@@ -1,0 +1,32 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/backend.yml'
+
+defaults:
+  run:
+    working-directory: apps/backend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/backend
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
+      - run: cargo check --target wasm32-unknown-unknown --all-targets

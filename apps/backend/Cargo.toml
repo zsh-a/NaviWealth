@@ -1,0 +1,26 @@
+[package]
+name = "naviwealth-backend"
+version = "0.1.0"
+edition = "2021"
+authors = ["NaviWealth"]
+description = "NaviWealth backend on Cloudflare Workers (Rust)"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+worker = { version = "0.5", features = ["http", "d1"] }
+worker-macros = "0.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+chrono = { version = "0.4", default-features = false, features = ["serde", "wasmbind", "clock"] }
+uuid = { version = "1", features = ["v4", "serde", "js"] }
+console_error_panic_hook = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

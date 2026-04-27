@@ -1,0 +1,21 @@
+name = "naviwealth-backend"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-04-15"
+workers_dev = true
+
+[build]
+command = "cargo install -q worker-build && worker-build --release"
+
+[vars]
+ENVIRONMENT = "dev"
+
+# D1 database (FIR-36 will run schema migrations against this)
+# Create via: wrangler d1 create naviwealth
+# Then paste the database_id here.
+[[d1_databases]]
+binding = "DB"
+database_name = "naviwealth"
+database_id = "REPLACE_ME_AFTER_wrangler_d1_create"
+
+# Secrets (set via `wrangler secret put`):
+# - JWT_SECRET   # HS256 signing key for the single-user JWT

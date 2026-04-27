@@ -1,0 +1,21 @@
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local env
+.env
+.env.local
+.dev.vars
+
+# Agent / platform
+.agent_context/
+CLAUDE.md
