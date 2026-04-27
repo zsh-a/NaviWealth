@@ -1,0 +1,38 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: '60...90'
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        informational: false
+      mobile:
+        flags: [mobile]
+        target: 60%
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
+        threshold: 1%
+
+flags:
+  mobile:
+    paths:
+      - apps/mobile/lib
+
+ignore:
+  - 'apps/mobile/lib/**/*.g.dart'
+  - 'apps/mobile/lib/**/*.freezed.dart'
+  - 'apps/mobile/test/**'
+
+comment:
+  layout: 'reach,diff,flags,tree'
+  behavior: default
+  require_changes: false
