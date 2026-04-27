@@ -63,6 +63,14 @@ wrangler deploy               # 推到 *.workers.dev
 
 ---
 
+## Git Hooks
+
+```bash
+./tool/install-hooks.sh
+```
+
+安装一次后，提交时会对暂存的 `apps/mobile/**.dart` 跑 `dart format --set-exit-if-changed` 与 `flutter analyze --fatal-infos`。
+
 ## 贡献流程
 
 1. 在 Multica 看板上认领任务（FIR-N）。
