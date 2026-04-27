@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/gen/app_localizations.dart';
+
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(title: Text(l10n.settingsAppBarTitle)),
       body: ListView(
-        children: const [
+        children: [
           ListTile(
-            leading: Icon(Icons.account_circle_outlined),
-            title: Text('账户'),
-            subtitle: Text('登录与多端同步 (FIR-27 / FIR-28)'),
+            leading: const Icon(Icons.account_circle_outlined),
+            title: Text(l10n.settingsAccountTitle),
+            subtitle: Text(l10n.settingsAccountSubtitle),
           ),
           ListTile(
-            leading: Icon(Icons.currency_exchange),
-            title: Text('基础货币'),
-            subtitle: Text('CNY (默认)'),
+            leading: const Icon(Icons.currency_exchange),
+            title: Text(l10n.settingsBaseCurrencyTitle),
+            subtitle: Text(l10n.settingsBaseCurrencySubtitle('CNY')),
           ),
           ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('关于 NaviWealth'),
-            subtitle: Text('v0.1.0'),
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.settingsAboutTitle),
+            subtitle: Text(l10n.settingsAboutSubtitle('0.1.0')),
           ),
         ],
       ),
