@@ -5,6 +5,13 @@ import 'app/app.dart';
 import 'app/bootstrap.dart';
 
 Future<void> main() async {
-  await bootstrap();
-  runApp(const ProviderScope(child: NaviWealthApp()));
+  await runGuarded(() async {
+    final container = await bootstrap();
+    runApp(
+      UncontrolledProviderScope(
+        container: container,
+        child: const NaviWealthApp(),
+      ),
+    );
+  });
 }

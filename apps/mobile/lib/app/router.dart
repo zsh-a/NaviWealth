@@ -6,6 +6,7 @@ import '../features/analytics/analytics_page.dart';
 import '../features/assets/assets_page.dart';
 import '../features/home/home_page.dart';
 import '../features/settings/settings_page.dart';
+import '../l10n/gen/app_localizations.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -47,6 +48,7 @@ class _RootShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final location = GoRouter.of(
       context,
     ).routeInformationProvider.value.uri.path;
@@ -61,26 +63,26 @@ class _RootShell extends StatelessWidget {
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: '总览',
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard),
+            label: l10n.navHome,
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet),
-            label: '资产',
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: const Icon(Icons.account_balance_wallet),
+            label: l10n.navAssets,
           ),
           NavigationDestination(
-            icon: Icon(Icons.pie_chart_outline),
-            selectedIcon: Icon(Icons.pie_chart),
-            label: '分析',
+            icon: const Icon(Icons.pie_chart_outline),
+            selectedIcon: const Icon(Icons.pie_chart),
+            label: l10n.navAnalytics,
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: '设置',
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: l10n.navSettings,
           ),
         ],
         onDestinationSelected: (i) {

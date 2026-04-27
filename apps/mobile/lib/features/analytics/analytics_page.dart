@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/gen/app_localizations.dart';
+
 class AnalyticsPage extends StatelessWidget {
   const AnalyticsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('分析')),
-      body: const Center(child: Text('组合分析 (FIR-7) + 收益率 (FIR-8) — 待实现')),
+      appBar: AppBar(title: Text(l10n.analyticsAppBarTitle)),
+      body: const Center(child: Text('FIR-7 / FIR-8')),
     );
   }
 }
