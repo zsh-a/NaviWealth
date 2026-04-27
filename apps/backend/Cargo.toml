@@ -19,6 +19,15 @@ chrono = { version = "0.4", default-features = false, features = ["serde", "wasm
 uuid = { version = "1", features = ["v4", "serde", "js"] }
 console_error_panic_hook = "0.1"
 
+# Auth (FIR-29). HS256 JWT is hand-rolled on hmac+sha2 because `jsonwebtoken`
+# does not build for `wasm32-unknown-unknown` without a non-default crypto
+# backend; argon2 is pure-Rust and salt entropy comes from `getrandom` (js).
+argon2 = "0.5"
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+getrandom = { version = "0.2", features = ["js"] }
+
 [profile.release]
 opt-level = "s"
 lto = true
