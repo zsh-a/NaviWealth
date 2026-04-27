@@ -91,7 +91,7 @@ jobs:
           cd build/web
           tar -czf "../../naviwealth-web-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz" .
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: mobile ${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
           generate_release_notes: true
@@ -131,7 +131,7 @@ jobs:
         run: |
           tar -czf "naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz" build/worker
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: backend ${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
           generate_release_notes: true
