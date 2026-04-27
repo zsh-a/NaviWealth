@@ -13,6 +13,14 @@ naviwealth/
 ├── apps/
 │   ├── mobile/      # Flutter 三端 App（FIR-2 / FIR-14 ...）
 │   └── backend/     # Cloudflare Workers + Rust（FIR-28 / FIR-32 / FIR-36 ...）
+└── .github/
+    ├── workflows/
+    │   ├── mobile.yml     # analyze / test / 覆盖率 / build (web/android/ios)
+    │   ├── backend.yml    # cargo fmt / clippy / check / cargo audit
+    │   ├── security.yml   # 每周扫描：dart pub outdated / cargo audit / trivy fs
+    │   └── release.yml    # 标签触发：mobile-vX.Y.Z / backend-vX.Y.Z
+    ├── dependabot.yml     # Actions / pub / cargo 依赖自动更新
+    └── CODEOWNERS         # 默认评审人
 └── .github/workflows/
     ├── mobile.yml   # Flutter analyze + test + web build
     └── backend.yml  # cargo fmt / clippy / check + wrangler deploy（PR preview / main prod）
@@ -90,3 +98,33 @@ PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流�
 1. 在 Multica 看板上认领任务（FIR-N）。
 2. 从 `main` 拉分支：`feature/fir-<N>-<short>`。
 3. 提交并推送，CI 通过后开 PR。
+
+`main` 分支的保护规则与必需检查见 [`docs/branch-protection.md`](docs/branch-protection.md)。
+
+---
+
+## CI / 质量门禁
+
+| 流水线 | 触发条件 | 关键步骤 |
+| --- | --- | --- |
+| `mobile` | 修改 `apps/mobile/**` 或 workflow | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / web+android+ios 构建 |
+| `backend` | 修改 `apps/backend/**` 或 workflow | cargo fmt / clippy / check (wasm32) / **cargo audit** |
+| `security` | 每周一 03:17 UTC + 手动 + lockfile 变更 | `dart pub outdated` / `cargo audit` / Trivy 文件系统扫描 |
+| `release` | tag 推送 `mobile-vX.Y.Z` / `backend-vX.Y.Z` | 版本号写入源文件 → 构建 → 创建 GitHub Release |
+
+覆盖率阈值在 [`codecov.yml`](codecov.yml) 中配置：项目目标 60%（mobile flag），diff（patch）目标 70%。`*.g.dart` / `*.freezed.dart` 不计入。
+
+依赖更新由 Dependabot 周一自动开 PR，见 [`.github/dependabot.yml`](.github/dependabot.yml)。
+
+### 版本号约定
+
+- **语义化版本** + **构建号**：`SEMVER+BUILD`
+- 构建号 = 该 tag 在 git 历史上的提交计数（`git rev-list --count <tag>`），保证单调递增、可从历史复现
+- 发版示例：
+
+  ```bash
+  ./tool/bump-version.sh mobile 0.2.0
+  git push origin HEAD --follow-tags
+  ```
+
+  会修改 `pubspec.yaml`、提交、打 tag，并由 `release.yml` 在构建时把 `version: 0.2.0+1` 重写成 `0.2.0+<commit-count>`。
