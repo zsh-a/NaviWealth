@@ -8,7 +8,18 @@ part 'app_database.g.dart';
 
 const String defaultDbFileName = 'naviwealth.db';
 
-@DriftDatabase(tables: [Accounts, Assets, Txns, FxRates, AppMeta])
+@DriftDatabase(
+  tables: [
+    Accounts,
+    Assets,
+    Txns,
+    FxRates,
+    AppMeta,
+    MarketQuotes,
+    MarketHistoryBars,
+    MarketSymbolSearches,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase({required String encryptionKey, String? dbFileName})
     : super(
