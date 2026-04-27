@@ -1,0 +1,62 @@
+{
+  "@@locale": "en",
+  "appTitle": "NaviWealth",
+  "@appTitle": {
+    "description": "Application name shown in title bar and launchers"
+  },
+
+  "navHome": "Overview",
+  "@navHome": { "description": "Bottom nav: dashboard / overview tab" },
+  "navAssets": "Assets",
+  "@navAssets": { "description": "Bottom nav: assets tab" },
+  "navAnalytics": "Analytics",
+  "@navAnalytics": { "description": "Bottom nav: analytics tab" },
+  "navSettings": "Settings",
+  "@navSettings": { "description": "Bottom nav: settings tab" },
+
+  "homeAppBarTitle": "Overview",
+  "homeNetWorthTitle": "Net Worth",
+  "homeNetWorthSubtitle": "Base currency {currency} · shown once data is connected",
+  "@homeNetWorthSubtitle": {
+    "placeholders": {
+      "currency": { "type": "String", "example": "CNY" }
+    }
+  },
+  "homeTodayReturnTitle": "Today's Return",
+  "homeTodayReturnSubtitle": "Live quotes pending. FIR-4 will populate this card.",
+  "homeAllocationTitle": "Asset Allocation",
+  "homeAllocationSubtitle": "FIR-7 will surface category, sector, and region breakdowns here.",
+  "homeFireTitle": "FIRE Progress",
+  "homeFireSubtitle": "FIR-9 will show days to financial independence and milestones.",
+
+  "assetsAppBarTitle": "Assets",
+  "assetsEmptyHint": "Asset entry & management (FIR-5) — coming soon",
+  "assetsAddAction": "Add asset",
+
+  "analyticsAppBarTitle": "Analytics",
+  "settingsAppBarTitle": "Settings",
+  "settingsAccountTitle": "Account",
+  "settingsAccountSubtitle": "Sign-in & multi-device sync (FIR-27 / FIR-28)",
+  "settingsBaseCurrencyTitle": "Base currency",
+  "settingsBaseCurrencySubtitle": "{currency} (default)",
+  "@settingsBaseCurrencySubtitle": {
+    "placeholders": {
+      "currency": { "type": "String", "example": "CNY" }
+    }
+  },
+  "settingsAboutTitle": "About NaviWealth",
+  "settingsAboutSubtitle": "v{version}",
+  "@settingsAboutSubtitle": {
+    "placeholders": {
+      "version": { "type": "String", "example": "0.1.0" }
+    }
+  },
+
+  "commonRetry": "Retry",
+  "commonCancel": "Cancel",
+  "commonConfirm": "Confirm",
+  "commonSave": "Save",
+  "commonClose": "Close",
+  "commonLoading": "Loading…",
+  "commonError": "Something went wrong"
+}
