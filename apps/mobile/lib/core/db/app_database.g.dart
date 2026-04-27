@@ -2709,6 +2709,1694 @@ class AppMetaCompanion extends UpdateCompanion<AppMetaRow> {
   }
 }
 
+class $MarketQuotesTable extends MarketQuotes
+    with TableInfo<$MarketQuotesTable, MarketQuoteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MarketQuotesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _priceMeta = const VerificationMeta('price');
+  @override
+  late final GeneratedColumn<String> price = GeneratedColumn<String>(
+    'price',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _previousCloseMeta = const VerificationMeta(
+    'previousClose',
+  );
+  @override
+  late final GeneratedColumn<String> previousClose = GeneratedColumn<String>(
+    'previous_close',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _openPriceMeta = const VerificationMeta(
+    'openPrice',
+  );
+  @override
+  late final GeneratedColumn<String> openPrice = GeneratedColumn<String>(
+    'open_price',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dayHighMeta = const VerificationMeta(
+    'dayHigh',
+  );
+  @override
+  late final GeneratedColumn<String> dayHigh = GeneratedColumn<String>(
+    'day_high',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dayLowMeta = const VerificationMeta('dayLow');
+  @override
+  late final GeneratedColumn<String> dayLow = GeneratedColumn<String>(
+    'day_low',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _volumeMeta = const VerificationMeta('volume');
+  @override
+  late final GeneratedColumn<int> volume = GeneratedColumn<int>(
+    'volume',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exchangeMeta = const VerificationMeta(
+    'exchange',
+  );
+  @override
+  late final GeneratedColumn<String> exchange = GeneratedColumn<String>(
+    'exchange',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _asOfMeta = const VerificationMeta('asOf');
+  @override
+  late final GeneratedColumn<DateTime> asOf = GeneratedColumn<DateTime>(
+    'as_of',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    symbol,
+    source,
+    currency,
+    price,
+    previousClose,
+    openPrice,
+    dayHigh,
+    dayLow,
+    volume,
+    exchange,
+    asOf,
+    fetchedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'market_quotes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MarketQuoteRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyMeta);
+    }
+    if (data.containsKey('price')) {
+      context.handle(
+        _priceMeta,
+        price.isAcceptableOrUnknown(data['price']!, _priceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_priceMeta);
+    }
+    if (data.containsKey('previous_close')) {
+      context.handle(
+        _previousCloseMeta,
+        previousClose.isAcceptableOrUnknown(
+          data['previous_close']!,
+          _previousCloseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('open_price')) {
+      context.handle(
+        _openPriceMeta,
+        openPrice.isAcceptableOrUnknown(data['open_price']!, _openPriceMeta),
+      );
+    }
+    if (data.containsKey('day_high')) {
+      context.handle(
+        _dayHighMeta,
+        dayHigh.isAcceptableOrUnknown(data['day_high']!, _dayHighMeta),
+      );
+    }
+    if (data.containsKey('day_low')) {
+      context.handle(
+        _dayLowMeta,
+        dayLow.isAcceptableOrUnknown(data['day_low']!, _dayLowMeta),
+      );
+    }
+    if (data.containsKey('volume')) {
+      context.handle(
+        _volumeMeta,
+        volume.isAcceptableOrUnknown(data['volume']!, _volumeMeta),
+      );
+    }
+    if (data.containsKey('exchange')) {
+      context.handle(
+        _exchangeMeta,
+        exchange.isAcceptableOrUnknown(data['exchange']!, _exchangeMeta),
+      );
+    }
+    if (data.containsKey('as_of')) {
+      context.handle(
+        _asOfMeta,
+        asOf.isAcceptableOrUnknown(data['as_of']!, _asOfMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_asOfMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {symbol, source};
+  @override
+  MarketQuoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MarketQuoteRow(
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      price: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}price'],
+      )!,
+      previousClose: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous_close'],
+      ),
+      openPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}open_price'],
+      ),
+      dayHigh: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day_high'],
+      ),
+      dayLow: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day_low'],
+      ),
+      volume: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}volume'],
+      ),
+      exchange: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exchange'],
+      ),
+      asOf: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}as_of'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MarketQuotesTable createAlias(String alias) {
+    return $MarketQuotesTable(attachedDatabase, alias);
+  }
+}
+
+class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
+  final String symbol;
+  final String source;
+  final String currency;
+  final String price;
+  final String? previousClose;
+  final String? openPrice;
+  final String? dayHigh;
+  final String? dayLow;
+  final int? volume;
+  final String? exchange;
+  final DateTime asOf;
+  final DateTime fetchedAt;
+  const MarketQuoteRow({
+    required this.symbol,
+    required this.source,
+    required this.currency,
+    required this.price,
+    this.previousClose,
+    this.openPrice,
+    this.dayHigh,
+    this.dayLow,
+    this.volume,
+    this.exchange,
+    required this.asOf,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['symbol'] = Variable<String>(symbol);
+    map['source'] = Variable<String>(source);
+    map['currency'] = Variable<String>(currency);
+    map['price'] = Variable<String>(price);
+    if (!nullToAbsent || previousClose != null) {
+      map['previous_close'] = Variable<String>(previousClose);
+    }
+    if (!nullToAbsent || openPrice != null) {
+      map['open_price'] = Variable<String>(openPrice);
+    }
+    if (!nullToAbsent || dayHigh != null) {
+      map['day_high'] = Variable<String>(dayHigh);
+    }
+    if (!nullToAbsent || dayLow != null) {
+      map['day_low'] = Variable<String>(dayLow);
+    }
+    if (!nullToAbsent || volume != null) {
+      map['volume'] = Variable<int>(volume);
+    }
+    if (!nullToAbsent || exchange != null) {
+      map['exchange'] = Variable<String>(exchange);
+    }
+    map['as_of'] = Variable<DateTime>(asOf);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  MarketQuotesCompanion toCompanion(bool nullToAbsent) {
+    return MarketQuotesCompanion(
+      symbol: Value(symbol),
+      source: Value(source),
+      currency: Value(currency),
+      price: Value(price),
+      previousClose: previousClose == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousClose),
+      openPrice: openPrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(openPrice),
+      dayHigh: dayHigh == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dayHigh),
+      dayLow: dayLow == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dayLow),
+      volume: volume == null && nullToAbsent
+          ? const Value.absent()
+          : Value(volume),
+      exchange: exchange == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exchange),
+      asOf: Value(asOf),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory MarketQuoteRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MarketQuoteRow(
+      symbol: serializer.fromJson<String>(json['symbol']),
+      source: serializer.fromJson<String>(json['source']),
+      currency: serializer.fromJson<String>(json['currency']),
+      price: serializer.fromJson<String>(json['price']),
+      previousClose: serializer.fromJson<String?>(json['previousClose']),
+      openPrice: serializer.fromJson<String?>(json['openPrice']),
+      dayHigh: serializer.fromJson<String?>(json['dayHigh']),
+      dayLow: serializer.fromJson<String?>(json['dayLow']),
+      volume: serializer.fromJson<int?>(json['volume']),
+      exchange: serializer.fromJson<String?>(json['exchange']),
+      asOf: serializer.fromJson<DateTime>(json['asOf']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'symbol': serializer.toJson<String>(symbol),
+      'source': serializer.toJson<String>(source),
+      'currency': serializer.toJson<String>(currency),
+      'price': serializer.toJson<String>(price),
+      'previousClose': serializer.toJson<String?>(previousClose),
+      'openPrice': serializer.toJson<String?>(openPrice),
+      'dayHigh': serializer.toJson<String?>(dayHigh),
+      'dayLow': serializer.toJson<String?>(dayLow),
+      'volume': serializer.toJson<int?>(volume),
+      'exchange': serializer.toJson<String?>(exchange),
+      'asOf': serializer.toJson<DateTime>(asOf),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  MarketQuoteRow copyWith({
+    String? symbol,
+    String? source,
+    String? currency,
+    String? price,
+    Value<String?> previousClose = const Value.absent(),
+    Value<String?> openPrice = const Value.absent(),
+    Value<String?> dayHigh = const Value.absent(),
+    Value<String?> dayLow = const Value.absent(),
+    Value<int?> volume = const Value.absent(),
+    Value<String?> exchange = const Value.absent(),
+    DateTime? asOf,
+    DateTime? fetchedAt,
+  }) => MarketQuoteRow(
+    symbol: symbol ?? this.symbol,
+    source: source ?? this.source,
+    currency: currency ?? this.currency,
+    price: price ?? this.price,
+    previousClose: previousClose.present
+        ? previousClose.value
+        : this.previousClose,
+    openPrice: openPrice.present ? openPrice.value : this.openPrice,
+    dayHigh: dayHigh.present ? dayHigh.value : this.dayHigh,
+    dayLow: dayLow.present ? dayLow.value : this.dayLow,
+    volume: volume.present ? volume.value : this.volume,
+    exchange: exchange.present ? exchange.value : this.exchange,
+    asOf: asOf ?? this.asOf,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  MarketQuoteRow copyWithCompanion(MarketQuotesCompanion data) {
+    return MarketQuoteRow(
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      source: data.source.present ? data.source.value : this.source,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      price: data.price.present ? data.price.value : this.price,
+      previousClose: data.previousClose.present
+          ? data.previousClose.value
+          : this.previousClose,
+      openPrice: data.openPrice.present ? data.openPrice.value : this.openPrice,
+      dayHigh: data.dayHigh.present ? data.dayHigh.value : this.dayHigh,
+      dayLow: data.dayLow.present ? data.dayLow.value : this.dayLow,
+      volume: data.volume.present ? data.volume.value : this.volume,
+      exchange: data.exchange.present ? data.exchange.value : this.exchange,
+      asOf: data.asOf.present ? data.asOf.value : this.asOf,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketQuoteRow(')
+          ..write('symbol: $symbol, ')
+          ..write('source: $source, ')
+          ..write('currency: $currency, ')
+          ..write('price: $price, ')
+          ..write('previousClose: $previousClose, ')
+          ..write('openPrice: $openPrice, ')
+          ..write('dayHigh: $dayHigh, ')
+          ..write('dayLow: $dayLow, ')
+          ..write('volume: $volume, ')
+          ..write('exchange: $exchange, ')
+          ..write('asOf: $asOf, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    symbol,
+    source,
+    currency,
+    price,
+    previousClose,
+    openPrice,
+    dayHigh,
+    dayLow,
+    volume,
+    exchange,
+    asOf,
+    fetchedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MarketQuoteRow &&
+          other.symbol == this.symbol &&
+          other.source == this.source &&
+          other.currency == this.currency &&
+          other.price == this.price &&
+          other.previousClose == this.previousClose &&
+          other.openPrice == this.openPrice &&
+          other.dayHigh == this.dayHigh &&
+          other.dayLow == this.dayLow &&
+          other.volume == this.volume &&
+          other.exchange == this.exchange &&
+          other.asOf == this.asOf &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
+  final Value<String> symbol;
+  final Value<String> source;
+  final Value<String> currency;
+  final Value<String> price;
+  final Value<String?> previousClose;
+  final Value<String?> openPrice;
+  final Value<String?> dayHigh;
+  final Value<String?> dayLow;
+  final Value<int?> volume;
+  final Value<String?> exchange;
+  final Value<DateTime> asOf;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const MarketQuotesCompanion({
+    this.symbol = const Value.absent(),
+    this.source = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.price = const Value.absent(),
+    this.previousClose = const Value.absent(),
+    this.openPrice = const Value.absent(),
+    this.dayHigh = const Value.absent(),
+    this.dayLow = const Value.absent(),
+    this.volume = const Value.absent(),
+    this.exchange = const Value.absent(),
+    this.asOf = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MarketQuotesCompanion.insert({
+    required String symbol,
+    required String source,
+    required String currency,
+    required String price,
+    this.previousClose = const Value.absent(),
+    this.openPrice = const Value.absent(),
+    this.dayHigh = const Value.absent(),
+    this.dayLow = const Value.absent(),
+    this.volume = const Value.absent(),
+    this.exchange = const Value.absent(),
+    required DateTime asOf,
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : symbol = Value(symbol),
+       source = Value(source),
+       currency = Value(currency),
+       price = Value(price),
+       asOf = Value(asOf),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<MarketQuoteRow> custom({
+    Expression<String>? symbol,
+    Expression<String>? source,
+    Expression<String>? currency,
+    Expression<String>? price,
+    Expression<String>? previousClose,
+    Expression<String>? openPrice,
+    Expression<String>? dayHigh,
+    Expression<String>? dayLow,
+    Expression<int>? volume,
+    Expression<String>? exchange,
+    Expression<DateTime>? asOf,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (symbol != null) 'symbol': symbol,
+      if (source != null) 'source': source,
+      if (currency != null) 'currency': currency,
+      if (price != null) 'price': price,
+      if (previousClose != null) 'previous_close': previousClose,
+      if (openPrice != null) 'open_price': openPrice,
+      if (dayHigh != null) 'day_high': dayHigh,
+      if (dayLow != null) 'day_low': dayLow,
+      if (volume != null) 'volume': volume,
+      if (exchange != null) 'exchange': exchange,
+      if (asOf != null) 'as_of': asOf,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MarketQuotesCompanion copyWith({
+    Value<String>? symbol,
+    Value<String>? source,
+    Value<String>? currency,
+    Value<String>? price,
+    Value<String?>? previousClose,
+    Value<String?>? openPrice,
+    Value<String?>? dayHigh,
+    Value<String?>? dayLow,
+    Value<int?>? volume,
+    Value<String?>? exchange,
+    Value<DateTime>? asOf,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return MarketQuotesCompanion(
+      symbol: symbol ?? this.symbol,
+      source: source ?? this.source,
+      currency: currency ?? this.currency,
+      price: price ?? this.price,
+      previousClose: previousClose ?? this.previousClose,
+      openPrice: openPrice ?? this.openPrice,
+      dayHigh: dayHigh ?? this.dayHigh,
+      dayLow: dayLow ?? this.dayLow,
+      volume: volume ?? this.volume,
+      exchange: exchange ?? this.exchange,
+      asOf: asOf ?? this.asOf,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (price.present) {
+      map['price'] = Variable<String>(price.value);
+    }
+    if (previousClose.present) {
+      map['previous_close'] = Variable<String>(previousClose.value);
+    }
+    if (openPrice.present) {
+      map['open_price'] = Variable<String>(openPrice.value);
+    }
+    if (dayHigh.present) {
+      map['day_high'] = Variable<String>(dayHigh.value);
+    }
+    if (dayLow.present) {
+      map['day_low'] = Variable<String>(dayLow.value);
+    }
+    if (volume.present) {
+      map['volume'] = Variable<int>(volume.value);
+    }
+    if (exchange.present) {
+      map['exchange'] = Variable<String>(exchange.value);
+    }
+    if (asOf.present) {
+      map['as_of'] = Variable<DateTime>(asOf.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketQuotesCompanion(')
+          ..write('symbol: $symbol, ')
+          ..write('source: $source, ')
+          ..write('currency: $currency, ')
+          ..write('price: $price, ')
+          ..write('previousClose: $previousClose, ')
+          ..write('openPrice: $openPrice, ')
+          ..write('dayHigh: $dayHigh, ')
+          ..write('dayLow: $dayLow, ')
+          ..write('volume: $volume, ')
+          ..write('exchange: $exchange, ')
+          ..write('asOf: $asOf, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MarketHistoryBarsTable extends MarketHistoryBars
+    with TableInfo<$MarketHistoryBarsTable, MarketHistoryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MarketHistoryBarsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _intervalMeta = const VerificationMeta(
+    'interval',
+  );
+  @override
+  late final GeneratedColumn<String> interval = GeneratedColumn<String>(
+    'interval',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _asOfMeta = const VerificationMeta('asOf');
+  @override
+  late final GeneratedColumn<DateTime> asOf = GeneratedColumn<DateTime>(
+    'as_of',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _openPriceMeta = const VerificationMeta(
+    'openPrice',
+  );
+  @override
+  late final GeneratedColumn<String> openPrice = GeneratedColumn<String>(
+    'open_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _highMeta = const VerificationMeta('high');
+  @override
+  late final GeneratedColumn<String> high = GeneratedColumn<String>(
+    'high',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lowMeta = const VerificationMeta('low');
+  @override
+  late final GeneratedColumn<String> low = GeneratedColumn<String>(
+    'low',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closePriceMeta = const VerificationMeta(
+    'closePrice',
+  );
+  @override
+  late final GeneratedColumn<String> closePrice = GeneratedColumn<String>(
+    'close_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _volumeMeta = const VerificationMeta('volume');
+  @override
+  late final GeneratedColumn<int> volume = GeneratedColumn<int>(
+    'volume',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _adjustedCloseMeta = const VerificationMeta(
+    'adjustedClose',
+  );
+  @override
+  late final GeneratedColumn<String> adjustedClose = GeneratedColumn<String>(
+    'adjusted_close',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    symbol,
+    interval,
+    asOf,
+    source,
+    openPrice,
+    high,
+    low,
+    closePrice,
+    volume,
+    adjustedClose,
+    fetchedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'market_history_bars';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MarketHistoryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('interval')) {
+      context.handle(
+        _intervalMeta,
+        interval.isAcceptableOrUnknown(data['interval']!, _intervalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_intervalMeta);
+    }
+    if (data.containsKey('as_of')) {
+      context.handle(
+        _asOfMeta,
+        asOf.isAcceptableOrUnknown(data['as_of']!, _asOfMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_asOfMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('open_price')) {
+      context.handle(
+        _openPriceMeta,
+        openPrice.isAcceptableOrUnknown(data['open_price']!, _openPriceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_openPriceMeta);
+    }
+    if (data.containsKey('high')) {
+      context.handle(
+        _highMeta,
+        high.isAcceptableOrUnknown(data['high']!, _highMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_highMeta);
+    }
+    if (data.containsKey('low')) {
+      context.handle(
+        _lowMeta,
+        low.isAcceptableOrUnknown(data['low']!, _lowMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lowMeta);
+    }
+    if (data.containsKey('close_price')) {
+      context.handle(
+        _closePriceMeta,
+        closePrice.isAcceptableOrUnknown(data['close_price']!, _closePriceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_closePriceMeta);
+    }
+    if (data.containsKey('volume')) {
+      context.handle(
+        _volumeMeta,
+        volume.isAcceptableOrUnknown(data['volume']!, _volumeMeta),
+      );
+    }
+    if (data.containsKey('adjusted_close')) {
+      context.handle(
+        _adjustedCloseMeta,
+        adjustedClose.isAcceptableOrUnknown(
+          data['adjusted_close']!,
+          _adjustedCloseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {symbol, interval, asOf, source};
+  @override
+  MarketHistoryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MarketHistoryRow(
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      interval: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}interval'],
+      )!,
+      asOf: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}as_of'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      openPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}open_price'],
+      )!,
+      high: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}high'],
+      )!,
+      low: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}low'],
+      )!,
+      closePrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}close_price'],
+      )!,
+      volume: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}volume'],
+      ),
+      adjustedClose: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}adjusted_close'],
+      ),
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MarketHistoryBarsTable createAlias(String alias) {
+    return $MarketHistoryBarsTable(attachedDatabase, alias);
+  }
+}
+
+class MarketHistoryRow extends DataClass
+    implements Insertable<MarketHistoryRow> {
+  final String symbol;
+  final String interval;
+  final DateTime asOf;
+  final String source;
+  final String openPrice;
+  final String high;
+  final String low;
+  final String closePrice;
+  final int? volume;
+  final String? adjustedClose;
+  final DateTime fetchedAt;
+  const MarketHistoryRow({
+    required this.symbol,
+    required this.interval,
+    required this.asOf,
+    required this.source,
+    required this.openPrice,
+    required this.high,
+    required this.low,
+    required this.closePrice,
+    this.volume,
+    this.adjustedClose,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['symbol'] = Variable<String>(symbol);
+    map['interval'] = Variable<String>(interval);
+    map['as_of'] = Variable<DateTime>(asOf);
+    map['source'] = Variable<String>(source);
+    map['open_price'] = Variable<String>(openPrice);
+    map['high'] = Variable<String>(high);
+    map['low'] = Variable<String>(low);
+    map['close_price'] = Variable<String>(closePrice);
+    if (!nullToAbsent || volume != null) {
+      map['volume'] = Variable<int>(volume);
+    }
+    if (!nullToAbsent || adjustedClose != null) {
+      map['adjusted_close'] = Variable<String>(adjustedClose);
+    }
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  MarketHistoryBarsCompanion toCompanion(bool nullToAbsent) {
+    return MarketHistoryBarsCompanion(
+      symbol: Value(symbol),
+      interval: Value(interval),
+      asOf: Value(asOf),
+      source: Value(source),
+      openPrice: Value(openPrice),
+      high: Value(high),
+      low: Value(low),
+      closePrice: Value(closePrice),
+      volume: volume == null && nullToAbsent
+          ? const Value.absent()
+          : Value(volume),
+      adjustedClose: adjustedClose == null && nullToAbsent
+          ? const Value.absent()
+          : Value(adjustedClose),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory MarketHistoryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MarketHistoryRow(
+      symbol: serializer.fromJson<String>(json['symbol']),
+      interval: serializer.fromJson<String>(json['interval']),
+      asOf: serializer.fromJson<DateTime>(json['asOf']),
+      source: serializer.fromJson<String>(json['source']),
+      openPrice: serializer.fromJson<String>(json['openPrice']),
+      high: serializer.fromJson<String>(json['high']),
+      low: serializer.fromJson<String>(json['low']),
+      closePrice: serializer.fromJson<String>(json['closePrice']),
+      volume: serializer.fromJson<int?>(json['volume']),
+      adjustedClose: serializer.fromJson<String?>(json['adjustedClose']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'symbol': serializer.toJson<String>(symbol),
+      'interval': serializer.toJson<String>(interval),
+      'asOf': serializer.toJson<DateTime>(asOf),
+      'source': serializer.toJson<String>(source),
+      'openPrice': serializer.toJson<String>(openPrice),
+      'high': serializer.toJson<String>(high),
+      'low': serializer.toJson<String>(low),
+      'closePrice': serializer.toJson<String>(closePrice),
+      'volume': serializer.toJson<int?>(volume),
+      'adjustedClose': serializer.toJson<String?>(adjustedClose),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  MarketHistoryRow copyWith({
+    String? symbol,
+    String? interval,
+    DateTime? asOf,
+    String? source,
+    String? openPrice,
+    String? high,
+    String? low,
+    String? closePrice,
+    Value<int?> volume = const Value.absent(),
+    Value<String?> adjustedClose = const Value.absent(),
+    DateTime? fetchedAt,
+  }) => MarketHistoryRow(
+    symbol: symbol ?? this.symbol,
+    interval: interval ?? this.interval,
+    asOf: asOf ?? this.asOf,
+    source: source ?? this.source,
+    openPrice: openPrice ?? this.openPrice,
+    high: high ?? this.high,
+    low: low ?? this.low,
+    closePrice: closePrice ?? this.closePrice,
+    volume: volume.present ? volume.value : this.volume,
+    adjustedClose: adjustedClose.present
+        ? adjustedClose.value
+        : this.adjustedClose,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  MarketHistoryRow copyWithCompanion(MarketHistoryBarsCompanion data) {
+    return MarketHistoryRow(
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      interval: data.interval.present ? data.interval.value : this.interval,
+      asOf: data.asOf.present ? data.asOf.value : this.asOf,
+      source: data.source.present ? data.source.value : this.source,
+      openPrice: data.openPrice.present ? data.openPrice.value : this.openPrice,
+      high: data.high.present ? data.high.value : this.high,
+      low: data.low.present ? data.low.value : this.low,
+      closePrice: data.closePrice.present
+          ? data.closePrice.value
+          : this.closePrice,
+      volume: data.volume.present ? data.volume.value : this.volume,
+      adjustedClose: data.adjustedClose.present
+          ? data.adjustedClose.value
+          : this.adjustedClose,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketHistoryRow(')
+          ..write('symbol: $symbol, ')
+          ..write('interval: $interval, ')
+          ..write('asOf: $asOf, ')
+          ..write('source: $source, ')
+          ..write('openPrice: $openPrice, ')
+          ..write('high: $high, ')
+          ..write('low: $low, ')
+          ..write('closePrice: $closePrice, ')
+          ..write('volume: $volume, ')
+          ..write('adjustedClose: $adjustedClose, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    symbol,
+    interval,
+    asOf,
+    source,
+    openPrice,
+    high,
+    low,
+    closePrice,
+    volume,
+    adjustedClose,
+    fetchedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MarketHistoryRow &&
+          other.symbol == this.symbol &&
+          other.interval == this.interval &&
+          other.asOf == this.asOf &&
+          other.source == this.source &&
+          other.openPrice == this.openPrice &&
+          other.high == this.high &&
+          other.low == this.low &&
+          other.closePrice == this.closePrice &&
+          other.volume == this.volume &&
+          other.adjustedClose == this.adjustedClose &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
+  final Value<String> symbol;
+  final Value<String> interval;
+  final Value<DateTime> asOf;
+  final Value<String> source;
+  final Value<String> openPrice;
+  final Value<String> high;
+  final Value<String> low;
+  final Value<String> closePrice;
+  final Value<int?> volume;
+  final Value<String?> adjustedClose;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const MarketHistoryBarsCompanion({
+    this.symbol = const Value.absent(),
+    this.interval = const Value.absent(),
+    this.asOf = const Value.absent(),
+    this.source = const Value.absent(),
+    this.openPrice = const Value.absent(),
+    this.high = const Value.absent(),
+    this.low = const Value.absent(),
+    this.closePrice = const Value.absent(),
+    this.volume = const Value.absent(),
+    this.adjustedClose = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MarketHistoryBarsCompanion.insert({
+    required String symbol,
+    required String interval,
+    required DateTime asOf,
+    required String source,
+    required String openPrice,
+    required String high,
+    required String low,
+    required String closePrice,
+    this.volume = const Value.absent(),
+    this.adjustedClose = const Value.absent(),
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : symbol = Value(symbol),
+       interval = Value(interval),
+       asOf = Value(asOf),
+       source = Value(source),
+       openPrice = Value(openPrice),
+       high = Value(high),
+       low = Value(low),
+       closePrice = Value(closePrice),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<MarketHistoryRow> custom({
+    Expression<String>? symbol,
+    Expression<String>? interval,
+    Expression<DateTime>? asOf,
+    Expression<String>? source,
+    Expression<String>? openPrice,
+    Expression<String>? high,
+    Expression<String>? low,
+    Expression<String>? closePrice,
+    Expression<int>? volume,
+    Expression<String>? adjustedClose,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (symbol != null) 'symbol': symbol,
+      if (interval != null) 'interval': interval,
+      if (asOf != null) 'as_of': asOf,
+      if (source != null) 'source': source,
+      if (openPrice != null) 'open_price': openPrice,
+      if (high != null) 'high': high,
+      if (low != null) 'low': low,
+      if (closePrice != null) 'close_price': closePrice,
+      if (volume != null) 'volume': volume,
+      if (adjustedClose != null) 'adjusted_close': adjustedClose,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MarketHistoryBarsCompanion copyWith({
+    Value<String>? symbol,
+    Value<String>? interval,
+    Value<DateTime>? asOf,
+    Value<String>? source,
+    Value<String>? openPrice,
+    Value<String>? high,
+    Value<String>? low,
+    Value<String>? closePrice,
+    Value<int?>? volume,
+    Value<String?>? adjustedClose,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return MarketHistoryBarsCompanion(
+      symbol: symbol ?? this.symbol,
+      interval: interval ?? this.interval,
+      asOf: asOf ?? this.asOf,
+      source: source ?? this.source,
+      openPrice: openPrice ?? this.openPrice,
+      high: high ?? this.high,
+      low: low ?? this.low,
+      closePrice: closePrice ?? this.closePrice,
+      volume: volume ?? this.volume,
+      adjustedClose: adjustedClose ?? this.adjustedClose,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (interval.present) {
+      map['interval'] = Variable<String>(interval.value);
+    }
+    if (asOf.present) {
+      map['as_of'] = Variable<DateTime>(asOf.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (openPrice.present) {
+      map['open_price'] = Variable<String>(openPrice.value);
+    }
+    if (high.present) {
+      map['high'] = Variable<String>(high.value);
+    }
+    if (low.present) {
+      map['low'] = Variable<String>(low.value);
+    }
+    if (closePrice.present) {
+      map['close_price'] = Variable<String>(closePrice.value);
+    }
+    if (volume.present) {
+      map['volume'] = Variable<int>(volume.value);
+    }
+    if (adjustedClose.present) {
+      map['adjusted_close'] = Variable<String>(adjustedClose.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketHistoryBarsCompanion(')
+          ..write('symbol: $symbol, ')
+          ..write('interval: $interval, ')
+          ..write('asOf: $asOf, ')
+          ..write('source: $source, ')
+          ..write('openPrice: $openPrice, ')
+          ..write('high: $high, ')
+          ..write('low: $low, ')
+          ..write('closePrice: $closePrice, ')
+          ..write('volume: $volume, ')
+          ..write('adjustedClose: $adjustedClose, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MarketSymbolSearchesTable extends MarketSymbolSearches
+    with TableInfo<$MarketSymbolSearchesTable, MarketSymbolSearchRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MarketSymbolSearchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _queryMeta = const VerificationMeta('query');
+  @override
+  late final GeneratedColumn<String> query = GeneratedColumn<String>(
+    'query',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resultsMeta = const VerificationMeta(
+    'results',
+  );
+  @override
+  late final GeneratedColumn<String> results = GeneratedColumn<String>(
+    'results',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [query, source, results, fetchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'market_symbol_searches';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MarketSymbolSearchRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('query')) {
+      context.handle(
+        _queryMeta,
+        query.isAcceptableOrUnknown(data['query']!, _queryMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_queryMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('results')) {
+      context.handle(
+        _resultsMeta,
+        results.isAcceptableOrUnknown(data['results']!, _resultsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_resultsMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {query, source};
+  @override
+  MarketSymbolSearchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MarketSymbolSearchRow(
+      query: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}query'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      results: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}results'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MarketSymbolSearchesTable createAlias(String alias) {
+    return $MarketSymbolSearchesTable(attachedDatabase, alias);
+  }
+}
+
+class MarketSymbolSearchRow extends DataClass
+    implements Insertable<MarketSymbolSearchRow> {
+  final String query;
+  final String source;
+  final String results;
+  final DateTime fetchedAt;
+  const MarketSymbolSearchRow({
+    required this.query,
+    required this.source,
+    required this.results,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['query'] = Variable<String>(query);
+    map['source'] = Variable<String>(source);
+    map['results'] = Variable<String>(results);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  MarketSymbolSearchesCompanion toCompanion(bool nullToAbsent) {
+    return MarketSymbolSearchesCompanion(
+      query: Value(query),
+      source: Value(source),
+      results: Value(results),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory MarketSymbolSearchRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MarketSymbolSearchRow(
+      query: serializer.fromJson<String>(json['query']),
+      source: serializer.fromJson<String>(json['source']),
+      results: serializer.fromJson<String>(json['results']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'query': serializer.toJson<String>(query),
+      'source': serializer.toJson<String>(source),
+      'results': serializer.toJson<String>(results),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  MarketSymbolSearchRow copyWith({
+    String? query,
+    String? source,
+    String? results,
+    DateTime? fetchedAt,
+  }) => MarketSymbolSearchRow(
+    query: query ?? this.query,
+    source: source ?? this.source,
+    results: results ?? this.results,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  MarketSymbolSearchRow copyWithCompanion(MarketSymbolSearchesCompanion data) {
+    return MarketSymbolSearchRow(
+      query: data.query.present ? data.query.value : this.query,
+      source: data.source.present ? data.source.value : this.source,
+      results: data.results.present ? data.results.value : this.results,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketSymbolSearchRow(')
+          ..write('query: $query, ')
+          ..write('source: $source, ')
+          ..write('results: $results, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(query, source, results, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MarketSymbolSearchRow &&
+          other.query == this.query &&
+          other.source == this.source &&
+          other.results == this.results &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class MarketSymbolSearchesCompanion
+    extends UpdateCompanion<MarketSymbolSearchRow> {
+  final Value<String> query;
+  final Value<String> source;
+  final Value<String> results;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const MarketSymbolSearchesCompanion({
+    this.query = const Value.absent(),
+    this.source = const Value.absent(),
+    this.results = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MarketSymbolSearchesCompanion.insert({
+    required String query,
+    required String source,
+    required String results,
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : query = Value(query),
+       source = Value(source),
+       results = Value(results),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<MarketSymbolSearchRow> custom({
+    Expression<String>? query,
+    Expression<String>? source,
+    Expression<String>? results,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (query != null) 'query': query,
+      if (source != null) 'source': source,
+      if (results != null) 'results': results,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MarketSymbolSearchesCompanion copyWith({
+    Value<String>? query,
+    Value<String>? source,
+    Value<String>? results,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return MarketSymbolSearchesCompanion(
+      query: query ?? this.query,
+      source: source ?? this.source,
+      results: results ?? this.results,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (query.present) {
+      map['query'] = Variable<String>(query.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (results.present) {
+      map['results'] = Variable<String>(results.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketSymbolSearchesCompanion(')
+          ..write('query: $query, ')
+          ..write('source: $source, ')
+          ..write('results: $results, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2717,6 +4405,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TxnsTable txns = $TxnsTable(this);
   late final $FxRatesTable fxRates = $FxRatesTable(this);
   late final $AppMetaTable appMeta = $AppMetaTable(this);
+  late final $MarketQuotesTable marketQuotes = $MarketQuotesTable(this);
+  late final $MarketHistoryBarsTable marketHistoryBars =
+      $MarketHistoryBarsTable(this);
+  late final $MarketSymbolSearchesTable marketSymbolSearches =
+      $MarketSymbolSearchesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2727,6 +4420,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     txns,
     fxRates,
     appMeta,
+    marketQuotes,
+    marketHistoryBars,
+    marketSymbolSearches,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -4673,6 +6369,869 @@ typedef $$AppMetaTableProcessedTableManager =
       AppMetaRow,
       PrefetchHooks Function()
     >;
+typedef $$MarketQuotesTableCreateCompanionBuilder =
+    MarketQuotesCompanion Function({
+      required String symbol,
+      required String source,
+      required String currency,
+      required String price,
+      Value<String?> previousClose,
+      Value<String?> openPrice,
+      Value<String?> dayHigh,
+      Value<String?> dayLow,
+      Value<int?> volume,
+      Value<String?> exchange,
+      required DateTime asOf,
+      required DateTime fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$MarketQuotesTableUpdateCompanionBuilder =
+    MarketQuotesCompanion Function({
+      Value<String> symbol,
+      Value<String> source,
+      Value<String> currency,
+      Value<String> price,
+      Value<String?> previousClose,
+      Value<String?> openPrice,
+      Value<String?> dayHigh,
+      Value<String?> dayLow,
+      Value<int?> volume,
+      Value<String?> exchange,
+      Value<DateTime> asOf,
+      Value<DateTime> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$MarketQuotesTableFilterComposer
+    extends Composer<_$AppDatabase, $MarketQuotesTable> {
+  $$MarketQuotesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get price => $composableBuilder(
+    column: $table.price,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previousClose => $composableBuilder(
+    column: $table.previousClose,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get openPrice => $composableBuilder(
+    column: $table.openPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dayHigh => $composableBuilder(
+    column: $table.dayHigh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dayLow => $composableBuilder(
+    column: $table.dayLow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get volume => $composableBuilder(
+    column: $table.volume,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exchange => $composableBuilder(
+    column: $table.exchange,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get asOf => $composableBuilder(
+    column: $table.asOf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MarketQuotesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MarketQuotesTable> {
+  $$MarketQuotesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get price => $composableBuilder(
+    column: $table.price,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get previousClose => $composableBuilder(
+    column: $table.previousClose,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get openPrice => $composableBuilder(
+    column: $table.openPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dayHigh => $composableBuilder(
+    column: $table.dayHigh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dayLow => $composableBuilder(
+    column: $table.dayLow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get volume => $composableBuilder(
+    column: $table.volume,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exchange => $composableBuilder(
+    column: $table.exchange,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get asOf => $composableBuilder(
+    column: $table.asOf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MarketQuotesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MarketQuotesTable> {
+  $$MarketQuotesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get price =>
+      $composableBuilder(column: $table.price, builder: (column) => column);
+
+  GeneratedColumn<String> get previousClose => $composableBuilder(
+    column: $table.previousClose,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get openPrice =>
+      $composableBuilder(column: $table.openPrice, builder: (column) => column);
+
+  GeneratedColumn<String> get dayHigh =>
+      $composableBuilder(column: $table.dayHigh, builder: (column) => column);
+
+  GeneratedColumn<String> get dayLow =>
+      $composableBuilder(column: $table.dayLow, builder: (column) => column);
+
+  GeneratedColumn<int> get volume =>
+      $composableBuilder(column: $table.volume, builder: (column) => column);
+
+  GeneratedColumn<String> get exchange =>
+      $composableBuilder(column: $table.exchange, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get asOf =>
+      $composableBuilder(column: $table.asOf, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$MarketQuotesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MarketQuotesTable,
+          MarketQuoteRow,
+          $$MarketQuotesTableFilterComposer,
+          $$MarketQuotesTableOrderingComposer,
+          $$MarketQuotesTableAnnotationComposer,
+          $$MarketQuotesTableCreateCompanionBuilder,
+          $$MarketQuotesTableUpdateCompanionBuilder,
+          (
+            MarketQuoteRow,
+            BaseReferences<_$AppDatabase, $MarketQuotesTable, MarketQuoteRow>,
+          ),
+          MarketQuoteRow,
+          PrefetchHooks Function()
+        > {
+  $$MarketQuotesTableTableManager(_$AppDatabase db, $MarketQuotesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MarketQuotesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MarketQuotesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MarketQuotesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> symbol = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<String> price = const Value.absent(),
+                Value<String?> previousClose = const Value.absent(),
+                Value<String?> openPrice = const Value.absent(),
+                Value<String?> dayHigh = const Value.absent(),
+                Value<String?> dayLow = const Value.absent(),
+                Value<int?> volume = const Value.absent(),
+                Value<String?> exchange = const Value.absent(),
+                Value<DateTime> asOf = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketQuotesCompanion(
+                symbol: symbol,
+                source: source,
+                currency: currency,
+                price: price,
+                previousClose: previousClose,
+                openPrice: openPrice,
+                dayHigh: dayHigh,
+                dayLow: dayLow,
+                volume: volume,
+                exchange: exchange,
+                asOf: asOf,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String symbol,
+                required String source,
+                required String currency,
+                required String price,
+                Value<String?> previousClose = const Value.absent(),
+                Value<String?> openPrice = const Value.absent(),
+                Value<String?> dayHigh = const Value.absent(),
+                Value<String?> dayLow = const Value.absent(),
+                Value<int?> volume = const Value.absent(),
+                Value<String?> exchange = const Value.absent(),
+                required DateTime asOf,
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MarketQuotesCompanion.insert(
+                symbol: symbol,
+                source: source,
+                currency: currency,
+                price: price,
+                previousClose: previousClose,
+                openPrice: openPrice,
+                dayHigh: dayHigh,
+                dayLow: dayLow,
+                volume: volume,
+                exchange: exchange,
+                asOf: asOf,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MarketQuotesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MarketQuotesTable,
+      MarketQuoteRow,
+      $$MarketQuotesTableFilterComposer,
+      $$MarketQuotesTableOrderingComposer,
+      $$MarketQuotesTableAnnotationComposer,
+      $$MarketQuotesTableCreateCompanionBuilder,
+      $$MarketQuotesTableUpdateCompanionBuilder,
+      (
+        MarketQuoteRow,
+        BaseReferences<_$AppDatabase, $MarketQuotesTable, MarketQuoteRow>,
+      ),
+      MarketQuoteRow,
+      PrefetchHooks Function()
+    >;
+typedef $$MarketHistoryBarsTableCreateCompanionBuilder =
+    MarketHistoryBarsCompanion Function({
+      required String symbol,
+      required String interval,
+      required DateTime asOf,
+      required String source,
+      required String openPrice,
+      required String high,
+      required String low,
+      required String closePrice,
+      Value<int?> volume,
+      Value<String?> adjustedClose,
+      required DateTime fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$MarketHistoryBarsTableUpdateCompanionBuilder =
+    MarketHistoryBarsCompanion Function({
+      Value<String> symbol,
+      Value<String> interval,
+      Value<DateTime> asOf,
+      Value<String> source,
+      Value<String> openPrice,
+      Value<String> high,
+      Value<String> low,
+      Value<String> closePrice,
+      Value<int?> volume,
+      Value<String?> adjustedClose,
+      Value<DateTime> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$MarketHistoryBarsTableFilterComposer
+    extends Composer<_$AppDatabase, $MarketHistoryBarsTable> {
+  $$MarketHistoryBarsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get interval => $composableBuilder(
+    column: $table.interval,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get asOf => $composableBuilder(
+    column: $table.asOf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get openPrice => $composableBuilder(
+    column: $table.openPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get high => $composableBuilder(
+    column: $table.high,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get low => $composableBuilder(
+    column: $table.low,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get closePrice => $composableBuilder(
+    column: $table.closePrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get volume => $composableBuilder(
+    column: $table.volume,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get adjustedClose => $composableBuilder(
+    column: $table.adjustedClose,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MarketHistoryBarsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MarketHistoryBarsTable> {
+  $$MarketHistoryBarsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get interval => $composableBuilder(
+    column: $table.interval,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get asOf => $composableBuilder(
+    column: $table.asOf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get openPrice => $composableBuilder(
+    column: $table.openPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get high => $composableBuilder(
+    column: $table.high,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get low => $composableBuilder(
+    column: $table.low,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get closePrice => $composableBuilder(
+    column: $table.closePrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get volume => $composableBuilder(
+    column: $table.volume,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get adjustedClose => $composableBuilder(
+    column: $table.adjustedClose,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MarketHistoryBarsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MarketHistoryBarsTable> {
+  $$MarketHistoryBarsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get interval =>
+      $composableBuilder(column: $table.interval, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get asOf =>
+      $composableBuilder(column: $table.asOf, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get openPrice =>
+      $composableBuilder(column: $table.openPrice, builder: (column) => column);
+
+  GeneratedColumn<String> get high =>
+      $composableBuilder(column: $table.high, builder: (column) => column);
+
+  GeneratedColumn<String> get low =>
+      $composableBuilder(column: $table.low, builder: (column) => column);
+
+  GeneratedColumn<String> get closePrice => $composableBuilder(
+    column: $table.closePrice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get volume =>
+      $composableBuilder(column: $table.volume, builder: (column) => column);
+
+  GeneratedColumn<String> get adjustedClose => $composableBuilder(
+    column: $table.adjustedClose,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$MarketHistoryBarsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MarketHistoryBarsTable,
+          MarketHistoryRow,
+          $$MarketHistoryBarsTableFilterComposer,
+          $$MarketHistoryBarsTableOrderingComposer,
+          $$MarketHistoryBarsTableAnnotationComposer,
+          $$MarketHistoryBarsTableCreateCompanionBuilder,
+          $$MarketHistoryBarsTableUpdateCompanionBuilder,
+          (
+            MarketHistoryRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MarketHistoryBarsTable,
+              MarketHistoryRow
+            >,
+          ),
+          MarketHistoryRow,
+          PrefetchHooks Function()
+        > {
+  $$MarketHistoryBarsTableTableManager(
+    _$AppDatabase db,
+    $MarketHistoryBarsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MarketHistoryBarsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MarketHistoryBarsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MarketHistoryBarsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> symbol = const Value.absent(),
+                Value<String> interval = const Value.absent(),
+                Value<DateTime> asOf = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> openPrice = const Value.absent(),
+                Value<String> high = const Value.absent(),
+                Value<String> low = const Value.absent(),
+                Value<String> closePrice = const Value.absent(),
+                Value<int?> volume = const Value.absent(),
+                Value<String?> adjustedClose = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketHistoryBarsCompanion(
+                symbol: symbol,
+                interval: interval,
+                asOf: asOf,
+                source: source,
+                openPrice: openPrice,
+                high: high,
+                low: low,
+                closePrice: closePrice,
+                volume: volume,
+                adjustedClose: adjustedClose,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String symbol,
+                required String interval,
+                required DateTime asOf,
+                required String source,
+                required String openPrice,
+                required String high,
+                required String low,
+                required String closePrice,
+                Value<int?> volume = const Value.absent(),
+                Value<String?> adjustedClose = const Value.absent(),
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MarketHistoryBarsCompanion.insert(
+                symbol: symbol,
+                interval: interval,
+                asOf: asOf,
+                source: source,
+                openPrice: openPrice,
+                high: high,
+                low: low,
+                closePrice: closePrice,
+                volume: volume,
+                adjustedClose: adjustedClose,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MarketHistoryBarsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MarketHistoryBarsTable,
+      MarketHistoryRow,
+      $$MarketHistoryBarsTableFilterComposer,
+      $$MarketHistoryBarsTableOrderingComposer,
+      $$MarketHistoryBarsTableAnnotationComposer,
+      $$MarketHistoryBarsTableCreateCompanionBuilder,
+      $$MarketHistoryBarsTableUpdateCompanionBuilder,
+      (
+        MarketHistoryRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MarketHistoryBarsTable,
+          MarketHistoryRow
+        >,
+      ),
+      MarketHistoryRow,
+      PrefetchHooks Function()
+    >;
+typedef $$MarketSymbolSearchesTableCreateCompanionBuilder =
+    MarketSymbolSearchesCompanion Function({
+      required String query,
+      required String source,
+      required String results,
+      required DateTime fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$MarketSymbolSearchesTableUpdateCompanionBuilder =
+    MarketSymbolSearchesCompanion Function({
+      Value<String> query,
+      Value<String> source,
+      Value<String> results,
+      Value<DateTime> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$MarketSymbolSearchesTableFilterComposer
+    extends Composer<_$AppDatabase, $MarketSymbolSearchesTable> {
+  $$MarketSymbolSearchesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get query => $composableBuilder(
+    column: $table.query,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get results => $composableBuilder(
+    column: $table.results,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MarketSymbolSearchesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MarketSymbolSearchesTable> {
+  $$MarketSymbolSearchesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get query => $composableBuilder(
+    column: $table.query,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get results => $composableBuilder(
+    column: $table.results,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MarketSymbolSearchesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MarketSymbolSearchesTable> {
+  $$MarketSymbolSearchesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get query =>
+      $composableBuilder(column: $table.query, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get results =>
+      $composableBuilder(column: $table.results, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$MarketSymbolSearchesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MarketSymbolSearchesTable,
+          MarketSymbolSearchRow,
+          $$MarketSymbolSearchesTableFilterComposer,
+          $$MarketSymbolSearchesTableOrderingComposer,
+          $$MarketSymbolSearchesTableAnnotationComposer,
+          $$MarketSymbolSearchesTableCreateCompanionBuilder,
+          $$MarketSymbolSearchesTableUpdateCompanionBuilder,
+          (
+            MarketSymbolSearchRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MarketSymbolSearchesTable,
+              MarketSymbolSearchRow
+            >,
+          ),
+          MarketSymbolSearchRow,
+          PrefetchHooks Function()
+        > {
+  $$MarketSymbolSearchesTableTableManager(
+    _$AppDatabase db,
+    $MarketSymbolSearchesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MarketSymbolSearchesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MarketSymbolSearchesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MarketSymbolSearchesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> query = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> results = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketSymbolSearchesCompanion(
+                query: query,
+                source: source,
+                results: results,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String query,
+                required String source,
+                required String results,
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MarketSymbolSearchesCompanion.insert(
+                query: query,
+                source: source,
+                results: results,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MarketSymbolSearchesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MarketSymbolSearchesTable,
+      MarketSymbolSearchRow,
+      $$MarketSymbolSearchesTableFilterComposer,
+      $$MarketSymbolSearchesTableOrderingComposer,
+      $$MarketSymbolSearchesTableAnnotationComposer,
+      $$MarketSymbolSearchesTableCreateCompanionBuilder,
+      $$MarketSymbolSearchesTableUpdateCompanionBuilder,
+      (
+        MarketSymbolSearchRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MarketSymbolSearchesTable,
+          MarketSymbolSearchRow
+        >,
+      ),
+      MarketSymbolSearchRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4686,4 +7245,10 @@ class $AppDatabaseManager {
       $$FxRatesTableTableManager(_db, _db.fxRates);
   $$AppMetaTableTableManager get appMeta =>
       $$AppMetaTableTableManager(_db, _db.appMeta);
+  $$MarketQuotesTableTableManager get marketQuotes =>
+      $$MarketQuotesTableTableManager(_db, _db.marketQuotes);
+  $$MarketHistoryBarsTableTableManager get marketHistoryBars =>
+      $$MarketHistoryBarsTableTableManager(_db, _db.marketHistoryBars);
+  $$MarketSymbolSearchesTableTableManager get marketSymbolSearches =>
+      $$MarketSymbolSearchesTableTableManager(_db, _db.marketSymbolSearches);
 }
