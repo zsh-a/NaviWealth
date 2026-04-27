@@ -15,7 +15,7 @@ naviwealth/
 │   └── backend/     # Cloudflare Workers + Rust（FIR-28 / FIR-32 / FIR-36 ...）
 └── .github/workflows/
     ├── mobile.yml   # Flutter analyze + test + web build
-    └── backend.yml  # cargo fmt / clippy / check（wasm32-unknown-unknown）
+    └── backend.yml  # cargo fmt / clippy / check + wrangler deploy（PR preview / main prod）
 ```
 
 任务编号 `FIR-N` 对应 Multica 看板上的 issue。
@@ -49,6 +49,20 @@ wrangler deploy               # 推到 *.workers.dev
 
 - `GET /health`     — 服务存活
 - `GET /health/db`  — D1 绑定可达
+
+Worker 端的运行时 secret：
+
+```bash
+cd apps/backend
+wrangler secret put JWT_SECRET   # HS256 签名 key（FIR-37 鉴权用）
+```
+
+CI / 部署所需的 GitHub 仓库 Secrets（在 `Settings → Secrets and variables → Actions` 配置；未配置时 CI 仍通过，deploy job 自动跳过）：
+
+- `CLOUDFLARE_API_TOKEN` — 具备 Workers Deploy 权限的 API token
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare 账户 ID
+
+PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流量）；合并到 `main` 会跑 `wrangler deploy`（生产）。
 
 ---
 
