@@ -1,17 +1,69 @@
-# naviwealth
+# NaviWealth Mobile (Flutter)
 
-NaviWealth - 个人财务管理软件
+跨端三平台 App（iOS / Android / Web）。本 README 记录工程基线决策（FIR-14）。
 
-## Getting Started
+## 运行
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run                   # 默认设备
+flutter run -d chrome         # Web (dev server)
+flutter test
+flutter analyze --fatal-infos
+flutter build web --release   # 产物在 build/web
+flutter build apk --debug     # Android
+flutter build ios --debug --no-codesign  # iOS（需 macOS）
+```
 
-A few resources to get you started if this is your first Flutter project:
+## 目录结构
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```
+lib/
+├── app/        # MaterialApp、router、bootstrap
+├── core/       # 配置、日志、错误处理等横切关注点
+├── features/   # 业务模块（feature-first）：home / assets / analytics / settings
+└── shared/     # 跨 feature 复用的 UI / 工具
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+新增功能默认进入 `lib/features/<feature>/`，避免按层级（presentation/data/domain）拆分跨 feature 的目录。
+
+## 关键依赖
+
+| 用途 | 包 |
+|----|----|
+| 状态管理 | `flutter_riverpod` + `riverpod_annotation` |
+| 路由 | `go_router`（Web URL 同步、深链路） |
+| 数据模型 | `freezed` + `json_serializable` |
+| 本地存储 | `drift` + `drift_flutter`（跨平台连接，Web 走 sqlite3 wasm） |
+| HTTP | `dio` |
+| i18n / 数字货币 | `intl` |
+| 日志 | `logger` |
+
+## Web 路由策略
+
+使用 **Path URL strategy**（`/assets` 而非 `/#/assets`）。在 `bootstrap()` 中调用 `usePathUrlStrategy()`，部署时（Cloudflare Pages）需要把未匹配路径 fallback 到 `index.html`，否则刷新子路由会 404。
+
+`web/index.html` 的 `<base href="$FLUTTER_BASE_HREF">` 占位符由 `flutter build web --base-href=...` 在构建时替换；默认 `/` 即可。
+
+## 渲染策略
+
+默认走 Flutter 默认 Web 渲染器（CanvasKit on desktop，HTML/auto on mobile）。Wasm 模式在 `flutter build web` dry-run 中已通过；后续如需可加 `--wasm` 切换。
+
+## 状态：单包（非 melos）
+
+`apps/mobile` 是单一 Flutter package；当前没有需要拆分成多个 Dart package 的需求，暂不引入 melos。后续若出现共享的 pure-Dart 工具包再评估。
+
+## 代码规范
+
+- `analysis_options.yaml` 启用 strict-casts / strict-inference / strict-raw-types，并打开 `prefer_const_*`、`avoid_dynamic_calls`、`avoid_print`、`require_trailing_commas` 等。
+- 生成代码（`*.g.dart` / `*.freezed.dart`）已从 lint 中排除。
+- 提交前钩子见仓库根目录 `tool/install-hooks.sh`：会对暂存的 `.dart` 文件跑 `dart format` 与 `flutter analyze`。
+
+## CI
+
+`.github/workflows/mobile.yml` 在 `apps/mobile/**` 变更时触发：
+
+1. `analyze-and-test` — `dart format --set-exit-if-changed` + `flutter analyze --fatal-infos` + `flutter test`
+2. `build-web` — `flutter build web --release`
+3. `build-android` — `flutter build apk --debug`
+4. `build-ios` — `flutter build ios --debug --no-codesign`（macOS runner）
