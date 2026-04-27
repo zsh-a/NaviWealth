@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../shared/theme/app_theme.dart';
+import '../design_system/design_system.dart';
 import 'router.dart';
 
 class NaviWealthApp extends ConsumerWidget {
@@ -11,12 +11,14 @@ class NaviWealthApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final marketMode = ref.watch(marketColorModeProvider);
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'NaviWealth',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      theme: AppTheme.light(marketColorMode: marketMode),
+      darkTheme: AppTheme.dark(marketColorMode: marketMode),
+      themeMode: themeMode,
       routerConfig: router,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
