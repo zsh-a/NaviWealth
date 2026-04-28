@@ -355,6 +355,31 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get deferredLoadRetry;
+
+  /// Title shown when go_router can't match a URL to any registered route (404).
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get routeNotFoundTitle;
+
+  /// Body of the 404 page; includes the URL the user tried to visit.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find {path}. It may have been moved or never existed.'**
+  String routeNotFoundMessage(String path);
+
+  /// Title shown when go_router's errorBuilder fires for a runtime error (not a 404).
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get routeErrorTitle;
+
+  /// Action that navigates back to the home tab from an error / not-found page.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to overview'**
+  String get routeGoHome;
+
   /// Title of the shortcut help dialog (Cmd/Ctrl+/)
   ///
   /// In en, this message translates to:

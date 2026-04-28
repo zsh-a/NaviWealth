@@ -35,7 +35,7 @@ Future<ProviderContainer> _pumpAt(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       appRouterProvider.overrideWith(
-        (ref) => buildAppRouter(initialLocation: initialLocation),
+        (ref) => buildAppRouter(ref, initialLocation: initialLocation),
       ),
     ],
   );

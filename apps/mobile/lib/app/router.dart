@@ -12,6 +12,9 @@ import '../features/home/home_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
+import 'route_analytics_observer.dart';
+import 'route_error_page.dart';
+import 'route_guard.dart';
 
 /// Paths of the four primary tabs in the root shell, in display order.
 ///
@@ -25,10 +28,18 @@ const List<String> kPrimaryTabPaths = <String>[
 ];
 
 /// Builds the app's [GoRouter]. Exposed (rather than inlined in the provider)
-/// so tests can construct a router seeded at an arbitrary deep-link location.
-GoRouter buildAppRouter({String initialLocation = '/'}) {
+/// so tests can construct a router seeded at an arbitrary deep-link location
+/// and inject their own observers / guards through the [Ref].
+GoRouter buildAppRouter(
+  Ref ref, {
+  String initialLocation = '/',
+}) {
   return GoRouter(
     initialLocation: initialLocation,
+    observers: <NavigatorObserver>[ref.read(routeAnalyticsObserverProvider)],
+    refreshListenable: ref.read(routeRefreshListenableProvider),
+    redirect: (context, state) => routerRedirect(ref, context, state),
+    errorBuilder: (context, state) => RouteErrorPage(state: state),
     routes: [
       ShellRoute(
         builder: (context, state, child) => _RootShell(child: child),
@@ -68,7 +79,7 @@ GoRouter buildAppRouter({String initialLocation = '/'}) {
   );
 }
 
-final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter());
+final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
 
 class _RootShell extends StatelessWidget {
   const _RootShell({required this.child});
