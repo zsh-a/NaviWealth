@@ -49,6 +49,7 @@ enum TransactionType {
   tax,
   valuationAdjust,
   split,
+  liabilityPayment,
 }
 
 /// Cost-basis lot selection. Configurable per [Settings] so users in
@@ -65,6 +66,23 @@ enum LiabilityType {
   marginLoan,
   other,
 }
+
+/// Repayment schedule shape — drives how the amortization table is generated
+/// from the loan's principal, rate and term.
+///
+/// - [equalInstallment] (等额本息) — same total payment every period; the
+///   principal share grows while the interest share shrinks.
+/// - [equalPrincipal] (等额本金) — same principal share every period; the
+///   total payment shrinks because interest is computed on the falling
+///   balance.
+enum RepaymentMethod { equalInstallment, equalPrincipal }
+
+/// How the [Liability] interest rate is determined. [fixed] keeps the rate
+/// constant; [lprFloating] is a Chinese-mortgage convention where the
+/// effective rate floats with the central bank's LPR — we still store the
+/// effective rate, but flagging it lets the UI surface a "rate may change"
+/// hint rather than implying the schedule is set in stone.
+enum LiabilityRateType { fixed, lprFloating }
 
 /// User-visible color theme preference.
 enum AppThemeMode { system, light, dark }

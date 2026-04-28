@@ -9,6 +9,10 @@ import 'package:go_router/go_router.dart';
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/assets_page.dart' deferred as assets_lib;
 import '../features/home/home_page.dart';
+import '../features/liabilities/ui/liabilities_page.dart'
+    deferred as liabilities_lib;
+import '../features/liabilities/ui/liability_detail_page.dart'
+    deferred as liability_detail_lib;
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -45,6 +49,30 @@ GoRouter buildAppRouter({String initialLocation = '/'}) {
               load: assets_lib.loadLibrary,
               builder: (_) => assets_lib.AssetsPage(),
             ),
+            routes: [
+              GoRoute(
+                path: 'liabilities',
+                name: 'liabilities',
+                builder: (context, state) => DeferredRoute(
+                  load: liabilities_lib.loadLibrary,
+                  builder: (_) => liabilities_lib.LiabilitiesPage(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    name: 'liabilityDetail',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return DeferredRoute(
+                        load: liability_detail_lib.loadLibrary,
+                        builder: (_) =>
+                            liability_detail_lib.LiabilityDetailPage(id: id),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: '/analytics',

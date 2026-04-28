@@ -62,6 +62,162 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsAddAction => '添加资产';
 
   @override
+  String get assetsLiabilitiesLink => '负债与还款计划';
+
+  @override
+  String get liabilitiesAppBarTitle => '负债';
+
+  @override
+  String get liabilitiesEmptyHint => '尚未录入负债。添加房贷、车贷、信用卡或消费贷以跟踪还款。';
+
+  @override
+  String get liabilitiesAddAction => '添加负债';
+
+  @override
+  String get liabilityTypeMortgage => '房贷';
+
+  @override
+  String get liabilityTypeCarLoan => '车贷';
+
+  @override
+  String get liabilityTypeCreditCard => '信用卡';
+
+  @override
+  String get liabilityTypeConsumerLoan => '消费贷';
+
+  @override
+  String get liabilityTypeStudentLoan => '学生贷款';
+
+  @override
+  String get liabilityTypeMarginLoan => '融资融券';
+
+  @override
+  String get liabilityTypeOther => '其他';
+
+  @override
+  String get liabilityRateTypeFixed => '固定利率';
+
+  @override
+  String get liabilityRateTypeLpr => 'LPR 浮动';
+
+  @override
+  String get liabilityMethodEqualInstallment => '等额本息';
+
+  @override
+  String get liabilityMethodEqualPrincipal => '等额本金';
+
+  @override
+  String get liabilityFieldName => '名称';
+
+  @override
+  String get liabilityFieldType => '类型';
+
+  @override
+  String get liabilityFieldPrincipal => '本金';
+
+  @override
+  String get liabilityFieldInterestRate => '年利率 (%)';
+
+  @override
+  String get liabilityFieldRateType => '利率类型';
+
+  @override
+  String get liabilityFieldTerm => '期限（月）';
+
+  @override
+  String get liabilityFieldStartDate => '起还日';
+
+  @override
+  String get liabilityFieldMethod => '还款方式';
+
+  @override
+  String get liabilityFieldCurrency => '币种';
+
+  @override
+  String get liabilityFieldStatementDay => '账单日';
+
+  @override
+  String get liabilityFieldPaymentDueDay => '还款日';
+
+  @override
+  String get liabilitySaveAction => '保存';
+
+  @override
+  String get liabilityValidationRequired => '必填';
+
+  @override
+  String get liabilityValidationPositive => '必须大于零';
+
+  @override
+  String get liabilityValidationDayOfMonth => '必须为 1–31';
+
+  @override
+  String get liabilitySummaryRemaining => '剩余本金';
+
+  @override
+  String get liabilitySummaryInterestPaid => '已还利息';
+
+  @override
+  String get liabilitySummaryInterestTotal => '总利息支出';
+
+  @override
+  String get liabilitySummaryInterestRatio => '利息占比';
+
+  @override
+  String liabilitySummaryProgress(int paid, int total) {
+    return '已还 $paid / $total 期';
+  }
+
+  @override
+  String get liabilityScheduleHeading => '还款计划表';
+
+  @override
+  String get liabilityScheduleColPeriod => '#';
+
+  @override
+  String get liabilityScheduleColDue => '到期日';
+
+  @override
+  String get liabilityScheduleColPrincipal => '本金';
+
+  @override
+  String get liabilityScheduleColInterest => '利息';
+
+  @override
+  String get liabilityScheduleColRemaining => '剩余';
+
+  @override
+  String get liabilityScheduleColStatus => '状态';
+
+  @override
+  String get liabilityScheduleStatusPaid => '已还';
+
+  @override
+  String get liabilityScheduleStatusDue => '未还';
+
+  @override
+  String get liabilityScheduleMarkPaid => '标记已还';
+
+  @override
+  String liabilityScheduleMarkPaidConfirmTitle(int period) {
+    return '标记第 $period 期已还？';
+  }
+
+  @override
+  String liabilityScheduleMarkPaidConfirmBody(String amount) {
+    return '这将记录一笔 $amount 的还款交易（日期为今天），且无法从本页撤销。';
+  }
+
+  @override
+  String get liabilityScheduleMarkPaidNoAccount => '标记还款前请先指定还款账户。';
+
+  @override
+  String get liabilityNotFound => '未找到该负债';
+
+  @override
+  String get liabilityRevolvingNoSchedule => '信用卡 / 循环授信无固定还款计划表。';
+
+  @override
   String get analyticsAppBarTitle => '分析';
 
   @override
@@ -142,6 +298,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => '重试';
+
+  @override
   String get shortcutsHelpTitle => '键盘快捷键';
 
   @override

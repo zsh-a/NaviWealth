@@ -131,12 +131,22 @@ class Liabilities extends Table with SyncableTable {
   TextColumn get principal => text().map(const DecimalConverter())();
   TextColumn get interestRate => text().map(const DecimalConverter())();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
+  TextColumn get paymentMethod =>
+      text().map(const EnumStringConverter(RepaymentMethod.values)).withDefault(
+        Constant(RepaymentMethod.equalInstallment.name),
+      )();
+  TextColumn get rateType =>
+      text().map(const EnumStringConverter(LiabilityRateType.values)).withDefault(
+        Constant(LiabilityRateType.fixed.name),
+      )();
   TextColumn get accountId => text().nullable()();
   DateTimeColumn get startDate => dateTime().nullable()();
   DateTimeColumn get endDate => dateTime().nullable()();
   IntColumn get termMonths => integer().nullable()();
   TextColumn get monthlyPayment =>
       text().map(const DecimalConverter()).nullable()();
+  IntColumn get statementDay => integer().nullable()();
+  IntColumn get paymentDueDay => integer().nullable()();
   TextColumn get note => text().nullable()();
 
   @override
