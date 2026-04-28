@@ -71,6 +71,9 @@ jobs:
       - run: flutter pub get
       - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
         run: tool/setup-drift-web.sh
+      - name: Build CN web font subsets (app-cn-base.woff2 + app-cn-ext.woff2)
+        # Fails the build if app-cn-base.woff2 exceeds the 250 KB budget.
+        run: tool/build-cn-fonts.sh
       - run: flutter build web --release --source-maps
       - uses: actions/upload-artifact@v4
         with:

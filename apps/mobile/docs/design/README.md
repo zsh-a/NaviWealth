@@ -21,6 +21,7 @@
 | 10 | [设置](./10-settings.md) | 账户、币种、主题、涨跌色、隐私、关于 |
 | 11 | [动效与交互](./11-motion-and-interactions.md) | 数字滚动、骨架屏、过渡曲线、键盘快捷键 |
 | 12 | [可用性自查](./12-usability-self-check.md) | 走查清单、可访问性、暗黑模式、空态/错误态 |
+| 13 | [Web 字体子集化](./13-web-fonts.md) | Noto Sans SC 子集流水线、`@font-face` 加载、首屏 250 KB 预算 |
 
 ## 与依赖的关系
 

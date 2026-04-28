@@ -2,21 +2,37 @@ import 'package:flutter/material.dart';
 
 /// Type scale.
 ///
-/// We don't ship a custom font in this baseline (the default platform sans
-/// stack is fine and avoids a 4-6 MB CJK download on Web). Sizes follow a
-/// modular scale closer to a dense fintech UI than Material's defaults — the
-/// `display` tier in particular is tuned for a net-worth headline.
+/// On Web, [fontFamilySans] resolves to `AppCnSans`, our pyftsubset-built
+/// subset of Noto Sans SC variable. The base subset is ~120 KB and loads
+/// with the first paint; the extension subset (~1.7 MB) is lazy-loaded only
+/// when a glyph outside the base set is rendered (free-text input, server
+/// payload). On iOS / Android / Web-while-loading, [fontFamilyFallback]
+/// hands rendering off to the platform CJK font so the user never sees
+/// tofu while the woff2 is in flight or unavailable. See
+/// `docs/design/13-web-fonts.md` for the pipeline.
 ///
 /// `tabular` indicates lining tabular figures should be used (essential for
 /// money columns).
 class TypographyTokens {
   const TypographyTokens._();
 
-  // Font families. `fontFamilySans` is intentionally null so Flutter falls
-  // back to the platform sans stack — overriding here (e.g. shipping Inter
-  // or Source Han Sans) is the single edit needed to change the app font.
-  // ignore: unnecessary_nullable_for_final_variable_declarations
-  static const String? fontFamilySans = null;
+  /// Font family used by every text style. Backed by the subset webfont on
+  /// Web and falls through to [fontFamilyFallback] on iOS / Android.
+  static const String fontFamilySans = 'AppCnSans';
+
+  /// Resolved in order when [fontFamilySans] cannot render a glyph yet —
+  /// covers offline / first-paint on Web and platforms where the bundled
+  /// font isn't available. Mirrors the `<style>` font stack in
+  /// `web/index.html`.
+  static const List<String> fontFamilyFallback = <String>[
+    'PingFang SC', // iOS / macOS
+    'Hiragino Sans GB', // older macOS
+    'Microsoft YaHei', // Windows
+    'Source Han Sans SC', // Linux (Adobe / Google)
+    'Noto Sans SC', // Linux generic fallback
+    'sans-serif',
+  ];
+
   static const String fontFamilyMono = 'monospace';
 
   // Lining tabular figures — keeps digits the same width across rows.
@@ -38,6 +54,7 @@ class TypographyTokens {
       fontWeight: weight,
       letterSpacing: letterSpacing,
       fontFamily: fontFamilySans,
+      fontFamilyFallback: fontFamilyFallback,
       fontFeatures: tabular ? tabularFigures : null,
     );
   }

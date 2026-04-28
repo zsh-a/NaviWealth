@@ -7,6 +7,8 @@
 ```bash
 flutter pub get
 flutter run                   # 默认设备
+tool/setup-drift-web.sh       # Web 才需要：sqlite3.wasm + drift_worker.dart.js
+tool/build-cn-fonts.sh        # Web 才需要：app-cn-base.woff2 + app-cn-ext.woff2
 flutter run -d chrome         # Web (dev server)
 flutter test
 flutter analyze --fatal-infos
@@ -14,6 +16,8 @@ flutter build web --release   # 产物在 build/web
 flutter build apk --debug     # Android
 flutter build ios --debug --no-codesign  # iOS（需 macOS）
 ```
+
+> Web 字体子集化（FIR-38）的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中的中文字符并产出 ≤ 250 KB 首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
 
 ## 目录结构
 
