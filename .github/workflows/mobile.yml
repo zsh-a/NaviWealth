@@ -69,6 +69,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
+        run: tool/setup-drift-web.sh
       - run: flutter build web --release --source-maps
       - uses: actions/upload-artifact@v4
         with:
