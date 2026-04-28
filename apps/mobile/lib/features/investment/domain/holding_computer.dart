@@ -264,6 +264,7 @@ class HoldingComputer {
       case TransactionType.tax:
       case TransactionType.valuationAdjust:
       case TransactionType.split:
+      case TransactionType.liabilityPayment:
         return false;
     }
   }

@@ -4254,6 +4254,26 @@ class $LiabilitiesTable extends Liabilities
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<RepaymentMethod, String>
+  paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: Constant(RepaymentMethod.equalInstallment.name),
+  ).withConverter<RepaymentMethod>($LiabilitiesTable.$converterpaymentMethod);
+  @override
+  late final GeneratedColumnWithTypeConverter<LiabilityRateType, String>
+  rateType = GeneratedColumn<String>(
+    'rate_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: Constant(LiabilityRateType.fixed.name),
+  ).withConverter<LiabilityRateType>($LiabilitiesTable.$converterrateType);
   static const VerificationMeta _accountIdMeta = const VerificationMeta(
     'accountId',
   );
@@ -4307,6 +4327,28 @@ class $LiabilitiesTable extends Liabilities
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       ).withConverter<Decimal?>($LiabilitiesTable.$convertermonthlyPaymentn);
+  static const VerificationMeta _statementDayMeta = const VerificationMeta(
+    'statementDay',
+  );
+  @override
+  late final GeneratedColumn<int> statementDay = GeneratedColumn<int>(
+    'statement_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paymentDueDayMeta = const VerificationMeta(
+    'paymentDueDay',
+  );
+  @override
+  late final GeneratedColumn<int> paymentDueDay = GeneratedColumn<int>(
+    'payment_due_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _noteMeta = const VerificationMeta('note');
   @override
   late final GeneratedColumn<String> note = GeneratedColumn<String>(
@@ -4329,11 +4371,15 @@ class $LiabilitiesTable extends Liabilities
     principal,
     interestRate,
     currency,
+    paymentMethod,
+    rateType,
     accountId,
     startDate,
     endDate,
     termMonths,
     monthlyPayment,
+    statementDay,
+    paymentDueDay,
     note,
   ];
   @override
@@ -4429,6 +4475,24 @@ class $LiabilitiesTable extends Liabilities
         termMonths.isAcceptableOrUnknown(data['term_months']!, _termMonthsMeta),
       );
     }
+    if (data.containsKey('statement_day')) {
+      context.handle(
+        _statementDayMeta,
+        statementDay.isAcceptableOrUnknown(
+          data['statement_day']!,
+          _statementDayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('payment_due_day')) {
+      context.handle(
+        _paymentDueDayMeta,
+        paymentDueDay.isAcceptableOrUnknown(
+          data['payment_due_day']!,
+          _paymentDueDayMeta,
+        ),
+      );
+    }
     if (data.containsKey('note')) {
       context.handle(
         _noteMeta,
@@ -4496,6 +4560,18 @@ class $LiabilitiesTable extends Liabilities
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      paymentMethod: $LiabilitiesTable.$converterpaymentMethod.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}payment_method'],
+        )!,
+      ),
+      rateType: $LiabilitiesTable.$converterrateType.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}rate_type'],
+        )!,
+      ),
       accountId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}account_id'],
@@ -4518,6 +4594,14 @@ class $LiabilitiesTable extends Liabilities
           data['${effectivePrefix}monthly_payment'],
         ),
       ),
+      statementDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}statement_day'],
+      ),
+      paymentDueDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}payment_due_day'],
+      ),
       note: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}note'],
@@ -4537,6 +4621,10 @@ class $LiabilitiesTable extends Liabilities
       const DecimalConverter();
   static TypeConverter<Decimal, String> $converterinterestRate =
       const DecimalConverter();
+  static TypeConverter<RepaymentMethod, String> $converterpaymentMethod =
+      const EnumStringConverter(RepaymentMethod.values);
+  static TypeConverter<LiabilityRateType, String> $converterrateType =
+      const EnumStringConverter(LiabilityRateType.values);
   static TypeConverter<Decimal, String> $convertermonthlyPayment =
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $convertermonthlyPaymentn =
@@ -4571,11 +4659,15 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
   final Decimal principal;
   final Decimal interestRate;
   final String currency;
+  final RepaymentMethod paymentMethod;
+  final LiabilityRateType rateType;
   final String? accountId;
   final DateTime? startDate;
   final DateTime? endDate;
   final int? termMonths;
   final Decimal? monthlyPayment;
+  final int? statementDay;
+  final int? paymentDueDay;
   final String? note;
   const LiabilityRow({
     required this.ownerUserId,
@@ -4589,11 +4681,15 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
     required this.principal,
     required this.interestRate,
     required this.currency,
+    required this.paymentMethod,
+    required this.rateType,
     this.accountId,
     this.startDate,
     this.endDate,
     this.termMonths,
     this.monthlyPayment,
+    this.statementDay,
+    this.paymentDueDay,
     this.note,
   });
   @override
@@ -4626,6 +4722,16 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       );
     }
     map['currency'] = Variable<String>(currency);
+    {
+      map['payment_method'] = Variable<String>(
+        $LiabilitiesTable.$converterpaymentMethod.toSql(paymentMethod),
+      );
+    }
+    {
+      map['rate_type'] = Variable<String>(
+        $LiabilitiesTable.$converterrateType.toSql(rateType),
+      );
+    }
     if (!nullToAbsent || accountId != null) {
       map['account_id'] = Variable<String>(accountId);
     }
@@ -4642,6 +4748,12 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       map['monthly_payment'] = Variable<String>(
         $LiabilitiesTable.$convertermonthlyPaymentn.toSql(monthlyPayment),
       );
+    }
+    if (!nullToAbsent || statementDay != null) {
+      map['statement_day'] = Variable<int>(statementDay);
+    }
+    if (!nullToAbsent || paymentDueDay != null) {
+      map['payment_due_day'] = Variable<int>(paymentDueDay);
     }
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
@@ -4664,6 +4776,8 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       principal: Value(principal),
       interestRate: Value(interestRate),
       currency: Value(currency),
+      paymentMethod: Value(paymentMethod),
+      rateType: Value(rateType),
       accountId: accountId == null && nullToAbsent
           ? const Value.absent()
           : Value(accountId),
@@ -4679,6 +4793,12 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       monthlyPayment: monthlyPayment == null && nullToAbsent
           ? const Value.absent()
           : Value(monthlyPayment),
+      statementDay: statementDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(statementDay),
+      paymentDueDay: paymentDueDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paymentDueDay),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
     );
   }
@@ -4700,11 +4820,17 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       principal: serializer.fromJson<Decimal>(json['principal']),
       interestRate: serializer.fromJson<Decimal>(json['interestRate']),
       currency: serializer.fromJson<String>(json['currency']),
+      paymentMethod: serializer.fromJson<RepaymentMethod>(
+        json['paymentMethod'],
+      ),
+      rateType: serializer.fromJson<LiabilityRateType>(json['rateType']),
       accountId: serializer.fromJson<String?>(json['accountId']),
       startDate: serializer.fromJson<DateTime?>(json['startDate']),
       endDate: serializer.fromJson<DateTime?>(json['endDate']),
       termMonths: serializer.fromJson<int?>(json['termMonths']),
       monthlyPayment: serializer.fromJson<Decimal?>(json['monthlyPayment']),
+      statementDay: serializer.fromJson<int?>(json['statementDay']),
+      paymentDueDay: serializer.fromJson<int?>(json['paymentDueDay']),
       note: serializer.fromJson<String?>(json['note']),
     );
   }
@@ -4723,11 +4849,15 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       'principal': serializer.toJson<Decimal>(principal),
       'interestRate': serializer.toJson<Decimal>(interestRate),
       'currency': serializer.toJson<String>(currency),
+      'paymentMethod': serializer.toJson<RepaymentMethod>(paymentMethod),
+      'rateType': serializer.toJson<LiabilityRateType>(rateType),
       'accountId': serializer.toJson<String?>(accountId),
       'startDate': serializer.toJson<DateTime?>(startDate),
       'endDate': serializer.toJson<DateTime?>(endDate),
       'termMonths': serializer.toJson<int?>(termMonths),
       'monthlyPayment': serializer.toJson<Decimal?>(monthlyPayment),
+      'statementDay': serializer.toJson<int?>(statementDay),
+      'paymentDueDay': serializer.toJson<int?>(paymentDueDay),
       'note': serializer.toJson<String?>(note),
     };
   }
@@ -4744,11 +4874,15 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
     Decimal? principal,
     Decimal? interestRate,
     String? currency,
+    RepaymentMethod? paymentMethod,
+    LiabilityRateType? rateType,
     Value<String?> accountId = const Value.absent(),
     Value<DateTime?> startDate = const Value.absent(),
     Value<DateTime?> endDate = const Value.absent(),
     Value<int?> termMonths = const Value.absent(),
     Value<Decimal?> monthlyPayment = const Value.absent(),
+    Value<int?> statementDay = const Value.absent(),
+    Value<int?> paymentDueDay = const Value.absent(),
     Value<String?> note = const Value.absent(),
   }) => LiabilityRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -4762,6 +4896,8 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
     principal: principal ?? this.principal,
     interestRate: interestRate ?? this.interestRate,
     currency: currency ?? this.currency,
+    paymentMethod: paymentMethod ?? this.paymentMethod,
+    rateType: rateType ?? this.rateType,
     accountId: accountId.present ? accountId.value : this.accountId,
     startDate: startDate.present ? startDate.value : this.startDate,
     endDate: endDate.present ? endDate.value : this.endDate,
@@ -4769,6 +4905,10 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
     monthlyPayment: monthlyPayment.present
         ? monthlyPayment.value
         : this.monthlyPayment,
+    statementDay: statementDay.present ? statementDay.value : this.statementDay,
+    paymentDueDay: paymentDueDay.present
+        ? paymentDueDay.value
+        : this.paymentDueDay,
     note: note.present ? note.value : this.note,
   );
   LiabilityRow copyWithCompanion(LiabilitiesCompanion data) {
@@ -4790,6 +4930,10 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
           ? data.interestRate.value
           : this.interestRate,
       currency: data.currency.present ? data.currency.value : this.currency,
+      paymentMethod: data.paymentMethod.present
+          ? data.paymentMethod.value
+          : this.paymentMethod,
+      rateType: data.rateType.present ? data.rateType.value : this.rateType,
       accountId: data.accountId.present ? data.accountId.value : this.accountId,
       startDate: data.startDate.present ? data.startDate.value : this.startDate,
       endDate: data.endDate.present ? data.endDate.value : this.endDate,
@@ -4799,6 +4943,12 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
       monthlyPayment: data.monthlyPayment.present
           ? data.monthlyPayment.value
           : this.monthlyPayment,
+      statementDay: data.statementDay.present
+          ? data.statementDay.value
+          : this.statementDay,
+      paymentDueDay: data.paymentDueDay.present
+          ? data.paymentDueDay.value
+          : this.paymentDueDay,
       note: data.note.present ? data.note.value : this.note,
     );
   }
@@ -4817,18 +4967,22 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
           ..write('principal: $principal, ')
           ..write('interestRate: $interestRate, ')
           ..write('currency: $currency, ')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('rateType: $rateType, ')
           ..write('accountId: $accountId, ')
           ..write('startDate: $startDate, ')
           ..write('endDate: $endDate, ')
           ..write('termMonths: $termMonths, ')
           ..write('monthlyPayment: $monthlyPayment, ')
+          ..write('statementDay: $statementDay, ')
+          ..write('paymentDueDay: $paymentDueDay, ')
           ..write('note: $note')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     ownerUserId,
     updatedAt,
     updatedByDevice,
@@ -4840,13 +4994,17 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
     principal,
     interestRate,
     currency,
+    paymentMethod,
+    rateType,
     accountId,
     startDate,
     endDate,
     termMonths,
     monthlyPayment,
+    statementDay,
+    paymentDueDay,
     note,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4862,11 +5020,15 @@ class LiabilityRow extends DataClass implements Insertable<LiabilityRow> {
           other.principal == this.principal &&
           other.interestRate == this.interestRate &&
           other.currency == this.currency &&
+          other.paymentMethod == this.paymentMethod &&
+          other.rateType == this.rateType &&
           other.accountId == this.accountId &&
           other.startDate == this.startDate &&
           other.endDate == this.endDate &&
           other.termMonths == this.termMonths &&
           other.monthlyPayment == this.monthlyPayment &&
+          other.statementDay == this.statementDay &&
+          other.paymentDueDay == this.paymentDueDay &&
           other.note == this.note);
 }
 
@@ -4882,11 +5044,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
   final Value<Decimal> principal;
   final Value<Decimal> interestRate;
   final Value<String> currency;
+  final Value<RepaymentMethod> paymentMethod;
+  final Value<LiabilityRateType> rateType;
   final Value<String?> accountId;
   final Value<DateTime?> startDate;
   final Value<DateTime?> endDate;
   final Value<int?> termMonths;
   final Value<Decimal?> monthlyPayment;
+  final Value<int?> statementDay;
+  final Value<int?> paymentDueDay;
   final Value<String?> note;
   final Value<int> rowid;
   const LiabilitiesCompanion({
@@ -4901,11 +5067,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
     this.principal = const Value.absent(),
     this.interestRate = const Value.absent(),
     this.currency = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
+    this.rateType = const Value.absent(),
     this.accountId = const Value.absent(),
     this.startDate = const Value.absent(),
     this.endDate = const Value.absent(),
     this.termMonths = const Value.absent(),
     this.monthlyPayment = const Value.absent(),
+    this.statementDay = const Value.absent(),
+    this.paymentDueDay = const Value.absent(),
     this.note = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -4921,11 +5091,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
     required Decimal principal,
     required Decimal interestRate,
     required String currency,
+    this.paymentMethod = const Value.absent(),
+    this.rateType = const Value.absent(),
     this.accountId = const Value.absent(),
     this.startDate = const Value.absent(),
     this.endDate = const Value.absent(),
     this.termMonths = const Value.absent(),
     this.monthlyPayment = const Value.absent(),
+    this.statementDay = const Value.absent(),
+    this.paymentDueDay = const Value.absent(),
     this.note = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -4950,11 +5124,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
     Expression<String>? principal,
     Expression<String>? interestRate,
     Expression<String>? currency,
+    Expression<String>? paymentMethod,
+    Expression<String>? rateType,
     Expression<String>? accountId,
     Expression<DateTime>? startDate,
     Expression<DateTime>? endDate,
     Expression<int>? termMonths,
     Expression<String>? monthlyPayment,
+    Expression<int>? statementDay,
+    Expression<int>? paymentDueDay,
     Expression<String>? note,
     Expression<int>? rowid,
   }) {
@@ -4970,11 +5148,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
       if (principal != null) 'principal': principal,
       if (interestRate != null) 'interest_rate': interestRate,
       if (currency != null) 'currency': currency,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (rateType != null) 'rate_type': rateType,
       if (accountId != null) 'account_id': accountId,
       if (startDate != null) 'start_date': startDate,
       if (endDate != null) 'end_date': endDate,
       if (termMonths != null) 'term_months': termMonths,
       if (monthlyPayment != null) 'monthly_payment': monthlyPayment,
+      if (statementDay != null) 'statement_day': statementDay,
+      if (paymentDueDay != null) 'payment_due_day': paymentDueDay,
       if (note != null) 'note': note,
       if (rowid != null) 'rowid': rowid,
     });
@@ -4992,11 +5174,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
     Value<Decimal>? principal,
     Value<Decimal>? interestRate,
     Value<String>? currency,
+    Value<RepaymentMethod>? paymentMethod,
+    Value<LiabilityRateType>? rateType,
     Value<String?>? accountId,
     Value<DateTime?>? startDate,
     Value<DateTime?>? endDate,
     Value<int?>? termMonths,
     Value<Decimal?>? monthlyPayment,
+    Value<int?>? statementDay,
+    Value<int?>? paymentDueDay,
     Value<String?>? note,
     Value<int>? rowid,
   }) {
@@ -5012,11 +5198,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
       principal: principal ?? this.principal,
       interestRate: interestRate ?? this.interestRate,
       currency: currency ?? this.currency,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      rateType: rateType ?? this.rateType,
       accountId: accountId ?? this.accountId,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       termMonths: termMonths ?? this.termMonths,
       monthlyPayment: monthlyPayment ?? this.monthlyPayment,
+      statementDay: statementDay ?? this.statementDay,
+      paymentDueDay: paymentDueDay ?? this.paymentDueDay,
       note: note ?? this.note,
       rowid: rowid ?? this.rowid,
     );
@@ -5066,6 +5256,16 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
     }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(
+        $LiabilitiesTable.$converterpaymentMethod.toSql(paymentMethod.value),
+      );
+    }
+    if (rateType.present) {
+      map['rate_type'] = Variable<String>(
+        $LiabilitiesTable.$converterrateType.toSql(rateType.value),
+      );
+    }
     if (accountId.present) {
       map['account_id'] = Variable<String>(accountId.value);
     }
@@ -5082,6 +5282,12 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
       map['monthly_payment'] = Variable<String>(
         $LiabilitiesTable.$convertermonthlyPaymentn.toSql(monthlyPayment.value),
       );
+    }
+    if (statementDay.present) {
+      map['statement_day'] = Variable<int>(statementDay.value);
+    }
+    if (paymentDueDay.present) {
+      map['payment_due_day'] = Variable<int>(paymentDueDay.value);
     }
     if (note.present) {
       map['note'] = Variable<String>(note.value);
@@ -5106,11 +5312,15 @@ class LiabilitiesCompanion extends UpdateCompanion<LiabilityRow> {
           ..write('principal: $principal, ')
           ..write('interestRate: $interestRate, ')
           ..write('currency: $currency, ')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('rateType: $rateType, ')
           ..write('accountId: $accountId, ')
           ..write('startDate: $startDate, ')
           ..write('endDate: $endDate, ')
           ..write('termMonths: $termMonths, ')
           ..write('monthlyPayment: $monthlyPayment, ')
+          ..write('statementDay: $statementDay, ')
+          ..write('paymentDueDay: $paymentDueDay, ')
           ..write('note: $note, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -14099,11 +14309,15 @@ typedef $$LiabilitiesTableCreateCompanionBuilder =
       required Decimal principal,
       required Decimal interestRate,
       required String currency,
+      Value<RepaymentMethod> paymentMethod,
+      Value<LiabilityRateType> rateType,
       Value<String?> accountId,
       Value<DateTime?> startDate,
       Value<DateTime?> endDate,
       Value<int?> termMonths,
       Value<Decimal?> monthlyPayment,
+      Value<int?> statementDay,
+      Value<int?> paymentDueDay,
       Value<String?> note,
       Value<int> rowid,
     });
@@ -14120,11 +14334,15 @@ typedef $$LiabilitiesTableUpdateCompanionBuilder =
       Value<Decimal> principal,
       Value<Decimal> interestRate,
       Value<String> currency,
+      Value<RepaymentMethod> paymentMethod,
+      Value<LiabilityRateType> rateType,
       Value<String?> accountId,
       Value<DateTime?> startDate,
       Value<DateTime?> endDate,
       Value<int?> termMonths,
       Value<Decimal?> monthlyPayment,
+      Value<int?> statementDay,
+      Value<int?> paymentDueDay,
       Value<String?> note,
       Value<int> rowid,
     });
@@ -14197,6 +14415,18 @@ class $$LiabilitiesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<RepaymentMethod, RepaymentMethod, String>
+  get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LiabilityRateType, LiabilityRateType, String>
+  get rateType => $composableBuilder(
+    column: $table.rateType,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
   ColumnFilters<String> get accountId => $composableBuilder(
     column: $table.accountId,
     builder: (column) => ColumnFilters(column),
@@ -14221,6 +14451,16 @@ class $$LiabilitiesTableFilterComposer
   get monthlyPayment => $composableBuilder(
     column: $table.monthlyPayment,
     builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get statementDay => $composableBuilder(
+    column: $table.statementDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get paymentDueDay => $composableBuilder(
+    column: $table.paymentDueDay,
+    builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<String> get note => $composableBuilder(
@@ -14293,6 +14533,16 @@ class $$LiabilitiesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rateType => $composableBuilder(
+    column: $table.rateType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get accountId => $composableBuilder(
     column: $table.accountId,
     builder: (column) => ColumnOrderings(column),
@@ -14315,6 +14565,16 @@ class $$LiabilitiesTableOrderingComposer
 
   ColumnOrderings<String> get monthlyPayment => $composableBuilder(
     column: $table.monthlyPayment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get statementDay => $composableBuilder(
+    column: $table.statementDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get paymentDueDay => $composableBuilder(
+    column: $table.paymentDueDay,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -14373,6 +14633,15 @@ class $$LiabilitiesTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<RepaymentMethod, String> get paymentMethod =>
+      $composableBuilder(
+        column: $table.paymentMethod,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<LiabilityRateType, String> get rateType =>
+      $composableBuilder(column: $table.rateType, builder: (column) => column);
+
   GeneratedColumn<String> get accountId =>
       $composableBuilder(column: $table.accountId, builder: (column) => column);
 
@@ -14392,6 +14661,16 @@ class $$LiabilitiesTableAnnotationComposer
         column: $table.monthlyPayment,
         builder: (column) => column,
       );
+
+  GeneratedColumn<int> get statementDay => $composableBuilder(
+    column: $table.statementDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get paymentDueDay => $composableBuilder(
+    column: $table.paymentDueDay,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
@@ -14439,11 +14718,15 @@ class $$LiabilitiesTableTableManager
                 Value<Decimal> principal = const Value.absent(),
                 Value<Decimal> interestRate = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<RepaymentMethod> paymentMethod = const Value.absent(),
+                Value<LiabilityRateType> rateType = const Value.absent(),
                 Value<String?> accountId = const Value.absent(),
                 Value<DateTime?> startDate = const Value.absent(),
                 Value<DateTime?> endDate = const Value.absent(),
                 Value<int?> termMonths = const Value.absent(),
                 Value<Decimal?> monthlyPayment = const Value.absent(),
+                Value<int?> statementDay = const Value.absent(),
+                Value<int?> paymentDueDay = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LiabilitiesCompanion(
@@ -14458,11 +14741,15 @@ class $$LiabilitiesTableTableManager
                 principal: principal,
                 interestRate: interestRate,
                 currency: currency,
+                paymentMethod: paymentMethod,
+                rateType: rateType,
                 accountId: accountId,
                 startDate: startDate,
                 endDate: endDate,
                 termMonths: termMonths,
                 monthlyPayment: monthlyPayment,
+                statementDay: statementDay,
+                paymentDueDay: paymentDueDay,
                 note: note,
                 rowid: rowid,
               ),
@@ -14479,11 +14766,15 @@ class $$LiabilitiesTableTableManager
                 required Decimal principal,
                 required Decimal interestRate,
                 required String currency,
+                Value<RepaymentMethod> paymentMethod = const Value.absent(),
+                Value<LiabilityRateType> rateType = const Value.absent(),
                 Value<String?> accountId = const Value.absent(),
                 Value<DateTime?> startDate = const Value.absent(),
                 Value<DateTime?> endDate = const Value.absent(),
                 Value<int?> termMonths = const Value.absent(),
                 Value<Decimal?> monthlyPayment = const Value.absent(),
+                Value<int?> statementDay = const Value.absent(),
+                Value<int?> paymentDueDay = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LiabilitiesCompanion.insert(
@@ -14498,11 +14789,15 @@ class $$LiabilitiesTableTableManager
                 principal: principal,
                 interestRate: interestRate,
                 currency: currency,
+                paymentMethod: paymentMethod,
+                rateType: rateType,
                 accountId: accountId,
                 startDate: startDate,
                 endDate: endDate,
                 termMonths: termMonths,
                 monthlyPayment: monthlyPayment,
+                statementDay: statementDay,
+                paymentDueDay: paymentDueDay,
                 note: note,
                 rowid: rowid,
               ),
