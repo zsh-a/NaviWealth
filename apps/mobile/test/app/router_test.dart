@@ -18,6 +18,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/data/domain/account.dart';
+import 'package:naviwealth/data/domain/asset.dart';
+import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/assets/assets_page.dart';
@@ -36,6 +39,15 @@ Future<ProviderContainer> _pumpAt(
       sharedPreferencesProvider.overrideWithValue(prefs),
       appRouterProvider.overrideWith(
         (ref) => buildAppRouter(initialLocation: initialLocation),
+      ),
+      // The Assets/Accounts tabs subscribe to live DB streams. In a routing
+      // smoke test we don't have a real database, so short-circuit the
+      // streams to empty lists so `pumpAndSettle` actually settles.
+      manualAssetsStreamProvider.overrideWith(
+        (ref) => Stream<List<Asset>>.value(const []),
+      ),
+      accountsStreamProvider.overrideWith(
+        (ref) => Stream<List<Account>>.value(const []),
       ),
     ],
   );
@@ -84,16 +96,15 @@ void main() {
       expect(find.byType(SettingsPage), findsOneWidget);
     });
 
-    testWidgets(
-      'unknown query params on a known path do not break the page',
-      (tester) async {
-        // FIR-43 calls out /analytics?range=1y as a future query-driven deep
-        // link. The :range param itself isn't wired yet (that's a follow-up
-        // feature), but at minimum an unknown query string must not 404.
-        await _pumpAt(tester, initialLocation: '/analytics?range=1y');
-        expect(find.byType(AnalyticsPage), findsOneWidget);
-      },
-    );
+    testWidgets('unknown query params on a known path do not break the page', (
+      tester,
+    ) async {
+      // FIR-43 calls out /analytics?range=1y as a future query-driven deep
+      // link. The :range param itself isn't wired yet (that's a follow-up
+      // feature), but at minimum an unknown query string must not 404.
+      await _pumpAt(tester, initialLocation: '/analytics?range=1y');
+      expect(find.byType(AnalyticsPage), findsOneWidget);
+    });
   });
 
   group('tab navigation keeps URL in sync', () {

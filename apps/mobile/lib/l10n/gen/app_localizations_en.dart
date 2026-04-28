@@ -147,6 +147,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => 'Retry';
+
+  @override
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
 
   @override

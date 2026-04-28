@@ -142,6 +142,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => '重试';
+
+  @override
   String get shortcutsHelpTitle => '键盘快捷键';
 
   @override

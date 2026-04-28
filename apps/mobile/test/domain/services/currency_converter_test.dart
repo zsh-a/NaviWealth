@@ -32,9 +32,7 @@ void main() {
 
     test('uses direct rate when registered', () {
       final converter = FxRateCurrencyConverter(
-        InMemoryFxRateLookup([
-          rate(date: day(2026, 4, 28), rate: '7.2'),
-        ]),
+        InMemoryFxRateLookup([rate(date: day(2026, 4, 28), rate: '7.2')]),
       );
       expect(
         converter.convert(Money.fromInt(10, 'USD'), 'CNY'),
@@ -87,34 +85,29 @@ void main() {
       );
     });
 
-    test(
-      'backfills to nearest earlier rate on a calendar holiday gap',
-      () {
-        // FX markets closed 2026-01-01 (New Year). Last quote was 2025-12-31.
-        // Asking for 2026-01-01 should return the 2025-12-31 rate, not throw.
-        final converter = FxRateCurrencyConverter(
-          InMemoryFxRateLookup([
-            rate(date: day(2025, 12, 31), rate: '7.0'),
-            rate(date: day(2026, 1, 5), rate: '7.1'),
-          ]),
-        );
-        expect(
-          converter.convert(
-            Money.fromInt(100, 'USD'),
-            'CNY',
-            on: day(2026, 1, 1),
-          ),
-          Money.parse('700.0', 'CNY'),
-        );
-      },
-    );
+    test('backfills to nearest earlier rate on a calendar holiday gap', () {
+      // FX markets closed 2026-01-01 (New Year). Last quote was 2025-12-31.
+      // Asking for 2026-01-01 should return the 2025-12-31 rate, not throw.
+      final converter = FxRateCurrencyConverter(
+        InMemoryFxRateLookup([
+          rate(date: day(2025, 12, 31), rate: '7.0'),
+          rate(date: day(2026, 1, 5), rate: '7.1'),
+        ]),
+      );
+      expect(
+        converter.convert(
+          Money.fromInt(100, 'USD'),
+          'CNY',
+          on: day(2026, 1, 1),
+        ),
+        Money.parse('700.0', 'CNY'),
+      );
+    });
 
     test('throws when no rate exists on or before the requested date', () {
       // Asking for a date BEFORE we have any data — backfill cannot help.
       final converter = FxRateCurrencyConverter(
-        InMemoryFxRateLookup([
-          rate(date: day(2026, 4, 28), rate: '7.2'),
-        ]),
+        InMemoryFxRateLookup([rate(date: day(2026, 4, 28), rate: '7.2')]),
       );
       expect(
         () => converter.convert(
@@ -128,9 +121,7 @@ void main() {
 
     test('throws when the pair is entirely unknown', () {
       final converter = FxRateCurrencyConverter(
-        InMemoryFxRateLookup([
-          rate(date: day(2026, 4, 28), rate: '7.2'),
-        ]),
+        InMemoryFxRateLookup([rate(date: day(2026, 4, 28), rate: '7.2')]),
       );
       expect(
         () => converter.convert(Money.fromInt(100, 'JPY'), 'USD'),
@@ -152,9 +143,7 @@ void main() {
 
     test('accepts intra-day timestamp for `on` and floors to the day', () {
       final converter = FxRateCurrencyConverter(
-        InMemoryFxRateLookup([
-          rate(date: day(2026, 4, 28), rate: '7.2'),
-        ]),
+        InMemoryFxRateLookup([rate(date: day(2026, 4, 28), rate: '7.2')]),
       );
       expect(
         converter.convert(
@@ -166,27 +155,24 @@ void main() {
       );
     });
 
-    test('prefers most recent observation when forward and inverse conflict',
-        () {
-      // Forward USD→CNY @ 2026-01-01 = 7.0
-      // Inverse CNY→USD @ 2026-04-01 = 0.10  (i.e. 1 USD = 10 CNY)
-      // The inverse is more recent, so it wins for a no-`on` query.
-      final converter = FxRateCurrencyConverter(
-        InMemoryFxRateLookup([
-          rate(date: day(2026, 1, 1), rate: '7.0'),
-          rate(
-            base: 'CNY',
-            quote: 'USD',
-            date: day(2026, 4, 1),
-            rate: '0.1',
-          ),
-        ]),
-      );
-      expect(
-        converter.convert(Money.fromInt(1, 'USD'), 'CNY'),
-        Money.parse('10.0', 'CNY'),
-      );
-    });
+    test(
+      'prefers most recent observation when forward and inverse conflict',
+      () {
+        // Forward USD→CNY @ 2026-01-01 = 7.0
+        // Inverse CNY→USD @ 2026-04-01 = 0.10  (i.e. 1 USD = 10 CNY)
+        // The inverse is more recent, so it wins for a no-`on` query.
+        final converter = FxRateCurrencyConverter(
+          InMemoryFxRateLookup([
+            rate(date: day(2026, 1, 1), rate: '7.0'),
+            rate(base: 'CNY', quote: 'USD', date: day(2026, 4, 1), rate: '0.1'),
+          ]),
+        );
+        expect(
+          converter.convert(Money.fromInt(1, 'USD'), 'CNY'),
+          Money.parse('10.0', 'CNY'),
+        );
+      },
+    );
   });
 
   group('InMemoryFxRateLookup', () {

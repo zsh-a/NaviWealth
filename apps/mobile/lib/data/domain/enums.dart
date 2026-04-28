@@ -20,6 +20,10 @@ enum AccountType {
 
 /// Static classification of an [Asset]. Used to drive UI affordances and
 /// cost-basis behavior.
+///
+/// FIR-44 added the three "no-market-data" deposit/wealth flavours at the
+/// end. Adding new values at the *end* keeps name-based persistence
+/// backwards-compatible (see `EnumStringConverter`).
 enum AssetType {
   stock,
   etf,
@@ -31,7 +35,20 @@ enum AssetType {
   vehicle,
   commodity,
   custom,
+  bankDepositTerm,
+  bankDepositDemand,
+  wealthProduct,
 }
+
+/// Subset of [AssetType] whose current price/value is updated manually by
+/// the user rather than fetched from a market data provider. The forms +
+/// repository in `features/assets` only handle these.
+const Set<AssetType> kManualValuationAssetTypes = {
+  AssetType.cash,
+  AssetType.bankDepositTerm,
+  AssetType.bankDepositDemand,
+  AssetType.wealthProduct,
+};
 
 /// Single fact-table entry kind. Anything that mutates a holding or cash
 /// position must be one of these so reports can roll up cleanly.

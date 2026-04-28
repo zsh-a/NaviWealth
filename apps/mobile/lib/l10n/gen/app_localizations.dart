@@ -355,6 +355,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get deferredLoadRetry;
+
   /// Title of the shortcut help dialog (Cmd/Ctrl+/)
   ///
   /// In en, this message translates to:

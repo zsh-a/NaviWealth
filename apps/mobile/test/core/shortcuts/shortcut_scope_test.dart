@@ -17,8 +17,9 @@ Future<void> _runOnDesktop(
 }
 
 void main() {
-  testWidgets('ShortcutScope fires bound callbacks on key press',
-      (tester) async {
+  testWidgets('ShortcutScope fires bound callbacks on key press', (
+    tester,
+  ) async {
     await _runOnDesktop(() async {
       var calls = 0;
       await tester.pumpWidget(
@@ -28,8 +29,11 @@ void main() {
             shortcuts: <ShortcutActivator, VoidCallback>{
               const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
                   calls++,
-              const SingleActivator(LogicalKeyboardKey.keyN, control: true):
-                  () => calls++,
+              const SingleActivator(
+                LogicalKeyboardKey.keyN,
+                control: true,
+              ): () =>
+                  calls++,
             },
             child: const Scaffold(
               body: Focus(autofocus: true, child: SizedBox()),
@@ -48,38 +52,35 @@ void main() {
     });
   });
 
-  testWidgets('ShortcutScope is a passthrough on mobile platforms',
-      (tester) async {
+  testWidgets('ShortcutScope is a passthrough on mobile platforms', (
+    tester,
+  ) async {
     if (kIsWeb) return; // Web is always considered desktop-capable.
-    await _runOnDesktop(
-      platform: TargetPlatform.android,
-      () async {
-        var calls = 0;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ShortcutScope(
-              autofocus: true,
-              shortcuts: <ShortcutActivator, VoidCallback>{
-                const SingleActivator(LogicalKeyboardKey.keyN): () => calls++,
-              },
-              child: const Scaffold(
-                body: Focus(autofocus: true, child: SizedBox()),
-              ),
+    await _runOnDesktop(platform: TargetPlatform.android, () async {
+      var calls = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ShortcutScope(
+            autofocus: true,
+            shortcuts: <ShortcutActivator, VoidCallback>{
+              const SingleActivator(LogicalKeyboardKey.keyN): () => calls++,
+            },
+            child: const Scaffold(
+              body: Focus(autofocus: true, child: SizedBox()),
             ),
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
-        await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+      await tester.pumpAndSettle();
 
-        expect(calls, 0);
-      },
-    );
+      expect(calls, 0);
+    });
   });
 
-  testWidgets('ShortcutScope skips when a TextField has focus',
-      (tester) async {
+  testWidgets('ShortcutScope skips when a TextField has focus', (tester) async {
     await _runOnDesktop(() async {
       var calls = 0;
       final controller = TextEditingController();
