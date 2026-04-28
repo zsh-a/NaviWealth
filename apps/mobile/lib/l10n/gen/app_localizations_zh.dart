@@ -138,6 +138,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonError => '出错了';
 
   @override
+  String get shortcutsHelpTitle => '键盘快捷键';
+
+  @override
+  String get shortcutCommandPalette => '打开命令面板';
+
+  @override
+  String get shortcutShowHelp => '显示快捷键帮助';
+
+  @override
+  String get shortcutDismissOverlay => '关闭当前弹窗';
+
+  @override
+  String shortcutSwitchTab(int position, String label) {
+    return '切换到第 $position 个标签 ($label)';
+  }
+
+  @override
   String get pwaUpdateAvailable => 'NaviWealth 有新版本可用。';
 
   @override

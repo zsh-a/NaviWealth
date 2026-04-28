@@ -8,6 +8,17 @@ import '../features/home/home_page.dart';
 import '../features/settings/settings_page.dart';
 import '../l10n/gen/app_localizations.dart';
 
+/// Paths of the four primary tabs in the root shell, in display order.
+///
+/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`4` to these
+/// indexes — keep order in sync with `_RootShell`'s NavigationBar.
+const List<String> kPrimaryTabPaths = <String>[
+  '/',
+  '/assets',
+  '/analytics',
+  '/settings',
+];
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
