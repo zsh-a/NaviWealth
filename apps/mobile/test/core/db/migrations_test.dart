@@ -44,6 +44,9 @@ void main() {
           'transactions',
           'fx_rates',
           'app_meta',
+          'market_quotes',
+          'market_history_bars',
+          'market_symbol_searches',
         ]),
       );
     });

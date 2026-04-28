@@ -34,6 +34,12 @@ impl AppError {
         }
     }
 
+    pub fn log(&self) {
+        if let Self::Internal(msg) = self {
+            worker::console_log!("internal error: {msg}");
+        }
+    }
+
     pub fn into_response(self) -> WorkerResult<Response> {
         let body = ErrorBody {
             code: self.code(),

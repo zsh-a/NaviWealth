@@ -2,51 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(title: Text(l10n.settingsAppBarTitle)),
       body: ListView(
         children: [
-          const ListTile(
-            leading: Icon(Icons.account_circle_outlined),
-            title: Text('账户'),
-            subtitle: Text('登录与多端同步 (FIR-27 / FIR-28)'),
+          ListTile(
+            leading: const Icon(Icons.account_circle_outlined),
+            title: Text(l10n.settingsAccountTitle),
+            subtitle: Text(l10n.settingsAccountSubtitle),
           ),
-          const ListTile(
-            leading: Icon(Icons.currency_exchange),
-            title: Text('基础货币'),
-            subtitle: Text('CNY (默认)'),
+          ListTile(
+            leading: const Icon(Icons.currency_exchange),
+            title: Text(l10n.settingsBaseCurrencyTitle),
+            subtitle: Text(l10n.settingsBaseCurrencySubtitle('CNY')),
           ),
           const Divider(),
-          const _SectionHeader(label: '外观'),
+          _SectionHeader(label: l10n.settingsAppearanceSection),
           ListTile(
             leading: const Icon(Icons.brightness_6_outlined),
-            title: const Text('主题模式'),
-            subtitle: Text(_themeModeLabel(themeMode)),
+            title: Text(l10n.settingsThemeModeTitle),
+            subtitle: Text(_themeModeLabel(l10n, themeMode)),
             trailing: SegmentedButton<ThemeMode>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: ThemeMode.system,
-                  icon: Icon(Icons.brightness_auto),
-                  tooltip: '跟随系统',
+                  icon: const Icon(Icons.brightness_auto),
+                  tooltip: l10n.themeModeSystem,
                 ),
                 ButtonSegment(
                   value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode_outlined),
-                  tooltip: '浅色',
+                  icon: const Icon(Icons.light_mode_outlined),
+                  tooltip: l10n.themeModeLight,
                 ),
                 ButtonSegment(
                   value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode_outlined),
-                  tooltip: '深色',
+                  icon: const Icon(Icons.dark_mode_outlined),
+                  tooltip: l10n.themeModeDark,
                 ),
               ],
               selected: {themeMode},
@@ -57,8 +59,8 @@ class SettingsPage extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.swap_vert),
-            title: const Text('涨跌色'),
-            subtitle: Text(_marketModeLabel(marketMode)),
+            title: Text(l10n.settingsMarketColorTitle),
+            subtitle: Text(_marketModeLabel(l10n, marketMode)),
             trailing: PopupMenuButton<MarketColorMode>(
               icon: const Icon(Icons.tune),
               onSelected: (m) =>
@@ -74,7 +76,7 @@ class SettingsPage extends ConsumerWidget {
                         else
                           const SizedBox(width: 18),
                         const SizedBox(width: 8),
-                        Text(_marketModeLabel(m)),
+                        Text(_marketModeLabel(l10n, m)),
                       ],
                     ),
                   ),
@@ -86,27 +88,29 @@ class SettingsPage extends ConsumerWidget {
             child: _MarketColorPreview(),
           ),
           const Divider(),
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('关于 NaviWealth'),
-            subtitle: Text('v0.1.0'),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.settingsAboutTitle),
+            subtitle: Text(l10n.settingsAboutSubtitle('0.1.0')),
           ),
         ],
       ),
     );
   }
 
-  String _themeModeLabel(ThemeMode mode) => switch (mode) {
-    ThemeMode.system => '跟随系统',
-    ThemeMode.light => '浅色',
-    ThemeMode.dark => '深色',
-  };
+  String _themeModeLabel(AppLocalizations l10n, ThemeMode mode) =>
+      switch (mode) {
+        ThemeMode.system => l10n.themeModeSystem,
+        ThemeMode.light => l10n.themeModeLight,
+        ThemeMode.dark => l10n.themeModeDark,
+      };
 
-  String _marketModeLabel(MarketColorMode mode) => switch (mode) {
-    MarketColorMode.redUpGreenDown => '红涨绿跌 (中国)',
-    MarketColorMode.greenUpRedDown => '绿涨红跌 (国际)',
-    MarketColorMode.colorblind => '色盲友好 (蓝/橙)',
-  };
+  String _marketModeLabel(AppLocalizations l10n, MarketColorMode mode) =>
+      switch (mode) {
+        MarketColorMode.redUpGreenDown => l10n.marketColorRedUpGreenDown,
+        MarketColorMode.greenUpRedDown => l10n.marketColorGreenUpRedDown,
+        MarketColorMode.colorblind => l10n.marketColorColorblind,
+      };
 }
 
 class _SectionHeader extends StatelessWidget {

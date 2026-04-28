@@ -1,0 +1,31 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import 'enums.dart';
+import 'sync_meta.dart';
+
+part 'tag.freezed.dart';
+
+@freezed
+class Tag with _$Tag {
+  const factory Tag({
+    required String id,
+    required String name,
+    required TagKind kind,
+    String? color,
+    required SyncMeta sync,
+  }) = _Tag;
+}
+
+/// M:N link between a [Tag] and the entity it labels (typically an [Asset]
+/// or [Account], but we keep the entity table textual for forward
+/// flexibility).
+@freezed
+class TagLink with _$TagLink {
+  const factory TagLink({
+    required String id,
+    required String tagId,
+    required String entityTable,
+    required String entityId,
+    required SyncMeta sync,
+  }) = _TagLink;
+}

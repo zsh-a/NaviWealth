@@ -1,0 +1,50 @@
+{
+  "@@locale": "zh",
+  "appTitle": "NaviWealth",
+
+  "navHome": "总览",
+  "navAssets": "资产",
+  "navAnalytics": "分析",
+  "navSettings": "设置",
+
+  "homeAppBarTitle": "总览",
+  "homeNetWorthTitle": "净资产",
+  "homeNetWorthSubtitle": "基础货币 {currency} · 等数据接入后展示",
+  "homeTodayReturnTitle": "今日收益",
+  "homeTodayReturnSubtitle": "尚未接入实时行情。FIR-4 完成后此处显示当日净值变动。",
+  "homeAllocationTitle": "资产分布",
+  "homeAllocationSubtitle": "将在 FIR-7 完成后显示大类饼图与行业 / 地域分布。",
+  "homeFireTitle": "FIRE 进度",
+  "homeFireSubtitle": "FIR-9 完成后显示距离财务自由的天数与里程碑。",
+
+  "assetsAppBarTitle": "资产",
+  "assetsEmptyHint": "资产录入与管理 (FIR-5) — 待实现",
+  "assetsAddAction": "添加资产",
+
+  "analyticsAppBarTitle": "分析",
+  "settingsAppBarTitle": "设置",
+  "settingsAccountTitle": "账户",
+  "settingsAccountSubtitle": "登录与多端同步 (FIR-27 / FIR-28)",
+  "settingsBaseCurrencyTitle": "基础货币",
+  "settingsBaseCurrencySubtitle": "{currency} (默认)",
+  "settingsAboutTitle": "关于 NaviWealth",
+  "settingsAboutSubtitle": "v{version}",
+
+  "settingsAppearanceSection": "外观",
+  "settingsThemeModeTitle": "主题模式",
+  "themeModeSystem": "跟随系统",
+  "themeModeLight": "浅色",
+  "themeModeDark": "深色",
+  "settingsMarketColorTitle": "涨跌色",
+  "marketColorRedUpGreenDown": "红涨绿跌 (中国)",
+  "marketColorGreenUpRedDown": "绿涨红跌 (国际)",
+  "marketColorColorblind": "色盲友好 (蓝/橙)",
+
+  "commonRetry": "重试",
+  "commonCancel": "取消",
+  "commonConfirm": "确认",
+  "commonSave": "保存",
+  "commonClose": "关闭",
+  "commonLoading": "加载中…",
+  "commonError": "出错了"
+}

@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
 
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('总览')),
+      appBar: AppBar(title: Text(l10n.homeAppBarTitle)),
       body: ListView(
         padding: Spacing.pageMobile,
-        children: const [
-          _NetWorthCard(),
-          SizedBox(height: Spacing.s12),
+        children: [
+          const _NetWorthCard(),
+          const SizedBox(height: Spacing.s12),
           _PlaceholderCard(
-            title: '今日收益',
-            subtitle: '尚未接入实时行情。FIR-4 完成后此处显示当日净值变动。',
+            title: l10n.homeTodayReturnTitle,
+            subtitle: l10n.homeTodayReturnSubtitle,
             icon: Icons.trending_up,
           ),
-          SizedBox(height: Spacing.s12),
+          const SizedBox(height: Spacing.s12),
           _PlaceholderCard(
-            title: '资产分布',
-            subtitle: '将在 FIR-7 完成后显示大类饼图与行业/地域分布。',
+            title: l10n.homeAllocationTitle,
+            subtitle: l10n.homeAllocationSubtitle,
             icon: Icons.donut_large,
           ),
-          SizedBox(height: Spacing.s12),
+          const SizedBox(height: Spacing.s12),
           _PlaceholderCard(
-            title: 'FIRE 进度',
-            subtitle: 'FIR-9 完成后显示距离财务自由的天数与里程碑。',
+            title: l10n.homeFireTitle,
+            subtitle: l10n.homeFireSubtitle,
             icon: Icons.flag_outlined,
           ),
         ],
@@ -43,13 +45,14 @@ class _NetWorthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: Spacing.cardHero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('净资产 (Net Worth)', style: theme.textTheme.titleMedium),
+            Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
             const SizedBox(height: Spacing.s8),
             // Net worth is unknown until accounts are linked — pass null and
             // let MoneyText render the placeholder with the right symbol.
@@ -60,7 +63,7 @@ class _NetWorthCard extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.s4),
             Text(
-              '基础货币 CNY · 等数据接入后展示',
+              l10n.homeNetWorthSubtitle('CNY'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

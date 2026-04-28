@@ -9,7 +9,10 @@ import 'app_database.dart';
 class SchemaVersions {
   static const int v1Initial = 1;
 
-  static const int current = v1Initial;
+  /// FIR-26: market_quotes / market_history_bars / market_symbol_searches.
+  static const int v2MarketCache = 2;
+
+  static const int current = v2MarketCache;
 }
 
 MigrationStrategy buildMigrationStrategy(AppDatabase db) {
@@ -18,13 +21,18 @@ MigrationStrategy buildMigrationStrategy(AppDatabase db) {
       await m.createAll();
     },
     onUpgrade: (m, from, to) async {
-      // Step migrations one version at a time so each step is small,
-      // testable, and can rely on the previous schema state. As soon as
-      // a real migration lands, replace this throw with a switch on `v`
-      // inside `for (var v = from + 1; v <= to; v++)`.
-      throw StateError(
-        'No migration registered for schema upgrade from v$from to v$to.',
-      );
+      for (var v = from + 1; v <= to; v++) {
+        switch (v) {
+          case SchemaVersions.v2MarketCache:
+            await m.createTable(db.marketQuotes);
+            await m.createTable(db.marketHistoryBars);
+            await m.createTable(db.marketSymbolSearches);
+          default:
+            throw StateError(
+              'No migration registered for schema upgrade to v$v.',
+            );
+        }
+      }
     },
     beforeOpen: (details) async {
       // Foreign keys must be enabled per-connection — they are off by

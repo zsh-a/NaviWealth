@@ -20,7 +20,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('总览'), findsWidgets);
+    // Home page localized title — "Overview" in en-US, "总览" in zh-CN.
+    // Test environment falls back to the first supported locale (en).
+    expect(find.text('Overview'), findsWidgets);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 }
