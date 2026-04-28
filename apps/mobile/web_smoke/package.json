@@ -1,0 +1,16 @@
+{
+  "name": "naviwealth-web-smoke",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Cross-browser Playwright smoke for the NaviWealth Flutter web build (FIR-40).",
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "install-browsers": "playwright install --with-deps"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
