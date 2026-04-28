@@ -46,5 +46,11 @@
   "commonSave": "保存",
   "commonClose": "关闭",
   "commonLoading": "加载中…",
-  "commonError": "出错了"
+  "commonError": "出错了",
+
+  "shortcutsHelpTitle": "键盘快捷键",
+  "shortcutCommandPalette": "打开命令面板",
+  "shortcutShowHelp": "显示快捷键帮助",
+  "shortcutDismissOverlay": "关闭当前弹窗",
+  "shortcutSwitchTab": "切换到第 {position} 个标签 ({label})"
 }

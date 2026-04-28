@@ -141,4 +141,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonError => 'Something went wrong';
+
+  @override
+  String get shortcutsHelpTitle => 'Keyboard shortcuts';
+
+  @override
+  String get shortcutCommandPalette => 'Open command palette';
+
+  @override
+  String get shortcutShowHelp => 'Show keyboard shortcut help';
+
+  @override
+  String get shortcutDismissOverlay => 'Close current dialog';
+
+  @override
+  String shortcutSwitchTab(int position, String label) {
+    return 'Switch to tab $position ($label)';
+  }
 }

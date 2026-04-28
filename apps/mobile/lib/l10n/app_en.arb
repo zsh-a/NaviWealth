@@ -68,5 +68,18 @@
   "commonSave": "Save",
   "commonClose": "Close",
   "commonLoading": "Loading…",
-  "commonError": "Something went wrong"
+  "commonError": "Something went wrong",
+
+  "shortcutsHelpTitle": "Keyboard shortcuts",
+  "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
+  "shortcutCommandPalette": "Open command palette",
+  "shortcutShowHelp": "Show keyboard shortcut help",
+  "shortcutDismissOverlay": "Close current dialog",
+  "shortcutSwitchTab": "Switch to tab {position} ({label})",
+  "@shortcutSwitchTab": {
+    "placeholders": {
+      "position": { "type": "int", "example": "1" },
+      "label": { "type": "String", "example": "Overview" }
+    }
+  }
 }
