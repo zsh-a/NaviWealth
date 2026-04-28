@@ -143,6 +143,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonError => 'Something went wrong';
 
   @override
+  String get deferredLoadFailedTitle => 'Couldn\'t load this section';
+
+  @override
+  String get deferredLoadRetry => 'Retry';
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
 
   @override

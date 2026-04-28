@@ -70,6 +70,11 @@
   "commonLoading": "Loading…",
   "commonError": "Something went wrong",
 
+  "deferredLoadFailedTitle": "Couldn't load this section",
+  "@deferredLoadFailedTitle": {
+    "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
+  },
+  "deferredLoadRetry": "Retry"
   "shortcutsHelpTitle": "Keyboard shortcuts",
   "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
   "shortcutCommandPalette": "Open command palette",
