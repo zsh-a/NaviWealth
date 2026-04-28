@@ -248,6 +248,60 @@ abstract class AppLocalizations {
   /// **'v{version}'**
   String settingsAboutSubtitle(String version);
 
+  /// No description provided for @settingsAppearanceSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearanceSection;
+
+  /// No description provided for @settingsThemeModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsThemeModeTitle;
+
+  /// No description provided for @themeModeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow system'**
+  String get themeModeSystem;
+
+  /// No description provided for @themeModeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeModeLight;
+
+  /// No description provided for @themeModeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeModeDark;
+
+  /// No description provided for @settingsMarketColorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Up / down colors'**
+  String get settingsMarketColorTitle;
+
+  /// No description provided for @marketColorRedUpGreenDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Red up / green down (CN)'**
+  String get marketColorRedUpGreenDown;
+
+  /// No description provided for @marketColorGreenUpRedDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Green up / red down (Intl)'**
+  String get marketColorGreenUpRedDown;
+
+  /// No description provided for @marketColorColorblind.
+  ///
+  /// In en, this message translates to:
+  /// **'Color-blind safe (blue / orange)'**
+  String get marketColorColorblind;
+
   /// No description provided for @commonRetry.
   ///
   /// In en, this message translates to:

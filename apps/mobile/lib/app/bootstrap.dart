@@ -4,30 +4,35 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/config/app_config.dart';
 import '../core/format/formatters.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/providers.dart';
+import '../design_system/preferences/theme_preferences.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
 /// error pipeline (Flutter framework errors, async zone errors, and the
 /// platform dispatcher channel) all funnel through [AppLogger] → [CrashReporter].
 ///
-/// Returns a [ProviderContainer] pre-seeded with the bootstrap logger so the
-/// caller can host it inside `UncontrolledProviderScope`. This guarantees the
-/// logger that captured early errors is the *same* instance the widget tree
-/// uses — no double init, no lost breadcrumbs.
+/// Returns a [ProviderContainer] pre-seeded with the bootstrap logger and a
+/// warm [SharedPreferences] handle so theme/market-color preferences resolve
+/// synchronously on first build. The caller hosts it inside
+/// `UncontrolledProviderScope`.
 Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   WidgetsFlutterBinding.ensureInitialized();
   // Clean URLs on web (e.g. /assets instead of /#/assets). No-op elsewhere.
   usePathUrlStrategy();
   await AppFormatters.ensureInitialized();
 
+  final prefs = await SharedPreferences.getInstance();
+
   final container = ProviderContainer(
     overrides: [
       if (config != null) appConfigProvider.overrideWithValue(config),
+      sharedPreferencesProvider.overrideWithValue(prefs),
     ],
   );
   // Force eager creation so AppLogger.instance is ready before any error

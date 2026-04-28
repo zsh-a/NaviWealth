@@ -30,6 +30,16 @@
   "settingsAboutTitle": "关于 NaviWealth",
   "settingsAboutSubtitle": "v{version}",
 
+  "settingsAppearanceSection": "外观",
+  "settingsThemeModeTitle": "主题模式",
+  "themeModeSystem": "跟随系统",
+  "themeModeLight": "浅色",
+  "themeModeDark": "深色",
+  "settingsMarketColorTitle": "涨跌色",
+  "marketColorRedUpGreenDown": "红涨绿跌 (中国)",
+  "marketColorGreenUpRedDown": "绿涨红跌 (国际)",
+  "marketColorColorblind": "色盲友好 (蓝/橙)",
+
   "commonRetry": "重试",
   "commonCancel": "取消",
   "commonConfirm": "确认",

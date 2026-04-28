@@ -90,6 +90,33 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get settingsAppearanceSection => '外观';
+
+  @override
+  String get settingsThemeModeTitle => '主题模式';
+
+  @override
+  String get themeModeSystem => '跟随系统';
+
+  @override
+  String get themeModeLight => '浅色';
+
+  @override
+  String get themeModeDark => '深色';
+
+  @override
+  String get settingsMarketColorTitle => '涨跌色';
+
+  @override
+  String get marketColorRedUpGreenDown => '红涨绿跌 (中国)';
+
+  @override
+  String get marketColorGreenUpRedDown => '绿涨红跌 (国际)';
+
+  @override
+  String get marketColorColorblind => '色盲友好 (蓝/橙)';
+
+  @override
   String get commonRetry => '重试';
 
   @override

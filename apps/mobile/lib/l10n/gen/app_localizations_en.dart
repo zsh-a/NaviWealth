@@ -95,6 +95,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsAppearanceSection => 'Appearance';
+
+  @override
+  String get settingsThemeModeTitle => 'Theme';
+
+  @override
+  String get themeModeSystem => 'Follow system';
+
+  @override
+  String get themeModeLight => 'Light';
+
+  @override
+  String get themeModeDark => 'Dark';
+
+  @override
+  String get settingsMarketColorTitle => 'Up / down colors';
+
+  @override
+  String get marketColorRedUpGreenDown => 'Red up / green down (CN)';
+
+  @override
+  String get marketColorGreenUpRedDown => 'Green up / red down (Intl)';
+
+  @override
+  String get marketColorColorblind => 'Color-blind safe (blue / orange)';
+
+  @override
   String get commonRetry => 'Retry';
 
   @override
