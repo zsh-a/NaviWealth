@@ -3,10 +3,13 @@ import 'package:drift/drift.dart';
 
 import '../domain/enums.dart';
 import '../domain/hlc.dart';
+import 'connection.dart';
 import 'converters.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
+
+const String defaultDbFileName = 'naviwealth.db';
 
 /// Local NaviWealth database.
 ///
@@ -36,10 +39,22 @@ part 'app_database.g.dart';
     Goals,
     Devices,
     OpLogs,
+    MarketQuotes,
+    MarketHistoryBars,
+    MarketSymbolSearches,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
+
+  /// Production constructor: opens an encrypted on-disk SQLCipher database.
+  AppDatabase.encrypted({required String encryptionKey, String? dbFileName})
+    : super(
+        openAppConnection(
+          dbFileName: dbFileName ?? defaultDbFileName,
+          encryptionKey: encryptionKey,
+        ),
+      );
 
   @override
   int get schemaVersion => 1;
