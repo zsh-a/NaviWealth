@@ -136,4 +136,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonError => '出错了';
+
+  @override
+  String get pwaUpdateAvailable => 'NaviWealth 有新版本可用。';
+
+  @override
+  String get pwaUpdateApply => '立即刷新';
+
+  @override
+  String get pwaUpdateDismiss => '稍后';
 }
