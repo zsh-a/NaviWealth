@@ -1,0 +1,21 @@
+/// Public API for NaviWealth's design system.
+///
+/// Mirrors the Figma token file at `apps/mobile/design_tokens/tokens.json`.
+/// See `apps/mobile/design_tokens/README.md` for the contract.
+library;
+
+export 'preferences/theme_preferences.dart';
+export 'theme/app_elevations.dart';
+export 'theme/app_theme.dart';
+export 'theme/market_color_mode.dart';
+export 'theme/market_colors.dart';
+export 'theme/semantic_colors.dart';
+export 'tokens/breakpoints.dart';
+export 'tokens/color_palette.dart';
+export 'tokens/motion_tokens.dart';
+export 'tokens/radius_tokens.dart';
+export 'tokens/spacing_tokens.dart';
+export 'tokens/typography_tokens.dart';
+export 'widgets/delta_chip.dart';
+export 'widgets/delta_text.dart';
+export 'widgets/money_text.dart';
