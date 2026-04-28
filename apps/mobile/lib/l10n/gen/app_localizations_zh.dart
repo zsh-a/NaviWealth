@@ -153,4 +153,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String shortcutSwitchTab(int position, String label) {
     return '切换到第 $position 个标签 ($label)';
   }
+
+  @override
+  String get pwaUpdateAvailable => 'NaviWealth 有新版本可用。';
+
+  @override
+  String get pwaUpdateApply => '立即刷新';
+
+  @override
+  String get pwaUpdateDismiss => '稍后';
 }

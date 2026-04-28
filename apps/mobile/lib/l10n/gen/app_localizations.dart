@@ -373,6 +373,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Switch to tab {position} ({label})'**
   String shortcutSwitchTab(int position, String label);
+
+  /// Banner shown when the PWA service worker has a new version waiting to activate
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of NaviWealth is ready.'**
+  String get pwaUpdateAvailable;
+
+  /// Action to apply the pending PWA update and reload
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get pwaUpdateApply;
+
+  /// Action to dismiss the PWA update banner without refreshing
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get pwaUpdateDismiss;
 }
 
 class _AppLocalizationsDelegate

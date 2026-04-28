@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/logging/providers.dart';
+import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -27,7 +28,9 @@ class NaviWealthApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       // The shortcut scope wraps the navigator subtree so dialog routes
       // (e.g. the help dialog opened by Cmd/Ctrl+/) are descendants of
-      // the Shortcuts widget and `Esc` reaches the dismiss action.
+      // the Shortcuts widget and `Esc` reaches the dismiss action. The
+      // PWA update banner sits inside that scope so it stacks above all
+      // routes on web; on non-web builds it's a transparent passthrough.
       builder: (BuildContext ctx, Widget? child) {
         return GlobalShortcutsScope(
           onSwitchPrimaryTab: (int index) {
@@ -37,7 +40,7 @@ class NaviWealthApp extends ConsumerWidget {
           onOpenCommandPalette: () => logger.i(
             'shortcut: command palette requested (UI ships in a follow-up)',
           ),
-          child: child ?? const SizedBox.shrink(),
+          child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
         );
       },
     );

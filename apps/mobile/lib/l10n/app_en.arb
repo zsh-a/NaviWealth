@@ -81,5 +81,12 @@
       "position": { "type": "int", "example": "1" },
       "label": { "type": "String", "example": "Overview" }
     }
-  }
+  },
+
+  "pwaUpdateAvailable": "A new version of NaviWealth is ready.",
+  "@pwaUpdateAvailable": { "description": "Banner shown when the PWA service worker has a new version waiting to activate" },
+  "pwaUpdateApply": "Refresh",
+  "@pwaUpdateApply": { "description": "Action to apply the pending PWA update and reload" },
+  "pwaUpdateDismiss": "Later",
+  "@pwaUpdateDismiss": { "description": "Action to dismiss the PWA update banner without refreshing" }
 }

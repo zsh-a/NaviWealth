@@ -158,4 +158,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String shortcutSwitchTab(int position, String label) {
     return 'Switch to tab $position ($label)';
   }
+
+  @override
+  String get pwaUpdateAvailable => 'A new version of NaviWealth is ready.';
+
+  @override
+  String get pwaUpdateApply => 'Refresh';
+
+  @override
+  String get pwaUpdateDismiss => 'Later';
 }
