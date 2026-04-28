@@ -355,6 +355,53 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get deferredLoadRetry;
+  /// Title of the shortcut help dialog (Cmd/Ctrl+/)
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get shortcutsHelpTitle;
+
+  /// No description provided for @shortcutCommandPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Open command palette'**
+  String get shortcutCommandPalette;
+
+  /// No description provided for @shortcutShowHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Show keyboard shortcut help'**
+  String get shortcutShowHelp;
+
+  /// No description provided for @shortcutDismissOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Close current dialog'**
+  String get shortcutDismissOverlay;
+
+  /// No description provided for @shortcutSwitchTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to tab {position} ({label})'**
+  String shortcutSwitchTab(int position, String label);
+
+  /// Banner shown when the PWA service worker has a new version waiting to activate
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of NaviWealth is ready.'**
+  String get pwaUpdateAvailable;
+
+  /// Action to apply the pending PWA update and reload
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get pwaUpdateApply;
+
+  /// Action to dismiss the PWA update banner without refreshing
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get pwaUpdateDismiss;
 }
 
 class _AppLocalizationsDelegate

@@ -45,6 +45,30 @@ lib/
 
 `web/index.html` 的 `<base href="$FLUTTER_BASE_HREF">` 占位符由 `flutter build web --base-href=...` 在构建时替换；默认 `/` 即可。
 
+## Web PWA / 离线 Shell（FIR-37）
+
+`web/service_worker.js` 是手写的 Service Worker，替换 Flutter 默认的 `flutter_service_worker.js`。Build Web 时 **必须** 关闭 Flutter 自带 SW，否则两者会互相覆盖：
+
+```bash
+flutter build web --release --pwa-strategy=none
+```
+
+策略一览：
+
+| 流量 | 策略 | 缓存桶 |
+|------|------|--------|
+| 导航请求 (`mode: navigate`) | Network-First → 离线回退 `index.html` | `nw-shell` |
+| Shell (`index.html` / `flutter_bootstrap.js` / `manifest.json`) | Cache-First + 后台刷新 | `nw-shell` |
+| WASM (`sqlite3.wasm` / `drift_worker.dart.js`) | Cache-First, 长期 | `nw-wasm` |
+| `GET /api/*` | Network-First → 离线 fallback (`X-NaviWealth-Offline: 1`) | `nw-api` |
+| 其它同源 GET（hash chunks / 字体 / 图标） | Stale-While-Revalidate | `nw-runtime` |
+
+`SW_VERSION` 常量是缓存版本号 — **在影响 shell 的发布上手动 bump**（chunk hash 变化由 hash-busting URL 自动隔离，不必 bump）。`activate` 阶段会清掉所有非当前版本的 `nw-*` 缓存。
+
+更新提醒：`window.naviwealthPwa` JS 桥接到 Dart 端 `PwaUpdateController`（`lib/core/pwa/`）；新版本就绪时 `MaterialApp.router` 的 `builder` 中的 `PwaUpdateBanner` 会出现底部横幅。点击「立即刷新」会发送 `SKIP_WAITING` 并在 `controllerchange` 后整页 reload。
+
+`manifest.json` 已包含：`scope` / `id` / `lang` / `categories` / `screenshots` / `shortcuts` / maskable icons —— Lighthouse PWA installability 应当全绿。
+
 ## 渲染策略
 
 默认走 Flutter 默认 Web 渲染器（CanvasKit on desktop，HTML/auto on mobile）。Wasm 模式在 `flutter build web` dry-run 中已通过；后续如需可加 `--wasm` 切换。

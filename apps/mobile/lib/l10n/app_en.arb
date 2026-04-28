@@ -75,4 +75,23 @@
     "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
   },
   "deferredLoadRetry": "Retry"
+  "shortcutsHelpTitle": "Keyboard shortcuts",
+  "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
+  "shortcutCommandPalette": "Open command palette",
+  "shortcutShowHelp": "Show keyboard shortcut help",
+  "shortcutDismissOverlay": "Close current dialog",
+  "shortcutSwitchTab": "Switch to tab {position} ({label})",
+  "@shortcutSwitchTab": {
+    "placeholders": {
+      "position": { "type": "int", "example": "1" },
+      "label": { "type": "String", "example": "Overview" }
+    }
+  },
+
+  "pwaUpdateAvailable": "A new version of NaviWealth is ready.",
+  "@pwaUpdateAvailable": { "description": "Banner shown when the PWA service worker has a new version waiting to activate" },
+  "pwaUpdateApply": "Refresh",
+  "@pwaUpdateApply": { "description": "Action to apply the pending PWA update and reload" },
+  "pwaUpdateDismiss": "Later",
+  "@pwaUpdateDismiss": { "description": "Action to dismiss the PWA update banner without refreshing" }
 }
