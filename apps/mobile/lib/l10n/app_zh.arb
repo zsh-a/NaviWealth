@@ -46,5 +46,9 @@
   "commonSave": "保存",
   "commonClose": "关闭",
   "commonLoading": "加载中…",
-  "commonError": "出错了"
+  "commonError": "出错了",
+
+  "pwaUpdateAvailable": "NaviWealth 有新版本可用。",
+  "pwaUpdateApply": "立即刷新",
+  "pwaUpdateDismiss": "稍后"
 }

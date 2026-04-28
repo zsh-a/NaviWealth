@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -19,17 +19,20 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="NaviWealth - 个人财务管理软件">
+  <meta name="theme-color" content="#0F172A">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="naviwealth">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NaviWealth">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>naviwealth</title>
+  <title>NaviWealth</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -41,6 +44,103 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+  // NaviWealth PWA bridge.
+  //
+  // Owns service-worker registration and exposes a single global
+  // `window.naviwealthPwa` that the Flutter app talks to via JS interop
+  // (see lib/core/pwa/pwa_update_web.dart). The bridge installs *before*
+  // flutter_bootstrap.js so the SW is registering while Dart compiles.
+  //
+  // Build with `flutter build web --pwa-strategy=none` so Flutter does not
+  // also generate flutter_service_worker.js (it would race this one).
+  (function () {
+    var bridge = {
+      updateAvailable: false,
+      version: null,
+      _listeners: [],
+      onUpdateAvailable: function (cb) {
+        this._listeners.push(cb);
+        if (this.updateAvailable) {
+          try { cb(); } catch (_) {}
+        }
+      },
+      applyUpdate: function () {
+        if (this._waiting) {
+          this._waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        // Reload once the new SW takes control. controllerchange fires on
+        // every controller swap; the once flag avoids reload loops.
+      },
+    };
+    window.naviwealthPwa = bridge;
+
+    function notify() {
+      bridge.updateAvailable = true;
+      for (var i = 0; i < bridge._listeners.length; i++) {
+        try { bridge._listeners[i](); } catch (_) {}
+      }
+      // Also dispatch a DOM event so non-Dart consumers (devtools, e2e
+      // probes) can observe the same signal without poking at internals.
+      window.dispatchEvent(new CustomEvent('naviwealth:pwa-update'));
+    }
+
+    function trackWaiting(reg) {
+      if (reg.waiting) {
+        bridge._waiting = reg.waiting;
+        notify();
+      }
+      if (reg.installing) {
+        var sw = reg.installing;
+        sw.addEventListener('statechange', function () {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            // A previous SW is still active → this one is the update.
+            bridge._waiting = sw;
+            notify();
+          }
+        });
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('service_worker.js', { scope: './' })
+          .then(function (reg) {
+            trackWaiting(reg);
+            reg.addEventListener('updatefound', function () {
+              trackWaiting(reg);
+            });
+            // Periodically poll the server for an updated SW. Browsers also
+            // do this on navigation but the SPA navigation under go_router
+            // doesn't trigger document loads, so without an explicit kick
+            // a long-lived tab never notices a new deploy.
+            setInterval(function () {
+              reg.update().catch(function () {});
+            }, 60 * 60 * 1000);
+          })
+          .catch(function (err) {
+            console.warn('[naviwealth] SW registration failed', err);
+          });
+
+        var reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (reloaded) return;
+          reloaded = true;
+          window.location.reload();
+        });
+
+        navigator.serviceWorker.addEventListener('message', function (ev) {
+          var data = ev.data;
+          if (!data || typeof data !== 'object') return;
+          if (data.type === 'SW_ACTIVATED' || data.type === 'SW_VERSION') {
+            bridge.version = data.version;
+          }
+        });
+      });
+    }
+  })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

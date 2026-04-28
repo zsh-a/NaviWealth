@@ -1,23 +1,31 @@
 {
-    "name": "naviwealth",
-    "short_name": "naviwealth",
-    "start_url": ".",
+    "id": "/",
+    "name": "NaviWealth",
+    "short_name": "NaviWealth",
+    "lang": "zh-CN",
+    "dir": "ltr",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "NaviWealth - 个人财务管理软件",
-    "orientation": "portrait-primary",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+    "background_color": "#0F172A",
+    "theme_color": "#0F172A",
+    "description": "NaviWealth - 个人财务管理软件，资产、交易、分析与 FIRE 一体化。",
+    "orientation": "any",
+    "categories": ["finance", "productivity", "utilities"],
     "prefer_related_applications": false,
     "icons": [
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "icons/Icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "icons/Icon-maskable-192.png",
@@ -30,6 +38,63 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "NaviWealth dashboard"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "NaviWealth dashboard"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "资产总览",
+            "short_name": "资产",
+            "description": "查看资产列表与持仓明细",
+            "url": "/assets",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "记一笔交易",
+            "short_name": "记账",
+            "description": "快速录入一笔买入或卖出",
+            "url": "/transactions/new",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "分析",
+            "short_name": "分析",
+            "description": "收益率、归因与 FIRE 进度",
+            "url": "/analytics",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
         }
     ]
 }

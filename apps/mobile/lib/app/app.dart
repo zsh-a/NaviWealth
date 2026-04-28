@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/pwa/pwa_update_banner.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'router.dart';
@@ -22,6 +23,10 @@ class NaviWealthApp extends ConsumerWidget {
       routerConfig: router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      // Wrap router output so the SW "new version" banner can overlay any
+      // route. On non-web builds the wrapper is a no-op pass-through.
+      builder: (context, child) =>
+          PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
     );
   }
 }
