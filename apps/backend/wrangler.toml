@@ -9,13 +9,15 @@ command = "cargo install -q worker-build && worker-build --release"
 [vars]
 ENVIRONMENT = "dev"
 
-# D1 database (FIR-36 will run schema migrations against this)
-# Create via: wrangler d1 create naviwealth
-# Then paste the database_id here.
+# D1 database. Migrations under ./migrations/ are applied via:
+#   wrangler d1 migrations apply naviwealth
+# Create the database first via: wrangler d1 create naviwealth, then paste the
+# returned database_id here.
 [[d1_databases]]
 binding = "DB"
 database_name = "naviwealth"
 database_id = "77b6d007-be46-432a-a0f6-8c74e3124997"
+migrations_dir = "migrations"
 
 # Secrets (set via `wrangler secret put`):
 # - JWT_SECRET   # HS256 signing key for the single-user JWT

@@ -1,7 +1,10 @@
 use worker::*;
 
+mod auth;
 mod error;
+mod hlc;
 mod routes;
+mod sync;
 
 #[event(fetch, respond_with_errors)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
@@ -11,6 +14,13 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get("/", |_, _| Response::ok("naviwealth-backend"))
         .get("/health", routes::health::get)
         .get_async("/health/db", routes::health::get_db)
+        .post_async("/auth/login", routes::auth::login)
+        .get_async("/auth/devices", routes::auth::list_devices)
+        .post_async("/auth/logout/:device_id", routes::auth::logout)
+        .post_async("/auth/refresh", routes::auth::refresh)
+        .get_async("/me", routes::me::get)
+        .post_async("/sync/push", routes::sync::push)
+        .get_async("/sync/pull", routes::sync::pull)
         .run(req, env)
         .await
 }

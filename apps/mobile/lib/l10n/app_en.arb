@@ -52,6 +52,16 @@
     }
   },
 
+  "settingsAppearanceSection": "Appearance",
+  "settingsThemeModeTitle": "Theme",
+  "themeModeSystem": "Follow system",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+  "settingsMarketColorTitle": "Up / down colors",
+  "marketColorRedUpGreenDown": "Red up / green down (CN)",
+  "marketColorGreenUpRedDown": "Green up / red down (Intl)",
+  "marketColorColorblind": "Color-blind safe (blue / orange)",
+
   "commonRetry": "Retry",
   "commonCancel": "Cancel",
   "commonConfirm": "Confirm",

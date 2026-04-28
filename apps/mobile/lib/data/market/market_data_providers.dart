@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/db/providers.dart';
 import '../../domain/services/market_data_service.dart';
+import '../db/providers.dart';
 import 'cache/cache_policy.dart';
 import 'cache/quote_cache.dart';
 import 'composite_market_data_service.dart';

@@ -12,7 +12,7 @@ import 'package:naviwealth/domain/entities/symbol_info.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 
-import '../../core/db/test_database.dart';
+import '../db/test_database.dart';
 import 'fake_clock.dart';
 
 class _FakeProvider implements MarketProvider {
