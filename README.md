@@ -39,8 +39,11 @@ cd apps/mobile
 flutter pub get
 flutter test
 flutter run                   # 默认设备
+tool/setup-drift-web.sh       # Web 端运行前一次：拉取 sqlite3.wasm + 编译 drift worker
 flutter run -d chrome         # Web
 ```
+
+`tool/setup-drift-web.sh` 把 `sqlite3.wasm`（与 pubspec.lock 中 `sqlite3` 版本对齐）和编译好的 `drift_worker.dart.js` 落到 `apps/mobile/web/`。两个产物都被 `.gitignore`，CI 在 `build-web` 任务里会自动重新生成。
 
 ### 后端（Cloudflare Workers + Rust）
 
