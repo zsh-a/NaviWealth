@@ -74,7 +74,22 @@
   "@deferredLoadFailedTitle": {
     "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
   },
-  "deferredLoadRetry": "Retry"
+  "deferredLoadRetry": "Retry",
+
+  "routeNotFoundTitle": "Page not found",
+  "@routeNotFoundTitle": { "description": "Title shown when go_router can't match a URL to any registered route (404)." },
+  "routeNotFoundMessage": "We couldn't find {path}. It may have been moved or never existed.",
+  "@routeNotFoundMessage": {
+    "description": "Body of the 404 page; includes the URL the user tried to visit.",
+    "placeholders": {
+      "path": { "type": "String", "example": "/typo-here" }
+    }
+  },
+  "routeErrorTitle": "Something went wrong",
+  "@routeErrorTitle": { "description": "Title shown when go_router's errorBuilder fires for a runtime error (not a 404)." },
+  "routeGoHome": "Back to overview",
+  "@routeGoHome": { "description": "Action that navigates back to the home tab from an error / not-found page." },
+
   "shortcutsHelpTitle": "Keyboard shortcuts",
   "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
   "shortcutCommandPalette": "Open command palette",
