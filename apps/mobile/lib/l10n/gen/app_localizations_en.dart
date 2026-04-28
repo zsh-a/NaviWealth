@@ -141,4 +141,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonError => 'Something went wrong';
+
+  @override
+  String get pwaUpdateAvailable => 'A new version of NaviWealth is ready.';
+
+  @override
+  String get pwaUpdateApply => 'Refresh';
+
+  @override
+  String get pwaUpdateDismiss => 'Later';
 }
