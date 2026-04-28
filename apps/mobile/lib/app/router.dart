@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 // docs/web-bundle.md for the resulting bundle layout.
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/assets_page.dart' deferred as assets_lib;
+import '../features/assets/physical/ui/physical_asset_detail_page.dart'
+    deferred as physical_detail_lib;
 import '../features/home/home_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
@@ -45,6 +47,20 @@ GoRouter buildAppRouter({String initialLocation = '/'}) {
               load: assets_lib.loadLibrary,
               builder: (_) => assets_lib.AssetsPage(),
             ),
+            routes: [
+              GoRoute(
+                path: 'physical/:id',
+                name: 'physicalAssetDetail',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return DeferredRoute(
+                    load: physical_detail_lib.loadLibrary,
+                    builder: (_) =>
+                        physical_detail_lib.PhysicalAssetDetailPage(id: id),
+                  );
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/analytics',

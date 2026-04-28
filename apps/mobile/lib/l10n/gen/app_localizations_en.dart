@@ -66,6 +66,120 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsAddAction => 'Add asset';
 
   @override
+  String get physicalAssetsSectionTitle => 'Real estate & vehicles';
+
+  @override
+  String get physicalAssetsEmpty =>
+      'No real estate or vehicles yet. Tap + to add one.';
+
+  @override
+  String get physicalAssetTypeRealEstate => 'Real estate';
+
+  @override
+  String get physicalAssetTypeVehicle => 'Vehicle';
+
+  @override
+  String get physicalAssetAddRealEstate => 'Add real estate';
+
+  @override
+  String get physicalAssetAddVehicle => 'Add vehicle';
+
+  @override
+  String get physicalAssetFieldName => 'Name';
+
+  @override
+  String get physicalAssetFieldAddress => 'Address';
+
+  @override
+  String get physicalAssetFieldPurchaseDate => 'Purchase date';
+
+  @override
+  String get physicalAssetFieldPurchasePrice => 'Purchase price';
+
+  @override
+  String get physicalAssetFieldCurrentValuation => 'Current valuation';
+
+  @override
+  String get physicalAssetFieldCurrency => 'Currency';
+
+  @override
+  String get physicalAssetFieldAnnualResidualRate => 'Annual residual rate';
+
+  @override
+  String get physicalAssetFieldAutoDepreciation =>
+      'Auto-depreciate between updates';
+
+  @override
+  String get physicalAssetFieldLinkedLiability => 'Linked mortgage / loan id';
+
+  @override
+  String get physicalAssetFieldNote => 'Note';
+
+  @override
+  String get physicalAssetCreateSubmit => 'Save';
+
+  @override
+  String get physicalAssetUpdateValuationAction => 'Update valuation';
+
+  @override
+  String get physicalAssetUpdateValuationTitle => 'Update valuation';
+
+  @override
+  String get physicalAssetUpdateValuationDate => 'As-of date';
+
+  @override
+  String get physicalAssetUpdateValuationAmount => 'New valuation';
+
+  @override
+  String get physicalAssetUpdateValuationSubmit => 'Save valuation';
+
+  @override
+  String get physicalAssetDeleteAction => 'Delete';
+
+  @override
+  String get physicalAssetDeleteConfirmTitle => 'Delete this asset?';
+
+  @override
+  String get physicalAssetDeleteConfirmBody =>
+      'Valuation history will be tombstoned but recoverable on devices that have already synced.';
+
+  @override
+  String get physicalAssetDetailValuationTitle => 'Current valuation';
+
+  @override
+  String get physicalAssetDetailHistoryTitle => 'Valuation history';
+
+  @override
+  String get physicalAssetDetailDepreciationProjection =>
+      'Depreciation projection';
+
+  @override
+  String get physicalAssetDetailPurchaseLabel => 'Purchase';
+
+  @override
+  String get physicalAssetDetailManualUpdateLabel => 'Manual update';
+
+  @override
+  String get physicalAssetDetailAutoEstimateLabel => 'Auto-estimate';
+
+  @override
+  String physicalAssetDetailEstimatedToday(String value) {
+    return 'Estimated value today: $value';
+  }
+
+  @override
+  String get physicalAssetValidationRequired => 'Required';
+
+  @override
+  String get physicalAssetValidationPositive => 'Must be greater than 0';
+
+  @override
+  String get physicalAssetValidationResidualRange => 'Must be between 0 and 1';
+
+  @override
+  String get physicalAssetNotFound => 'Asset not found';
+
+  @override
   String get analyticsAppBarTitle => 'Analytics';
 
   @override
@@ -147,6 +261,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => 'Retry';
+
+  @override
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
 
   @override

@@ -62,6 +62,116 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsAddAction => '添加资产';
 
   @override
+  String get physicalAssetsSectionTitle => '房产与车辆';
+
+  @override
+  String get physicalAssetsEmpty => '暂无房产或车辆。点击 + 添加。';
+
+  @override
+  String get physicalAssetTypeRealEstate => '房产';
+
+  @override
+  String get physicalAssetTypeVehicle => '车辆';
+
+  @override
+  String get physicalAssetAddRealEstate => '添加房产';
+
+  @override
+  String get physicalAssetAddVehicle => '添加车辆';
+
+  @override
+  String get physicalAssetFieldName => '名称';
+
+  @override
+  String get physicalAssetFieldAddress => '地址';
+
+  @override
+  String get physicalAssetFieldPurchaseDate => '购入日';
+
+  @override
+  String get physicalAssetFieldPurchasePrice => '购入价';
+
+  @override
+  String get physicalAssetFieldCurrentValuation => '当前估值';
+
+  @override
+  String get physicalAssetFieldCurrency => '币种';
+
+  @override
+  String get physicalAssetFieldAnnualResidualRate => '年度残值率';
+
+  @override
+  String get physicalAssetFieldAutoDepreciation => '估值之间自动折旧';
+
+  @override
+  String get physicalAssetFieldLinkedLiability => '关联房贷 / 车贷 ID';
+
+  @override
+  String get physicalAssetFieldNote => '备注';
+
+  @override
+  String get physicalAssetCreateSubmit => '保存';
+
+  @override
+  String get physicalAssetUpdateValuationAction => '更新估值';
+
+  @override
+  String get physicalAssetUpdateValuationTitle => '更新估值';
+
+  @override
+  String get physicalAssetUpdateValuationDate => '估值日期';
+
+  @override
+  String get physicalAssetUpdateValuationAmount => '新估值';
+
+  @override
+  String get physicalAssetUpdateValuationSubmit => '保存估值';
+
+  @override
+  String get physicalAssetDeleteAction => '删除';
+
+  @override
+  String get physicalAssetDeleteConfirmTitle => '确认删除该资产？';
+
+  @override
+  String get physicalAssetDeleteConfirmBody => '估值历史将被标记删除,但已同步过的设备仍可追溯。';
+
+  @override
+  String get physicalAssetDetailValuationTitle => '当前估值';
+
+  @override
+  String get physicalAssetDetailHistoryTitle => '估值历史';
+
+  @override
+  String get physicalAssetDetailDepreciationProjection => '折旧曲线';
+
+  @override
+  String get physicalAssetDetailPurchaseLabel => '购入';
+
+  @override
+  String get physicalAssetDetailManualUpdateLabel => '手动更新';
+
+  @override
+  String get physicalAssetDetailAutoEstimateLabel => '自动估算';
+
+  @override
+  String physicalAssetDetailEstimatedToday(String value) {
+    return '今日估算:$value';
+  }
+
+  @override
+  String get physicalAssetValidationRequired => '必填';
+
+  @override
+  String get physicalAssetValidationPositive => '必须大于 0';
+
+  @override
+  String get physicalAssetValidationResidualRange => '必须在 0 与 1 之间';
+
+  @override
+  String get physicalAssetNotFound => '资产不存在';
+
+  @override
   String get analyticsAppBarTitle => '分析';
 
   @override
@@ -142,6 +252,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => '重试';
+
+  @override
   String get shortcutsHelpTitle => '键盘快捷键';
 
   @override

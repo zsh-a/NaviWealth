@@ -33,6 +33,48 @@
   "assetsEmptyHint": "Asset entry & management (FIR-5) — coming soon",
   "assetsAddAction": "Add asset",
 
+  "physicalAssetsSectionTitle": "Real estate & vehicles",
+  "physicalAssetsEmpty": "No real estate or vehicles yet. Tap + to add one.",
+  "physicalAssetTypeRealEstate": "Real estate",
+  "physicalAssetTypeVehicle": "Vehicle",
+  "physicalAssetAddRealEstate": "Add real estate",
+  "physicalAssetAddVehicle": "Add vehicle",
+  "physicalAssetFieldName": "Name",
+  "physicalAssetFieldAddress": "Address",
+  "physicalAssetFieldPurchaseDate": "Purchase date",
+  "physicalAssetFieldPurchasePrice": "Purchase price",
+  "physicalAssetFieldCurrentValuation": "Current valuation",
+  "physicalAssetFieldCurrency": "Currency",
+  "physicalAssetFieldAnnualResidualRate": "Annual residual rate",
+  "physicalAssetFieldAutoDepreciation": "Auto-depreciate between updates",
+  "physicalAssetFieldLinkedLiability": "Linked mortgage / loan id",
+  "physicalAssetFieldNote": "Note",
+  "physicalAssetCreateSubmit": "Save",
+  "physicalAssetUpdateValuationAction": "Update valuation",
+  "physicalAssetUpdateValuationTitle": "Update valuation",
+  "physicalAssetUpdateValuationDate": "As-of date",
+  "physicalAssetUpdateValuationAmount": "New valuation",
+  "physicalAssetUpdateValuationSubmit": "Save valuation",
+  "physicalAssetDeleteAction": "Delete",
+  "physicalAssetDeleteConfirmTitle": "Delete this asset?",
+  "physicalAssetDeleteConfirmBody": "Valuation history will be tombstoned but recoverable on devices that have already synced.",
+  "physicalAssetDetailValuationTitle": "Current valuation",
+  "physicalAssetDetailHistoryTitle": "Valuation history",
+  "physicalAssetDetailDepreciationProjection": "Depreciation projection",
+  "physicalAssetDetailPurchaseLabel": "Purchase",
+  "physicalAssetDetailManualUpdateLabel": "Manual update",
+  "physicalAssetDetailAutoEstimateLabel": "Auto-estimate",
+  "physicalAssetDetailEstimatedToday": "Estimated value today: {value}",
+  "@physicalAssetDetailEstimatedToday": {
+    "placeholders": {
+      "value": { "type": "String", "example": "¥120,000" }
+    }
+  },
+  "physicalAssetValidationRequired": "Required",
+  "physicalAssetValidationPositive": "Must be greater than 0",
+  "physicalAssetValidationResidualRange": "Must be between 0 and 1",
+  "physicalAssetNotFound": "Asset not found",
+
   "analyticsAppBarTitle": "Analytics",
   "settingsAppBarTitle": "Settings",
   "settingsAccountTitle": "Account",
@@ -74,7 +116,7 @@
   "@deferredLoadFailedTitle": {
     "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
   },
-  "deferredLoadRetry": "Retry"
+  "deferredLoadRetry": "Retry",
   "shortcutsHelpTitle": "Keyboard shortcuts",
   "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
   "shortcutCommandPalette": "Open command palette",
