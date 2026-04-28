@@ -149,6 +149,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deferredLoadRetry => 'Retry';
 
   @override
+  String get routeNotFoundTitle => 'Page not found';
+
+  @override
+  String routeNotFoundMessage(String path) {
+    return 'We couldn\'t find $path. It may have been moved or never existed.';
+  }
+
+  @override
+  String get routeErrorTitle => 'Something went wrong';
+
+  @override
+  String get routeGoHome => 'Back to overview';
+
+  @override
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
 
   @override

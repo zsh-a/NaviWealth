@@ -38,7 +38,7 @@ Future<ProviderContainer> _pumpAt(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       appRouterProvider.overrideWith(
-        (ref) => buildAppRouter(initialLocation: initialLocation),
+        (ref) => buildAppRouter(ref, initialLocation: initialLocation),
       ),
       // The Assets/Accounts tabs subscribe to live DB streams. In a routing
       // smoke test we don't have a real database, so short-circuit the
