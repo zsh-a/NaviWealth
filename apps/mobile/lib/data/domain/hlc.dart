@@ -1,19 +1,27 @@
 /// Hybrid Logical Clock timestamp.
 ///
-/// Local devices may have skewed wall clocks; HLC pairs the wall time with a
-/// monotonically-increasing logical counter so two events still get a stable
-/// total order even when one device's clock drifts backwards. The total order
-/// is `(wallMillis, counter, nodeId)` lexicographically — `nodeId` is only the
-/// final tie-breaker and never affects causality.
+/// Pairs the wall time with a monotonically-increasing logical counter so two
+/// events still get a stable total order even when one device's clock drifts
+/// backwards. The total order is `(wallMillis, counter, nodeId)`
+/// lexicographically — `nodeId` is only the final tie-breaker and never
+/// affects causality.
 ///
-/// Wire format: `<wallMillis>:<counter>-<nodeId>`. The counter is base-10 to
-/// keep logs grep-able; we don't gain anything by hex-encoding it.
+/// **Wire format (frozen by `docs/sync-protocol.md` §3.1):**
+/// `<wallMillis>.<counter:%04x>-<nodeId>`. The dot separator and zero-padded
+/// hex counter are mandatory: this lets a TEXT column on D1 / SQLite be
+/// indexed and range-scanned in lex order without a separate sortable column.
 class Hlc implements Comparable<Hlc> {
   const Hlc({
     required this.wallMillis,
     required this.counter,
     required this.nodeId,
   });
+
+  /// Special node id used for server-stamped HLCs (§3.1).
+  static const String serverNodeId = '00000000-0000-0000-0000-000000000000';
+
+  /// Logical counter is u16; overflow bumps `wallMillis`.
+  static const int counterMax = 0xFFFF;
 
   /// Local wall-clock reading (milliseconds since Unix epoch) at the moment
   /// the event was generated *or* observed — whichever is later. This is
@@ -42,9 +50,17 @@ class Hlc implements Comparable<Hlc> {
     if (wall > lastSeen.wallMillis) {
       return Hlc(wallMillis: wall, counter: 0, nodeId: lastSeen.nodeId);
     }
+    final nextCounter = lastSeen.counter + 1;
+    if (nextCounter > counterMax) {
+      return Hlc(
+        wallMillis: lastSeen.wallMillis + 1,
+        counter: 0,
+        nodeId: lastSeen.nodeId,
+      );
+    }
     return Hlc(
       wallMillis: lastSeen.wallMillis,
-      counter: lastSeen.counter + 1,
+      counter: nextCounter,
       nodeId: lastSeen.nodeId,
     );
   }
@@ -75,23 +91,37 @@ class Hlc implements Comparable<Hlc> {
       nextCounter = 0;
     }
 
+    if (nextCounter > counterMax) {
+      return Hlc(wallMillis: maxWall + 1, counter: 0, nodeId: nodeId);
+    }
     return Hlc(wallMillis: maxWall, counter: nextCounter, nodeId: nodeId);
   }
 
-  /// Parse the wire format `<wallMillis>:<counter>-<nodeId>`. Throws
-  /// [FormatException] on malformed input — callers should treat this as a
-  /// non-recoverable corruption signal.
+  /// Parse the canonical wire format `<wallMillis>.<counter:%04x>-<nodeId>`
+  /// (`docs/sync-protocol.md` §3.1). Throws [FormatException] on malformed
+  /// input — callers should treat this as a non-recoverable corruption signal.
   factory Hlc.parse(String packed) {
-    final colon = packed.indexOf(':');
-    final dash = packed.indexOf('-', colon + 1);
-    if (colon < 1 || dash < 0) {
+    final dot = packed.indexOf('.');
+    final dash = dot < 0 ? -1 : packed.indexOf('-', dot + 1);
+    if (dot < 1 || dash < 0) {
       throw FormatException('Malformed HLC: $packed');
     }
-    final wall = int.parse(packed.substring(0, colon));
-    final counter = int.parse(packed.substring(colon + 1, dash));
+    final wallStr = packed.substring(0, dot);
+    final counterStr = packed.substring(dot + 1, dash);
     final node = packed.substring(dash + 1);
     if (node.isEmpty) {
       throw FormatException('Malformed HLC (missing nodeId): $packed');
+    }
+    final wall = int.tryParse(wallStr);
+    if (wall == null || wall < 0) {
+      throw FormatException('Malformed HLC wall: $packed');
+    }
+    if (counterStr.length != 4) {
+      throw FormatException('Malformed HLC counter (expect 4 hex): $packed');
+    }
+    final counter = int.tryParse(counterStr, radix: 16);
+    if (counter == null || counter < 0 || counter > counterMax) {
+      throw FormatException('Malformed HLC counter: $packed');
     }
     return Hlc(wallMillis: wall, counter: counter, nodeId: node);
   }
@@ -125,5 +155,8 @@ class Hlc implements Comparable<Hlc> {
   int get hashCode => Object.hash(wallMillis, counter, nodeId);
 
   @override
-  String toString() => '$wallMillis:$counter-$nodeId';
+  String toString() {
+    final hex = counter.toRadixString(16).padLeft(4, '0');
+    return '$wallMillis.$hex-$nodeId';
+  }
 }
