@@ -1,12 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../data/domain/enums.dart';
-import '../../../data/domain/hlc.dart';
-import '../../../data/domain/liability.dart';
-import '../../../data/domain/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -261,8 +257,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
       final rateFraction = (ratePercent / Decimal.fromInt(100)).toDecimal(
         scaleOnInfinitePrecision: 10,
       );
-      final liability = Liability(
-        id: const Uuid().v4(),
+      await repo.create(
         type: _type,
         name: _name.text.trim(),
         principal: Decimal.parse(_principal.text.trim()),
@@ -278,16 +273,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
         paymentDueDay: _isCreditCard
             ? int.tryParse(_paymentDueDay.text.trim())
             : null,
-        // Sync metadata is overwritten by the repository before persistence;
-        // we only need to satisfy the constructor's required fields here.
-        sync: SyncMeta(
-          ownerUserId: '',
-          updatedAt: DateTime.now(),
-          updatedByDevice: '',
-          hlc: Hlc.zero('placeholder'),
-        ),
       );
-      await repo.create(liability);
       if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _saving = false);

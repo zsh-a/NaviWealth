@@ -1,49 +1,37 @@
 import 'package:decimal/decimal.dart';
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
-import 'package:naviwealth/data/domain/liability.dart';
-import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/liabilities/data/liability_repository.dart';
+
+import '../../../data/db/test_database.dart';
+import '../../../data/repositories/_stub_stamper.dart';
 
 Decimal d(String s) => Decimal.parse(s);
 
 void main() {
   late AppDatabase db;
-  late int hlcCounter;
+  late InMemoryOutboxStore outbox;
+  late LiabilityRepository repo;
 
   setUp(() {
-    db = AppDatabase(NativeDatabase.memory());
-    hlcCounter = 0;
-  });
-
-  tearDown(() => db.close());
-
-  Future<Hlc> stamp() async {
-    hlcCounter++;
-    return Hlc(
-      wallMillis: 1_700_000_000_000 + hlcCounter,
-      counter: 0,
-      nodeId: 'test-device',
-    );
-  }
-
-  LiabilityRepository repo({String Function()? id}) {
-    return LiabilityRepository(
+    db = makeTestDatabase();
+    outbox = InMemoryOutboxStore();
+    repo = LiabilityRepository(
       db: db,
-      ownerUserId: 'user-1',
-      deviceId: 'test-device',
-      stampHlc: stamp,
-      idGenerator: id,
+      outbox: outbox,
+      stamper: makeStubStamper(),
       clock: () => DateTime.utc(2026, 1, 1),
     );
-  }
+  });
 
-  Liability mortgage({String id = 'lia-1', String? accountId}) {
-    return Liability(
-      id: id,
+  tearDown(() async => db.close());
+
+  test('create persists liability + full schedule and queues insert ops',
+      () async {
+    final l = await repo.create(
       type: LiabilityType.mortgage,
       name: 'Home',
       principal: d('120000'),
@@ -52,94 +40,121 @@ void main() {
       paymentMethod: RepaymentMethod.equalPrincipal,
       termMonths: 12,
       startDate: DateTime.utc(2026, 1, 1),
-      accountId: accountId,
-      sync: SyncMeta(
-        ownerUserId: '',
-        updatedAt: DateTime.utc(2026, 1, 1),
-        updatedByDevice: '',
-        hlc: Hlc.zero('placeholder'),
-      ),
     );
-  }
 
-  test('create persists liability and full amortization schedule', () async {
-    var idCounter = 0;
-    final r = repo(id: () => 'gen-${++idCounter}');
-    await r.create(mortgage());
+    expect(l.name, 'Home');
 
-    final list = await r.watchAll().first;
+    final list = await repo.watchAll().first;
     expect(list, hasLength(1));
-    expect(list.single.name, 'Home');
 
-    final schedule = await r.scheduleFor('lia-1');
+    final schedule = await repo.scheduleFor(l.id);
     expect(schedule, hasLength(12));
     expect(schedule.first.periodIndex, 1);
-    expect(schedule.last.periodIndex, 12);
     expect(schedule.last.remainingBalance, Decimal.zero);
+
+    final batch = await outbox.peekBatch();
+    // 1 liability insert + 12 amortization inserts = 13 ops.
+    expect(batch, hasLength(13));
+    expect(batch.first.tableName, 'liabilities');
+    expect(batch.first.opType, OpType.insert);
+    expect(batch.skip(1).every((o) => o.tableName == 'amortization_entries'),
+        isTrue);
+    expect(batch.skip(1).every((o) => o.opType == OpType.insert), isTrue);
   });
 
-  test('credit card creates header without schedule', () async {
-    final r = repo();
-    final cc = Liability(
-      id: 'cc-1',
+  test('credit-card liability persists without a schedule', () async {
+    final cc = await repo.create(
       type: LiabilityType.creditCard,
       name: 'Visa',
-      principal: d('0'),
+      principal: d('1'),
       interestRate: d('0.18'),
       currency: 'CNY',
       statementDay: 5,
       paymentDueDay: 25,
-      sync: SyncMeta(
-        ownerUserId: '',
-        updatedAt: DateTime.utc(2026, 1, 1),
-        updatedByDevice: '',
-        hlc: Hlc.zero('placeholder'),
-      ),
     );
-    // Credit card has no termMonths/startDate, so principal-positivity is the
-    // only thing the model enforces — bump it just enough to satisfy the
-    // calculator's invariant should the schedule path ever fire.
-    await r.create(cc.copyWith(principal: d('1')));
-    final schedule = await r.scheduleFor('cc-1');
+    final schedule = await repo.scheduleFor(cc.id);
     expect(schedule, isEmpty);
+
+    final batch = await outbox.peekBatch();
+    expect(batch, hasLength(1));
+    expect(batch.single.tableName, 'liabilities');
   });
 
-  test('registerPayment marks period paid and writes a transaction', () async {
-    final r = repo();
-    await r.create(mortgage(accountId: 'acc-1'));
+  test(
+    'registerPayment marks period paid, writes a transaction, and queues '
+    'amortization-update + transactions-insert ops',
+    () async {
+      final l = await repo.create(
+        type: LiabilityType.mortgage,
+        name: 'Home',
+        principal: d('120000'),
+        interestRate: d('0.05'),
+        currency: 'CNY',
+        paymentMethod: RepaymentMethod.equalPrincipal,
+        termMonths: 12,
+        startDate: DateTime.utc(2026, 1, 1),
+        accountId: 'acc-1',
+      );
+      // Drain create-time ops so the next assertion is easier to read.
+      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
-    final txId = await r.registerPayment(
-      liabilityId: 'lia-1',
-      periodIndex: 1,
-    );
-    expect(txId, isNotEmpty);
+      final txId = await repo.registerPayment(
+        liabilityId: l.id,
+        periodIndex: 1,
+      );
+      expect(txId, isNotEmpty);
 
-    final schedule = await r.scheduleFor('lia-1');
-    expect(schedule.first.paidAt, isNotNull);
-    expect(schedule[1].paidAt, isNull);
+      final schedule = await repo.scheduleFor(l.id);
+      expect(schedule.first.paidAt, isNotNull);
+      expect(schedule[1].paidAt, isNull);
 
-    final txs = await db.select(db.transactions).get();
-    expect(txs, hasLength(1));
-    expect(txs.single.type, TransactionType.liabilityPayment);
-    expect(txs.single.accountId, 'acc-1');
-    expect(txs.single.currency, 'CNY');
-  });
+      final batch = await outbox.peekBatch();
+      expect(batch, hasLength(2));
+      final amortOp = batch.firstWhere(
+        (o) => o.tableName == 'amortization_entries',
+      );
+      expect(amortOp.opType, OpType.update);
+      expect(amortOp.fieldsDiff!.containsKey('paid_at'), isTrue);
+      final txOp = batch.firstWhere((o) => o.tableName == 'transactions');
+      expect(txOp.opType, OpType.insert);
+      expect(txOp.rowId, txId);
+      expect(txOp.fieldsDiff!['type'], 'liabilityPayment');
+      expect(txOp.fieldsDiff!['account_id'], 'acc-1');
+    },
+  );
 
   test('registerPayment refuses to mark a period twice', () async {
-    final r = repo();
-    await r.create(mortgage(accountId: 'acc-1'));
-    await r.registerPayment(liabilityId: 'lia-1', periodIndex: 1);
+    final l = await repo.create(
+      type: LiabilityType.mortgage,
+      name: 'Home',
+      principal: d('120000'),
+      interestRate: d('0.05'),
+      currency: 'CNY',
+      paymentMethod: RepaymentMethod.equalPrincipal,
+      termMonths: 12,
+      startDate: DateTime.utc(2026, 1, 1),
+      accountId: 'acc-1',
+    );
+    await repo.registerPayment(liabilityId: l.id, periodIndex: 1);
     expect(
-      () => r.registerPayment(liabilityId: 'lia-1', periodIndex: 1),
+      () => repo.registerPayment(liabilityId: l.id, periodIndex: 1),
       throwsA(isA<StateError>()),
     );
   });
 
   test('registerPayment requires accountId on the liability', () async {
-    final r = repo();
-    await r.create(mortgage());
+    final l = await repo.create(
+      type: LiabilityType.mortgage,
+      name: 'Home',
+      principal: d('120000'),
+      interestRate: d('0.05'),
+      currency: 'CNY',
+      paymentMethod: RepaymentMethod.equalPrincipal,
+      termMonths: 12,
+      startDate: DateTime.utc(2026, 1, 1),
+    );
     expect(
-      () => r.registerPayment(liabilityId: 'lia-1', periodIndex: 1),
+      () => repo.registerPayment(liabilityId: l.id, periodIndex: 1),
       throwsA(isA<StateError>()),
     );
   });

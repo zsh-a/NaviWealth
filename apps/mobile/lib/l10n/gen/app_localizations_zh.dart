@@ -300,6 +300,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deferredLoadRetry => '重试';
 
   @override
+  String get routeNotFoundTitle => '页面不存在';
+
+  @override
+  String routeNotFoundMessage(String path) {
+    return '找不到 $path。链接可能已失效或从未存在。';
+  }
+
+  @override
+  String get routeErrorTitle => '出错了';
+
+  @override
+  String get routeGoHome => '返回总览';
+
+  @override
   String get shortcutsHelpTitle => '键盘快捷键';
 
   @override

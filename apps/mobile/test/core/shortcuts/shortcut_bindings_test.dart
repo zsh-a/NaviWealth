@@ -13,25 +13,45 @@ void main() {
           .where((b) => b.intent is OpenCommandPaletteIntent)
           .toList();
       expect(paletteBindings, hasLength(2));
-      final activators =
-          paletteBindings.map((b) => b.activator).cast<SingleActivator>();
-      expect(activators.any((a) => a.meta && a.trigger == LogicalKeyboardKey.keyK), isTrue);
-      expect(activators.any((a) => a.control && a.trigger == LogicalKeyboardKey.keyK), isTrue);
+      final activators = paletteBindings
+          .map((b) => b.activator)
+          .cast<SingleActivator>();
+      expect(
+        activators.any((a) => a.meta && a.trigger == LogicalKeyboardKey.keyK),
+        isTrue,
+      );
+      expect(
+        activators.any(
+          (a) => a.control && a.trigger == LogicalKeyboardKey.keyK,
+        ),
+        isTrue,
+      );
     });
 
     test('declares Cmd+/ and Ctrl+/ for the help dialog', () {
-      final helpBindings =
-          bindings.where((b) => b.intent is ShowShortcutHelpIntent).toList();
+      final helpBindings = bindings
+          .where((b) => b.intent is ShowShortcutHelpIntent)
+          .toList();
       expect(helpBindings, hasLength(2));
-      final activators =
-          helpBindings.map((b) => b.activator).cast<SingleActivator>();
-      expect(activators.any((a) => a.meta && a.trigger == LogicalKeyboardKey.slash), isTrue);
-      expect(activators.any((a) => a.control && a.trigger == LogicalKeyboardKey.slash), isTrue);
+      final activators = helpBindings
+          .map((b) => b.activator)
+          .cast<SingleActivator>();
+      expect(
+        activators.any((a) => a.meta && a.trigger == LogicalKeyboardKey.slash),
+        isTrue,
+      );
+      expect(
+        activators.any(
+          (a) => a.control && a.trigger == LogicalKeyboardKey.slash,
+        ),
+        isTrue,
+      );
     });
 
     test('declares Esc for dismissing overlays', () {
-      final escBindings =
-          bindings.where((b) => b.intent is DismissOverlayIntent).toList();
+      final escBindings = bindings
+          .where((b) => b.intent is DismissOverlayIntent)
+          .toList();
       expect(escBindings, hasLength(1));
       final activator = escBindings.single.activator as SingleActivator;
       expect(activator.trigger, LogicalKeyboardKey.escape);
