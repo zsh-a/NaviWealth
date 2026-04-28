@@ -8,9 +8,11 @@ import '../features/home/home_page.dart';
 import '../features/settings/settings_page.dart';
 import '../l10n/gen/app_localizations.dart';
 
-final appRouterProvider = Provider<GoRouter>((ref) {
+/// Builds the app's [GoRouter]. Exposed (rather than inlined in the provider)
+/// so tests can construct a router seeded at an arbitrary deep-link location.
+GoRouter buildAppRouter({String initialLocation = '/'}) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: initialLocation,
     routes: [
       ShellRoute(
         builder: (context, state, child) => _RootShell(child: child),
@@ -39,7 +41,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-});
+}
+
+final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter());
 
 class _RootShell extends StatelessWidget {
   const _RootShell({required this.child});
