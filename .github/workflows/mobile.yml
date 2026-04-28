@@ -52,7 +52,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mobile-coverage
           path: apps/mobile/coverage/lcov.info
@@ -75,7 +75,7 @@ jobs:
         # Fails the build if app-cn-base.woff2 exceeds the 250 KB budget.
         run: tool/build-cn-fonts.sh
       - run: flutter build web --release --source-maps
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: mobile-web-build
           path: apps/mobile/build/web

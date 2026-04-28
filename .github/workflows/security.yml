@@ -36,7 +36,7 @@ jobs:
         run: dart pub outdated --mode=outdated
       - name: Capture outdated report (JSON)
         run: dart pub outdated --json > pub-outdated.json || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: pub-outdated
           path: apps/mobile/pub-outdated.json
