@@ -136,4 +136,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonError => '出错了';
+
+  @override
+  String get deferredLoadFailedTitle => '该页面加载失败';
+
+  @override
+  String get deferredLoadRetry => '重试';
 }

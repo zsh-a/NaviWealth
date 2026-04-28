@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/analytics/analytics_page.dart';
-import '../features/assets/assets_page.dart';
+// Tabs other than home are split into their own dart2js part files; each part
+// is loaded the first time the user navigates to that route. Home ships in
+// main.dart.js to avoid a part-file fetch on first paint. See
+// docs/web-bundle.md for the resulting bundle layout.
+import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
+import '../features/assets/assets_page.dart' deferred as assets_lib;
 import '../features/home/home_page.dart';
-import '../features/settings/settings_page.dart';
+import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
+import 'deferred_route.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -23,17 +28,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/assets',
             name: 'assets',
-            builder: (context, state) => const AssetsPage(),
+            builder: (context, state) => DeferredRoute(
+              load: assets_lib.loadLibrary,
+              builder: (_) => assets_lib.AssetsPage(),
+            ),
           ),
           GoRoute(
             path: '/analytics',
             name: 'analytics',
-            builder: (context, state) => const AnalyticsPage(),
+            builder: (context, state) => DeferredRoute(
+              load: analytics_lib.loadLibrary,
+              builder: (_) => analytics_lib.AnalyticsPage(),
+            ),
           ),
           GoRoute(
             path: '/settings',
             name: 'settings',
-            builder: (context, state) => const SettingsPage(),
+            builder: (context, state) => DeferredRoute(
+              load: settings_lib.loadLibrary,
+              builder: (_) => settings_lib.SettingsPage(),
+            ),
           ),
         ],
       ),

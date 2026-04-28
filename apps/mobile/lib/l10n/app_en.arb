@@ -68,5 +68,11 @@
   "commonSave": "Save",
   "commonClose": "Close",
   "commonLoading": "Loading…",
-  "commonError": "Something went wrong"
+  "commonError": "Something went wrong",
+
+  "deferredLoadFailedTitle": "Couldn't load this section",
+  "@deferredLoadFailedTitle": {
+    "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
+  },
+  "deferredLoadRetry": "Retry"
 }

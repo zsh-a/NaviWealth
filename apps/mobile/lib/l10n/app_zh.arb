@@ -46,5 +46,8 @@
   "commonSave": "保存",
   "commonClose": "关闭",
   "commonLoading": "加载中…",
-  "commonError": "出错了"
+  "commonError": "出错了",
+
+  "deferredLoadFailedTitle": "该页面加载失败",
+  "deferredLoadRetry": "重试"
 }

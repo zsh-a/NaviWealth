@@ -141,4 +141,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonError => 'Something went wrong';
+
+  @override
+  String get deferredLoadFailedTitle => 'Couldn\'t load this section';
+
+  @override
+  String get deferredLoadRetry => 'Retry';
 }

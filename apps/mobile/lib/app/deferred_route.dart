@@ -1,0 +1,117 @@
+import 'package:flutter/material.dart';
+
+import '../l10n/gen/app_localizations.dart';
+
+/// Wraps a route whose page widget lives in a `deferred as` library.
+///
+/// On first navigation the part file is fetched and parsed; subsequent visits
+/// resolve synchronously because [Future] returned by `loadLibrary` caches.
+/// A retry path is exposed so a transient network failure (offline, flaky
+/// CDN) doesn't leave the user stuck on an error scaffold.
+class DeferredRoute extends StatefulWidget {
+  const DeferredRoute({
+    super.key,
+    required this.load,
+    required this.builder,
+    this.placeholder,
+  });
+
+  /// Typically `someLib.loadLibrary` — the function `dart:deferred` synthesizes.
+  final Future<void> Function() load;
+
+  /// Built only after [load] resolves successfully.
+  final WidgetBuilder builder;
+
+  /// Optional override for the in-flight indicator. Defaults to a centered
+  /// progress ring inside a [Scaffold] so the bottom nav bar from the shell
+  /// stays anchored.
+  final Widget? placeholder;
+
+  @override
+  State<DeferredRoute> createState() => _DeferredRouteState();
+}
+
+class _DeferredRouteState extends State<DeferredRoute> {
+  late Future<void> _future = widget.load();
+
+  void _retry() {
+    setState(() {
+      _future = widget.load();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return widget.placeholder ?? const _DeferredLoading();
+        }
+        if (snapshot.hasError) {
+          return _DeferredError(error: snapshot.error!, onRetry: _retry);
+        }
+        return widget.builder(context);
+      },
+    );
+  }
+}
+
+class _DeferredLoading extends StatelessWidget {
+  const _DeferredLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+}
+
+class _DeferredError extends StatelessWidget {
+  const _DeferredError({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.cloud_off_outlined,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.deferredLoadFailedTitle,
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$error',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: Text(l10n.deferredLoadRetry),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
