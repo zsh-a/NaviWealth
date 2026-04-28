@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
+import '../../core/sync/sync_tables.dart';
 import '../domain/enums.dart';
 import '../domain/hlc.dart';
 import 'connection.dart';
@@ -56,22 +57,41 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
+  /// FIR-34: v2 introduces the SyncEngine outbox + cursor key/value store on
+  /// top of the Drift-managed entity tables. Migrations apply each `v -> v+1`
+  /// step in order; new releases must keep prior steps intact.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _createIndexes(this);
+      await _createSyncTables(this);
     },
     onUpgrade: (m, from, to) async {
-      // No upgrades yet — every release ships v1.
+      for (var v = from + 1; v <= to; v++) {
+        switch (v) {
+          case 2:
+            await _createSyncTables(this);
+          default:
+            throw StateError(
+              'No migration registered for schema upgrade to v$v.',
+            );
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+}
+
+Future<void> _createSyncTables(AppDatabase db) async {
+  for (final stmt in syncTableDdl) {
+    await db.customStatement(stmt);
+  }
 }
 
 /// Indexes that aren't expressible inline on Drift `Table` getters.
