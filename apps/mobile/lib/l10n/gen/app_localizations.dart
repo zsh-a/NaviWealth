@@ -344,6 +344,17 @@ abstract class AppLocalizations {
   /// **'Something went wrong'**
   String get commonError;
 
+  /// Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this section'**
+  String get deferredLoadFailedTitle;
+
+  /// No description provided for @deferredLoadRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get deferredLoadRetry;
   /// Title of the shortcut help dialog (Cmd/Ctrl+/)
   ///
   /// In en, this message translates to:
