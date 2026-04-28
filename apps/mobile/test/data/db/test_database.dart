@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 
-import 'package:naviwealth/core/db/app_database.dart';
+import 'package:naviwealth/data/db/app_database.dart';
 
 /// Builds an in-memory [AppDatabase] suitable for unit tests.
 ///
@@ -13,7 +13,7 @@ AppDatabase makeTestDatabase() {
   // silence drift's "multiple databases" warning so test output stays
   // readable. Production code only ever creates one.
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  return AppDatabase.forTesting(
+  return AppDatabase(
     DatabaseConnection(NativeDatabase.memory(logStatements: false)),
   );
 }
