@@ -84,8 +84,7 @@ Future<GoRouter> _pumpRouter(
   return router;
 }
 
-String _path(GoRouter router) =>
-    router.routeInformationProvider.value.uri.path;
+String _path(GoRouter router) => router.routeInformationProvider.value.uri.path;
 
 void main() {
   testWidgets('no guards → original path renders', (tester) async {

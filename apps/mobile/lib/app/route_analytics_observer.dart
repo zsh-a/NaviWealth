@@ -98,9 +98,7 @@ class LoggerPageViewSink implements PageViewSink {
   @override
   void recordPageView(PageViewEvent event) {
     final from = event.previousName ?? '∅';
-    _logger.i(
-      'page_view ${event.transition} ${event.name} (from $from)',
-    );
+    _logger.i('page_view ${event.transition} ${event.name} (from $from)');
   }
 }
 

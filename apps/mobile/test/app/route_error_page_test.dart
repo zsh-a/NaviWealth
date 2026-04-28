@@ -50,5 +50,4 @@ void main() {
     expect(find.text('home'), findsOneWidget);
     expect(router.routeInformationProvider.value.uri.path, '/');
   });
-
 }

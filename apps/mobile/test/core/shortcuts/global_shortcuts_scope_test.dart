@@ -34,8 +34,9 @@ Future<void> _runOnDesktop(
 
 void main() {
   group('GlobalShortcutsScope', () {
-    testWidgets('digit key dispatches SwitchPrimaryTabIntent with the index',
-        (tester) async {
+    testWidgets('digit key dispatches SwitchPrimaryTabIntent with the index', (
+      tester,
+    ) async {
       await _runOnDesktop(() async {
         final dispatched = <int>[];
         await tester.pumpWidget(
@@ -83,8 +84,9 @@ void main() {
       });
     });
 
-    testWidgets('digit keys are suppressed while a TextField has focus',
-        (tester) async {
+    testWidgets('digit keys are suppressed while a TextField has focus', (
+      tester,
+    ) async {
       await _runOnDesktop(() async {
         final dispatched = <int>[];
         final controller = TextEditingController();
@@ -150,35 +152,33 @@ void main() {
     });
   });
 
-  testWidgets('is a transparent passthrough on native mobile platforms',
-      (tester) async {
+  testWidgets('is a transparent passthrough on native mobile platforms', (
+    tester,
+  ) async {
     // kIsWeb is a compile-time constant so we can only assert the native
     // mobile branch here. On Web the scope is always active, which is
     // covered by the desktop tests above.
     if (kIsWeb) return;
 
-    await _runOnDesktop(
-      platform: TargetPlatform.iOS,
-      () async {
-        final dispatched = <int>[];
-        await tester.pumpWidget(
-          _wrap(
-            GlobalShortcutsScope(
-              onSwitchPrimaryTab: dispatched.add,
-              onOpenCommandPalette: () {},
-              child: const Scaffold(
-                body: Focus(autofocus: true, child: SizedBox()),
-              ),
+    await _runOnDesktop(platform: TargetPlatform.iOS, () async {
+      final dispatched = <int>[];
+      await tester.pumpWidget(
+        _wrap(
+          GlobalShortcutsScope(
+            onSwitchPrimaryTab: dispatched.add,
+            onOpenCommandPalette: () {},
+            child: const Scaffold(
+              body: Focus(autofocus: true, child: SizedBox()),
             ),
           ),
-        );
-        await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit2);
-        await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit2);
+      await tester.pumpAndSettle();
 
-        expect(dispatched, isEmpty);
-      },
-    );
+      expect(dispatched, isEmpty);
+    });
   });
 }
