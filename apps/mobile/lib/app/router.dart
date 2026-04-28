@@ -15,6 +15,10 @@ import '../features/assets/cash_form_page.dart';
 import '../features/assets/deposit_form_page.dart';
 import '../features/assets/wealth_product_form_page.dart';
 import '../features/home/home_page.dart';
+import '../features/liabilities/ui/liabilities_page.dart'
+    deferred as liabilities_lib;
+import '../features/liabilities/ui/liability_detail_page.dart'
+    deferred as liability_detail_lib;
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -74,6 +78,28 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'new/wealth',
                 name: 'asset-new-wealth',
                 builder: (context, state) => const WealthProductFormPage(),
+              ),
+              GoRoute(
+                path: 'liabilities',
+                name: 'liabilities',
+                builder: (context, state) => DeferredRoute(
+                  load: liabilities_lib.loadLibrary,
+                  builder: (_) => liabilities_lib.LiabilitiesPage(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    name: 'liabilityDetail',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return DeferredRoute(
+                        load: liability_detail_lib.loadLibrary,
+                        builder: (_) =>
+                            liability_detail_lib.LiabilityDetailPage(id: id),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: ':assetId',

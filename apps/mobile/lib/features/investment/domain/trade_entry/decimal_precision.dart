@@ -21,6 +21,9 @@ class DecimalPrecisionRules {
       case AssetType.crypto:
         return 18;
       case AssetType.cash:
+      case AssetType.bankDepositDemand:
+      case AssetType.bankDepositTerm:
+      case AssetType.wealthProduct:
         return 4;
       case AssetType.bond:
         return 6;

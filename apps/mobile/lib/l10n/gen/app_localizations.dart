@@ -200,6 +200,306 @@ abstract class AppLocalizations {
   /// **'Add asset'**
   String get assetsAddAction;
 
+  /// Tile on the Assets page that opens the liabilities subscreen
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities & repayment plans'**
+  String get assetsLiabilitiesLink;
+
+  /// No description provided for @liabilitiesAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get liabilitiesAppBarTitle;
+
+  /// No description provided for @liabilitiesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No liabilities yet. Add a mortgage, car loan, credit card or consumer loan to track repayment.'**
+  String get liabilitiesEmptyHint;
+
+  /// No description provided for @liabilitiesAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add liability'**
+  String get liabilitiesAddAction;
+
+  /// No description provided for @liabilityTypeMortgage.
+  ///
+  /// In en, this message translates to:
+  /// **'Mortgage'**
+  String get liabilityTypeMortgage;
+
+  /// No description provided for @liabilityTypeCarLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Car loan'**
+  String get liabilityTypeCarLoan;
+
+  /// No description provided for @liabilityTypeCreditCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit card'**
+  String get liabilityTypeCreditCard;
+
+  /// No description provided for @liabilityTypeConsumerLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Consumer loan'**
+  String get liabilityTypeConsumerLoan;
+
+  /// No description provided for @liabilityTypeStudentLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Student loan'**
+  String get liabilityTypeStudentLoan;
+
+  /// No description provided for @liabilityTypeMarginLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin loan'**
+  String get liabilityTypeMarginLoan;
+
+  /// No description provided for @liabilityTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get liabilityTypeOther;
+
+  /// No description provided for @liabilityRateTypeFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed rate'**
+  String get liabilityRateTypeFixed;
+
+  /// No description provided for @liabilityRateTypeLpr.
+  ///
+  /// In en, this message translates to:
+  /// **'LPR floating'**
+  String get liabilityRateTypeLpr;
+
+  /// No description provided for @liabilityMethodEqualInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal installment'**
+  String get liabilityMethodEqualInstallment;
+
+  /// No description provided for @liabilityMethodEqualPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal principal'**
+  String get liabilityMethodEqualPrincipal;
+
+  /// No description provided for @liabilityFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get liabilityFieldName;
+
+  /// No description provided for @liabilityFieldType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get liabilityFieldType;
+
+  /// No description provided for @liabilityFieldPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get liabilityFieldPrincipal;
+
+  /// No description provided for @liabilityFieldInterestRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual rate (%)'**
+  String get liabilityFieldInterestRate;
+
+  /// No description provided for @liabilityFieldRateType.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate type'**
+  String get liabilityFieldRateType;
+
+  /// No description provided for @liabilityFieldTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Term (months)'**
+  String get liabilityFieldTerm;
+
+  /// No description provided for @liabilityFieldStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get liabilityFieldStartDate;
+
+  /// No description provided for @liabilityFieldMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Repayment method'**
+  String get liabilityFieldMethod;
+
+  /// No description provided for @liabilityFieldCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get liabilityFieldCurrency;
+
+  /// No description provided for @liabilityFieldStatementDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement day'**
+  String get liabilityFieldStatementDay;
+
+  /// No description provided for @liabilityFieldPaymentDueDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment due day'**
+  String get liabilityFieldPaymentDueDay;
+
+  /// No description provided for @liabilitySaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get liabilitySaveAction;
+
+  /// No description provided for @liabilityValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get liabilityValidationRequired;
+
+  /// No description provided for @liabilityValidationPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than zero'**
+  String get liabilityValidationPositive;
+
+  /// No description provided for @liabilityValidationDayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be 1–31'**
+  String get liabilityValidationDayOfMonth;
+
+  /// No description provided for @liabilitySummaryRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining principal'**
+  String get liabilitySummaryRemaining;
+
+  /// No description provided for @liabilitySummaryInterestPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest paid so far'**
+  String get liabilitySummaryInterestPaid;
+
+  /// No description provided for @liabilitySummaryInterestTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total interest cost'**
+  String get liabilitySummaryInterestTotal;
+
+  /// No description provided for @liabilitySummaryInterestRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest as share of total payments'**
+  String get liabilitySummaryInterestRatio;
+
+  /// No description provided for @liabilitySummaryProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {paid} of {total} periods'**
+  String liabilitySummaryProgress(int paid, int total);
+
+  /// No description provided for @liabilityScheduleHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Amortization schedule'**
+  String get liabilityScheduleHeading;
+
+  /// No description provided for @liabilityScheduleColPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'#'**
+  String get liabilityScheduleColPeriod;
+
+  /// No description provided for @liabilityScheduleColDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get liabilityScheduleColDue;
+
+  /// No description provided for @liabilityScheduleColPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get liabilityScheduleColPrincipal;
+
+  /// No description provided for @liabilityScheduleColInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get liabilityScheduleColInterest;
+
+  /// No description provided for @liabilityScheduleColRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get liabilityScheduleColRemaining;
+
+  /// No description provided for @liabilityScheduleColStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get liabilityScheduleColStatus;
+
+  /// No description provided for @liabilityScheduleStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get liabilityScheduleStatusPaid;
+
+  /// No description provided for @liabilityScheduleStatusDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get liabilityScheduleStatusDue;
+
+  /// No description provided for @liabilityScheduleMarkPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark paid'**
+  String get liabilityScheduleMarkPaid;
+
+  /// No description provided for @liabilityScheduleMarkPaidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark period {period} paid?'**
+  String liabilityScheduleMarkPaidConfirmTitle(int period);
+
+  /// No description provided for @liabilityScheduleMarkPaidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This records a {amount} liability-payment transaction dated today and cannot be undone from this screen.'**
+  String liabilityScheduleMarkPaidConfirmBody(String amount);
+
+  /// No description provided for @liabilityScheduleMarkPaidNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a payer account before marking periods paid.'**
+  String get liabilityScheduleMarkPaidNoAccount;
+
+  /// No description provided for @liabilityNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability not found'**
+  String get liabilityNotFound;
+
+  /// No description provided for @liabilityRevolvingNoSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit-card / revolving lines have no fixed amortization schedule.'**
+  String get liabilityRevolvingNoSchedule;
+
   /// No description provided for @analyticsAppBarTitle.
   ///
   /// In en, this message translates to:

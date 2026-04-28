@@ -32,6 +32,11 @@ class AssetsPage extends ConsumerWidget {
             tooltip: '账户管理',
             onPressed: () => context.go('/accounts'),
           ),
+          IconButton(
+            icon: const Icon(Icons.payments_outlined),
+            tooltip: '负债与还款计划',
+            onPressed: () => context.push('/assets/liabilities'),
+          ),
         ],
       ),
       body: assetsAsync.when(
@@ -81,6 +86,15 @@ class AssetsPage extends ConsumerWidget {
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.go('/assets/new/wealth');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_balance_outlined),
+              title: const Text('负债（房贷 / 车贷 / 信用卡 / 消费贷）'),
+              subtitle: const Text('录入并跟踪还款计划'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/assets/liabilities');
               },
             ),
           ],
