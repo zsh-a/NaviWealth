@@ -54,8 +54,7 @@ abstract class FxRateLookup {
 /// FX cache lands. The list is normalized at construction so callers can
 /// pass rates in any order.
 class InMemoryFxRateLookup implements FxRateLookup {
-  InMemoryFxRateLookup(Iterable<FxRate> rates)
-    : _byPair = _index(rates);
+  InMemoryFxRateLookup(Iterable<FxRate> rates) : _byPair = _index(rates);
 
   final Map<_PairKey, List<FxRate>> _byPair;
 

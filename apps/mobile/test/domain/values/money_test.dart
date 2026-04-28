@@ -48,15 +48,14 @@ void main() {
     });
 
     test('scale multiplies amount without changing currency', () {
-      expect(
-        m('100', 'USD').scale(Decimal.parse('1.05')),
-        m('105.00', 'USD'),
-      );
+      expect(m('100', 'USD').scale(Decimal.parse('1.05')), m('105.00', 'USD'));
     });
 
     test('comparison operators reject mismatched currencies', () {
-      expect(() => m('1', 'USD') < m('1', 'EUR'),
-          throwsA(isA<CurrencyMismatchError>()));
+      expect(
+        () => m('1', 'USD') < m('1', 'EUR'),
+        throwsA(isA<CurrencyMismatchError>()),
+      );
     });
 
     test('comparison operators work within a currency', () {

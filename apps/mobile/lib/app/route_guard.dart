@@ -43,11 +43,7 @@ final routeRefreshListenableProvider = Provider<Listenable>((ref) {
 /// Composes the registered [RouteGuard]s into a single `redirect` callback
 /// for [GoRouter]. Returns the first non-null redirect, or `null` if every
 /// guard says "go ahead".
-String? routerRedirect(
-  Ref ref,
-  BuildContext context,
-  GoRouterState state,
-) {
+String? routerRedirect(Ref ref, BuildContext context, GoRouterState state) {
   final guards = ref.read(routeGuardsProvider);
   for (final guard in guards) {
     final target = guard.redirect(state);

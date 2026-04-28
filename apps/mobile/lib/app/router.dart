@@ -6,8 +6,14 @@ import 'package:go_router/go_router.dart';
 // is loaded the first time the user navigates to that route. Home ships in
 // main.dart.js to avoid a part-file fetch on first paint. See
 // docs/web-bundle.md for the resulting bundle layout.
+import '../features/accounts/account_form_page.dart';
+import '../features/accounts/accounts_page.dart';
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
+import '../features/assets/asset_detail_page.dart';
 import '../features/assets/assets_page.dart' deferred as assets_lib;
+import '../features/assets/cash_form_page.dart';
+import '../features/assets/deposit_form_page.dart';
+import '../features/assets/wealth_product_form_page.dart';
 import '../features/home/home_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
@@ -30,10 +36,7 @@ const List<String> kPrimaryTabPaths = <String>[
 /// Builds the app's [GoRouter]. Exposed (rather than inlined in the provider)
 /// so tests can construct a router seeded at an arbitrary deep-link location
 /// and inject their own observers / guards through the [Ref].
-GoRouter buildAppRouter(
-  Ref ref, {
-  String initialLocation = '/',
-}) {
+GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
     observers: <NavigatorObserver>[ref.read(routeAnalyticsObserverProvider)],
@@ -56,6 +59,48 @@ GoRouter buildAppRouter(
               load: assets_lib.loadLibrary,
               builder: (_) => assets_lib.AssetsPage(),
             ),
+            routes: [
+              GoRoute(
+                path: 'new/cash',
+                name: 'asset-new-cash',
+                builder: (context, state) => const CashFormPage(),
+              ),
+              GoRoute(
+                path: 'new/deposit',
+                name: 'asset-new-deposit',
+                builder: (context, state) => const DepositFormPage(),
+              ),
+              GoRoute(
+                path: 'new/wealth',
+                name: 'asset-new-wealth',
+                builder: (context, state) => const WealthProductFormPage(),
+              ),
+              GoRoute(
+                path: ':assetId',
+                name: 'asset-detail',
+                builder: (context, state) =>
+                    AssetDetailPage(assetId: state.pathParameters['assetId']!),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/accounts',
+            name: 'accounts',
+            builder: (context, state) => const AccountsPage(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                name: 'account-new',
+                builder: (context, state) => const AccountFormPage(),
+              ),
+              GoRoute(
+                path: ':accountId',
+                name: 'account-detail',
+                builder: (context, state) => AccountFormPage(
+                  accountId: state.pathParameters['accountId'],
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: '/analytics',
@@ -92,13 +137,18 @@ class _RootShell extends StatelessWidget {
     final location = GoRouter.of(
       context,
     ).routeInformationProvider.value.uri.path;
-    final index = switch (location) {
-      '/' => 0,
-      '/assets' => 1,
-      '/analytics' => 2,
-      '/settings' => 3,
-      _ => 0,
-    };
+    // Sub-routes under `/assets` and `/accounts` keep the Assets tab
+    // highlighted: e.g. `/assets/new/cash` is "still" assets-tab content.
+    final int index;
+    if (location.startsWith('/assets') || location.startsWith('/accounts')) {
+      index = 1;
+    } else if (location.startsWith('/analytics')) {
+      index = 2;
+    } else if (location.startsWith('/settings')) {
+      index = 3;
+    } else {
+      index = 0;
+    }
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
