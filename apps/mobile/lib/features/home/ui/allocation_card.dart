@@ -6,6 +6,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
 
+
 /// Asset-allocation card: a donut chart of category totals plus a
 /// tappable legend that drills into the category's underlying assets.
 ///
@@ -93,6 +94,15 @@ class AllocationCard extends StatelessWidget {
                   const SizedBox(height: Spacing.s12),
                   legend,
                 ],
+                const SizedBox(height: Spacing.s8),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton.icon(
+                    onPressed: () => context.push('/rebalance'),
+                    icon: const Icon(Icons.balance, size: 18),
+                    label: Text(l10n.rebalanceNavLink),
+                  ),
+                ),
               ],
             );
           },

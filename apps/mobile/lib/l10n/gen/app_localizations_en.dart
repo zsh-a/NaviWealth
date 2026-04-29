@@ -908,4 +908,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get benchmarkIndexHsi => 'Hang Seng';
+
+  @override
+  String get rebalanceTitle => 'Rebalance';
+
+  @override
+  String get rebalanceSchemeTitle => 'Target scheme';
+
+  @override
+  String get rebalanceSchemeConservative => 'Conservative';
+
+  @override
+  String get rebalanceSchemeBalanced => 'Balanced';
+
+  @override
+  String get rebalanceSchemeAggressive => 'Aggressive';
+
+  @override
+  String get rebalanceSchemeCustom => 'Custom';
+
+  @override
+  String get rebalanceDriftTitle => 'Allocation drift';
+
+  @override
+  String rebalanceOverallDrift(String value) {
+    return 'Overall drift: $value';
+  }
+
+  @override
+  String get rebalanceBalanced => 'On target';
+
+  @override
+  String get rebalanceTradeTitle => 'Suggested trades';
+
+  @override
+  String get rebalanceBuy => 'Buy';
+
+  @override
+  String get rebalanceSell => 'Sell';
+
+  @override
+  String get rebalanceEstimatedFees => 'Estimated fees';
+
+  @override
+  String get rebalanceEstimatedTaxes => 'Estimated taxes';
+
+  @override
+  String get rebalanceDriftAfter => 'Drift after rebalance';
+
+  @override
+  String get rebalanceEmptyTitle => 'No data yet';
+
+  @override
+  String get rebalanceEmptyHint =>
+      'Add assets to see your allocation drift and rebalance suggestions.';
+
+  @override
+  String get rebalanceSettingsTooltip => 'Rebalance settings';
+
+  @override
+  String get rebalanceSettingsTitle => 'Settings';
+
+  @override
+  String get rebalanceWarningThreshold => 'Warning threshold';
+
+  @override
+  String get rebalanceCriticalThreshold => 'Critical threshold';
+
+  @override
+  String get rebalanceNavLink => 'Rebalance';
 }

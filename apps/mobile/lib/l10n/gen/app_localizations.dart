@@ -1685,6 +1685,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hang Seng'**
   String get benchmarkIndexHsi;
+
+  /// AppBar title for the rebalance page.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get rebalanceTitle;
+
+  /// No description provided for @rebalanceSchemeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Target scheme'**
+  String get rebalanceSchemeTitle;
+
+  /// No description provided for @rebalanceSchemeConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get rebalanceSchemeConservative;
+
+  /// No description provided for @rebalanceSchemeBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get rebalanceSchemeBalanced;
+
+  /// No description provided for @rebalanceSchemeAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get rebalanceSchemeAggressive;
+
+  /// No description provided for @rebalanceSchemeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get rebalanceSchemeCustom;
+
+  /// No description provided for @rebalanceDriftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation drift'**
+  String get rebalanceDriftTitle;
+
+  /// No description provided for @rebalanceOverallDrift.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall drift: {value}'**
+  String rebalanceOverallDrift(String value);
+
+  /// No description provided for @rebalanceBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'On target'**
+  String get rebalanceBalanced;
+
+  /// No description provided for @rebalanceTradeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested trades'**
+  String get rebalanceTradeTitle;
+
+  /// No description provided for @rebalanceBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get rebalanceBuy;
+
+  /// No description provided for @rebalanceSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get rebalanceSell;
+
+  /// No description provided for @rebalanceEstimatedFees.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated fees'**
+  String get rebalanceEstimatedFees;
+
+  /// No description provided for @rebalanceEstimatedTaxes.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated taxes'**
+  String get rebalanceEstimatedTaxes;
+
+  /// No description provided for @rebalanceDriftAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift after rebalance'**
+  String get rebalanceDriftAfter;
+
+  /// No description provided for @rebalanceEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get rebalanceEmptyTitle;
+
+  /// No description provided for @rebalanceEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add assets to see your allocation drift and rebalance suggestions.'**
+  String get rebalanceEmptyHint;
+
+  /// No description provided for @rebalanceSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance settings'**
+  String get rebalanceSettingsTooltip;
+
+  /// No description provided for @rebalanceSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get rebalanceSettingsTitle;
+
+  /// No description provided for @rebalanceWarningThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning threshold'**
+  String get rebalanceWarningThreshold;
+
+  /// No description provided for @rebalanceCriticalThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical threshold'**
+  String get rebalanceCriticalThreshold;
+
+  /// No description provided for @rebalanceNavLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get rebalanceNavLink;
 }
 
 class _AppLocalizationsDelegate

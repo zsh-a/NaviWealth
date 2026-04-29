@@ -869,4 +869,72 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkIndexHsi => '恒生';
+
+  @override
+  String get rebalanceTitle => '再平衡';
+
+  @override
+  String get rebalanceSchemeTitle => '目标方案';
+
+  @override
+  String get rebalanceSchemeConservative => '保守';
+
+  @override
+  String get rebalanceSchemeBalanced => '平衡';
+
+  @override
+  String get rebalanceSchemeAggressive => '激进';
+
+  @override
+  String get rebalanceSchemeCustom => '自定义';
+
+  @override
+  String get rebalanceDriftTitle => '偏离总览';
+
+  @override
+  String rebalanceOverallDrift(String value) {
+    return '整体偏离：$value';
+  }
+
+  @override
+  String get rebalanceBalanced => '在目标范围内';
+
+  @override
+  String get rebalanceTradeTitle => '建议交易';
+
+  @override
+  String get rebalanceBuy => '买入';
+
+  @override
+  String get rebalanceSell => '卖出';
+
+  @override
+  String get rebalanceEstimatedFees => '估算费用';
+
+  @override
+  String get rebalanceEstimatedTaxes => '估算税费';
+
+  @override
+  String get rebalanceDriftAfter => '再平衡后偏离';
+
+  @override
+  String get rebalanceEmptyTitle => '暂无数据';
+
+  @override
+  String get rebalanceEmptyHint => '添加资产后即可查看偏离与再平衡建议。';
+
+  @override
+  String get rebalanceSettingsTooltip => '再平衡设置';
+
+  @override
+  String get rebalanceSettingsTitle => '设置';
+
+  @override
+  String get rebalanceWarningThreshold => '预警阈值';
+
+  @override
+  String get rebalanceCriticalThreshold => '严重阈值';
+
+  @override
+  String get rebalanceNavLink => '再平衡';
 }

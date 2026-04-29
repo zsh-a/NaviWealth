@@ -449,5 +449,32 @@
   "benchmarkIndexHs300": "CSI 300",
   "benchmarkIndexSp500": "S&P 500",
   "benchmarkIndexNasdaq": "NASDAQ",
-  "benchmarkIndexHsi": "Hang Seng"
+  "benchmarkIndexHsi": "Hang Seng",
+
+  "rebalanceTitle": "Rebalance",
+  "@rebalanceTitle": { "description": "AppBar title for the rebalance page." },
+  "rebalanceSchemeTitle": "Target scheme",
+  "rebalanceSchemeConservative": "Conservative",
+  "rebalanceSchemeBalanced": "Balanced",
+  "rebalanceSchemeAggressive": "Aggressive",
+  "rebalanceSchemeCustom": "Custom",
+  "rebalanceDriftTitle": "Allocation drift",
+  "rebalanceOverallDrift": "Overall drift: {value}",
+  "@rebalanceOverallDrift": {
+    "placeholders": { "value": { "type": "String", "example": "7.0%" } }
+  },
+  "rebalanceBalanced": "On target",
+  "rebalanceTradeTitle": "Suggested trades",
+  "rebalanceBuy": "Buy",
+  "rebalanceSell": "Sell",
+  "rebalanceEstimatedFees": "Estimated fees",
+  "rebalanceEstimatedTaxes": "Estimated taxes",
+  "rebalanceDriftAfter": "Drift after rebalance",
+  "rebalanceEmptyTitle": "No data yet",
+  "rebalanceEmptyHint": "Add assets to see your allocation drift and rebalance suggestions.",
+  "rebalanceSettingsTooltip": "Rebalance settings",
+  "rebalanceSettingsTitle": "Settings",
+  "rebalanceWarningThreshold": "Warning threshold",
+  "rebalanceCriticalThreshold": "Critical threshold",
+  "rebalanceNavLink": "Rebalance"
 }

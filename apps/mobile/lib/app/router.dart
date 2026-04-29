@@ -25,6 +25,8 @@ import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
+import '../features/rebalance/ui/rebalance_page.dart'
+    deferred as rebalance_lib;
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -59,6 +61,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     physical_detail_lib.loadLibrary(),
     corp_action_lib.loadLibrary(),
     devices_lib.loadLibrary(),
+    rebalance_lib.loadLibrary(),
   ]);
 }
 
@@ -184,6 +187,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             builder: (context, state) => DeferredRoute(
               load: analytics_lib.loadLibrary,
               builder: (_) => analytics_lib.AnalyticsPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/rebalance',
+            name: 'rebalance',
+            builder: (context, state) => DeferredRoute(
+              load: rebalance_lib.loadLibrary,
+              builder: (_) => rebalance_lib.RebalancePage(),
             ),
           ),
           GoRoute(
