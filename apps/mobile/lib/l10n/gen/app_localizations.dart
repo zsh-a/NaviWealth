@@ -1147,6 +1147,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Later'**
   String get pwaUpdateDismiss;
+
+  /// Subtitle on the login screen, sits below the app name.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authLoginTitle;
+
+  /// Primary action button on the login form.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authLoginSubmit;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authPasswordShowTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get authPasswordShowTooltip;
+
+  /// No description provided for @authPasswordHideTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get authPasswordHideTooltip;
+
+  /// No description provided for @authEmailErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address.'**
+  String get authEmailErrorEmpty;
+
+  /// No description provided for @authEmailErrorInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That doesn\'t look like a valid email.'**
+  String get authEmailErrorInvalid;
+
+  /// No description provided for @authPasswordErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password.'**
+  String get authPasswordErrorEmpty;
+
+  /// No description provided for @authPasswordErrorTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters.'**
+  String get authPasswordErrorTooShort;
+
+  /// No description provided for @authLoginErrorInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or password is incorrect.'**
+  String get authLoginErrorInvalidCredentials;
+
+  /// No description provided for @authLoginErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the server. Check your connection and try again.'**
+  String get authLoginErrorNetwork;
+
+  /// No description provided for @authLoginErrorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is having trouble. Please try again in a minute.'**
+  String get authLoginErrorServer;
+
+  /// No description provided for @authLoginErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed. Please try again.'**
+  String get authLoginErrorGeneric;
+
+  /// Inline banner shown on the login screen after the auth controller dropped an expired session.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired. Please sign in again.'**
+  String get authLoginNoticeSessionExpired;
+
+  /// Settings row that opens the device list.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get settingsDevicesTitle;
+
+  /// No description provided for @settingsDevicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View signed-in devices and revoke access'**
+  String get settingsDevicesSubtitle;
+
+  /// AppBar title on the devices list page.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed-in devices'**
+  String get authDevicesTitle;
+
+  /// Fallback name for devices that signed in without a device_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed device'**
+  String get authDeviceUnnamed;
+
+  /// Chip on the row representing the currently signed-in device.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get authDeviceCurrent;
+
+  /// Subtitle of a device row showing when it last touched the API.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {timestamp}'**
+  String authDeviceLastSeen(String timestamp);
+
+  /// No description provided for @authDeviceRevokeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign this device out'**
+  String get authDeviceRevokeTooltip;
+
+  /// No description provided for @authDeviceRevokeDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign this device out?'**
+  String get authDeviceRevokeDialogTitle;
+
+  /// No description provided for @authDeviceRevokeDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign {device} out? It will need to log in again to sync.'**
+  String authDeviceRevokeDialogBody(String device);
+
+  /// No description provided for @authDeviceRevokeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get authDeviceRevokeConfirm;
+
+  /// No description provided for @authDeviceRevokeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t revoke that device. Please try again.'**
+  String get authDeviceRevokeError;
+
+  /// No description provided for @authDevicesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your devices.'**
+  String get authDevicesLoadError;
+
+  /// No description provided for @authLogoutCurrentTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get authLogoutCurrentTooltip;
+
+  /// No description provided for @authLogoutDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get authLogoutDialogTitle;
+
+  /// No description provided for @authLogoutDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need to sign in again on this device.'**
+  String get authLogoutDialogBody;
+
+  /// No description provided for @authLogoutDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get authLogoutDialogConfirm;
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -21,6 +22,13 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.account_circle_outlined),
             title: Text(l10n.settingsAccountTitle),
             subtitle: Text(l10n.settingsAccountSubtitle),
+          ),
+          ListTile(
+            leading: const Icon(Icons.devices_outlined),
+            title: Text(l10n.settingsDevicesTitle),
+            subtitle: Text(l10n.settingsDevicesSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.goNamed('devices'),
           ),
           ListTile(
             leading: const Icon(Icons.currency_exchange),

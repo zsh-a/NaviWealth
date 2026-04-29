@@ -557,4 +557,101 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pwaUpdateDismiss => '稍后';
+
+  @override
+  String get authLoginTitle => '欢迎回来';
+
+  @override
+  String get authLoginSubmit => '登录';
+
+  @override
+  String get authEmailLabel => '邮箱';
+
+  @override
+  String get authPasswordLabel => '密码';
+
+  @override
+  String get authPasswordShowTooltip => '显示密码';
+
+  @override
+  String get authPasswordHideTooltip => '隐藏密码';
+
+  @override
+  String get authEmailErrorEmpty => '请输入邮箱地址。';
+
+  @override
+  String get authEmailErrorInvalid => '邮箱格式不正确。';
+
+  @override
+  String get authPasswordErrorEmpty => '请输入密码。';
+
+  @override
+  String get authPasswordErrorTooShort => '密码至少需要 8 位。';
+
+  @override
+  String get authLoginErrorInvalidCredentials => '邮箱或密码不正确。';
+
+  @override
+  String get authLoginErrorNetwork => '无法连接服务器，请检查网络后重试。';
+
+  @override
+  String get authLoginErrorServer => '服务器暂时无响应，请稍后重试。';
+
+  @override
+  String get authLoginErrorGeneric => '登录失败，请重试。';
+
+  @override
+  String get authLoginNoticeSessionExpired => '登录已过期，请重新登录。';
+
+  @override
+  String get settingsDevicesTitle => '已登录设备';
+
+  @override
+  String get settingsDevicesSubtitle => '查看已登录的设备并远程登出';
+
+  @override
+  String get authDevicesTitle => '已登录设备';
+
+  @override
+  String get authDeviceUnnamed => '未命名设备';
+
+  @override
+  String get authDeviceCurrent => '当前设备';
+
+  @override
+  String authDeviceLastSeen(String timestamp) {
+    return '最近活跃 $timestamp';
+  }
+
+  @override
+  String get authDeviceRevokeTooltip => '登出此设备';
+
+  @override
+  String get authDeviceRevokeDialogTitle => '登出该设备？';
+
+  @override
+  String authDeviceRevokeDialogBody(String device) {
+    return '确定要登出 $device 吗？该设备需重新登录后才能继续同步。';
+  }
+
+  @override
+  String get authDeviceRevokeConfirm => '登出';
+
+  @override
+  String get authDeviceRevokeError => '登出失败，请重试。';
+
+  @override
+  String get authDevicesLoadError => '无法加载设备列表。';
+
+  @override
+  String get authLogoutCurrentTooltip => '登出';
+
+  @override
+  String get authLogoutDialogTitle => '确定要登出？';
+
+  @override
+  String get authLogoutDialogBody => '登出后需要在此设备上重新登录。';
+
+  @override
+  String get authLogoutDialogConfirm => '登出';
 }

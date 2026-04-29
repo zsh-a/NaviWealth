@@ -6,12 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/format/formatters.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/providers.dart';
+import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/auth/data/auth_controller.dart';
+import '../features/auth/data/auth_route_guard.dart';
+import 'route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
 /// error pipeline (Flutter framework errors, async zone errors, and the
@@ -33,6 +38,34 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     overrides: [
       if (config != null) appConfigProvider.overrideWithValue(config),
       sharedPreferencesProvider.overrideWithValue(prefs),
+      // Plug the AuthRouteGuard into FIR-15's empty default. The guard
+      // reads `authControllerProvider` per redirect; auth state changes
+      // bump `routeRedirectVersionProvider` which makes go_router re-run
+      // the full redirect chain.
+      routeGuardsProvider.overrideWith(
+        (ref) => <RouteGuard>[ref.watch(authRouteGuardProvider)],
+      ),
+      // Feed the access token to the SyncEngine so /sync/push and
+      // /sync/pull go out authed once a session is active. The fetcher
+      // closes over Riverpod's container, so token rotation is picked up
+      // on every request without re-creating the SyncEngine.
+      syncAuthTokenProvider.overrideWith(
+        (ref) => () async => ref
+            .read(authControllerProvider.notifier)
+            .currentSession()
+            ?.accessToken,
+      ),
+      // Wire the AuthInterceptor's hooks to the live controller so any
+      // future `authedDioProvider` consumer (feature endpoints that need
+      // refresh-on-401) gets the correct session + recovery behaviour.
+      core_auth.authSessionReaderProvider.overrideWith(
+        (ref) => () =>
+            ref.read(authControllerProvider.notifier).currentSession(),
+      ),
+      core_auth.authOnUnauthorizedProvider.overrideWith(
+        (ref) =>
+            () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
+      ),
     ],
   );
   // Force eager creation so AppLogger.instance is ready before any error

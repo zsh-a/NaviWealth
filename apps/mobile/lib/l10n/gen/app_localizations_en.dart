@@ -575,4 +575,109 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pwaUpdateDismiss => 'Later';
+
+  @override
+  String get authLoginTitle => 'Welcome back';
+
+  @override
+  String get authLoginSubmit => 'Sign in';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authPasswordShowTooltip => 'Show password';
+
+  @override
+  String get authPasswordHideTooltip => 'Hide password';
+
+  @override
+  String get authEmailErrorEmpty => 'Enter your email address.';
+
+  @override
+  String get authEmailErrorInvalid => 'That doesn\'t look like a valid email.';
+
+  @override
+  String get authPasswordErrorEmpty => 'Enter your password.';
+
+  @override
+  String get authPasswordErrorTooShort =>
+      'Password must be at least 8 characters.';
+
+  @override
+  String get authLoginErrorInvalidCredentials =>
+      'Email or password is incorrect.';
+
+  @override
+  String get authLoginErrorNetwork =>
+      'Couldn\'t reach the server. Check your connection and try again.';
+
+  @override
+  String get authLoginErrorServer =>
+      'The server is having trouble. Please try again in a minute.';
+
+  @override
+  String get authLoginErrorGeneric => 'Sign-in failed. Please try again.';
+
+  @override
+  String get authLoginNoticeSessionExpired =>
+      'Your session expired. Please sign in again.';
+
+  @override
+  String get settingsDevicesTitle => 'Devices';
+
+  @override
+  String get settingsDevicesSubtitle =>
+      'View signed-in devices and revoke access';
+
+  @override
+  String get authDevicesTitle => 'Signed-in devices';
+
+  @override
+  String get authDeviceUnnamed => 'Unnamed device';
+
+  @override
+  String get authDeviceCurrent => 'This device';
+
+  @override
+  String authDeviceLastSeen(String timestamp) {
+    return 'Last seen $timestamp';
+  }
+
+  @override
+  String get authDeviceRevokeTooltip => 'Sign this device out';
+
+  @override
+  String get authDeviceRevokeDialogTitle => 'Sign this device out?';
+
+  @override
+  String authDeviceRevokeDialogBody(String device) {
+    return 'Sign $device out? It will need to log in again to sync.';
+  }
+
+  @override
+  String get authDeviceRevokeConfirm => 'Sign out';
+
+  @override
+  String get authDeviceRevokeError =>
+      'Couldn\'t revoke that device. Please try again.';
+
+  @override
+  String get authDevicesLoadError => 'Couldn\'t load your devices.';
+
+  @override
+  String get authLogoutCurrentTooltip => 'Sign out';
+
+  @override
+  String get authLogoutDialogTitle => 'Sign out?';
+
+  @override
+  String get authLogoutDialogBody =>
+      'You\'ll need to sign in again on this device.';
+
+  @override
+  String get authLogoutDialogConfirm => 'Sign out';
 }
