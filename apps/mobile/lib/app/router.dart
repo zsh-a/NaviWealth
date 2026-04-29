@@ -21,6 +21,7 @@ import '../features/auth/presentation/login_page.dart';
 import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
+import '../features/investment/presentation/trade_entry_form_page.dart';
 import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
@@ -116,6 +117,18 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   load: corp_action_lib.loadLibrary,
                   builder: (_) => corp_action_lib.CorporateActionEntryRoute(),
                 ),
+              ),
+              GoRoute(
+                path: 'trade',
+                name: 'trade-entry',
+                builder: (context, state) {
+                  final assetId = state.uri.queryParameters['assetId'];
+                  final accountId = state.uri.queryParameters['accountId'];
+                  return TradeEntryFormPage(
+                    assetId: assetId,
+                    accountId: accountId,
+                  );
+                },
               ),
               GoRoute(
                 path: 'physical/:id',
