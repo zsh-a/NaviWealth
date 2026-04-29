@@ -1328,6 +1328,142 @@ abstract class AppLocalizations {
   /// **'Sign out'**
   String get authLogoutDialogConfirm;
 
+  /// No description provided for @dashboardAllocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset allocation'**
+  String get dashboardAllocationTitle;
+
+  /// No description provided for @dashboardTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth trend'**
+  String get dashboardTrendTitle;
+
+  /// No description provided for @dashboardCategoryStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Stocks'**
+  String get dashboardCategoryStock;
+
+  /// No description provided for @dashboardCategoryEtf.
+  ///
+  /// In en, this message translates to:
+  /// **'ETFs'**
+  String get dashboardCategoryEtf;
+
+  /// No description provided for @dashboardCategoryBondsAndFunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonds & funds'**
+  String get dashboardCategoryBondsAndFunds;
+
+  /// No description provided for @dashboardCategoryCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get dashboardCategoryCash;
+
+  /// No description provided for @dashboardCategoryCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get dashboardCategoryCrypto;
+
+  /// No description provided for @dashboardCategoryRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate'**
+  String get dashboardCategoryRealEstate;
+
+  /// No description provided for @dashboardCategoryVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicles'**
+  String get dashboardCategoryVehicle;
+
+  /// No description provided for @dashboardCategoryLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get dashboardCategoryLiability;
+
+  /// No description provided for @dashboardRange1M.
+  ///
+  /// In en, this message translates to:
+  /// **'1M'**
+  String get dashboardRange1M;
+
+  /// No description provided for @dashboardRange3M.
+  ///
+  /// In en, this message translates to:
+  /// **'3M'**
+  String get dashboardRange3M;
+
+  /// No description provided for @dashboardRange6M.
+  ///
+  /// In en, this message translates to:
+  /// **'6M'**
+  String get dashboardRange6M;
+
+  /// No description provided for @dashboardRange1Y.
+  ///
+  /// In en, this message translates to:
+  /// **'1Y'**
+  String get dashboardRange1Y;
+
+  /// No description provided for @dashboardRange3Y.
+  ///
+  /// In en, this message translates to:
+  /// **'3Y'**
+  String get dashboardRange3Y;
+
+  /// No description provided for @dashboardRangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get dashboardRangeAll;
+
+  /// No description provided for @dashboardRangeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get dashboardRangeCustom;
+
+  /// No description provided for @dashboardDrillDownItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String dashboardDrillDownItemCount(int count);
+
+  /// No description provided for @dashboardNetWorthBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Assets {assets} − Liabilities {liabilities} ({currency})'**
+  String dashboardNetWorthBreakdown(
+    String assets,
+    String liabilities,
+    String currency,
+  );
+
+  /// No description provided for @dashboardSnapshotError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your dashboard: {error}'**
+  String dashboardSnapshotError(String error);
+
+  /// No description provided for @dashboardTrendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the trend chart: {error}'**
+  String dashboardTrendError(String error);
+
+  /// No description provided for @dashboardTrendFlatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend line is flat — no historical valuation snapshots yet for the assets in this window.'**
+  String get dashboardTrendFlatHint;
+
   /// AppBar title for the analytics tab.
   ///
   /// In en, this message translates to:

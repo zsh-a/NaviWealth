@@ -653,6 +653,89 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authLogoutDialogConfirm => '登出';
 
   @override
+  String get dashboardAllocationTitle => '大类资产分布';
+
+  @override
+  String get dashboardTrendTitle => '净资产趋势';
+
+  @override
+  String get dashboardCategoryStock => '股票';
+
+  @override
+  String get dashboardCategoryEtf => 'ETF';
+
+  @override
+  String get dashboardCategoryBondsAndFunds => '债券与基金';
+
+  @override
+  String get dashboardCategoryCash => '现金';
+
+  @override
+  String get dashboardCategoryCrypto => '加密资产';
+
+  @override
+  String get dashboardCategoryRealEstate => '房产';
+
+  @override
+  String get dashboardCategoryVehicle => '车辆';
+
+  @override
+  String get dashboardCategoryLiability => '负债';
+
+  @override
+  String get dashboardRange1M => '1月';
+
+  @override
+  String get dashboardRange3M => '3月';
+
+  @override
+  String get dashboardRange6M => '6月';
+
+  @override
+  String get dashboardRange1Y => '1年';
+
+  @override
+  String get dashboardRange3Y => '3年';
+
+  @override
+  String get dashboardRangeAll => '全部';
+
+  @override
+  String get dashboardRangeCustom => '自定义';
+
+  @override
+  String dashboardDrillDownItemCount(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    return '共 $countString 项';
+  }
+
+  @override
+  String dashboardNetWorthBreakdown(
+    String assets,
+    String liabilities,
+    String currency,
+  ) {
+    return '资产 $assets − 负债 $liabilities ($currency)';
+  }
+
+  @override
+  String dashboardSnapshotError(String error) {
+    return '加载仪表盘失败：$error';
+  }
+
+  @override
+  String dashboardTrendError(String error) {
+    return '加载趋势图失败：$error';
+  }
+
+  @override
+  String get dashboardTrendFlatHint => '当前数据未提供历史估值，趋势线显示为平直。后续接入估值变动后将自动展现波动。';
+
+  @override
   String get analyticsAppBarTitle => '组合分析';
 
   @override

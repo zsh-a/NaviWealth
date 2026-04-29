@@ -20,12 +20,14 @@ import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/router.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
+import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/assets/assets_page.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
+import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,6 +59,12 @@ Future<ProviderContainer> _pumpAt(
       // spinning forever.
       physicalAssetsListProvider.overrideWith(
         (ref) => Stream.value(const []),
+      ),
+      // FIR-52's dashboard watches liabilities to render its allocation
+      // card. Stub the live stream so the home page settles to its empty
+      // snapshot instead of hanging on the database key store.
+      liabilitiesStreamProvider.overrideWith(
+        (ref) => Stream<List<Liability>>.value(const []),
       ),
     ],
   );

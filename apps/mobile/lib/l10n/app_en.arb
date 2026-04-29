@@ -322,6 +322,51 @@
   "authLogoutDialogBody": "You'll need to sign in again on this device.",
   "authLogoutDialogConfirm": "Sign out",
 
+  "dashboardAllocationTitle": "Asset allocation",
+  "dashboardTrendTitle": "Net worth trend",
+  "dashboardCategoryStock": "Stocks",
+  "dashboardCategoryEtf": "ETFs",
+  "dashboardCategoryBondsAndFunds": "Bonds & funds",
+  "dashboardCategoryCash": "Cash",
+  "dashboardCategoryCrypto": "Crypto",
+  "dashboardCategoryRealEstate": "Real estate",
+  "dashboardCategoryVehicle": "Vehicles",
+  "dashboardCategoryLiability": "Liabilities",
+  "dashboardRange1M": "1M",
+  "dashboardRange3M": "3M",
+  "dashboardRange6M": "6M",
+  "dashboardRange1Y": "1Y",
+  "dashboardRange3Y": "3Y",
+  "dashboardRangeAll": "All",
+  "dashboardRangeCustom": "Custom",
+  "dashboardDrillDownItemCount": "{count, plural, =1{1 item} other{{count} items}}",
+  "@dashboardDrillDownItemCount": {
+    "placeholders": {
+      "count": { "type": "int", "format": "compact" }
+    }
+  },
+  "dashboardNetWorthBreakdown": "Assets {assets} − Liabilities {liabilities} ({currency})",
+  "@dashboardNetWorthBreakdown": {
+    "placeholders": {
+      "assets": { "type": "String" },
+      "liabilities": { "type": "String" },
+      "currency": { "type": "String" }
+    }
+  },
+  "dashboardSnapshotError": "Couldn't load your dashboard: {error}",
+  "@dashboardSnapshotError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "dashboardTrendError": "Couldn't load the trend chart: {error}",
+  "@dashboardTrendError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "dashboardTrendFlatHint": "Trend line is flat — no historical valuation snapshots yet for the assets in this window.",
+
   "analyticsAppBarTitle": "Analytics",
   "@analyticsAppBarTitle": { "description": "AppBar title for the analytics tab." },
 

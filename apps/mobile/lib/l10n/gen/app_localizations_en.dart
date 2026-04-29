@@ -679,6 +679,96 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authLogoutDialogConfirm => 'Sign out';
 
   @override
+  String get dashboardAllocationTitle => 'Asset allocation';
+
+  @override
+  String get dashboardTrendTitle => 'Net worth trend';
+
+  @override
+  String get dashboardCategoryStock => 'Stocks';
+
+  @override
+  String get dashboardCategoryEtf => 'ETFs';
+
+  @override
+  String get dashboardCategoryBondsAndFunds => 'Bonds & funds';
+
+  @override
+  String get dashboardCategoryCash => 'Cash';
+
+  @override
+  String get dashboardCategoryCrypto => 'Crypto';
+
+  @override
+  String get dashboardCategoryRealEstate => 'Real estate';
+
+  @override
+  String get dashboardCategoryVehicle => 'Vehicles';
+
+  @override
+  String get dashboardCategoryLiability => 'Liabilities';
+
+  @override
+  String get dashboardRange1M => '1M';
+
+  @override
+  String get dashboardRange3M => '3M';
+
+  @override
+  String get dashboardRange6M => '6M';
+
+  @override
+  String get dashboardRange1Y => '1Y';
+
+  @override
+  String get dashboardRange3Y => '3Y';
+
+  @override
+  String get dashboardRangeAll => 'All';
+
+  @override
+  String get dashboardRangeCustom => 'Custom';
+
+  @override
+  String dashboardDrillDownItemCount(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dashboardNetWorthBreakdown(
+    String assets,
+    String liabilities,
+    String currency,
+  ) {
+    return 'Assets $assets − Liabilities $liabilities ($currency)';
+  }
+
+  @override
+  String dashboardSnapshotError(String error) {
+    return 'Couldn\'t load your dashboard: $error';
+  }
+
+  @override
+  String dashboardTrendError(String error) {
+    return 'Couldn\'t load the trend chart: $error';
+  }
+
+  @override
+  String get dashboardTrendFlatHint =>
+      'Trend line is flat — no historical valuation snapshots yet for the assets in this window.';
+
+  @override
   String get analyticsAppBarTitle => 'Analytics';
 
   @override
