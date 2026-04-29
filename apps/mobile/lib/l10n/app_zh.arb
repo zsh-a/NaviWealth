@@ -144,7 +144,6 @@
   "physicalAssetValidationResidualRange": "必须在 0 与 1 之间",
   "physicalAssetNotFound": "资产不存在",
 
-  "analyticsAppBarTitle": "分析",
   "settingsAppBarTitle": "设置",
   "settingsAccountTitle": "账户",
   "settingsAccountSubtitle": "登录与多端同步 (FIR-27 / FIR-28)",
@@ -248,5 +247,40 @@
   "dashboardNetWorthBreakdown": "资产 {assets} − 负债 {liabilities} ({currency})",
   "dashboardSnapshotError": "加载仪表盘失败：{error}",
   "dashboardTrendError": "加载趋势图失败：{error}",
-  "dashboardTrendFlatHint": "当前数据未提供历史估值，趋势线显示为平直。后续接入估值变动后将自动展现波动。"
+  "dashboardTrendFlatHint": "当前数据未提供历史估值，趋势线显示为平直。后续接入估值变动后将自动展现波动。",
+
+  "analyticsAppBarTitle": "组合分析",
+
+  "analyticsEquityTitle": "股票透视",
+  "analyticsEquitySubtitle": "按行业、地域或市值切片查看股票 / ETF 持仓。",
+  "analyticsDimensionSector": "行业",
+  "analyticsDimensionRegion": "地域",
+  "analyticsDimensionMarketCap": "市值",
+  "analyticsTotalValueLabel": "总持仓 {currency}",
+
+  "analyticsBucketUnclassified": "未分类",
+  "analyticsBucketRegionCnA": "A 股",
+  "analyticsBucketRegionHk": "港股",
+  "analyticsBucketRegionUs": "美股",
+  "analyticsBucketRegionCrypto": "加密",
+  "analyticsBucketRegionFx": "外汇",
+  "analyticsBucketRegionUnknown": "其它",
+  "analyticsBucketMarketCapLarge": "大盘",
+  "analyticsBucketMarketCapMid": "中盘",
+  "analyticsBucketMarketCapSmall": "小盘",
+
+  "analyticsHoldingsCount": "{count, plural, other {{count} 只持仓}}",
+
+  "analyticsUnclassifiedHint": "{count, plural, other {还有 {count} 只持仓缺少分类元数据。}}",
+  "analyticsUnclassifiedAction": "去补全",
+  "analyticsUnclassifiedRowCta": "点击持仓即可补全其分类信息。",
+
+  "analyticsEmptyTitle": "暂无股票持仓",
+  "analyticsEmptyHint": "录入股票或 ETF 交易后，此处将展示分布。",
+
+  "analyticsLoadError": "无法加载持仓分布。",
+  "analyticsRetry": "重试",
+
+  "analyticsBucketSheetTitle": "「{label}」持仓",
+  "analyticsHoldingTooltip": "{symbol} · {value} · {weight}"
 }

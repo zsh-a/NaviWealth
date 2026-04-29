@@ -24,6 +24,8 @@ import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
+import 'package:naviwealth/features/analytics/data/providers.dart'
+    as analytics_data;
 import 'package:naviwealth/features/assets/assets_page.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
@@ -65,6 +67,12 @@ Future<ProviderContainer> _pumpAt(
       // snapshot instead of hanging on the database key store.
       liabilitiesStreamProvider.overrideWith(
         (ref) => Stream<List<Liability>>.value(const []),
+      ),
+      // FIR-53's analytics tab reads equity assets from the same Drift
+      // database. Same pattern as the other tabs — short-circuit to an
+      // empty list so `pumpAndSettle` resolves.
+      analytics_data.equityAssetsStreamProvider.overrideWith(
+        (ref) => Stream<List<Asset>>.value(const []),
       ),
     ],
   );
