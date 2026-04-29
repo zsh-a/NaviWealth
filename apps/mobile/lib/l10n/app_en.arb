@@ -190,7 +190,6 @@
   "physicalAssetValidationResidualRange": "Must be between 0 and 1",
   "physicalAssetNotFound": "Asset not found",
 
-  "analyticsAppBarTitle": "Analytics",
   "settingsAppBarTitle": "Settings",
   "settingsAccountTitle": "Account",
   "settingsAccountSubtitle": "Sign-in & multi-device sync (FIR-27 / FIR-28)",
@@ -366,5 +365,68 @@
       "error": { "type": "String" }
     }
   },
-  "dashboardTrendFlatHint": "Trend line is flat — no historical valuation snapshots yet for the assets in this window."
+  "dashboardTrendFlatHint": "Trend line is flat — no historical valuation snapshots yet for the assets in this window.",
+
+  "analyticsAppBarTitle": "Analytics",
+  "@analyticsAppBarTitle": { "description": "AppBar title for the analytics tab." },
+
+  "analyticsEquityTitle": "Equity Allocation",
+  "analyticsEquitySubtitle": "Slice your stock & ETF holdings by sector, region, or market cap.",
+  "analyticsDimensionSector": "Sector",
+  "analyticsDimensionRegion": "Region",
+  "analyticsDimensionMarketCap": "Market Cap",
+  "analyticsTotalValueLabel": "Total {currency}",
+  "@analyticsTotalValueLabel": {
+    "placeholders": {
+      "currency": { "type": "String", "example": "CNY" }
+    }
+  },
+
+  "analyticsBucketUnclassified": "Unclassified",
+  "analyticsBucketRegionCnA": "A-shares",
+  "analyticsBucketRegionHk": "Hong Kong",
+  "analyticsBucketRegionUs": "United States",
+  "analyticsBucketRegionCrypto": "Crypto",
+  "analyticsBucketRegionFx": "FX",
+  "analyticsBucketRegionUnknown": "Other",
+  "analyticsBucketMarketCapLarge": "Large cap",
+  "analyticsBucketMarketCapMid": "Mid cap",
+  "analyticsBucketMarketCapSmall": "Small cap",
+
+  "analyticsHoldingsCount": "{count, plural, =1 {{count} holding} other {{count} holdings}}",
+  "@analyticsHoldingsCount": {
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  },
+
+  "analyticsUnclassifiedHint": "{count, plural, =1 {1 holding is missing classification metadata.} other {{count} holdings are missing classification metadata.}}",
+  "@analyticsUnclassifiedHint": {
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  },
+  "analyticsUnclassifiedAction": "Complete",
+  "analyticsUnclassifiedRowCta": "Tap a holding to fill in its metadata.",
+
+  "analyticsEmptyTitle": "No equity holdings yet",
+  "analyticsEmptyHint": "Once you record stock or ETF transactions, the breakdown will show up here.",
+
+  "analyticsLoadError": "Couldn't load the allocation view.",
+  "analyticsRetry": "Retry",
+
+  "analyticsBucketSheetTitle": "Holdings in {label}",
+  "@analyticsBucketSheetTitle": {
+    "placeholders": {
+      "label": { "type": "String", "example": "Technology" }
+    }
+  },
+  "analyticsHoldingTooltip": "{symbol} · {value} · {weight}",
+  "@analyticsHoldingTooltip": {
+    "placeholders": {
+      "symbol": { "type": "String", "example": "AAPL" },
+      "value": { "type": "String", "example": "¥10,000" },
+      "weight": { "type": "String", "example": "12.3%" }
+    }
+  }
 }
