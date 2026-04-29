@@ -1,14 +1,14 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../design_system/charts/charts.dart';
 import '../data/physical_asset.dart';
 
 /// Line chart of valuation history.
 ///
 /// Manual / purchase points always show as filled dots; the projected
-/// curve (vehicle auto-depreciation) is rendered as a translucent fill so
-/// users can tell at a glance which segments came from the database vs the
-/// depreciation model.
+/// curve (vehicle auto-depreciation) is rendered as a dashed line in the
+/// theme's `tertiary` color so users can tell at a glance which segments
+/// came from the database vs the depreciation model.
 class ValuationTrendChart extends StatelessWidget {
   const ValuationTrendChart({
     super.key,
@@ -23,71 +23,37 @@ class ValuationTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (points.isEmpty && projection.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final manualSpots = _toSpots(points);
-    final projectionSpots = _toSpots(projection);
-    final all = [...points, ...projection];
-    final minX = all
-        .map((p) => p.asOf.millisecondsSinceEpoch.toDouble())
-        .reduce((a, b) => a < b ? a : b);
-    final maxX = all
-        .map((p) => p.asOf.millisecondsSinceEpoch.toDouble())
-        .reduce((a, b) => a > b ? a : b);
-    final values = all.map((p) => p.value.toDouble()).toList();
-    final minY = values.reduce((a, b) => a < b ? a : b);
-    final maxY = values.reduce((a, b) => a > b ? a : b);
-    final yPad = (maxY - minY).abs() * 0.1 + 1;
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: LineChart(
-        LineChartData(
-          minX: minX,
-          maxX: maxX,
-          minY: (minY - yPad).clamp(0, double.infinity),
-          maxY: maxY + yPad,
-          gridData: const FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          titlesData: const FlTitlesData(show: false),
-          lineBarsData: [
-            if (projectionSpots.length >= 2)
-              LineChartBarData(
-                spots: projectionSpots,
-                isCurved: false,
-                dashArray: [4, 4],
-                color: theme.colorScheme.tertiary,
-                barWidth: 1.5,
-                dotData: const FlDotData(show: false),
-              ),
-            if (manualSpots.isNotEmpty)
-              LineChartBarData(
-                spots: manualSpots,
-                isCurved: false,
-                color: theme.colorScheme.primary,
-                barWidth: 2.5,
-                dotData: const FlDotData(show: true),
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                ),
-              ),
-          ],
-        ),
-      ),
+    return NwLineChart(
+      series: [
+        if (projection.length >= 2)
+          ChartSeries(
+            name: '预计估值',
+            intent: SeriesIntent.projection,
+            emphasis: SeriesEmphasis.dashed,
+            points: _toPoints(projection),
+          ),
+        if (points.isNotEmpty)
+          ChartSeries(
+            name: '历史估值',
+            intent: SeriesIntent.primary,
+            points: _toPoints(points),
+          ),
+      ],
+      yAxis: ValueAxis.currency(currencyCode: currency),
+      filled: true,
+      semanticLabel: '估值走势',
     );
   }
 
-  static List<FlSpot> _toSpots(List<ValuationPoint> pts) {
+  static List<ChartPoint> _toPoints(List<ValuationPoint> pts) {
     final sorted = [...pts]..sort((a, b) => a.asOf.compareTo(b.asOf));
-    return sorted
-        .map(
-          (p) => FlSpot(
-            p.asOf.millisecondsSinceEpoch.toDouble(),
-            p.value.toDouble(),
-          ),
-        )
-        .toList();
+    return [
+      for (final p in sorted)
+        ChartPoint(
+          x: p.asOf.millisecondsSinceEpoch.toDouble(),
+          y: p.value.toDouble(),
+          meta: p,
+        ),
+    ];
   }
 }
