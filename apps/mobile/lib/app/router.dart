@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/assets_page.dart' deferred as assets_lib;
 import '../features/home/home_page.dart';
+import '../features/investment/presentation/corporate_action_entry_route.dart'
+    deferred as corp_action_lib;
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -45,6 +47,16 @@ GoRouter buildAppRouter({String initialLocation = '/'}) {
               load: assets_lib.loadLibrary,
               builder: (_) => assets_lib.AssetsPage(),
             ),
+            routes: [
+              GoRoute(
+                path: 'corporate-action',
+                name: 'corporate-action',
+                builder: (context, state) => DeferredRoute(
+                  load: corp_action_lib.loadLibrary,
+                  builder: (_) => corp_action_lib.CorporateActionEntryRoute(),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: '/analytics',

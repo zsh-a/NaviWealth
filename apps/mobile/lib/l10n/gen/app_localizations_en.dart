@@ -66,6 +66,120 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsAddAction => 'Add asset';
 
   @override
+  String get assetsCorporateActionAction => 'Record corporate action';
+
+  @override
+  String get corpActionTitle => 'Corporate Action';
+
+  @override
+  String get corpActionSelectAsset => 'Asset';
+
+  @override
+  String get corpActionSelectAssetHint =>
+      'Choose which holding the action applies to.';
+
+  @override
+  String get corpActionEventTypeTitle => 'Event type';
+
+  @override
+  String get corpActionTypeCashDividend => 'Cash dividend';
+
+  @override
+  String get corpActionTypeStockDividend => 'Stock dividend';
+
+  @override
+  String get corpActionTypeSplit => 'Split / reverse split';
+
+  @override
+  String get corpActionTypeRightsIssue => 'Rights issue';
+
+  @override
+  String get corpActionTypeDrip => 'DRIP (reinvest)';
+
+  @override
+  String get corpActionEffectiveDate => 'Effective date';
+
+  @override
+  String get corpActionAmountPerShare => 'Amount per share';
+
+  @override
+  String get corpActionWithholdingTax => 'Withholding tax (total)';
+
+  @override
+  String get corpActionBonusRatio =>
+      'Bonus ratio (extra shares per held share)';
+
+  @override
+  String get corpActionSplitRatio => 'Split ratio';
+
+  @override
+  String get corpActionSplitRatioHelp =>
+      '2 = 2-for-1 forward split · 0.1 = 1-for-10 reverse split';
+
+  @override
+  String get corpActionSubscribedQuantity => 'Subscribed quantity';
+
+  @override
+  String get corpActionPricePerUnit => 'Price per share';
+
+  @override
+  String get corpActionFee => 'Fee';
+
+  @override
+  String get corpActionPreviewAction => 'Preview impact';
+
+  @override
+  String get corpActionSubmitAction => 'Submit';
+
+  @override
+  String get corpActionPreviewHeading => 'Preview';
+
+  @override
+  String get corpActionNoEligibleHolding =>
+      'No eligible holding for this asset and account on the effective date.';
+
+  @override
+  String get corpActionPreviewSharesOnRecord => 'Shares on record';
+
+  @override
+  String get corpActionPreviewGross => 'Gross';
+
+  @override
+  String get corpActionPreviewTax => 'Tax';
+
+  @override
+  String get corpActionPreviewNet => 'Net';
+
+  @override
+  String get corpActionPreviewCashFlow => 'Cash flow';
+
+  @override
+  String corpActionPreviewLotChange(
+    String id,
+    String beforeQty,
+    String afterQty,
+    String beforeCost,
+    String afterCost,
+  ) {
+    return 'Lot $id: $beforeQty → $afterQty @ $beforeCost → $afterCost';
+  }
+
+  @override
+  String corpActionPreviewNewLot(String qty, String cost) {
+    return 'New lot: $qty @ $cost';
+  }
+
+  @override
+  String get corpActionSubmitted => 'Recorded.';
+
+  @override
+  String get corpActionInvalidNumber => 'Enter a positive number';
+
+  @override
+  String get corpActionInvalidNumberNonNegative =>
+      'Enter a non-negative number';
+
+  @override
   String get analyticsAppBarTitle => 'Analytics';
 
   @override
@@ -147,6 +261,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => 'Retry';
+
+  @override
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
 
   @override
