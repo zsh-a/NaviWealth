@@ -1,69 +1,125 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'data/dashboard_providers.dart';
+import 'domain/dashboard_models.dart';
+import 'ui/allocation_card.dart';
+import 'ui/trend_card.dart';
 
-class HomePage extends StatelessWidget {
+/// Dashboard surface (FIR-52).
+///
+/// Two cards: a category-allocation pie + drill-down list, and a net-worth
+/// trend chart with time-range chips. Layout adapts at the
+/// [Breakpoints.mobile] boundary — single column on phones, two-column on
+/// tablet / desktop so the cards sit side-by-side.
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.homeAppBarTitle)),
-      body: ListView(
-        padding: Spacing.pageMobile,
-        children: [
-          const _NetWorthCard(),
-          const SizedBox(height: Spacing.s12),
-          _PlaceholderCard(
-            title: l10n.homeTodayReturnTitle,
-            subtitle: l10n.homeTodayReturnSubtitle,
-            icon: Icons.trending_up,
-          ),
-          const SizedBox(height: Spacing.s12),
-          _PlaceholderCard(
-            title: l10n.homeAllocationTitle,
-            subtitle: l10n.homeAllocationSubtitle,
-            icon: Icons.donut_large,
-          ),
-          const SizedBox(height: Spacing.s12),
-          _PlaceholderCard(
-            title: l10n.homeFireTitle,
-            subtitle: l10n.homeFireSubtitle,
-            icon: Icons.flag_outlined,
-          ),
-        ],
+      body: snapshotAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => _ErrorBody(error: e),
+        data: (snapshot) => _DashboardBody(snapshot: snapshot),
       ),
     );
   }
 }
 
-class _NetWorthCard extends StatelessWidget {
-  const _NetWorthCard();
+class _DashboardBody extends StatelessWidget {
+  const _DashboardBody({required this.snapshot});
+
+  final DashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isWide = !Breakpoints.isMobile(width);
+        final padding =
+            isWide ? Spacing.pageWide : Spacing.pageMobile;
+        final header = _NetWorthHeader(snapshot: snapshot);
+        final allocation = AllocationCard(snapshot: snapshot);
+        final trend = TrendCard(snapshot: snapshot);
+
+        if (isWide) {
+          return ListView(
+            padding: padding,
+            children: [
+              header,
+              const SizedBox(height: Spacing.s16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: allocation),
+                  const SizedBox(width: Spacing.s16),
+                  Expanded(child: trend),
+                ],
+              ),
+            ],
+          );
+        }
+        return ListView(
+          padding: padding,
+          children: [
+            header,
+            const SizedBox(height: Spacing.s12),
+            allocation,
+            const SizedBox(height: Spacing.s12),
+            trend,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _NetWorthHeader extends StatelessWidget {
+  const _NetWorthHeader({required this.snapshot});
+
+  final DashboardSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final hasData = !snapshot.isEmpty;
+    final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     return Card(
       child: Padding(
         padding: Spacing.cardHero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
+            Text(
+              l10n.homeNetWorthTitle,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
-            // Net worth is unknown until accounts are linked — pass null and
-            // let MoneyText render the placeholder with the right symbol.
-            const MoneyText(
-              amount: null,
-              currencyCode: 'CNY',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+            MoneyText(
+              amount: value,
+              currencyCode: snapshot.baseCurrency,
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+              showSign: value != null && value < 0,
             ),
             const SizedBox(height: Spacing.s4),
             Text(
-              l10n.homeNetWorthSubtitle('CNY'),
+              hasData
+                  ? l10n.dashboardNetWorthBreakdown(
+                      _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
+                      _formatBaseAmount(
+                        snapshot.totalLiabilities.amount.toDouble(),
+                      ),
+                      snapshot.baseCurrency,
+                    )
+                  : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -73,46 +129,27 @@ class _NetWorthCard extends StatelessWidget {
       ),
     );
   }
+
+  String _formatBaseAmount(double v) => v.toStringAsFixed(0);
 }
 
-class _PlaceholderCard extends StatelessWidget {
-  const _PlaceholderCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
+class _ErrorBody extends StatelessWidget {
+  const _ErrorBody({required this.error});
 
-  final String title;
-  final String subtitle;
-  final IconData icon;
+  final Object error;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return Center(
       child: Padding(
-        padding: Spacing.card,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: theme.colorScheme.primary),
-            const SizedBox(width: Spacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: Spacing.s4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        padding: Spacing.pageMobile,
+        child: Text(
+          AppLocalizations.of(context).dashboardSnapshotError('$error'),
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.error,
+          ),
         ),
       ),
     );
