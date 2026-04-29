@@ -2,6 +2,10 @@ import 'package:decimal/decimal.dart';
 
 /// A realized gain/loss record. One [RealizedPnL] is produced per consumed
 /// lot per sell — a single sell that draws from N lots produces N records.
+///
+/// [lotOpenedAt] is preserved so downstream services (FX P&L, capital
+/// gains tax) can resolve the buy-day FX rate or holding period without
+/// having to keep the original [Lot] around after persistence.
 class RealizedPnL {
   const RealizedPnL({
     required this.id,
@@ -15,6 +19,7 @@ class RealizedPnL {
     required this.proceeds,
     required this.fees,
     required this.realizedAt,
+    required this.lotOpenedAt,
   });
 
   final String id;
@@ -29,8 +34,18 @@ class RealizedPnL {
   final Decimal fees;
   final DateTime realizedAt;
 
-  /// Net realized gain: proceeds minus fees minus cost basis.
+  /// `Lot.openedAt` of the consumed lot. Equal to the buy date for ordinary
+  /// lots; equal to the corporate-action effective date for lots opened by
+  /// a rights issue or DRIP.
+  final DateTime lotOpenedAt;
+
+  /// Net realized gain in asset currency: proceeds minus fees minus cost
+  /// basis. Capital-gains tax is computed against this value.
   Decimal get gain => proceeds - fees - costBasis;
+
+  /// Elapsed time from lot open to realization. Useful as the
+  /// [TaxPolicy.capitalGainsTax] holding period input.
+  Duration get holdingPeriod => realizedAt.difference(lotOpenedAt);
 
   @override
   bool operator ==(Object other) {
@@ -46,7 +61,8 @@ class RealizedPnL {
         other.costBasis == costBasis &&
         other.proceeds == proceeds &&
         other.fees == fees &&
-        other.realizedAt == realizedAt;
+        other.realizedAt == realizedAt &&
+        other.lotOpenedAt == lotOpenedAt;
   }
 
   @override
@@ -62,6 +78,7 @@ class RealizedPnL {
     proceeds,
     fees,
     realizedAt,
+    lotOpenedAt,
   );
 
   @override
