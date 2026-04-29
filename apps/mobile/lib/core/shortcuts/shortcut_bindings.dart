@@ -24,7 +24,7 @@ class ShortcutBinding {
 /// Kept here (not imported from the router) so `core/shortcuts/` stays free of
 /// feature-layer dependencies — the [SwitchPrimaryTabIntent] handler is wired
 /// up by `app/`, which knows about routes.
-const int kPrimaryTabCount = 4;
+const int kPrimaryTabCount = 5;
 
 /// Returns the global shortcut bindings, including both the macOS (`meta`) and
 /// non-macOS (`control`) variant for `Cmd/Ctrl+...` combos so the same map
@@ -83,6 +83,8 @@ LogicalKeyboardKey _digitForIndex(int index) {
       return LogicalKeyboardKey.digit3;
     case 3:
       return LogicalKeyboardKey.digit4;
+    case 4:
+      return LogicalKeyboardKey.digit5;
     default:
       throw ArgumentError.value(index, 'index', 'unexpected primary tab index');
   }

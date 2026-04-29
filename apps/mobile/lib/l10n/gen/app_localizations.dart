@@ -116,6 +116,12 @@ abstract class AppLocalizations {
   /// **'Assets'**
   String get navAssets;
 
+  /// Bottom nav: day-to-day expense tab (FIR-69)
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get navExpenses;
+
   /// Bottom nav: analytics tab
   ///
   /// In en, this message translates to:
@@ -1817,6 +1823,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rebalance'**
   String get rebalanceNavLink;
+
   /// Header for the risk concentration alert panel on the analytics page.
   ///
   /// In en, this message translates to:

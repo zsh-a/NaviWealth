@@ -131,6 +131,21 @@ class ExpenseCategoryRepository {
     return rows.map(_toCategory).toList();
   }
 
+  /// Live stream variant of [listAllExceptDeleted]. Drives the management
+  /// page so the archived section updates the moment a row is restored.
+  /// Active rows come first (NULL `archivedAt` sorts before non-NULL); ties
+  /// fall back to `sortOrder` then name so picker order stays stable.
+  Stream<List<ExpenseCategory>> watchAllExceptDeleted() {
+    final query = _db.select(_db.expenseCategories)
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.archivedAt),
+        (t) => OrderingTerm(expression: t.sortOrder),
+        (t) => OrderingTerm(expression: t.name),
+      ]);
+    return query.watch().map((rows) => rows.map(_toCategory).toList());
+  }
+
   Future<ExpenseCategory?> findById(String id) async {
     final row = await (_db.select(
       _db.expenseCategories,
