@@ -30,7 +30,7 @@ jobs:
       semver: ${{ steps.parse.outputs.semver }}
       build_number: ${{ steps.parse.outputs.build_number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - id: parse
@@ -63,7 +63,7 @@ jobs:
       run:
         working-directory: apps/mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -121,7 +121,7 @@ jobs:
       run:
         working-directory: apps/backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
