@@ -500,6 +500,222 @@ abstract class AppLocalizations {
   /// **'Credit-card / revolving lines have no fixed amortization schedule.'**
   String get liabilityRevolvingNoSchedule;
 
+  /// No description provided for @physicalAssetsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate & vehicles'**
+  String get physicalAssetsSectionTitle;
+
+  /// No description provided for @physicalAssetsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No real estate or vehicles yet. Tap + to add one.'**
+  String get physicalAssetsEmpty;
+
+  /// No description provided for @physicalAssetTypeRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate'**
+  String get physicalAssetTypeRealEstate;
+
+  /// No description provided for @physicalAssetTypeVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get physicalAssetTypeVehicle;
+
+  /// No description provided for @physicalAssetAddRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Add real estate'**
+  String get physicalAssetAddRealEstate;
+
+  /// No description provided for @physicalAssetAddVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add vehicle'**
+  String get physicalAssetAddVehicle;
+
+  /// No description provided for @physicalAssetFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get physicalAssetFieldName;
+
+  /// No description provided for @physicalAssetFieldAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get physicalAssetFieldAddress;
+
+  /// No description provided for @physicalAssetFieldPurchaseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase date'**
+  String get physicalAssetFieldPurchaseDate;
+
+  /// No description provided for @physicalAssetFieldPurchasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase price'**
+  String get physicalAssetFieldPurchasePrice;
+
+  /// No description provided for @physicalAssetFieldCurrentValuation.
+  ///
+  /// In en, this message translates to:
+  /// **'Current valuation'**
+  String get physicalAssetFieldCurrentValuation;
+
+  /// No description provided for @physicalAssetFieldCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get physicalAssetFieldCurrency;
+
+  /// No description provided for @physicalAssetFieldAnnualResidualRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual residual rate'**
+  String get physicalAssetFieldAnnualResidualRate;
+
+  /// No description provided for @physicalAssetFieldAutoDepreciation.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-depreciate between updates'**
+  String get physicalAssetFieldAutoDepreciation;
+
+  /// No description provided for @physicalAssetFieldLinkedLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked mortgage / loan id'**
+  String get physicalAssetFieldLinkedLiability;
+
+  /// No description provided for @physicalAssetFieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get physicalAssetFieldNote;
+
+  /// No description provided for @physicalAssetCreateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get physicalAssetCreateSubmit;
+
+  /// No description provided for @physicalAssetUpdateValuationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update valuation'**
+  String get physicalAssetUpdateValuationAction;
+
+  /// No description provided for @physicalAssetUpdateValuationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update valuation'**
+  String get physicalAssetUpdateValuationTitle;
+
+  /// No description provided for @physicalAssetUpdateValuationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'As-of date'**
+  String get physicalAssetUpdateValuationDate;
+
+  /// No description provided for @physicalAssetUpdateValuationAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'New valuation'**
+  String get physicalAssetUpdateValuationAmount;
+
+  /// No description provided for @physicalAssetUpdateValuationSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save valuation'**
+  String get physicalAssetUpdateValuationSubmit;
+
+  /// No description provided for @physicalAssetDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get physicalAssetDeleteAction;
+
+  /// No description provided for @physicalAssetDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this asset?'**
+  String get physicalAssetDeleteConfirmTitle;
+
+  /// No description provided for @physicalAssetDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation history will be tombstoned but recoverable on devices that have already synced.'**
+  String get physicalAssetDeleteConfirmBody;
+
+  /// No description provided for @physicalAssetDetailValuationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Current valuation'**
+  String get physicalAssetDetailValuationTitle;
+
+  /// No description provided for @physicalAssetDetailHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation history'**
+  String get physicalAssetDetailHistoryTitle;
+
+  /// No description provided for @physicalAssetDetailDepreciationProjection.
+  ///
+  /// In en, this message translates to:
+  /// **'Depreciation projection'**
+  String get physicalAssetDetailDepreciationProjection;
+
+  /// No description provided for @physicalAssetDetailPurchaseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase'**
+  String get physicalAssetDetailPurchaseLabel;
+
+  /// No description provided for @physicalAssetDetailManualUpdateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual update'**
+  String get physicalAssetDetailManualUpdateLabel;
+
+  /// No description provided for @physicalAssetDetailAutoEstimateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-estimate'**
+  String get physicalAssetDetailAutoEstimateLabel;
+
+  /// No description provided for @physicalAssetDetailEstimatedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated value today: {value}'**
+  String physicalAssetDetailEstimatedToday(String value);
+
+  /// No description provided for @physicalAssetValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get physicalAssetValidationRequired;
+
+  /// No description provided for @physicalAssetValidationPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than 0'**
+  String get physicalAssetValidationPositive;
+
+  /// No description provided for @physicalAssetValidationResidualRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be between 0 and 1'**
+  String get physicalAssetValidationResidualRange;
+
+  /// No description provided for @physicalAssetNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset not found'**
+  String get physicalAssetNotFound;
+
   /// No description provided for @analyticsAppBarTitle.
   ///
   /// In en, this message translates to:
