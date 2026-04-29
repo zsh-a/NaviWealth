@@ -289,6 +289,11 @@ class NetWorthService {
         // drop is reflected in the amortization schedule's
         // `remainingBalance`, so net-worth nets out automatically.
         addCash(-notional);
+      case TransactionType.expense:
+        // FIR-68: expense rows store the magnitude as a negative `quantity`
+        // already, so `notional` here is negative. Adding it directly is the
+        // correct cash drop.
+        addCash(notional);
       case TransactionType.reinvest:
         // Cash dividend immediately purchases new shares: net cash impact
         // is zero, share count grows.
@@ -326,6 +331,9 @@ class NetWorthService {
       case TransactionType.valuationAdjust:
       case TransactionType.split:
       case TransactionType.liabilityPayment:
+      case TransactionType.expense:
+        // FIR-68: expenses are consumption, not external portfolio funding,
+        // so they don't move the XIRR series.
         return null;
     }
   }

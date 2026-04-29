@@ -37,6 +37,7 @@ const String defaultDbFileName = 'naviwealth.db';
     Tags,
     TagLinks,
     Categories,
+    ExpenseCategories,
     Goals,
     Devices,
     OpLogs,
@@ -62,8 +63,12 @@ class AppDatabase extends _$AppDatabase {
   ///  - v3 (FIR-47) — Liability gains paymentMethod / rateType /
   ///    statementDay / paymentDueDay so amortization tables can be derived
   ///    and credit-card billing days can drive reminders.
+  ///  - v4 (FIR-68) — Expense schema: `transactions.expense_metadata_json`
+  ///    (per-row expense payload) plus a dedicated `expense_categories`
+  ///    table. The `expense` value was appended to TransactionType so
+  ///    existing rows stay valid.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +87,10 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(liabilities, liabilities.rateType);
             await m.addColumn(liabilities, liabilities.statementDay);
             await m.addColumn(liabilities, liabilities.paymentDueDay);
+          case 4:
+            await m.addColumn(transactions, transactions.expenseMetadataJson);
+            await m.createTable(expenseCategories);
+            await _createExpenseCategoriesIndexes(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -97,6 +106,21 @@ class AppDatabase extends _$AppDatabase {
 
 Future<void> _createSyncTables(AppDatabase db) async {
   for (final stmt in syncTableDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+/// v4 migration helper: indexes for the new `expense_categories` table.
+/// Pulled out so the upgrade path stays declarative and matches the same
+/// statements [_createIndexes] uses on a fresh install.
+Future<void> _createExpenseCategoriesIndexes(AppDatabase db) async {
+  const stmts = <String>[
+    'CREATE INDEX IF NOT EXISTS idx_expense_categories_owner_hlc '
+        'ON expense_categories(owner_user_id, hlc)',
+    'CREATE INDEX IF NOT EXISTS idx_expense_categories_parent '
+        'ON expense_categories(parent_id)',
+  ];
+  for (final stmt in stmts) {
     await db.customStatement(stmt);
   }
 }
@@ -127,6 +151,10 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON tag_links(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_categories_owner_hlc '
         'ON categories(owner_user_id, hlc)',
+    'CREATE INDEX IF NOT EXISTS idx_expense_categories_owner_hlc '
+        'ON expense_categories(owner_user_id, hlc)',
+    'CREATE INDEX IF NOT EXISTS idx_expense_categories_parent '
+        'ON expense_categories(parent_id)',
     'CREATE INDEX IF NOT EXISTS idx_goals_owner_hlc '
         'ON goals(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_devices_owner_hlc '

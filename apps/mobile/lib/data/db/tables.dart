@@ -118,6 +118,13 @@ class Transactions extends Table with SyncableTable {
   TextColumn get lotId => text().nullable()();
   TextColumn get note => text().nullable()();
 
+  /// FIR-68: expense-specific payload (category id, tags, ...) when
+  /// `type = expense`. NULL for every other transaction kind. Kept as a
+  /// JSON blob for the same reason `assets.metadata_json` is — adding
+  /// expense-only columns would bloat the row for the 95% of transactions
+  /// that aren't expenses.
+  TextColumn get expenseMetadataJson => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -224,6 +231,31 @@ class Categories extends Table with SyncableTable {
   TextColumn get name => text()();
   TextColumn get parentId => text().nullable()();
   IntColumn get sortOrder => integer().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// FIR-68 — categorisation taxonomy for expenses. Two-level tree (a row
+/// with a non-null `parentId` is a sub-category). Distinct from
+/// [Categories], which is the generic asset/holding tree without
+/// icon/color/archive support.
+///
+/// `archivedAt` is a *user-archive* flag (the row stays visible in pickers
+/// but is hidden from the default list and from picker defaults) and is
+/// orthogonal to the SyncableTable `deletedAt` tombstone (which removes
+/// the row). Default categories seeded by [ExpenseCategoryRepository] use
+/// deterministic ids so re-running the seed across devices doesn't
+/// duplicate them.
+@DataClassName('ExpenseCategoryRow')
+class ExpenseCategories extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get parentId => text().nullable()();
+  TextColumn get icon => text().nullable()();
+  TextColumn get color => text().nullable()();
+  IntColumn get sortOrder => integer().nullable()();
+  DateTimeColumn get archivedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
