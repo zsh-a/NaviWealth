@@ -1,0 +1,181 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../design_system/design_system.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../data/physical_asset.dart';
+import '../data/providers.dart';
+
+class ValuationUpdateSheet extends ConsumerStatefulWidget {
+  const ValuationUpdateSheet({super.key, required this.asset});
+
+  final PhysicalAsset asset;
+
+  @override
+  ConsumerState<ValuationUpdateSheet> createState() =>
+      _ValuationUpdateSheetState();
+
+  static Future<bool?> show(
+    BuildContext context, {
+    required PhysicalAsset asset,
+  }) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: ValuationUpdateSheet(asset: asset),
+      ),
+    );
+  }
+}
+
+class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _amountCtrl;
+  final TextEditingController _noteCtrl = TextEditingController();
+  late DateTime _asOf;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountCtrl = TextEditingController(
+      text: widget.asset.currentValuation.toString(),
+    );
+    _asOf = DateTime.now();
+  }
+
+  @override
+  void dispose() {
+    _amountCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final dateFormat = DateFormat.yMMMd(
+      Localizations.maybeLocaleOf(context)?.toString(),
+    );
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.s16,
+          Spacing.s12,
+          Spacing.s16,
+          Spacing.s24,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: Spacing.s12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.outlineVariant,
+                    borderRadius: Radii.brXs,
+                  ),
+                ),
+              ),
+              Text(
+                l10n.physicalAssetUpdateValuationTitle,
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: Spacing.s16),
+              TextFormField(
+                controller: _amountCtrl,
+                decoration: InputDecoration(
+                  labelText: l10n.physicalAssetUpdateValuationAmount,
+                ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return l10n.physicalAssetValidationRequired;
+                  }
+                  final parsed = Decimal.tryParse(v.trim());
+                  if (parsed == null || parsed < Decimal.zero) {
+                    return l10n.physicalAssetValidationPositive;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: Spacing.s12),
+              InkWell(
+                onTap: _saving ? null : _pickDate,
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: l10n.physicalAssetUpdateValuationDate,
+                  ),
+                  child: Text(dateFormat.format(_asOf)),
+                ),
+              ),
+              const SizedBox(height: Spacing.s12),
+              TextFormField(
+                controller: _noteCtrl,
+                decoration: InputDecoration(
+                  labelText: l10n.physicalAssetFieldNote,
+                ),
+                minLines: 1,
+                maxLines: 3,
+              ),
+              const SizedBox(height: Spacing.s24),
+              FilledButton(
+                onPressed: _saving ? null : _submit,
+                child: _saving
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.physicalAssetUpdateValuationSubmit),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _asOf,
+      firstDate: DateTime(1970),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    if (picked != null) setState(() => _asOf = picked);
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _saving = true);
+    try {
+      final repo =
+          await ref.read(physicalAssetRepositoryProvider.future);
+      await repo.updateValuation(
+        assetId: widget.asset.id,
+        newValuation: Decimal.parse(_amountCtrl.text.trim()),
+        asOf: _asOf,
+        note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+}

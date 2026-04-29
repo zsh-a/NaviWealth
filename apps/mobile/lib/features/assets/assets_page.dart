@@ -9,20 +9,27 @@ import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
+import 'physical/data/physical_asset.dart';
+import 'physical/data/providers.dart';
+import 'physical/ui/physical_asset_card.dart';
+import 'physical/ui/physical_asset_create_sheet.dart';
 
 /// Tab body for `/assets`. Shows the manual-valuation asset book
-/// (cash, deposits, wealth products) grouped by type, with a FAB that
-/// opens a bottom sheet to choose which kind of asset to add.
+/// (cash, deposits, wealth products) grouped by type, plus a "real estate
+/// & vehicles" section for non-financial assets, and a FAB that opens a
+/// bottom sheet to choose which kind of asset to add.
 ///
 /// Securities / crypto holdings will be appended once their feature ticket
-/// lands; this page intentionally only knows about manual-valuation rows
-/// so the two surfaces can evolve independently.
+/// lands; this page intentionally only knows about manually-valued rows so
+/// the two surfaces can evolve independently.
 class AssetsPage extends ConsumerWidget {
   const AssetsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final assetsAsync = ref.watch(manualAssetsStreamProvider);
+    final manualAsync = ref.watch(manualAssetsStreamProvider);
+    final physicalAsync = ref.watch(physicalAssetsListProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('资产'),
@@ -39,11 +46,9 @@ class AssetsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: assetsAsync.when(
-        data: (assets) =>
-            assets.isEmpty ? const _EmptyHint() : _AssetsByType(assets: assets),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+      body: _AssetsBody(
+        manualAsync: manualAsync,
+        physicalAsync: physicalAsync,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddSheet(context),
@@ -54,6 +59,7 @@ class AssetsPage extends ConsumerWidget {
   }
 
   void _showAddSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -89,6 +95,24 @@ class AssetsPage extends ConsumerWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: Text(l10n.physicalAssetAddRealEstate),
+              subtitle: const Text('地址、购入价、当前估值,可关联房贷'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _openPhysicalCreate(context, AssetType.realEstate);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.directions_car_outlined),
+              title: Text(l10n.physicalAssetAddVehicle),
+              subtitle: const Text('购入价、年度残值率、自动折旧'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _openPhysicalCreate(context, AssetType.vehicle);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.account_balance_outlined),
               title: const Text('负债（房贷 / 车贷 / 信用卡 / 消费贷）'),
               subtitle: const Text('录入并跟踪还款计划'),
@@ -100,6 +124,53 @@ class AssetsPage extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _openPhysicalCreate(
+    BuildContext context,
+    AssetType type,
+  ) async {
+    final created = await PhysicalAssetCreateSheet.show(context, type: type);
+    if (created != null && context.mounted) {
+      context.goNamed(
+        'physicalAssetDetail',
+        pathParameters: {'id': created.id},
+      );
+    }
+  }
+}
+
+class _AssetsBody extends StatelessWidget {
+  const _AssetsBody({
+    required this.manualAsync,
+    required this.physicalAsync,
+  });
+
+  final AsyncValue<List<Asset>> manualAsync;
+  final AsyncValue<List<PhysicalAsset>> physicalAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    if (manualAsync.isLoading || physicalAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final manualErr = manualAsync.hasError ? manualAsync.error : null;
+    final physicalErr = physicalAsync.hasError ? physicalAsync.error : null;
+    if (manualErr != null && physicalErr != null) {
+      return Center(child: Text('加载失败：$manualErr'));
+    }
+    final manual = manualAsync.value ?? const <Asset>[];
+    final physical = physicalAsync.value ?? const <PhysicalAsset>[];
+    if (manual.isEmpty && physical.isEmpty) {
+      return const _EmptyHint();
+    }
+    return ListView(
+      padding: Spacing.pageMobile,
+      children: [
+        if (manual.isNotEmpty) _ManualAssetsSection(assets: manual),
+        if (physical.isNotEmpty) _PhysicalAssetsSection(assets: physical),
+      ],
     );
   }
 }
@@ -117,7 +188,10 @@ class _EmptyHint extends StatelessWidget {
           children: [
             Icon(Icons.account_balance_wallet_outlined, size: 48),
             SizedBox(height: Spacing.s12),
-            Text('尚未录入资产。点击右下角添加现金、存款或理财产品。', textAlign: TextAlign.center),
+            Text(
+              '尚未录入资产。点击右下角添加现金、存款、理财、房产或车辆。',
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -125,8 +199,8 @@ class _EmptyHint extends StatelessWidget {
   }
 }
 
-class _AssetsByType extends StatelessWidget {
-  const _AssetsByType({required this.assets});
+class _ManualAssetsSection extends StatelessWidget {
+  const _ManualAssetsSection({required this.assets});
 
   final List<Asset> assets;
 
@@ -143,35 +217,62 @@ class _AssetsByType extends StatelessWidget {
       AssetType.wealthProduct,
     ].where(grouped.containsKey).toList(growable: false);
 
-    return ListView.builder(
-      padding: Spacing.pageMobile,
-      itemCount: order.length,
-      itemBuilder: (context, i) {
-        final type = order[i];
-        final group = grouped[type]!;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                top: Spacing.s8,
-                bottom: Spacing.s8,
-              ),
-              child: Text(
-                manualAssetTypeLabel(type),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final type in order) ...[
+          Padding(
+            padding: const EdgeInsets.only(
+              top: Spacing.s8,
+              bottom: Spacing.s8,
             ),
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [for (final asset in group) _AssetTile(asset: asset)],
-              ),
+            child: Text(
+              manualAssetTypeLabel(type),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s12),
-          ],
-        );
-      },
+          ),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                for (final asset in grouped[type]!) _AssetTile(asset: asset),
+              ],
+            ),
+          ),
+          const SizedBox(height: Spacing.s12),
+        ],
+      ],
+    );
+  }
+}
+
+class _PhysicalAssetsSection extends StatelessWidget {
+  const _PhysicalAssetsSection({required this.assets});
+
+  final List<PhysicalAsset> assets;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            top: Spacing.s8,
+            bottom: Spacing.s8,
+          ),
+          child: Text(
+            l10n.physicalAssetsSectionTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        for (final asset in assets) ...[
+          PhysicalAssetCard(asset: asset),
+          const SizedBox(height: Spacing.s8),
+        ],
+        const SizedBox(height: Spacing.s12),
+      ],
     );
   }
 }
