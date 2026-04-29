@@ -19,11 +19,10 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use worker::{Headers, Request, Response, Result as WorkerResult, RouteContext};
 
-use crate::ai::anthropic::{
-    self, AnthropicMessage, AnthropicRequest, ChatMessage, DEFAULT_MODEL,
-};
+use crate::ai::anthropic::{self, AnthropicMessage, AnthropicRequest, ChatMessage, DEFAULT_MODEL};
 use crate::ai::guardrails::{
-    self, ANTHROPIC_MAX_OUTPUT_TOKENS, MAX_REQUEST_BODY_BYTES, MAX_TOOL_ROUNDS, SYSTEM_PROMPT,
+    self, ANTHROPIC_MAX_OUTPUT_TOKENS, MAX_PROPOSALS_PER_CONVERSATION, MAX_REQUEST_BODY_BYTES,
+    MAX_TOOL_ROUNDS, SYSTEM_PROMPT,
 };
 use crate::ai::sse::encode_event;
 use crate::ai::tools::{self, ToolCtx};
@@ -114,8 +113,8 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
         .set("x-accel-buffering", "no")
         .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
 
-    let resp = Response::from_stream(rx)
-        .map_err(|e| AppError::Internal(format!("from_stream: {e}")))?;
+    let resp =
+        Response::from_stream(rx).map_err(|e| AppError::Internal(format!("from_stream: {e}")))?;
     Ok(resp.with_headers(headers))
 }
 
@@ -161,11 +160,19 @@ async fn run_tool_loop(
             Ok(m) => m,
             Err(e) => {
                 send_event(tx, "error", &json!({"message": e.to_string()})).await;
-                send_event(tx, "done", &json!({"stop_reason": "error", "rounds": rounds_used})).await;
+                send_event(
+                    tx,
+                    "done",
+                    &json!({"stop_reason": "error", "rounds": rounds_used}),
+                )
+                .await;
                 return;
             }
         };
-        last_stop = response.stop_reason.clone().unwrap_or_else(|| "unknown".into());
+        last_stop = response
+            .stop_reason
+            .clone()
+            .unwrap_or_else(|| "unknown".into());
 
         // Emit text blocks immediately; collect tool_use blocks so we can
         // dispatch them after we've replayed the assistant turn.
@@ -202,6 +209,12 @@ async fn run_tool_loop(
             break;
         }
 
+        // Count `propose_*` calls already in the conversation *before* we
+        // append the current assistant turn. Combined with `proposals_this_turn`
+        // below this gives us the running total used to enforce
+        // MAX_PROPOSALS_PER_CONVERSATION (FIR-66 guardrail).
+        let proposals_before = guardrails::count_existing_proposals(&messages);
+
         // Push the assistant turn (with the original tool_use blocks) onto
         // the conversation, then dispatch each tool and queue the
         // tool_result blocks under a single user turn.
@@ -212,6 +225,7 @@ async fn run_tool_loop(
 
         let ctx = ToolCtx { user_id, db: &db };
         let mut tool_results: Vec<Value> = Vec::with_capacity(tool_uses.len());
+        let mut proposals_this_turn: u8 = 0;
         for (id, name, input) in &tool_uses {
             send_event(
                 tx,
@@ -219,7 +233,31 @@ async fn run_tool_loop(
                 &json!({"id": id, "name": name, "input": input}),
             )
             .await;
-            let output = tools::dispatch(&ctx, name, input).await;
+            let is_propose = name.starts_with("propose_");
+            let output = if is_propose
+                && proposals_before.saturating_add(proposals_this_turn)
+                    >= MAX_PROPOSALS_PER_CONVERSATION
+            {
+                // Cap reached. Return a synthesised tool_result so the model
+                // sees the failure and can ask the user to wrap up the
+                // pending confirmations rather than retrying. We deliberately
+                // never invoke the proposal builder here — the dispatcher
+                // doesn't even touch D1 for this call.
+                json!({
+                    "error":   "proposal_cap_exceeded",
+                    "code":    "proposal_cap_exceeded",
+                    "limit":   MAX_PROPOSALS_PER_CONVERSATION,
+                    "message": format!(
+                        "本次对话已达到 {MAX_PROPOSALS_PER_CONVERSATION} 个 propose_* 上限。\
+                         请让用户先在前端确认页处理已有的提议（确认或取消），再继续录入。"
+                    ),
+                })
+            } else {
+                if is_propose {
+                    proposals_this_turn = proposals_this_turn.saturating_add(1);
+                }
+                tools::dispatch(&ctx, name, input).await
+            };
             send_event(
                 tx,
                 "tool_result",
@@ -229,8 +267,7 @@ async fn run_tool_loop(
             // Anthropic accepts either a string or an array of content blocks
             // for tool_result.content. Strings are simpler and round-trip
             // exactly through serde_json.
-            let serialized =
-                serde_json::to_string(&output).unwrap_or_else(|_| "null".into());
+            let serialized = serde_json::to_string(&output).unwrap_or_else(|_| "null".into());
             tool_results.push(json!({
                 "type": "tool_result",
                 "tool_use_id": id,
