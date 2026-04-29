@@ -130,6 +130,15 @@ class AssetsPage extends ConsumerWidget {
                 context.push('/assets/corporate-action');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz_outlined),
+              title: const Text('证券交易'),
+              subtitle: const Text('买入 / 卖出股票、ETF、加密货币'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/assets/trade');
+              },
+            ),
           ],
         ),
       ),
