@@ -265,5 +265,61 @@
   "pwaUpdateApply": "Refresh",
   "@pwaUpdateApply": { "description": "Action to apply the pending PWA update and reload" },
   "pwaUpdateDismiss": "Later",
-  "@pwaUpdateDismiss": { "description": "Action to dismiss the PWA update banner without refreshing" }
+  "@pwaUpdateDismiss": { "description": "Action to dismiss the PWA update banner without refreshing" },
+
+  "authLoginTitle": "Welcome back",
+  "@authLoginTitle": { "description": "Subtitle on the login screen, sits below the app name." },
+  "authLoginSubmit": "Sign in",
+  "@authLoginSubmit": { "description": "Primary action button on the login form." },
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Password",
+  "authPasswordShowTooltip": "Show password",
+  "authPasswordHideTooltip": "Hide password",
+
+  "authEmailErrorEmpty": "Enter your email address.",
+  "authEmailErrorInvalid": "That doesn't look like a valid email.",
+  "authPasswordErrorEmpty": "Enter your password.",
+  "authPasswordErrorTooShort": "Password must be at least 8 characters.",
+
+  "authLoginErrorInvalidCredentials": "Email or password is incorrect.",
+  "authLoginErrorNetwork": "Couldn't reach the server. Check your connection and try again.",
+  "authLoginErrorServer": "The server is having trouble. Please try again in a minute.",
+  "authLoginErrorGeneric": "Sign-in failed. Please try again.",
+
+  "authLoginNoticeSessionExpired": "Your session expired. Please sign in again.",
+  "@authLoginNoticeSessionExpired": { "description": "Inline banner shown on the login screen after the auth controller dropped an expired session." },
+
+  "settingsDevicesTitle": "Devices",
+  "@settingsDevicesTitle": { "description": "Settings row that opens the device list." },
+  "settingsDevicesSubtitle": "View signed-in devices and revoke access",
+
+  "authDevicesTitle": "Signed-in devices",
+  "@authDevicesTitle": { "description": "AppBar title on the devices list page." },
+  "authDeviceUnnamed": "Unnamed device",
+  "@authDeviceUnnamed": { "description": "Fallback name for devices that signed in without a device_name." },
+  "authDeviceCurrent": "This device",
+  "@authDeviceCurrent": { "description": "Chip on the row representing the currently signed-in device." },
+  "authDeviceLastSeen": "Last seen {timestamp}",
+  "@authDeviceLastSeen": {
+    "description": "Subtitle of a device row showing when it last touched the API.",
+    "placeholders": {
+      "timestamp": { "type": "String", "example": "4/28/2026 09:30 AM" }
+    }
+  },
+  "authDeviceRevokeTooltip": "Sign this device out",
+  "authDeviceRevokeDialogTitle": "Sign this device out?",
+  "authDeviceRevokeDialogBody": "Sign {device} out? It will need to log in again to sync.",
+  "@authDeviceRevokeDialogBody": {
+    "placeholders": {
+      "device": { "type": "String", "example": "iOS" }
+    }
+  },
+  "authDeviceRevokeConfirm": "Sign out",
+  "authDeviceRevokeError": "Couldn't revoke that device. Please try again.",
+  "authDevicesLoadError": "Couldn't load your devices.",
+
+  "authLogoutCurrentTooltip": "Sign out",
+  "authLogoutDialogTitle": "Sign out?",
+  "authLogoutDialogBody": "You'll need to sign in again on this device.",
+  "authLogoutDialogConfirm": "Sign out"
 }

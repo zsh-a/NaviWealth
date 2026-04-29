@@ -16,6 +16,8 @@ import '../features/assets/deposit_form_page.dart';
 import '../features/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
 import '../features/assets/wealth_product_form_page.dart';
+import '../features/auth/presentation/devices_page.dart' deferred as devices_lib;
+import '../features/auth/presentation/login_page.dart';
 import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
@@ -56,6 +58,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),
     corp_action_lib.loadLibrary(),
+    devices_lib.loadLibrary(),
   ]);
 }
 
@@ -70,6 +73,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
     redirect: (context, state) => routerRedirect(ref, context, state),
     errorBuilder: (context, state) => RouteErrorPage(state: state),
     routes: [
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginPage(),
+      ),
       ShellRoute(
         builder: (context, state, child) => _RootShell(child: child),
         routes: [
@@ -185,6 +193,16 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               load: settings_lib.loadLibrary,
               builder: (_) => settings_lib.SettingsPage(),
             ),
+            routes: [
+              GoRoute(
+                path: 'devices',
+                name: 'devices',
+                builder: (context, state) => DeferredRoute(
+                  load: devices_lib.loadLibrary,
+                  builder: (_) => devices_lib.DevicesPage(),
+                ),
+              ),
+            ],
           ),
         ],
       ),

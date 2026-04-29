@@ -187,5 +187,43 @@
 
   "pwaUpdateAvailable": "NaviWealth 有新版本可用。",
   "pwaUpdateApply": "立即刷新",
-  "pwaUpdateDismiss": "稍后"
+  "pwaUpdateDismiss": "稍后",
+
+  "authLoginTitle": "欢迎回来",
+  "authLoginSubmit": "登录",
+  "authEmailLabel": "邮箱",
+  "authPasswordLabel": "密码",
+  "authPasswordShowTooltip": "显示密码",
+  "authPasswordHideTooltip": "隐藏密码",
+
+  "authEmailErrorEmpty": "请输入邮箱地址。",
+  "authEmailErrorInvalid": "邮箱格式不正确。",
+  "authPasswordErrorEmpty": "请输入密码。",
+  "authPasswordErrorTooShort": "密码至少需要 8 位。",
+
+  "authLoginErrorInvalidCredentials": "邮箱或密码不正确。",
+  "authLoginErrorNetwork": "无法连接服务器，请检查网络后重试。",
+  "authLoginErrorServer": "服务器暂时无响应，请稍后重试。",
+  "authLoginErrorGeneric": "登录失败，请重试。",
+
+  "authLoginNoticeSessionExpired": "登录已过期，请重新登录。",
+
+  "settingsDevicesTitle": "已登录设备",
+  "settingsDevicesSubtitle": "查看已登录的设备并远程登出",
+
+  "authDevicesTitle": "已登录设备",
+  "authDeviceUnnamed": "未命名设备",
+  "authDeviceCurrent": "当前设备",
+  "authDeviceLastSeen": "最近活跃 {timestamp}",
+  "authDeviceRevokeTooltip": "登出此设备",
+  "authDeviceRevokeDialogTitle": "登出该设备？",
+  "authDeviceRevokeDialogBody": "确定要登出 {device} 吗？该设备需重新登录后才能继续同步。",
+  "authDeviceRevokeConfirm": "登出",
+  "authDeviceRevokeError": "登出失败，请重试。",
+  "authDevicesLoadError": "无法加载设备列表。",
+
+  "authLogoutCurrentTooltip": "登出",
+  "authLogoutDialogTitle": "确定要登出？",
+  "authLogoutDialogBody": "登出后需要在此设备上重新登录。",
+  "authLogoutDialogConfirm": "登出"
 }
