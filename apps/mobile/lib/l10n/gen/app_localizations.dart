@@ -1817,6 +1817,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rebalance'**
   String get rebalanceNavLink;
+
   /// Header for the risk concentration alert panel on the analytics page.
   ///
   /// In en, this message translates to:

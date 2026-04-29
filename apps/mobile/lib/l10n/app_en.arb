@@ -476,7 +476,7 @@
   "rebalanceSettingsTitle": "Settings",
   "rebalanceWarningThreshold": "Warning threshold",
   "rebalanceCriticalThreshold": "Critical threshold",
-  "rebalanceNavLink": "Rebalance"
+  "rebalanceNavLink": "Rebalance",
   "riskAlertTitle": "Concentration Alerts",
   "@riskAlertTitle": { "description": "Header for the risk concentration alert panel on the analytics page." },
 

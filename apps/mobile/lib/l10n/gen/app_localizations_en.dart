@@ -977,6 +977,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceNavLink => 'Rebalance';
+
+  @override
   String get riskAlertTitle => 'Concentration Alerts';
 
   @override

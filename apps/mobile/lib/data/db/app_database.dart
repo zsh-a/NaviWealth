@@ -62,8 +62,12 @@ class AppDatabase extends _$AppDatabase {
   ///  - v3 (FIR-47) — Liability gains paymentMethod / rateType /
   ///    statementDay / paymentDueDay so amortization tables can be derived
   ///    and credit-card billing days can drive reminders.
+  ///  - v4 (FIR-60) — Local AI chat history (chat_sessions + chat_messages).
+  ///    Local-only, never synced — chat transcripts are private to the
+  ///    device. Tables are created with raw DDL so the chat feature can
+  ///    evolve its row shape without tugging the main Drift codegen.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,6 +75,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _createIndexes(this);
       await _createSyncTables(this);
+      await _createChatTables(this);
     },
     onUpgrade: (m, from, to) async {
       for (var v = from + 1; v <= to; v++) {
@@ -82,6 +87,8 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(liabilities, liabilities.rateType);
             await m.addColumn(liabilities, liabilities.statementDay);
             await m.addColumn(liabilities, liabilities.paymentDueDay);
+          case 4:
+            await _createChatTables(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -93,6 +100,54 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+}
+
+/// AI chat history (FIR-60). Two raw tables, both local-only:
+///
+///  - `chat_sessions` — one row per conversation, ordered by
+///    `last_message_at DESC` for the sidebar.
+///  - `chat_messages` — one row per turn (user / assistant / system /
+///    error). The assistant turn carries the visible text *and* a
+///    `tool_calls_json` blob so the UI can replay the tool-use timeline
+///    without re-querying the model.
+///
+/// `IF NOT EXISTS` makes the helper idempotent so onCreate (fresh install)
+/// and the v4 onUpgrade step (existing install) can both call it.
+Future<void> _createChatTables(AppDatabase db) async {
+  const stmts = <String>[
+    '''
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id              TEXT PRIMARY KEY,
+  owner_user_id   TEXT NOT NULL,
+  title           TEXT NOT NULL,
+  model           TEXT,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  last_message_at INTEGER
+)
+''',
+    '''
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id               TEXT PRIMARY KEY,
+  session_id       TEXT NOT NULL,
+  owner_user_id    TEXT NOT NULL,
+  role             TEXT NOT NULL,
+  content          TEXT NOT NULL DEFAULT '',
+  tool_calls_json  TEXT,
+  status           TEXT NOT NULL,
+  error_message    TEXT,
+  created_at       INTEGER NOT NULL,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+)
+''',
+    'CREATE INDEX IF NOT EXISTS idx_chat_sessions_owner_last '
+        'ON chat_sessions(owner_user_id, last_message_at)',
+    'CREATE INDEX IF NOT EXISTS idx_chat_messages_session_created '
+        'ON chat_messages(session_id, created_at)',
+  ];
+  for (final stmt in stmts) {
+    await db.customStatement(stmt);
+  }
 }
 
 Future<void> _createSyncTables(AppDatabase db) async {

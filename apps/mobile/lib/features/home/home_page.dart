@@ -23,7 +23,16 @@ class HomePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.homeAppBarTitle)),
+      appBar: AppBar(
+        title: Text(l10n.homeAppBarTitle),
+        actions: [
+          IconButton(
+            tooltip: 'AI 助手',
+            icon: const Icon(Icons.auto_awesome_outlined),
+            onPressed: () => context.push('/ai'),
+          ),
+        ],
+      ),
       body: snapshotAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => _ErrorBody(error: e),

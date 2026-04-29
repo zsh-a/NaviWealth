@@ -937,6 +937,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rebalanceNavLink => '再平衡';
+
+  @override
   String get riskAlertTitle => '集中度预警';
 
   @override
