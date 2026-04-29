@@ -101,11 +101,11 @@ void main() {
       await tester.pumpWidget(
         _wrap(Builder(builder: (ctx) {
           scheme = Theme.of(ctx).colorScheme;
-          return NwLineChart(
+          return const NwLineChart(
             series: [
               ChartSeries(
                 name: 'p',
-                points: const [
+                points: [
                   ChartPoint(x: 0, y: 0),
                   ChartPoint(x: 1, y: 1),
                 ],
@@ -119,12 +119,12 @@ void main() {
     });
 
     testWidgets('projection intent renders dashed', (tester) async {
-      await tester.pumpWidget(_wrap(NwLineChart(
+      await tester.pumpWidget(_wrap(const NwLineChart(
         series: [
           ChartSeries(
             name: 'projection',
             intent: SeriesIntent.projection,
-            points: const [
+            points: [
               ChartPoint(x: 0, y: 0),
               ChartPoint(x: 1, y: 1),
             ],
@@ -138,9 +138,9 @@ void main() {
 
   group('NwAreaChart', () {
     testWidgets('stacked: true accumulates Y across series', (tester) async {
-      await tester.pumpWidget(_wrap(NwAreaChart(
+      await tester.pumpWidget(_wrap(const NwAreaChart(
         stacked: true,
-        series: const [
+        series: [
           ChartSeries(
             name: 'a',
             points: [
