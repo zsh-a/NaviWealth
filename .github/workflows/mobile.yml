@@ -86,7 +86,7 @@ jobs:
           if-no-files-found: error
 
   build-android:
-    name: build android (debug apk)
+    name: build android (release apk)
     runs-on: ubuntu-latest
     needs: analyze-and-test
     steps:
@@ -104,4 +104,21 @@ jobs:
         run: |
           mkdir -p assets/fonts
           touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
-      - run: flutter build apk --debug
+      - name: Decode signing keystore
+        if: env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > "${{ runner.temp }}/release.keystore"
+      - name: Build release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
+          if-no-files-found: error
