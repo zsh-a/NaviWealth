@@ -25,5 +25,6 @@
 
 pub mod anthropic;
 pub mod guardrails;
+pub mod proposals;
 pub mod sse;
 pub mod tools;

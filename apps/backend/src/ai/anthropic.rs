@@ -94,8 +94,8 @@ pub async fn call_blocking(
     api_key: &str,
     payload: &AnthropicRequest<'_>,
 ) -> Result<AnthropicMessage, AppError> {
-    let body = serde_json::to_string(payload)
-        .map_err(|e| AppError::Internal(format!("ser: {e}")))?;
+    let body =
+        serde_json::to_string(payload).map_err(|e| AppError::Internal(format!("ser: {e}")))?;
     let req = build_request(api_key, &body)?;
     let mut resp = Fetch::Request(req)
         .send()
@@ -115,4 +115,3 @@ pub async fn call_blocking(
         .map_err(|e| AppError::Internal(format!("anthropic json: {e}")))?;
     Ok(msg)
 }
-
