@@ -869,4 +869,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkIndexHsi => '恒生';
+
+  @override
+  String get riskAlertTitle => '集中度预警';
+
+  @override
+  String riskAlertAssetTitle(String name) {
+    return '$name 持仓过重';
+  }
+
+  @override
+  String riskAlertSectorTitle(String sector) {
+    return '$sector 板块过重';
+  }
+
+  @override
+  String riskAlertRegionTitle(String region) {
+    return '$region 地域过重';
+  }
+
+  @override
+  String riskAlertCurrencyTitle(String currency) {
+    return '$currency 敞口过大';
+  }
+
+  @override
+  String riskAlertThresholdBreached(String dimension, String threshold) {
+    return '$dimension 阈值：$threshold';
+  }
+
+  @override
+  String get riskDimensionAsset => '资产';
+
+  @override
+  String get riskDimensionSector => '行业';
+
+  @override
+  String get riskDimensionRegion => '地域';
+
+  @override
+  String get riskDimensionCurrency => '币种';
+
+  @override
+  String get settingsRiskSection => '风险偏好';
+
+  @override
+  String get settingsRiskAssetLabel => '单一资产上限';
+
+  @override
+  String get settingsRiskAssetSubtitle => '单只资产占总资产比例超过此值时预警。';
+
+  @override
+  String get settingsRiskSectorLabel => '行业上限';
+
+  @override
+  String get settingsRiskSectorSubtitle => '单一行业占比超过此值时预警。';
+
+  @override
+  String get settingsRiskRegionLabel => '地域上限';
+
+  @override
+  String get settingsRiskRegionSubtitle => '单一市场 / 地域占比超过此值时预警。';
+
+  @override
+  String get settingsRiskCurrencyLabel => '币种上限';
+
+  @override
+  String get settingsRiskCurrencySubtitle => '单一币种敞口超过此值时预警。';
+
+  @override
+  String get settingsRiskResetDefaults => '恢复默认';
 }

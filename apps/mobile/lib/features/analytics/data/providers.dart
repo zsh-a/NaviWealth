@@ -4,9 +4,11 @@ import '../../../data/db/providers.dart';
 import '../../../data/domain/asset.dart';
 import '../../investment/domain/holding_service.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
+import '../domain/concentration_risk.dart';
 import '../domain/equity_allocation.dart';
 import '../domain/equity_classification.dart';
 import 'equity_assets_repository.dart';
+import 'risk_threshold_preferences.dart';
 
 /// Read-only repository for stock / ETF / mutual-fund rows. Used by the
 /// analytics layer until a dedicated equity write repository ships.
@@ -98,6 +100,27 @@ final equityAllocationViewProvider = FutureProvider.autoDispose
     );
   },
 );
+
+/// Concentration-risk alerts for the current portfolio. Re-evaluates when
+/// holdings, asset metadata, classifier, or threshold settings change.
+final concentrationAlertsProvider =
+    FutureProvider.autoDispose<List<ConcentrationAlert>>((ref) async {
+  final snapshots = await ref.watch(equityHoldingsSnapshotProvider.future);
+  final assets = await ref.watch(equityAssetsStreamProvider.future);
+  final classifier = ref.watch(equityClassifierProvider);
+  final thresholds = ref.watch(concentrationThresholdsProvider);
+
+  final assetById = <String, Asset>{
+    for (final a in assets) a.id: a,
+  };
+
+  return const ConcentrationRiskService().detect(
+    snapshots: snapshots.values,
+    assetLookup: (id) => assetById[id],
+    classifier: classifier,
+    thresholds: thresholds,
+  );
+});
 
 /// Empty default — keeps the page renderable until a real holdings
 /// pipeline is wired up. The class is intentionally private; tests should
