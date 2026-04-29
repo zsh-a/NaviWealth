@@ -437,9 +437,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get physicalAssetNotFound => '资产不存在';
 
   @override
-  String get analyticsAppBarTitle => '分析';
-
-  @override
   String get settingsAppBarTitle => '设置';
 
   @override
@@ -654,4 +651,105 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authLogoutDialogConfirm => '登出';
+
+  @override
+  String get analyticsAppBarTitle => '组合分析';
+
+  @override
+  String get analyticsEquityTitle => '股票透视';
+
+  @override
+  String get analyticsEquitySubtitle => '按行业、地域或市值切片查看股票 / ETF 持仓。';
+
+  @override
+  String get analyticsDimensionSector => '行业';
+
+  @override
+  String get analyticsDimensionRegion => '地域';
+
+  @override
+  String get analyticsDimensionMarketCap => '市值';
+
+  @override
+  String analyticsTotalValueLabel(String currency) {
+    return '总持仓 $currency';
+  }
+
+  @override
+  String get analyticsBucketUnclassified => '未分类';
+
+  @override
+  String get analyticsBucketRegionCnA => 'A 股';
+
+  @override
+  String get analyticsBucketRegionHk => '港股';
+
+  @override
+  String get analyticsBucketRegionUs => '美股';
+
+  @override
+  String get analyticsBucketRegionCrypto => '加密';
+
+  @override
+  String get analyticsBucketRegionFx => '外汇';
+
+  @override
+  String get analyticsBucketRegionUnknown => '其它';
+
+  @override
+  String get analyticsBucketMarketCapLarge => '大盘';
+
+  @override
+  String get analyticsBucketMarketCapMid => '中盘';
+
+  @override
+  String get analyticsBucketMarketCapSmall => '小盘';
+
+  @override
+  String analyticsHoldingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 只持仓',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String analyticsUnclassifiedHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '还有 $count 只持仓缺少分类元数据。',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analyticsUnclassifiedAction => '去补全';
+
+  @override
+  String get analyticsUnclassifiedRowCta => '点击持仓即可补全其分类信息。';
+
+  @override
+  String get analyticsEmptyTitle => '暂无股票持仓';
+
+  @override
+  String get analyticsEmptyHint => '录入股票或 ETF 交易后，此处将展示分布。';
+
+  @override
+  String get analyticsLoadError => '无法加载持仓分布。';
+
+  @override
+  String get analyticsRetry => '重试';
+
+  @override
+  String analyticsBucketSheetTitle(String label) {
+    return '「$label」持仓';
+  }
+
+  @override
+  String analyticsHoldingTooltip(String symbol, String value, String weight) {
+    return '$symbol · $value · $weight';
+  }
 }

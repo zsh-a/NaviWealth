@@ -920,12 +920,6 @@ abstract class AppLocalizations {
   /// **'Asset not found'**
   String get physicalAssetNotFound;
 
-  /// No description provided for @analyticsAppBarTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Analytics'**
-  String get analyticsAppBarTitle;
-
   /// No description provided for @settingsAppBarTitle.
   ///
   /// In en, this message translates to:
@@ -1333,6 +1327,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out'**
   String get authLogoutDialogConfirm;
+
+  /// AppBar title for the analytics tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get analyticsAppBarTitle;
+
+  /// No description provided for @analyticsEquityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Equity Allocation'**
+  String get analyticsEquityTitle;
+
+  /// No description provided for @analyticsEquitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Slice your stock & ETF holdings by sector, region, or market cap.'**
+  String get analyticsEquitySubtitle;
+
+  /// No description provided for @analyticsDimensionSector.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector'**
+  String get analyticsDimensionSector;
+
+  /// No description provided for @analyticsDimensionRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get analyticsDimensionRegion;
+
+  /// No description provided for @analyticsDimensionMarketCap.
+  ///
+  /// In en, this message translates to:
+  /// **'Market Cap'**
+  String get analyticsDimensionMarketCap;
+
+  /// No description provided for @analyticsTotalValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {currency}'**
+  String analyticsTotalValueLabel(String currency);
+
+  /// No description provided for @analyticsBucketUnclassified.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclassified'**
+  String get analyticsBucketUnclassified;
+
+  /// No description provided for @analyticsBucketRegionCnA.
+  ///
+  /// In en, this message translates to:
+  /// **'A-shares'**
+  String get analyticsBucketRegionCnA;
+
+  /// No description provided for @analyticsBucketRegionHk.
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong'**
+  String get analyticsBucketRegionHk;
+
+  /// No description provided for @analyticsBucketRegionUs.
+  ///
+  /// In en, this message translates to:
+  /// **'United States'**
+  String get analyticsBucketRegionUs;
+
+  /// No description provided for @analyticsBucketRegionCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get analyticsBucketRegionCrypto;
+
+  /// No description provided for @analyticsBucketRegionFx.
+  ///
+  /// In en, this message translates to:
+  /// **'FX'**
+  String get analyticsBucketRegionFx;
+
+  /// No description provided for @analyticsBucketRegionUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get analyticsBucketRegionUnknown;
+
+  /// No description provided for @analyticsBucketMarketCapLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large cap'**
+  String get analyticsBucketMarketCapLarge;
+
+  /// No description provided for @analyticsBucketMarketCapMid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mid cap'**
+  String get analyticsBucketMarketCapMid;
+
+  /// No description provided for @analyticsBucketMarketCapSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small cap'**
+  String get analyticsBucketMarketCapSmall;
+
+  /// No description provided for @analyticsHoldingsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {{count} holding} other {{count} holdings}}'**
+  String analyticsHoldingsCount(int count);
+
+  /// No description provided for @analyticsUnclassifiedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 holding is missing classification metadata.} other {{count} holdings are missing classification metadata.}}'**
+  String analyticsUnclassifiedHint(int count);
+
+  /// No description provided for @analyticsUnclassifiedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get analyticsUnclassifiedAction;
+
+  /// No description provided for @analyticsUnclassifiedRowCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a holding to fill in its metadata.'**
+  String get analyticsUnclassifiedRowCta;
+
+  /// No description provided for @analyticsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No equity holdings yet'**
+  String get analyticsEmptyTitle;
+
+  /// No description provided for @analyticsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Once you record stock or ETF transactions, the breakdown will show up here.'**
+  String get analyticsEmptyHint;
+
+  /// No description provided for @analyticsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the allocation view.'**
+  String get analyticsLoadError;
+
+  /// No description provided for @analyticsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get analyticsRetry;
+
+  /// No description provided for @analyticsBucketSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings in {label}'**
+  String analyticsBucketSheetTitle(String label);
+
+  /// No description provided for @analyticsHoldingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} · {value} · {weight}'**
+  String analyticsHoldingTooltip(String symbol, String value, String weight);
 }
 
 class _AppLocalizationsDelegate

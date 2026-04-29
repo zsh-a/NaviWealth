@@ -454,9 +454,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get physicalAssetNotFound => 'Asset not found';
 
   @override
-  String get analyticsAppBarTitle => 'Analytics';
-
-  @override
   String get settingsAppBarTitle => 'Settings';
 
   @override
@@ -680,4 +677,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authLogoutDialogConfirm => 'Sign out';
+
+  @override
+  String get analyticsAppBarTitle => 'Analytics';
+
+  @override
+  String get analyticsEquityTitle => 'Equity Allocation';
+
+  @override
+  String get analyticsEquitySubtitle =>
+      'Slice your stock & ETF holdings by sector, region, or market cap.';
+
+  @override
+  String get analyticsDimensionSector => 'Sector';
+
+  @override
+  String get analyticsDimensionRegion => 'Region';
+
+  @override
+  String get analyticsDimensionMarketCap => 'Market Cap';
+
+  @override
+  String analyticsTotalValueLabel(String currency) {
+    return 'Total $currency';
+  }
+
+  @override
+  String get analyticsBucketUnclassified => 'Unclassified';
+
+  @override
+  String get analyticsBucketRegionCnA => 'A-shares';
+
+  @override
+  String get analyticsBucketRegionHk => 'Hong Kong';
+
+  @override
+  String get analyticsBucketRegionUs => 'United States';
+
+  @override
+  String get analyticsBucketRegionCrypto => 'Crypto';
+
+  @override
+  String get analyticsBucketRegionFx => 'FX';
+
+  @override
+  String get analyticsBucketRegionUnknown => 'Other';
+
+  @override
+  String get analyticsBucketMarketCapLarge => 'Large cap';
+
+  @override
+  String get analyticsBucketMarketCapMid => 'Mid cap';
+
+  @override
+  String get analyticsBucketMarketCapSmall => 'Small cap';
+
+  @override
+  String analyticsHoldingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '$count holding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String analyticsUnclassifiedHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings are missing classification metadata.',
+      one: '1 holding is missing classification metadata.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analyticsUnclassifiedAction => 'Complete';
+
+  @override
+  String get analyticsUnclassifiedRowCta =>
+      'Tap a holding to fill in its metadata.';
+
+  @override
+  String get analyticsEmptyTitle => 'No equity holdings yet';
+
+  @override
+  String get analyticsEmptyHint =>
+      'Once you record stock or ETF transactions, the breakdown will show up here.';
+
+  @override
+  String get analyticsLoadError => 'Couldn\'t load the allocation view.';
+
+  @override
+  String get analyticsRetry => 'Retry';
+
+  @override
+  String analyticsBucketSheetTitle(String label) {
+    return 'Holdings in $label';
+  }
+
+  @override
+  String analyticsHoldingTooltip(String symbol, String value, String weight) {
+    return '$symbol · $value · $weight';
+  }
 }
