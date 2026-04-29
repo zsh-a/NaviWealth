@@ -1625,6 +1625,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{symbol} · {value} · {weight}'**
   String analyticsHoldingTooltip(String symbol, String value, String weight);
+
+  /// No description provided for @benchmarkComparisonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Benchmark comparison'**
+  String get benchmarkComparisonTitle;
+
+  /// No description provided for @benchmarkComparisonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin major indices against your net worth and read off the excess return.'**
+  String get benchmarkComparisonSubtitle;
+
+  /// No description provided for @benchmarkComparisonError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the benchmark comparison: {error}'**
+  String benchmarkComparisonError(String error);
+
+  /// No description provided for @benchmarkSeriesPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get benchmarkSeriesPortfolio;
+
+  /// No description provided for @benchmarkPortfolioAnnualizedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio annualized'**
+  String get benchmarkPortfolioAnnualizedLabel;
+
+  /// No description provided for @benchmarkAnnualizedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Annualized {value}'**
+  String benchmarkAnnualizedSubtitle(String value);
+
+  /// No description provided for @benchmarkIndexHs300.
+  ///
+  /// In en, this message translates to:
+  /// **'CSI 300'**
+  String get benchmarkIndexHs300;
+
+  /// No description provided for @benchmarkIndexSp500.
+  ///
+  /// In en, this message translates to:
+  /// **'S&P 500'**
+  String get benchmarkIndexSp500;
+
+  /// No description provided for @benchmarkIndexNasdaq.
+  ///
+  /// In en, this message translates to:
+  /// **'NASDAQ'**
+  String get benchmarkIndexNasdaq;
+
+  /// No description provided for @benchmarkIndexHsi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hang Seng'**
+  String get benchmarkIndexHsi;
 }
 
 class _AppLocalizationsDelegate

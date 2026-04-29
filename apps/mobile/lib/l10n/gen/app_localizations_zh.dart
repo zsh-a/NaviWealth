@@ -835,4 +835,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String analyticsHoldingTooltip(String symbol, String value, String weight) {
     return '$symbol · $value · $weight';
   }
+
+  @override
+  String get benchmarkComparisonTitle => '基准指数对比';
+
+  @override
+  String get benchmarkComparisonSubtitle => '选定主流指数，与组合走势对照并查看超额收益。';
+
+  @override
+  String benchmarkComparisonError(String error) {
+    return '无法加载基准对比：$error';
+  }
+
+  @override
+  String get benchmarkSeriesPortfolio => '组合';
+
+  @override
+  String get benchmarkPortfolioAnnualizedLabel => '组合年化';
+
+  @override
+  String benchmarkAnnualizedSubtitle(String value) {
+    return '年化 $value';
+  }
+
+  @override
+  String get benchmarkIndexHs300 => '沪深 300';
+
+  @override
+  String get benchmarkIndexSp500 => '标普 500';
+
+  @override
+  String get benchmarkIndexNasdaq => '纳指';
+
+  @override
+  String get benchmarkIndexHsi => '恒生';
 }

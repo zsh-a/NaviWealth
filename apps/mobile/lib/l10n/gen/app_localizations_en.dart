@@ -873,4 +873,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String analyticsHoldingTooltip(String symbol, String value, String weight) {
     return '$symbol · $value · $weight';
   }
+
+  @override
+  String get benchmarkComparisonTitle => 'Benchmark comparison';
+
+  @override
+  String get benchmarkComparisonSubtitle =>
+      'Pin major indices against your net worth and read off the excess return.';
+
+  @override
+  String benchmarkComparisonError(String error) {
+    return 'Couldn\'t load the benchmark comparison: $error';
+  }
+
+  @override
+  String get benchmarkSeriesPortfolio => 'Portfolio';
+
+  @override
+  String get benchmarkPortfolioAnnualizedLabel => 'Portfolio annualized';
+
+  @override
+  String benchmarkAnnualizedSubtitle(String value) {
+    return 'Annualized $value';
+  }
+
+  @override
+  String get benchmarkIndexHs300 => 'CSI 300';
+
+  @override
+  String get benchmarkIndexSp500 => 'S&P 500';
+
+  @override
+  String get benchmarkIndexNasdaq => 'NASDAQ';
+
+  @override
+  String get benchmarkIndexHsi => 'Hang Seng';
 }

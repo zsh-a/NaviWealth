@@ -428,5 +428,26 @@
       "value": { "type": "String", "example": "¥10,000" },
       "weight": { "type": "String", "example": "12.3%" }
     }
-  }
+  },
+
+  "benchmarkComparisonTitle": "Benchmark comparison",
+  "benchmarkComparisonSubtitle": "Pin major indices against your net worth and read off the excess return.",
+  "benchmarkComparisonError": "Couldn't load the benchmark comparison: {error}",
+  "@benchmarkComparisonError": {
+    "placeholders": {
+      "error": { "type": "String", "example": "network down" }
+    }
+  },
+  "benchmarkSeriesPortfolio": "Portfolio",
+  "benchmarkPortfolioAnnualizedLabel": "Portfolio annualized",
+  "benchmarkAnnualizedSubtitle": "Annualized {value}",
+  "@benchmarkAnnualizedSubtitle": {
+    "placeholders": {
+      "value": { "type": "String", "example": "+8.42%" }
+    }
+  },
+  "benchmarkIndexHs300": "CSI 300",
+  "benchmarkIndexSp500": "S&P 500",
+  "benchmarkIndexNasdaq": "NASDAQ",
+  "benchmarkIndexHsi": "Hang Seng"
 }

@@ -282,5 +282,16 @@
   "analyticsRetry": "重试",
 
   "analyticsBucketSheetTitle": "「{label}」持仓",
-  "analyticsHoldingTooltip": "{symbol} · {value} · {weight}"
+  "analyticsHoldingTooltip": "{symbol} · {value} · {weight}",
+
+  "benchmarkComparisonTitle": "基准指数对比",
+  "benchmarkComparisonSubtitle": "选定主流指数，与组合走势对照并查看超额收益。",
+  "benchmarkComparisonError": "无法加载基准对比：{error}",
+  "benchmarkSeriesPortfolio": "组合",
+  "benchmarkPortfolioAnnualizedLabel": "组合年化",
+  "benchmarkAnnualizedSubtitle": "年化 {value}",
+  "benchmarkIndexHs300": "沪深 300",
+  "benchmarkIndexSp500": "标普 500",
+  "benchmarkIndexNasdaq": "纳指",
+  "benchmarkIndexHsi": "恒生"
 }
