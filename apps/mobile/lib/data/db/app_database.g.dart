@@ -3255,6 +3255,17 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _expenseMetadataJsonMeta =
+      const VerificationMeta('expenseMetadataJson');
+  @override
+  late final GeneratedColumn<String> expenseMetadataJson =
+      GeneratedColumn<String>(
+        'expense_metadata_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -3276,6 +3287,7 @@ class $TransactionsTable extends Transactions
     counterAccountId,
     lotId,
     note,
+    expenseMetadataJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3387,6 +3399,15 @@ class $TransactionsTable extends Transactions
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('expense_metadata_json')) {
+      context.handle(
+        _expenseMetadataJsonMeta,
+        expenseMetadataJson.isAcceptableOrUnknown(
+          data['expense_metadata_json']!,
+          _expenseMetadataJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3484,6 +3505,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      expenseMetadataJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expense_metadata_json'],
+      ),
     );
   }
 
@@ -3545,6 +3570,13 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   final String? counterAccountId;
   final String? lotId;
   final String? note;
+
+  /// FIR-68: expense-specific payload (category id, tags, ...) when
+  /// `type = expense`. NULL for every other transaction kind. Kept as a
+  /// JSON blob for the same reason `assets.metadata_json` is — adding
+  /// expense-only columns would bloat the row for the 95% of transactions
+  /// that aren't expenses.
+  final String? expenseMetadataJson;
   const TransactionRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -3565,6 +3597,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     this.counterAccountId,
     this.lotId,
     this.note,
+    this.expenseMetadataJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3624,6 +3657,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    if (!nullToAbsent || expenseMetadataJson != null) {
+      map['expense_metadata_json'] = Variable<String>(expenseMetadataJson);
+    }
     return map;
   }
 
@@ -3658,6 +3694,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ? const Value.absent()
           : Value(lotId),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      expenseMetadataJson: expenseMetadataJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expenseMetadataJson),
     );
   }
 
@@ -3686,6 +3725,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       counterAccountId: serializer.fromJson<String?>(json['counterAccountId']),
       lotId: serializer.fromJson<String?>(json['lotId']),
       note: serializer.fromJson<String?>(json['note']),
+      expenseMetadataJson: serializer.fromJson<String?>(
+        json['expenseMetadataJson'],
+      ),
     );
   }
   @override
@@ -3711,6 +3753,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'counterAccountId': serializer.toJson<String?>(counterAccountId),
       'lotId': serializer.toJson<String?>(lotId),
       'note': serializer.toJson<String?>(note),
+      'expenseMetadataJson': serializer.toJson<String?>(expenseMetadataJson),
     };
   }
 
@@ -3734,6 +3777,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     Value<String?> counterAccountId = const Value.absent(),
     Value<String?> lotId = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    Value<String?> expenseMetadataJson = const Value.absent(),
   }) => TransactionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3756,6 +3800,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
         : this.counterAccountId,
     lotId: lotId.present ? lotId.value : this.lotId,
     note: note.present ? note.value : this.note,
+    expenseMetadataJson: expenseMetadataJson.present
+        ? expenseMetadataJson.value
+        : this.expenseMetadataJson,
   );
   TransactionRow copyWithCompanion(TransactionsCompanion data) {
     return TransactionRow(
@@ -3786,6 +3833,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           : this.counterAccountId,
       lotId: data.lotId.present ? data.lotId.value : this.lotId,
       note: data.note.present ? data.note.value : this.note,
+      expenseMetadataJson: data.expenseMetadataJson.present
+          ? data.expenseMetadataJson.value
+          : this.expenseMetadataJson,
     );
   }
 
@@ -3810,7 +3860,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ..write('tax: $tax, ')
           ..write('counterAccountId: $counterAccountId, ')
           ..write('lotId: $lotId, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('expenseMetadataJson: $expenseMetadataJson')
           ..write(')'))
         .toString();
   }
@@ -3836,6 +3887,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     counterAccountId,
     lotId,
     note,
+    expenseMetadataJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -3859,7 +3911,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           other.tax == this.tax &&
           other.counterAccountId == this.counterAccountId &&
           other.lotId == this.lotId &&
-          other.note == this.note);
+          other.note == this.note &&
+          other.expenseMetadataJson == this.expenseMetadataJson);
 }
 
 class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
@@ -3882,6 +3935,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<String?> counterAccountId;
   final Value<String?> lotId;
   final Value<String?> note;
+  final Value<String?> expenseMetadataJson;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -3903,6 +3957,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.counterAccountId = const Value.absent(),
     this.lotId = const Value.absent(),
     this.note = const Value.absent(),
+    this.expenseMetadataJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -3925,6 +3980,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.counterAccountId = const Value.absent(),
     this.lotId = const Value.absent(),
     this.note = const Value.absent(),
+    this.expenseMetadataJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -3957,6 +4013,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Expression<String>? counterAccountId,
     Expression<String>? lotId,
     Expression<String>? note,
+    Expression<String>? expenseMetadataJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3979,6 +4036,8 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (counterAccountId != null) 'counter_account_id': counterAccountId,
       if (lotId != null) 'lot_id': lotId,
       if (note != null) 'note': note,
+      if (expenseMetadataJson != null)
+        'expense_metadata_json': expenseMetadataJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4003,6 +4062,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Value<String?>? counterAccountId,
     Value<String?>? lotId,
     Value<String?>? note,
+    Value<String?>? expenseMetadataJson,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -4025,6 +4085,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       counterAccountId: counterAccountId ?? this.counterAccountId,
       lotId: lotId ?? this.lotId,
       note: note ?? this.note,
+      expenseMetadataJson: expenseMetadataJson ?? this.expenseMetadataJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4101,6 +4162,11 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (expenseMetadataJson.present) {
+      map['expense_metadata_json'] = Variable<String>(
+        expenseMetadataJson.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4129,6 +4195,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
           ..write('counterAccountId: $counterAccountId, ')
           ..write('lotId: $lotId, ')
           ..write('note: $note, ')
+          ..write('expenseMetadataJson: $expenseMetadataJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8634,6 +8701,737 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
   }
 }
 
+class $ExpenseCategoriesTable extends ExpenseCategories
+    with TableInfo<$ExpenseCategoriesTable, ExpenseCategoryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExpenseCategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($ExpenseCategoriesTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _parentIdMeta = const VerificationMeta(
+    'parentId',
+  );
+  @override
+  late final GeneratedColumn<String> parentId = GeneratedColumn<String>(
+    'parent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _iconMeta = const VerificationMeta('icon');
+  @override
+  late final GeneratedColumn<String> icon = GeneratedColumn<String>(
+    'icon',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _archivedAtMeta = const VerificationMeta(
+    'archivedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> archivedAt = GeneratedColumn<DateTime>(
+    'archived_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    name,
+    parentId,
+    icon,
+    color,
+    sortOrder,
+    archivedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'expense_categories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExpenseCategoryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('parent_id')) {
+      context.handle(
+        _parentIdMeta,
+        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
+      );
+    }
+    if (data.containsKey('icon')) {
+      context.handle(
+        _iconMeta,
+        icon.isAcceptableOrUnknown(data['icon']!, _iconMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('archived_at')) {
+      context.handle(
+        _archivedAtMeta,
+        archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExpenseCategoryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExpenseCategoryRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $ExpenseCategoriesTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      parentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent_id'],
+      ),
+      icon: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon'],
+      ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      ),
+      archivedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}archived_at'],
+      ),
+    );
+  }
+
+  @override
+  $ExpenseCategoriesTable createAlias(String alias) {
+    return $ExpenseCategoriesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class ExpenseCategoryRow extends DataClass
+    implements Insertable<ExpenseCategoryRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String name;
+  final String? parentId;
+  final String? icon;
+  final String? color;
+  final int? sortOrder;
+  final DateTime? archivedAt;
+  const ExpenseCategoryRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.name,
+    this.parentId,
+    this.icon,
+    this.color,
+    this.sortOrder,
+    this.archivedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $ExpenseCategoriesTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || parentId != null) {
+      map['parent_id'] = Variable<String>(parentId);
+    }
+    if (!nullToAbsent || icon != null) {
+      map['icon'] = Variable<String>(icon);
+    }
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
+    if (!nullToAbsent || sortOrder != null) {
+      map['sort_order'] = Variable<int>(sortOrder);
+    }
+    if (!nullToAbsent || archivedAt != null) {
+      map['archived_at'] = Variable<DateTime>(archivedAt);
+    }
+    return map;
+  }
+
+  ExpenseCategoriesCompanion toCompanion(bool nullToAbsent) {
+    return ExpenseCategoriesCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      name: Value(name),
+      parentId: parentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentId),
+      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
+      sortOrder: sortOrder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sortOrder),
+      archivedAt: archivedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(archivedAt),
+    );
+  }
+
+  factory ExpenseCategoryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExpenseCategoryRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      parentId: serializer.fromJson<String?>(json['parentId']),
+      icon: serializer.fromJson<String?>(json['icon']),
+      color: serializer.fromJson<String?>(json['color']),
+      sortOrder: serializer.fromJson<int?>(json['sortOrder']),
+      archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'parentId': serializer.toJson<String?>(parentId),
+      'icon': serializer.toJson<String?>(icon),
+      'color': serializer.toJson<String?>(color),
+      'sortOrder': serializer.toJson<int?>(sortOrder),
+      'archivedAt': serializer.toJson<DateTime?>(archivedAt),
+    };
+  }
+
+  ExpenseCategoryRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? name,
+    Value<String?> parentId = const Value.absent(),
+    Value<String?> icon = const Value.absent(),
+    Value<String?> color = const Value.absent(),
+    Value<int?> sortOrder = const Value.absent(),
+    Value<DateTime?> archivedAt = const Value.absent(),
+  }) => ExpenseCategoryRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    parentId: parentId.present ? parentId.value : this.parentId,
+    icon: icon.present ? icon.value : this.icon,
+    color: color.present ? color.value : this.color,
+    sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
+    archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+  );
+  ExpenseCategoryRow copyWithCompanion(ExpenseCategoriesCompanion data) {
+    return ExpenseCategoryRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      icon: data.icon.present ? data.icon.value : this.icon,
+      color: data.color.present ? data.color.value : this.color,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      archivedAt: data.archivedAt.present
+          ? data.archivedAt.value
+          : this.archivedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpenseCategoryRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('parentId: $parentId, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('archivedAt: $archivedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    name,
+    parentId,
+    icon,
+    color,
+    sortOrder,
+    archivedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExpenseCategoryRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.parentId == this.parentId &&
+          other.icon == this.icon &&
+          other.color == this.color &&
+          other.sortOrder == this.sortOrder &&
+          other.archivedAt == this.archivedAt);
+}
+
+class ExpenseCategoriesCompanion extends UpdateCompanion<ExpenseCategoryRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> parentId;
+  final Value<String?> icon;
+  final Value<String?> color;
+  final Value<int?> sortOrder;
+  final Value<DateTime?> archivedAt;
+  final Value<int> rowid;
+  const ExpenseCategoriesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.color = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExpenseCategoriesCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String name,
+    this.parentId = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.color = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       name = Value(name);
+  static Insertable<ExpenseCategoryRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? parentId,
+    Expression<String>? icon,
+    Expression<String>? color,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? archivedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (parentId != null) 'parent_id': parentId,
+      if (icon != null) 'icon': icon,
+      if (color != null) 'color': color,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (archivedAt != null) 'archived_at': archivedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExpenseCategoriesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? parentId,
+    Value<String?>? icon,
+    Value<String?>? color,
+    Value<int?>? sortOrder,
+    Value<DateTime?>? archivedAt,
+    Value<int>? rowid,
+  }) {
+    return ExpenseCategoriesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      parentId: parentId ?? this.parentId,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      sortOrder: sortOrder ?? this.sortOrder,
+      archivedAt: archivedAt ?? this.archivedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $ExpenseCategoriesTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (parentId.present) {
+      map['parent_id'] = Variable<String>(parentId.value);
+    }
+    if (icon.present) {
+      map['icon'] = Variable<String>(icon.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (archivedAt.present) {
+      map['archived_at'] = Variable<DateTime>(archivedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpenseCategoriesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('parentId: $parentId, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $GoalsTable extends Goals with TableInfo<$GoalsTable, GoalRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -12386,6 +13184,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TagsTable tags = $TagsTable(this);
   late final $TagLinksTable tagLinks = $TagLinksTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
+  late final $ExpenseCategoriesTable expenseCategories =
+      $ExpenseCategoriesTable(this);
   late final $GoalsTable goals = $GoalsTable(this);
   late final $DevicesTable devices = $DevicesTable(this);
   late final $OpLogsTable opLogs = $OpLogsTable(this);
@@ -12411,6 +13211,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     tags,
     tagLinks,
     categories,
+    expenseCategories,
     goals,
     devices,
     opLogs,
@@ -13837,6 +14638,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> counterAccountId,
       Value<String?> lotId,
       Value<String?> note,
+      Value<String?> expenseMetadataJson,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -13860,6 +14662,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> counterAccountId,
       Value<String?> lotId,
       Value<String?> note,
+      Value<String?> expenseMetadataJson,
       Value<int> rowid,
     });
 
@@ -13972,6 +14775,11 @@ class $$TransactionsTableFilterComposer
     column: $table.note,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get expenseMetadataJson => $composableBuilder(
+    column: $table.expenseMetadataJson,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$TransactionsTableOrderingComposer
@@ -14077,6 +14885,11 @@ class $$TransactionsTableOrderingComposer
     column: $table.note,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get expenseMetadataJson => $composableBuilder(
+    column: $table.expenseMetadataJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -14152,6 +14965,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get expenseMetadataJson => $composableBuilder(
+    column: $table.expenseMetadataJson,
+    builder: (column) => column,
+  );
 }
 
 class $$TransactionsTableTableManager
@@ -14204,6 +15022,7 @@ class $$TransactionsTableTableManager
                 Value<String?> counterAccountId = const Value.absent(),
                 Value<String?> lotId = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<String?> expenseMetadataJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 ownerUserId: ownerUserId,
@@ -14225,6 +15044,7 @@ class $$TransactionsTableTableManager
                 counterAccountId: counterAccountId,
                 lotId: lotId,
                 note: note,
+                expenseMetadataJson: expenseMetadataJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14248,6 +15068,7 @@ class $$TransactionsTableTableManager
                 Value<String?> counterAccountId = const Value.absent(),
                 Value<String?> lotId = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<String?> expenseMetadataJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -14269,6 +15090,7 @@ class $$TransactionsTableTableManager
                 counterAccountId: counterAccountId,
                 lotId: lotId,
                 note: note,
+                expenseMetadataJson: expenseMetadataJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -16449,6 +17271,359 @@ typedef $$CategoriesTableProcessedTableManager =
       CategoryRow,
       PrefetchHooks Function()
     >;
+typedef $$ExpenseCategoriesTableCreateCompanionBuilder =
+    ExpenseCategoriesCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String name,
+      Value<String?> parentId,
+      Value<String?> icon,
+      Value<String?> color,
+      Value<int?> sortOrder,
+      Value<DateTime?> archivedAt,
+      Value<int> rowid,
+    });
+typedef $$ExpenseCategoriesTableUpdateCompanionBuilder =
+    ExpenseCategoriesCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> name,
+      Value<String?> parentId,
+      Value<String?> icon,
+      Value<String?> color,
+      Value<int?> sortOrder,
+      Value<DateTime?> archivedAt,
+      Value<int> rowid,
+    });
+
+class $$ExpenseCategoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
+  $$ExpenseCategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExpenseCategoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
+  $$ExpenseCategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExpenseCategoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
+  $$ExpenseCategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get parentId =>
+      $composableBuilder(column: $table.parentId, builder: (column) => column);
+
+  GeneratedColumn<String> get icon =>
+      $composableBuilder(column: $table.icon, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$ExpenseCategoriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExpenseCategoriesTable,
+          ExpenseCategoryRow,
+          $$ExpenseCategoriesTableFilterComposer,
+          $$ExpenseCategoriesTableOrderingComposer,
+          $$ExpenseCategoriesTableAnnotationComposer,
+          $$ExpenseCategoriesTableCreateCompanionBuilder,
+          $$ExpenseCategoriesTableUpdateCompanionBuilder,
+          (
+            ExpenseCategoryRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ExpenseCategoriesTable,
+              ExpenseCategoryRow
+            >,
+          ),
+          ExpenseCategoryRow,
+          PrefetchHooks Function()
+        > {
+  $$ExpenseCategoriesTableTableManager(
+    _$AppDatabase db,
+    $ExpenseCategoriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExpenseCategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExpenseCategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExpenseCategoriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> parentId = const Value.absent(),
+                Value<String?> icon = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<int?> sortOrder = const Value.absent(),
+                Value<DateTime?> archivedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExpenseCategoriesCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                name: name,
+                parentId: parentId,
+                icon: icon,
+                color: color,
+                sortOrder: sortOrder,
+                archivedAt: archivedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String name,
+                Value<String?> parentId = const Value.absent(),
+                Value<String?> icon = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<int?> sortOrder = const Value.absent(),
+                Value<DateTime?> archivedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExpenseCategoriesCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                name: name,
+                parentId: parentId,
+                icon: icon,
+                color: color,
+                sortOrder: sortOrder,
+                archivedAt: archivedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExpenseCategoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExpenseCategoriesTable,
+      ExpenseCategoryRow,
+      $$ExpenseCategoriesTableFilterComposer,
+      $$ExpenseCategoriesTableOrderingComposer,
+      $$ExpenseCategoriesTableAnnotationComposer,
+      $$ExpenseCategoriesTableCreateCompanionBuilder,
+      $$ExpenseCategoriesTableUpdateCompanionBuilder,
+      (
+        ExpenseCategoryRow,
+        BaseReferences<
+          _$AppDatabase,
+          $ExpenseCategoriesTable,
+          ExpenseCategoryRow
+        >,
+      ),
+      ExpenseCategoryRow,
+      PrefetchHooks Function()
+    >;
 typedef $$GoalsTableCreateCompanionBuilder =
     GoalsCompanion Function({
       required String ownerUserId,
@@ -18293,6 +19468,8 @@ class $AppDatabaseManager {
       $$TagLinksTableTableManager(_db, _db.tagLinks);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
+  $$ExpenseCategoriesTableTableManager get expenseCategories =>
+      $$ExpenseCategoriesTableTableManager(_db, _db.expenseCategories);
   $$GoalsTableTableManager get goals =>
       $$GoalsTableTableManager(_db, _db.goals);
   $$DevicesTableTableManager get devices =>
