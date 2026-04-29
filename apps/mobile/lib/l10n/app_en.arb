@@ -449,5 +449,53 @@
   "benchmarkIndexHs300": "CSI 300",
   "benchmarkIndexSp500": "S&P 500",
   "benchmarkIndexNasdaq": "NASDAQ",
-  "benchmarkIndexHsi": "Hang Seng"
+  "benchmarkIndexHsi": "Hang Seng",
+
+  "riskAlertTitle": "Concentration Alerts",
+  "@riskAlertTitle": { "description": "Header for the risk concentration alert panel on the analytics page." },
+
+  "riskAlertAssetTitle": "{name} overweight",
+  "@riskAlertAssetTitle": {
+    "description": "Alert title for a single asset exceeding its concentration threshold.",
+    "placeholders": { "name": { "type": "String", "example": "AAPL" } }
+  },
+  "riskAlertSectorTitle": "{sector} overweight",
+  "@riskAlertSectorTitle": {
+    "description": "Alert title for a sector exceeding its concentration threshold.",
+    "placeholders": { "sector": { "type": "String", "example": "Technology" } }
+  },
+  "riskAlertRegionTitle": "{region} overweight",
+  "@riskAlertRegionTitle": {
+    "description": "Alert title for a region exceeding its concentration threshold.",
+    "placeholders": { "region": { "type": "String", "example": "usStock" } }
+  },
+  "riskAlertCurrencyTitle": "{currency} exposure",
+  "@riskAlertCurrencyTitle": {
+    "description": "Alert title for a currency exceeding its concentration threshold.",
+    "placeholders": { "currency": { "type": "String", "example": "USD" } }
+  },
+  "riskAlertThresholdBreached": "{dimension} threshold: {threshold}",
+  "@riskAlertThresholdBreached": {
+    "description": "Subtitle showing which dimension threshold was breached.",
+    "placeholders": {
+      "dimension": { "type": "String", "example": "Asset" },
+      "threshold": { "type": "String", "example": "20%" }
+    }
+  },
+
+  "riskDimensionAsset": "Asset",
+  "riskDimensionSector": "Sector",
+  "riskDimensionRegion": "Region",
+  "riskDimensionCurrency": "Currency",
+
+  "settingsRiskSection": "Risk Preferences",
+  "settingsRiskAssetLabel": "Single asset limit",
+  "settingsRiskAssetSubtitle": "Alert when one asset exceeds this share of total portfolio.",
+  "settingsRiskSectorLabel": "Sector limit",
+  "settingsRiskSectorSubtitle": "Alert when one sector exceeds this share.",
+  "settingsRiskRegionLabel": "Region limit",
+  "settingsRiskRegionSubtitle": "Alert when one market / region exceeds this share.",
+  "settingsRiskCurrencyLabel": "Currency limit",
+  "settingsRiskCurrencySubtitle": "Alert when one currency exposure exceeds this share.",
+  "settingsRiskResetDefaults": "Reset to defaults"
 }

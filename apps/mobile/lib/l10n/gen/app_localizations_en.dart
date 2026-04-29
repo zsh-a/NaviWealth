@@ -908,4 +908,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get benchmarkIndexHsi => 'Hang Seng';
+
+  @override
+  String get riskAlertTitle => 'Concentration Alerts';
+
+  @override
+  String riskAlertAssetTitle(String name) {
+    return '$name overweight';
+  }
+
+  @override
+  String riskAlertSectorTitle(String sector) {
+    return '$sector overweight';
+  }
+
+  @override
+  String riskAlertRegionTitle(String region) {
+    return '$region overweight';
+  }
+
+  @override
+  String riskAlertCurrencyTitle(String currency) {
+    return '$currency exposure';
+  }
+
+  @override
+  String riskAlertThresholdBreached(String dimension, String threshold) {
+    return '$dimension threshold: $threshold';
+  }
+
+  @override
+  String get riskDimensionAsset => 'Asset';
+
+  @override
+  String get riskDimensionSector => 'Sector';
+
+  @override
+  String get riskDimensionRegion => 'Region';
+
+  @override
+  String get riskDimensionCurrency => 'Currency';
+
+  @override
+  String get settingsRiskSection => 'Risk Preferences';
+
+  @override
+  String get settingsRiskAssetLabel => 'Single asset limit';
+
+  @override
+  String get settingsRiskAssetSubtitle =>
+      'Alert when one asset exceeds this share of total portfolio.';
+
+  @override
+  String get settingsRiskSectorLabel => 'Sector limit';
+
+  @override
+  String get settingsRiskSectorSubtitle =>
+      'Alert when one sector exceeds this share.';
+
+  @override
+  String get settingsRiskRegionLabel => 'Region limit';
+
+  @override
+  String get settingsRiskRegionSubtitle =>
+      'Alert when one market / region exceeds this share.';
+
+  @override
+  String get settingsRiskCurrencyLabel => 'Currency limit';
+
+  @override
+  String get settingsRiskCurrencySubtitle =>
+      'Alert when one currency exposure exceeds this share.';
+
+  @override
+  String get settingsRiskResetDefaults => 'Reset to defaults';
 }
