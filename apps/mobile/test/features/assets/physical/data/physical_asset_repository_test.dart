@@ -5,30 +5,23 @@ import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset_repository.dart';
-import 'package:naviwealth/features/assets/physical/data/sync_stamper.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../data/db/test_database.dart';
+import '../../../../data/repositories/_stub_stamper.dart';
 
 void main() {
   late AppDatabase db;
   late InMemoryOutboxStore outbox;
-  late InMemoryCursorStore cursors;
   late PhysicalAssetRepository repo;
 
   setUp(() {
     db = makeTestDatabase();
     outbox = InMemoryOutboxStore();
-    cursors = InMemoryCursorStore();
     repo = PhysicalAssetRepository(
       db: db,
-      stamper: SyncStamper(
-        db: db,
-        cursors: cursors,
-        outbox: outbox,
-        userId: 'u1',
-        deviceId: 'd1',
-      ),
+      outbox: outbox,
+      stamper: makeStubStamper(userId: 'u1', deviceId: 'd1'),
       uuid: const Uuid(),
     );
   });

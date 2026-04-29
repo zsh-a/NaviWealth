@@ -32,6 +32,70 @@
   "assetsAppBarTitle": "Assets",
   "assetsEmptyHint": "Asset entry & management (FIR-5) — coming soon",
   "assetsAddAction": "Add asset",
+  "assetsLiabilitiesLink": "Liabilities & repayment plans",
+  "@assetsLiabilitiesLink": { "description": "Tile on the Assets page that opens the liabilities subscreen" },
+
+  "liabilitiesAppBarTitle": "Liabilities",
+  "liabilitiesEmptyHint": "No liabilities yet. Add a mortgage, car loan, credit card or consumer loan to track repayment.",
+  "liabilitiesAddAction": "Add liability",
+  "liabilityTypeMortgage": "Mortgage",
+  "liabilityTypeCarLoan": "Car loan",
+  "liabilityTypeCreditCard": "Credit card",
+  "liabilityTypeConsumerLoan": "Consumer loan",
+  "liabilityTypeStudentLoan": "Student loan",
+  "liabilityTypeMarginLoan": "Margin loan",
+  "liabilityTypeOther": "Other",
+  "liabilityRateTypeFixed": "Fixed rate",
+  "liabilityRateTypeLpr": "LPR floating",
+  "liabilityMethodEqualInstallment": "Equal installment",
+  "liabilityMethodEqualPrincipal": "Equal principal",
+  "liabilityFieldName": "Name",
+  "liabilityFieldType": "Type",
+  "liabilityFieldPrincipal": "Principal",
+  "liabilityFieldInterestRate": "Annual rate (%)",
+  "liabilityFieldRateType": "Rate type",
+  "liabilityFieldTerm": "Term (months)",
+  "liabilityFieldStartDate": "Start date",
+  "liabilityFieldMethod": "Repayment method",
+  "liabilityFieldCurrency": "Currency",
+  "liabilityFieldStatementDay": "Statement day",
+  "liabilityFieldPaymentDueDay": "Payment due day",
+  "liabilitySaveAction": "Save",
+  "liabilityValidationRequired": "Required",
+  "liabilityValidationPositive": "Must be greater than zero",
+  "liabilityValidationDayOfMonth": "Must be 1–31",
+  "liabilitySummaryRemaining": "Remaining principal",
+  "liabilitySummaryInterestPaid": "Interest paid so far",
+  "liabilitySummaryInterestTotal": "Total interest cost",
+  "liabilitySummaryInterestRatio": "Interest as share of total payments",
+  "liabilitySummaryProgress": "Paid {paid} of {total} periods",
+  "@liabilitySummaryProgress": {
+    "placeholders": {
+      "paid": { "type": "int", "example": "3" },
+      "total": { "type": "int", "example": "240" }
+    }
+  },
+  "liabilityScheduleHeading": "Amortization schedule",
+  "liabilityScheduleColPeriod": "#",
+  "liabilityScheduleColDue": "Due",
+  "liabilityScheduleColPrincipal": "Principal",
+  "liabilityScheduleColInterest": "Interest",
+  "liabilityScheduleColRemaining": "Balance",
+  "liabilityScheduleColStatus": "Status",
+  "liabilityScheduleStatusPaid": "Paid",
+  "liabilityScheduleStatusDue": "Pending",
+  "liabilityScheduleMarkPaid": "Mark paid",
+  "liabilityScheduleMarkPaidConfirmTitle": "Mark period {period} paid?",
+  "@liabilityScheduleMarkPaidConfirmTitle": {
+    "placeholders": { "period": { "type": "int", "example": "1" } }
+  },
+  "liabilityScheduleMarkPaidConfirmBody": "This records a {amount} liability-payment transaction dated today and cannot be undone from this screen.",
+  "@liabilityScheduleMarkPaidConfirmBody": {
+    "placeholders": { "amount": { "type": "String", "example": "¥6,123.45" } }
+  },
+  "liabilityScheduleMarkPaidNoAccount": "Assign a payer account before marking periods paid.",
+  "liabilityNotFound": "Liability not found",
+  "liabilityRevolvingNoSchedule": "Credit-card / revolving lines have no fixed amortization schedule.",
 
   "physicalAssetsSectionTitle": "Real estate & vehicles",
   "physicalAssetsEmpty": "No real estate or vehicles yet. Tap + to add one.",
@@ -117,6 +181,21 @@
     "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
   },
   "deferredLoadRetry": "Retry",
+
+  "routeNotFoundTitle": "Page not found",
+  "@routeNotFoundTitle": { "description": "Title shown when go_router can't match a URL to any registered route (404)." },
+  "routeNotFoundMessage": "We couldn't find {path}. It may have been moved or never existed.",
+  "@routeNotFoundMessage": {
+    "description": "Body of the 404 page; includes the URL the user tried to visit.",
+    "placeholders": {
+      "path": { "type": "String", "example": "/typo-here" }
+    }
+  },
+  "routeErrorTitle": "Something went wrong",
+  "@routeErrorTitle": { "description": "Title shown when go_router's errorBuilder fires for a runtime error (not a 404)." },
+  "routeGoHome": "Back to overview",
+  "@routeGoHome": { "description": "Action that navigates back to the home tab from an error / not-found page." },
+
   "shortcutsHelpTitle": "Keyboard shortcuts",
   "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
   "shortcutCommandPalette": "Open command palette",

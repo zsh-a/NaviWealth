@@ -1,47 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/sync/drift_sync_storage.dart';
-import '../../../../core/sync/providers.dart';
 import '../../../../data/db/providers.dart';
+import '../../../../data/repositories/mutation_context.dart';
+import '../../../../data/repositories/providers.dart';
 import 'physical_asset.dart';
 import 'physical_asset_repository.dart';
-import 'sync_stamper.dart';
-
-/// Single-user identity until FIR-30 wires real auth. Override at the
-/// `ProviderScope` root in tests / multi-user smoke harnesses.
-///
-/// Kept here (rather than in `core/auth/`) on purpose: there is no auth
-/// module yet, and putting a placeholder there would invite drift between
-/// the placeholder and the eventual real provider. Local features that
-/// need an owner id read it from this provider; FIR-30 will swap the
-/// definition in one place.
-final currentUserIdProvider = Provider<String>((ref) => 'local-user');
 
 final physicalAssetRepositoryProvider =
     FutureProvider<PhysicalAssetRepository>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
-  final deviceId = await ref.watch(deviceIdProviderProvider).getOrCreate();
-  final userId = ref.watch(currentUserIdProvider);
-  final stamper = SyncStamper(
-    db: db,
-    cursors: DriftCursorStore(db),
-    outbox: DriftOutboxStore(db),
-    userId: userId,
-    deviceId: deviceId,
-  );
-  return PhysicalAssetRepository(db: db, stamper: stamper);
+  final outbox = await ref.watch(outboxStoreProvider.future);
+  final stamper = await ref.watch(mutationStamperProvider.future);
+  return PhysicalAssetRepository(db: db, outbox: outbox, stamper: stamper);
 });
 
 final physicalAssetsListProvider =
-    StreamProvider<List<PhysicalAsset>>((ref) async* {
+    StreamProvider.autoDispose<List<PhysicalAsset>>((ref) async* {
   final repo = await ref.watch(physicalAssetRepositoryProvider.future);
   yield* repo.watchAll();
 });
 
 /// Single-asset detail. Re-fires whenever the underlying list changes so
-/// the detail page picks up edits from elsewhere in the app.
+/// the detail page picks up edits made elsewhere in the app.
 final physicalAssetDetailProvider =
-    FutureProvider.family<PhysicalAsset?, String>((ref, id) async {
+    FutureProvider.autoDispose.family<PhysicalAsset?, String>((ref, id) async {
   final list = await ref.watch(physicalAssetsListProvider.future);
   for (final a in list) {
     if (a.id == id) return a;
@@ -53,7 +35,10 @@ final physicalAssetDetailProvider =
 });
 
 final physicalAssetValuationHistoryProvider =
-    FutureProvider.family<List<ValuationPoint>, String>((ref, id) async {
+    FutureProvider.autoDispose.family<List<ValuationPoint>, String>((
+  ref,
+  id,
+) async {
   // Recompute when the list rebuilds so a new valuationAdjust transaction
   // shows up immediately.
   await ref.watch(physicalAssetsListProvider.future);

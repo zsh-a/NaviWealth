@@ -1,30 +1,37 @@
 import 'package:decimal/decimal.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/sync/op.dart';
+import '../../../../core/sync/op_outbox.dart';
 import '../../../../data/db/app_database.dart';
 import '../../../../data/domain/enums.dart';
+import '../../../../data/repositories/mutation_context.dart';
 import 'physical_asset.dart';
 import 'physical_asset_meta.dart';
-import 'sync_stamper.dart';
 
 /// CRUD + valuation history for non-financial assets (real estate, vehicles).
 ///
 /// Acts as the single mutation entry point so callers can't accidentally
-/// forget the OpLog enqueue or the synthetic `valuationAdjust` transaction
-/// that the analytics layer relies on.
+/// forget the sync `Op` enqueue or the synthetic `valuationAdjust`
+/// transaction that the analytics layer relies on. Mirrors the contract
+/// of [ManualAssetRepository] / [LiabilityRepository] from FIR-44 / FIR-47:
+/// each write happens inside a Drift transaction that *both* mutates the
+/// row and enqueues a corresponding [Op].
 class PhysicalAssetRepository {
   PhysicalAssetRepository({
     required AppDatabase db,
-    required SyncStamper stamper,
+    required OutboxStore outbox,
+    required MutationStamper stamper,
     Uuid uuid = const Uuid(),
   })  : _db = db,
+        _outbox = outbox,
         _stamper = stamper,
         _uuid = uuid;
 
   final AppDatabase _db;
-  final SyncStamper _stamper;
+  final OutboxStore _outbox;
+  final MutationStamper _stamper;
   final Uuid _uuid;
 
   static const Set<AssetType> _physicalTypes = {
@@ -42,14 +49,13 @@ class PhysicalAssetRepository {
                 t.type.isInValues(_physicalTypes.toList()),
           )
           ..orderBy([
-            (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
+            (t) =>
+                OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
           ]))
         .get();
     return rows.map(_wrap).whereType<PhysicalAsset>().toList(growable: false);
   }
 
-  /// Reactive variant of [listAll]. Use from Riverpod stream providers so
-  /// the UI rebuilds whenever any physical-asset row changes.
   Stream<List<PhysicalAsset>> watchAll() {
     final query = _db.select(_db.assets)
       ..where(
@@ -60,8 +66,10 @@ class PhysicalAssetRepository {
         (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
       ]);
     return query.watch().map(
-          (rows) =>
-              rows.map(_wrap).whereType<PhysicalAsset>().toList(growable: false),
+          (rows) => rows
+              .map(_wrap)
+              .whereType<PhysicalAsset>()
+              .toList(growable: false),
         );
   }
 
@@ -75,8 +83,8 @@ class PhysicalAssetRepository {
 
   /// Returns the valuation history for [assetId] in chronological order.
   ///
-  /// Includes a synthesised "purchase" point as the first entry so the
-  /// UI chart never starts mid-air. Subsequent points are the rows in
+  /// Includes a synthesised "purchase" point as the first entry so the UI
+  /// chart never starts mid-air. Subsequent points are rows in
   /// [Transactions] with `type = valuationAdjust`.
   Future<List<ValuationPoint>> getValuationHistory(String assetId) async {
     final asset = await getById(assetId);
@@ -111,8 +119,6 @@ class PhysicalAssetRepository {
 
   // ---------- Writes ----------
 
-  /// Insert a new real-estate asset. Returns the persisted [PhysicalAsset]
-  /// so the caller can navigate straight to its detail page.
   Future<PhysicalAsset> createRealEstate({
     required String name,
     String? address,
@@ -121,7 +127,6 @@ class PhysicalAssetRepository {
     required Decimal purchasePrice,
     Decimal? currentValuation,
     String? linkedLiabilityId,
-    DateTime? now,
   }) {
     return _create(
       type: AssetType.realEstate,
@@ -134,11 +139,9 @@ class PhysicalAssetRepository {
         purchasePrice: purchasePrice,
         linkedLiabilityId: linkedLiabilityId,
       ),
-      now: now,
     );
   }
 
-  /// Insert a new vehicle asset.
   Future<PhysicalAsset> createVehicle({
     required String name,
     required String currency,
@@ -147,7 +150,6 @@ class PhysicalAssetRepository {
     Decimal? currentValuation,
     Decimal? annualResidualRate,
     bool autoDepreciation = true,
-    DateTime? now,
   }) {
     return _create(
       type: AssetType.vehicle,
@@ -160,59 +162,56 @@ class PhysicalAssetRepository {
         annualResidualRate: annualResidualRate,
         autoDepreciation: autoDepreciation,
       ),
-      now: now,
     );
   }
 
   /// Manual valuation update.
   ///
   /// Atomically: bumps `Assets.lastPrice` / `lastPriceAt`, inserts a
-  /// `valuationAdjust` transaction so the change is visible in the history,
-  /// and enqueues sync ops for both rows.
+  /// `valuationAdjust` transaction so the change is visible in the
+  /// history, and enqueues sync ops for both rows.
   Future<void> updateValuation({
     required String assetId,
     required Decimal newValuation,
     required DateTime asOf,
     String? note,
-    DateTime? now,
   }) async {
     final existing = await getById(assetId);
     if (existing == null) {
       throw StateError('Asset $assetId does not exist or was deleted');
     }
 
-    await _stamper.runTransaction(() async {
-      final assetStamp = await _stamper.stamp(now: now);
+    await _db.transaction(() async {
+      final assetStamp = await _stamper.stamp();
       await (_db.update(_db.assets)..where((t) => t.id.equals(assetId))).write(
         AssetsCompanion(
           lastPrice: Value(newValuation),
           lastPriceAt: Value(asOf),
-          updatedAt: Value(assetStamp.updatedAt),
-          updatedByDevice: Value(_stamper.deviceId),
+          updatedAt: Value(assetStamp.now),
+          updatedByDevice: Value(assetStamp.deviceId),
           hlc: Value(assetStamp.hlc),
         ),
       );
-      await _stamper.enqueue(
-        opId: _uuid.v4(),
+      await _enqueue(
         tableName: 'assets',
         rowId: assetId,
         opType: OpType.update,
-        hlc: assetStamp.hlc,
-        fieldsDiff: <String, Object?>{
+        stamp: assetStamp,
+        fields: <String, Object?>{
           'last_price': newValuation.toString(),
           'last_price_at': asOf.toUtc().toIso8601String(),
-          'updated_at': assetStamp.updatedAt.toIso8601String(),
-          'updated_by_device': _stamper.deviceId,
+          'updated_at': assetStamp.now.toUtc().toIso8601String(),
+          'updated_by_device': assetStamp.deviceId,
           'hlc': assetStamp.hlc.toString(),
         },
       );
 
-      final txStamp = await _stamper.stamp(now: now);
+      final txStamp = await _stamper.stamp();
       final txId = _uuid.v4();
-      // Quantity is fixed at 1 — physical assets are unitary and the
+      // Quantity is fixed at 1 — physical assets are unitary, and the
       // analytics layer treats `valuationAdjust` rows as authoritative
-      // mark-to-market events on the underlying asset, not as quantity
-      // changes.
+      // mark-to-market events on the underlying asset rather than
+      // quantity changes.
       final txQuantity = Decimal.one;
       await _db.into(_db.transactions).insert(
             TransactionsCompanion.insert(
@@ -225,19 +224,18 @@ class PhysicalAssetRepository {
               currency: existing.currency,
               tradeDate: asOf,
               note: Value(note),
-              ownerUserId: _stamper.userId,
-              updatedAt: txStamp.updatedAt,
-              updatedByDevice: _stamper.deviceId,
+              ownerUserId: txStamp.ownerUserId,
+              updatedAt: txStamp.now,
+              updatedByDevice: txStamp.deviceId,
               hlc: txStamp.hlc,
             ),
           );
-      await _stamper.enqueue(
-        opId: _uuid.v4(),
+      await _enqueue(
         tableName: 'transactions',
         rowId: txId,
         opType: OpType.insert,
-        hlc: txStamp.hlc,
-        fieldsDiff: <String, Object?>{
+        stamp: txStamp,
+        fields: <String, Object?>{
           'id': txId,
           'account_id': assetId,
           'asset_id': assetId,
@@ -247,9 +245,9 @@ class PhysicalAssetRepository {
           'currency': existing.currency,
           'trade_date': asOf.toUtc().toIso8601String(),
           'note': ?note,
-          'owner_user_id': _stamper.userId,
-          'updated_at': txStamp.updatedAt.toIso8601String(),
-          'updated_by_device': _stamper.deviceId,
+          'owner_user_id': txStamp.ownerUserId,
+          'updated_at': txStamp.now.toUtc().toIso8601String(),
+          'updated_by_device': txStamp.deviceId,
           'hlc': txStamp.hlc.toString(),
         },
       );
@@ -258,60 +256,57 @@ class PhysicalAssetRepository {
 
   /// Soft-delete the asset. The row stays in the table with `deleted_at`
   /// populated so peers receive the delete during the next pull.
-  Future<void> delete(String assetId, {DateTime? now}) async {
-    await _stamper.runTransaction(() async {
-      final stamp = await _stamper.stamp(now: now);
+  Future<void> delete(String assetId) async {
+    await _db.transaction(() async {
+      final stamp = await _stamper.stamp();
       await (_db.update(_db.assets)..where((t) => t.id.equals(assetId))).write(
         AssetsCompanion(
-          deletedAt: Value(stamp.updatedAt),
-          updatedAt: Value(stamp.updatedAt),
-          updatedByDevice: Value(_stamper.deviceId),
+          deletedAt: Value(stamp.now),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
           hlc: Value(stamp.hlc),
         ),
       );
-      await _stamper.enqueue(
-        opId: _uuid.v4(),
+      await _enqueue(
         tableName: 'assets',
         rowId: assetId,
         opType: OpType.delete,
-        hlc: stamp.hlc,
-        fieldsDiff: null,
+        stamp: stamp,
+        fields: null,
       );
     });
   }
 
-  /// Update the metadata-only fields (address, residual rate, link, etc.).
+  /// Update metadata-only fields (address, residual rate, link, etc.).
   /// Does NOT change the current valuation — that goes through
   /// [updateValuation] so the history stays accurate.
   Future<void> updateMetadata({
     required String assetId,
     required PhysicalAssetMeta meta,
     String? name,
-    DateTime? now,
   }) async {
-    await _stamper.runTransaction(() async {
-      final stamp = await _stamper.stamp(now: now);
-      final encoded = meta.encode();
+    final encoded = meta.encode();
+    await _db.transaction(() async {
+      final stamp = await _stamper.stamp();
       await (_db.update(_db.assets)..where((t) => t.id.equals(assetId))).write(
         AssetsCompanion(
           name: name == null ? const Value.absent() : Value(name),
           metadataJson: Value(encoded),
-          updatedAt: Value(stamp.updatedAt),
-          updatedByDevice: Value(_stamper.deviceId),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
           hlc: Value(stamp.hlc),
         ),
       );
-      await _stamper.enqueue(
-        opId: _uuid.v4(),
+      await _enqueue(
         tableName: 'assets',
         rowId: assetId,
         opType: OpType.update,
-        hlc: stamp.hlc,
-        fieldsDiff: <String, Object?>{
+        stamp: stamp,
+        fields: <String, Object?>{
           'name': ?name,
           'metadata_json': encoded,
-          'updated_at': stamp.updatedAt.toIso8601String(),
-          'updated_by_device': _stamper.deviceId,
+          'updated_at': stamp.now.toUtc().toIso8601String(),
+          'updated_by_device': stamp.deviceId,
           'hlc': stamp.hlc.toString(),
         },
       );
@@ -333,13 +328,12 @@ class PhysicalAssetRepository {
     required String currency,
     required Decimal currentValuation,
     required PhysicalAssetMeta meta,
-    DateTime? now,
   }) async {
     final id = _uuid.v4();
     final encoded = meta.encode();
 
-    await _stamper.runTransaction(() async {
-      final stamp = await _stamper.stamp(now: now);
+    await _db.transaction(() async {
+      final stamp = await _stamper.stamp();
       // `symbol` is required on the Assets table but only meaningful for
       // securities. We reuse the row id as the symbol so it's stable and
       // unique without leaking PII into a fielded column.
@@ -351,32 +345,31 @@ class PhysicalAssetRepository {
               currency: currency,
               name: Value(name),
               lastPrice: Value(currentValuation),
-              lastPriceAt: Value(stamp.updatedAt),
+              lastPriceAt: Value(stamp.now),
               metadataJson: Value(encoded),
-              ownerUserId: _stamper.userId,
-              updatedAt: stamp.updatedAt,
-              updatedByDevice: _stamper.deviceId,
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
               hlc: stamp.hlc,
             ),
           );
-      await _stamper.enqueue(
-        opId: _uuid.v4(),
+      await _enqueue(
         tableName: 'assets',
         rowId: id,
         opType: OpType.insert,
-        hlc: stamp.hlc,
-        fieldsDiff: <String, Object?>{
+        stamp: stamp,
+        fields: <String, Object?>{
           'id': id,
           'type': type.name,
           'symbol': id,
           'currency': currency,
           'name': name,
           'last_price': currentValuation.toString(),
-          'last_price_at': stamp.updatedAt.toIso8601String(),
+          'last_price_at': stamp.now.toUtc().toIso8601String(),
           'metadata_json': encoded,
-          'owner_user_id': _stamper.userId,
-          'updated_at': stamp.updatedAt.toIso8601String(),
-          'updated_by_device': _stamper.deviceId,
+          'owner_user_id': stamp.ownerUserId,
+          'updated_at': stamp.now.toUtc().toIso8601String(),
+          'updated_by_device': stamp.deviceId,
           'hlc': stamp.hlc.toString(),
         },
       );
@@ -387,5 +380,25 @@ class PhysicalAssetRepository {
       throw StateError('Asset $id was inserted but could not be re-read');
     }
     return created;
+  }
+
+  Future<void> _enqueue({
+    required String tableName,
+    required String rowId,
+    required OpType opType,
+    required MutationStamp stamp,
+    required Map<String, Object?>? fields,
+  }) async {
+    final op = Op(
+      opId: _uuid.v4(),
+      tableName: tableName,
+      rowId: rowId,
+      opType: opType,
+      fieldsDiff: fields,
+      hlc: stamp.hlc,
+      deviceId: stamp.deviceId,
+    );
+    if (validateOpForQueue(op) != null) return;
+    await _outbox.enqueue(op);
   }
 }

@@ -20,6 +20,10 @@ enum AccountType {
 
 /// Static classification of an [Asset]. Used to drive UI affordances and
 /// cost-basis behavior.
+///
+/// FIR-44 added the three "no-market-data" deposit/wealth flavours at the
+/// end. Adding new values at the *end* keeps name-based persistence
+/// backwards-compatible (see `EnumStringConverter`).
 enum AssetType {
   stock,
   etf,
@@ -31,7 +35,20 @@ enum AssetType {
   vehicle,
   commodity,
   custom,
+  bankDepositTerm,
+  bankDepositDemand,
+  wealthProduct,
 }
+
+/// Subset of [AssetType] whose current price/value is updated manually by
+/// the user rather than fetched from a market data provider. The forms +
+/// repository in `features/assets` only handle these.
+const Set<AssetType> kManualValuationAssetTypes = {
+  AssetType.cash,
+  AssetType.bankDepositTerm,
+  AssetType.bankDepositDemand,
+  AssetType.wealthProduct,
+};
 
 /// Single fact-table entry kind. Anything that mutates a holding or cash
 /// position must be one of these so reports can roll up cleanly.
@@ -49,6 +66,7 @@ enum TransactionType {
   tax,
   valuationAdjust,
   split,
+  liabilityPayment,
 }
 
 /// Cost-basis lot selection. Configurable per [Settings] so users in
@@ -65,6 +83,23 @@ enum LiabilityType {
   marginLoan,
   other,
 }
+
+/// Repayment schedule shape — drives how the amortization table is generated
+/// from the loan's principal, rate and term.
+///
+/// - [equalInstallment] (等额本息) — same total payment every period; the
+///   principal share grows while the interest share shrinks.
+/// - [equalPrincipal] (等额本金) — same principal share every period; the
+///   total payment shrinks because interest is computed on the falling
+///   balance.
+enum RepaymentMethod { equalInstallment, equalPrincipal }
+
+/// How the [Liability] interest rate is determined. [fixed] keeps the rate
+/// constant; [lprFloating] is a Chinese-mortgage convention where the
+/// effective rate floats with the central bank's LPR — we still store the
+/// effective rate, but flagging it lets the UI surface a "rate may change"
+/// hint rather than implying the schedule is set in stone.
+enum LiabilityRateType { fixed, lprFloating }
 
 /// User-visible color theme preference.
 enum AppThemeMode { system, light, dark }

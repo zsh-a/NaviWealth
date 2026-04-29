@@ -57,11 +57,13 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
-  /// FIR-34: v2 introduces the SyncEngine outbox + cursor key/value store on
-  /// top of the Drift-managed entity tables. Migrations apply each `v -> v+1`
-  /// step in order; new releases must keep prior steps intact.
+  /// Schema history:
+  ///  - v2 (FIR-34) — SyncEngine outbox + cursor key/value store.
+  ///  - v3 (FIR-47) — Liability gains paymentMethod / rateType /
+  ///    statementDay / paymentDueDay so amortization tables can be derived
+  ///    and credit-card billing days can drive reminders.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -75,6 +77,11 @@ class AppDatabase extends _$AppDatabase {
         switch (v) {
           case 2:
             await _createSyncTables(this);
+          case 3:
+            await m.addColumn(liabilities, liabilities.paymentMethod);
+            await m.addColumn(liabilities, liabilities.rateType);
+            await m.addColumn(liabilities, liabilities.statementDay);
+            await m.addColumn(liabilities, liabilities.paymentDueDay);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
