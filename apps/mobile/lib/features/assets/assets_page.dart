@@ -64,8 +64,8 @@ class AssetsPage extends ConsumerWidget {
       context: context,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: ListView(
+          shrinkWrap: true,
           children: [
             ListTile(
               leading: const Icon(Icons.payments_outlined),
