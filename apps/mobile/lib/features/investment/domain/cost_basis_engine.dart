@@ -153,6 +153,7 @@ class CostBasisEngine {
           proceeds: proceeds,
           fees: fees,
           realizedAt: event.tradeDate,
+          lotOpenedAt: lot.openedAt,
         ),
       );
       updatedLotsById[lot.id] = lot.copyWith(
