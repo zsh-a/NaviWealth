@@ -121,6 +121,15 @@ class AssetsPage extends ConsumerWidget {
                 context.push('/assets/liabilities');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.account_tree_outlined),
+              title: Text(l10n.assetsCorporateActionAction),
+              subtitle: const Text('分红 / 拆股 / 配股 / 红股 / DRIP'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/assets/corporate-action');
+              },
+            ),
           ],
         ),
       ),

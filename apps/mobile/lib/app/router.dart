@@ -17,6 +17,8 @@ import '../features/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
 import '../features/assets/wealth_product_form_page.dart';
 import '../features/home/home_page.dart';
+import '../features/investment/presentation/corporate_action_entry_route.dart'
+    deferred as corp_action_lib;
 import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
@@ -53,6 +55,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     liabilities_lib.loadLibrary(),
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),
+    corp_action_lib.loadLibrary(),
   ]);
 }
 
@@ -97,6 +100,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'new/wealth',
                 name: 'asset-new-wealth',
                 builder: (context, state) => const WealthProductFormPage(),
+              ),
+              GoRoute(
+                path: 'corporate-action',
+                name: 'corporate-action',
+                builder: (context, state) => DeferredRoute(
+                  load: corp_action_lib.loadLibrary,
+                  builder: (_) => corp_action_lib.CorporateActionEntryRoute(),
+                ),
               ),
               GoRoute(
                 path: 'physical/:id',

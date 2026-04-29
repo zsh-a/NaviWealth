@@ -62,6 +62,115 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsAddAction => '添加资产';
 
   @override
+  String get assetsCorporateActionAction => '录入公司行动';
+
+  @override
+  String get corpActionTitle => '公司行动';
+
+  @override
+  String get corpActionSelectAsset => '资产';
+
+  @override
+  String get corpActionSelectAssetHint => '选择本次事件所影响的持仓。';
+
+  @override
+  String get corpActionEventTypeTitle => '事件类型';
+
+  @override
+  String get corpActionTypeCashDividend => '现金分红';
+
+  @override
+  String get corpActionTypeStockDividend => '送股 / 红股';
+
+  @override
+  String get corpActionTypeSplit => '拆股 / 合股';
+
+  @override
+  String get corpActionTypeRightsIssue => '配股';
+
+  @override
+  String get corpActionTypeDrip => 'DRIP 自动再投';
+
+  @override
+  String get corpActionEffectiveDate => '登记日';
+
+  @override
+  String get corpActionAmountPerShare => '每股金额';
+
+  @override
+  String get corpActionWithholdingTax => '代扣税款（总额）';
+
+  @override
+  String get corpActionBonusRatio => '送股比例（每持有 1 股送 N 股）';
+
+  @override
+  String get corpActionSplitRatio => '拆股比例';
+
+  @override
+  String get corpActionSplitRatioHelp => '2 = 1 拆 2 · 0.1 = 10 合 1';
+
+  @override
+  String get corpActionSubscribedQuantity => '认购数量';
+
+  @override
+  String get corpActionPricePerUnit => '每股价格';
+
+  @override
+  String get corpActionFee => '手续费';
+
+  @override
+  String get corpActionPreviewAction => '预览影响';
+
+  @override
+  String get corpActionSubmitAction => '提交';
+
+  @override
+  String get corpActionPreviewHeading => '预览';
+
+  @override
+  String get corpActionNoEligibleHolding => '登记日当天该账户在此资产上没有可派息的持仓。';
+
+  @override
+  String get corpActionPreviewSharesOnRecord => '登记日持股';
+
+  @override
+  String get corpActionPreviewGross => '总额';
+
+  @override
+  String get corpActionPreviewTax => '税款';
+
+  @override
+  String get corpActionPreviewNet => '净额';
+
+  @override
+  String get corpActionPreviewCashFlow => '现金流';
+
+  @override
+  String corpActionPreviewLotChange(
+    String id,
+    String beforeQty,
+    String afterQty,
+    String beforeCost,
+    String afterCost,
+  ) {
+    return 'Lot $id：$beforeQty → $afterQty @ $beforeCost → $afterCost';
+  }
+
+  @override
+  String corpActionPreviewNewLot(String qty, String cost) {
+    return '新 Lot：$qty @ $cost';
+  }
+
+  @override
+  String get corpActionSubmitted => '已记录。';
+
+  @override
+  String get corpActionInvalidNumber => '请输入正数';
+
+  @override
+  String get corpActionInvalidNumberNonNegative => '请输入非负数';
+
+  @override
   String get assetsLiabilitiesLink => '负债与还款计划';
 
   @override
