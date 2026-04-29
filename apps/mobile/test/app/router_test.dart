@@ -73,6 +73,15 @@ String _currentPath(ProviderContainer container) {
 }
 
 void main() {
+  setUpAll(() async {
+    // `DeferredRoute` calls `loadLibrary()` on tab pages. In the VM that
+    // returns a real-async Future the fake test clock can't drive, so the
+    // spinner can hang `pumpAndSettle` forever. Pre-load all of them once
+    // so subsequent calls return an already-completed cached future.
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    await binding.runAsync(preloadDeferredRoutesForTest);
+  });
+
   group('deep-link arrival', () {
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);

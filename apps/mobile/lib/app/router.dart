@@ -37,6 +37,22 @@ const List<String> kPrimaryTabPaths = <String>[
   '/settings',
 ];
 
+/// Test-only: eagerly resolve every deferred-as library the router maps to
+/// a tab so subsequent [DeferredRoute] mounts see an already-completed
+/// `loadLibrary()` future. Without this, widget tests sit on the loading
+/// spinner — `loadLibrary()` is real-async and the fake test clock can't
+/// drive it. Call from `setUpAll` inside a `runAsync` block.
+@visibleForTesting
+Future<void> preloadDeferredRoutesForTest() async {
+  await Future.wait<void>(<Future<void>>[
+    assets_lib.loadLibrary(),
+    analytics_lib.loadLibrary(),
+    settings_lib.loadLibrary(),
+    liabilities_lib.loadLibrary(),
+    liability_detail_lib.loadLibrary(),
+  ]);
+}
+
 /// Builds the app's [GoRouter]. Exposed (rather than inlined in the provider)
 /// so tests can construct a router seeded at an arbitrary deep-link location
 /// and inject their own observers / guards through the [Ref].
@@ -149,6 +165,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
     ],
   );
 }
+
 
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
 
