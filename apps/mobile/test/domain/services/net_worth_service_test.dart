@@ -454,6 +454,57 @@ void main() {
       );
     });
 
+    test('liabilityPayment moves cash out without an external cash flow', () {
+      final svc = _service(
+        liabilities: [
+          LiabilitySnapshot(
+            id: 'mortgage',
+            currency: 'USD',
+            initialPrincipal: d('100000'),
+            startDate: day(2026, 1, 1),
+            schedule: [
+              AmortizationPoint(
+                dueDate: day(2026, 1, 31),
+                remainingBalance: d('99000'),
+              ),
+            ],
+          ),
+        ],
+      );
+      final series = svc.timeSeries(
+        transactions: [
+          tx(
+            id: 'd',
+            type: TransactionType.deposit,
+            quantity: '120000',
+            tradeDate: day(2026, 1, 1),
+          ),
+          // FIR-47 shape: qty=1, price=monthly payment (1500 = 1000 principal
+          // + 500 interest). The principal drop (1000) is already baked into
+          // the schedule's remainingBalance for Jan 31.
+          tx(
+            id: 'pay',
+            type: TransactionType.liabilityPayment,
+            quantity: '1',
+            price: '1500',
+            tradeDate: day(2026, 1, 31),
+          ),
+        ],
+        from: day(2026, 1, 1),
+        to: day(2026, 1, 31),
+        granularity: NetWorthGranularity.month,
+        baseCurrency: 'USD',
+      );
+      // Jan 1: assets 120k, liabilities 100k → net 20k.
+      expect(series.samples.first.netWorth, Money.parse('20000', 'USD'));
+      // Jan 31: assets 120k - 1500 = 118500, liabilities 99000 → net 19500.
+      // The 500 interest is the actual loss in net worth that month.
+      expect(series.samples.last.netWorth, Money.parse('19500', 'USD'));
+      // liabilityPayment is intra-portfolio — never tagged for XIRR.
+      expect(series.cashFlows.length, 1);
+      expect(series.cashFlows.single.transactionId, 'd');
+    });
+
     test('liability before its startDate is excluded', () {
       final svc = _service(
         liabilities: [

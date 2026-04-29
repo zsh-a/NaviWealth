@@ -283,6 +283,11 @@ class NetWorthService {
       case TransactionType.transferOut:
       case TransactionType.fee:
       case TransactionType.tax:
+      case TransactionType.liabilityPayment:
+        // FIR-47 emits a `liabilityPayment` tx (qty=1, price=totalPayment)
+        // from the funding cash account. The matching liability balance
+        // drop is reflected in the amortization schedule's
+        // `remainingBalance`, so net-worth nets out automatically.
         addCash(-notional);
       case TransactionType.reinvest:
         // Cash dividend immediately purchases new shares: net cash impact
@@ -320,6 +325,7 @@ class NetWorthService {
       case TransactionType.tax:
       case TransactionType.valuationAdjust:
       case TransactionType.split:
+      case TransactionType.liabilityPayment:
         return null;
     }
   }
