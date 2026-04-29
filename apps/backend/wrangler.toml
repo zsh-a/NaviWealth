@@ -20,4 +20,5 @@ database_id = "77b6d007-be46-432a-a0f6-8c74e3124997"
 migrations_dir = "migrations"
 
 # Secrets (set via `wrangler secret put`):
-# - JWT_SECRET   # HS256 signing key for the single-user JWT
+# - JWT_SECRET           # HS256 signing key for the single-user JWT
+# - ANTHROPIC_API_KEY    # Anthropic Claude API key used by /ai/chat (FIR-59)

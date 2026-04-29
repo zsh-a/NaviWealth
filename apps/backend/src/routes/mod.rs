@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod auth;
 pub mod common;
 pub mod health;
