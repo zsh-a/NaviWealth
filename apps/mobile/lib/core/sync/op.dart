@@ -20,6 +20,10 @@ const Set<String> kSyncableTables = {
   'categories',
   'settings',
   'users',
+  // FIR-68: dedicated expense category taxonomy. Distinct from the generic
+  // `categories` table which is reserved for asset/holding hierarchies and
+  // doesn't carry icon/color/archive metadata.
+  'expense_categories',
 };
 
 enum OpType { insert, update, delete }
