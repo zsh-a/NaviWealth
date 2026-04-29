@@ -1817,6 +1817,125 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rebalance'**
   String get rebalanceNavLink;
+  /// Header for the risk concentration alert panel on the analytics page.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentration Alerts'**
+  String get riskAlertTitle;
+
+  /// Alert title for a single asset exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} overweight'**
+  String riskAlertAssetTitle(String name);
+
+  /// Alert title for a sector exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{sector} overweight'**
+  String riskAlertSectorTitle(String sector);
+
+  /// Alert title for a region exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{region} overweight'**
+  String riskAlertRegionTitle(String region);
+
+  /// Alert title for a currency exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{currency} exposure'**
+  String riskAlertCurrencyTitle(String currency);
+
+  /// Subtitle showing which dimension threshold was breached.
+  ///
+  /// In en, this message translates to:
+  /// **'{dimension} threshold: {threshold}'**
+  String riskAlertThresholdBreached(String dimension, String threshold);
+
+  /// No description provided for @riskDimensionAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get riskDimensionAsset;
+
+  /// No description provided for @riskDimensionSector.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector'**
+  String get riskDimensionSector;
+
+  /// No description provided for @riskDimensionRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get riskDimensionRegion;
+
+  /// No description provided for @riskDimensionCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get riskDimensionCurrency;
+
+  /// No description provided for @settingsRiskSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk Preferences'**
+  String get settingsRiskSection;
+
+  /// No description provided for @settingsRiskAssetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Single asset limit'**
+  String get settingsRiskAssetLabel;
+
+  /// No description provided for @settingsRiskAssetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one asset exceeds this share of total portfolio.'**
+  String get settingsRiskAssetSubtitle;
+
+  /// No description provided for @settingsRiskSectorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector limit'**
+  String get settingsRiskSectorLabel;
+
+  /// No description provided for @settingsRiskSectorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one sector exceeds this share.'**
+  String get settingsRiskSectorSubtitle;
+
+  /// No description provided for @settingsRiskRegionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Region limit'**
+  String get settingsRiskRegionLabel;
+
+  /// No description provided for @settingsRiskRegionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one market / region exceeds this share.'**
+  String get settingsRiskRegionSubtitle;
+
+  /// No description provided for @settingsRiskCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency limit'**
+  String get settingsRiskCurrencyLabel;
+
+  /// No description provided for @settingsRiskCurrencySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one currency exposure exceeds this share.'**
+  String get settingsRiskCurrencySubtitle;
+
+  /// No description provided for @settingsRiskResetDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get settingsRiskResetDefaults;
 }
 
 class _AppLocalizationsDelegate

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../analytics/data/risk_threshold_preferences.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -96,6 +97,9 @@ class SettingsPage extends ConsumerWidget {
             child: _MarketColorPreview(),
           ),
           const Divider(),
+          _SectionHeader(label: l10n.settingsRiskSection),
+          const _RiskThresholdSettings(),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.settingsAboutTitle),
@@ -152,6 +156,122 @@ class _MarketColorPreview extends StatelessWidget {
         DeltaChip(value: -0.42, format: DeltaFormat.percent),
         DeltaChip(value: 0, format: DeltaFormat.percent),
       ],
+    );
+  }
+}
+
+/// Concentration-risk threshold sliders under Settings → Risk Preferences.
+class _RiskThresholdSettings extends ConsumerWidget {
+  const _RiskThresholdSettings();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final thresholds = ref.watch(concentrationThresholdsProvider);
+
+    return Column(
+      children: [
+        _ThresholdSlider(
+          icon: Icons.account_balance_wallet_outlined,
+          label: l10n.settingsRiskAssetLabel,
+          subtitle: l10n.settingsRiskAssetSubtitle,
+          value: thresholds.assetWarning,
+          onChanged: (v) =>
+              ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
+        ),
+        _ThresholdSlider(
+          icon: Icons.category_outlined,
+          label: l10n.settingsRiskSectorLabel,
+          subtitle: l10n.settingsRiskSectorSubtitle,
+          value: thresholds.sectorWarning,
+          onChanged: (v) => ref
+              .read(concentrationThresholdsProvider.notifier)
+              .updateSector(v),
+        ),
+        _ThresholdSlider(
+          icon: Icons.public,
+          label: l10n.settingsRiskRegionLabel,
+          subtitle: l10n.settingsRiskRegionSubtitle,
+          value: thresholds.regionWarning,
+          onChanged: (v) => ref
+              .read(concentrationThresholdsProvider.notifier)
+              .updateRegion(v),
+        ),
+        _ThresholdSlider(
+          icon: Icons.currency_exchange,
+          label: l10n.settingsRiskCurrencyLabel,
+          subtitle: l10n.settingsRiskCurrencySubtitle,
+          value: thresholds.currencyWarning,
+          onChanged: (v) => ref
+              .read(concentrationThresholdsProvider.notifier)
+              .updateCurrency(v),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton(
+              onPressed: () => ref
+                  .read(concentrationThresholdsProvider.notifier)
+                  .resetToDefaults(),
+              child: Text(l10n.settingsRiskResetDefaults),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ThresholdSlider extends StatelessWidget {
+  const _ThresholdSlider({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(label),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(subtitle),
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: value,
+                  min: 0.05,
+                  max: 0.95,
+                  divisions: 18,
+                  label: '${(value * 100).round()}%',
+                  onChanged: onChanged,
+                ),
+              ),
+              SizedBox(
+                width: 48,
+                child: Text(
+                  '${(value * 100).round()}%',
+                  style: theme.textTheme.titleSmall,
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
