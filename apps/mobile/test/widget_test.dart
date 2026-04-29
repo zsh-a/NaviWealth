@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
+import 'package:naviwealth/data/domain/account.dart';
+import 'package:naviwealth/data/domain/asset.dart';
+import 'package:naviwealth/data/domain/liability.dart';
+import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -14,7 +20,24 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          // The dashboard subscribes to live DB streams. With no real
+          // database in the test environment, short-circuit the streams
+          // so the home page resolves to its empty state.
+          manualAssetsStreamProvider.overrideWith(
+            (ref) => Stream<List<Asset>>.value(const []),
+          ),
+          physicalAssetsListProvider.overrideWith(
+            (ref) => Stream.value(const []),
+          ),
+          liabilitiesStreamProvider.overrideWith(
+            (ref) => Stream<List<Liability>>.value(const []),
+          ),
+          accountsStreamProvider.overrideWith(
+            (ref) => Stream<List<Account>>.value(const []),
+          ),
+        ],
         child: const NaviWealthApp(),
       ),
     );
