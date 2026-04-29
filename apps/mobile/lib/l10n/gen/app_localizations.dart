@@ -200,6 +200,210 @@ abstract class AppLocalizations {
   /// **'Add asset'**
   String get assetsAddAction;
 
+  /// Action that opens the corporate-action entry form (dividend, split, rights issue, DRIP).
+  ///
+  /// In en, this message translates to:
+  /// **'Record corporate action'**
+  String get assetsCorporateActionAction;
+
+  /// No description provided for @corpActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Corporate Action'**
+  String get corpActionTitle;
+
+  /// No description provided for @corpActionSelectAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get corpActionSelectAsset;
+
+  /// No description provided for @corpActionSelectAssetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which holding the action applies to.'**
+  String get corpActionSelectAssetHint;
+
+  /// No description provided for @corpActionEventTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event type'**
+  String get corpActionEventTypeTitle;
+
+  /// No description provided for @corpActionTypeCashDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash dividend'**
+  String get corpActionTypeCashDividend;
+
+  /// No description provided for @corpActionTypeStockDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock dividend'**
+  String get corpActionTypeStockDividend;
+
+  /// No description provided for @corpActionTypeSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split / reverse split'**
+  String get corpActionTypeSplit;
+
+  /// No description provided for @corpActionTypeRightsIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Rights issue'**
+  String get corpActionTypeRightsIssue;
+
+  /// No description provided for @corpActionTypeDrip.
+  ///
+  /// In en, this message translates to:
+  /// **'DRIP (reinvest)'**
+  String get corpActionTypeDrip;
+
+  /// No description provided for @corpActionEffectiveDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective date'**
+  String get corpActionEffectiveDate;
+
+  /// No description provided for @corpActionAmountPerShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount per share'**
+  String get corpActionAmountPerShare;
+
+  /// No description provided for @corpActionWithholdingTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Withholding tax (total)'**
+  String get corpActionWithholdingTax;
+
+  /// No description provided for @corpActionBonusRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus ratio (extra shares per held share)'**
+  String get corpActionBonusRatio;
+
+  /// No description provided for @corpActionSplitRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Split ratio'**
+  String get corpActionSplitRatio;
+
+  /// No description provided for @corpActionSplitRatioHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'2 = 2-for-1 forward split · 0.1 = 1-for-10 reverse split'**
+  String get corpActionSplitRatioHelp;
+
+  /// No description provided for @corpActionSubscribedQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribed quantity'**
+  String get corpActionSubscribedQuantity;
+
+  /// No description provided for @corpActionPricePerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Price per share'**
+  String get corpActionPricePerUnit;
+
+  /// No description provided for @corpActionFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get corpActionFee;
+
+  /// No description provided for @corpActionPreviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview impact'**
+  String get corpActionPreviewAction;
+
+  /// No description provided for @corpActionSubmitAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get corpActionSubmitAction;
+
+  /// No description provided for @corpActionPreviewHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get corpActionPreviewHeading;
+
+  /// No description provided for @corpActionNoEligibleHolding.
+  ///
+  /// In en, this message translates to:
+  /// **'No eligible holding for this asset and account on the effective date.'**
+  String get corpActionNoEligibleHolding;
+
+  /// No description provided for @corpActionPreviewSharesOnRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares on record'**
+  String get corpActionPreviewSharesOnRecord;
+
+  /// No description provided for @corpActionPreviewGross.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross'**
+  String get corpActionPreviewGross;
+
+  /// No description provided for @corpActionPreviewTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get corpActionPreviewTax;
+
+  /// No description provided for @corpActionPreviewNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get corpActionPreviewNet;
+
+  /// No description provided for @corpActionPreviewCashFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash flow'**
+  String get corpActionPreviewCashFlow;
+
+  /// No description provided for @corpActionPreviewLotChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Lot {id}: {beforeQty} → {afterQty} @ {beforeCost} → {afterCost}'**
+  String corpActionPreviewLotChange(
+    String id,
+    String beforeQty,
+    String afterQty,
+    String beforeCost,
+    String afterCost,
+  );
+
+  /// No description provided for @corpActionPreviewNewLot.
+  ///
+  /// In en, this message translates to:
+  /// **'New lot: {qty} @ {cost}'**
+  String corpActionPreviewNewLot(String qty, String cost);
+
+  /// No description provided for @corpActionSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded.'**
+  String get corpActionSubmitted;
+
+  /// No description provided for @corpActionInvalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive number'**
+  String get corpActionInvalidNumber;
+
+  /// No description provided for @corpActionInvalidNumberNonNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a non-negative number'**
+  String get corpActionInvalidNumberNonNegative;
+
   /// Tile on the Assets page that opens the liabilities subscreen
   ///
   /// In en, this message translates to:

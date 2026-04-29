@@ -32,6 +32,57 @@
   "assetsAppBarTitle": "Assets",
   "assetsEmptyHint": "Asset entry & management (FIR-5) — coming soon",
   "assetsAddAction": "Add asset",
+  "assetsCorporateActionAction": "Record corporate action",
+  "@assetsCorporateActionAction": { "description": "Action that opens the corporate-action entry form (dividend, split, rights issue, DRIP)." },
+
+  "corpActionTitle": "Corporate Action",
+  "corpActionSelectAsset": "Asset",
+  "corpActionSelectAssetHint": "Choose which holding the action applies to.",
+  "corpActionEventTypeTitle": "Event type",
+  "corpActionTypeCashDividend": "Cash dividend",
+  "corpActionTypeStockDividend": "Stock dividend",
+  "corpActionTypeSplit": "Split / reverse split",
+  "corpActionTypeRightsIssue": "Rights issue",
+  "corpActionTypeDrip": "DRIP (reinvest)",
+  "corpActionEffectiveDate": "Effective date",
+  "corpActionAmountPerShare": "Amount per share",
+  "corpActionWithholdingTax": "Withholding tax (total)",
+  "corpActionBonusRatio": "Bonus ratio (extra shares per held share)",
+  "corpActionSplitRatio": "Split ratio",
+  "corpActionSplitRatioHelp": "2 = 2-for-1 forward split · 0.1 = 1-for-10 reverse split",
+  "corpActionSubscribedQuantity": "Subscribed quantity",
+  "corpActionPricePerUnit": "Price per share",
+  "corpActionFee": "Fee",
+  "corpActionPreviewAction": "Preview impact",
+  "corpActionSubmitAction": "Submit",
+  "corpActionPreviewHeading": "Preview",
+  "corpActionNoEligibleHolding": "No eligible holding for this asset and account on the effective date.",
+  "corpActionPreviewSharesOnRecord": "Shares on record",
+  "corpActionPreviewGross": "Gross",
+  "corpActionPreviewTax": "Tax",
+  "corpActionPreviewNet": "Net",
+  "corpActionPreviewCashFlow": "Cash flow",
+  "corpActionPreviewLotChange": "Lot {id}: {beforeQty} → {afterQty} @ {beforeCost} → {afterCost}",
+  "@corpActionPreviewLotChange": {
+    "placeholders": {
+      "id": { "type": "String" },
+      "beforeQty": { "type": "String" },
+      "afterQty": { "type": "String" },
+      "beforeCost": { "type": "String" },
+      "afterCost": { "type": "String" }
+    }
+  },
+  "corpActionPreviewNewLot": "New lot: {qty} @ {cost}",
+  "@corpActionPreviewNewLot": {
+    "placeholders": {
+      "qty": { "type": "String" },
+      "cost": { "type": "String" }
+    }
+  },
+  "corpActionSubmitted": "Recorded.",
+  "corpActionInvalidNumber": "Enter a positive number",
+  "corpActionInvalidNumberNonNegative": "Enter a non-negative number",
+
   "assetsLiabilitiesLink": "Liabilities & repayment plans",
   "@assetsLiabilitiesLink": { "description": "Tile on the Assets page that opens the liabilities subscreen" },
 

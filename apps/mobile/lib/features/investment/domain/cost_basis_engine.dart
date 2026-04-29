@@ -6,10 +6,26 @@ import 'cost_basis/cost_basis_method.dart';
 import 'cost_basis/cost_basis_strategy.dart';
 import 'cost_basis/fifo_strategy.dart';
 import 'cost_basis/lifo_strategy.dart';
+import 'models/cash_dividend.dart';
 import 'models/corporate_actions.dart';
 import 'models/lot.dart';
 import 'models/realized_pnl.dart';
 import 'models/trade_events.dart';
+
+/// Result of [CostBasisEngine.applyDrip]: the dividend record plus the new
+/// lot opened by reinvestment. [updatedLots] is the input lot list with the
+/// new lot appended at the end so callers can persist it directly.
+class DripResult {
+  const DripResult({
+    required this.cashDividend,
+    required this.newLot,
+    required this.updatedLots,
+  });
+
+  final CashDividend cashDividend;
+  final Lot newLot;
+  final List<Lot> updatedLots;
+}
 
 /// Result of [CostBasisEngine.applySell]: the post-sell lot state plus the
 /// realized P&L records the sell produced.
@@ -208,6 +224,187 @@ class CostBasisEngine {
         ),
       );
     }).toList();
+  }
+
+  /// Apply a cash dividend (现金分红). Sums the eligible open shares as of
+  /// [CashDividendAction.effectiveDate] and computes gross / net cash. Open
+  /// lots are not modified — the caller is responsible for booking the
+  /// resulting cash transaction. Returns `null` if the holder owns zero
+  /// shares of [CashDividendAction.assetId] in [CashDividendAction.accountId]
+  /// on the effective date (nothing to pay out).
+  ///
+  /// Lots whose `openedAt` is strictly after [CashDividendAction.effectiveDate]
+  /// are excluded (they were not held on record date).
+  CashDividend? applyCashDividend(
+    CashDividendAction action,
+    Iterable<Lot> lots,
+  ) {
+    if (action.amountPerShare.sign < 0) {
+      throw ArgumentError.value(
+        action.amountPerShare,
+        'CashDividendAction.amountPerShare',
+        'must be non-negative',
+      );
+    }
+    if (action.withholdingTax.sign < 0) {
+      throw ArgumentError.value(
+        action.withholdingTax,
+        'CashDividendAction.withholdingTax',
+        'must be non-negative',
+      );
+    }
+    final shares = _eligibleShareCount(
+      lots: lots,
+      accountId: action.accountId,
+      assetId: action.assetId,
+      asOf: action.effectiveDate,
+    );
+    if (shares.sign <= 0) return null;
+    final gross = shares * action.amountPerShare;
+    if (action.withholdingTax > gross) {
+      throw ArgumentError.value(
+        action.withholdingTax,
+        'CashDividendAction.withholdingTax',
+        'cannot exceed gross dividend ($gross)',
+      );
+    }
+    final net = gross - action.withholdingTax;
+    return CashDividend(
+      id: _idGenerator(),
+      transactionId: action.transactionId,
+      accountId: action.accountId,
+      assetId: action.assetId,
+      currency: action.currency,
+      effectiveDate: action.effectiveDate,
+      shareCount: shares,
+      amountPerShare: action.amountPerShare,
+      grossAmount: gross,
+      withholdingTax: action.withholdingTax,
+      netAmount: net,
+      reinvested: false,
+    );
+  }
+
+  /// Apply a DRIP (dividend reinvestment plan): the dividend due on the
+  /// holding is paid as additional shares at [DripAction.pricePerUnit].
+  /// Computes net dividend (gross minus tax), then opens a new [Lot] whose
+  /// total cost equals `net` and whose quantity is `(net - fee) / price`
+  /// (rounded at the configured scale). Existing lots are unchanged; the
+  /// new lot is appended to [DripResult.updatedLots].
+  ///
+  /// Throws [ArgumentError] if there are no eligible shares to reinvest
+  /// against — DRIP requires an existing position.
+  DripResult applyDrip(DripAction action, Iterable<Lot> lots) {
+    _requirePositive(action.amountPerShare, 'DripAction.amountPerShare');
+    _requirePositive(action.pricePerUnit, 'DripAction.pricePerUnit');
+    if (action.withholdingTax.sign < 0) {
+      throw ArgumentError.value(
+        action.withholdingTax,
+        'DripAction.withholdingTax',
+        'must be non-negative',
+      );
+    }
+    if (action.fee.sign < 0) {
+      throw ArgumentError.value(
+        action.fee,
+        'DripAction.fee',
+        'must be non-negative',
+      );
+    }
+    final lotsList = lots.toList();
+    final shares = _eligibleShareCount(
+      lots: lotsList,
+      accountId: action.accountId,
+      assetId: action.assetId,
+      asOf: action.effectiveDate,
+    );
+    if (shares.sign <= 0) {
+      throw ArgumentError.value(
+        shares,
+        'DripAction',
+        'no eligible shares of ${action.assetId} held in '
+            '${action.accountId} on ${action.effectiveDate}',
+      );
+    }
+    final gross = shares * action.amountPerShare;
+    if (action.withholdingTax > gross) {
+      throw ArgumentError.value(
+        action.withholdingTax,
+        'DripAction.withholdingTax',
+        'cannot exceed gross dividend ($gross)',
+      );
+    }
+    final net = gross - action.withholdingTax;
+    final cashAvailable = net - action.fee;
+    if (cashAvailable.sign <= 0) {
+      throw ArgumentError.value(
+        action.fee,
+        'DripAction.fee',
+        'fee ($action.fee) exceeds net dividend ($net) — nothing to reinvest',
+      );
+    }
+    final newLotQuantity = (cashAvailable / action.pricePerUnit).toDecimal(
+      scaleOnInfinitePrecision: _scale,
+    );
+    if (newLotQuantity.sign <= 0) {
+      throw ArgumentError.value(
+        newLotQuantity,
+        'DripAction',
+        'reinvestment produced zero shares at scale $_scale',
+      );
+    }
+    final totalCost = newLotQuantity * action.pricePerUnit + action.fee;
+    final costPerUnit = (totalCost / newLotQuantity).toDecimal(
+      scaleOnInfinitePrecision: _scale,
+    );
+    final newLot = Lot(
+      id: _idGenerator(),
+      openingTransactionId: action.transactionId,
+      accountId: action.accountId,
+      assetId: action.assetId,
+      currency: action.currency,
+      originalQuantity: newLotQuantity,
+      remainingQuantity: newLotQuantity,
+      costPerUnit: costPerUnit,
+      openedAt: action.effectiveDate,
+    );
+    final dividend = CashDividend(
+      id: _idGenerator(),
+      transactionId: action.transactionId,
+      accountId: action.accountId,
+      assetId: action.assetId,
+      currency: action.currency,
+      effectiveDate: action.effectiveDate,
+      shareCount: shares,
+      amountPerShare: action.amountPerShare,
+      grossAmount: gross,
+      withholdingTax: action.withholdingTax,
+      netAmount: net,
+      reinvested: true,
+    );
+    return DripResult(
+      cashDividend: dividend,
+      newLot: newLot,
+      updatedLots: [...lotsList, newLot],
+    );
+  }
+
+  /// Sum [Lot.remainingQuantity] across lots matching [accountId] / [assetId]
+  /// that were opened on or before [asOf].
+  Decimal _eligibleShareCount({
+    required Iterable<Lot> lots,
+    required String accountId,
+    required String assetId,
+    required DateTime asOf,
+  }) {
+    var total = Decimal.zero;
+    for (final lot in lots) {
+      if (lot.accountId != accountId) continue;
+      if (lot.assetId != assetId) continue;
+      if (lot.openedAt.isAfter(asOf)) continue;
+      total += lot.remainingQuantity;
+    }
+    return total;
   }
 
   /// Apply a rights issue (配股): the shareholder subscribes new shares at a
