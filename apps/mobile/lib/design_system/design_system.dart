@@ -4,6 +4,7 @@
 /// See `apps/mobile/design_tokens/README.md` for the contract.
 library;
 
+export 'charts/charts.dart';
 export 'preferences/theme_preferences.dart';
 export 'theme/app_elevations.dart';
 export 'theme/app_theme.dart';

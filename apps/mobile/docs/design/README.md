@@ -22,11 +22,12 @@
 | 11 | [动效与交互](./11-motion-and-interactions.md) | 数字滚动、骨架屏、过渡曲线、键盘快捷键 |
 | 12 | [可用性自查](./12-usability-self-check.md) | 走查清单、可访问性、暗黑模式、空态/错误态 |
 | 13 | [Web 字体子集化](./13-web-fonts.md) | Noto Sans SC 子集流水线、`@font-face` 加载、首屏 250 KB 预算 |
+| 14 | [图表库 / Charts](./14-charts.md) | fl_chart vs syncfusion 选型、统一封装、主题接入、降采样、钻取 |
 
 ## 与依赖的关系
 
 - **FIR-22（设计 Token + 组件库）**：本文档以 Token 名（如 `color.fg.primary`、`type.body.md`、`space.4`）引用，FIR-22 落地后对应到具体值。当前回退到 Material 3 `ColorScheme` 名（`onSurface`、`primary` 等）。
-- **FIR-24（图表库选型）**：分析、FIRE、再平衡页用到的图表给出"语义需求"（数据形状、交互），不绑定 fl_chart vs syncfusion 的具体 API。
+- **FIR-24（图表库选型与封装）**：已选 `fl_chart` 作为底层渲染器，统一封装在 `lib/design_system/charts/`；详见 [14-charts.md](./14-charts.md)。所有业务页面（分析、FIRE、再平衡）通过 `Nw*Chart` 系列消费，不直接 import `fl_chart`。
 - **FIR-2（基础架构）**：响应式策略与路由结构与现有 `app/router.dart` 对齐，并提出后续拆 ShellRoute 的建议（详见 `01-responsive-layout.md`）。
 
 ## 标记约定
