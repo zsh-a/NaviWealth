@@ -28,6 +28,15 @@ sha2 = "0.10"
 base64 = "0.22"
 getrandom = { version = "0.2", features = ["js"] }
 
+# AI assistant (FIR-59). `futures-channel` + `futures-util` give us an
+# `mpsc::unbounded` we can hand to `Response::from_stream`, which is how the
+# Anthropic streaming relay pumps SSE bytes back to the client without ever
+# materialising the full body in memory. `wasm-bindgen-futures` is re-exported
+# by `worker` itself but we use it directly to spawn the background relay.
+futures-channel = "0.3"
+futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
+wasm-bindgen-futures = "0.4"
+
 [profile.release]
 opt-level = "s"
 lto = true

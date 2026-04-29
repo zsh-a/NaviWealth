@@ -561,6 +561,8 @@ dependencies = [
  "base64",
  "chrono",
  "console_error_panic_hook",
+ "futures-channel",
+ "futures-util",
  "getrandom 0.2.17",
  "hmac",
  "serde",
@@ -568,6 +570,7 @@ dependencies = [
  "sha2",
  "thiserror",
  "uuid",
+ "wasm-bindgen-futures",
  "worker",
  "worker-macros",
 ]
