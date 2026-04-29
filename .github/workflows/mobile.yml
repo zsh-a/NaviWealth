@@ -78,6 +78,8 @@ jobs:
         # Fails the build if app-cn-base.woff2 exceeds the 250 KB budget.
         run: tool/build-cn-fonts.sh
       - run: flutter build web --release --source-maps
+      - name: Bundle size guard (main.dart.js gzip-9 budget)
+        run: tool/check-web-bundle-size.sh
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-web-build

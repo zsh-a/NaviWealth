@@ -15,8 +15,9 @@ naviwealth/
 │   └── backend/     # Cloudflare Workers + Rust（FIR-28 / FIR-32 / FIR-36 ...）
 └── .github/
     ├── workflows/
-    │   ├── mobile.yml     # analyze / test / 覆盖率 / build (web/android/ios)
-    │   ├── backend.yml    # cargo fmt / clippy / check / cargo audit
+    │   ├── mobile.yml     # analyze / test / 覆盖率 / build (web/android/ios) + bundle 体积守卫
+    │   ├── backend.yml    # cargo fmt / clippy / check / cargo audit + wrangler deploy
+    │   ├── pages.yml      # Flutter web → Cloudflare Pages（main 生产 / PR preview）
     │   ├── security.yml   # 每周扫描：dart pub outdated / cargo audit / trivy fs
     │   └── release.yml    # 标签触发：mobile-vX.Y.Z / backend-vX.Y.Z
     ├── dependabot.yml     # Actions / pub / cargo 依赖自动更新
@@ -86,6 +87,10 @@ PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流�
 - 认证：单用户 JWT，无注册端点
 - 不上架：Web 走 Cloudflare Pages，移动端 sideload / TestFlight 内部组
 
+## 个人部署
+
+完整步骤（Cloudflare Pages + Workers + D1，iOS sideload，Android APK）见 [`docs/deploy.md`](docs/deploy.md)。
+
 ---
 
 ## Git Hooks
@@ -110,8 +115,9 @@ PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流�
 
 | 流水线 | 触发条件 | 关键步骤 |
 | --- | --- | --- |
-| `mobile` | 修改 `apps/mobile/**` 或 workflow | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / web+android+ios 构建 |
-| `backend` | 修改 `apps/backend/**` 或 workflow | cargo fmt / clippy / check (wasm32) / **cargo audit** |
+| `mobile` | 修改 `apps/mobile/**` 或 workflow | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / web+android+ios 构建（含 main.dart.js gzip 体积守卫） |
+| `backend` | 修改 `apps/backend/**` 或 workflow | cargo fmt / clippy / check (wasm32) / **cargo audit** / `wrangler deploy` (main) / `versions upload` (PR) |
+| `pages` | 修改 `apps/mobile/**` 或 workflow | 构建 web → 体积守卫 → strip source maps → `wrangler pages deploy` (main 生产 / PR preview)，密钥未配置时跳过 |
 | `security` | 每周一 03:17 UTC + 手动 + lockfile 变更 | `dart pub outdated` / `cargo audit` / Trivy 文件系统扫描 |
 | `release` | tag 推送 `mobile-vX.Y.Z` / `backend-vX.Y.Z` | 版本号写入源文件 → 构建 → 创建 GitHub Release |
 

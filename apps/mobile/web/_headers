@@ -1,0 +1,52 @@
+# Cloudflare Pages response headers.
+#
+# Three caching tiers, matching the service worker's three cache buckets in
+# apps/mobile/web/service_worker.js:
+#
+#   * shell (index.html, manifest.json, service_worker.js, flutter_bootstrap.js)
+#     — must always be revalidated so a deploy reaches users on next load.
+#   * hashed assets (main.dart.js, *.part.js, canvaskit/*, sqlite3.wasm,
+#     drift_worker.dart.js, fonts under assets/) — content-addressed by the
+#     build, safe to cache forever.
+#   * everything else — short cache.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# App shell — never cached at the edge so a Pages deploy is visible
+# immediately. The service worker handles offline.
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/service_worker.js
+  Cache-Control: public, max-age=0, must-revalidate
+/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+/flutter_bootstrap.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Build-hashed JS chunks — Flutter rewrites the URL on every release.
+/main.dart.js
+  Cache-Control: public, max-age=31536000, immutable
+/main.dart.js_*.part.js
+  Cache-Control: public, max-age=31536000, immutable
+/flutter.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# CanvasKit and DB worker assets — versioned, large, hot.
+/canvaskit/*
+  Cache-Control: public, max-age=31536000, immutable
+/sqlite3.wasm
+  Cache-Control: public, max-age=31536000, immutable
+/drift_worker.dart.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# Font subsets are content-addressed by the build pipeline (build-cn-fonts.sh).
+/assets/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Other Flutter assets (icons, MaterialIcons-Regular.otf, l10n).
+/assets/*
+  Cache-Control: public, max-age=86400

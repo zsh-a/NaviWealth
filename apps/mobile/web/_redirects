@@ -1,0 +1,10 @@
+# Cloudflare Pages SPA fallback.
+#
+# go_router (browser history mode) owns deep-link routes like /assets,
+# /transactions/new, /analytics/equity. Pages serves matching static files
+# first, so this rule only fires for paths that don't resolve to a real file
+# — i.e. SPA routes — and rewrites them to the bootstrap shell with a 200.
+#
+# Hashed assets (main.dart.js, *.part.js, canvaskit/*) match real files and
+# are served directly with no rewrite, so this is safe.
+/*    /index.html   200

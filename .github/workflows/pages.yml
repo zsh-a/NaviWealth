@@ -1,0 +1,105 @@
+name: pages
+
+# Build the Flutter web bundle and deploy it to Cloudflare Pages.
+#
+# Two execution modes, gated on the same secrets pattern as backend.yml so
+# the workflow stays green in forks / before secrets are configured:
+#   * push to main      → wrangler pages deploy --branch main      (production)
+#   * pull_request      → wrangler pages deploy --branch <pr-head> (preview)
+#
+# Required GitHub repository secrets:
+#   CLOUDFLARE_API_TOKEN   — token with "Cloudflare Pages: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID  — Cloudflare account ID
+#
+# Optional repository variable:
+#   CLOUDFLARE_PAGES_PROJECT — Pages project name (default: naviwealth-web)
+#
+# The Pages project must exist before the first deploy. Create it once via
+# `wrangler pages project create $PROJECT --production-branch main` or in
+# the Cloudflare dashboard. See docs/deploy.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/pages.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: apps/mobile
+
+jobs:
+  deploy-config:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - id: gate
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping Pages deploy."
+          fi
+
+  deploy:
+    needs: deploy-config
+    if: needs.deploy-config.outputs.enabled == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+    env:
+      PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'naviwealth-web' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Materialize drift web assets
+        run: tool/setup-drift-web.sh
+      - name: Build CN web font subsets
+        run: tool/build-cn-fonts.sh
+      # Production deploys ship without source maps. See docs/web-bundle.md
+      # — leaving *.map on the CDN multiplies egress and exposes symbols
+      # to anyone who opens DevTools on prod.
+      - run: flutter build web --release --no-source-maps --tree-shake-icons
+      - name: Bundle size guard
+        run: tool/check-web-bundle-size.sh
+      - name: Strip stray source maps
+        run: find build/web -name '*.map' -delete
+      # Pick the deploy branch: main → production, PR → preview channel
+      # named after the head ref (Cloudflare auto-generates a preview URL).
+      - id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            branch="${{ github.event.pull_request.head.ref }}"
+          else
+            branch="main"
+          fi
+          # Cloudflare branch names cannot contain '/' — sanitize.
+          safe="$(printf '%s' "$branch" | tr '/' '-' | cut -c1-28)"
+          echo "name=$safe" >> "$GITHUB_OUTPUT"
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/mobile
+          command: pages deploy build/web --project-name=${{ env.PAGES_PROJECT }} --branch=${{ steps.branch.outputs.name }} --commit-hash=${{ github.sha }}
