@@ -7,8 +7,7 @@ import 'package:decimal/decimal.dart';
 /// wrong totals. Amounts are stored as [Decimal] (not [double]) — see
 /// FIR-3's "所有金额使用 Decimal 而非 double" decision.
 class Money implements Comparable<Money> {
-  Money(this.amount, String currency)
-    : currency = _normalizeCurrency(currency);
+  Money(this.amount, String currency) : currency = _normalizeCurrency(currency);
 
   /// Construct from an integer minor-unit-free amount (e.g. `Money.fromInt(10, 'USD')`
   /// for $10, not 10 cents).

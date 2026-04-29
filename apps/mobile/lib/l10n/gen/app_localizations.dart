@@ -404,6 +404,522 @@ abstract class AppLocalizations {
   /// **'Enter a non-negative number'**
   String get corpActionInvalidNumberNonNegative;
 
+  /// Tile on the Assets page that opens the liabilities subscreen
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities & repayment plans'**
+  String get assetsLiabilitiesLink;
+
+  /// No description provided for @liabilitiesAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get liabilitiesAppBarTitle;
+
+  /// No description provided for @liabilitiesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No liabilities yet. Add a mortgage, car loan, credit card or consumer loan to track repayment.'**
+  String get liabilitiesEmptyHint;
+
+  /// No description provided for @liabilitiesAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add liability'**
+  String get liabilitiesAddAction;
+
+  /// No description provided for @liabilityTypeMortgage.
+  ///
+  /// In en, this message translates to:
+  /// **'Mortgage'**
+  String get liabilityTypeMortgage;
+
+  /// No description provided for @liabilityTypeCarLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Car loan'**
+  String get liabilityTypeCarLoan;
+
+  /// No description provided for @liabilityTypeCreditCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit card'**
+  String get liabilityTypeCreditCard;
+
+  /// No description provided for @liabilityTypeConsumerLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Consumer loan'**
+  String get liabilityTypeConsumerLoan;
+
+  /// No description provided for @liabilityTypeStudentLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Student loan'**
+  String get liabilityTypeStudentLoan;
+
+  /// No description provided for @liabilityTypeMarginLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin loan'**
+  String get liabilityTypeMarginLoan;
+
+  /// No description provided for @liabilityTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get liabilityTypeOther;
+
+  /// No description provided for @liabilityRateTypeFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed rate'**
+  String get liabilityRateTypeFixed;
+
+  /// No description provided for @liabilityRateTypeLpr.
+  ///
+  /// In en, this message translates to:
+  /// **'LPR floating'**
+  String get liabilityRateTypeLpr;
+
+  /// No description provided for @liabilityMethodEqualInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal installment'**
+  String get liabilityMethodEqualInstallment;
+
+  /// No description provided for @liabilityMethodEqualPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal principal'**
+  String get liabilityMethodEqualPrincipal;
+
+  /// No description provided for @liabilityFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get liabilityFieldName;
+
+  /// No description provided for @liabilityFieldType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get liabilityFieldType;
+
+  /// No description provided for @liabilityFieldPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get liabilityFieldPrincipal;
+
+  /// No description provided for @liabilityFieldInterestRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual rate (%)'**
+  String get liabilityFieldInterestRate;
+
+  /// No description provided for @liabilityFieldRateType.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate type'**
+  String get liabilityFieldRateType;
+
+  /// No description provided for @liabilityFieldTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Term (months)'**
+  String get liabilityFieldTerm;
+
+  /// No description provided for @liabilityFieldStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get liabilityFieldStartDate;
+
+  /// No description provided for @liabilityFieldMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Repayment method'**
+  String get liabilityFieldMethod;
+
+  /// No description provided for @liabilityFieldCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get liabilityFieldCurrency;
+
+  /// No description provided for @liabilityFieldStatementDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement day'**
+  String get liabilityFieldStatementDay;
+
+  /// No description provided for @liabilityFieldPaymentDueDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment due day'**
+  String get liabilityFieldPaymentDueDay;
+
+  /// No description provided for @liabilitySaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get liabilitySaveAction;
+
+  /// No description provided for @liabilityValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get liabilityValidationRequired;
+
+  /// No description provided for @liabilityValidationPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than zero'**
+  String get liabilityValidationPositive;
+
+  /// No description provided for @liabilityValidationDayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be 1–31'**
+  String get liabilityValidationDayOfMonth;
+
+  /// No description provided for @liabilitySummaryRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining principal'**
+  String get liabilitySummaryRemaining;
+
+  /// No description provided for @liabilitySummaryInterestPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest paid so far'**
+  String get liabilitySummaryInterestPaid;
+
+  /// No description provided for @liabilitySummaryInterestTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total interest cost'**
+  String get liabilitySummaryInterestTotal;
+
+  /// No description provided for @liabilitySummaryInterestRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest as share of total payments'**
+  String get liabilitySummaryInterestRatio;
+
+  /// No description provided for @liabilitySummaryProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {paid} of {total} periods'**
+  String liabilitySummaryProgress(int paid, int total);
+
+  /// No description provided for @liabilityScheduleHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Amortization schedule'**
+  String get liabilityScheduleHeading;
+
+  /// No description provided for @liabilityScheduleColPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'#'**
+  String get liabilityScheduleColPeriod;
+
+  /// No description provided for @liabilityScheduleColDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get liabilityScheduleColDue;
+
+  /// No description provided for @liabilityScheduleColPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get liabilityScheduleColPrincipal;
+
+  /// No description provided for @liabilityScheduleColInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get liabilityScheduleColInterest;
+
+  /// No description provided for @liabilityScheduleColRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get liabilityScheduleColRemaining;
+
+  /// No description provided for @liabilityScheduleColStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get liabilityScheduleColStatus;
+
+  /// No description provided for @liabilityScheduleStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get liabilityScheduleStatusPaid;
+
+  /// No description provided for @liabilityScheduleStatusDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get liabilityScheduleStatusDue;
+
+  /// No description provided for @liabilityScheduleMarkPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark paid'**
+  String get liabilityScheduleMarkPaid;
+
+  /// No description provided for @liabilityScheduleMarkPaidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark period {period} paid?'**
+  String liabilityScheduleMarkPaidConfirmTitle(int period);
+
+  /// No description provided for @liabilityScheduleMarkPaidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This records a {amount} liability-payment transaction dated today and cannot be undone from this screen.'**
+  String liabilityScheduleMarkPaidConfirmBody(String amount);
+
+  /// No description provided for @liabilityScheduleMarkPaidNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a payer account before marking periods paid.'**
+  String get liabilityScheduleMarkPaidNoAccount;
+
+  /// No description provided for @liabilityNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability not found'**
+  String get liabilityNotFound;
+
+  /// No description provided for @liabilityRevolvingNoSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit-card / revolving lines have no fixed amortization schedule.'**
+  String get liabilityRevolvingNoSchedule;
+
+  /// No description provided for @physicalAssetsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate & vehicles'**
+  String get physicalAssetsSectionTitle;
+
+  /// No description provided for @physicalAssetsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No real estate or vehicles yet. Tap + to add one.'**
+  String get physicalAssetsEmpty;
+
+  /// No description provided for @physicalAssetTypeRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate'**
+  String get physicalAssetTypeRealEstate;
+
+  /// No description provided for @physicalAssetTypeVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get physicalAssetTypeVehicle;
+
+  /// No description provided for @physicalAssetAddRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Add real estate'**
+  String get physicalAssetAddRealEstate;
+
+  /// No description provided for @physicalAssetAddVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add vehicle'**
+  String get physicalAssetAddVehicle;
+
+  /// No description provided for @physicalAssetFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get physicalAssetFieldName;
+
+  /// No description provided for @physicalAssetFieldAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get physicalAssetFieldAddress;
+
+  /// No description provided for @physicalAssetFieldPurchaseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase date'**
+  String get physicalAssetFieldPurchaseDate;
+
+  /// No description provided for @physicalAssetFieldPurchasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase price'**
+  String get physicalAssetFieldPurchasePrice;
+
+  /// No description provided for @physicalAssetFieldCurrentValuation.
+  ///
+  /// In en, this message translates to:
+  /// **'Current valuation'**
+  String get physicalAssetFieldCurrentValuation;
+
+  /// No description provided for @physicalAssetFieldCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get physicalAssetFieldCurrency;
+
+  /// No description provided for @physicalAssetFieldAnnualResidualRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual residual rate'**
+  String get physicalAssetFieldAnnualResidualRate;
+
+  /// No description provided for @physicalAssetFieldAutoDepreciation.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-depreciate between updates'**
+  String get physicalAssetFieldAutoDepreciation;
+
+  /// No description provided for @physicalAssetFieldLinkedLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked mortgage / loan id'**
+  String get physicalAssetFieldLinkedLiability;
+
+  /// No description provided for @physicalAssetFieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get physicalAssetFieldNote;
+
+  /// No description provided for @physicalAssetCreateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get physicalAssetCreateSubmit;
+
+  /// No description provided for @physicalAssetUpdateValuationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update valuation'**
+  String get physicalAssetUpdateValuationAction;
+
+  /// No description provided for @physicalAssetUpdateValuationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update valuation'**
+  String get physicalAssetUpdateValuationTitle;
+
+  /// No description provided for @physicalAssetUpdateValuationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'As-of date'**
+  String get physicalAssetUpdateValuationDate;
+
+  /// No description provided for @physicalAssetUpdateValuationAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'New valuation'**
+  String get physicalAssetUpdateValuationAmount;
+
+  /// No description provided for @physicalAssetUpdateValuationSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save valuation'**
+  String get physicalAssetUpdateValuationSubmit;
+
+  /// No description provided for @physicalAssetDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get physicalAssetDeleteAction;
+
+  /// No description provided for @physicalAssetDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this asset?'**
+  String get physicalAssetDeleteConfirmTitle;
+
+  /// No description provided for @physicalAssetDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation history will be tombstoned but recoverable on devices that have already synced.'**
+  String get physicalAssetDeleteConfirmBody;
+
+  /// No description provided for @physicalAssetDetailValuationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Current valuation'**
+  String get physicalAssetDetailValuationTitle;
+
+  /// No description provided for @physicalAssetDetailHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation history'**
+  String get physicalAssetDetailHistoryTitle;
+
+  /// No description provided for @physicalAssetDetailDepreciationProjection.
+  ///
+  /// In en, this message translates to:
+  /// **'Depreciation projection'**
+  String get physicalAssetDetailDepreciationProjection;
+
+  /// No description provided for @physicalAssetDetailPurchaseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase'**
+  String get physicalAssetDetailPurchaseLabel;
+
+  /// No description provided for @physicalAssetDetailManualUpdateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual update'**
+  String get physicalAssetDetailManualUpdateLabel;
+
+  /// No description provided for @physicalAssetDetailAutoEstimateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-estimate'**
+  String get physicalAssetDetailAutoEstimateLabel;
+
+  /// No description provided for @physicalAssetDetailEstimatedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated value today: {value}'**
+  String physicalAssetDetailEstimatedToday(String value);
+
+  /// No description provided for @physicalAssetValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get physicalAssetValidationRequired;
+
+  /// No description provided for @physicalAssetValidationPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than 0'**
+  String get physicalAssetValidationPositive;
+
+  /// No description provided for @physicalAssetValidationResidualRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be between 0 and 1'**
+  String get physicalAssetValidationResidualRange;
+
+  /// No description provided for @physicalAssetNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset not found'**
+  String get physicalAssetNotFound;
+
   /// No description provided for @analyticsAppBarTitle.
   ///
   /// In en, this message translates to:
@@ -559,6 +1075,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get deferredLoadRetry;
+
+  /// Title shown when go_router can't match a URL to any registered route (404).
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get routeNotFoundTitle;
+
+  /// Body of the 404 page; includes the URL the user tried to visit.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find {path}. It may have been moved or never existed.'**
+  String routeNotFoundMessage(String path);
+
+  /// Title shown when go_router's errorBuilder fires for a runtime error (not a 404).
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get routeErrorTitle;
+
+  /// Action that navigates back to the home tab from an error / not-found page.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to overview'**
+  String get routeGoHome;
 
   /// Title of the shortcut help dialog (Cmd/Ctrl+/)
   ///

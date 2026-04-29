@@ -13,6 +13,7 @@ export 'goal.dart';
 export 'hlc.dart';
 export 'holding.dart';
 export 'liability.dart';
+export 'manual_asset_metadata.dart';
 export 'money.dart';
 export 'op_log.dart';
 export 'settings.dart';

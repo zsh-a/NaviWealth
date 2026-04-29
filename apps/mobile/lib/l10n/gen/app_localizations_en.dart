@@ -180,6 +180,280 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter a non-negative number';
 
   @override
+  String get assetsLiabilitiesLink => 'Liabilities & repayment plans';
+
+  @override
+  String get liabilitiesAppBarTitle => 'Liabilities';
+
+  @override
+  String get liabilitiesEmptyHint =>
+      'No liabilities yet. Add a mortgage, car loan, credit card or consumer loan to track repayment.';
+
+  @override
+  String get liabilitiesAddAction => 'Add liability';
+
+  @override
+  String get liabilityTypeMortgage => 'Mortgage';
+
+  @override
+  String get liabilityTypeCarLoan => 'Car loan';
+
+  @override
+  String get liabilityTypeCreditCard => 'Credit card';
+
+  @override
+  String get liabilityTypeConsumerLoan => 'Consumer loan';
+
+  @override
+  String get liabilityTypeStudentLoan => 'Student loan';
+
+  @override
+  String get liabilityTypeMarginLoan => 'Margin loan';
+
+  @override
+  String get liabilityTypeOther => 'Other';
+
+  @override
+  String get liabilityRateTypeFixed => 'Fixed rate';
+
+  @override
+  String get liabilityRateTypeLpr => 'LPR floating';
+
+  @override
+  String get liabilityMethodEqualInstallment => 'Equal installment';
+
+  @override
+  String get liabilityMethodEqualPrincipal => 'Equal principal';
+
+  @override
+  String get liabilityFieldName => 'Name';
+
+  @override
+  String get liabilityFieldType => 'Type';
+
+  @override
+  String get liabilityFieldPrincipal => 'Principal';
+
+  @override
+  String get liabilityFieldInterestRate => 'Annual rate (%)';
+
+  @override
+  String get liabilityFieldRateType => 'Rate type';
+
+  @override
+  String get liabilityFieldTerm => 'Term (months)';
+
+  @override
+  String get liabilityFieldStartDate => 'Start date';
+
+  @override
+  String get liabilityFieldMethod => 'Repayment method';
+
+  @override
+  String get liabilityFieldCurrency => 'Currency';
+
+  @override
+  String get liabilityFieldStatementDay => 'Statement day';
+
+  @override
+  String get liabilityFieldPaymentDueDay => 'Payment due day';
+
+  @override
+  String get liabilitySaveAction => 'Save';
+
+  @override
+  String get liabilityValidationRequired => 'Required';
+
+  @override
+  String get liabilityValidationPositive => 'Must be greater than zero';
+
+  @override
+  String get liabilityValidationDayOfMonth => 'Must be 1–31';
+
+  @override
+  String get liabilitySummaryRemaining => 'Remaining principal';
+
+  @override
+  String get liabilitySummaryInterestPaid => 'Interest paid so far';
+
+  @override
+  String get liabilitySummaryInterestTotal => 'Total interest cost';
+
+  @override
+  String get liabilitySummaryInterestRatio =>
+      'Interest as share of total payments';
+
+  @override
+  String liabilitySummaryProgress(int paid, int total) {
+    return 'Paid $paid of $total periods';
+  }
+
+  @override
+  String get liabilityScheduleHeading => 'Amortization schedule';
+
+  @override
+  String get liabilityScheduleColPeriod => '#';
+
+  @override
+  String get liabilityScheduleColDue => 'Due';
+
+  @override
+  String get liabilityScheduleColPrincipal => 'Principal';
+
+  @override
+  String get liabilityScheduleColInterest => 'Interest';
+
+  @override
+  String get liabilityScheduleColRemaining => 'Balance';
+
+  @override
+  String get liabilityScheduleColStatus => 'Status';
+
+  @override
+  String get liabilityScheduleStatusPaid => 'Paid';
+
+  @override
+  String get liabilityScheduleStatusDue => 'Pending';
+
+  @override
+  String get liabilityScheduleMarkPaid => 'Mark paid';
+
+  @override
+  String liabilityScheduleMarkPaidConfirmTitle(int period) {
+    return 'Mark period $period paid?';
+  }
+
+  @override
+  String liabilityScheduleMarkPaidConfirmBody(String amount) {
+    return 'This records a $amount liability-payment transaction dated today and cannot be undone from this screen.';
+  }
+
+  @override
+  String get liabilityScheduleMarkPaidNoAccount =>
+      'Assign a payer account before marking periods paid.';
+
+  @override
+  String get liabilityNotFound => 'Liability not found';
+
+  @override
+  String get liabilityRevolvingNoSchedule =>
+      'Credit-card / revolving lines have no fixed amortization schedule.';
+
+  @override
+  String get physicalAssetsSectionTitle => 'Real estate & vehicles';
+
+  @override
+  String get physicalAssetsEmpty =>
+      'No real estate or vehicles yet. Tap + to add one.';
+
+  @override
+  String get physicalAssetTypeRealEstate => 'Real estate';
+
+  @override
+  String get physicalAssetTypeVehicle => 'Vehicle';
+
+  @override
+  String get physicalAssetAddRealEstate => 'Add real estate';
+
+  @override
+  String get physicalAssetAddVehicle => 'Add vehicle';
+
+  @override
+  String get physicalAssetFieldName => 'Name';
+
+  @override
+  String get physicalAssetFieldAddress => 'Address';
+
+  @override
+  String get physicalAssetFieldPurchaseDate => 'Purchase date';
+
+  @override
+  String get physicalAssetFieldPurchasePrice => 'Purchase price';
+
+  @override
+  String get physicalAssetFieldCurrentValuation => 'Current valuation';
+
+  @override
+  String get physicalAssetFieldCurrency => 'Currency';
+
+  @override
+  String get physicalAssetFieldAnnualResidualRate => 'Annual residual rate';
+
+  @override
+  String get physicalAssetFieldAutoDepreciation =>
+      'Auto-depreciate between updates';
+
+  @override
+  String get physicalAssetFieldLinkedLiability => 'Linked mortgage / loan id';
+
+  @override
+  String get physicalAssetFieldNote => 'Note';
+
+  @override
+  String get physicalAssetCreateSubmit => 'Save';
+
+  @override
+  String get physicalAssetUpdateValuationAction => 'Update valuation';
+
+  @override
+  String get physicalAssetUpdateValuationTitle => 'Update valuation';
+
+  @override
+  String get physicalAssetUpdateValuationDate => 'As-of date';
+
+  @override
+  String get physicalAssetUpdateValuationAmount => 'New valuation';
+
+  @override
+  String get physicalAssetUpdateValuationSubmit => 'Save valuation';
+
+  @override
+  String get physicalAssetDeleteAction => 'Delete';
+
+  @override
+  String get physicalAssetDeleteConfirmTitle => 'Delete this asset?';
+
+  @override
+  String get physicalAssetDeleteConfirmBody =>
+      'Valuation history will be tombstoned but recoverable on devices that have already synced.';
+
+  @override
+  String get physicalAssetDetailValuationTitle => 'Current valuation';
+
+  @override
+  String get physicalAssetDetailHistoryTitle => 'Valuation history';
+
+  @override
+  String get physicalAssetDetailDepreciationProjection =>
+      'Depreciation projection';
+
+  @override
+  String get physicalAssetDetailPurchaseLabel => 'Purchase';
+
+  @override
+  String get physicalAssetDetailManualUpdateLabel => 'Manual update';
+
+  @override
+  String get physicalAssetDetailAutoEstimateLabel => 'Auto-estimate';
+
+  @override
+  String physicalAssetDetailEstimatedToday(String value) {
+    return 'Estimated value today: $value';
+  }
+
+  @override
+  String get physicalAssetValidationRequired => 'Required';
+
+  @override
+  String get physicalAssetValidationPositive => 'Must be greater than 0';
+
+  @override
+  String get physicalAssetValidationResidualRange => 'Must be between 0 and 1';
+
+  @override
+  String get physicalAssetNotFound => 'Asset not found';
+
+  @override
   String get analyticsAppBarTitle => 'Analytics';
 
   @override
@@ -261,6 +535,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deferredLoadRetry => 'Retry';
+
+  @override
+  String get routeNotFoundTitle => 'Page not found';
+
+  @override
+  String routeNotFoundMessage(String path) {
+    return 'We couldn\'t find $path. It may have been moved or never existed.';
+  }
+
+  @override
+  String get routeErrorTitle => 'Something went wrong';
+
+  @override
+  String get routeGoHome => 'Back to overview';
 
   @override
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
