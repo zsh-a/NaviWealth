@@ -1,0 +1,237 @@
+import 'dart:async';
+
+import 'package:drift/drift.dart';
+
+import '../../../data/db/app_database.dart';
+import '../domain/chat_models.dart';
+
+/// Persistence layer for chat sessions and messages.
+///
+/// Tables are created via raw DDL in `app_database.dart` (see
+/// `_createChatTables`); this class wraps `customSelect` /
+/// `customStatement` so the chat feature can ship without regenerating
+/// the main Drift `.g.dart`. Round-trip is straightforward TEXT/INTEGER —
+/// the only non-obvious bit is that `tool_calls_json` is a serialized
+/// array (see `ToolInvocation.encodeList`).
+///
+/// The watch APIs are reactive via a private broadcast notifier rather
+/// than Drift's `readsFrom` mechanism — `readsFrom` requires
+/// `TableInfo` objects, and the chat tables are deliberately raw to
+/// keep them out of the codegen path. Every mutation bumps the
+/// notifier so subscribed streams re-issue their query.
+class ChatHistoryStore {
+  ChatHistoryStore(this._db);
+
+  final AppDatabase _db;
+  final StreamController<void> _changes = StreamController<void>.broadcast();
+
+  void dispose() {
+    _changes.close();
+  }
+
+  void _notify() {
+    if (!_changes.isClosed) _changes.add(null);
+  }
+
+  // ─── sessions ──────────────────────────────────────────────────────
+
+  /// Returns sessions for [ownerUserId] ordered by recency
+  /// (`last_message_at DESC`, with `created_at DESC` as a tiebreaker for
+  /// brand-new threads that have not received any messages yet).
+  Stream<List<ChatSession>> watchSessions(String ownerUserId) {
+    return _drive(() => _listSessions(ownerUserId));
+  }
+
+  Future<List<ChatSession>> _listSessions(String ownerUserId) async {
+    final rows = await _db.customSelect(
+      'SELECT * FROM chat_sessions WHERE owner_user_id = ?1 '
+      'ORDER BY COALESCE(last_message_at, created_at) DESC',
+      variables: [Variable<String>(ownerUserId)],
+    ).get();
+    return rows.map(_sessionFromRow).toList(growable: false);
+  }
+
+  /// Build a per-listener stream that yields once on subscribe and then
+  /// each time the store's broadcast notifier fires. Using an explicit
+  /// [StreamController] (rather than `async*` over the broadcast) lets
+  /// us cancel the broadcast subscription deterministically when the
+  /// caller cancels — `async*` over a broadcast can leave the generator
+  /// suspended past test teardown.
+  Stream<T> _drive<T>(Future<T> Function() snapshot) {
+    late StreamController<T> controller;
+    StreamSubscription<void>? sub;
+    Future<void> push() async {
+      try {
+        final v = await snapshot();
+        if (!controller.isClosed) controller.add(v);
+      } catch (e, st) {
+        if (!controller.isClosed) controller.addError(e, st);
+      }
+    }
+    controller = StreamController<T>(
+      onListen: () {
+        sub = _changes.stream.listen((_) => push());
+        push();
+      },
+      onCancel: () async {
+        await sub?.cancel();
+        sub = null;
+      },
+    );
+    return controller.stream;
+  }
+
+  Future<ChatSession?> findSession(String id) async {
+    final row = await _db.customSelect(
+      'SELECT * FROM chat_sessions WHERE id = ?1',
+      variables: [Variable<String>(id)],
+    ).getSingleOrNull();
+    return row == null ? null : _sessionFromRow(row);
+  }
+
+  Future<void> insertSession(ChatSession session) async {
+    await _db.customStatement(
+      'INSERT INTO chat_sessions '
+      '(id, owner_user_id, title, model, created_at, updated_at, last_message_at) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+      <Object?>[
+        session.id,
+        session.ownerUserId,
+        session.title,
+        session.model,
+        session.createdAt.millisecondsSinceEpoch,
+        session.updatedAt.millisecondsSinceEpoch,
+        session.lastMessageAt?.millisecondsSinceEpoch,
+      ],
+    );
+    _notify();
+  }
+
+  Future<void> renameSession(String id, String title) async {
+    await _db.customStatement(
+      'UPDATE chat_sessions SET title = ?2, updated_at = ?3 WHERE id = ?1',
+      <Object?>[id, title, DateTime.now().millisecondsSinceEpoch],
+    );
+    _notify();
+  }
+
+  Future<void> touchSession(String id, DateTime lastMessageAt) async {
+    await _db.customStatement(
+      'UPDATE chat_sessions SET last_message_at = ?2, updated_at = ?2 '
+      'WHERE id = ?1',
+      <Object?>[id, lastMessageAt.millisecondsSinceEpoch],
+    );
+    _notify();
+  }
+
+  Future<void> deleteSession(String id) async {
+    // Manually delete messages first — chat tables are created with
+    // `FOREIGN KEY ... ON DELETE CASCADE`, but `PRAGMA foreign_keys` is
+    // only enabled on the *production* path (see beforeOpen). In tests
+    // and on web (where SQLCipher isn't loaded) the cascade may not
+    // fire, so do it explicitly here.
+    await _db.customStatement(
+      'DELETE FROM chat_messages WHERE session_id = ?1',
+      <Object?>[id],
+    );
+    await _db.customStatement(
+      'DELETE FROM chat_sessions WHERE id = ?1',
+      <Object?>[id],
+    );
+    _notify();
+  }
+
+  // ─── messages ──────────────────────────────────────────────────────
+
+  Stream<List<ChatMessage>> watchMessages(String sessionId) {
+    return _drive(() => listMessages(sessionId));
+  }
+
+  Future<List<ChatMessage>> listMessages(String sessionId) async {
+    final rows = await _db.customSelect(
+      'SELECT * FROM chat_messages WHERE session_id = ?1 '
+      'ORDER BY created_at ASC, id ASC',
+      variables: [Variable<String>(sessionId)],
+    ).get();
+    return rows.map(_messageFromRow).toList(growable: false);
+  }
+
+  Future<void> insertMessage(ChatMessage msg) async {
+    await _db.customStatement(
+      'INSERT INTO chat_messages '
+      '(id, session_id, owner_user_id, role, content, tool_calls_json, '
+      ' status, error_message, created_at) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)',
+      <Object?>[
+        msg.id,
+        msg.sessionId,
+        msg.ownerUserId,
+        msg.role.wire,
+        msg.content,
+        msg.toolCalls.isEmpty ? null : ToolInvocation.encodeList(msg.toolCalls),
+        msg.status.wire,
+        msg.errorMessage,
+        msg.createdAt.millisecondsSinceEpoch,
+      ],
+    );
+    _notify();
+  }
+
+  Future<void> updateMessage(ChatMessage msg) async {
+    await _db.customStatement(
+      'UPDATE chat_messages SET '
+      ' content = ?2, tool_calls_json = ?3, status = ?4, error_message = ?5 '
+      'WHERE id = ?1',
+      <Object?>[
+        msg.id,
+        msg.content,
+        msg.toolCalls.isEmpty ? null : ToolInvocation.encodeList(msg.toolCalls),
+        msg.status.wire,
+        msg.errorMessage,
+      ],
+    );
+    _notify();
+  }
+
+  // ─── row decoders ─────────────────────────────────────────────────
+
+  ChatSession _sessionFromRow(QueryRow row) {
+    final lastMs = row.readNullable<int>('last_message_at');
+    return ChatSession(
+      id: row.read<String>('id'),
+      ownerUserId: row.read<String>('owner_user_id'),
+      title: row.read<String>('title'),
+      model: row.readNullable<String>('model'),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        row.read<int>('created_at'),
+        isUtc: true,
+      ),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(
+        row.read<int>('updated_at'),
+        isUtc: true,
+      ),
+      lastMessageAt: lastMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(lastMs, isUtc: true),
+    );
+  }
+
+  ChatMessage _messageFromRow(QueryRow row) {
+    return ChatMessage(
+      id: row.read<String>('id'),
+      sessionId: row.read<String>('session_id'),
+      ownerUserId: row.read<String>('owner_user_id'),
+      role: ChatRoleX.parse(row.read<String>('role')),
+      content: row.read<String>('content'),
+      toolCalls: ToolInvocation.decodeList(
+        row.readNullable<String>('tool_calls_json'),
+      ),
+      status: ChatMessageStatusX.parse(row.read<String>('status')),
+      errorMessage: row.readNullable<String>('error_message'),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        row.read<int>('created_at'),
+        isUtc: true,
+      ),
+    );
+  }
+}
