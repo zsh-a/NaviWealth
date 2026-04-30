@@ -42,6 +42,7 @@ QueryExecutor openConnectionImpl({
     final file = File(p.join(dir.path, dbFileName));
     return NativeDatabase.createInBackground(
       file,
+      isolateSetup: _configureSqlCipherDynamicLibrary,
       setup: (raw) {
         raw.execute("PRAGMA key = \"x'$encryptionKey'\";");
         raw.execute('PRAGMA cipher_memory_security = ON;');

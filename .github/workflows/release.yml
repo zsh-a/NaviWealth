@@ -98,7 +98,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          flutter build apk --release
+          flutter build apk --release --target-platform android-arm64
           flutter build appbundle --release
       - name: Package web bundle
         run: |
