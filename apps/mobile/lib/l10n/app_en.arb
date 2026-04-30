@@ -9,6 +9,8 @@
   "@navHome": { "description": "Bottom nav: dashboard / overview tab" },
   "navAssets": "Assets",
   "@navAssets": { "description": "Bottom nav: assets tab" },
+  "navExpenses": "Expenses",
+  "@navExpenses": { "description": "Bottom nav: day-to-day expense tab (FIR-69)" },
   "navAnalytics": "Analytics",
   "@navAnalytics": { "description": "Bottom nav: analytics tab" },
   "navSettings": "Settings",

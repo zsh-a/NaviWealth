@@ -16,8 +16,12 @@ import '../features/assets/deposit_form_page.dart';
 import '../features/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
 import '../features/assets/wealth_product_form_page.dart';
-import '../features/auth/presentation/devices_page.dart' deferred as devices_lib;
+import '../features/auth/presentation/devices_page.dart'
+    deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
+import '../features/expense/ui/expense_categories_page.dart';
+import '../features/expense/ui/expense_form_page.dart';
+import '../features/expense/ui/expense_list_page.dart';
 import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
@@ -26,8 +30,7 @@ import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
-import '../features/rebalance/ui/rebalance_page.dart'
-    deferred as rebalance_lib;
+import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -42,6 +45,7 @@ import 'route_guard.dart';
 const List<String> kPrimaryTabPaths = <String>[
   '/',
   '/assets',
+  '/expenses',
   '/analytics',
   '/settings',
 ];
@@ -195,6 +199,30 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             ],
           ),
           GoRoute(
+            path: '/expenses',
+            name: 'expenses',
+            builder: (context, state) => const ExpenseListPage(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                name: 'expense-new',
+                builder: (context, state) => const ExpenseFormPage(),
+              ),
+              GoRoute(
+                path: 'categories',
+                name: 'expense-categories',
+                builder: (context, state) => const ExpenseCategoriesPage(),
+              ),
+              GoRoute(
+                path: ':expenseId',
+                name: 'expense-detail',
+                builder: (context, state) => ExpenseFormPage(
+                  expenseId: state.pathParameters['expenseId'],
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
             path: '/analytics',
             name: 'analytics',
             builder: (context, state) => DeferredRoute(
@@ -234,7 +262,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   );
 }
 
-
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
 
 class _RootShell extends StatelessWidget {
@@ -253,10 +280,12 @@ class _RootShell extends StatelessWidget {
     final int index;
     if (location.startsWith('/assets') || location.startsWith('/accounts')) {
       index = 1;
-    } else if (location.startsWith('/analytics')) {
+    } else if (location.startsWith('/expenses')) {
       index = 2;
-    } else if (location.startsWith('/settings')) {
+    } else if (location.startsWith('/analytics')) {
       index = 3;
+    } else if (location.startsWith('/settings')) {
+      index = 4;
     } else {
       index = 0;
     }
@@ -276,6 +305,11 @@ class _RootShell extends StatelessWidget {
             label: l10n.navAssets,
           ),
           NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
+            label: l10n.navExpenses,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.pie_chart_outline),
             selectedIcon: const Icon(Icons.pie_chart),
             label: l10n.navAnalytics,
@@ -293,8 +327,10 @@ class _RootShell extends StatelessWidget {
             case 1:
               context.goNamed('assets');
             case 2:
-              context.goNamed('analytics');
+              context.goNamed('expenses');
             case 3:
+              context.goNamed('analytics');
+            case 4:
               context.goNamed('settings');
           }
         },
