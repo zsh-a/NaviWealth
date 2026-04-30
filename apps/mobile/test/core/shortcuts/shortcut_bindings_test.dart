@@ -70,6 +70,7 @@ void main() {
         LogicalKeyboardKey.digit3,
         LogicalKeyboardKey.digit4,
         LogicalKeyboardKey.digit5,
+        LogicalKeyboardKey.digit6,
       ];
       expect(
         keys.length,

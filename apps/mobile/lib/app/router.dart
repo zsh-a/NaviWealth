@@ -24,6 +24,7 @@ import '../features/expense/ui/expense_categories_page.dart';
 import '../features/expense/ui/expense_form_page.dart';
 import '../features/expense/ui/expense_list_page.dart';
 import '../features/expense/ui/expense_report_page.dart';
+import '../features/fire/presentation/fire_page.dart' deferred as fire_lib;
 import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
@@ -40,15 +41,16 @@ import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
 
-/// Paths of the four primary tabs in the root shell, in display order.
+/// Paths of the six primary tabs in the root shell, in display order.
 ///
-/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`4` to these
+/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`6` to these
 /// indexes — keep order in sync with `_RootShell`'s NavigationBar.
 const List<String> kPrimaryTabPaths = <String>[
   '/',
   '/assets',
   '/expenses',
   '/analytics',
+  '/fire',
   '/settings',
 ];
 
@@ -63,6 +65,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     assets_lib.loadLibrary(),
     analytics_lib.loadLibrary(),
     settings_lib.loadLibrary(),
+    fire_lib.loadLibrary(),
     liabilities_lib.loadLibrary(),
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),
@@ -239,6 +242,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             ),
           ),
           GoRoute(
+            path: '/fire',
+            name: 'fire',
+            builder: (context, state) => DeferredRoute(
+              load: fire_lib.loadLibrary,
+              builder: (_) => fire_lib.FirePage(),
+            ),
+          ),
+          GoRoute(
             path: '/rebalance',
             name: 'rebalance',
             builder: (context, state) => DeferredRoute(
@@ -300,8 +311,10 @@ class _RootShell extends StatelessWidget {
       index = 2;
     } else if (location.startsWith('/analytics')) {
       index = 3;
-    } else if (location.startsWith('/settings')) {
+    } else if (location.startsWith('/fire')) {
       index = 4;
+    } else if (location.startsWith('/settings')) {
+      index = 5;
     } else {
       index = 0;
     }
@@ -331,6 +344,11 @@ class _RootShell extends StatelessWidget {
             label: l10n.navAnalytics,
           ),
           NavigationDestination(
+            icon: const Icon(Icons.flag_outlined),
+            selectedIcon: const Icon(Icons.flag),
+            label: l10n.navFire,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.settings_outlined),
             selectedIcon: const Icon(Icons.settings),
             label: l10n.navSettings,
@@ -347,6 +365,8 @@ class _RootShell extends StatelessWidget {
             case 3:
               context.goNamed('analytics');
             case 4:
+              context.goNamed('fire');
+            case 5:
               context.goNamed('settings');
           }
         },
