@@ -14,11 +14,19 @@ class ChatComposer extends StatefulWidget {
     required this.isStreaming,
     required this.onSend,
     required this.onCancel,
+    this.isFlushing = false,
   });
 
   final bool isStreaming;
+
+  /// Pre-chat sync gate (FIR-71) is draining the OpLog. The composer
+  /// disables input and shows "正在同步..." for the typically sub-second
+  /// window while we wait for `/sync/push` to land.
+  final bool isFlushing;
   final ValueChanged<String> onSend;
   final VoidCallback onCancel;
+
+  bool get _busy => isStreaming || isFlushing;
 
   @override
   State<ChatComposer> createState() => _ChatComposerState();
@@ -60,7 +68,7 @@ class _ChatComposerState extends State<ChatComposer> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final canSend = !widget.isStreaming && _controller.text.trim().isNotEmpty;
+    final canSend = !widget._busy && _controller.text.trim().isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -88,12 +96,14 @@ class _ChatComposerState extends State<ChatComposer> {
                   keyboardType: TextInputType.multiline,
                   minLines: 1,
                   maxLines: 6,
-                  enabled: !widget.isStreaming,
+                  enabled: !widget._busy,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: widget.isStreaming
-                        ? '正在生成回答…'
-                        : '问问 NaviWealth：例如"我最近一个月赚了多少？"',
+                    hintText: widget.isFlushing
+                        ? '正在同步本地数据…'
+                        : widget.isStreaming
+                            ? '正在生成回答…'
+                            : '问问 NaviWealth：例如"我最近一个月赚了多少？"',
                     filled: true,
                     fillColor: cs.surfaceContainerHighest,
                     contentPadding: const EdgeInsets.symmetric(
@@ -114,6 +124,15 @@ class _ChatComposerState extends State<ChatComposer> {
                 onPressed: widget.onCancel,
                 tooltip: '停止生成',
                 icon: const Icon(Icons.stop),
+              )
+            else if (widget.isFlushing)
+              const Padding(
+                padding: EdgeInsets.all(Spacing.s8),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
               )
             else
               IconButton.filled(
