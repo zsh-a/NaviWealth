@@ -428,5 +428,107 @@
       "value": { "type": "String", "example": "¥10,000" },
       "weight": { "type": "String", "example": "12.3%" }
     }
-  }
+  },
+
+  "navFire": "FIRE",
+  "@navFire": { "description": "Bottom-nav tab label for the FIRE dashboard." },
+
+  "fireAppBarTitle": "FIRE",
+  "fireLoadError": "Could not load FIRE dashboard. {detail}",
+  "@fireLoadError": {
+    "placeholders": { "detail": { "type": "String" } }
+  },
+  "fireRetry": "Retry",
+
+  "fireEmptyTitle": "Set your FIRE goal",
+  "fireEmptyHint": "Enter your target net worth, monthly expenses and savings to see how far you are from financial independence.",
+  "fireEmptySetGoalCta": "Set goal",
+  "fireEditGoal": "Edit goal",
+
+  "fireGoalSheetTitle": "FIRE goal",
+  "fireGoalSheetSubtitle": "Inputs are stored on this device only and are inflation-adjusted with the rate below.",
+  "fireGoalSheetCancel": "Cancel",
+  "fireGoalSheetSave": "Save",
+  "fireGoalFieldTarget": "Target net worth",
+  "fireGoalFieldTargetHelper": "Net worth required to retire, in today's purchasing power.",
+  "fireGoalFieldMonthlyExpenses": "Monthly expenses at FIRE",
+  "fireGoalFieldMonthlyExpensesHelper": "Used by the 4% rule to check if your target supports your lifestyle.",
+  "fireGoalFieldMonthlySurplus": "Monthly surplus (savings)",
+  "fireGoalFieldMonthlySurplusHelper": "How much you save each month — drives the projection's contribution.",
+  "fireGoalFieldInflation": "Inflation: {rate}%",
+  "@fireGoalFieldInflation": {
+    "placeholders": { "rate": { "type": "String", "example": "3.0" } }
+  },
+  "fireGoalValidationRequired": "Required",
+  "fireGoalValidationInvalidNumber": "Enter a valid number",
+  "fireGoalValidationNonNegative": "Must be zero or positive",
+  "fireGoalValidationPositive": "Must be greater than zero",
+
+  "fireProgressTitle": "Progress to FIRE",
+  "fireProgressGaugeCaption": "of FIRE target",
+  "fireProgressCurrent": "Current net worth",
+  "fireProgressTarget": "Target",
+
+  "fireCountdownTitle": "Time to FIRE · {scenario}",
+  "@fireCountdownTitle": {
+    "placeholders": { "scenario": { "type": "String", "example": "Neutral" } }
+  },
+  "fireCountdownReachedTitle": "You've reached FIRE",
+  "fireCountdownReachedSubtitle": "Net worth already meets the target — focus on sustaining the safe-withdrawal rate.",
+  "fireCountdownUnreachable": "Unreachable within 100 years at the current surplus and return rate. Increase savings or your return assumption.",
+  "fireCountdownUnreachableShort": "100y+",
+  "fireCountdownYearsOnly": "{years, plural, =1{1 year} other{{years} years}}",
+  "@fireCountdownYearsOnly": {
+    "placeholders": { "years": { "type": "int" } }
+  },
+  "fireCountdownMonthsOnly": "{months, plural, =1{1 month} other{{months} months}}",
+  "@fireCountdownMonthsOnly": {
+    "placeholders": { "months": { "type": "int" } }
+  },
+  "fireCountdownYearsMonths": "{years}y {months}m",
+  "@fireCountdownYearsMonths": {
+    "placeholders": {
+      "years": { "type": "int" },
+      "months": { "type": "int" }
+    }
+  },
+  "fireCountdownDaysAprox": "≈ {days} days",
+  "@fireCountdownDaysAprox": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+
+  "fireProjectionTitle": "Projection",
+  "fireProjectionSubtitle": "Net worth path under each return scenario; dashed line is the inflation-adjusted target.",
+  "fireProjectionTargetLineLegend": "Target (inflation-adjusted)",
+
+  "fireScenariosTableTitle": "Scenarios",
+  "fireScenarioConservative": "Conservative",
+  "fireScenarioNeutral": "Neutral",
+  "fireScenarioAggressive": "Aggressive",
+  "fireScenarioLive": "Live (XIRR)",
+  "fireScenarioRateLabel": "{rate}% annualized",
+  "@fireScenarioRateLabel": {
+    "placeholders": { "rate": { "type": "String", "example": "6.0" } }
+  },
+  "fireScenarioReachedNow": "Now",
+
+  "fireSafeWithdrawalTitle": "4% rule",
+  "fireSafeWithdrawalSubtitle": "Trinity-study safe withdrawal: 4% of the target each year, in today's purchasing power.",
+  "fireSafeWithdrawalMonthly": "Safe monthly withdrawal",
+  "fireSafeWithdrawalAnnual": "Safe annual withdrawal",
+  "fireSafeWithdrawalNoExpenses": "Set monthly expenses to compare with this withdrawal.",
+  "fireSafeWithdrawalCovers": "Covers planned expenses with {amount} to spare each month.",
+  "@fireSafeWithdrawalCovers": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "fireSafeWithdrawalShortfall": "Falls short of planned expenses by {amount} per month.",
+  "@fireSafeWithdrawalShortfall": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+
+  "fireSensitivityTitle": "Sensitivity",
+  "fireSensitivitySubtitle": "How time-to-FIRE shifts when monthly surplus changes by ±20%.",
+  "fireSensitivityHigherSurplus": "+20% surplus",
+  "fireSensitivityBaseline": "Current surplus",
+  "fireSensitivityLowerSurplus": "-20% surplus"
 }

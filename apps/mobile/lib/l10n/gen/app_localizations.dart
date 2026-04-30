@@ -1625,6 +1625,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{symbol} · {value} · {weight}'**
   String analyticsHoldingTooltip(String symbol, String value, String weight);
+
+  /// Bottom-nav tab label for the FIRE dashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE'**
+  String get navFire;
+
+  /// No description provided for @fireAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE'**
+  String get fireAppBarTitle;
+
+  /// No description provided for @fireLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load FIRE dashboard. {detail}'**
+  String fireLoadError(String detail);
+
+  /// No description provided for @fireRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get fireRetry;
+
+  /// No description provided for @fireEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your FIRE goal'**
+  String get fireEmptyTitle;
+
+  /// No description provided for @fireEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your target net worth, monthly expenses and savings to see how far you are from financial independence.'**
+  String get fireEmptyHint;
+
+  /// No description provided for @fireEmptySetGoalCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Set goal'**
+  String get fireEmptySetGoalCta;
+
+  /// No description provided for @fireEditGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit goal'**
+  String get fireEditGoal;
+
+  /// No description provided for @fireGoalSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE goal'**
+  String get fireGoalSheetTitle;
+
+  /// No description provided for @fireGoalSheetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inputs are stored on this device only and are inflation-adjusted with the rate below.'**
+  String get fireGoalSheetSubtitle;
+
+  /// No description provided for @fireGoalSheetCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get fireGoalSheetCancel;
+
+  /// No description provided for @fireGoalSheetSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get fireGoalSheetSave;
+
+  /// No description provided for @fireGoalFieldTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target net worth'**
+  String get fireGoalFieldTarget;
+
+  /// No description provided for @fireGoalFieldTargetHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth required to retire, in today\'s purchasing power.'**
+  String get fireGoalFieldTargetHelper;
+
+  /// No description provided for @fireGoalFieldMonthlyExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly expenses at FIRE'**
+  String get fireGoalFieldMonthlyExpenses;
+
+  /// No description provided for @fireGoalFieldMonthlyExpensesHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by the 4% rule to check if your target supports your lifestyle.'**
+  String get fireGoalFieldMonthlyExpensesHelper;
+
+  /// No description provided for @fireGoalFieldMonthlySurplus.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly surplus (savings)'**
+  String get fireGoalFieldMonthlySurplus;
+
+  /// No description provided for @fireGoalFieldMonthlySurplusHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'How much you save each month — drives the projection\'s contribution.'**
+  String get fireGoalFieldMonthlySurplusHelper;
+
+  /// No description provided for @fireGoalFieldInflation.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflation: {rate}%'**
+  String fireGoalFieldInflation(String rate);
+
+  /// No description provided for @fireGoalValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get fireGoalValidationRequired;
+
+  /// No description provided for @fireGoalValidationInvalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number'**
+  String get fireGoalValidationInvalidNumber;
+
+  /// No description provided for @fireGoalValidationNonNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be zero or positive'**
+  String get fireGoalValidationNonNegative;
+
+  /// No description provided for @fireGoalValidationPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than zero'**
+  String get fireGoalValidationPositive;
+
+  /// No description provided for @fireProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress to FIRE'**
+  String get fireProgressTitle;
+
+  /// No description provided for @fireProgressGaugeCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'of FIRE target'**
+  String get fireProgressGaugeCaption;
+
+  /// No description provided for @fireProgressCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current net worth'**
+  String get fireProgressCurrent;
+
+  /// No description provided for @fireProgressTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get fireProgressTarget;
+
+  /// No description provided for @fireCountdownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to FIRE · {scenario}'**
+  String fireCountdownTitle(String scenario);
+
+  /// No description provided for @fireCountdownReachedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached FIRE'**
+  String get fireCountdownReachedTitle;
+
+  /// No description provided for @fireCountdownReachedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth already meets the target — focus on sustaining the safe-withdrawal rate.'**
+  String get fireCountdownReachedSubtitle;
+
+  /// No description provided for @fireCountdownUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unreachable within 100 years at the current surplus and return rate. Increase savings or your return assumption.'**
+  String get fireCountdownUnreachable;
+
+  /// No description provided for @fireCountdownUnreachableShort.
+  ///
+  /// In en, this message translates to:
+  /// **'100y+'**
+  String get fireCountdownUnreachableShort;
+
+  /// No description provided for @fireCountdownYearsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'{years, plural, =1{1 year} other{{years} years}}'**
+  String fireCountdownYearsOnly(int years);
+
+  /// No description provided for @fireCountdownMonthsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1{1 month} other{{months} months}}'**
+  String fireCountdownMonthsOnly(int months);
+
+  /// No description provided for @fireCountdownYearsMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{years}y {months}m'**
+  String fireCountdownYearsMonths(int years, int months);
+
+  /// No description provided for @fireCountdownDaysAprox.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {days} days'**
+  String fireCountdownDaysAprox(int days);
+
+  /// No description provided for @fireProjectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Projection'**
+  String get fireProjectionTitle;
+
+  /// No description provided for @fireProjectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth path under each return scenario; dashed line is the inflation-adjusted target.'**
+  String get fireProjectionSubtitle;
+
+  /// No description provided for @fireProjectionTargetLineLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Target (inflation-adjusted)'**
+  String get fireProjectionTargetLineLegend;
+
+  /// No description provided for @fireScenariosTableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scenarios'**
+  String get fireScenariosTableTitle;
+
+  /// No description provided for @fireScenarioConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get fireScenarioConservative;
+
+  /// No description provided for @fireScenarioNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'Neutral'**
+  String get fireScenarioNeutral;
+
+  /// No description provided for @fireScenarioAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get fireScenarioAggressive;
+
+  /// No description provided for @fireScenarioLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live (XIRR)'**
+  String get fireScenarioLive;
+
+  /// No description provided for @fireScenarioRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}% annualized'**
+  String fireScenarioRateLabel(String rate);
+
+  /// No description provided for @fireScenarioReachedNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get fireScenarioReachedNow;
+
+  /// No description provided for @fireSafeWithdrawalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'4% rule'**
+  String get fireSafeWithdrawalTitle;
+
+  /// No description provided for @fireSafeWithdrawalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trinity-study safe withdrawal: 4% of the target each year, in today\'s purchasing power.'**
+  String get fireSafeWithdrawalSubtitle;
+
+  /// No description provided for @fireSafeWithdrawalMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe monthly withdrawal'**
+  String get fireSafeWithdrawalMonthly;
+
+  /// No description provided for @fireSafeWithdrawalAnnual.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe annual withdrawal'**
+  String get fireSafeWithdrawalAnnual;
+
+  /// No description provided for @fireSafeWithdrawalNoExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Set monthly expenses to compare with this withdrawal.'**
+  String get fireSafeWithdrawalNoExpenses;
+
+  /// No description provided for @fireSafeWithdrawalCovers.
+  ///
+  /// In en, this message translates to:
+  /// **'Covers planned expenses with {amount} to spare each month.'**
+  String fireSafeWithdrawalCovers(String amount);
+
+  /// No description provided for @fireSafeWithdrawalShortfall.
+  ///
+  /// In en, this message translates to:
+  /// **'Falls short of planned expenses by {amount} per month.'**
+  String fireSafeWithdrawalShortfall(String amount);
+
+  /// No description provided for @fireSensitivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensitivity'**
+  String get fireSensitivityTitle;
+
+  /// No description provided for @fireSensitivitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How time-to-FIRE shifts when monthly surplus changes by ±20%.'**
+  String get fireSensitivitySubtitle;
+
+  /// No description provided for @fireSensitivityHigherSurplus.
+  ///
+  /// In en, this message translates to:
+  /// **'+20% surplus'**
+  String get fireSensitivityHigherSurplus;
+
+  /// No description provided for @fireSensitivityBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Current surplus'**
+  String get fireSensitivityBaseline;
+
+  /// No description provided for @fireSensitivityLowerSurplus.
+  ///
+  /// In en, this message translates to:
+  /// **'-20% surplus'**
+  String get fireSensitivityLowerSurplus;
 }
 
 class _AppLocalizationsDelegate

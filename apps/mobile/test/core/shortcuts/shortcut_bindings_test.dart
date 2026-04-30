@@ -59,7 +59,7 @@ void main() {
       expect(activator.control, isFalse);
     });
 
-    test('declares 1-4 for primary tab switching, in order', () {
+    test('declares 1-5 for primary tab switching, in order', () {
       final tabBindings = bindings
           .where((b) => b.intent is SwitchPrimaryTabIntent)
           .toList();
@@ -69,6 +69,7 @@ void main() {
         LogicalKeyboardKey.digit2,
         LogicalKeyboardKey.digit3,
         LogicalKeyboardKey.digit4,
+        LogicalKeyboardKey.digit5,
       ];
       for (var i = 0; i < kPrimaryTabCount; i++) {
         final binding = tabBindings[i];

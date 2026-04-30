@@ -282,5 +282,73 @@
   "analyticsRetry": "重试",
 
   "analyticsBucketSheetTitle": "「{label}」持仓",
-  "analyticsHoldingTooltip": "{symbol} · {value} · {weight}"
+  "analyticsHoldingTooltip": "{symbol} · {value} · {weight}",
+
+  "navFire": "FIRE",
+
+  "fireAppBarTitle": "FIRE 仪表盘",
+  "fireLoadError": "FIRE 仪表盘加载失败。{detail}",
+  "fireRetry": "重试",
+
+  "fireEmptyTitle": "设定 FIRE 目标",
+  "fireEmptyHint": "填写目标净资产、月支出与月结余，量化追踪距离财务自由还有多远。",
+  "fireEmptySetGoalCta": "设定目标",
+  "fireEditGoal": "修改目标",
+
+  "fireGoalSheetTitle": "FIRE 目标",
+  "fireGoalSheetSubtitle": "数据仅保存在本地，目标按下方通胀率折算购买力。",
+  "fireGoalSheetCancel": "取消",
+  "fireGoalSheetSave": "保存",
+  "fireGoalFieldTarget": "目标净资产",
+  "fireGoalFieldTargetHelper": "退休所需净资产，以今日购买力计。",
+  "fireGoalFieldMonthlyExpenses": "退休后月支出",
+  "fireGoalFieldMonthlyExpensesHelper": "用于 4% 提取规则校验目标是否能覆盖生活开销。",
+  "fireGoalFieldMonthlySurplus": "当前月结余",
+  "fireGoalFieldMonthlySurplusHelper": "每月可投入的金额，是模拟曲线的现金流来源。",
+  "fireGoalFieldInflation": "通胀率：{rate}%",
+  "fireGoalValidationRequired": "必填",
+  "fireGoalValidationInvalidNumber": "请输入有效数字",
+  "fireGoalValidationNonNegative": "不能为负数",
+  "fireGoalValidationPositive": "请输入大于 0 的数字",
+
+  "fireProgressTitle": "进度",
+  "fireProgressGaugeCaption": "已达成目标比例",
+  "fireProgressCurrent": "当前净资产",
+  "fireProgressTarget": "目标",
+
+  "fireCountdownTitle": "倒计时 · {scenario}",
+  "fireCountdownReachedTitle": "已达成 FIRE",
+  "fireCountdownReachedSubtitle": "净资产已超过目标，可关注 4% 安全提取下的可持续支出。",
+  "fireCountdownUnreachable": "按当前结余与收益率，100 年内无法达成目标。请提高储蓄或调整收益预期。",
+  "fireCountdownUnreachableShort": "100年+",
+  "fireCountdownYearsOnly": "{years, plural, other {{years} 年}}",
+  "fireCountdownMonthsOnly": "{months, plural, other {{months} 个月}}",
+  "fireCountdownYearsMonths": "{years} 年 {months} 个月",
+  "fireCountdownDaysAprox": "约 {days} 天",
+
+  "fireProjectionTitle": "多场景模拟",
+  "fireProjectionSubtitle": "各收益场景下的净资产路径；虚线为通胀调整后的目标。",
+  "fireProjectionTargetLineLegend": "目标（通胀调整）",
+
+  "fireScenariosTableTitle": "场景对比",
+  "fireScenarioConservative": "保守",
+  "fireScenarioNeutral": "中性",
+  "fireScenarioAggressive": "激进",
+  "fireScenarioLive": "实际（XIRR）",
+  "fireScenarioRateLabel": "年化 {rate}%",
+  "fireScenarioReachedNow": "现在",
+
+  "fireSafeWithdrawalTitle": "4% 提取规则",
+  "fireSafeWithdrawalSubtitle": "Trinity 研究安全提取率：每年取目标的 4%，按今日购买力计。",
+  "fireSafeWithdrawalMonthly": "安全月提取",
+  "fireSafeWithdrawalAnnual": "安全年提取",
+  "fireSafeWithdrawalNoExpenses": "填写月支出后可与提取额对比。",
+  "fireSafeWithdrawalCovers": "覆盖计划支出，每月剩余 {amount}。",
+  "fireSafeWithdrawalShortfall": "每月仍缺口 {amount}。",
+
+  "fireSensitivityTitle": "结余敏感度",
+  "fireSensitivitySubtitle": "月结余 ±20% 对达成时间的影响。",
+  "fireSensitivityHigherSurplus": "结余 +20%",
+  "fireSensitivityBaseline": "当前结余",
+  "fireSensitivityLowerSurplus": "结余 -20%"
 }

@@ -835,4 +835,208 @@ class AppLocalizationsZh extends AppLocalizations {
   String analyticsHoldingTooltip(String symbol, String value, String weight) {
     return '$symbol · $value · $weight';
   }
+
+  @override
+  String get navFire => 'FIRE';
+
+  @override
+  String get fireAppBarTitle => 'FIRE 仪表盘';
+
+  @override
+  String fireLoadError(String detail) {
+    return 'FIRE 仪表盘加载失败。$detail';
+  }
+
+  @override
+  String get fireRetry => '重试';
+
+  @override
+  String get fireEmptyTitle => '设定 FIRE 目标';
+
+  @override
+  String get fireEmptyHint => '填写目标净资产、月支出与月结余，量化追踪距离财务自由还有多远。';
+
+  @override
+  String get fireEmptySetGoalCta => '设定目标';
+
+  @override
+  String get fireEditGoal => '修改目标';
+
+  @override
+  String get fireGoalSheetTitle => 'FIRE 目标';
+
+  @override
+  String get fireGoalSheetSubtitle => '数据仅保存在本地，目标按下方通胀率折算购买力。';
+
+  @override
+  String get fireGoalSheetCancel => '取消';
+
+  @override
+  String get fireGoalSheetSave => '保存';
+
+  @override
+  String get fireGoalFieldTarget => '目标净资产';
+
+  @override
+  String get fireGoalFieldTargetHelper => '退休所需净资产，以今日购买力计。';
+
+  @override
+  String get fireGoalFieldMonthlyExpenses => '退休后月支出';
+
+  @override
+  String get fireGoalFieldMonthlyExpensesHelper => '用于 4% 提取规则校验目标是否能覆盖生活开销。';
+
+  @override
+  String get fireGoalFieldMonthlySurplus => '当前月结余';
+
+  @override
+  String get fireGoalFieldMonthlySurplusHelper => '每月可投入的金额，是模拟曲线的现金流来源。';
+
+  @override
+  String fireGoalFieldInflation(String rate) {
+    return '通胀率：$rate%';
+  }
+
+  @override
+  String get fireGoalValidationRequired => '必填';
+
+  @override
+  String get fireGoalValidationInvalidNumber => '请输入有效数字';
+
+  @override
+  String get fireGoalValidationNonNegative => '不能为负数';
+
+  @override
+  String get fireGoalValidationPositive => '请输入大于 0 的数字';
+
+  @override
+  String get fireProgressTitle => '进度';
+
+  @override
+  String get fireProgressGaugeCaption => '已达成目标比例';
+
+  @override
+  String get fireProgressCurrent => '当前净资产';
+
+  @override
+  String get fireProgressTarget => '目标';
+
+  @override
+  String fireCountdownTitle(String scenario) {
+    return '倒计时 · $scenario';
+  }
+
+  @override
+  String get fireCountdownReachedTitle => '已达成 FIRE';
+
+  @override
+  String get fireCountdownReachedSubtitle => '净资产已超过目标，可关注 4% 安全提取下的可持续支出。';
+
+  @override
+  String get fireCountdownUnreachable => '按当前结余与收益率，100 年内无法达成目标。请提高储蓄或调整收益预期。';
+
+  @override
+  String get fireCountdownUnreachableShort => '100年+';
+
+  @override
+  String fireCountdownYearsOnly(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: '$years 年',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fireCountdownMonthsOnly(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fireCountdownYearsMonths(int years, int months) {
+    return '$years 年 $months 个月';
+  }
+
+  @override
+  String fireCountdownDaysAprox(int days) {
+    return '约 $days 天';
+  }
+
+  @override
+  String get fireProjectionTitle => '多场景模拟';
+
+  @override
+  String get fireProjectionSubtitle => '各收益场景下的净资产路径；虚线为通胀调整后的目标。';
+
+  @override
+  String get fireProjectionTargetLineLegend => '目标（通胀调整）';
+
+  @override
+  String get fireScenariosTableTitle => '场景对比';
+
+  @override
+  String get fireScenarioConservative => '保守';
+
+  @override
+  String get fireScenarioNeutral => '中性';
+
+  @override
+  String get fireScenarioAggressive => '激进';
+
+  @override
+  String get fireScenarioLive => '实际（XIRR）';
+
+  @override
+  String fireScenarioRateLabel(String rate) {
+    return '年化 $rate%';
+  }
+
+  @override
+  String get fireScenarioReachedNow => '现在';
+
+  @override
+  String get fireSafeWithdrawalTitle => '4% 提取规则';
+
+  @override
+  String get fireSafeWithdrawalSubtitle => 'Trinity 研究安全提取率：每年取目标的 4%，按今日购买力计。';
+
+  @override
+  String get fireSafeWithdrawalMonthly => '安全月提取';
+
+  @override
+  String get fireSafeWithdrawalAnnual => '安全年提取';
+
+  @override
+  String get fireSafeWithdrawalNoExpenses => '填写月支出后可与提取额对比。';
+
+  @override
+  String fireSafeWithdrawalCovers(String amount) {
+    return '覆盖计划支出，每月剩余 $amount。';
+  }
+
+  @override
+  String fireSafeWithdrawalShortfall(String amount) {
+    return '每月仍缺口 $amount。';
+  }
+
+  @override
+  String get fireSensitivityTitle => '结余敏感度';
+
+  @override
+  String get fireSensitivitySubtitle => '月结余 ±20% 对达成时间的影响。';
+
+  @override
+  String get fireSensitivityHigherSurplus => '结余 +20%';
+
+  @override
+  String get fireSensitivityBaseline => '当前结余';
+
+  @override
+  String get fireSensitivityLowerSurplus => '结余 -20%';
 }

@@ -873,4 +873,221 @@ class AppLocalizationsEn extends AppLocalizations {
   String analyticsHoldingTooltip(String symbol, String value, String weight) {
     return '$symbol · $value · $weight';
   }
+
+  @override
+  String get navFire => 'FIRE';
+
+  @override
+  String get fireAppBarTitle => 'FIRE';
+
+  @override
+  String fireLoadError(String detail) {
+    return 'Could not load FIRE dashboard. $detail';
+  }
+
+  @override
+  String get fireRetry => 'Retry';
+
+  @override
+  String get fireEmptyTitle => 'Set your FIRE goal';
+
+  @override
+  String get fireEmptyHint =>
+      'Enter your target net worth, monthly expenses and savings to see how far you are from financial independence.';
+
+  @override
+  String get fireEmptySetGoalCta => 'Set goal';
+
+  @override
+  String get fireEditGoal => 'Edit goal';
+
+  @override
+  String get fireGoalSheetTitle => 'FIRE goal';
+
+  @override
+  String get fireGoalSheetSubtitle =>
+      'Inputs are stored on this device only and are inflation-adjusted with the rate below.';
+
+  @override
+  String get fireGoalSheetCancel => 'Cancel';
+
+  @override
+  String get fireGoalSheetSave => 'Save';
+
+  @override
+  String get fireGoalFieldTarget => 'Target net worth';
+
+  @override
+  String get fireGoalFieldTargetHelper =>
+      'Net worth required to retire, in today\'s purchasing power.';
+
+  @override
+  String get fireGoalFieldMonthlyExpenses => 'Monthly expenses at FIRE';
+
+  @override
+  String get fireGoalFieldMonthlyExpensesHelper =>
+      'Used by the 4% rule to check if your target supports your lifestyle.';
+
+  @override
+  String get fireGoalFieldMonthlySurplus => 'Monthly surplus (savings)';
+
+  @override
+  String get fireGoalFieldMonthlySurplusHelper =>
+      'How much you save each month — drives the projection\'s contribution.';
+
+  @override
+  String fireGoalFieldInflation(String rate) {
+    return 'Inflation: $rate%';
+  }
+
+  @override
+  String get fireGoalValidationRequired => 'Required';
+
+  @override
+  String get fireGoalValidationInvalidNumber => 'Enter a valid number';
+
+  @override
+  String get fireGoalValidationNonNegative => 'Must be zero or positive';
+
+  @override
+  String get fireGoalValidationPositive => 'Must be greater than zero';
+
+  @override
+  String get fireProgressTitle => 'Progress to FIRE';
+
+  @override
+  String get fireProgressGaugeCaption => 'of FIRE target';
+
+  @override
+  String get fireProgressCurrent => 'Current net worth';
+
+  @override
+  String get fireProgressTarget => 'Target';
+
+  @override
+  String fireCountdownTitle(String scenario) {
+    return 'Time to FIRE · $scenario';
+  }
+
+  @override
+  String get fireCountdownReachedTitle => 'You\'ve reached FIRE';
+
+  @override
+  String get fireCountdownReachedSubtitle =>
+      'Net worth already meets the target — focus on sustaining the safe-withdrawal rate.';
+
+  @override
+  String get fireCountdownUnreachable =>
+      'Unreachable within 100 years at the current surplus and return rate. Increase savings or your return assumption.';
+
+  @override
+  String get fireCountdownUnreachableShort => '100y+';
+
+  @override
+  String fireCountdownYearsOnly(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: '$years years',
+      one: '1 year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fireCountdownMonthsOnly(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fireCountdownYearsMonths(int years, int months) {
+    return '${years}y ${months}m';
+  }
+
+  @override
+  String fireCountdownDaysAprox(int days) {
+    return '≈ $days days';
+  }
+
+  @override
+  String get fireProjectionTitle => 'Projection';
+
+  @override
+  String get fireProjectionSubtitle =>
+      'Net worth path under each return scenario; dashed line is the inflation-adjusted target.';
+
+  @override
+  String get fireProjectionTargetLineLegend => 'Target (inflation-adjusted)';
+
+  @override
+  String get fireScenariosTableTitle => 'Scenarios';
+
+  @override
+  String get fireScenarioConservative => 'Conservative';
+
+  @override
+  String get fireScenarioNeutral => 'Neutral';
+
+  @override
+  String get fireScenarioAggressive => 'Aggressive';
+
+  @override
+  String get fireScenarioLive => 'Live (XIRR)';
+
+  @override
+  String fireScenarioRateLabel(String rate) {
+    return '$rate% annualized';
+  }
+
+  @override
+  String get fireScenarioReachedNow => 'Now';
+
+  @override
+  String get fireSafeWithdrawalTitle => '4% rule';
+
+  @override
+  String get fireSafeWithdrawalSubtitle =>
+      'Trinity-study safe withdrawal: 4% of the target each year, in today\'s purchasing power.';
+
+  @override
+  String get fireSafeWithdrawalMonthly => 'Safe monthly withdrawal';
+
+  @override
+  String get fireSafeWithdrawalAnnual => 'Safe annual withdrawal';
+
+  @override
+  String get fireSafeWithdrawalNoExpenses =>
+      'Set monthly expenses to compare with this withdrawal.';
+
+  @override
+  String fireSafeWithdrawalCovers(String amount) {
+    return 'Covers planned expenses with $amount to spare each month.';
+  }
+
+  @override
+  String fireSafeWithdrawalShortfall(String amount) {
+    return 'Falls short of planned expenses by $amount per month.';
+  }
+
+  @override
+  String get fireSensitivityTitle => 'Sensitivity';
+
+  @override
+  String get fireSensitivitySubtitle =>
+      'How time-to-FIRE shifts when monthly surplus changes by ±20%.';
+
+  @override
+  String get fireSensitivityHigherSurplus => '+20% surplus';
+
+  @override
+  String get fireSensitivityBaseline => 'Current surplus';
+
+  @override
+  String get fireSensitivityLowerSurplus => '-20% surplus';
 }

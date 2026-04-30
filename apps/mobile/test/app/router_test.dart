@@ -177,7 +177,8 @@ void main() {
       container.read(appRouterProvider).go('/settings');
       await tester.pumpAndSettle();
       final updated = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(updated.selectedIndex, 3);
+      // Settings is now the 5th tab (index 4) after FIRE was inserted at 3.
+      expect(updated.selectedIndex, 4);
     });
   });
 
