@@ -39,6 +39,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Build CN web font subsets
+        run: tool/build-cn-fonts.sh
       - name: Materialize drift web assets
         run: tool/setup-drift-web.sh
       - run: flutter build web --release --source-maps

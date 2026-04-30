@@ -49,6 +49,9 @@ _ALWAYS_INCLUDE: list[int] = (
     + list(range(0x3000, 0x3040))
     # Halfwidth and fullwidth forms (full-width digits, brackets, ¥, etc.)
     + list(range(0xFF00, 0xFFF0))
+    # Material DatePicker / time-picker CJK chars not always in source scan:
+    # weekday headers (二四五六), 星 (星期), 昨 (昨天)
+    + [0x4E8C, 0x56DB, 0x4E94, 0x516D, 0x661F, 0x6628]
 )
 
 
