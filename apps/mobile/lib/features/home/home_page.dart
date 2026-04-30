@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -22,11 +23,25 @@ class HomePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.homeAppBarTitle)),
+      appBar: AppBar(
+        title: Text(l10n.homeAppBarTitle),
+        actions: [
+          IconButton(
+            tooltip: 'AI 助手',
+            icon: const Icon(Icons.auto_awesome_outlined),
+            onPressed: () => context.push('/ai'),
+          ),
+        ],
+      ),
       body: snapshotAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => _ErrorBody(error: e),
         data: (snapshot) => _DashboardBody(snapshot: snapshot),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/assets/trade'),
+        tooltip: '录入交易',
+        child: const Icon(Icons.add_chart),
       ),
     );
   }

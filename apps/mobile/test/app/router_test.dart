@@ -24,14 +24,27 @@ import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
+import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
+import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
 import 'package:naviwealth/features/analytics/data/providers.dart'
     as analytics_data;
+import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
+import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/assets_page.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _OfflineBenchmarkSource implements BenchmarkHistorySource {
+  @override
+  Future<List<TimeSeriesPoint>> seriesFor({
+    required BenchmarkIndex index,
+    required DateTime from,
+    required DateTime to,
+  }) async => const [];
+}
 
 Future<ProviderContainer> _pumpAt(
   WidgetTester tester, {
@@ -59,9 +72,7 @@ Future<ProviderContainer> _pumpAt(
       // is available under `flutter_test`. Stub with an immediate empty
       // emission so the page resolves to its empty state instead of
       // spinning forever.
-      physicalAssetsListProvider.overrideWith(
-        (ref) => Stream.value(const []),
-      ),
+      physicalAssetsListProvider.overrideWith((ref) => Stream.value(const [])),
       // FIR-52's dashboard watches liabilities to render its allocation
       // card. Stub the live stream so the home page settles to its empty
       // snapshot instead of hanging on the database key store.
@@ -73,6 +84,13 @@ Future<ProviderContainer> _pumpAt(
       // empty list so `pumpAndSettle` resolves.
       analytics_data.equityAssetsStreamProvider.overrideWith(
         (ref) => Stream<List<Asset>>.value(const []),
+      ),
+      // FIR-56's benchmark comparison card pulls index history through the
+      // composite market-data service, which reaches the encrypted DB +
+      // network providers we don't have under flutter_test. Stub with an
+      // offline source so the analytics page settles instead of hanging.
+      benchmarkHistorySourceProvider.overrideWith(
+        (_) async => _OfflineBenchmarkSource(),
       ),
     ],
   );
@@ -170,15 +188,16 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
+      // FIR-69 inserted Expenses at index 2, so Analytics moved to 3.
+      // FIR-57 then inserted FIRE at 4, pushing Settings out to index 5.
       final container = await _pumpAt(tester, initialLocation: '/analytics');
       final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(bar.selectedIndex, 2);
+      expect(bar.selectedIndex, 3);
 
       container.read(appRouterProvider).go('/settings');
       await tester.pumpAndSettle();
       final updated = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      // Settings is now the 5th tab (index 4) after FIRE was inserted at 3.
-      expect(updated.selectedIndex, 4);
+      expect(updated.selectedIndex, 5);
     });
   });
 

@@ -6,12 +6,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/data/repositories/providers.dart' as repo_providers;
 import 'package:naviwealth/features/analytics/analytics_page.dart';
+import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
+import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
 import 'package:naviwealth/features/analytics/data/providers.dart';
+import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
+import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
+import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
+import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+class _EmptyBenchmarkSource implements BenchmarkHistorySource {
+  @override
+  Future<List<TimeSeriesPoint>> seriesFor({
+    required BenchmarkIndex index,
+    required DateTime from,
+    required DateTime to,
+  }) async => const [];
+}
 
 class _StubHoldingService implements HoldingService {
   _StubHoldingService(this._snapshots);
@@ -87,6 +105,20 @@ ProviderContainer _container({
         _StubHoldingService(snapshots),
       ),
       analyticsBaseCurrencyProvider.overrideWithValue(baseCurrency),
+      // Benchmark card depends on the dashboard's net-worth pipeline. Stub
+      // the upstream streams so the card renders the empty state without
+      // touching the database / market-data service.
+      repo_providers.manualAssetsStreamProvider.overrideWith(
+        (_) => Stream.value(const <Asset>[]),
+      ),
+      physicalAssetsListProvider.overrideWith(
+        (_) => Stream.value(const <PhysicalAsset>[]),
+      ),
+      liabilitiesStreamProvider.overrideWith(
+        (_) => Stream.value(const <Liability>[]),
+      ),
+      benchmarkHistorySourceProvider
+          .overrideWith((_) async => _EmptyBenchmarkSource()),
     ],
   );
 }

@@ -116,6 +116,12 @@ abstract class AppLocalizations {
   /// **'Assets'**
   String get navAssets;
 
+  /// Bottom nav: day-to-day expense tab (FIR-69)
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get navExpenses;
+
   /// Bottom nav: analytics tab
   ///
   /// In en, this message translates to:
@@ -1973,6 +1979,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'-20% surplus'**
   String get fireSensitivityLowerSurplus;
+
+  /// No description provided for @benchmarkComparisonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Benchmark comparison'**
+  String get benchmarkComparisonTitle;
+
+  /// No description provided for @benchmarkComparisonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin major indices against your net worth and read off the excess return.'**
+  String get benchmarkComparisonSubtitle;
+
+  /// No description provided for @benchmarkComparisonError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the benchmark comparison: {error}'**
+  String benchmarkComparisonError(String error);
+
+  /// No description provided for @benchmarkSeriesPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get benchmarkSeriesPortfolio;
+
+  /// No description provided for @benchmarkPortfolioAnnualizedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio annualized'**
+  String get benchmarkPortfolioAnnualizedLabel;
+
+  /// No description provided for @benchmarkAnnualizedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Annualized {value}'**
+  String benchmarkAnnualizedSubtitle(String value);
+
+  /// No description provided for @benchmarkIndexHs300.
+  ///
+  /// In en, this message translates to:
+  /// **'CSI 300'**
+  String get benchmarkIndexHs300;
+
+  /// No description provided for @benchmarkIndexSp500.
+  ///
+  /// In en, this message translates to:
+  /// **'S&P 500'**
+  String get benchmarkIndexSp500;
+
+  /// No description provided for @benchmarkIndexNasdaq.
+  ///
+  /// In en, this message translates to:
+  /// **'NASDAQ'**
+  String get benchmarkIndexNasdaq;
+
+  /// No description provided for @benchmarkIndexHsi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hang Seng'**
+  String get benchmarkIndexHsi;
+
+  /// AppBar title for the rebalance page.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get rebalanceTitle;
+
+  /// No description provided for @rebalanceSchemeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Target scheme'**
+  String get rebalanceSchemeTitle;
+
+  /// No description provided for @rebalanceSchemeConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get rebalanceSchemeConservative;
+
+  /// No description provided for @rebalanceSchemeBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get rebalanceSchemeBalanced;
+
+  /// No description provided for @rebalanceSchemeAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get rebalanceSchemeAggressive;
+
+  /// No description provided for @rebalanceSchemeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get rebalanceSchemeCustom;
+
+  /// No description provided for @rebalanceDriftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation drift'**
+  String get rebalanceDriftTitle;
+
+  /// No description provided for @rebalanceOverallDrift.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall drift: {value}'**
+  String rebalanceOverallDrift(String value);
+
+  /// No description provided for @rebalanceBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'On target'**
+  String get rebalanceBalanced;
+
+  /// No description provided for @rebalanceTradeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested trades'**
+  String get rebalanceTradeTitle;
+
+  /// No description provided for @rebalanceBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get rebalanceBuy;
+
+  /// No description provided for @rebalanceSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get rebalanceSell;
+
+  /// No description provided for @rebalanceEstimatedFees.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated fees'**
+  String get rebalanceEstimatedFees;
+
+  /// No description provided for @rebalanceEstimatedTaxes.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated taxes'**
+  String get rebalanceEstimatedTaxes;
+
+  /// No description provided for @rebalanceDriftAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift after rebalance'**
+  String get rebalanceDriftAfter;
+
+  /// No description provided for @rebalanceEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get rebalanceEmptyTitle;
+
+  /// No description provided for @rebalanceEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add assets to see your allocation drift and rebalance suggestions.'**
+  String get rebalanceEmptyHint;
+
+  /// No description provided for @rebalanceSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance settings'**
+  String get rebalanceSettingsTooltip;
+
+  /// No description provided for @rebalanceSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get rebalanceSettingsTitle;
+
+  /// No description provided for @rebalanceWarningThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning threshold'**
+  String get rebalanceWarningThreshold;
+
+  /// No description provided for @rebalanceCriticalThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical threshold'**
+  String get rebalanceCriticalThreshold;
+
+  /// No description provided for @rebalanceNavLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get rebalanceNavLink;
+
+  /// Header for the risk concentration alert panel on the analytics page.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentration Alerts'**
+  String get riskAlertTitle;
+
+  /// Alert title for a single asset exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} overweight'**
+  String riskAlertAssetTitle(String name);
+
+  /// Alert title for a sector exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{sector} overweight'**
+  String riskAlertSectorTitle(String sector);
+
+  /// Alert title for a region exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{region} overweight'**
+  String riskAlertRegionTitle(String region);
+
+  /// Alert title for a currency exceeding its concentration threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{currency} exposure'**
+  String riskAlertCurrencyTitle(String currency);
+
+  /// Subtitle showing which dimension threshold was breached.
+  ///
+  /// In en, this message translates to:
+  /// **'{dimension} threshold: {threshold}'**
+  String riskAlertThresholdBreached(String dimension, String threshold);
+
+  /// No description provided for @riskDimensionAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get riskDimensionAsset;
+
+  /// No description provided for @riskDimensionSector.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector'**
+  String get riskDimensionSector;
+
+  /// No description provided for @riskDimensionRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get riskDimensionRegion;
+
+  /// No description provided for @riskDimensionCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get riskDimensionCurrency;
+
+  /// No description provided for @settingsRiskSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk Preferences'**
+  String get settingsRiskSection;
+
+  /// No description provided for @settingsRiskAssetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Single asset limit'**
+  String get settingsRiskAssetLabel;
+
+  /// No description provided for @settingsRiskAssetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one asset exceeds this share of total portfolio.'**
+  String get settingsRiskAssetSubtitle;
+
+  /// No description provided for @settingsRiskSectorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sector limit'**
+  String get settingsRiskSectorLabel;
+
+  /// No description provided for @settingsRiskSectorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one sector exceeds this share.'**
+  String get settingsRiskSectorSubtitle;
+
+  /// No description provided for @settingsRiskRegionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Region limit'**
+  String get settingsRiskRegionLabel;
+
+  /// No description provided for @settingsRiskRegionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one market / region exceeds this share.'**
+  String get settingsRiskRegionSubtitle;
+
+  /// No description provided for @settingsRiskCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency limit'**
+  String get settingsRiskCurrencyLabel;
+
+  /// No description provided for @settingsRiskCurrencySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when one currency exposure exceeds this share.'**
+  String get settingsRiskCurrencySubtitle;
+
+  /// No description provided for @settingsRiskResetDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get settingsRiskResetDefaults;
 }
 
 class _AppLocalizationsDelegate

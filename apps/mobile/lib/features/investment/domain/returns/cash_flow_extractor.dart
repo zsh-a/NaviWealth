@@ -174,6 +174,9 @@ class CashFlowExtractor {
       case TransactionType.valuationAdjust:
       case TransactionType.split:
       case TransactionType.liabilityPayment:
+      case TransactionType.expense:
+        // FIR-68: expenses never reference an asset (filtered above by the
+        // null-assetId guard) — listed for switch exhaustiveness.
         return null;
     }
   }
@@ -203,6 +206,10 @@ class CashFlowExtractor {
       case TransactionType.valuationAdjust:
       case TransactionType.split:
       case TransactionType.liabilityPayment:
+      case TransactionType.expense:
+        // FIR-68: expenses are consumption from the cash account — they
+        // change the cash balance but not the *external* funding curve
+        // that IRR is built on, so they must not appear as account flows.
         return null;
     }
   }

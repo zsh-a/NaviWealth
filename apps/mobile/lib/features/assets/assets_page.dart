@@ -64,8 +64,8 @@ class AssetsPage extends ConsumerWidget {
       context: context,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: ListView(
+          shrinkWrap: true,
           children: [
             ListTile(
               leading: const Icon(Icons.payments_outlined),
@@ -128,6 +128,15 @@ class AssetsPage extends ConsumerWidget {
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.push('/assets/corporate-action');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz_outlined),
+              title: const Text('证券交易'),
+              subtitle: const Text('买入 / 卖出股票、ETF、加密货币'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/assets/trade');
               },
             ),
           ],

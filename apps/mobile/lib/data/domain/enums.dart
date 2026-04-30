@@ -52,6 +52,12 @@ const Set<AssetType> kManualValuationAssetTypes = {
 
 /// Single fact-table entry kind. Anything that mutates a holding or cash
 /// position must be one of these so reports can roll up cleanly.
+///
+/// FIR-68 added `expense` at the end. An expense is a categorised cash
+/// outflow stored as a [Transactions] row with `quantity` carrying the
+/// signed (negative) amount and `expenseMetadataJson` holding the
+/// expense-specific bits (category, tags). Existing aggregators that don't
+/// know about expenses can safely fold them as a generic outflow.
 enum TransactionType {
   buy,
   sell,
@@ -67,6 +73,7 @@ enum TransactionType {
   valuationAdjust,
   split,
   liabilityPayment,
+  expense,
 }
 
 /// Cost-basis lot selection. Configurable per [Settings] so users in

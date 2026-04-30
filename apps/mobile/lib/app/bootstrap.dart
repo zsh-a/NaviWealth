@@ -33,6 +33,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   await AppFormatters.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
+  final effectiveConfig = config ?? AppConfig.dev;
 
   final container = ProviderContainer(
     overrides: [
@@ -41,10 +42,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // Plug the AuthRouteGuard into FIR-15's empty default. The guard
       // reads `authControllerProvider` per redirect; auth state changes
       // bump `routeRedirectVersionProvider` which makes go_router re-run
-      // the full redirect chain.
-      routeGuardsProvider.overrideWith(
-        (ref) => <RouteGuard>[ref.watch(authRouteGuardProvider)],
-      ),
+      // the full redirect chain. Skipped when `bypassAuth` is on so dev
+      // builds can browse the app without a session.
+      if (!effectiveConfig.bypassAuth)
+        routeGuardsProvider.overrideWith(
+          (ref) => <RouteGuard>[ref.watch(authRouteGuardProvider)],
+        ),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
       // closes over Riverpod's container, so token rotation is picked up

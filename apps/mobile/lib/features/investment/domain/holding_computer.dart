@@ -265,6 +265,12 @@ class HoldingComputer {
       case TransactionType.valuationAdjust:
       case TransactionType.split:
       case TransactionType.liabilityPayment:
+      case TransactionType.expense:
+        // FIR-68: expenses are pure cash outflows — assetId is always null
+        // for them, but we list this case explicitly so the switch stays
+        // exhaustive and a future change that incorrectly attaches an
+        // assetId to an expense doesn't accidentally start mutating
+        // holdings.
         return false;
     }
   }

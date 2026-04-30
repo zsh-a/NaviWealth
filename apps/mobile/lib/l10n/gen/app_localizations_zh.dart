@@ -18,6 +18,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navAssets => '资产';
 
   @override
+  String get navExpenses => '支出';
+
+  @override
   String get navAnalytics => '分析';
 
   @override
@@ -1039,4 +1042,176 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fireSensitivityLowerSurplus => '结余 -20%';
+
+  @override
+  String get benchmarkComparisonTitle => '基准指数对比';
+
+  @override
+  String get benchmarkComparisonSubtitle => '选定主流指数，与组合走势对照并查看超额收益。';
+
+  @override
+  String benchmarkComparisonError(String error) {
+    return '无法加载基准对比：$error';
+  }
+
+  @override
+  String get benchmarkSeriesPortfolio => '组合';
+
+  @override
+  String get benchmarkPortfolioAnnualizedLabel => '组合年化';
+
+  @override
+  String benchmarkAnnualizedSubtitle(String value) {
+    return '年化 $value';
+  }
+
+  @override
+  String get benchmarkIndexHs300 => '沪深 300';
+
+  @override
+  String get benchmarkIndexSp500 => '标普 500';
+
+  @override
+  String get benchmarkIndexNasdaq => '纳指';
+
+  @override
+  String get benchmarkIndexHsi => '恒生';
+
+  @override
+  String get rebalanceTitle => '再平衡';
+
+  @override
+  String get rebalanceSchemeTitle => '目标方案';
+
+  @override
+  String get rebalanceSchemeConservative => '保守';
+
+  @override
+  String get rebalanceSchemeBalanced => '平衡';
+
+  @override
+  String get rebalanceSchemeAggressive => '激进';
+
+  @override
+  String get rebalanceSchemeCustom => '自定义';
+
+  @override
+  String get rebalanceDriftTitle => '偏离总览';
+
+  @override
+  String rebalanceOverallDrift(String value) {
+    return '整体偏离：$value';
+  }
+
+  @override
+  String get rebalanceBalanced => '在目标范围内';
+
+  @override
+  String get rebalanceTradeTitle => '建议交易';
+
+  @override
+  String get rebalanceBuy => '买入';
+
+  @override
+  String get rebalanceSell => '卖出';
+
+  @override
+  String get rebalanceEstimatedFees => '估算费用';
+
+  @override
+  String get rebalanceEstimatedTaxes => '估算税费';
+
+  @override
+  String get rebalanceDriftAfter => '再平衡后偏离';
+
+  @override
+  String get rebalanceEmptyTitle => '暂无数据';
+
+  @override
+  String get rebalanceEmptyHint => '添加资产后即可查看偏离与再平衡建议。';
+
+  @override
+  String get rebalanceSettingsTooltip => '再平衡设置';
+
+  @override
+  String get rebalanceSettingsTitle => '设置';
+
+  @override
+  String get rebalanceWarningThreshold => '预警阈值';
+
+  @override
+  String get rebalanceCriticalThreshold => '严重阈值';
+
+  @override
+  String get rebalanceNavLink => '再平衡';
+
+  @override
+  String get riskAlertTitle => '集中度预警';
+
+  @override
+  String riskAlertAssetTitle(String name) {
+    return '$name 持仓过重';
+  }
+
+  @override
+  String riskAlertSectorTitle(String sector) {
+    return '$sector 板块过重';
+  }
+
+  @override
+  String riskAlertRegionTitle(String region) {
+    return '$region 地域过重';
+  }
+
+  @override
+  String riskAlertCurrencyTitle(String currency) {
+    return '$currency 敞口过大';
+  }
+
+  @override
+  String riskAlertThresholdBreached(String dimension, String threshold) {
+    return '$dimension 阈值：$threshold';
+  }
+
+  @override
+  String get riskDimensionAsset => '资产';
+
+  @override
+  String get riskDimensionSector => '行业';
+
+  @override
+  String get riskDimensionRegion => '地域';
+
+  @override
+  String get riskDimensionCurrency => '币种';
+
+  @override
+  String get settingsRiskSection => '风险偏好';
+
+  @override
+  String get settingsRiskAssetLabel => '单一资产上限';
+
+  @override
+  String get settingsRiskAssetSubtitle => '单只资产占总资产比例超过此值时预警。';
+
+  @override
+  String get settingsRiskSectorLabel => '行业上限';
+
+  @override
+  String get settingsRiskSectorSubtitle => '单一行业占比超过此值时预警。';
+
+  @override
+  String get settingsRiskRegionLabel => '地域上限';
+
+  @override
+  String get settingsRiskRegionSubtitle => '单一市场 / 地域占比超过此值时预警。';
+
+  @override
+  String get settingsRiskCurrencyLabel => '币种上限';
+
+  @override
+  String get settingsRiskCurrencySubtitle => '单一币种敞口超过此值时预警。';
+
+  @override
+  String get settingsRiskResetDefaults => '恢复默认';
 }

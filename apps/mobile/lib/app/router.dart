@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 // docs/web-bundle.md for the resulting bundle layout.
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
+import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
 import '../features/assets/assets_page.dart' deferred as assets_lib;
@@ -16,16 +17,23 @@ import '../features/assets/deposit_form_page.dart';
 import '../features/assets/physical/ui/physical_asset_detail_page.dart'
     deferred as physical_detail_lib;
 import '../features/assets/wealth_product_form_page.dart';
-import '../features/auth/presentation/devices_page.dart' deferred as devices_lib;
+import '../features/auth/presentation/devices_page.dart'
+    deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
+import '../features/expense/ui/expense_categories_page.dart';
+import '../features/expense/ui/expense_form_page.dart';
+import '../features/expense/ui/expense_list_page.dart';
+import '../features/expense/ui/expense_report_page.dart';
 import '../features/fire/presentation/fire_page.dart' deferred as fire_lib;
 import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
+import '../features/investment/presentation/trade_entry_form_page.dart';
 import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
+import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -33,13 +41,14 @@ import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
 
-/// Paths of the five primary tabs in the root shell, in display order.
+/// Paths of the six primary tabs in the root shell, in display order.
 ///
-/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`5` to these
+/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`6` to these
 /// indexes — keep order in sync with `_RootShell`'s NavigationBar.
 const List<String> kPrimaryTabPaths = <String>[
   '/',
   '/assets',
+  '/expenses',
   '/analytics',
   '/fire',
   '/settings',
@@ -62,6 +71,8 @@ Future<void> preloadDeferredRoutesForTest() async {
     physical_detail_lib.loadLibrary(),
     corp_action_lib.loadLibrary(),
     devices_lib.loadLibrary(),
+    rebalance_lib.loadLibrary(),
+    ai_chat_lib.loadLibrary(),
   ]);
 }
 
@@ -119,6 +130,18 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   load: corp_action_lib.loadLibrary,
                   builder: (_) => corp_action_lib.CorporateActionEntryRoute(),
                 ),
+              ),
+              GoRoute(
+                path: 'trade',
+                name: 'trade-entry',
+                builder: (context, state) {
+                  final assetId = state.uri.queryParameters['assetId'];
+                  final accountId = state.uri.queryParameters['accountId'];
+                  return TradeEntryFormPage(
+                    assetId: assetId,
+                    accountId: accountId,
+                  );
+                },
               ),
               GoRoute(
                 path: 'physical/:id',
@@ -182,6 +205,35 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             ],
           ),
           GoRoute(
+            path: '/expenses',
+            name: 'expenses',
+            builder: (context, state) => const ExpenseListPage(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                name: 'expense-new',
+                builder: (context, state) => const ExpenseFormPage(),
+              ),
+              GoRoute(
+                path: 'categories',
+                name: 'expense-categories',
+                builder: (context, state) => const ExpenseCategoriesPage(),
+              ),
+              GoRoute(
+                path: 'report',
+                name: 'expense-report',
+                builder: (context, state) => const ExpenseReportPage(),
+              ),
+              GoRoute(
+                path: ':expenseId',
+                name: 'expense-detail',
+                builder: (context, state) => ExpenseFormPage(
+                  expenseId: state.pathParameters['expenseId'],
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
             path: '/analytics',
             name: 'analytics',
             builder: (context, state) => DeferredRoute(
@@ -195,6 +247,22 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             builder: (context, state) => DeferredRoute(
               load: fire_lib.loadLibrary,
               builder: (_) => fire_lib.FirePage(),
+            ),
+          ),
+          GoRoute(
+            path: '/rebalance',
+            name: 'rebalance',
+            builder: (context, state) => DeferredRoute(
+              load: rebalance_lib.loadLibrary,
+              builder: (_) => rebalance_lib.RebalancePage(),
+            ),
+          ),
+          GoRoute(
+            path: '/ai',
+            name: 'ai-chat',
+            builder: (context, state) => DeferredRoute(
+              load: ai_chat_lib.loadLibrary,
+              builder: (_) => ai_chat_lib.AiChatPage(),
             ),
           ),
           GoRoute(
@@ -221,7 +289,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   );
 }
 
-
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
 
 class _RootShell extends StatelessWidget {
@@ -240,12 +307,14 @@ class _RootShell extends StatelessWidget {
     final int index;
     if (location.startsWith('/assets') || location.startsWith('/accounts')) {
       index = 1;
-    } else if (location.startsWith('/analytics')) {
+    } else if (location.startsWith('/expenses')) {
       index = 2;
-    } else if (location.startsWith('/fire')) {
+    } else if (location.startsWith('/analytics')) {
       index = 3;
-    } else if (location.startsWith('/settings')) {
+    } else if (location.startsWith('/fire')) {
       index = 4;
+    } else if (location.startsWith('/settings')) {
+      index = 5;
     } else {
       index = 0;
     }
@@ -263,6 +332,11 @@ class _RootShell extends StatelessWidget {
             icon: const Icon(Icons.account_balance_wallet_outlined),
             selectedIcon: const Icon(Icons.account_balance_wallet),
             label: l10n.navAssets,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long),
+            label: l10n.navExpenses,
           ),
           NavigationDestination(
             icon: const Icon(Icons.pie_chart_outline),
@@ -287,10 +361,12 @@ class _RootShell extends StatelessWidget {
             case 1:
               context.goNamed('assets');
             case 2:
-              context.goNamed('analytics');
+              context.goNamed('expenses');
             case 3:
-              context.goNamed('fire');
+              context.goNamed('analytics');
             case 4:
+              context.goNamed('fire');
+            case 5:
               context.goNamed('settings');
           }
         },

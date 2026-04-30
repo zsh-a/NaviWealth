@@ -11,6 +11,8 @@ import '../../l10n/gen/app_localizations.dart';
 import 'data/providers.dart';
 import 'domain/equity_allocation.dart';
 import 'domain/equity_classification.dart';
+import 'ui/benchmark/benchmark_comparison_card.dart';
+import 'ui/risk_alert_panel.dart';
 
 /// Analytics tab — currently houses the equity透视 view (FIR-53).
 /// Future tabs (returns, liquidity) will be added as additional sections
@@ -54,6 +56,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               ),
             ),
           ),
+          const SizedBox(height: Spacing.s24),
+          const RiskAlertPanel(),
+          const SizedBox(height: Spacing.s24),
+          const BenchmarkComparisonCard(),
         ],
       ),
     );
