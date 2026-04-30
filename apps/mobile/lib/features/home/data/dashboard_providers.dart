@@ -9,28 +9,56 @@ import '../../assets/physical/data/physical_asset.dart';
 import '../../assets/physical/data/providers.dart';
 import '../../liabilities/data/providers.dart';
 import '../../liabilities/domain/liability_summary.dart';
+import '../../settings/data/base_currency_preference.dart';
 import '../domain/dashboard_aggregator.dart';
 import '../domain/dashboard_models.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
 
-/// Base currency the dashboard renders totals in. The persisted user
-/// setting will eventually drive this (FIR-21); the dashboard already takes
-/// the value from a provider so the wiring point is in place. Default
-/// matches the placeholder used elsewhere on the home screen.
-final dashboardBaseCurrencyProvider = Provider<String>((ref) => 'CNY');
+/// Base currency the dashboard renders totals in. Reads from the persisted
+/// user preference (FIR-73) so changing the setting reactively recomputes
+/// every downstream allocation / trend point.
+final dashboardBaseCurrencyProvider = Provider<String>((ref) {
+  return ref.watch(baseCurrencyProvider);
+});
+
+/// Holdings excluded from the dashboard totals because no FX rate could
+/// convert them to [dashboardBaseCurrencyProvider]. Aggregated across both
+/// the snapshot (current allocation) and the trend (historical samples) so
+/// the dashboard renders a single warning banner instead of forcing the
+/// user to spot the discrepancy by eyeballing two charts.
+final dashboardCurrencyMismatchesProvider = Provider<List<CurrencyMismatch>>((
+  ref,
+) {
+  final snapshot = ref.watch(dashboardSnapshotProvider).value;
+  final trend = ref.watch(dashboardTrendProvider).value;
+  final seen = <String>{};
+  final out = <CurrencyMismatch>[];
+  for (final m in [
+    ...?snapshot?.currencyMismatches,
+    ...?trend?.currencyMismatches,
+  ]) {
+    if (seen.add(m.id)) out.add(m);
+  }
+  return List.unmodifiable(out);
+});
 
 /// Currency converter used for cross-currency conversion in the dashboard.
 /// FIR-51's [NetWorthService] expects an [FxRateLookup]-backed converter;
-/// until the FX rate repository ships its own provider, the dashboard uses
-/// an empty in-memory lookup. Same-currency conversions short-circuit, and
-/// callers (the aggregator + trend builder) already drop rows whose FX
-/// rate is missing — so the chart renders correctly out of the box for
-/// single-currency portfolios and degrades gracefully when foreign-currency
-/// holdings appear without an FX feed.
+/// the dashboard reads every recorded rate from the local `fx_rates` table
+/// (FIR-73) so manually entered rates flow into the snapshot, the
+/// allocation pie, and the trend chart without a refresh.
+///
+/// Same-currency conversions short-circuit, and callers (the aggregator +
+/// trend builder) drop rows whose FX rate is missing while reporting them
+/// via [DashboardSnapshot.currencyMismatches] / [DashboardTrend.currencyMismatches]
+/// — so the dashboard renders correctly for single-currency portfolios and
+/// degrades visibly (banner, not silent) when a foreign-currency holding
+/// is missing its rate.
 final dashboardCurrencyConverterProvider =
     Provider<CurrencyConverter>((ref) {
-  return FxRateCurrencyConverter(InMemoryFxRateLookup(const []));
+  final rates = ref.watch(fxRatesStreamProvider).value ?? const [];
+  return FxRateCurrencyConverter(InMemoryFxRateLookup(rates));
 });
 
 /// Currently selected time range for the trend chart. Defaults to 1 year —

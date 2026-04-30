@@ -7,6 +7,7 @@ import '../../l10n/gen/app_localizations.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
 import 'ui/allocation_card.dart';
+import 'ui/currency_mismatch_banner.dart';
 import 'ui/trend_card.dart';
 
 /// Dashboard surface (FIR-52).
@@ -36,7 +37,13 @@ class HomePage extends ConsumerWidget {
       body: snapshotAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => _ErrorBody(error: e),
-        data: (snapshot) => _DashboardBody(snapshot: snapshot),
+        data: (snapshot) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const CurrencyMismatchBanner(),
+            Expanded(child: _DashboardBody(snapshot: snapshot)),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/assets/trade'),

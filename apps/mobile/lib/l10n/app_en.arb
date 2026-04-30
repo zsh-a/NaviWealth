@@ -202,6 +202,17 @@
       "currency": { "type": "String", "example": "CNY" }
     }
   },
+  "settingsBaseCurrencyHint": "Totals on the dashboard, allocation chart, and trend chart are shown in this currency.",
+  "settingsBaseCurrencySheetTitle": "Pick base currency",
+  "dashboardCurrencyMismatchBanner": "{count, plural, one{1 holding excluded — missing FX rate to {currency}} other{{count} holdings excluded — missing FX rates to {currency}}}",
+  "@dashboardCurrencyMismatchBanner": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "currency": { "type": "String", "example": "CNY" }
+    }
+  },
+  "dashboardCurrencyMismatchAction": "View",
+  "dashboardCurrencyMismatchSheetTitle": "Holdings excluded from totals",
   "settingsAboutTitle": "About NaviWealth",
   "settingsAboutSubtitle": "v{version}",
   "@settingsAboutSubtitle": {

@@ -150,6 +150,11 @@
   "settingsAccountSubtitle": "登录与多端同步 (FIR-27 / FIR-28)",
   "settingsBaseCurrencyTitle": "基础货币",
   "settingsBaseCurrencySubtitle": "{currency} (默认)",
+  "settingsBaseCurrencyHint": "总览、资产分布、净资产趋势的汇总数字均以此币种展示。",
+  "settingsBaseCurrencySheetTitle": "选择基础货币",
+  "dashboardCurrencyMismatchBanner": "{count, plural, other{有 {count} 项资产因缺少到 {currency} 的汇率而未计入合计}}",
+  "dashboardCurrencyMismatchAction": "查看",
+  "dashboardCurrencyMismatchSheetTitle": "未计入合计的资产",
   "settingsAboutTitle": "关于 NaviWealth",
   "settingsAboutSubtitle": "v{version}",
 

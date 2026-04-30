@@ -956,6 +956,36 @@ abstract class AppLocalizations {
   /// **'{currency} (default)'**
   String settingsBaseCurrencySubtitle(String currency);
 
+  /// No description provided for @settingsBaseCurrencyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Totals on the dashboard, allocation chart, and trend chart are shown in this currency.'**
+  String get settingsBaseCurrencyHint;
+
+  /// No description provided for @settingsBaseCurrencySheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick base currency'**
+  String get settingsBaseCurrencySheetTitle;
+
+  /// No description provided for @dashboardCurrencyMismatchBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 holding excluded — missing FX rate to {currency}} other{{count} holdings excluded — missing FX rates to {currency}}}'**
+  String dashboardCurrencyMismatchBanner(int count, String currency);
+
+  /// No description provided for @dashboardCurrencyMismatchAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get dashboardCurrencyMismatchAction;
+
+  /// No description provided for @dashboardCurrencyMismatchSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings excluded from totals'**
+  String get dashboardCurrencyMismatchSheetTitle;
+
   /// No description provided for @settingsAboutTitle.
   ///
   /// In en, this message translates to:

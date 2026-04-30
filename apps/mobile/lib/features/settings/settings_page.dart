@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../analytics/data/risk_threshold_preferences.dart';
+import '../shared/forms/currency_picker.dart';
+import 'data/base_currency_preference.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -14,6 +16,7 @@ class SettingsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final baseCurrency = ref.watch(baseCurrencyProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsAppBarTitle)),
@@ -34,7 +37,19 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.currency_exchange),
             title: Text(l10n.settingsBaseCurrencyTitle),
-            subtitle: Text(l10n.settingsBaseCurrencySubtitle('CNY')),
+            subtitle: Text(l10n.settingsBaseCurrencyHint),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  baseCurrency,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(width: Spacing.s4),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            onTap: () => _pickBaseCurrency(context, ref, baseCurrency),
           ),
           const Divider(),
           _SectionHeader(label: l10n.settingsAppearanceSection),
@@ -108,6 +123,58 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _pickBaseCurrency(
+    BuildContext context,
+    WidgetRef ref,
+    String current,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.s16,
+                  vertical: Spacing.s8,
+                ),
+                child: Text(
+                  l10n.settingsBaseCurrencySheetTitle,
+                  style: Theme.of(ctx).textTheme.titleMedium,
+                ),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final option in kCommonCurrencies)
+                      ListTile(
+                        title: Text(option.label),
+                        trailing: option.code == current
+                            ? const Icon(Icons.check)
+                            : null,
+                        onTap: () => Navigator.of(ctx).pop(option.code),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null && picked != current) {
+      await ref.read(baseCurrencyProvider.notifier).set(picked);
+    }
   }
 
   String _themeModeLabel(AppLocalizations l10n, ThemeMode mode) =>
