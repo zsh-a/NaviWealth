@@ -14,6 +14,13 @@ const PUSH_MAX_OPS: usize = 500;
 const PULL_DEFAULT_LIMIT: u32 = 500;
 const PULL_BODY_BUDGET: usize = 900 * 1024;
 
+/// Latency above which a sync request is logged as `slow=true` for D1
+/// budget tracking. The spec carves a 50 ms D1 CPU budget per push/pull
+/// (docs/sync-protocol.md §1) — this threshold is set well below the
+/// platform's 50 ms isolate cap so we surface drift before customers do.
+/// See docs/sync-monitoring.md for the alerting that consumes this.
+const SLOW_REQUEST_THRESHOLD_MS: i64 = 30;
+
 // ---------------------------------------------------------------------------
 // POST /sync/push
 // ---------------------------------------------------------------------------
@@ -40,7 +47,15 @@ struct RejectedOp {
 }
 
 pub async fn push(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
-    match push_inner(req, ctx).await {
+    let started_ms = Utc::now().timestamp_millis();
+    let mut metrics = SyncMetrics::default();
+    let result = push_inner(req, ctx, &mut metrics).await;
+    let (status, code) = match &result {
+        Ok(r) => (r.status_code(), "ok"),
+        Err(e) => (e.status(), e.code()),
+    };
+    log_request("push", status, code, started_ms, &metrics);
+    match result {
         Ok(r) => Ok(r),
         Err(e) => {
             e.log();
@@ -49,7 +64,11 @@ pub async fn push(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response>
     }
 }
 
-async fn push_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response, AppError> {
+async fn push_inner(
+    mut req: Request,
+    ctx: RouteContext<()>,
+    metrics: &mut SyncMetrics,
+) -> Result<Response, AppError> {
     check_protocol_version(req.headers())?;
     let auth = require_auth(&req, &ctx).await?;
 
@@ -156,6 +175,10 @@ async fn push_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
 
     state::save(&db, &user_id, clock).await?;
 
+    metrics.batch_size = body.ops.len();
+    metrics.accepted = accepted as usize;
+    metrics.rejected = rejected.len();
+
     let resp = PushResponse {
         accepted,
         rejected,
@@ -193,7 +216,15 @@ struct OpRow {
 }
 
 pub async fn pull(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
-    match pull_inner(req, ctx).await {
+    let started_ms = Utc::now().timestamp_millis();
+    let mut metrics = SyncMetrics::default();
+    let result = pull_inner(req, ctx, &mut metrics).await;
+    let (status, code) = match &result {
+        Ok(r) => (r.status_code(), "ok"),
+        Err(e) => (e.status(), e.code()),
+    };
+    log_request("pull", status, code, started_ms, &metrics);
+    match result {
         Ok(r) => Ok(r),
         Err(e) => {
             e.log();
@@ -202,7 +233,11 @@ pub async fn pull(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response>
     }
 }
 
-async fn pull_inner(req: Request, ctx: RouteContext<()>) -> Result<Response, AppError> {
+async fn pull_inner(
+    req: Request,
+    ctx: RouteContext<()>,
+    metrics: &mut SyncMetrics,
+) -> Result<Response, AppError> {
     check_protocol_version(req.headers())?;
     let auth = require_auth(&req, &ctx).await?;
 
@@ -325,6 +360,9 @@ async fn pull_inner(req: Request, ctx: RouteContext<()>) -> Result<Response, App
         None => Hlc::zero().to_canonical(),
     };
 
+    metrics.pulled = ops.len();
+    metrics.has_more = has_more;
+
     let resp = PullResponse {
         ops,
         server_hlc_high,
@@ -332,6 +370,53 @@ async fn pull_inner(req: Request, ctx: RouteContext<()>) -> Result<Response, App
         server_now: Utc::now().to_rfc3339(),
     };
     Response::from_json(&resp).map_err(AppError::from)
+}
+
+// ---------------------------------------------------------------------------
+// Structured request log — consumed by `wrangler tail` and the dashboards
+// described in docs/sync-monitoring.md. The format is intentionally stable
+// and grep-friendly:
+//
+//     [SYNC] op=push status=200 code=ok dur_ms=12 batch=487 acc=487 rej=0 slow=false
+//
+// Adding a field is fine; reordering or renaming will break parsing on the
+// monitoring side. Bump a small version tag in the log if you ever do that.
+// ---------------------------------------------------------------------------
+
+#[derive(Default)]
+struct SyncMetrics {
+    /// Push: total ops in the batch.
+    batch_size: usize,
+    /// Push: ops accepted into op_log.
+    accepted: usize,
+    /// Push: ops rejected per-op (op_id_mutated, unknown_table, …).
+    rejected: usize,
+    /// Pull: ops returned in this page.
+    pulled: usize,
+    /// Pull: whether the client must page again.
+    has_more: bool,
+}
+
+fn log_request(op: &str, status: u16, code: &str, started_ms: i64, metrics: &SyncMetrics) {
+    let dur_ms = (Utc::now().timestamp_millis() - started_ms).max(0);
+    let slow = dur_ms > SLOW_REQUEST_THRESHOLD_MS;
+    let detail = if op == "push" {
+        format!(
+            "batch={} acc={} rej={}",
+            metrics.batch_size, metrics.accepted, metrics.rejected
+        )
+    } else {
+        format!("pulled={} has_more={}", metrics.pulled, metrics.has_more)
+    };
+    worker::console_log!(
+        "[SYNC] op={} status={} code={} dur_ms={} {} slow={}",
+        op,
+        status,
+        code,
+        dur_ms,
+        detail,
+        slow
+    );
 }
 
 #[derive(Deserialize)]
