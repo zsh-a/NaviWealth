@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
+import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
 import '../domain/chat_models.dart';
+import '../state/chat_sync_gate.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'chat_repository.dart';
@@ -62,4 +64,14 @@ final chatMessagesStreamProvider =
     StreamProvider.family<List<ChatMessage>, String>((ref, sessionId) async* {
   final repo = await ref.watch(chatRepositoryProvider.future);
   yield* repo.watchMessages(sessionId);
+});
+
+/// Pre-chat sync flush gate (FIR-71). The AI backend reads the user's
+/// data from D1, which is updated by the client's OpLog push. Without
+/// this gate, a user who records a transaction and immediately asks the
+/// model "what's my position?" can race the 30-s polling cycle and get
+/// a stale answer.
+final chatSyncGateProvider = FutureProvider<ChatSyncGate>((ref) async {
+  final engine = await ref.watch(syncEngineProvider.future);
+  return ChatSyncGate(engine: engine);
 });

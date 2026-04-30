@@ -128,7 +128,7 @@ class ChatRepository {
 
     final ctx = buildContextWindow(history: history, pending: content);
     if (ctx.droppedTurns > 0) {
-      await _insertSystemNotice(
+      await insertSystemNotice(
         sessionId: sessionId,
         ownerUserId: ownerUserId,
         content: '已折叠 ${ctx.droppedTurns} 条更早的历史以控制上下文长度。',
@@ -215,7 +215,11 @@ class ChatRepository {
     return outcome;
   }
 
-  Future<void> _insertSystemNotice({
+  /// Insert an in-band system message into the timeline. Used both
+  /// internally (context-window truncation notices) and by the chat
+  /// controller (FIR-71 staleness warning when the pre-chat sync gate
+  /// times out).
+  Future<void> insertSystemNotice({
     required String sessionId,
     required String ownerUserId,
     required String content,

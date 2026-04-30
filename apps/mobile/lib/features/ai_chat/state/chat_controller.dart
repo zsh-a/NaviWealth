@@ -3,23 +3,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/providers.dart';
 import '../data/providers.dart';
+import 'chat_sync_gate.dart';
 
-/// UI-side state for one chat session: are we currently streaming, and
-/// the cancel handle for the in-flight turn.
+/// Phases of the user's outgoing turn:
+///  - [idle]: composer enabled, no work in flight
+///  - [flushing]: pre-chat sync gate is draining the OpLog so the AI
+///    backend's D1 view reflects the user's latest edits (FIR-71).
+///  - [streaming]: SSE stream from `/ai/chat` is being consumed.
+enum ChatTurnPhase { idle, flushing, streaming }
+
+/// UI-side state for one chat session: where we are in the send pipeline,
+/// and the cancel handle for the in-flight turn.
 ///
 /// Persisted state (sessions list, message timeline) lives in Drift and
 /// flows through `chatSessionsStreamProvider` /
 /// `chatMessagesStreamProvider`. This controller only models ephemeral
 /// UI signals.
 class ChatTurnState {
-  const ChatTurnState({this.isStreaming = false, this.cancelToken});
+  const ChatTurnState({
+    this.phase = ChatTurnPhase.idle,
+    this.cancelToken,
+  });
 
-  final bool isStreaming;
+  final ChatTurnPhase phase;
   final CancelToken? cancelToken;
 
-  ChatTurnState copyWith({bool? isStreaming, CancelToken? cancelToken}) =>
+  bool get isIdle => phase == ChatTurnPhase.idle;
+  bool get isFlushing => phase == ChatTurnPhase.flushing;
+  bool get isStreaming => phase == ChatTurnPhase.streaming;
+  bool get isBusy => phase != ChatTurnPhase.idle;
+
+  ChatTurnState copyWith({ChatTurnPhase? phase, CancelToken? cancelToken}) =>
       ChatTurnState(
-        isStreaming: isStreaming ?? this.isStreaming,
+        phase: phase ?? this.phase,
         cancelToken: cancelToken ?? this.cancelToken,
       );
 }
@@ -32,10 +48,11 @@ class ChatController extends StateNotifier<ChatTurnState> {
   final String sessionId;
 
   /// Send [content] as the next user turn. Concurrent calls are
-  /// rejected — the UI disables the send button while streaming.
+  /// rejected — the UI disables the send button while the pipeline is
+  /// running.
   Future<void> send(String content) async {
     final trimmed = content.trim();
-    if (trimmed.isEmpty || state.isStreaming) return;
+    if (trimmed.isEmpty || state.isBusy) return;
 
     final session = ref.read(authSessionReaderProvider)();
     if (session == null) {
@@ -45,11 +62,27 @@ class ChatController extends StateNotifier<ChatTurnState> {
       return;
     }
 
+    state = state.copyWith(phase: ChatTurnPhase.flushing);
+
+    final gateOutcome = await _runSyncGate();
+
+    if (!mounted) return;
+
     final cancelToken = CancelToken();
-    state = state.copyWith(isStreaming: true, cancelToken: cancelToken);
+    state = state.copyWith(
+      phase: ChatTurnPhase.streaming,
+      cancelToken: cancelToken,
+    );
 
     try {
       final repo = await ref.read(chatRepositoryProvider.future);
+      if (gateOutcome == ChatGateOutcome.degraded) {
+        await repo.insertSystemNotice(
+          sessionId: sessionId,
+          ownerUserId: session.userId,
+          content: '本地数据未完成同步，回答可能滞后于你刚刚的录入。',
+        );
+      }
       await repo.sendMessage(
         sessionId: sessionId,
         ownerUserId: session.userId,
@@ -60,6 +93,23 @@ class ChatController extends StateNotifier<ChatTurnState> {
       if (mounted) {
         state = const ChatTurnState();
       }
+    }
+  }
+
+  /// Run the pre-chat sync gate. Catches all errors (including a missing
+  /// or unbuilt SyncEngine in early-dev / tests) and folds them into a
+  /// gate outcome — chat is never blocked by infrastructure failures.
+  Future<ChatGateOutcome> _runSyncGate() async {
+    try {
+      final gate = await ref.read(chatSyncGateProvider.future);
+      return await gate.awaitFlush();
+    } catch (_) {
+      // Sync infra not wired (early dev) or transient init failure: skip
+      // the gate rather than blocking the user. We deliberately do NOT
+      // surface a staleness warning here, because the more common cause
+      // is "auth token isn't issued yet" which would make the warning
+      // appear on every turn.
+      return ChatGateOutcome.clean;
     }
   }
 
