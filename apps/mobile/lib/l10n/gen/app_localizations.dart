@@ -968,6 +968,78 @@ abstract class AppLocalizations {
   /// **'Pick base currency'**
   String get settingsBaseCurrencySheetTitle;
 
+  /// No description provided for @settingsFxRatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FX rates'**
+  String get settingsFxRatesTitle;
+
+  /// No description provided for @settingsFxRatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manually record exchange rates so foreign-currency holdings convert into the base currency.'**
+  String get settingsFxRatesSubtitle;
+
+  /// No description provided for @fxRatesAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FX rates'**
+  String get fxRatesAppBarTitle;
+
+  /// No description provided for @fxRatesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No FX rates recorded yet. Tap the + button to add one — it will be picked up immediately by the dashboard.'**
+  String get fxRatesEmpty;
+
+  /// No description provided for @fxRatesAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rate'**
+  String get fxRatesAddAction;
+
+  /// No description provided for @fxRatesEntrySheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an FX rate'**
+  String get fxRatesEntrySheetTitle;
+
+  /// No description provided for @fxRatesFromLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get fxRatesFromLabel;
+
+  /// No description provided for @fxRatesToLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get fxRatesToLabel;
+
+  /// No description provided for @fxRatesRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get fxRatesRateLabel;
+
+  /// No description provided for @fxRatesAsOfLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'As of'**
+  String get fxRatesAsOfLabel;
+
+  /// No description provided for @fxRatesSamePairError.
+  ///
+  /// In en, this message translates to:
+  /// **'Source and target currencies must differ.'**
+  String get fxRatesSamePairError;
+
+  /// No description provided for @fxRatesInvalidRateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate must be a positive number.'**
+  String get fxRatesInvalidRateError;
+
   /// No description provided for @dashboardCurrencyMismatchBanner.
   ///
   /// In en, this message translates to:

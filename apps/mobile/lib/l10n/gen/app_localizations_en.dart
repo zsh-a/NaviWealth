@@ -482,6 +482,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBaseCurrencySheetTitle => 'Pick base currency';
 
   @override
+  String get settingsFxRatesTitle => 'FX rates';
+
+  @override
+  String get settingsFxRatesSubtitle =>
+      'Manually record exchange rates so foreign-currency holdings convert into the base currency.';
+
+  @override
+  String get fxRatesAppBarTitle => 'FX rates';
+
+  @override
+  String get fxRatesEmpty =>
+      'No FX rates recorded yet. Tap the + button to add one — it will be picked up immediately by the dashboard.';
+
+  @override
+  String get fxRatesAddAction => 'Add rate';
+
+  @override
+  String get fxRatesEntrySheetTitle => 'Add an FX rate';
+
+  @override
+  String get fxRatesFromLabel => 'From';
+
+  @override
+  String get fxRatesToLabel => 'To';
+
+  @override
+  String get fxRatesRateLabel => 'Rate';
+
+  @override
+  String get fxRatesAsOfLabel => 'As of';
+
+  @override
+  String get fxRatesSamePairError =>
+      'Source and target currencies must differ.';
+
+  @override
+  String get fxRatesInvalidRateError => 'Rate must be a positive number.';
+
+  @override
   String dashboardCurrencyMismatchBanner(int count, String currency) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

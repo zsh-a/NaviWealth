@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -99,6 +100,11 @@ class CurrencyMismatchBanner extends ConsumerWidget {
                   leading: const Icon(Icons.currency_exchange),
                   title: Text('${m.currency} → $baseCurrency'),
                   subtitle: Text(m.id),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    context.goNamed('fx-rates');
+                  },
                 ),
             ],
           ),

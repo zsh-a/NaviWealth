@@ -51,6 +51,13 @@ class SettingsPage extends ConsumerWidget {
             ),
             onTap: () => _pickBaseCurrency(context, ref, baseCurrency),
           ),
+          ListTile(
+            leading: const Icon(Icons.published_with_changes_outlined),
+            title: Text(l10n.settingsFxRatesTitle),
+            subtitle: Text(l10n.settingsFxRatesSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.goNamed('fx-rates'),
+          ),
           const Divider(),
           _SectionHeader(label: l10n.settingsAppearanceSection),
           ListTile(
