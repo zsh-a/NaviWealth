@@ -230,6 +230,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败：$e')),
             data: (messages) => _MessagesList(
+              sessionId: widget.sessionId,
               messages: messages,
               scroll: _scroll,
               onSuggest: (text) => ref
@@ -255,11 +256,13 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
 
 class _MessagesList extends StatelessWidget {
   const _MessagesList({
+    required this.sessionId,
     required this.messages,
     required this.scroll,
     required this.onSuggest,
   });
 
+  final String sessionId;
   final List<ChatMessage> messages;
   final ScrollController scroll;
   final ValueChanged<String> onSuggest;
@@ -276,7 +279,10 @@ class _MessagesList extends StatelessWidget {
         vertical: Spacing.s12,
       ),
       itemCount: messages.length,
-      itemBuilder: (_, i) => MessageBubble(message: messages[i]),
+      itemBuilder: (_, i) => MessageBubble(
+        sessionId: sessionId,
+        message: messages[i],
+      ),
     );
   }
 }

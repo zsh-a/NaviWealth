@@ -5,11 +5,15 @@ import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
+import '../../../data/repositories/providers.dart';
+import '../../investment/data/providers.dart';
+import '../../liabilities/data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_sync_gate.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'chat_repository.dart';
+import 'proposal_applier.dart';
 
 /// Dio dedicated to `/ai/*` endpoints. The receive timeout is large
 /// because a single chat turn can sit on a streaming connection for
@@ -74,4 +78,27 @@ final chatMessagesStreamProvider =
 final chatSyncGateProvider = FutureProvider<ChatSyncGate>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);
   return ChatSyncGate(engine: engine);
+});
+
+/// FIR-67 — applier that turns a confirmed `propose_*` plan into the
+/// matching repository write. Pulled out as a Riverpod provider so
+/// `ProposeCard` can resolve it once and pass it down to its action
+/// handlers, without each card re-resolving every repository.
+final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
+  final transactionRepo = await ref.watch(transactionRepositoryProvider.future);
+  final tradeService = await ref.watch(tradeEntryServiceProvider.future);
+  final expenseRepo = await ref.watch(expenseRepositoryProvider.future);
+  final accountRepo = await ref.watch(accountRepositoryProvider.future);
+  final manualAssetRepo = await ref.watch(
+    manualAssetRepositoryProvider.future,
+  );
+  final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
+  return ProposalApplier(
+    transactionRepo: transactionRepo,
+    tradeEntryService: tradeService,
+    expenseRepo: expenseRepo,
+    accountRepo: accountRepo,
+    manualAssetRepo: manualAssetRepo,
+    liabilityRepo: liabilityRepo,
+  );
 });

@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
+import '../domain/proposal_apply_state.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
@@ -213,6 +214,34 @@ class ChatRepository {
     }
 
     return outcome;
+  }
+
+  /// Mutate the apply state of one tool invocation inside [messageId].
+  ///
+  /// Used by FIR-67 propose-card flow: confirm / cancel / undo each call this
+  /// to persist the new status alongside the existing assistant message so a
+  /// reload preserves the user's decision.
+  Future<void> updateToolApplyState({
+    required String sessionId,
+    required String messageId,
+    required String toolInvocationId,
+    required ProposalApplyState? newState,
+  }) async {
+    final messages = await _store.listMessages(sessionId);
+    final message = messages.firstWhere(
+      (m) => m.id == messageId,
+      orElse: () => throw StateError(
+        'message $messageId not found in session $sessionId',
+      ),
+    );
+    final updatedToolCalls = <ToolInvocation>[
+      for (final t in message.toolCalls)
+        if (t.id == toolInvocationId)
+          t.copyWith(applyState: newState, clearApplyState: newState == null)
+        else
+          t,
+    ];
+    await _store.updateMessage(message.copyWith(toolCalls: updatedToolCalls));
   }
 
   /// Insert an in-band system message into the timeline. Used both
