@@ -290,7 +290,7 @@ class __$$AssetImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$AssetImpl implements _Asset {
+class _$AssetImpl extends _Asset {
   const _$AssetImpl({
     required this.id,
     required this.type,
@@ -306,7 +306,7 @@ class _$AssetImpl implements _Asset {
     this.logoUrl,
     this.metadataJson,
     required this.sync,
-  });
+  }) : super._();
 
   @override
   final String id;
@@ -396,7 +396,7 @@ class _$AssetImpl implements _Asset {
       __$$AssetImplCopyWithImpl<_$AssetImpl>(this, _$identity);
 }
 
-abstract class _Asset implements Asset {
+abstract class _Asset extends Asset {
   const factory _Asset({
     required final String id,
     required final AssetType type,
@@ -413,6 +413,7 @@ abstract class _Asset implements Asset {
     final String? metadataJson,
     required final SyncMeta sync,
   }) = _$AssetImpl;
+  const _Asset._() : super._();
 
   @override
   String get id;
