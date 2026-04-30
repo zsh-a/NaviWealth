@@ -80,10 +80,26 @@ final expenseRepositoryProvider = FutureProvider<ExpenseRepository>((
 
 /// Live stream of non-archived, non-deleted expense categories — what the
 /// expense entry picker subscribes to.
+///
+/// First read also triggers default-category seeding so a brand-new install
+/// has the canonical 12 buckets ready before the picker paints. The seed
+/// is idempotent across devices (deterministic ids), so doing this on
+/// every cold start is safe.
 final expenseCategoriesStreamProvider =
     StreamProvider.autoDispose<List<ExpenseCategory>>((ref) async* {
       final repo = await ref.watch(expenseCategoryRepositoryProvider.future);
+      await repo.seedDefaults();
       yield* repo.watchActive();
+    });
+
+/// Live stream of every non-tombstoned expense category, archived rows
+/// included. Drives the management page; the active picker keeps using
+/// [expenseCategoriesStreamProvider] so it doesn't paint archived rows.
+final allExpenseCategoriesStreamProvider =
+    StreamProvider.autoDispose<List<ExpenseCategory>>((ref) async* {
+      final repo = await ref.watch(expenseCategoryRepositoryProvider.future);
+      await repo.seedDefaults();
+      yield* repo.watchAllExceptDeleted();
     });
 
 /// Live stream of all non-deleted expenses across all accounts. Feature

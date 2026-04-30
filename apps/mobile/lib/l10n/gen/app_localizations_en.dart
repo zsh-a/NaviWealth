@@ -18,6 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAssets => 'Assets';
 
   @override
+  String get navExpenses => 'Expenses';
+
+  @override
   String get navAnalytics => 'Analytics';
 
   @override
@@ -977,6 +980,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceNavLink => 'Rebalance';
+
+  @override
   String get riskAlertTitle => 'Concentration Alerts';
 
   @override
