@@ -85,7 +85,10 @@ jobs:
       - run: flutter pub get
       - name: Build CN web font subsets
         run: bash tool/build-cn-fonts.sh
-      - run: flutter build web --release --source-maps
+      - name: Read backend API URL
+        id: api-url
+        run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
+      - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
       - name: Decode signing keystore
         if: env.KEYSTORE_BASE64 != ''
         env:

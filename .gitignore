@@ -16,5 +16,8 @@ Thumbs.db
 .env.local
 .dev.vars
 
+# Rust build output
+target/
+
 # Agent / platform
 .agent_context/

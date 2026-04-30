@@ -77,7 +77,10 @@ jobs:
       - name: Build CN web font subsets (app-cn-base.woff2 + app-cn-ext.woff2)
         # Fails the build if app-cn-base.woff2 exceeds the 250 KB budget.
         run: tool/build-cn-fonts.sh
-      - run: flutter build web --release --source-maps
+      - name: Read backend API URL
+        id: api-url
+        run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
+      - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-web-build

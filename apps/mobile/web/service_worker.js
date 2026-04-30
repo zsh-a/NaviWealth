@@ -41,13 +41,20 @@ const SHELL_PRECACHE = [
   'icons/Icon-maskable-512.png',
 ];
 
-// API requests that should use Network-First with cache fallback. Matches both
-// same-origin /api/* and any cross-origin host whose path starts with /api/.
-// Sync engine endpoints live under /api/sync (FIR-34); FIR-26 market cache
-// reads from configurable provider hosts whose paths don't all start with
-// /api/, so those still go through dio's own caching layer rather than here.
+// API requests that should use Network-First with cache fallback.
+// Backend routes (Cloudflare Workers): /auth/*, /sync/*, /ai/*, /health*, /me.
+// Only same-origin requests can be intercepted; cross-origin (workers.dev)
+// requests pass through to the network directly.
 function isApiRequest(url) {
-  return url.pathname.startsWith('/api/');
+  if (url.origin !== self.location.origin) return false;
+  const p = url.pathname;
+  return (
+    p.startsWith('/auth/') ||
+    p.startsWith('/sync/') ||
+    p.startsWith('/ai/') ||
+    p.startsWith('/health') ||
+    p === '/me'
+  );
 }
 
 function isWasmAsset(url) {
