@@ -188,8 +188,8 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // FIR-69 inserted Expenses at index 2, so Analytics moved to 3 and
-      // Settings to 4. Update the expectations alongside the router change.
+      // FIR-69 inserted Expenses at index 2, so Analytics moved to 3.
+      // FIR-57 then inserted FIRE at 4, pushing Settings out to index 5.
       final container = await _pumpAt(tester, initialLocation: '/analytics');
       final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
       expect(bar.selectedIndex, 3);
@@ -197,7 +197,7 @@ void main() {
       container.read(appRouterProvider).go('/settings');
       await tester.pumpAndSettle();
       final updated = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(updated.selectedIndex, 4);
+      expect(updated.selectedIndex, 5);
     });
   });
 
