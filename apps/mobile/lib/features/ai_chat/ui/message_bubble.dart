@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../design_system/design_system.dart';
 import '../domain/chat_models.dart';
+import '../domain/proposal_apply_state.dart';
+import '../domain/proposal_plan.dart';
+import 'propose_card.dart';
 import 'tool_invocation_card.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
@@ -15,8 +18,9 @@ import 'tool_invocation_card.dart';
 /// Streaming assistant turns get a small pulsing dot at the end of the
 /// text so the user can tell content is still arriving.
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message});
+  const MessageBubble({super.key, required this.sessionId, required this.message});
 
+  final String sessionId;
   final ChatMessage message;
 
   @override
@@ -28,7 +32,7 @@ class MessageBubble extends StatelessWidget {
         return _UserBubble(message: message);
       case ChatRole.assistant:
       case ChatRole.error:
-        return _AssistantBubble(message: message);
+        return _AssistantBubble(sessionId: sessionId, message: message);
     }
   }
 }
@@ -78,8 +82,9 @@ class _UserBubble extends StatelessWidget {
 }
 
 class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.message});
+  const _AssistantBubble({required this.sessionId, required this.message});
 
+  final String sessionId;
   final ChatMessage message;
 
   bool get _isError => message.role == ChatRole.error ||
@@ -129,8 +134,9 @@ class _AssistantBubble extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (message.toolCalls.isNotEmpty)
-                      ...message.toolCalls.map(
-                        (t) => ToolInvocationCard(invocation: t),
+                      _ToolCallsSection(
+                        sessionId: sessionId,
+                        message: message,
                       ),
                     if (message.content.isNotEmpty || isStreaming) ...[
                       if (message.toolCalls.isNotEmpty)
@@ -158,6 +164,67 @@ class _AssistantBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Splits an assistant turn's tool calls into the propose / non-propose
+/// halves. Propose calls render as `ProposeCard` with a batch action row
+/// when 2+ are still pending; everything else falls through to the
+/// generic `ToolInvocationCard` exactly like before.
+class _ToolCallsSection extends StatelessWidget {
+  const _ToolCallsSection({required this.sessionId, required this.message});
+
+  final String sessionId;
+  final ChatMessage message;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <_ToolEntry>[];
+    final pending =
+        <({ToolInvocation invocation, ReadyProposalPlan plan})>[];
+    for (final t in message.toolCalls) {
+      final isPropose = isProposeTool(t.name);
+      final plan = isPropose ? ProposalPlan.tryParse(t.output) : null;
+      if (isPropose && plan != null) {
+        entries.add(_ToolEntry.propose(t, plan));
+        if (plan is ReadyProposalPlan) {
+          final state = t.applyState ?? ProposalApplyState.pending;
+          if (state.status == ProposalApplyStatus.pending ||
+              state.status == ProposalApplyStatus.errored) {
+            pending.add((invocation: t, plan: plan));
+          }
+        }
+      } else {
+        entries.add(_ToolEntry.generic(t));
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (pending.length >= 2)
+          ProposeBatchActions(
+            sessionId: sessionId,
+            message: message,
+            pending: pending,
+          ),
+        for (final entry in entries)
+          entry.plan == null
+              ? ToolInvocationCard(invocation: entry.invocation)
+              : ProposeCard(
+                  sessionId: sessionId,
+                  message: message,
+                  invocation: entry.invocation,
+                  plan: entry.plan!,
+                ),
+      ],
+    );
+  }
+}
+
+class _ToolEntry {
+  _ToolEntry.propose(this.invocation, this.plan);
+  _ToolEntry.generic(this.invocation) : plan = null;
+  final ToolInvocation invocation;
+  final ProposalPlan? plan;
 }
 
 class _AssistantBody extends StatelessWidget {

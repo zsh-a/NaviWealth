@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'proposal_apply_state.dart';
+
 /// Roles understood by `POST /ai/chat`.
 ///
 /// `system` and `error` are local-only roles the UI uses to surface
@@ -59,6 +61,7 @@ class ToolInvocation {
     required this.name,
     required this.input,
     this.output,
+    this.applyState,
   });
 
   final String id;
@@ -66,22 +69,47 @@ class ToolInvocation {
   final Object? input;
   final Object? output;
 
-  ToolInvocation copyWith({Object? output}) =>
-      ToolInvocation(id: id, name: name, input: input, output: output);
+  /// FIR-67 — apply state for `propose_*` tool calls. `null` for read-only
+  /// tools and for propose tools the user hasn't acted on yet (the UI
+  /// treats null and `pending` identically; null keeps the JSON payload
+  /// quiet for non-propose calls so we don't bloat persisted history).
+  final ProposalApplyState? applyState;
+
+  ToolInvocation copyWith({
+    Object? output,
+    ProposalApplyState? applyState,
+    bool clearApplyState = false,
+  }) => ToolInvocation(
+    id: id,
+    name: name,
+    input: input,
+    output: output ?? this.output,
+    applyState: clearApplyState ? null : (applyState ?? this.applyState),
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'id': id,
     'name': name,
     'input': input,
     'output': output,
+    if (applyState != null) 'apply_state': applyState!.toJson(),
   };
 
-  factory ToolInvocation.fromJson(Map<String, Object?> json) => ToolInvocation(
-    id: (json['id'] ?? '') as String,
-    name: (json['name'] ?? '') as String,
-    input: json['input'],
-    output: json['output'],
-  );
+  factory ToolInvocation.fromJson(Map<String, Object?> json) {
+    final raw = json['apply_state'];
+    final apply = raw is Map
+        ? ProposalApplyState.fromJson(
+            raw.map((k, v) => MapEntry(k.toString(), v)),
+          )
+        : null;
+    return ToolInvocation(
+      id: (json['id'] ?? '') as String,
+      name: (json['name'] ?? '') as String,
+      input: json['input'],
+      output: json['output'],
+      applyState: apply,
+    );
+  }
 
   static String encodeList(List<ToolInvocation> items) =>
       jsonEncode(items.map((t) => t.toJson()).toList());
