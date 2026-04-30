@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 // docs/web-bundle.md for the resulting bundle layout.
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
+import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
 import '../features/assets/assets_page.dart' deferred as assets_lib;
@@ -67,6 +68,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     corp_action_lib.loadLibrary(),
     devices_lib.loadLibrary(),
     rebalance_lib.loadLibrary(),
+    ai_chat_lib.loadLibrary(),
   ]);
 }
 
@@ -236,6 +238,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             builder: (context, state) => DeferredRoute(
               load: rebalance_lib.loadLibrary,
               builder: (_) => rebalance_lib.RebalancePage(),
+            ),
+          ),
+          GoRoute(
+            path: '/ai',
+            name: 'ai-chat',
+            builder: (context, state) => DeferredRoute(
+              load: ai_chat_lib.loadLibrary,
+              builder: (_) => ai_chat_lib.AiChatPage(),
             ),
           ),
           GoRoute(
