@@ -45,6 +45,7 @@ class DashboardAggregator {
     required Iterable<LiabilitySummary> liabilitySummaries,
   }) {
     final byCategory = <AssetCategory, List<CategoryItem>>{};
+    _mismatches.clear();
 
     for (final asset in manualAssets) {
       final item = _itemForManualAsset(asset);
@@ -125,8 +126,11 @@ class DashboardAggregator {
       totalAssets: totalAssets,
       totalLiabilities: totalLiabilities,
       netWorth: totalAssets - totalLiabilities,
+      currencyMismatches: List.unmodifiable(_mismatches),
     );
   }
+
+  final List<CurrencyMismatch> _mismatches = [];
 
   CategoryItem? _itemForManualAsset(Asset asset) {
     final price = asset.lastPrice ?? Decimal.zero;
@@ -168,6 +172,7 @@ class DashboardAggregator {
     try {
       return converter.convert(amount, baseCurrency, on: asOf);
     } on FxRateNotFoundError {
+      _mismatches.add(CurrencyMismatch(id: id, currency: amount.currency));
       onCurrencyMismatch?.call(id, amount.currency);
       return null;
     }

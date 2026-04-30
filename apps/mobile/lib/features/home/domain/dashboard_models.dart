@@ -112,6 +112,26 @@ class CategoryAllocation {
   int get hashCode => Object.hash(category, totalInBase, Object.hashAll(items));
 }
 
+/// One asset / liability whose conversion to the dashboard's base currency
+/// failed. Surfaced so the UI can warn the user that the displayed total
+/// excludes these holdings instead of silently dropping them.
+@immutable
+class CurrencyMismatch {
+  const CurrencyMismatch({required this.id, required this.currency});
+
+  final String id;
+  final String currency;
+
+  @override
+  bool operator ==(Object other) =>
+      other is CurrencyMismatch &&
+      other.id == id &&
+      other.currency == currency;
+
+  @override
+  int get hashCode => Object.hash(id, currency);
+}
+
 /// Snapshot of the user's current asset distribution, ready to be rendered
 /// by the dashboard pie chart and net-worth header.
 @immutable
@@ -123,6 +143,7 @@ class DashboardSnapshot {
     required this.totalAssets,
     required this.totalLiabilities,
     required this.netWorth,
+    this.currencyMismatches = const [],
   });
 
   /// Empty snapshot — used as the initial state while async data is still
@@ -147,6 +168,11 @@ class DashboardSnapshot {
   final Money totalAssets;
   final Money totalLiabilities;
   final Money netWorth;
+
+  /// Holdings excluded from the totals because no FX rate could convert
+  /// them to [baseCurrency]. Empty when every asset / liability could be
+  /// folded into the snapshot. Caller surfaces these in a warning banner.
+  final List<CurrencyMismatch> currencyMismatches;
 
   bool get isEmpty => allocations.isEmpty;
 }

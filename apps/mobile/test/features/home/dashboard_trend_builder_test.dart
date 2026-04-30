@@ -234,5 +234,35 @@ void main() {
       expect(range.from, day(2026, 1, 1));
       expect(range.to, day(2026, 3, 31));
     });
+
+    test('records currencyMismatches when an asset has no FX rate (FIR-73)',
+        () {
+      // No FX rates registered → USD asset cannot be converted to CNY base.
+      final usdCash = Asset(
+        id: 'usd-cash',
+        type: AssetType.cash,
+        symbol: 'usd-cash',
+        currency: 'USD',
+        lastPrice: d('1000'),
+        sync: _meta(),
+      );
+      final range = DashboardTimeRange.resolve(
+        preset: DashboardRangePreset.m1,
+        now: day(2026, 4, 30),
+      );
+      final trend = _builder().build(
+        range: range,
+        manualAssets: [usdCash, _cash(id: 'cny', price: '500')],
+        physicalAssets: const [],
+        liabilities: const [],
+        liabilitySchedules: const {},
+      );
+      // USD asset is excluded; CNY survivor anchors the trend.
+      expect(trend.points.first.assets.amount, d('500'));
+      expect(trend.currencyMismatches, hasLength(1));
+      final mismatch = trend.currencyMismatches.single;
+      expect(mismatch.id, 'usd-cash');
+      expect(mismatch.currency, 'USD');
+    });
   });
 }

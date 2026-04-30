@@ -20,6 +20,7 @@ import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/home/ui/allocation_card.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Decimal d(String s) => Decimal.parse(s);
 DateTime day(int y, int m, int dd) => DateTime.utc(y, m, dd);
@@ -58,12 +59,14 @@ Liability _liability({
 
 ProviderScope _wrap({
   required Widget child,
+  required SharedPreferences prefs,
   List<Asset> manualAssets = const [],
   List<PhysicalAsset> physicalAssets = const [],
   List<Liability> liabilities = const [],
 }) {
   return ProviderScope(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
       manualAssetsStreamProvider.overrideWith(
         (ref) => Stream.value(manualAssets),
       ),
@@ -84,10 +87,16 @@ ProviderScope _wrap({
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets(
       'home page renders the empty state when no assets / liabilities exist',
       (tester) async {
-    await tester.pumpWidget(_wrap(child: const HomePage()));
+    final prefs = await SharedPreferences.getInstance();
+    await tester
+        .pumpWidget(_wrap(prefs: prefs, child: const HomePage()));
     await tester.pumpAndSettle();
     expect(find.byType(HomePage), findsOneWidget);
     // Empty pie placeholder is shown.
@@ -97,7 +106,9 @@ void main() {
   testWidgets('home page renders allocation pie with category slices', (
     tester,
   ) async {
+    final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(_wrap(
+      prefs: prefs,
       manualAssets: [
         _cash('cash', '10000'),
       ],
@@ -116,8 +127,10 @@ void main() {
   testWidgets('time range chips persist selection in the provider', (
     tester,
   ) async {
+    final prefs = await SharedPreferences.getInstance();
     late ProviderContainer container;
     await tester.pumpWidget(_wrap(
+      prefs: prefs,
       manualAssets: [_cash('cash', '10000')],
       child: Consumer(builder: (context, ref, _) {
         container = ProviderScope.containerOf(context, listen: false);

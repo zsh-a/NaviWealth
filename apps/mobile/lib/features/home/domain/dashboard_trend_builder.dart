@@ -8,6 +8,7 @@ import '../../../domain/services/liability_balance_source.dart';
 import '../../../domain/services/net_worth_service.dart';
 import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
+import 'dashboard_models.dart';
 import 'dashboard_time_range.dart';
 
 /// One observation on the dashboard trend chart. Mirrors
@@ -34,11 +35,17 @@ class DashboardTrend {
     required this.range,
     required this.baseCurrency,
     required this.points,
+    this.currencyMismatches = const [],
   });
 
   final DashboardTimeRange range;
   final String baseCurrency;
   final List<TrendPoint> points;
+
+  /// Holdings excluded from one or more sample dates because no FX rate
+  /// could convert them to [baseCurrency]. Mirrors the snapshot field of
+  /// the same name; the dashboard merges both lists into a single banner.
+  final List<CurrencyMismatch> currencyMismatches;
 
   bool get isEmpty => points.isEmpty;
 }
@@ -67,10 +74,19 @@ class DashboardTrendBuilder {
   DashboardTrendBuilder({
     required this.converter,
     required this.baseCurrency,
+    this.onCurrencyMismatch,
   });
 
   final CurrencyConverter converter;
   final String baseCurrency;
+
+  /// Optional callback invoked when an asset / liability is silently
+  /// dropped from a sample because its currency cannot be converted to
+  /// [baseCurrency] for the sample date. Mirrors
+  /// [DashboardAggregator.onCurrencyMismatch] so the dashboard can show a
+  /// single "data incomplete" banner that covers both the snapshot and
+  /// the trend chart.
+  final void Function(String id, String currency)? onCurrencyMismatch;
 
   DashboardTrend build({
     required DashboardTimeRange range,
@@ -104,9 +120,22 @@ class DashboardTrendBuilder {
     final sampleDates = _sampleDates(range);
 
     final points = <TrendPoint>[];
+    final reported = <String>{};
+    final mismatches = <CurrencyMismatch>[];
+    void report(String id, String currency) {
+      // Each id should only fire the callback once per build, even if every
+      // sample date misses its rate — the banner doesn't get more useful
+      // when a single missing pair is reported 30+ times.
+      if (reported.add(id)) {
+        mismatches.add(CurrencyMismatch(id: id, currency: currency));
+        onCurrencyMismatch?.call(id, currency);
+      }
+    }
+
     for (final date in sampleDates) {
-      final assets = _valueAssets(date, manualList, physicalList);
-      final liabilitiesValue = _valueLiabilities(date, liabSource);
+      final assets = _valueAssets(date, manualList, physicalList, report);
+      final liabilitiesValue =
+          _valueLiabilities(date, liabSource, report);
       points.add(
         TrendPoint(
           asOf: date,
@@ -120,6 +149,7 @@ class DashboardTrendBuilder {
       range: range,
       baseCurrency: baseCurrency,
       points: points,
+      currencyMismatches: List.unmodifiable(mismatches),
     );
   }
 
@@ -127,6 +157,7 @@ class DashboardTrendBuilder {
     DateTime date,
     List<Asset> manualAssets,
     List<PhysicalAsset> physicalAssets,
+    void Function(String id, String currency) report,
   ) {
     var total = Money.zero(baseCurrency);
     for (final asset in manualAssets) {
@@ -135,31 +166,48 @@ class DashboardTrendBuilder {
       // Until valuation history is captured, hold cash / deposit / wealth
       // products flat across the window — better than dropping them.
       final amount = Money(price, asset.currency);
-      total = _addInBase(total, amount, date);
+      total = _addInBase(total, amount, date, asset.id, report);
     }
     for (final pa in physicalAssets) {
       if (pa.purchaseDate.isAfter(date)) continue;
       final value = _valueOfPhysicalAt(pa, date);
       if (value.sign <= 0) continue;
       final amount = Money(value, pa.currency);
-      total = _addInBase(total, amount, date);
+      total = _addInBase(total, amount, date, pa.id, report);
     }
     return total;
   }
 
-  Money _valueLiabilities(DateTime date, LiabilityBalanceSource source) {
+  Money _valueLiabilities(
+    DateTime date,
+    LiabilityBalanceSource source,
+    void Function(String id, String currency) report,
+  ) {
     var total = Money.zero(baseCurrency);
     for (final balance in source.balancesOn(date)) {
-      total = _addInBase(total, balance.outstanding, date);
+      total = _addInBase(
+        total,
+        balance.outstanding,
+        date,
+        balance.liabilityId,
+        report,
+      );
     }
     return total;
   }
 
-  Money _addInBase(Money acc, Money amount, DateTime on) {
+  Money _addInBase(
+    Money acc,
+    Money amount,
+    DateTime on,
+    String id,
+    void Function(String id, String currency) report,
+  ) {
     if (amount.currency == baseCurrency) return acc + amount;
     try {
       return acc + converter.convert(amount, baseCurrency, on: on);
     } on FxRateNotFoundError {
+      report(id, amount.currency);
       return acc;
     }
   }

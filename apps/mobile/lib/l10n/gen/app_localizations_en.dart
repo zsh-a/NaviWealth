@@ -475,6 +475,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsBaseCurrencyHint =>
+      'Totals on the dashboard, allocation chart, and trend chart are shown in this currency.';
+
+  @override
+  String get settingsBaseCurrencySheetTitle => 'Pick base currency';
+
+  @override
+  String dashboardCurrencyMismatchBanner(int count, String currency) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings excluded — missing FX rates to $currency',
+      one: '1 holding excluded — missing FX rate to $currency',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashboardCurrencyMismatchAction => 'View';
+
+  @override
+  String get dashboardCurrencyMismatchSheetTitle =>
+      'Holdings excluded from totals';
+
+  @override
   String get settingsAboutTitle => 'About NaviWealth';
 
   @override

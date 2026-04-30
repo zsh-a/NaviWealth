@@ -321,5 +321,162 @@ void main() {
       expect(cats, {AssetCategory.realEstate, AssetCategory.vehicle});
       expect(snap.totalAssets.amount, d('2680000'));
     });
+
+    test(
+      'three-currency portfolio (CNY + USD + HKD) sums to base via FX (FIR-73)',
+      () {
+        // Mirrors the user-reported scenario in FIR-73:
+        //   account A: CNY cash 10000, A-share ETF 50000 RMB
+        //   account B: USD cash 5000, AAPL 100 @ 180 = 18000 USD
+        //   account C: HKD 0700.HK 100 @ 320 = 32000 HKD
+        // Base = CNY, USD/CNY = 7.2, HKD/CNY = 0.92.
+        final converter = _converter([
+          dom.FxRate(
+            base: 'USD',
+            quote: 'CNY',
+            date: day(2026, 4, 28),
+            rate: d('7.2'),
+            source: 'test',
+          ),
+          dom.FxRate(
+            base: 'HKD',
+            quote: 'CNY',
+            date: day(2026, 4, 28),
+            rate: d('0.92'),
+            source: 'test',
+          ),
+        ]);
+        final snap = _aggregator(converter: converter).aggregate(
+          manualAssets: [
+            _manualAsset(
+              id: 'cny-cash',
+              type: AssetType.cash,
+              currency: 'CNY',
+              price: '10000',
+            ),
+            _manualAsset(
+              id: 'a-share-etf',
+              type: AssetType.etf,
+              currency: 'CNY',
+              price: '50000',
+            ),
+            _manualAsset(
+              id: 'usd-cash',
+              type: AssetType.cash,
+              currency: 'USD',
+              price: '5000',
+            ),
+            _manualAsset(
+              id: 'aapl',
+              type: AssetType.stock,
+              currency: 'USD',
+              price: '18000',
+            ),
+            _manualAsset(
+              id: 'tencent',
+              type: AssetType.stock,
+              currency: 'HKD',
+              price: '32000',
+            ),
+          ],
+          physicalAssets: const [],
+          liabilities: const [],
+          liabilitySummaries: const [],
+        );
+        // 10000 + 50000 + 5000*7.2 + 18000*7.2 + 32000*0.92
+        // = 60000 + 36000 + 129600 + 29440 = 255040
+        expect(snap.totalAssets.amount, d('255040.00'));
+        expect(snap.netWorth.amount, d('255040.00'));
+        expect(snap.currencyMismatches, isEmpty);
+        // Native amounts are preserved per item — the drill-down sheet
+        // needs them to render the "USD 5000" subtitle.
+        final usdItem = snap.allocations
+            .expand((a) => a.items)
+            .firstWhere((i) => i.id == 'usd-cash');
+        expect(usdItem.nativeCurrency, 'USD');
+        expect(usdItem.nativeAmount, d('5000'));
+      },
+    );
+
+    test('snapshot.currencyMismatches lists every excluded holding (FIR-73)',
+        () {
+      final agg = _aggregator();
+      final snap = agg.aggregate(
+        manualAssets: [
+          _manualAsset(id: 'cny', type: AssetType.cash, price: '1000'),
+          _manualAsset(
+            id: 'usd-orphan',
+            type: AssetType.cash,
+            currency: 'USD',
+            price: '1000',
+          ),
+          _manualAsset(
+            id: 'hkd-orphan',
+            type: AssetType.cash,
+            currency: 'HKD',
+            price: '5000',
+          ),
+        ],
+        physicalAssets: const [],
+        liabilities: const [],
+        liabilitySummaries: const [],
+      );
+      expect(
+        snap.currencyMismatches.map((m) => '${m.id}:${m.currency}').toSet(),
+        {'usd-orphan:USD', 'hkd-orphan:HKD'},
+      );
+      // Banner copy uses the count to drive the plural form.
+      expect(snap.currencyMismatches, hasLength(2));
+      // CNY total still includes the survivor.
+      expect(snap.totalAssets.amount, d('1000'));
+    });
+
+    test(
+      'switching base currency to USD recomputes every total via inverse FX',
+      () {
+        // The provider rewires baseCurrency on user setting changes; this
+        // test exercises that the math is symmetric — given the same
+        // portfolio, asking for totals in USD instead of CNY produces a
+        // proportionally smaller number.
+        final converter = _converter([
+          dom.FxRate(
+            base: 'USD',
+            quote: 'CNY',
+            date: day(2026, 4, 28),
+            rate: d('7.2'),
+            source: 'test',
+          ),
+        ]);
+        final inUsd = DashboardAggregator(
+          converter: converter,
+          baseCurrency: 'USD',
+          asOf: day(2026, 4, 29),
+        ).aggregate(
+          manualAssets: [
+            _manualAsset(
+              id: 'cny-cash',
+              type: AssetType.cash,
+              currency: 'CNY',
+              price: '7200',
+            ),
+            _manualAsset(
+              id: 'usd-cash',
+              type: AssetType.cash,
+              currency: 'USD',
+              price: '1000',
+            ),
+          ],
+          physicalAssets: const [],
+          liabilities: const [],
+          liabilitySummaries: const [],
+        );
+        // 7200 CNY * (1/7.2) USD/CNY + 1000 USD = 1000 + 1000 = 2000 USD.
+        expect(inUsd.baseCurrency, 'USD');
+        // The inverse rate is computed via Decimal so we tolerate a small
+        // rounding tail from the 1/7.2 series.
+        final total = inUsd.totalAssets.amount.toDouble();
+        expect(total, closeTo(2000.0, 0.0001));
+      },
+    );
   });
 }
