@@ -18,6 +18,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navAssets => '资产';
 
   @override
+  String get navExpenses => '支出';
+
+  @override
   String get navAnalytics => '分析';
 
   @override

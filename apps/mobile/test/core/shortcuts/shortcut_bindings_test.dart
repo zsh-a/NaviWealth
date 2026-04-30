@@ -59,17 +59,23 @@ void main() {
       expect(activator.control, isFalse);
     });
 
-    test('declares 1-4 for primary tab switching, in order', () {
+    test('declares digit shortcuts for primary tab switching, in order', () {
       final tabBindings = bindings
           .where((b) => b.intent is SwitchPrimaryTabIntent)
           .toList();
       expect(tabBindings, hasLength(kPrimaryTabCount));
-      final keys = <LogicalKeyboardKey>[
+      const keys = <LogicalKeyboardKey>[
         LogicalKeyboardKey.digit1,
         LogicalKeyboardKey.digit2,
         LogicalKeyboardKey.digit3,
         LogicalKeyboardKey.digit4,
+        LogicalKeyboardKey.digit5,
       ];
+      expect(
+        keys.length,
+        greaterThanOrEqualTo(kPrimaryTabCount),
+        reason: 'test must enumerate enough digit keys for every tab',
+      );
       for (var i = 0; i < kPrimaryTabCount; i++) {
         final binding = tabBindings[i];
         expect(

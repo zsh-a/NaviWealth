@@ -1,12 +1,21 @@
 //! Function-calling tool surface exposed to the LLM.
 //!
+//! Two families of tools live here:
+//!
+//! - **Read tools** (`get_*`, `compute_*`): feed the model real numbers from
+//!   D1 so it doesn't have to invent any. Tool outputs are deterministic
+//!   given the data, so any figure the assistant echoes traces back to
+//!   [`dispatch`], not the model's head.
+//! - **Write proposal tools** (`propose_*`, FIR-66): the model is still
+//!   forbidden from writing directly. These tools resolve user-supplied
+//!   references (account name, asset symbol, expense category) and return a
+//!   structured *plan* the mobile client renders into a confirmation UI;
+//!   only after the human taps "确认" does the client invoke the existing
+//!   repository (`TransactionRepository`, `AccountRepository`, etc.) to
+//!   persist the row. The plan envelope is built in `proposals.rs`.
+//!
 //! The model is forbidden from inventing financial values (see
-//! `guardrails::SYSTEM_PROMPT`). Instead it calls one of the tools defined
-//! here — the dispatcher reads the user's synced data from D1, computes
-//! the answer server-side, and returns a structured JSON document. Tool
-//! outputs are deterministic given the data, so the user can trust that any
-//! number echoed by the assistant came out of [`dispatch`], not the model's
-//! head.
+//! `guardrails::SYSTEM_PROMPT`).
 //!
 //! ## Design
 //!
@@ -131,6 +140,117 @@ pub fn schemas() -> Vec<ToolSchema> {
             description: "扫描当前持仓集中度并返回风险预警列表：单一资产或单一行业占比 > 20% 即触发 warning。".into(),
             input_schema: json!({"type": "object", "properties": {}}),
         },
+        // -------------------------------------------------------------------
+        // Write-proposal tools (FIR-66). These never persist anything;
+        // they always return a plan the client confirms.
+        // -------------------------------------------------------------------
+        ToolSchema {
+            name: "propose_trade".into(),
+            description: "提议一笔证券 / 加密交易（买入 / 卖出 / 转入 / 转出 / 估值调整）。\
+                          ⚠ 这是只提议、不落库的工具：返回一个 plan，前端会让用户在确认 UI 上点确认后才走 \
+                          TradeEntryService.buildPlan + TransactionRepository。\
+                          - asset 通过 asset_id 或 asset_symbol / asset_name 任一指认；多个匹配会返回 candidates。\
+                          - account 同理。\
+                          - 缺少字段时优先反问用户，不要硬编值。\
+                          - 日期相对值（昨天 / 上周三）请你解析为 ISO-8601 后传入。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["type", "quantity"],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": ["buy", "sell", "transferIn", "transferOut", "valuationAdjust"]
+                    },
+                    "asset_id":     { "type": "string" },
+                    "asset_symbol": { "type": "string", "description": "如 AAPL / 600519 / BTC" },
+                    "asset_name":   { "type": "string", "description": "如 苹果 / 茅台" },
+                    "account_id":   { "type": "string" },
+                    "account_name": { "type": "string" },
+                    "quantity":     { "type": "number", "minimum": 0 },
+                    "price":        { "type": "number", "minimum": 0, "description": "成交价。留空时前端会从行情回填，并 warn 用户。" },
+                    "fee":          { "type": "number", "minimum": 0, "default": 0 },
+                    "tax":          { "type": "number", "minimum": 0, "default": 0 },
+                    "currency":     { "type": "string", "description": "ISO 4217；留空时取账户币种" },
+                    "trade_date":   { "type": "string", "description": "ISO-8601；相对日期请你先解析" },
+                    "note":         { "type": "string" }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "propose_expense".into(),
+            description: "提议一笔日常消费 / 支出。返回 plan，前端确认后才走 ExpenseRepository（FIR-64）。\
+                          类目从内置 9 类里选：餐饮 / 交通 / 房租 / 娱乐 / 医疗 / 教育 / 购物 / 旅行 / 其它。\
+                          类目不在闭集时工具会返回 candidates，请你让用户选一个再重新调用。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                    "amount":       { "type": "number", "minimum": 0 },
+                    "category":     { "type": "string", "description": "中文 label 或 slug，如 餐饮 / food" },
+                    "account_id":   { "type": "string" },
+                    "account_name": { "type": "string" },
+                    "currency":     { "type": "string" },
+                    "date":         { "type": "string", "description": "ISO-8601" },
+                    "note":         { "type": "string" }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "propose_liability_payment".into(),
+            description: "提议一笔负债还款（房贷、信用卡、消费贷等）。返回 plan，前端确认后走还款流程。\
+                          liability 通过 liability_id 或 liability_name 指认；金额 > 0。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                    "liability_id":      { "type": "string" },
+                    "liability_name":    { "type": "string" },
+                    "from_account_id":   { "type": "string", "description": "还款来源账户" },
+                    "from_account_name": { "type": "string" },
+                    "amount":            { "type": "number", "minimum": 0 },
+                    "currency":          { "type": "string" },
+                    "date":              { "type": "string", "description": "ISO-8601" },
+                    "note":              { "type": "string" }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "propose_account_create".into(),
+            description: "提议创建一个新账户（券商 / 银行 / 现金 / 实物资产 / 负债）。返回 plan + 预分配 id。\
+                          后续 propose_trade / propose_expense 可以引用这个 id。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["name", "type"],
+                "properties": {
+                    "name":        { "type": "string" },
+                    "type":        {
+                        "type": "string",
+                        "enum": ["brokerage", "bank", "cryptoWallet", "realEstate", "vehicle", "liability", "cash", "other"]
+                    },
+                    "currency":    { "type": "string", "default": "CNY" },
+                    "institution": { "type": "string" },
+                    "note":        { "type": "string" }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "propose_asset_valuation".into(),
+            description: "提议更新一个手工估值资产（房产 / 车 / 现金 / 银行存款 / 理财）的当前估值。\
+                          有市场行情的证券请改用 propose_trade 的 valuationAdjust 类型。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["new_value"],
+                "properties": {
+                    "asset_id":     { "type": "string" },
+                    "asset_symbol": { "type": "string" },
+                    "asset_name":   { "type": "string" },
+                    "new_value":    { "type": "number", "minimum": 0 },
+                    "currency":     { "type": "string" },
+                    "date":         { "type": "string", "description": "ISO-8601" },
+                    "note":         { "type": "string" }
+                }
+            }),
+        },
     ]
 }
 
@@ -139,6 +259,7 @@ pub fn schemas() -> Vec<ToolSchema> {
 /// `tool_result` with `is_error=true` rather than a 500 — the conversation
 /// can recover.
 pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
+    use super::proposals;
     let result = match name {
         "get_holdings" => get_holdings(ctx, input).await,
         "get_transactions" => get_transactions(ctx, input).await,
@@ -148,6 +269,12 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
         "get_geo_breakdown" => get_breakdown(ctx, BreakdownDim::Region).await,
         "get_market_cap_breakdown" => get_breakdown(ctx, BreakdownDim::MarketCap).await,
         "get_risk_alerts" => get_risk_alerts(ctx).await,
+        // FIR-66 write proposals — never persist; always return a plan.
+        "propose_trade" => proposals::propose_trade(ctx, input).await,
+        "propose_expense" => proposals::propose_expense(ctx, input).await,
+        "propose_liability_payment" => proposals::propose_liability_payment(ctx, input).await,
+        "propose_account_create" => proposals::propose_account_create(ctx, input).await,
+        "propose_asset_valuation" => proposals::propose_asset_valuation(ctx, input).await,
         _ => Err(AppError::BadRequest(format!("unknown tool: {name}"))),
     };
     match result {
@@ -198,7 +325,9 @@ async fn load_payloads(
 }
 
 fn parse_iso(s: &str) -> Option<DateTime<Utc>> {
-    DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))
+    DateTime::parse_from_rfc3339(s)
+        .ok()
+        .map(|d| d.with_timezone(&Utc))
 }
 
 fn payload_str<'a>(p: &'a Value, key: &str) -> Option<&'a str> {
@@ -248,12 +377,19 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
     let txns = load_payloads(ctx.db, ctx.user_id, "transactions").await?;
 
     let mut accs: Map<String, Value> = Map::new();
-    let mut tracker: std::collections::HashMap<String, HoldingAcc> = std::collections::HashMap::new();
+    let mut tracker: std::collections::HashMap<String, HoldingAcc> =
+        std::collections::HashMap::new();
 
     for (_, p) in &txns {
-        let Some(asset_id) = payload_str(p, "assetId") else { continue };
-        let Some(tx_type) = payload_str(p, "type") else { continue };
-        let Some(qty) = payload_num(p, "quantity") else { continue };
+        let Some(asset_id) = payload_str(p, "assetId") else {
+            continue;
+        };
+        let Some(tx_type) = payload_str(p, "type") else {
+            continue;
+        };
+        let Some(qty) = payload_num(p, "quantity") else {
+            continue;
+        };
         let price = payload_num(p, "price").unwrap_or(0.0);
         let currency = payload_str(p, "currency").map(|s| s.to_string());
         if let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) {
@@ -263,7 +399,9 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
                 }
             }
         }
-        let Some((sign, is_proceeds)) = signed_qty_factor(tx_type) else { continue };
+        let Some((sign, is_proceeds)) = signed_qty_factor(tx_type) else {
+            continue;
+        };
         let entry = tracker
             .entry(asset_id.to_string())
             .or_insert_with(|| HoldingAcc {
@@ -334,10 +472,7 @@ async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, App
         .get("from")
         .and_then(|v| v.as_str())
         .and_then(parse_iso);
-    let to = input
-        .get("to")
-        .and_then(|v| v.as_str())
-        .and_then(parse_iso);
+    let to = input.get("to").and_then(|v| v.as_str()).and_then(parse_iso);
     let limit = input
         .get("limit")
         .and_then(|v| v.as_u64())
@@ -362,7 +497,9 @@ async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, App
                 continue;
             }
         }
-        let Some(date) = payload_str(&p, "tradeDate").and_then(parse_iso) else { continue };
+        let Some(date) = payload_str(&p, "tradeDate").and_then(parse_iso) else {
+            continue;
+        };
         if let Some(b) = from {
             if date < b {
                 continue;
@@ -477,10 +614,7 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         .get("from")
         .and_then(|v| v.as_str())
         .and_then(parse_iso);
-    let to = input
-        .get("to")
-        .and_then(|v| v.as_str())
-        .and_then(parse_iso);
+    let to = input.get("to").and_then(|v| v.as_str()).and_then(parse_iso);
 
     let txns = load_payloads(ctx.db, ctx.user_id, "transactions").await?;
     let mut flows: Vec<CashFlow> = Vec::new();
@@ -488,13 +622,15 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
     let mut residual_qty: f64 = 0.0;
     let mut last_price: f64 = 0.0;
     for (_, p) in &txns {
-        let Some(tx_type) = payload_str(p, "type") else { continue };
-        if scope == "asset" {
-            if payload_str(p, "assetId") != asset_filter {
-                continue;
-            }
+        let Some(tx_type) = payload_str(p, "type") else {
+            continue;
+        };
+        if scope == "asset" && payload_str(p, "assetId") != asset_filter {
+            continue;
         }
-        let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) else { continue };
+        let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) else {
+            continue;
+        };
         if let Some(b) = from {
             if date < b {
                 continue;
@@ -509,7 +645,10 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         let price = payload_num(p, "price").unwrap_or(0.0);
         let fee = payload_num(p, "fee").unwrap_or(0.0);
         if let Some(amt) = cash_flow_amount(tx_type, qty, price, fee) {
-            flows.push(CashFlow { when: date, amount: amt });
+            flows.push(CashFlow {
+                when: date,
+                amount: amt,
+            });
         }
         if currency.is_none() {
             currency = payload_str(p, "currency").map(|s| s.to_string());
@@ -565,12 +704,9 @@ fn next_step(d: DateTime<Utc>, granularity: &str) -> DateTime<Utc> {
                 m = 1;
                 y += 1;
             }
-            DateTime::parse_from_rfc3339(&format!(
-                "{:04}-{:02}-01T00:00:00Z",
-                y, m
-            ))
-            .map(|x| x.with_timezone(&Utc))
-            .unwrap_or(d + Duration::days(30))
+            DateTime::parse_from_rfc3339(&format!("{:04}-{:02}-01T00:00:00Z", y, m))
+                .map(|x| x.with_timezone(&Utc))
+                .unwrap_or(d + Duration::days(30))
         }
     }
 }
@@ -600,17 +736,19 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
     // + taxes + withdraws as -.
     let mut events: Vec<(DateTime<Utc>, f64, Option<String>)> = Vec::new();
     for (_, p) in &txns {
-        let Some(tx_type) = payload_str(p, "type") else { continue };
-        let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) else { continue };
+        let Some(tx_type) = payload_str(p, "type") else {
+            continue;
+        };
+        let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) else {
+            continue;
+        };
         let qty = payload_num(p, "quantity").unwrap_or(0.0);
         let price = payload_num(p, "price").unwrap_or(0.0);
         let fee = payload_num(p, "fee").unwrap_or(0.0);
         let tax = payload_num(p, "tax").unwrap_or(0.0);
         let currency = payload_str(p, "currency").map(|s| s.to_string());
         let amount = match tx_type {
-            "deposit" | "dividend" | "interest" | "sell" | "transferIn" => {
-                qty * price - fee - tax
-            }
+            "deposit" | "dividend" | "interest" | "sell" | "transferIn" => qty * price - fee - tax,
             "buy" | "reinvest" => -(qty * price + fee + tax),
             "withdraw" | "fee" | "tax" | "liabilityPayment" | "transferOut" => {
                 -(qty * price + fee + tax)
@@ -712,7 +850,9 @@ async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, Ap
         std::collections::HashMap::new();
     let mut total = 0.0f64;
     for (asset_id, h) in holdings_obj {
-        let Some(asset) = asset_lookup.get(asset_id) else { continue };
+        let Some(asset) = asset_lookup.get(asset_id) else {
+            continue;
+        };
         let cost = h.get("cost_basis").and_then(|v| v.as_f64()).unwrap_or(0.0);
         let currency = h
             .get("currency")
@@ -821,8 +961,14 @@ mod tests {
             .unwrap()
             .with_timezone(&Utc);
         let rate = xirr(&[
-            CashFlow { when: t0, amount: -1000.0 },
-            CashFlow { when: t1, amount: 1100.0 },
+            CashFlow {
+                when: t0,
+                amount: -1000.0,
+            },
+            CashFlow {
+                when: t1,
+                amount: 1100.0,
+            },
         ])
         .unwrap();
         assert!((rate - 0.10).abs() < 1e-3, "rate = {rate}");
@@ -832,8 +978,14 @@ mod tests {
     fn xirr_returns_none_for_single_sign() {
         let t0 = Utc::now();
         let rate = xirr(&[
-            CashFlow { when: t0, amount: -1.0 },
-            CashFlow { when: t0 + Duration::days(30), amount: -2.0 },
+            CashFlow {
+                when: t0,
+                amount: -1.0,
+            },
+            CashFlow {
+                when: t0 + Duration::days(30),
+                amount: -2.0,
+            },
         ]);
         assert!(rate.is_none());
     }
@@ -850,8 +1002,39 @@ mod tests {
             "get_geo_breakdown",
             "get_market_cap_breakdown",
             "get_risk_alerts",
+            "propose_trade",
+            "propose_expense",
+            "propose_liability_payment",
+            "propose_account_create",
+            "propose_asset_valuation",
         ] {
             assert!(names.iter().any(|n| n == expected), "missing {expected}");
+        }
+    }
+
+    #[test]
+    fn propose_schemas_have_required_fields_marked() {
+        let by_name: std::collections::HashMap<String, ToolSchema> =
+            schemas().into_iter().map(|s| (s.name.clone(), s)).collect();
+        for (name, expected_required) in [
+            ("propose_trade", &["type", "quantity"][..]),
+            ("propose_expense", &["amount"][..]),
+            ("propose_liability_payment", &["amount"][..]),
+            ("propose_account_create", &["name", "type"][..]),
+            ("propose_asset_valuation", &["new_value"][..]),
+        ] {
+            let schema = by_name.get(name).expect(name);
+            let req = schema
+                .input_schema
+                .get("required")
+                .and_then(|v| v.as_array())
+                .unwrap_or_else(|| panic!("{name} missing required[]"));
+            for f in expected_required {
+                assert!(
+                    req.iter().any(|v| v.as_str() == Some(*f)),
+                    "{name} required[] missing {f}"
+                );
+            }
         }
     }
 }

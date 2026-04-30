@@ -18,6 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAssets => 'Assets';
 
   @override
+  String get navExpenses => 'Expenses';
+
+  @override
   String get navAnalytics => 'Analytics';
 
   @override

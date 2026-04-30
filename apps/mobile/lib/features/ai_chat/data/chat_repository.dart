@@ -117,7 +117,12 @@ class ChatRepository {
       role: ChatRole.assistant,
       content: '',
       status: ChatMessageStatus.streaming,
-      createdAt: DateTime.now().toUtc(),
+      // Force the assistant placeholder strictly after the user turn so
+      // the `ORDER BY created_at, id` sort never flips them when both
+      // inserts land on the same wall millisecond — UUIDs sort
+      // arbitrarily and on a fast machine the assistant id can land
+      // ahead of the user id.
+      createdAt: now.add(const Duration(milliseconds: 1)),
     );
     await _store.insertMessage(assistant);
 

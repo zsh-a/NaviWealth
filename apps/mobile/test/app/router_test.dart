@@ -72,9 +72,7 @@ Future<ProviderContainer> _pumpAt(
       // is available under `flutter_test`. Stub with an immediate empty
       // emission so the page resolves to its empty state instead of
       // spinning forever.
-      physicalAssetsListProvider.overrideWith(
-        (ref) => Stream.value(const []),
-      ),
+      physicalAssetsListProvider.overrideWith((ref) => Stream.value(const [])),
       // FIR-52's dashboard watches liabilities to render its allocation
       // card. Stub the live stream so the home page settles to its empty
       // snapshot instead of hanging on the database key store.
@@ -190,14 +188,16 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
+      // FIR-69 inserted Expenses at index 2, so Analytics moved to 3 and
+      // Settings to 4. Update the expectations alongside the router change.
       final container = await _pumpAt(tester, initialLocation: '/analytics');
       final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(bar.selectedIndex, 2);
+      expect(bar.selectedIndex, 3);
 
       container.read(appRouterProvider).go('/settings');
       await tester.pumpAndSettle();
       final updated = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(updated.selectedIndex, 3);
+      expect(updated.selectedIndex, 4);
     });
   });
 
