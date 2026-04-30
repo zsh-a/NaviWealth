@@ -50,6 +50,19 @@ const Set<AssetType> kManualValuationAssetTypes = {
   AssetType.wealthProduct,
 };
 
+/// Subset of [AssetType] whose canonical id is `<market>:<symbol>` (FIR-75)
+/// and which `SecuritiesAssetRepository.watchSecurities` lists by default.
+/// Anything outside this set either has no global symbol (cash / deposit /
+/// wealth product / real estate / vehicle) or is too freeform to lift into
+/// the catalog (custom, commodity).
+const Set<AssetType> kSecuritiesAssetTypes = {
+  AssetType.stock,
+  AssetType.etf,
+  AssetType.mutualFund,
+  AssetType.bond,
+  AssetType.crypto,
+};
+
 /// Single fact-table entry kind. Anything that mutates a holding or cash
 /// position must be one of these so reports can roll up cleanly.
 ///
