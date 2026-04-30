@@ -100,6 +100,31 @@ class TransactionRepository {
     return (await findById(tx.id))!;
   }
 
+  /// Soft-delete a transaction by id and enqueue a delete op. Used by the
+  /// FIR-67 propose-card 60s undo path, which knows the row id but not the
+  /// originally-created lots; lot bookkeeping is replayed by HoldingService
+  /// so dropping the transaction is sufficient.
+  Future<void> softDeleteById(String transactionId) async {
+    final stamp = await _stamper.stamp();
+    final companion = TransactionsCompanion(
+      updatedAt: Value(stamp.now),
+      updatedByDevice: Value(stamp.deviceId),
+      hlc: Value(stamp.hlc),
+      deletedAt: Value(stamp.now),
+    );
+    await _db.transaction(() async {
+      await (_db.update(_db.transactions)
+            ..where((t) => t.id.equals(transactionId)))
+          .write(companion);
+      await _enqueue(
+        opType: OpType.delete,
+        rowId: transactionId,
+        fields: null,
+        stamp: stamp,
+      );
+    });
+  }
+
   /// Soft-delete a transaction and enqueue a delete op.
   Future<void> deleteTrade(TransactionDeletePlan plan) async {
     final stamp = await _stamper.stamp();
