@@ -23,6 +23,7 @@ import '../features/auth/presentation/login_page.dart';
 import '../features/expense/ui/expense_categories_page.dart';
 import '../features/expense/ui/expense_form_page.dart';
 import '../features/expense/ui/expense_list_page.dart';
+import '../features/expense/ui/expense_report_page.dart';
 import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
@@ -214,6 +215,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'categories',
                 name: 'expense-categories',
                 builder: (context, state) => const ExpenseCategoriesPage(),
+              ),
+              GoRoute(
+                path: 'report',
+                name: 'expense-report',
+                builder: (context, state) => const ExpenseReportPage(),
               ),
               GoRoute(
                 path: ':expenseId',
