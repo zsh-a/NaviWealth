@@ -1,0 +1,23 @@
+symbol,market,type,currency,name_en,name_cn,aliases
+600519,cn_a,stock,CNY,Kweichow Moutai,贵州茅台,茅台 mt mtjt mtjituan
+000858,cn_a,stock,CNY,Wuliangye Yibin,五粮液,wly
+600036,cn_a,stock,CNY,China Merchants Bank,招商银行,zsyh cmb
+601398,cn_a,stock,CNY,Industrial and Commercial Bank of China,工商银行,icbc gsyh
+601318,cn_a,stock,CNY,Ping An Insurance,中国平安,pa pingan
+000001,cn_a,stock,CNY,Ping An Bank,平安银行,payh
+000002,cn_a,stock,CNY,China Vanke,万科A,vanke wk
+600276,cn_a,stock,CNY,Jiangsu Hengrui Pharmaceuticals,恒瑞医药,hr hryy
+600887,cn_a,stock,CNY,Inner Mongolia Yili Industrial Group,伊利股份,yili
+600030,cn_a,stock,CNY,CITIC Securities,中信证券,citic zxzq
+601012,cn_a,stock,CNY,LONGi Green Energy Technology,隆基绿能,longi
+300750,cn_a,stock,CNY,Contemporary Amperex Technology,宁德时代,catl ndsd
+300059,cn_a,stock,CNY,East Money Information,东方财富,dfcf
+000333,cn_a,stock,CNY,Midea Group,美的集团,md mdjt
+000651,cn_a,stock,CNY,Gree Electric Appliances,格力电器,gree gldq
+600519,cn_a,stock,CNY,Kweichow Moutai,贵州茅台,茅台 maotai
+510300,cn_a,etf,CNY,Huatai-PineBridge CSI 300 ETF,华泰柏瑞沪深300ETF,hs300 csi300
+510500,cn_a,etf,CNY,China Asset Management CSI 500 ETF,中证500ETF,csi500
+588000,cn_a,etf,CNY,Huatai-PineBridge STAR50 ETF,科创50ETF,star50
+512880,cn_a,etf,CNY,GF Securities ETF,证券ETF,securitiesetf
+512100,cn_a,etf,CNY,China Asset Management CSI 1000 ETF,中证1000ETF,csi1000
+510050,cn_a,etf,CNY,China Asset Management SSE 50 ETF,上证50ETF,sse50 sz50
