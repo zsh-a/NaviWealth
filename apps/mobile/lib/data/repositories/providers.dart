@@ -14,6 +14,7 @@ import 'expense_repository.dart';
 import 'fx_rate_repository.dart';
 import 'manual_asset_repository.dart';
 import 'mutation_context.dart';
+import 'securities_asset_repository.dart';
 
 /// FIFO outbox bound to the local database. Mirrors the engine's outbox so
 /// repos enqueue ops into the same row of the `op_outbox` table the
@@ -39,6 +40,17 @@ final manualAssetRepositoryProvider = FutureProvider<ManualAssetRepository>((
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
   return ManualAssetRepository(db: db, outbox: outbox, stamper: stamper);
+});
+
+/// FIR-75: securities-class assets (stock / ETF / fund / bond / crypto).
+/// Sibling to [manualAssetRepositoryProvider]; the two repos write into
+/// the same `assets` table but own different identity schemes.
+final securitiesAssetRepositoryProvider =
+    FutureProvider<SecuritiesAssetRepository>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final outbox = await ref.watch(outboxStoreProvider.future);
+  final stamper = await ref.watch(mutationStamperProvider.future);
+  return SecuritiesAssetRepository(db: db, outbox: outbox, stamper: stamper);
 });
 
 /// Live stream of all non-archived, non-deleted accounts. UIs watch this
