@@ -19,7 +19,7 @@ class AppConfig {
       defaultValue: 'http://127.0.0.1:8787',
     ),
     environment: AppEnvironment.dev,
-    bypassAuth: bool.fromEnvironment('BYPASS_AUTH', defaultValue: true),
+    bypassAuth: bool.fromEnvironment('BYPASS_AUTH', defaultValue: false),
   );
 }
 
