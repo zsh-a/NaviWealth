@@ -457,6 +457,28 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get settingsBaseCurrencyHint => '总览、资产分布、净资产趋势的汇总数字均以此币种展示。';
+
+  @override
+  String get settingsBaseCurrencySheetTitle => '选择基础货币';
+
+  @override
+  String dashboardCurrencyMismatchBanner(int count, String currency) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 项资产因缺少到 $currency 的汇率而未计入合计',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashboardCurrencyMismatchAction => '查看';
+
+  @override
+  String get dashboardCurrencyMismatchSheetTitle => '未计入合计的资产';
+
+  @override
   String get settingsAboutTitle => '关于 NaviWealth';
 
   @override
