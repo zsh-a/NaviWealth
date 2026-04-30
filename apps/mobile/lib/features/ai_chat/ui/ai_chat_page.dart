@@ -240,6 +240,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
         ),
         ChatComposer(
           isStreaming: turn.isStreaming,
+          isFlushing: turn.isFlushing,
           onSend: (text) {
             ref.read(chatControllerProvider(widget.sessionId).notifier).send(text);
           },
