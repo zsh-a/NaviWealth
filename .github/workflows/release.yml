@@ -83,6 +83,8 @@ jobs:
           sed -i -E "s/^version: .*/version: ${SEMVER}+${BUILD}/" pubspec.yaml
           grep '^version:' pubspec.yaml
       - run: flutter pub get
+      - name: Build CN web font subsets
+        run: bash tool/build-cn-fonts.sh
       - run: flutter build web --release --source-maps
       - name: Decode signing keystore
         if: env.KEYSTORE_BASE64 != ''
