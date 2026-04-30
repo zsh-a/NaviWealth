@@ -79,6 +79,11 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         title: const Text('支出'),
         actions: [
           IconButton(
+            tooltip: '月度报表',
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => context.go('/expenses/report'),
+          ),
+          IconButton(
             tooltip: '类目管理',
             icon: const Icon(Icons.category_outlined),
             onPressed: () => context.go('/expenses/categories'),
