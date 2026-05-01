@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
 import '../../design_system/charts/charts.dart';
+import '../../design_system/tokens/radius_tokens.dart';
 import '../../design_system/tokens/spacing_tokens.dart';
+import '../../design_system/widgets/skeleton.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/providers.dart';
 import 'domain/equity_allocation.dart';
@@ -404,9 +406,23 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: Spacing.s48),
-      child: Center(child: CircularProgressIndicator()),
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SkeletonBox(width: 120, height: 14),
+            SkeletonBox(width: 120, height: 18),
+          ],
+        ),
+        SizedBox(height: Spacing.s16),
+        SkeletonBox(height: 220, radius: Radii.sm),
+        SizedBox(height: Spacing.s16),
+        SkeletonBox(height: 56, radius: Radii.sm),
+        SizedBox(height: Spacing.s8),
+        SkeletonBox(height: 56, radius: Radii.sm),
+      ],
     );
   }
 }

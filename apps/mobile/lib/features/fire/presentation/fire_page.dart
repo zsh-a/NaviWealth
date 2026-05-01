@@ -33,7 +33,7 @@ class FirePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.fireAppBarTitle)),
       body: viewAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _FireSkeleton(),
         error: (e, _) => _ErrorState(
           message: l10n.fireLoadError('$e'),
           onRetry: () => ref.invalidate(fireDashboardViewProvider),
@@ -42,6 +42,65 @@ class FirePage extends ConsumerWidget {
             ? _ConfiguredBody(view: view)
             : const _UnconfiguredBody(),
       ),
+    );
+  }
+}
+
+class _FireSkeleton extends StatelessWidget {
+  const _FireSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: Spacing.pageMobile,
+      children: const [
+        SkeletonCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 120, height: 18),
+              SizedBox(height: Spacing.s12),
+              Center(
+                child: SkeletonBox(
+                  width: 200,
+                  height: 200,
+                  radius: Radii.full,
+                ),
+              ),
+              SizedBox(height: Spacing.s16),
+              SkeletonBox(height: 14),
+              SizedBox(height: Spacing.s4),
+              SkeletonBox(height: 14, width: 220),
+            ],
+          ),
+        ),
+        SizedBox(height: Spacing.s12),
+        SkeletonCard(
+          padding: Spacing.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 140, height: 16),
+              SizedBox(height: Spacing.s8),
+              SkeletonBox(width: 200, height: 28, radius: Radii.sm),
+              SizedBox(height: Spacing.s4),
+              SkeletonBox(width: 160, height: 12),
+            ],
+          ),
+        ),
+        SizedBox(height: Spacing.s12),
+        SkeletonCard(
+          padding: Spacing.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 160, height: 16),
+              SizedBox(height: Spacing.s12),
+              SkeletonBox(height: 180, radius: Radii.sm),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
