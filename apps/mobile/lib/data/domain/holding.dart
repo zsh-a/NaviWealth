@@ -11,7 +11,7 @@ part 'holding.freezed.dart';
 ///
 /// As a derived view, Holding has no [SyncMeta] of its own.
 @freezed
-class Holding with _$Holding {
+abstract class Holding with _$Holding {
   const factory Holding({
     required String accountId,
     required String assetId,

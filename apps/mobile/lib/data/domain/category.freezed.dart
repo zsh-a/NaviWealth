@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,248 +9,293 @@ part of 'category.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
 /// @nodoc
 mixin _$Category {
-  String get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  String? get parentId => throw _privateConstructorUsedError;
-  int? get sortOrder => throw _privateConstructorUsedError;
-  SyncMeta get sync => throw _privateConstructorUsedError;
 
-  /// Create a copy of Category
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $CategoryCopyWith<Category> get copyWith =>
-      throw _privateConstructorUsedError;
+ String get id; String get name; String? get parentId; int? get sortOrder; SyncMeta get sync;
+/// Create a copy of Category
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(this as Category, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,name,parentId,sortOrder,sync);
+
+@override
+String toString() {
+  return 'Category(id: $id, name: $name, parentId: $parentId, sortOrder: $sortOrder, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $CategoryCopyWith<$Res> {
-  factory $CategoryCopyWith(Category value, $Res Function(Category) then) =
-      _$CategoryCopyWithImpl<$Res, Category>;
-  @useResult
-  $Res call({
-    String id,
-    String name,
-    String? parentId,
-    int? sortOrder,
-    SyncMeta sync,
-  });
+abstract mixin class $CategoryCopyWith<$Res>  {
+  factory $CategoryCopyWith(Category value, $Res Function(Category) _then) = _$CategoryCopyWithImpl;
+@useResult
+$Res call({
+ String id, String name, String? parentId, int? sortOrder, SyncMeta sync
+});
 
-  $SyncMetaCopyWith<$Res> get sync;
+
+$SyncMetaCopyWith<$Res> get sync;
+
 }
-
 /// @nodoc
-class _$CategoryCopyWithImpl<$Res, $Val extends Category>
+class _$CategoryCopyWithImpl<$Res>
     implements $CategoryCopyWith<$Res> {
-  _$CategoryCopyWithImpl(this._value, this._then);
+  _$CategoryCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Category _self;
+  final $Res Function(Category) _then;
 
-  /// Create a copy of Category
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-    Object? parentId = freezed,
-    Object? sortOrder = freezed,
-    Object? sync = null,
-  }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            parentId: freezed == parentId
-                ? _value.parentId
-                : parentId // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            sortOrder: freezed == sortOrder
-                ? _value.sortOrder
-                : sortOrder // ignore: cast_nullable_to_non_nullable
-                      as int?,
-            sync: null == sync
-                ? _value.sync
-                : sync // ignore: cast_nullable_to_non_nullable
-                      as SyncMeta,
-          )
-          as $Val,
-    );
-  }
-
-  /// Create a copy of Category
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $SyncMetaCopyWith<$Res> get sync {
-    return $SyncMetaCopyWith<$Res>(_value.sync, (value) {
-      return _then(_value.copyWith(sync: value) as $Val);
-    });
-  }
+/// Create a copy of Category
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? parentId = freezed,Object? sortOrder = freezed,Object? sync = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
+as int?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
 }
-
-/// @nodoc
-abstract class _$$CategoryImplCopyWith<$Res>
-    implements $CategoryCopyWith<$Res> {
-  factory _$$CategoryImplCopyWith(
-    _$CategoryImpl value,
-    $Res Function(_$CategoryImpl) then,
-  ) = __$$CategoryImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({
-    String id,
-    String name,
-    String? parentId,
-    int? sortOrder,
-    SyncMeta sync,
+/// Create a copy of Category
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
+}
+}
 
-  @override
-  $SyncMetaCopyWith<$Res> get sync;
+
+/// Adds pattern-matching-related methods to [Category].
+extension CategoryPatterns on Category {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Category value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Category() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Category value)  $default,){
+final _that = this;
+switch (_that) {
+case _Category():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Category value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Category() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? parentId,  int? sortOrder,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Category() when $default != null:
+return $default(_that.id,_that.name,_that.parentId,_that.sortOrder,_that.sync);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? parentId,  int? sortOrder,  SyncMeta sync)  $default,) {final _that = this;
+switch (_that) {
+case _Category():
+return $default(_that.id,_that.name,_that.parentId,_that.sortOrder,_that.sync);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? parentId,  int? sortOrder,  SyncMeta sync)?  $default,) {final _that = this;
+switch (_that) {
+case _Category() when $default != null:
+return $default(_that.id,_that.name,_that.parentId,_that.sortOrder,_that.sync);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
-class __$$CategoryImplCopyWithImpl<$Res>
-    extends _$CategoryCopyWithImpl<$Res, _$CategoryImpl>
-    implements _$$CategoryImplCopyWith<$Res> {
-  __$$CategoryImplCopyWithImpl(
-    _$CategoryImpl _value,
-    $Res Function(_$CategoryImpl) _then,
-  ) : super(_value, _then);
 
-  /// Create a copy of Category
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-    Object? parentId = freezed,
-    Object? sortOrder = freezed,
-    Object? sync = null,
-  }) {
-    return _then(
-      _$CategoryImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        parentId: freezed == parentId
-            ? _value.parentId
-            : parentId // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        sortOrder: freezed == sortOrder
-            ? _value.sortOrder
-            : sortOrder // ignore: cast_nullable_to_non_nullable
-                  as int?,
-        sync: null == sync
-            ? _value.sync
-            : sync // ignore: cast_nullable_to_non_nullable
-                  as SyncMeta,
-      ),
-    );
-  }
+
+class _Category implements Category {
+  const _Category({required this.id, required this.name, this.parentId, this.sortOrder, required this.sync});
+  
+
+@override final  String id;
+@override final  String name;
+@override final  String? parentId;
+@override final  int? sortOrder;
+@override final  SyncMeta sync;
+
+/// Create a copy of Category
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CategoryCopyWith<_Category> get copyWith => __$CategoryCopyWithImpl<_Category>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,name,parentId,sortOrder,sync);
+
+@override
+String toString() {
+  return 'Category(id: $id, name: $name, parentId: $parentId, sortOrder: $sortOrder, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
+abstract mixin class _$CategoryCopyWith<$Res> implements $CategoryCopyWith<$Res> {
+  factory _$CategoryCopyWith(_Category value, $Res Function(_Category) _then) = __$CategoryCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String name, String? parentId, int? sortOrder, SyncMeta sync
+});
 
-class _$CategoryImpl implements _Category {
-  const _$CategoryImpl({
-    required this.id,
-    required this.name,
-    this.parentId,
-    this.sortOrder,
-    required this.sync,
+
+@override $SyncMetaCopyWith<$Res> get sync;
+
+}
+/// @nodoc
+class __$CategoryCopyWithImpl<$Res>
+    implements _$CategoryCopyWith<$Res> {
+  __$CategoryCopyWithImpl(this._self, this._then);
+
+  final _Category _self;
+  final $Res Function(_Category) _then;
+
+/// Create a copy of Category
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? parentId = freezed,Object? sortOrder = freezed,Object? sync = null,}) {
+  return _then(_Category(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
+as int?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
+}
+
+/// Create a copy of Category
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
-
-  @override
-  final String id;
-  @override
-  final String name;
-  @override
-  final String? parentId;
-  @override
-  final int? sortOrder;
-  @override
-  final SyncMeta sync;
-
-  @override
-  String toString() {
-    return 'Category(id: $id, name: $name, parentId: $parentId, sortOrder: $sortOrder, sync: $sync)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$CategoryImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.parentId, parentId) ||
-                other.parentId == parentId) &&
-            (identical(other.sortOrder, sortOrder) ||
-                other.sortOrder == sortOrder) &&
-            (identical(other.sync, sync) || other.sync == sync));
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, name, parentId, sortOrder, sync);
-
-  /// Create a copy of Category
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$CategoryImplCopyWith<_$CategoryImpl> get copyWith =>
-      __$$CategoryImplCopyWithImpl<_$CategoryImpl>(this, _$identity);
+}
 }
 
-abstract class _Category implements Category {
-  const factory _Category({
-    required final String id,
-    required final String name,
-    final String? parentId,
-    final int? sortOrder,
-    required final SyncMeta sync,
-  }) = _$CategoryImpl;
-
-  @override
-  String get id;
-  @override
-  String get name;
-  @override
-  String? get parentId;
-  @override
-  int? get sortOrder;
-  @override
-  SyncMeta get sync;
-
-  /// Create a copy of Category
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CategoryImplCopyWith<_$CategoryImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,339 +9,305 @@ part of 'account.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
 /// @nodoc
 mixin _$Account {
-  String get id => throw _privateConstructorUsedError;
-  AccountType get type => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  String get currency => throw _privateConstructorUsedError;
-  String? get institution => throw _privateConstructorUsedError;
-  String? get accountNumber => throw _privateConstructorUsedError;
-  String? get note => throw _privateConstructorUsedError;
-  bool get archived => throw _privateConstructorUsedError;
-  SyncMeta get sync => throw _privateConstructorUsedError;
 
-  /// Create a copy of Account
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $AccountCopyWith<Account> get copyWith => throw _privateConstructorUsedError;
+ String get id; AccountType get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived; SyncMeta get sync;
+/// Create a copy of Account
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AccountCopyWith<Account> get copyWith => _$AccountCopyWithImpl<Account>(this as Account, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,sync);
+
+@override
+String toString() {
+  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $AccountCopyWith<$Res> {
-  factory $AccountCopyWith(Account value, $Res Function(Account) then) =
-      _$AccountCopyWithImpl<$Res, Account>;
-  @useResult
-  $Res call({
-    String id,
-    AccountType type,
-    String name,
-    String currency,
-    String? institution,
-    String? accountNumber,
-    String? note,
-    bool archived,
-    SyncMeta sync,
-  });
+abstract mixin class $AccountCopyWith<$Res>  {
+  factory $AccountCopyWith(Account value, $Res Function(Account) _then) = _$AccountCopyWithImpl;
+@useResult
+$Res call({
+ String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, SyncMeta sync
+});
 
-  $SyncMetaCopyWith<$Res> get sync;
+
+$SyncMetaCopyWith<$Res> get sync;
+
 }
-
 /// @nodoc
-class _$AccountCopyWithImpl<$Res, $Val extends Account>
+class _$AccountCopyWithImpl<$Res>
     implements $AccountCopyWith<$Res> {
-  _$AccountCopyWithImpl(this._value, this._then);
+  _$AccountCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Account _self;
+  final $Res Function(Account) _then;
 
-  /// Create a copy of Account
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? type = null,
-    Object? name = null,
-    Object? currency = null,
-    Object? institution = freezed,
-    Object? accountNumber = freezed,
-    Object? note = freezed,
-    Object? archived = null,
-    Object? sync = null,
-  }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as AccountType,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            currency: null == currency
-                ? _value.currency
-                : currency // ignore: cast_nullable_to_non_nullable
-                      as String,
-            institution: freezed == institution
-                ? _value.institution
-                : institution // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            accountNumber: freezed == accountNumber
-                ? _value.accountNumber
-                : accountNumber // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            note: freezed == note
-                ? _value.note
-                : note // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            archived: null == archived
-                ? _value.archived
-                : archived // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            sync: null == sync
-                ? _value.sync
-                : sync // ignore: cast_nullable_to_non_nullable
-                      as SyncMeta,
-          )
-          as $Val,
-    );
-  }
-
-  /// Create a copy of Account
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $SyncMetaCopyWith<$Res> get sync {
-    return $SyncMetaCopyWith<$Res>(_value.sync, (value) {
-      return _then(_value.copyWith(sync: value) as $Val);
-    });
-  }
+/// Create a copy of Account
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? sync = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as AccountType,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,institution: freezed == institution ? _self.institution : institution // ignore: cast_nullable_to_non_nullable
+as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
+as bool,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
 }
-
-/// @nodoc
-abstract class _$$AccountImplCopyWith<$Res> implements $AccountCopyWith<$Res> {
-  factory _$$AccountImplCopyWith(
-    _$AccountImpl value,
-    $Res Function(_$AccountImpl) then,
-  ) = __$$AccountImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({
-    String id,
-    AccountType type,
-    String name,
-    String currency,
-    String? institution,
-    String? accountNumber,
-    String? note,
-    bool archived,
-    SyncMeta sync,
+/// Create a copy of Account
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
+}
+}
 
-  @override
-  $SyncMetaCopyWith<$Res> get sync;
+
+/// Adds pattern-matching-related methods to [Account].
+extension AccountPatterns on Account {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Account value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Account() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Account value)  $default,){
+final _that = this;
+switch (_that) {
+case _Account():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Account value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Account() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Account() when $default != null:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.sync);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  SyncMeta sync)  $default,) {final _that = this;
+switch (_that) {
+case _Account():
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.sync);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  SyncMeta sync)?  $default,) {final _that = this;
+switch (_that) {
+case _Account() when $default != null:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.sync);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
-class __$$AccountImplCopyWithImpl<$Res>
-    extends _$AccountCopyWithImpl<$Res, _$AccountImpl>
-    implements _$$AccountImplCopyWith<$Res> {
-  __$$AccountImplCopyWithImpl(
-    _$AccountImpl _value,
-    $Res Function(_$AccountImpl) _then,
-  ) : super(_value, _then);
 
-  /// Create a copy of Account
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? type = null,
-    Object? name = null,
-    Object? currency = null,
-    Object? institution = freezed,
-    Object? accountNumber = freezed,
-    Object? note = freezed,
-    Object? archived = null,
-    Object? sync = null,
-  }) {
-    return _then(
-      _$AccountImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as AccountType,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        currency: null == currency
-            ? _value.currency
-            : currency // ignore: cast_nullable_to_non_nullable
-                  as String,
-        institution: freezed == institution
-            ? _value.institution
-            : institution // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        accountNumber: freezed == accountNumber
-            ? _value.accountNumber
-            : accountNumber // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        note: freezed == note
-            ? _value.note
-            : note // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        archived: null == archived
-            ? _value.archived
-            : archived // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        sync: null == sync
-            ? _value.sync
-            : sync // ignore: cast_nullable_to_non_nullable
-                  as SyncMeta,
-      ),
-    );
-  }
+
+class _Account implements Account {
+  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, required this.sync});
+  
+
+@override final  String id;
+@override final  AccountType type;
+@override final  String name;
+@override final  String currency;
+@override final  String? institution;
+@override final  String? accountNumber;
+@override final  String? note;
+@override@JsonKey() final  bool archived;
+@override final  SyncMeta sync;
+
+/// Create a copy of Account
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AccountCopyWith<_Account> get copyWith => __$AccountCopyWithImpl<_Account>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,sync);
+
+@override
+String toString() {
+  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
+abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
+  factory _$AccountCopyWith(_Account value, $Res Function(_Account) _then) = __$AccountCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, SyncMeta sync
+});
 
-class _$AccountImpl implements _Account {
-  const _$AccountImpl({
-    required this.id,
-    required this.type,
-    required this.name,
-    required this.currency,
-    this.institution,
-    this.accountNumber,
-    this.note,
-    this.archived = false,
-    required this.sync,
+
+@override $SyncMetaCopyWith<$Res> get sync;
+
+}
+/// @nodoc
+class __$AccountCopyWithImpl<$Res>
+    implements _$AccountCopyWith<$Res> {
+  __$AccountCopyWithImpl(this._self, this._then);
+
+  final _Account _self;
+  final $Res Function(_Account) _then;
+
+/// Create a copy of Account
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? sync = null,}) {
+  return _then(_Account(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as AccountType,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,institution: freezed == institution ? _self.institution : institution // ignore: cast_nullable_to_non_nullable
+as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
+as bool,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
+}
+
+/// Create a copy of Account
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
-
-  @override
-  final String id;
-  @override
-  final AccountType type;
-  @override
-  final String name;
-  @override
-  final String currency;
-  @override
-  final String? institution;
-  @override
-  final String? accountNumber;
-  @override
-  final String? note;
-  @override
-  @JsonKey()
-  final bool archived;
-  @override
-  final SyncMeta sync;
-
-  @override
-  String toString() {
-    return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, sync: $sync)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$AccountImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.type, type) || other.type == type) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.currency, currency) ||
-                other.currency == currency) &&
-            (identical(other.institution, institution) ||
-                other.institution == institution) &&
-            (identical(other.accountNumber, accountNumber) ||
-                other.accountNumber == accountNumber) &&
-            (identical(other.note, note) || other.note == note) &&
-            (identical(other.archived, archived) ||
-                other.archived == archived) &&
-            (identical(other.sync, sync) || other.sync == sync));
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    type,
-    name,
-    currency,
-    institution,
-    accountNumber,
-    note,
-    archived,
-    sync,
-  );
-
-  /// Create a copy of Account
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$AccountImplCopyWith<_$AccountImpl> get copyWith =>
-      __$$AccountImplCopyWithImpl<_$AccountImpl>(this, _$identity);
+}
 }
 
-abstract class _Account implements Account {
-  const factory _Account({
-    required final String id,
-    required final AccountType type,
-    required final String name,
-    required final String currency,
-    final String? institution,
-    final String? accountNumber,
-    final String? note,
-    final bool archived,
-    required final SyncMeta sync,
-  }) = _$AccountImpl;
-
-  @override
-  String get id;
-  @override
-  AccountType get type;
-  @override
-  String get name;
-  @override
-  String get currency;
-  @override
-  String? get institution;
-  @override
-  String? get accountNumber;
-  @override
-  String? get note;
-  @override
-  bool get archived;
-  @override
-  SyncMeta get sync;
-
-  /// Create a copy of Account
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AccountImplCopyWith<_$AccountImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

@@ -62,7 +62,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     // without this the deep-linked page stays mounted under a logged-out
     // session until the next user-driven navigation.
     listenSelf((prev, next) {
-      if (prev?.valueOrNull.runtimeType == next.valueOrNull.runtimeType) {
+      if (prev?.value.runtimeType == next.value.runtimeType) {
         return;
       }
       _bumpRouterRedirect();
@@ -83,7 +83,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// AuthGuard parks navigation on a splash anyway, so requests aren't
   /// going out yet.
   AuthSession? currentSession() {
-    final value = state.valueOrNull;
+    final value = state.value;
     return value is AuthLoggedIn ? value.session : null;
   }
 

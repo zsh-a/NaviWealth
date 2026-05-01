@@ -8,7 +8,7 @@ import 'sync_meta.dart';
 part 'asset.freezed.dart';
 
 @freezed
-class Asset with _$Asset {
+abstract class Asset with _$Asset {
   // Required by freezed to host the static [idFor] helper alongside the
   // generated factory.
   const Asset._();

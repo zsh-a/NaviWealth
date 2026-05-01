@@ -15,7 +15,7 @@ part 'expense_category.freezed.dart';
 /// [SyncMeta.deletedAt] tombstone — archived rows still sync and can be
 /// restored by clearing [archivedAt]; tombstoned rows are gone.
 @freezed
-class ExpenseCategory with _$ExpenseCategory {
+abstract class ExpenseCategory with _$ExpenseCategory {
   const factory ExpenseCategory({
     required String id,
     required String name,

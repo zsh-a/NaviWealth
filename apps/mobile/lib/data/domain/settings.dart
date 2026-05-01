@@ -6,7 +6,7 @@ import 'sync_meta.dart';
 part 'settings.freezed.dart';
 
 @freezed
-class Settings with _$Settings {
+abstract class Settings with _$Settings {
   const factory Settings({
     required String userId,
     required String baseCurrency,

@@ -16,7 +16,7 @@ part 'expense.freezed.dart';
 /// `quantity` so a naive `SUM(quantity * price)` rolls cash flows up
 /// correctly without per-type sign-flipping.
 @freezed
-class Expense with _$Expense {
+abstract class Expense with _$Expense {
   const factory Expense({
     required String id,
     required String accountId,

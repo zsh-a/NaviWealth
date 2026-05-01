@@ -56,7 +56,7 @@ final _testRouterProvider = Provider.family<GoRouter, String>((ref, initial) {
   return GoRouter(
     initialLocation: initial,
     refreshListenable: ref.watch(routeRefreshListenableProvider),
-    redirect: (context, state) => routerRedirect(ref, context, state),
+    redirect: (context, state) => routerRedirect(ref.container, context, state),
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
       GoRoute(path: '/assets', builder: (_, _) => const _Marker('assets')),
@@ -165,7 +165,7 @@ void main() {
           pathParameters: const {},
           pageKey: const ValueKey('/assets'),
         );
-        return routerRedirect(ref, _NoopBuildContext(), state);
+        return routerRedirect(ref.container, _NoopBuildContext(), state);
       }),
     );
 

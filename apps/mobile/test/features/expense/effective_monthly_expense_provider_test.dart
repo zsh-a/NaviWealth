@@ -74,7 +74,9 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    // Wait for the expenses stream to deliver.
+    // Listen to keep the entire dependency chain alive.
+    final sub = container.listen(effectiveMonthlyExpenseProvider, (_, __) {});
+    addTearDown(sub.close);
     await container.read(expensesStreamProvider.future);
 
     final effective = container
@@ -94,6 +96,8 @@ void main() {
       expenses: const [],
     );
     addTearDown(container.dispose);
+    final sub = container.listen(effectiveMonthlyExpenseProvider, (_, __) {});
+    addTearDown(sub.close);
     await container.read(expensesStreamProvider.future);
 
     final effective = container
@@ -115,6 +119,8 @@ void main() {
       expenses: const [],
     );
     addTearDown(container.dispose);
+    final sub = container.listen(effectiveMonthlyExpenseProvider, (_, __) {});
+    addTearDown(sub.close);
     await container.read(expensesStreamProvider.future);
 
     final controller = container.read(

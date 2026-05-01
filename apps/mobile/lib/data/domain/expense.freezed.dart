@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,345 +9,311 @@ part of 'expense.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
 /// @nodoc
 mixin _$Expense {
-  String get id => throw _privateConstructorUsedError;
-  String get accountId => throw _privateConstructorUsedError;
-  String get categoryId => throw _privateConstructorUsedError;
-  Decimal get amount => throw _privateConstructorUsedError;
-  String get currency => throw _privateConstructorUsedError;
-  DateTime get tradeDate => throw _privateConstructorUsedError;
-  List<String> get tags => throw _privateConstructorUsedError;
-  String? get note => throw _privateConstructorUsedError;
-  SyncMeta get sync => throw _privateConstructorUsedError;
 
-  /// Create a copy of Expense
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ExpenseCopyWith<Expense> get copyWith => throw _privateConstructorUsedError;
+ String get id; String get accountId; String get categoryId; Decimal get amount; String get currency; DateTime get tradeDate; List<String> get tags; String? get note; SyncMeta get sync;
+/// Create a copy of Expense
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ExpenseCopyWith<Expense> get copyWith => _$ExpenseCopyWithImpl<Expense>(this as Expense, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,accountId,categoryId,amount,currency,tradeDate,const DeepCollectionEquality().hash(tags),note,sync);
+
+@override
+String toString() {
+  return 'Expense(id: $id, accountId: $accountId, categoryId: $categoryId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $ExpenseCopyWith<$Res> {
-  factory $ExpenseCopyWith(Expense value, $Res Function(Expense) then) =
-      _$ExpenseCopyWithImpl<$Res, Expense>;
-  @useResult
-  $Res call({
-    String id,
-    String accountId,
-    String categoryId,
-    Decimal amount,
-    String currency,
-    DateTime tradeDate,
-    List<String> tags,
-    String? note,
-    SyncMeta sync,
-  });
+abstract mixin class $ExpenseCopyWith<$Res>  {
+  factory $ExpenseCopyWith(Expense value, $Res Function(Expense) _then) = _$ExpenseCopyWithImpl;
+@useResult
+$Res call({
+ String id, String accountId, String categoryId, Decimal amount, String currency, DateTime tradeDate, List<String> tags, String? note, SyncMeta sync
+});
 
-  $SyncMetaCopyWith<$Res> get sync;
+
+$SyncMetaCopyWith<$Res> get sync;
+
 }
-
 /// @nodoc
-class _$ExpenseCopyWithImpl<$Res, $Val extends Expense>
+class _$ExpenseCopyWithImpl<$Res>
     implements $ExpenseCopyWith<$Res> {
-  _$ExpenseCopyWithImpl(this._value, this._then);
+  _$ExpenseCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Expense _self;
+  final $Res Function(Expense) _then;
 
-  /// Create a copy of Expense
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? accountId = null,
-    Object? categoryId = null,
-    Object? amount = null,
-    Object? currency = null,
-    Object? tradeDate = null,
-    Object? tags = null,
-    Object? note = freezed,
-    Object? sync = null,
-  }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            accountId: null == accountId
-                ? _value.accountId
-                : accountId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            categoryId: null == categoryId
-                ? _value.categoryId
-                : categoryId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            amount: null == amount
-                ? _value.amount
-                : amount // ignore: cast_nullable_to_non_nullable
-                      as Decimal,
-            currency: null == currency
-                ? _value.currency
-                : currency // ignore: cast_nullable_to_non_nullable
-                      as String,
-            tradeDate: null == tradeDate
-                ? _value.tradeDate
-                : tradeDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            tags: null == tags
-                ? _value.tags
-                : tags // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            note: freezed == note
-                ? _value.note
-                : note // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            sync: null == sync
-                ? _value.sync
-                : sync // ignore: cast_nullable_to_non_nullable
-                      as SyncMeta,
-          )
-          as $Val,
-    );
-  }
-
-  /// Create a copy of Expense
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $SyncMetaCopyWith<$Res> get sync {
-    return $SyncMetaCopyWith<$Res>(_value.sync, (value) {
-      return _then(_value.copyWith(sync: value) as $Val);
-    });
-  }
+/// Create a copy of Expense
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? accountId = null,Object? categoryId = null,Object? amount = null,Object? currency = null,Object? tradeDate = null,Object? tags = null,Object? note = freezed,Object? sync = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
+as String,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,tradeDate: null == tradeDate ? _self.tradeDate : tradeDate // ignore: cast_nullable_to_non_nullable
+as DateTime,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
+as List<String>,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
 }
-
-/// @nodoc
-abstract class _$$ExpenseImplCopyWith<$Res> implements $ExpenseCopyWith<$Res> {
-  factory _$$ExpenseImplCopyWith(
-    _$ExpenseImpl value,
-    $Res Function(_$ExpenseImpl) then,
-  ) = __$$ExpenseImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({
-    String id,
-    String accountId,
-    String categoryId,
-    Decimal amount,
-    String currency,
-    DateTime tradeDate,
-    List<String> tags,
-    String? note,
-    SyncMeta sync,
+/// Create a copy of Expense
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
+}
+}
 
-  @override
-  $SyncMetaCopyWith<$Res> get sync;
+
+/// Adds pattern-matching-related methods to [Expense].
+extension ExpensePatterns on Expense {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Expense value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Expense() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Expense value)  $default,){
+final _that = this;
+switch (_that) {
+case _Expense():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Expense value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Expense() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String accountId,  String categoryId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Expense() when $default != null:
+return $default(_that.id,_that.accountId,_that.categoryId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String accountId,  String categoryId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)  $default,) {final _that = this;
+switch (_that) {
+case _Expense():
+return $default(_that.id,_that.accountId,_that.categoryId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String accountId,  String categoryId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)?  $default,) {final _that = this;
+switch (_that) {
+case _Expense() when $default != null:
+return $default(_that.id,_that.accountId,_that.categoryId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
-class __$$ExpenseImplCopyWithImpl<$Res>
-    extends _$ExpenseCopyWithImpl<$Res, _$ExpenseImpl>
-    implements _$$ExpenseImplCopyWith<$Res> {
-  __$$ExpenseImplCopyWithImpl(
-    _$ExpenseImpl _value,
-    $Res Function(_$ExpenseImpl) _then,
-  ) : super(_value, _then);
 
-  /// Create a copy of Expense
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? accountId = null,
-    Object? categoryId = null,
-    Object? amount = null,
-    Object? currency = null,
-    Object? tradeDate = null,
-    Object? tags = null,
-    Object? note = freezed,
-    Object? sync = null,
-  }) {
-    return _then(
-      _$ExpenseImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        accountId: null == accountId
-            ? _value.accountId
-            : accountId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        categoryId: null == categoryId
-            ? _value.categoryId
-            : categoryId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        amount: null == amount
-            ? _value.amount
-            : amount // ignore: cast_nullable_to_non_nullable
-                  as Decimal,
-        currency: null == currency
-            ? _value.currency
-            : currency // ignore: cast_nullable_to_non_nullable
-                  as String,
-        tradeDate: null == tradeDate
-            ? _value.tradeDate
-            : tradeDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        tags: null == tags
-            ? _value._tags
-            : tags // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
-        note: freezed == note
-            ? _value.note
-            : note // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        sync: null == sync
-            ? _value.sync
-            : sync // ignore: cast_nullable_to_non_nullable
-                  as SyncMeta,
-      ),
-    );
-  }
+
+class _Expense implements Expense {
+  const _Expense({required this.id, required this.accountId, required this.categoryId, required this.amount, required this.currency, required this.tradeDate, final  List<String> tags = const <String>[], this.note, required this.sync}): _tags = tags;
+  
+
+@override final  String id;
+@override final  String accountId;
+@override final  String categoryId;
+@override final  Decimal amount;
+@override final  String currency;
+@override final  DateTime tradeDate;
+ final  List<String> _tags;
+@override@JsonKey() List<String> get tags {
+  if (_tags is EqualUnmodifiableListView) return _tags;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_tags);
+}
+
+@override final  String? note;
+@override final  SyncMeta sync;
+
+/// Create a copy of Expense
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ExpenseCopyWith<_Expense> get copyWith => __$ExpenseCopyWithImpl<_Expense>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,accountId,categoryId,amount,currency,tradeDate,const DeepCollectionEquality().hash(_tags),note,sync);
+
+@override
+String toString() {
+  return 'Expense(id: $id, accountId: $accountId, categoryId: $categoryId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
+abstract mixin class _$ExpenseCopyWith<$Res> implements $ExpenseCopyWith<$Res> {
+  factory _$ExpenseCopyWith(_Expense value, $Res Function(_Expense) _then) = __$ExpenseCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String accountId, String categoryId, Decimal amount, String currency, DateTime tradeDate, List<String> tags, String? note, SyncMeta sync
+});
 
-class _$ExpenseImpl implements _Expense {
-  const _$ExpenseImpl({
-    required this.id,
-    required this.accountId,
-    required this.categoryId,
-    required this.amount,
-    required this.currency,
-    required this.tradeDate,
-    final List<String> tags = const <String>[],
-    this.note,
-    required this.sync,
-  }) : _tags = tags;
 
-  @override
-  final String id;
-  @override
-  final String accountId;
-  @override
-  final String categoryId;
-  @override
-  final Decimal amount;
-  @override
-  final String currency;
-  @override
-  final DateTime tradeDate;
-  final List<String> _tags;
-  @override
-  @JsonKey()
-  List<String> get tags {
-    if (_tags is EqualUnmodifiableListView) return _tags;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_tags);
-  }
+@override $SyncMetaCopyWith<$Res> get sync;
 
-  @override
-  final String? note;
-  @override
-  final SyncMeta sync;
+}
+/// @nodoc
+class __$ExpenseCopyWithImpl<$Res>
+    implements _$ExpenseCopyWith<$Res> {
+  __$ExpenseCopyWithImpl(this._self, this._then);
 
-  @override
-  String toString() {
-    return 'Expense(id: $id, accountId: $accountId, categoryId: $categoryId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
-  }
+  final _Expense _self;
+  final $Res Function(_Expense) _then;
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ExpenseImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.accountId, accountId) ||
-                other.accountId == accountId) &&
-            (identical(other.categoryId, categoryId) ||
-                other.categoryId == categoryId) &&
-            (identical(other.amount, amount) || other.amount == amount) &&
-            (identical(other.currency, currency) ||
-                other.currency == currency) &&
-            (identical(other.tradeDate, tradeDate) ||
-                other.tradeDate == tradeDate) &&
-            const DeepCollectionEquality().equals(other._tags, _tags) &&
-            (identical(other.note, note) || other.note == note) &&
-            (identical(other.sync, sync) || other.sync == sync));
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    accountId,
-    categoryId,
-    amount,
-    currency,
-    tradeDate,
-    const DeepCollectionEquality().hash(_tags),
-    note,
-    sync,
-  );
-
-  /// Create a copy of Expense
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ExpenseImplCopyWith<_$ExpenseImpl> get copyWith =>
-      __$$ExpenseImplCopyWithImpl<_$ExpenseImpl>(this, _$identity);
+/// Create a copy of Expense
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? accountId = null,Object? categoryId = null,Object? amount = null,Object? currency = null,Object? tradeDate = null,Object? tags = null,Object? note = freezed,Object? sync = null,}) {
+  return _then(_Expense(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
+as String,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,tradeDate: null == tradeDate ? _self.tradeDate : tradeDate // ignore: cast_nullable_to_non_nullable
+as DateTime,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
+as List<String>,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
 }
 
-abstract class _Expense implements Expense {
-  const factory _Expense({
-    required final String id,
-    required final String accountId,
-    required final String categoryId,
-    required final Decimal amount,
-    required final String currency,
-    required final DateTime tradeDate,
-    final List<String> tags,
-    final String? note,
-    required final SyncMeta sync,
-  }) = _$ExpenseImpl;
-
-  @override
-  String get id;
-  @override
-  String get accountId;
-  @override
-  String get categoryId;
-  @override
-  Decimal get amount;
-  @override
-  String get currency;
-  @override
-  DateTime get tradeDate;
-  @override
-  List<String> get tags;
-  @override
-  String? get note;
-  @override
-  SyncMeta get sync;
-
-  /// Create a copy of Expense
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ExpenseImplCopyWith<_$ExpenseImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+/// Create a copy of Expense
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
+  });
 }
+}
+
+// dart format on

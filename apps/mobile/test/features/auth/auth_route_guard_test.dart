@@ -45,27 +45,13 @@ GoRouter _buildRouter(ProviderContainer container, String initial) {
     initialLocation: initial,
     refreshListenable: container.read(routeRefreshListenableProvider),
     redirect: (context, state) =>
-        routerRedirect(_RefRoot(container), context, state),
+        routerRedirect(container, context, state),
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
       GoRoute(path: '/assets', builder: (_, _) => const _Marker('assets')),
       GoRoute(path: '/login', builder: (_, _) => const _Marker('login')),
     ],
   );
-}
-
-/// Adapter so we can pass a [ProviderContainer] where a [Ref] is expected.
-class _RefRoot implements Ref {
-  _RefRoot(this._container);
-  final ProviderContainer _container;
-  @override
-  T read<T>(ProviderListenable<T> p) => _container.read(p);
-  @override
-  T watch<T>(ProviderListenable<T> p) => _container.read(p);
-  @override
-  dynamic noSuchMethod(Invocation invocation) {
-    throw UnimplementedError('only read/watch are supported in tests');
-  }
 }
 
 Future<GoRouter> _pump(

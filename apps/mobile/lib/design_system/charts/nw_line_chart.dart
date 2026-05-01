@@ -216,7 +216,7 @@ class NwLineChart extends StatelessWidget {
       enabled: true,
       touchTooltipData: LineTouchTooltipData(
         getTooltipColor: (_) => palette.tooltipBackground,
-        tooltipRoundedRadius: 6,
+        tooltipBorderRadius: BorderRadius.circular(6),
         tooltipPadding: const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 6,

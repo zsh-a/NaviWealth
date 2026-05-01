@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart';
@@ -140,7 +141,7 @@ final rebalancePlanProvider = Provider<RebalancePlan?>((ref) {
   final target = ref.watch(targetAllocationProvider);
   final engine = ref.watch(rebalanceEngineProvider);
 
-  final snapshot = snapshotAsync.valueOrNull;
+  final snapshot = snapshotAsync.value;
   if (snapshot == null || snapshot.isEmpty) return null;
 
   return engine.compute(snapshot: snapshot, target: target);

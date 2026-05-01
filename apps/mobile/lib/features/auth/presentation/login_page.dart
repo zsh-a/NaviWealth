@@ -88,7 +88,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final authState = ref.watch(authControllerProvider).valueOrNull;
+    final authState = ref.watch(authControllerProvider).value;
     // Banner is purely informational — once the user types anything we
     // suppress it (cleared on submit) so the form doesn't keep nagging.
     final showExpiredBanner = _lastErrorKind == null &&

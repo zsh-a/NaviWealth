@@ -10,7 +10,7 @@ part 'amortization_entry.freezed.dart';
 /// rows so the user can edit individual payments (early payoff, skipped
 /// month, etc.) and have those edits sync.
 @freezed
-class AmortizationEntry with _$AmortizationEntry {
+abstract class AmortizationEntry with _$AmortizationEntry {
   const factory AmortizationEntry({
     required String id,
     required String liabilityId,

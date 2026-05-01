@@ -32,7 +32,7 @@ void main() {
       // Stream.empty() completes immediately with no values; depending on
       // event-loop ordering Riverpod may show loading or done-without-value.
       expect(value.hasError, isFalse);
-      expect(value.valueOrNull, isNull);
+      expect(value.value, isNull);
     });
   });
 }

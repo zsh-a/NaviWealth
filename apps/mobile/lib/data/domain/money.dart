@@ -12,7 +12,7 @@ part 'money.freezed.dart';
 /// converters per table and (b) reporting queries need to group by currency
 /// in SQL. This class is the in-memory representation only.
 @freezed
-class Money with _$Money {
+abstract class Money with _$Money {
   const factory Money({required Decimal amount, required String currency}) =
       _Money;
 

@@ -17,7 +17,7 @@ class DevicesNotifier extends AsyncNotifier<DevicesResponse> {
   @override
   Future<DevicesResponse> build() async {
     final auth = ref.watch(authControllerProvider);
-    final session = switch (auth.valueOrNull) {
+    final session = switch (auth.value) {
       AuthLoggedIn(:final session) => session,
       _ => null,
     };
