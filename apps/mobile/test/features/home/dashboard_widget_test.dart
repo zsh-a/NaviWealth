@@ -10,6 +10,7 @@ import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
@@ -75,6 +76,9 @@ ProviderScope _wrap({
       ),
       liabilitiesStreamProvider.overrideWith(
         (ref) => Stream.value(liabilities),
+      ),
+      fxRatesStreamProvider.overrideWith(
+        (ref) => Stream<List<FxRate>>.value(const []),
       ),
     ],
     child: MaterialApp(

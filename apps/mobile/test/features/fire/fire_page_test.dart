@@ -9,6 +9,7 @@ import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/fire/data/fire_goal_preferences.dart';
 import 'package:naviwealth/features/fire/domain/fire_goal.dart';
@@ -49,6 +50,9 @@ Future<Widget> _wrap({
       ),
       liabilitiesStreamProvider.overrideWith(
         (ref) => Stream.value(const []),
+      ),
+      fxRatesStreamProvider.overrideWith(
+        (ref) => Stream<List<FxRate>>.value(const []),
       ),
     ],
     child: MaterialApp(
@@ -143,6 +147,9 @@ void main() {
           ),
           liabilitiesStreamProvider.overrideWith(
             (ref) => Stream.value(const []),
+          ),
+          fxRatesStreamProvider.overrideWith(
+            (ref) => Stream<List<FxRate>>.value(const []),
           ),
         ],
         child: MaterialApp(
