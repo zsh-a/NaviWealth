@@ -46,6 +46,8 @@ const String defaultDbFileName = 'naviwealth.db';
     MarketQuotes,
     MarketHistoryBars,
     MarketSymbolSearches,
+    SecuritiesCatalog,
+    SecuritiesCatalogMeta,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -80,8 +82,14 @@ class AppDatabase extends _$AppDatabase {
   ///    (synthesized in-memory by the trade entry form). The migration
   ///    rewrites `transactions.asset_id` to the canonical `<market>:<symbol>`
   ///    form so holdings replay continues to join cleanly.
+  ///  - v7 (FIR-76) — Local securities seed catalog + FTS5 index. Adds
+  ///    `securities_catalog`, `securities_catalog_meta` and a contentless
+  ///    `securities_catalog_fts` virtual table. The catalog is populated
+  ///    on first launch from a versioned asset bundle (see
+  ///    `SecuritiesCatalogLoader`); it is local-only and does not
+  ///    participate in OpLog sync.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -90,6 +98,8 @@ class AppDatabase extends _$AppDatabase {
       await _createIndexes(this);
       await _createSyncTables(this);
       await _createChatTables(this);
+      await _createSecuritiesCatalogFts(this);
+      await _createSecuritiesCatalogIndexes(this);
     },
     onUpgrade: (m, from, to) async {
       for (var v = from + 1; v <= to; v++) {
@@ -110,6 +120,11 @@ class AppDatabase extends _$AppDatabase {
           case 6:
             await _createSecuritiesAssetIndexes(this);
             await backfillSecuritiesAssetsFromTransactions(this);
+          case 7:
+            await m.createTable(securitiesCatalog);
+            await m.createTable(securitiesCatalogMeta);
+            await _createSecuritiesCatalogFts(this);
+            await _createSecuritiesCatalogIndexes(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -426,6 +441,74 @@ bool _looksLikeCanonicalAssetId(String id) {
   if (colon <= 0) return false;
   final prefix = id.substring(0, colon);
   return assetMarketFromWire(prefix) != null;
+}
+
+/// FIR-76 — contentless FTS5 index over the seed catalog. We use
+/// `content=''` (a.k.a. "contentless table") so the FTS rows hold only
+/// the inverted index, never the source columns; the loader keeps the
+/// FTS rowids in lock-step with [SecuritiesCatalog] rowids so a
+/// `SELECT ... JOIN securities_catalog ON ...` brings the original
+/// fields back. Two reasons we picked contentless over external content:
+///
+///   - We rebuild the catalog atomically from the asset bundle, so an
+///     external `content='securities_catalog'` table (which delegates
+///     `SELECT *` back to the source table by rowid) buys us nothing
+///     beyond the same join we'd write anyway.
+///   - We sidestep FTS5 triggers entirely. Trigger-driven sync is fragile
+///     under bulk inserts (the dump/reload path would fire 10k×3
+///     triggers); the loader inserts both tables explicitly inside a
+///     single transaction and stays predictable.
+///
+/// Tokenizer: `unicode61 remove_diacritics 2` — folds case, strips most
+/// diacritics, and treats CJK runs as letters so a Chinese name still
+/// indexes as a single token. Chinese sub-string matching (e.g. typing
+/// `茅台` against `贵州茅台`) is handled at search time by the
+/// `aliases` column rather than by an exotic CJK tokenizer.
+const List<String> _securitiesCatalogFtsStmts = [
+  '''
+CREATE VIRTUAL TABLE IF NOT EXISTS securities_catalog_fts USING fts5(
+  symbol,
+  name_en,
+  name_cn,
+  pinyin,
+  pinyin_initials,
+  aliases,
+  content='',
+  tokenize='unicode61 remove_diacritics 2'
+)
+''',
+];
+
+Future<void> _createSecuritiesCatalogFts(AppDatabase db) async {
+  for (final stmt in _securitiesCatalogFtsStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+const List<String> _securitiesCatalogIndexStmts = [
+  // Catalog reads are dominated by exact and prefix lookups on the four
+  // canonical columns. Prefix `LIKE 'q%'` queries on a TEXT column can
+  // use a regular index when the collation matches the search casing —
+  // the loader writes lower-cased values into these columns, so the
+  // default BINARY collation is sufficient.
+  'CREATE INDEX IF NOT EXISTS idx_securities_catalog_symbol '
+      'ON securities_catalog(symbol)',
+  'CREATE INDEX IF NOT EXISTS idx_securities_catalog_name_en '
+      'ON securities_catalog(name_en)',
+  'CREATE INDEX IF NOT EXISTS idx_securities_catalog_name_cn '
+      'ON securities_catalog(name_cn)',
+  'CREATE INDEX IF NOT EXISTS idx_securities_catalog_pinyin '
+      'ON securities_catalog(pinyin)',
+  'CREATE INDEX IF NOT EXISTS idx_securities_catalog_pinyin_initials '
+      'ON securities_catalog(pinyin_initials)',
+  'CREATE INDEX IF NOT EXISTS idx_securities_catalog_market '
+      'ON securities_catalog(market)',
+];
+
+Future<void> _createSecuritiesCatalogIndexes(AppDatabase db) async {
+  for (final stmt in _securitiesCatalogIndexStmts) {
+    await db.customStatement(stmt);
+  }
 }
 
 /// Conservative default: A-shares / HK / US all map to plain stock; the

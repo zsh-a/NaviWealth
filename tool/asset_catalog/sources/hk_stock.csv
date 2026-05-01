@@ -1,0 +1,14 @@
+symbol,market,type,currency,name_en,name_cn,aliases
+0700.HK,hk_stock,stock,HKD,Tencent Holdings,腾讯控股,tencent tx tencentholdings
+9988.HK,hk_stock,stock,HKD,Alibaba Group,阿里巴巴,alibaba ali baba
+3690.HK,hk_stock,stock,HKD,Meituan,美团,meituan mt
+1810.HK,hk_stock,stock,HKD,Xiaomi,小米集团,xiaomi xm xmjt
+2318.HK,hk_stock,stock,HKD,Ping An Insurance H,中国平安H,pingan pa
+0388.HK,hk_stock,stock,HKD,Hong Kong Exchanges and Clearing,香港交易所,hkex xgjys
+0939.HK,hk_stock,stock,HKD,China Construction Bank H,建设银行H,ccb jsyh
+2628.HK,hk_stock,stock,HKD,China Life Insurance H,中国人寿H,clife zgrs
+1288.HK,hk_stock,stock,HKD,Agricultural Bank of China H,农业银行H,abc nyyh
+1398.HK,hk_stock,stock,HKD,ICBC H,工商银行H,icbc gsyh
+0005.HK,hk_stock,stock,HKD,HSBC Holdings,汇丰控股,hsbc hf
+2800.HK,hk_stock,etf,HKD,Tracker Fund of Hong Kong,盈富基金,tracker yfjj
+3033.HK,hk_stock,etf,HKD,CSOP Hang Seng TECH ETF,恒生科技ETF,hstech

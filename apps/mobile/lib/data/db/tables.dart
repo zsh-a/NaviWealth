@@ -367,3 +367,75 @@ class MarketSymbolSearches extends Table {
   @override
   Set<Column<Object>> get primaryKey => {query, source};
 }
+
+/// FIR-76 — read-only seed catalog of major securities (A-shares full set,
+/// HK / US majors, popular ETFs). The trade-entry search hits this table
+/// first so a fresh install with zero recorded transactions still finds
+/// the user's instrument by symbol, English name, Chinese name, full
+/// pinyin or pinyin initials.
+///
+/// Deliberately *not* a [SyncableTable]:
+///   - The catalog is a market dictionary, not user data — every device
+///     has the same rows, derived from a pinned source bundle.
+///   - Rebuilding it on demand from a versioned asset is cheaper than
+///     replicating ~10k rows through the OpLog.
+///   - Excluding it from sync also lets us iterate the schema (new
+///     fields, finer-grained tokens) without burning HLC budget.
+///
+/// `id` follows the `Asset.idFor` grammar (`<market>:<symbol>`) so a
+/// catalog hit can be hoisted into the synced `assets` table without
+/// remapping ids when the user records their first trade.
+@DataClassName('SecuritiesCatalogRow')
+class SecuritiesCatalog extends Table {
+  TextColumn get id => text()();
+  TextColumn get symbol => text()();
+
+  /// Wire-form market label (`cn_a`, `us_stock`, …). Matches the value
+  /// space `assets.market` uses, so dedupe by `(market, symbol)` against
+  /// owned assets is a plain string compare and never has to round-trip
+  /// through `AssetMarket`.
+  TextColumn get market => text()();
+  TextColumn get type =>
+      text().map(const EnumStringConverter(AssetType.values))();
+  TextColumn get currency => text().withLength(min: 3, max: 8)();
+  TextColumn get nameEn => text().nullable()();
+  TextColumn get nameCn => text().nullable()();
+
+  /// Lower-cased full pinyin without tone marks, no separators
+  /// (e.g. `guizhoumaotai`). Matches typed-as-pinyin queries
+  /// (`gzmaotai`, `kweichowmoutai`).
+  TextColumn get pinyin => text().nullable()();
+
+  /// Pinyin initials, no separators (e.g. `gzmt`). Matches the very
+  /// common abbreviated-pinyin search style.
+  TextColumn get pinyinInitials => text().nullable()();
+
+  /// Whitespace-separated bag of additional searchable terms — common
+  /// short forms, English aliases, ticker variants. Indexed by FTS5 like
+  /// any other column; kept out of the four canonical name fields so
+  /// rank doesn't get diluted on exact lookups.
+  TextColumn get aliases => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// FIR-76 — singleton row that pins which version of the seed catalog is
+/// currently materialised in [SecuritiesCatalog]. The loader compares
+/// the bundled catalog's version + checksum against this row before
+/// touching the catalog table; a no-change reload is a free no-op.
+///
+/// Singleton convention: `id` is always `1`. We use an explicit row
+/// rather than a key/value blob so a botched upgrade can be inspected
+/// (or dumped) with a single `SELECT * FROM securities_catalog_meta`.
+@DataClassName('SecuritiesCatalogMetaRow')
+class SecuritiesCatalogMeta extends Table {
+  IntColumn get id => integer()();
+  TextColumn get version => text()();
+  TextColumn get checksum => text()();
+  IntColumn get rowCount => integer()();
+  DateTimeColumn get loadedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

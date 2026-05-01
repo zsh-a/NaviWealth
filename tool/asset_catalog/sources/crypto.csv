@@ -1,0 +1,15 @@
+symbol,market,type,currency,name_en,name_cn,aliases
+BTC-USD,crypto,crypto,USD,Bitcoin,比特币,bitcoin btc
+ETH-USD,crypto,crypto,USD,Ethereum,以太坊,ethereum eth
+USDT-USD,crypto,crypto,USD,Tether USD,泰达币,tether usdt
+USDC-USD,crypto,crypto,USD,USD Coin,USD Coin,usdc
+BNB-USD,crypto,crypto,USD,BNB,币安币,binance bnb
+SOL-USD,crypto,crypto,USD,Solana,索拉纳,solana sol
+XRP-USD,crypto,crypto,USD,XRP,瑞波币,xrp ripple
+ADA-USD,crypto,crypto,USD,Cardano,卡尔达诺,cardano ada
+DOGE-USD,crypto,crypto,USD,Dogecoin,狗狗币,dogecoin doge
+TRX-USD,crypto,crypto,USD,TRON,波场,tron trx
+AVAX-USD,crypto,crypto,USD,Avalanche,雪崩,avalanche avax
+DOT-USD,crypto,crypto,USD,Polkadot,波卡,polkadot dot
+LINK-USD,crypto,crypto,USD,Chainlink,链接,chainlink link
+LTC-USD,crypto,crypto,USD,Litecoin,莱特币,litecoin ltc

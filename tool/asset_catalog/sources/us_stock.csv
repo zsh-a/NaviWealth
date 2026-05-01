@@ -1,0 +1,30 @@
+symbol,market,type,currency,name_en,name_cn,aliases
+AAPL,us_stock,stock,USD,Apple Inc.,苹果公司,apple pg pingguo
+MSFT,us_stock,stock,USD,Microsoft Corporation,微软,microsoft wr
+GOOGL,us_stock,stock,USD,Alphabet Inc. Class A,谷歌A,google alphabet
+GOOG,us_stock,stock,USD,Alphabet Inc. Class C,谷歌C,google alphabet
+AMZN,us_stock,stock,USD,Amazon.com Inc.,亚马逊,amazon ymx
+META,us_stock,stock,USD,Meta Platforms Inc.,Meta平台,facebook fb meta
+NVDA,us_stock,stock,USD,NVIDIA Corporation,英伟达,nvidia ywd
+TSLA,us_stock,stock,USD,Tesla Inc.,特斯拉,tesla tsl
+NFLX,us_stock,stock,USD,Netflix Inc.,奈飞,netflix nf
+JPM,us_stock,stock,USD,JPMorgan Chase,摩根大通,jpmorgan jpm
+BRK,us_stock,stock,USD,Berkshire Hathaway B,伯克希尔哈撒韦B,berkshire bks bk
+V,us_stock,stock,USD,Visa Inc.,Visa,visa vs
+MA,us_stock,stock,USD,Mastercard Inc.,万事达卡,mastercard wsd
+WMT,us_stock,stock,USD,Walmart Inc.,沃尔玛,walmart wem
+DIS,us_stock,stock,USD,The Walt Disney Company,迪士尼,disney dsn
+KO,us_stock,stock,USD,The Coca-Cola Company,可口可乐,cocacola kkkl
+PEP,us_stock,stock,USD,PepsiCo Inc.,百事可乐,pepsi bskl
+PFE,us_stock,stock,USD,Pfizer Inc.,辉瑞,pfizer hr
+JNJ,us_stock,stock,USD,Johnson & Johnson,强生,johnson qs
+SPY,us_stock,etf,USD,SPDR S&P 500 ETF Trust,标普500 ETF,sp500 spdr
+QQQ,us_stock,etf,USD,Invesco QQQ Trust,纳斯达克100 ETF,nasdaq nasdaq100
+VOO,us_stock,etf,USD,Vanguard S&P 500 ETF,先锋标普500,vanguard
+VTI,us_stock,etf,USD,Vanguard Total Stock Market ETF,先锋全市场,vanguard
+IWM,us_stock,etf,USD,iShares Russell 2000 ETF,罗素2000 ETF,russell rs2000
+EFA,us_stock,etf,USD,iShares MSCI EAFE ETF,MSCI EAFE,msci eafe
+EEM,us_stock,etf,USD,iShares MSCI Emerging Markets ETF,MSCI新兴市场,msci em xxsc
+GLD,us_stock,etf,USD,SPDR Gold Shares,黄金 ETF,gold hj
+TLT,us_stock,etf,USD,iShares 20+ Year Treasury Bond ETF,长期国债 ETF,treasury gz
+ARKK,us_stock,etf,USD,ARK Innovation ETF,ARK 创新 ETF,ark cathie
