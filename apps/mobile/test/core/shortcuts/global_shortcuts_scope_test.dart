@@ -43,7 +43,7 @@ void main() {
           _wrap(
             GlobalShortcutsScope(
               onSwitchPrimaryTab: dispatched.add,
-              onOpenCommandPalette: () {},
+              onOpenCommandPalette: (_) {},
               child: const Scaffold(
                 body: Focus(autofocus: true, child: SizedBox()),
               ),
@@ -66,7 +66,7 @@ void main() {
           _wrap(
             GlobalShortcutsScope(
               onSwitchPrimaryTab: (_) {},
-              onOpenCommandPalette: () => called++,
+              onOpenCommandPalette: (_) => called++,
               child: const Scaffold(
                 body: Focus(autofocus: true, child: SizedBox()),
               ),
@@ -95,7 +95,7 @@ void main() {
           _wrap(
             GlobalShortcutsScope(
               onSwitchPrimaryTab: dispatched.add,
-              onOpenCommandPalette: () {},
+              onOpenCommandPalette: (_) {},
               child: Scaffold(
                 body: Center(
                   child: TextField(controller: controller, autofocus: true),
@@ -128,7 +128,7 @@ void main() {
             supportedLocales: AppLocalizations.supportedLocales,
             home: GlobalShortcutsScope(
               onSwitchPrimaryTab: (_) {},
-              onOpenCommandPalette: () {},
+              onOpenCommandPalette: (_) {},
               child: const Scaffold(body: SizedBox.expand()),
             ),
           ),
@@ -166,7 +166,7 @@ void main() {
         _wrap(
           GlobalShortcutsScope(
             onSwitchPrimaryTab: dispatched.add,
-            onOpenCommandPalette: () {},
+            onOpenCommandPalette: (_) {},
             child: const Scaffold(
               body: Focus(autofocus: true, child: SizedBox()),
             ),
