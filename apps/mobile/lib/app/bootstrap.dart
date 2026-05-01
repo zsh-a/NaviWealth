@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,6 +90,26 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 
   if (kDebugMode) {
     logger.i('NaviWealth bootstrap complete (${logger.environment.name})');
+    logger.i('API_BASE_URL: ${effectiveConfig.apiBaseUrl}');
+
+    // Network connectivity diagnostic
+    final testDio = Dio(BaseOptions(
+      baseUrl: effectiveConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 5),
+    ));
+    try {
+      final resp = await testDio.get('/health');
+      logger.i('Backend health check: ${resp.statusCode} ${resp.data}');
+    } on DioException catch (e) {
+      logger.e(
+        'Backend health check FAILED',
+        error: e,
+        stackTrace: StackTrace.current,
+      );
+      logger.e('  type: ${e.type}');
+      logger.e('  message: ${e.message}');
+      logger.e('  error: ${e.error}');
+    }
   }
   return container;
 }

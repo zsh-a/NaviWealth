@@ -20,6 +20,7 @@ fn main() {
     });
 
     let execute = args.iter().any(|a| a == "--execute");
+    let local = args.iter().any(|a| a == "--local");
     let password = get_arg(&args, "--password").unwrap_or_else(|| {
         rpassword::prompt_password("Password: ").expect("Failed to read password")
     });
@@ -48,12 +49,21 @@ fn main() {
             "INSERT INTO users (id, email, password_hash) VALUES ('{}', '{}', '{}');",
             user_id, email_normalized, password_hash
         );
+        let target = if local { "local" } else { "remote" };
         println!(
-            "\nExecuting against D1 (from {})...",
+            "\nExecuting against D1 {} (from {})...",
+            target,
             backend_dir.display()
         );
+        let mut cmd_args = vec!["d1", "execute", "naviwealth"];
+        if local {
+            cmd_args.push("--local");
+        } else {
+            cmd_args.push("--remote");
+        }
+        cmd_args.extend(["--command", &sql]);
         let status = Command::new("wrangler")
-            .args(["d1", "execute", "naviwealth", "--remote", "--command", &sql])
+            .args(&cmd_args)
             .current_dir(&backend_dir)
             .status()
             .expect("Failed to run wrangler. Is it installed?");
@@ -64,7 +74,7 @@ fn main() {
             std::process::exit(1);
         }
     } else {
-        println!("\nTo execute against D1, re-run with --execute");
+        println!("\nTo execute against D1, re-run with --execute [--local]");
     }
 }
 
@@ -118,12 +128,13 @@ fn get_arg(args: &[String], name: &str) -> Option<String> {
 
 fn print_usage() {
     eprintln!(
-        "Usage: register-user --email <EMAIL> [--password <PASSWORD>] [--execute]
+        "Usage: register-user --email <EMAIL> [--password <PASSWORD>] [--execute] [--local]
 
 Options:
   --email <EMAIL>          User email (required)
   --password <PASSWORD>    Password (prompted interactively if omitted)
   --execute                Run the INSERT against D1 via wrangler
+  --local                  Use local D1 database (default: remote)
   -h, --help               Show this help"
     );
 }
