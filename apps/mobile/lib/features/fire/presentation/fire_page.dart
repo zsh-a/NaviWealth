@@ -160,13 +160,17 @@ class _ConfiguredBody extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters =
         ref.watch(appFormattersProvider(Localizations.localeOf(context)));
-    return ListView(
-      padding: Spacing.pageMobile,
+    final left = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ProgressHeaderCard(view: view, formatters: formatters),
         const SizedBox(height: Spacing.s12),
         _CountdownCard(view: view, formatters: formatters),
-        const SizedBox(height: Spacing.s12),
+      ],
+    );
+    final right = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         _ProjectionCard(view: view, formatters: formatters),
         const SizedBox(height: Spacing.s12),
         _ScenariosTable(view: view, formatters: formatters),
@@ -174,13 +178,24 @@ class _ConfiguredBody extends ConsumerWidget {
         _SafeWithdrawalCard(view: view, formatters: formatters),
         const SizedBox(height: Spacing.s12),
         _SensitivityCard(view: view),
-        const SizedBox(height: Spacing.s16),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.edit_outlined),
-          label: Text(l10n.fireEditGoal),
-          onPressed: () => showFireGoalSheet(context),
-        ),
       ],
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+        return ListView(
+          padding: isWide ? Spacing.pageWide : Spacing.pageMobile,
+          children: [
+            ResponsiveTwoColumn(left: left, right: right),
+            const SizedBox(height: Spacing.s16),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.edit_outlined),
+              label: Text(l10n.fireEditGoal),
+              onPressed: () => showFireGoalSheet(context),
+            ),
+          ],
+        );
+      },
     );
   }
 }
