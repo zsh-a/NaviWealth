@@ -344,9 +344,23 @@ class _CardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 220,
-      child: Center(child: CircularProgressIndicator()),
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SkeletonBox(height: 220, radius: Radii.sm),
+        SizedBox(height: Spacing.s12),
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 14)),
+            SizedBox(width: Spacing.s12),
+            SkeletonBox(width: 80, height: 18),
+          ],
+        ),
+        SizedBox(height: Spacing.s8),
+        SkeletonBox(height: 14),
+        SizedBox(height: Spacing.s4),
+        SkeletonBox(height: 14, width: 200),
+      ],
     );
   }
 }

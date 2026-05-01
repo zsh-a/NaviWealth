@@ -35,7 +35,7 @@ class HomePage extends ConsumerWidget {
         ],
       ),
       body: snapshotAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _DashboardSkeleton(),
         error: (e, st) => _ErrorBody(error: e),
         data: (snapshot) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -153,6 +153,95 @@ class _NetWorthHeader extends StatelessWidget {
   }
 
   String _formatBaseAmount(double v) => v.toStringAsFixed(0);
+}
+
+/// Mirrors the layout of [_DashboardBody] with skeleton cards so the page
+/// settles into its real content without shuffling. Local-first reads
+/// usually flip from loading → data inside ~50ms; a spinner there reads as
+/// a flash, while a static skeleton just briefly previews the shape.
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+        final padding = isWide ? Spacing.pageWide : Spacing.pageMobile;
+        const allocation = SkeletonCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 120, height: 18, radius: Radii.xs),
+              SizedBox(height: Spacing.s16),
+              Center(
+                child: SkeletonBox(
+                  width: 200,
+                  height: 200,
+                  radius: Radii.full,
+                ),
+              ),
+              SizedBox(height: Spacing.s16),
+              SkeletonBox(height: 14),
+              SizedBox(height: Spacing.s8),
+              SkeletonBox(height: 14),
+            ],
+          ),
+        );
+        const trend = SkeletonCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 140, height: 18, radius: Radii.xs),
+              SizedBox(height: Spacing.s12),
+              SkeletonBox(height: 32, radius: Radii.sm),
+              SizedBox(height: Spacing.s12),
+              SkeletonBox(height: 220, radius: Radii.sm),
+            ],
+          ),
+        );
+        const header = SkeletonCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 88, height: 14, radius: Radii.xs),
+              SizedBox(height: Spacing.s8),
+              SkeletonBox(width: 220, height: 36, radius: Radii.sm),
+              SizedBox(height: Spacing.s8),
+              SkeletonBox(width: 180, height: 12, radius: Radii.xs),
+            ],
+          ),
+        );
+        if (isWide) {
+          return ListView(
+            padding: padding,
+            children: const [
+              header,
+              SizedBox(height: Spacing.s16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: allocation),
+                  SizedBox(width: Spacing.s16),
+                  Expanded(child: trend),
+                ],
+              ),
+            ],
+          );
+        }
+        return ListView(
+          padding: padding,
+          children: const [
+            header,
+            SizedBox(height: Spacing.s12),
+            allocation,
+            SizedBox(height: Spacing.s12),
+            trend,
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _ErrorBody extends StatelessWidget {
