@@ -33,6 +33,10 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.d
 import 'package:naviwealth/features/assets/assets_page.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/holding_service.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +48,18 @@ class _OfflineBenchmarkSource implements BenchmarkHistorySource {
     required DateTime from,
     required DateTime to,
   }) async => const [];
+}
+
+class _EmptyHoldingService implements HoldingService {
+  @override
+  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async => const {};
+  @override
+  Future<List<Lot>> lotsAt(DateTime asOf) async => const [];
+  @override
+  Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) =>
+      throw UnimplementedError();
+  @override
+  Future<void> invalidateFrom(DateTime from) async {}
 }
 
 // Standard test surface sizes for the three responsive shell breakpoints.
@@ -105,6 +121,10 @@ Future<ProviderContainer> _pumpAt(
       benchmarkHistorySourceProvider.overrideWith(
         (_) async => _OfflineBenchmarkSource(),
       ),
+      // FIR-89's holdings + returns pipeline reaches through the same
+      // encrypted DB chain. Stub both providers so the analytics +
+      // dashboard pages settle without hanging on the missing key store.
+      holdingServiceProvider.overrideWith((ref) async => _EmptyHoldingService()),
     ],
   );
   addTearDown(container.dispose);

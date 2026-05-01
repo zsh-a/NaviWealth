@@ -17,8 +17,10 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_compari
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -37,6 +39,8 @@ class _StubHoldingService implements HoldingService {
   @override
   Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async =>
       _snapshots;
+  @override
+  Future<List<Lot>> lotsAt(DateTime asOf) async => const [];
   @override
   Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) =>
       throw UnimplementedError();
@@ -101,8 +105,8 @@ ProviderContainer _container({
       equityAssetsStreamProvider.overrideWith(
         (_) => Stream.value(assets),
       ),
-      holdingServiceProvider.overrideWithValue(
-        _StubHoldingService(snapshots),
+      holdingServiceProvider.overrideWith(
+        (ref) async => _StubHoldingService(snapshots),
       ),
       analyticsBaseCurrencyProvider.overrideWithValue(baseCurrency),
       // Benchmark card depends on the dashboard's net-worth pipeline. Stub
