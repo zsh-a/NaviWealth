@@ -56,4 +56,53 @@ void main() {
     // (empty) string — which is the right user-facing outcome regardless.
     expect(controller.text, '');
   });
+
+  testWidgets(
+    'preserves text and cursor across rebuilds when no controller is supplied',
+    (tester) async {
+      var counter = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                // Avoid `const` so Flutter doesn't short-circuit the rebuild
+                // and skip AmountField.build — the bug only surfaces when
+                // build actually re-runs.
+                return Column(
+                  children: [
+                    AmountField(label: '金额 #$counter'),
+                    TextButton(
+                      onPressed: () => setState(() => counter++),
+                      child: const Text('rebuild'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextFormField), '1234.5');
+      // Place the cursor in the middle of the entered text.
+      final beforeRebuild = tester.widget<TextField>(find.byType(TextField));
+      beforeRebuild.controller!.selection = const TextSelection.collapsed(
+        offset: 3,
+      );
+      await tester.pump();
+      expect(find.text('1234.5'), findsOneWidget);
+
+      await tester.tap(find.text('rebuild'));
+      await tester.pump();
+
+      // The rendered text and cursor must survive the parent rebuild.
+      expect(find.text('1234.5'), findsOneWidget);
+      final afterRebuild = tester.widget<EditableText>(
+        find.byType(EditableText),
+      );
+      expect(afterRebuild.controller.text, '1234.5');
+      expect(afterRebuild.controller.selection.baseOffset, 3);
+    },
+  );
 }
