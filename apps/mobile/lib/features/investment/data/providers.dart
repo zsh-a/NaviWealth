@@ -16,6 +16,7 @@ import '../domain/cost_basis/cost_basis_method.dart';
 import '../domain/holding_price_source.dart';
 import '../domain/holding_service.dart';
 import '../domain/models/corporate_actions.dart';
+import '../domain/models/holding_snapshot.dart';
 import '../domain/models/lot.dart';
 import '../domain/returns/returns_service.dart';
 import '../domain/trade_entry/default_trade_entry_service.dart';
@@ -56,11 +57,22 @@ final tradeEntryServiceProvider = FutureProvider<TradeEntryService>((ref) async 
 /// it sees in a transaction, regardless of whether it's a manual cash row
 /// or a securities row — so this is a single read over the full table
 /// rather than the type-filtered streams the analytics or assets tabs use.
-final _allAssetsStreamProvider =
+/// Also consumed by the dashboard to pair securities holdings with their
+/// asset metadata (type → category bucket, name, currency).
+final allAssetsStreamProvider =
     StreamProvider.autoDispose<List<Asset>>((ref) async* {
   final db = await ref.watch(appDatabaseProvider.future);
   final query = db.select(db.assets)..where((t) => t.deletedAt.isNull());
   yield* query.watch().map((rows) => rows.map(_assetFromRow).toList());
+});
+
+/// Live stream of every non-deleted transaction. The holding and returns
+/// adapters consume this synchronously, so a new trade flows through to
+/// the dashboard and analytics snapshots without manual invalidation.
+final transactionsStreamProvider =
+    StreamProvider.autoDispose<List<Transaction>>((ref) async* {
+  final repo = await ref.watch(transactionRepositoryProvider.future);
+  yield* repo.watchAll();
 });
 
 /// Per-asset price source for the holding pipeline. Forward-fills from
@@ -75,7 +87,7 @@ final _allAssetsStreamProvider =
 /// `lastPriceAt` — refusing to forward-fill from "tomorrow's close" into
 /// "yesterday's value" prevents look-ahead bias in historical XIRR runs.
 final holdingPriceSourceProvider = Provider<HoldingPriceSource>((ref) {
-  final assets = ref.watch(_allAssetsStreamProvider).value ?? const <Asset>[];
+  final assets = ref.watch(allAssetsStreamProvider).value ?? const <Asset>[];
   return _AssetLastPriceHoldingPriceSource(assets);
 });
 
@@ -100,23 +112,26 @@ final holdingDailySnapshotStoreProvider =
   return InMemoryHoldingDailySnapshotStore();
 });
 
-/// Adapter from the existing [TransactionRepository] to
-/// [HoldingTransactionsRepository]. Loads full history then filters in
-/// memory — fine for personal-portfolio sizes; large-history users will
-/// motivate a Drift-side range query.
+/// Adapter exposing [transactionsStreamProvider] as a
+/// [HoldingTransactionsRepository]. Filters in memory by owner / date —
+/// fine for personal-portfolio sizes; a Drift-side range query is the
+/// natural follow-up for large-history users. Rebuilds whenever the
+/// transactions stream emits, which is what makes new trades surface in
+/// the dashboard / holdings views without explicit invalidation.
 final holdingTransactionsRepositoryProvider =
-    FutureProvider<HoldingTransactionsRepository>((ref) async {
-  final repo = await ref.watch(transactionRepositoryProvider.future);
-  return _TransactionRepositoryHoldingAdapter(repo);
+    Provider<HoldingTransactionsRepository>((ref) {
+  final txns =
+      ref.watch(transactionsStreamProvider).value ?? const <Transaction>[];
+  return _TransactionListHoldingAdapter(txns);
 });
 
-/// Adapter from the existing [TransactionRepository] to
-/// [ReturnsTransactionsRepository]. Same in-memory date filter as the
-/// holding adapter.
+/// Adapter exposing [transactionsStreamProvider] as a
+/// [ReturnsTransactionsRepository]. Same shape as the holding adapter.
 final returnsTransactionsRepositoryProvider =
-    FutureProvider<ReturnsTransactionsRepository>((ref) async {
-  final repo = await ref.watch(transactionRepositoryProvider.future);
-  return _TransactionRepositoryReturnsAdapter(repo);
+    Provider<ReturnsTransactionsRepository>((ref) {
+  final txns =
+      ref.watch(transactionsStreamProvider).value ?? const <Transaction>[];
+  return _TransactionListReturnsAdapter(txns);
 });
 
 /// Owner user id resolver — same MutationStamper-backed resolver every
@@ -144,8 +159,7 @@ final holdingBaseCurrencyProvider = Provider<String>((ref) {
 final holdingServiceProvider =
     FutureProvider<HoldingService>((ref) async {
   final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
-  final transactions =
-      await ref.watch(holdingTransactionsRepositoryProvider.future);
+  final transactions = ref.watch(holdingTransactionsRepositoryProvider);
   final snapshots = ref.watch(holdingDailySnapshotStoreProvider);
   final prices = ref.watch(holdingPriceSourceProvider);
   final converter = ref.watch(returnsCurrencyConverterProvider);
@@ -162,6 +176,17 @@ final holdingServiceProvider =
   );
 });
 
+/// Per-asset portfolio snapshot at "now". Single seam consumed by both
+/// the dashboard (rolls market value into `总资产`) and the analytics
+/// page (allocation / concentration views). Re-fires whenever the
+/// underlying transactions stream, asset prices, or FX rates change, so
+/// recording a trade reactively updates every downstream chart.
+final holdingsSnapshotProvider =
+    FutureProvider.autoDispose<Map<String, HoldingSnapshot>>((ref) async {
+  final service = await ref.watch(holdingServiceProvider.future);
+  return service.computeAt(DateTime.now().toUtc());
+});
+
 /// Adapter exposing [HoldingService.lotsAt] as a [ReturnsLotsSource].
 final returnsLotsSourceProvider =
     FutureProvider<ReturnsLotsSource>((ref) async {
@@ -176,8 +201,7 @@ final returnsLotsSourceProvider =
 final returnsServiceProvider =
     FutureProvider<ReturnsService>((ref) async {
   final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
-  final transactions =
-      await ref.watch(returnsTransactionsRepositoryProvider.future);
+  final transactions = ref.watch(returnsTransactionsRepositoryProvider);
   final lots = await ref.watch(returnsLotsSourceProvider.future);
   final prices = ref.watch(holdingPriceSourceProvider);
   final converter = ref.watch(returnsCurrencyConverterProvider);
@@ -236,61 +260,55 @@ class _AssetLastPriceHoldingPriceSource implements HoldingPriceSource {
   }
 }
 
-class _TransactionRepositoryHoldingAdapter
-    implements HoldingTransactionsRepository {
-  _TransactionRepositoryHoldingAdapter(this._repo);
-  final TransactionRepository _repo;
+List<Transaction> _filter(
+  List<Transaction> all,
+  String ownerUserId,
+  DateTime from,
+  DateTime to,
+) {
+  return all
+      .where(
+        (t) =>
+            t.sync.ownerUserId == ownerUserId &&
+            t.sync.deletedAt == null &&
+            !t.tradeDate.isBefore(from) &&
+            !t.tradeDate.isAfter(to),
+      )
+      .toList();
+}
+
+class _TransactionListHoldingAdapter implements HoldingTransactionsRepository {
+  _TransactionListHoldingAdapter(this._txns);
+  final List<Transaction> _txns;
 
   @override
   Future<List<Transaction>> transactionsInRange({
     required String ownerUserId,
     required DateTime from,
     required DateTime to,
-  }) async {
-    final all = await _repo.listAll();
-    return all
-        .where(
-          (t) =>
-              t.sync.ownerUserId == ownerUserId &&
-              t.sync.deletedAt == null &&
-              !t.tradeDate.isBefore(from) &&
-              !t.tradeDate.isAfter(to),
-        )
-        .toList();
-  }
+  }) async =>
+      _filter(_txns, ownerUserId, from, to);
 
   @override
   Future<List<CorporateAction>> corporateActionsInRange({
     required String ownerUserId,
     required DateTime from,
     required DateTime to,
-  }) async {
-    return const <CorporateAction>[];
-  }
+  }) async =>
+      const <CorporateAction>[];
 }
 
-class _TransactionRepositoryReturnsAdapter
-    implements ReturnsTransactionsRepository {
-  _TransactionRepositoryReturnsAdapter(this._repo);
-  final TransactionRepository _repo;
+class _TransactionListReturnsAdapter implements ReturnsTransactionsRepository {
+  _TransactionListReturnsAdapter(this._txns);
+  final List<Transaction> _txns;
 
   @override
   Future<List<Transaction>> transactionsInRange({
     required String ownerUserId,
     required DateTime from,
     required DateTime to,
-  }) async {
-    final all = await _repo.listAll();
-    return all
-        .where(
-          (t) =>
-              t.sync.ownerUserId == ownerUserId &&
-              t.sync.deletedAt == null &&
-              !t.tradeDate.isBefore(from) &&
-              !t.tradeDate.isAfter(to),
-        )
-        .toList();
-  }
+  }) async =>
+      _filter(_txns, ownerUserId, from, to);
 }
 
 class _HoldingServiceReturnsLotsSource implements ReturnsLotsSource {
