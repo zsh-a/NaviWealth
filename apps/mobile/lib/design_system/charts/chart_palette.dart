@@ -56,22 +56,22 @@ class ChartPalette {
         Color(0xFF67D6F0), // cyan
         Color(0xFFB497F1), // purple
         Color(0xFFF6C863), // orange
-        Color(0xFF5CC788), // green
+        Color(0xFF6EE7B7), // emerald
         Color(0xFFEB7BB1), // pink
         Color(0xFFE8D45A), // yellow
         Color(0xFF7AB7FB), // blue
-        Color(0xFFEB7373), // red
+        Color(0xFFFDA4AF), // soft crimson
       ];
     }
     return const [
       Color(0xFF0891B2), // cyan
       Color(0xFF7C3AED), // purple
       Color(0xFFD97706), // orange
-      Color(0xFF118A3D), // green
+      Color(0xFF10B981), // emerald
       Color(0xFFDB2777), // pink
       Color(0xFFCA8A04), // yellow
       Color(0xFF1F6FEB), // blue
-      Color(0xFFB81D1D), // red
+      Color(0xFFE11D48), // soft crimson
     ];
   }
 }

@@ -35,23 +35,25 @@ class ColorPalette {
   static const Color neutral950 = Color(0xFF0B1220);
   static const Color neutral1000 = Color(0xFF000000);
 
-  // ── Greens (gain / success) ─────────────────────────────────────────────
-  static const Color green50 = Color(0xFFE8F7EE);
-  static const Color green100 = Color(0xFFC8EBD3);
-  static const Color green300 = Color(0xFF5CC788);
-  static const Color green500 = Color(0xFF16A34A);
-  static const Color green600 = Color(0xFF118A3D);
-  static const Color green700 = Color(0xFF0E6E32);
-  static const Color green900 = Color(0xFF064220);
+  // ── Emerald greens (gain / success) ────────────────────────────────────
+  // Cooler, luminous emerald tones — premium fintech aesthetic.
+  static const Color green50 = Color(0xFFECFDF5);
+  static const Color green100 = Color(0xFFD1FAE5);
+  static const Color green300 = Color(0xFF6EE7B7);
+  static const Color green500 = Color(0xFF10B981);
+  static const Color green600 = Color(0xFF059669);
+  static const Color green700 = Color(0xFF047857);
+  static const Color green900 = Color(0xFF064E3B);
 
-  // ── Reds (loss / danger) ────────────────────────────────────────────────
-  static const Color red50 = Color(0xFFFDECEC);
-  static const Color red100 = Color(0xFFFAD0D0);
-  static const Color red300 = Color(0xFFEB7373);
-  static const Color red500 = Color(0xFFDC2626);
-  static const Color red600 = Color(0xFFB81D1D);
-  static const Color red700 = Color(0xFF8E1717);
-  static const Color red900 = Color(0xFF560B0B);
+  // ── Soft crimson (loss / danger) ───────────────────────────────────────
+  // Desaturated, softer reds — less aggressive, more refined.
+  static const Color red50 = Color(0xFFFFF1F2);
+  static const Color red100 = Color(0xFFFFE4E6);
+  static const Color red300 = Color(0xFFFDA4AF);
+  static const Color red500 = Color(0xFFE11D48);
+  static const Color red600 = Color(0xFFBE123C);
+  static const Color red700 = Color(0xFF9F1239);
+  static const Color red900 = Color(0xFF4C0519);
 
   // ── Ambers (warning) ────────────────────────────────────────────────────
   static const Color amber50 = Color(0xFFFEF6E5);

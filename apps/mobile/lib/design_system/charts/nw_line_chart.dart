@@ -149,7 +149,7 @@ class NwLineChart extends StatelessWidget {
 
     return LineChartBarData(
       spots: [for (final p in s.points) FlSpot(p.x, p.y)],
-      isCurved: false,
+      isCurved: true,
       color: color,
       dashArray: dashArray ??
           (isProjection ? const [4, 4] : null),
@@ -158,8 +158,15 @@ class NwLineChart extends StatelessWidget {
       belowBarData: filled
           ? BarAreaData(
               show: true,
-              color: color.withValues(
-                alpha: s.fillOpacity ?? _defaultFillAlpha(context),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  color.withValues(
+                    alpha: s.fillOpacity ?? _defaultFillAlpha(context),
+                  ),
+                  color.withValues(alpha: 0.0),
+                ],
               ),
             )
           : BarAreaData(show: false),

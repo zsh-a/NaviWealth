@@ -126,7 +126,7 @@ class _NetWorthHeader extends ConsumerWidget {
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: Spacing.s8),
-            MoneyText(
+            AnimatedMoneyText(
               amount: value,
               currencyCode: snapshot.baseCurrency,
               style: TypographyTokens.numericDisplay,

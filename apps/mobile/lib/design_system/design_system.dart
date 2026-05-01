@@ -17,6 +17,7 @@ export 'tokens/motion_tokens.dart';
 export 'tokens/radius_tokens.dart';
 export 'tokens/spacing_tokens.dart';
 export 'tokens/typography_tokens.dart';
+export 'widgets/animated_money_text.dart';
 export 'widgets/app_choice_chip.dart';
 export 'widgets/app_dismissible_list_tile.dart';
 export 'widgets/app_fab.dart';

@@ -77,7 +77,7 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
   factory SemanticColors.dark() => const SemanticColors(
     success: ColorPalette.green300,
     onSuccess: ColorPalette.green900,
-    successContainer: Color(0xFF0F3D22),
+    successContainer: Color(0xFF0D3326),
     onSuccessContainer: ColorPalette.green100,
     warning: Color(0xFFF5B544),
     onWarning: ColorPalette.amber700,

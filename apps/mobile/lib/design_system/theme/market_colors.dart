@@ -201,7 +201,7 @@ class _RedTone {
       return const _ToneSet(
         fg: ColorPalette.red300,
         onFg: ColorPalette.red900,
-        container: Color(0xFF3F1010),
+        container: Color(0xFF3D0F1A),
         onContainer: ColorPalette.red100,
       );
     }
@@ -220,7 +220,7 @@ class _GreenTone {
       return const _ToneSet(
         fg: ColorPalette.green300,
         onFg: ColorPalette.green900,
-        container: Color(0xFF0F3D22),
+        container: Color(0xFF0D3326),
         onContainer: ColorPalette.green100,
       );
     }
