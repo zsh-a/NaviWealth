@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +17,12 @@ import 'package:naviwealth/domain/entities/symbol_info.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/assets/asset_detail_page.dart';
+import 'package:naviwealth/features/assets/asset_detail_providers.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/holding_computer.dart';
+import 'package:naviwealth/features/investment/domain/holding_service.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/investment/domain/models/lot.dart';
 
 import '../../data/db/test_database.dart';
 import '../../data/repositories/_stub_stamper.dart';
@@ -98,6 +105,18 @@ class _Harness {
   Future<void> dispose() => db.close();
 }
 
+class _EmptyHoldingService implements HoldingService {
+  @override
+  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async => {};
+  @override
+  Future<List<Lot>> lotsAt(DateTime asOf) async => const [];
+  @override
+  Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) =>
+      throw UnimplementedError();
+  @override
+  Future<void> invalidateFrom(DateTime from) async {}
+}
+
 ProviderScope _wrap(_Harness h, MarketDataService market, String assetId) {
   return ProviderScope(
     overrides: [
@@ -106,6 +125,30 @@ ProviderScope _wrap(_Harness h, MarketDataService market, String assetId) {
       securitiesAssetRepositoryProvider.overrideWith((_) async => h.secRepo),
       manualAssetRepositoryProvider.overrideWith((_) async => h.manualRepo),
       marketDataServiceProvider.overrideWith((_) async => market),
+      // Asset-detail cards depend on the holding pipeline + transactions
+      // stream + price history. Stub the holding service to an empty
+      // portfolio, the transactions stream to an empty list, and the price
+      // history to a no-op replay so the cards render their empty states
+      // without touching the real database / network.
+      holdingServiceProvider.overrideWith((_) async => _EmptyHoldingService()),
+      assetTransactionsStreamProvider.overrideWith(
+        (ref, _) => Stream.value(const []),
+      ),
+      assetReplayProvider.overrideWith(
+        (ref, _) async => const HoldingReplayResult(
+          lots: [],
+          realizedPnL: [],
+          unfulfilledSells: [],
+        ),
+      ),
+      assetPriceHistoryProvider.overrideWith(
+        (ref, _) async => MarketResponse<List<HistoricalBar>>(
+          data: const [],
+          freshness: DataFreshness.live,
+          source: 'stub',
+          fetchedAt: DateTime.utc(2026, 5, 1),
+        ),
+      ),
     ],
     child: MaterialApp(
       home: AssetDetailPage(assetId: assetId),
@@ -212,4 +255,111 @@ void main() {
     expect(asset!.name, isNull,
         reason: 'a failed sync must not write a placeholder name');
   });
+
+  testWidgets('renders holding / P&L / mini-chart cards from snapshot data',
+      (tester) async {
+    await harness.secRepo.upsertSecurity(
+      symbol: 'AAPL',
+      market: AssetMarket.usStock,
+      type: AssetType.stock,
+      currency: 'USD',
+    );
+
+    final snapshot = HoldingSnapshot(
+      assetId: 'us_stock:AAPL',
+      quantity: Decimal.parse('10'),
+      costBasisInAssetCurrency: Decimal.parse('1500'),
+      marketValueInAssetCurrency: Decimal.parse('1750'),
+      assetCurrency: 'USD',
+      costBasisInBase: Decimal.parse('1500'),
+      marketValueInBase: Decimal.parse('1750'),
+      unrealizedPnlInBase: Decimal.parse('250'),
+      weight: Decimal.parse('1'),
+      baseCurrency: 'USD',
+      asOf: DateTime.utc(2026, 5, 1),
+    );
+    final history = [
+      HistoricalBar(
+        symbol: 'AAPL',
+        asOf: DateTime.utc(2026, 4, 30),
+        open: Decimal.parse('170'),
+        high: Decimal.parse('171'),
+        low: Decimal.parse('169'),
+        close: Decimal.parse('170'),
+      ),
+      HistoricalBar(
+        symbol: 'AAPL',
+        asOf: DateTime.utc(2026, 5, 1),
+        open: Decimal.parse('170'),
+        high: Decimal.parse('176'),
+        low: Decimal.parse('170'),
+        close: Decimal.parse('175'),
+      ),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => harness.db),
+          outboxStoreProvider.overrideWith((_) async => harness.outbox),
+          securitiesAssetRepositoryProvider
+              .overrideWith((_) async => harness.secRepo),
+          manualAssetRepositoryProvider
+              .overrideWith((_) async => harness.manualRepo),
+          marketDataServiceProvider
+              .overrideWith((_) async => _ConfigurableMarket()),
+          holdingServiceProvider.overrideWith(
+            (_) async =>
+                _StubHoldingService({'us_stock:AAPL': snapshot}),
+          ),
+          assetTransactionsStreamProvider.overrideWith(
+            (ref, _) => Stream.value(const []),
+          ),
+          assetReplayProvider.overrideWith(
+            (ref, _) async => const HoldingReplayResult(
+              lots: [],
+              realizedPnL: [],
+              unfulfilledSells: [],
+            ),
+          ),
+          assetPriceHistoryProvider.overrideWith(
+            (ref, _) async => MarketResponse<List<HistoricalBar>>(
+              data: history,
+              freshness: DataFreshness.live,
+              source: 'stub',
+              fetchedAt: DateTime.utc(2026, 5, 1),
+            ),
+          ),
+        ],
+        child: const MaterialApp(
+          home: AssetDetailPage(assetId: 'us_stock:AAPL'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Holding card surfaces quantity + cost + market value.
+    expect(find.text('当前数量'), findsOneWidget);
+    expect(find.text('10'), findsOneWidget);
+    expect(find.text('当前市值'), findsOneWidget);
+    // Unrealized P&L row, daily change row, and 30-day chart all render.
+    expect(find.text('未实现盈亏'), findsOneWidget);
+    expect(find.text('今日变动'), findsOneWidget);
+    expect(find.text('近 30 日走势'), findsOneWidget);
+  });
+}
+
+class _StubHoldingService implements HoldingService {
+  _StubHoldingService(this._snapshots);
+  final Map<String, HoldingSnapshot> _snapshots;
+  @override
+  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async =>
+      _snapshots;
+  @override
+  Future<List<Lot>> lotsAt(DateTime asOf) async => const [];
+  @override
+  Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) =>
+      throw UnimplementedError();
+  @override
+  Future<void> invalidateFrom(DateTime from) async {}
 }
