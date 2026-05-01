@@ -416,6 +416,12 @@
     }
   },
   "dashboardTrendFlatHint": "Trend line is flat — no historical valuation snapshots yet for the assets in this window.",
+  "dashboardHeaderDeltaTodayLabel": "Today",
+  "@dashboardHeaderDeltaTodayLabel": { "description": "Label for the today's net-worth change cell on the dashboard header (FIR-85)." },
+  "dashboardHeaderDeltaMonthLabel": "MTD",
+  "@dashboardHeaderDeltaMonthLabel": { "description": "Label for the month-to-date net-worth change cell on the dashboard header." },
+  "dashboardHeaderDeltaYtdLabel": "YTD",
+  "@dashboardHeaderDeltaYtdLabel": { "description": "Label for the year-to-date return cell on the dashboard header." },
 
   "analyticsAppBarTitle": "Analytics",
   "@analyticsAppBarTitle": { "description": "AppBar title for the analytics tab." },
