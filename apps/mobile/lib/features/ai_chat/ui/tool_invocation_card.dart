@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../domain/chat_models.dart';
+import 'tool_invocation_renderers.dart';
 
 /// Collapsible card surfacing one tool invocation. Header shows the
 /// human-friendly tool name + a one-line summary; the body (when
@@ -25,6 +26,7 @@ class ToolInvocationCard extends StatefulWidget {
 
 class _ToolInvocationCardState extends State<ToolInvocationCard> {
   bool _expanded = false;
+  bool _showRawJson = false;
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +141,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   _kvBlock(context, '参数', invocation.input),
                   if (invocation.output != null) ...[
                     const SizedBox(height: Spacing.s8),
-                    _kvBlock(context, '结果', invocation.output),
+                    _resultBlock(context, invocation),
                   ],
                 ],
               ),
@@ -158,6 +160,105 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       case _JumpKind.liability:
         context.go('/assets/liabilities/${Uri.encodeComponent(jump.id)}');
     }
+  }
+
+  /// Renders the tool's output. Tries a tool-specific renderer first; falls
+  /// back to pretty-printed JSON when no renderer is registered or when the
+  /// renderer threw. The user can always toggle into raw JSON for debugging,
+  /// and we force the raw view when the payload is too large for the inline
+  /// renderer to be useful (see [isOversizedToolPayload]).
+  Widget _resultBlock(BuildContext context, ToolInvocation invocation) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final oversized = isOversizedToolPayload(invocation.name, invocation.output);
+    final body = (oversized || _showRawJson)
+        ? null
+        : renderToolOutput(context, invocation.name, invocation.output);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              '结果',
+              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const Spacer(),
+            if (body != null)
+              InkWell(
+                borderRadius: Radii.brXs,
+                onTap: () => setState(() => _showRawJson = true),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s4,
+                    vertical: 2,
+                  ),
+                  child: Text(
+                    '查看 raw JSON',
+                    style: tt.labelSmall?.copyWith(color: cs.primary),
+                  ),
+                ),
+              )
+            else if (_showRawJson &&
+                renderToolOutput(context, invocation.name, invocation.output) !=
+                    null)
+              InkWell(
+                borderRadius: Radii.brXs,
+                onTap: () => setState(() => _showRawJson = false),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s4,
+                    vertical: 2,
+                  ),
+                  child: Text(
+                    '返回精简视图',
+                    style: tt.labelSmall?.copyWith(color: cs.primary),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: Spacing.s4),
+        if (body != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(Spacing.s8),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: Radii.brXs,
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.4),
+              ),
+            ),
+            child: body,
+          )
+        else
+          _rawJsonView(context, invocation.output),
+      ],
+    );
+  }
+
+  Widget _rawJsonView(BuildContext context, Object? value) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Spacing.s8),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: Radii.brXs,
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+      ),
+      child: SelectableText(
+        _prettyJson(value),
+        style: tt.bodySmall?.copyWith(
+          fontFamily: TypographyTokens.fontFamilyMono,
+          fontSize: 12,
+          height: 1.4,
+        ),
+      ),
+    );
   }
 
   Widget _kvBlock(BuildContext context, String label, Object? value) {
