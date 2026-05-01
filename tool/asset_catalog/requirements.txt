@@ -1,0 +1,21 @@
+# Pinned dependencies for the catalog build pipeline.
+# Installed into tool/asset_catalog/.venv by build-asset-catalog.sh --full.
+# The mobile app does NOT depend on any of these — they exist solely
+# to fetch + transform the upstream listings into the bundled NDJSON.
+
+# A-share — BaoStock primary feed (HTTP), mootdx fallback (TCP fan-out).
+baostock==0.8.9
+mootdx==0.11.7
+
+# HKEX xlsx parsing.
+openpyxl==3.1.5
+
+# HTTP fetcher (CoinGecko, NASDAQ Trader, SEC, HKEX).
+requests==2.32.3
+
+# Pinyin / initials for the bake step. pypinyin's data is fully embedded
+# so it has no transitive deps.
+pypinyin==0.51.0
+
+# Traditional → simplified Chinese for HKEX names.
+opencc-python-reimplemented==0.1.7

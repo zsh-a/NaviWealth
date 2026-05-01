@@ -83,6 +83,22 @@ jobs:
           sed -i -E "s/^version: .*/version: ${SEMVER}+${BUILD}/" pubspec.yaml
           grep '^version:' pubspec.yaml
       - run: flutter pub get
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refresh securities catalog from upstream feeds
+        # Pulls fresh listings from HKEX, NASDAQ Trader, SEC and CoinGecko,
+        # then bakes a new securities.v1.ndjson the Flutter build will pick
+        # up. BaoStock + mootdx are mainland-only and unreachable from
+        # GitHub-hosted runners; --allow-degraded keeps the last-committed
+        # A-share CSVs in that case so the release still ships. To pick
+        # up A-share refreshes, run ./tool/build-asset-catalog.sh --full
+        # locally on a CN host and commit the resulting CSVs + bundle
+        # before tagging, or move this step onto a self-hosted CN runner.
+        working-directory: ${{ github.workspace }}
+        run: |
+          ./tool/build-asset-catalog.sh --full --allow-degraded \
+            --sources hk_stock,us_stock,crypto
       - name: Build CN web font subsets
         run: bash tool/build-cn-fonts.sh
       - name: Read backend API URL
