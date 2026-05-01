@@ -373,44 +373,123 @@ class _AssetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final price = asset.lastPrice ?? Decimal.zero;
-    return ListTile(
-      title: Text(asset.name ?? asset.symbol),
-      subtitle: Text(_subtitle(asset)),
-      trailing: MoneyText(
-        amount: price.toDouble(),
-        currencyCode: asset.currency,
-      ),
+    final chips = _chipsFor(asset);
+    return InkWell(
       onTap: () => context.go('/assets/${asset.id}'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s16,
+          vertical: Spacing.s12,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    asset.name ?? asset.symbol,
+                    style: theme.textTheme.bodyLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (chips.isNotEmpty) ...[
+                    const SizedBox(height: Spacing.s6),
+                    Wrap(
+                      spacing: Spacing.s6,
+                      runSpacing: Spacing.s4,
+                      children: chips,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: Spacing.s12),
+            MoneyText(
+              amount: price.toDouble(),
+              currencyCode: asset.currency,
+              style: TypographyTokens.numericBody,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  String _subtitle(Asset asset) {
-    final parts = <String>[];
+  List<Widget> _chipsFor(Asset asset) {
+    final chips = <Widget>[];
     if (asset.symbol.isNotEmpty &&
         asset.symbol != asset.name &&
         asset.type != AssetType.cash) {
-      parts.add(asset.symbol);
+      chips.add(_MetaChip(label: asset.symbol));
     }
     final meta = asset.manualMetadata;
     if (meta is DepositMetadata) {
-      parts.add('利率 ${(meta.interestRate * Decimal.fromInt(100))}%');
+      chips.add(
+        _MetaChip(label: '利率 ${_formatRatePercent(meta.interestRate)}%'),
+      );
       if (meta.maturityDate != null) {
         final d = meta.maturityDate!;
-        parts.add('${d.year}-${_two(d.month)}-${_two(d.day)} 到期');
+        chips.add(
+          _MetaChip(label: '${d.year}-${_two(d.month)}-${_two(d.day)} 到期'),
+        );
       }
     } else if (meta is WealthProductMetadata) {
-      parts.add('预期 ${(meta.expectedAnnualReturn * Decimal.fromInt(100))}%');
+      chips.add(
+        _MetaChip(
+          label: '预期 ${_formatRatePercent(meta.expectedAnnualReturn)}%',
+        ),
+      );
       if (meta.issuer != null && meta.issuer!.isNotEmpty) {
-        parts.add(meta.issuer!);
+        chips.add(_MetaChip(label: meta.issuer!));
       }
-    } else {
-      parts.add(asset.currency);
     }
-    return parts.join(' · ');
+    chips.add(_MetaChip(label: asset.currency));
+    return chips;
   }
 
-  String _two(int n) => n.toString().padLeft(2, '0');
+  static String _formatRatePercent(Decimal rate) {
+    final pct = (rate * Decimal.fromInt(100)).toDouble();
+    return pct
+        .toStringAsFixed(2)
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
+  }
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isNumeric = RegExp(r'\d').hasMatch(label);
+    final base = theme.textTheme.labelSmall ?? TypographyTokens.labelSmall;
+    final textStyle = base.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      fontFeatures: isNumeric ? TypographyTokens.tabularFigures : null,
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: Radii.brSm,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s8,
+          vertical: Spacing.s2,
+        ),
+        child: Text(label, style: textStyle),
+      ),
+    );
+  }
 }
 
 String manualAssetTypeLabel(AssetType t) {
