@@ -6,6 +6,7 @@ import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../settings/data/base_currency_preference.dart';
 import '../shared/forms/forms.dart';
 import 'accounts_page.dart' show accountTypeLabel;
 
@@ -34,8 +35,14 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
   final _accountNumberController = TextEditingController();
   final _noteController = TextEditingController();
 
+  // Focus chain: name → institution → accountNumber → note.
+  final _nameFocus = FocusNode();
+  final _institutionFocus = FocusNode();
+  final _accountNumberFocus = FocusNode();
+  final _noteFocus = FocusNode();
+
   AccountType _type = AccountType.bank;
-  String? _currency = 'CNY';
+  String? _currency;
   bool _archived = false;
   bool _busy = false;
   Account? _initial;
@@ -45,6 +52,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
     super.initState();
     if (widget.isEdit) {
       _loadInitial();
+    } else {
+      // Default the new-account currency to the dashboard's base
+      // currency — the legacy hard-coded "CNY" forced overseas users to
+      // pick the right currency manually for every account.
+      _currency = ref.read(baseCurrencyProvider);
     }
   }
 
@@ -141,6 +153,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
     _institutionController.dispose();
     _accountNumberController.dispose();
     _noteController.dispose();
+    _nameFocus.dispose();
+    _institutionFocus.dispose();
+    _accountNumberFocus.dispose();
+    _noteFocus.dispose();
     super.dispose();
   }
 
@@ -163,8 +179,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: ListView(
                 padding: Spacing.pageMobile,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
                   DropdownButtonFormField<AccountType>(
                     // ignore: deprecated_member_use
@@ -188,6 +207,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _nameController,
+                    focusNode: _nameFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => _institutionFocus.requestFocus(),
                     decoration: const InputDecoration(
                       labelText: '账户名称',
                       border: OutlineInputBorder(),
@@ -203,6 +225,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _institutionController,
+                    focusNode: _institutionFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) =>
+                        _accountNumberFocus.requestFocus(),
                     decoration: const InputDecoration(
                       labelText: '机构',
                       helperText: '银行 / 券商 / 平台名称（可选）',
@@ -212,13 +238,19 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _accountNumberController,
+                    focusNode: _accountNumberFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => _noteFocus.requestFocus(),
                     decoration: const InputDecoration(
                       labelText: '账号 / 末位号（可选）',
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: Spacing.s12),
-                  NoteField(controller: _noteController),
+                  NoteField(
+                    controller: _noteController,
+                    focusNode: _noteFocus,
+                  ),
                   if (widget.isEdit) ...[
                     const SizedBox(height: Spacing.s12),
                     SwitchListTile(

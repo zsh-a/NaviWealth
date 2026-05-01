@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/domain/enums.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import 'liability_l10n.dart';
 
@@ -31,11 +34,30 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
   final _paymentDueDay = TextEditingController();
   final _currency = TextEditingController(text: 'CNY');
 
+  // Focus chain (loan):     name → principal → rate → currency → term.
+  // Focus chain (cardCC):   name → principal → rate → currency → statementDay → paymentDueDay.
+  final _nameFocus = FocusNode();
+  final _principalFocus = FocusNode();
+  final _rateFocus = FocusNode();
+  final _currencyFocus = FocusNode();
+  final _termFocus = FocusNode();
+  final _statementDayFocus = FocusNode();
+  final _paymentDueDayFocus = FocusNode();
+
   LiabilityType _type = LiabilityType.mortgage;
   RepaymentMethod _method = RepaymentMethod.equalInstallment;
   LiabilityRateType _rateType = LiabilityRateType.fixed;
   DateTime _startDate = DateTime.now();
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final defaults = ref.read(formDefaultsProvider);
+    if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+      _currency.text = defaults.assetCurrency!;
+    }
+  }
 
   @override
   void dispose() {
@@ -46,6 +68,13 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
     _statementDay.dispose();
     _paymentDueDay.dispose();
     _currency.dispose();
+    _nameFocus.dispose();
+    _principalFocus.dispose();
+    _rateFocus.dispose();
+    _currencyFocus.dispose();
+    _termFocus.dispose();
+    _statementDayFocus.dispose();
+    _paymentDueDayFocus.dispose();
     super.dispose();
   }
 
@@ -66,8 +95,10 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
       ),
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: Spacing.pageMobile,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             DropdownButtonFormField<LiabilityType>(
               initialValue: _type,
@@ -87,6 +118,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
             const SizedBox(height: Spacing.s12),
             TextFormField(
               controller: _name,
+              focusNode: _nameFocus,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => _principalFocus.requestFocus(),
               decoration: InputDecoration(
                 labelText: l10n.liabilityFieldName,
                 border: const OutlineInputBorder(),
@@ -98,6 +132,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
             const SizedBox(height: Spacing.s12),
             TextFormField(
               controller: _principal,
+              focusNode: _principalFocus,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => _rateFocus.requestFocus(),
               decoration: InputDecoration(
                 labelText: l10n.liabilityFieldPrincipal,
                 border: const OutlineInputBorder(),
@@ -110,6 +147,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
             const SizedBox(height: Spacing.s12),
             TextFormField(
               controller: _rate,
+              focusNode: _rateFocus,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => _currencyFocus.requestFocus(),
               decoration: InputDecoration(
                 labelText: l10n.liabilityFieldInterestRate,
                 border: const OutlineInputBorder(),
@@ -147,6 +187,14 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
             const SizedBox(height: Spacing.s12),
             TextFormField(
               controller: _currency,
+              focusNode: _currencyFocus,
+              textInputAction: _isCreditCard
+                  ? TextInputAction.next
+                  : TextInputAction.next,
+              onFieldSubmitted: (_) => _isCreditCard
+                  ? _statementDayFocus.requestFocus()
+                  : _termFocus.requestFocus(),
+              textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: l10n.liabilityFieldCurrency,
                 border: const OutlineInputBorder(),
@@ -159,6 +207,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
               const SizedBox(height: Spacing.s12),
               TextFormField(
                 controller: _term,
+                focusNode: _termFocus,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _saving ? null : _save(),
                 decoration: InputDecoration(
                   labelText: l10n.liabilityFieldTerm,
                   border: const OutlineInputBorder(),
@@ -198,6 +249,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
               const SizedBox(height: Spacing.s12),
               TextFormField(
                 controller: _statementDay,
+                focusNode: _statementDayFocus,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (_) => _paymentDueDayFocus.requestFocus(),
                 decoration: InputDecoration(
                   labelText: l10n.liabilityFieldStatementDay,
                   border: const OutlineInputBorder(),
@@ -208,6 +262,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
               const SizedBox(height: Spacing.s12),
               TextFormField(
                 controller: _paymentDueDay,
+                focusNode: _paymentDueDayFocus,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _saving ? null : _save(),
                 decoration: InputDecoration(
                   labelText: l10n.liabilityFieldPaymentDueDay,
                   border: const OutlineInputBorder(),
@@ -274,6 +331,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
             ? int.tryParse(_paymentDueDay.text.trim())
             : null,
       );
+      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
+            currency: _currency.text.trim().toUpperCase(),
+          ));
       if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _saving = false);

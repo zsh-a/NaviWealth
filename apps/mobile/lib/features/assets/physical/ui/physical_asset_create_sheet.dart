@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../data/domain/enums.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../shared/forms/forms.dart';
 import '../data/physical_asset.dart';
 import '../data/providers.dart';
 
@@ -51,11 +54,32 @@ class _PhysicalAssetCreateSheetState
   final _linkedLiabilityCtrl = TextEditingController();
   final _currencyCtrl = TextEditingController(text: 'CNY');
 
+  // Focus chain (real estate): name → address → currency → purchasePrice
+  // → currentValuation → linkedLiability.
+  // Focus chain (vehicle):     name → currency → purchasePrice
+  // → currentValuation → residualRate.
+  final _nameFocus = FocusNode();
+  final _addressFocus = FocusNode();
+  final _currencyFocus = FocusNode();
+  final _purchasePriceFocus = FocusNode();
+  final _currentValuationFocus = FocusNode();
+  final _residualRateFocus = FocusNode();
+  final _linkedLiabilityFocus = FocusNode();
+
   DateTime _purchaseDate = DateTime.now();
   bool _autoDepreciation = true;
   bool _saving = false;
 
   bool get _isVehicle => widget.type == AssetType.vehicle;
+
+  @override
+  void initState() {
+    super.initState();
+    final defaults = ref.read(formDefaultsProvider);
+    if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+      _currencyCtrl.text = defaults.assetCurrency!;
+    }
+  }
 
   @override
   void dispose() {
@@ -66,6 +90,13 @@ class _PhysicalAssetCreateSheetState
     _residualRateCtrl.dispose();
     _linkedLiabilityCtrl.dispose();
     _currencyCtrl.dispose();
+    _nameFocus.dispose();
+    _addressFocus.dispose();
+    _currencyFocus.dispose();
+    _purchasePriceFocus.dispose();
+    _currentValuationFocus.dispose();
+    _residualRateFocus.dispose();
+    _linkedLiabilityFocus.dispose();
     super.dispose();
   }
 
@@ -86,7 +117,9 @@ class _PhysicalAssetCreateSheetState
         ),
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -111,20 +144,26 @@ class _PhysicalAssetCreateSheetState
                 const SizedBox(height: Spacing.s16),
                 TextFormField(
                   controller: _nameCtrl,
+                  focusNode: _nameFocus,
                   decoration: InputDecoration(
                     labelText: l10n.physicalAssetFieldName,
                   ),
                   textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _isVehicle
+                      ? _currencyFocus.requestFocus()
+                      : _addressFocus.requestFocus(),
                   validator: _required(l10n),
                 ),
                 const SizedBox(height: Spacing.s12),
                 if (!_isVehicle) ...[
                   TextFormField(
                     controller: _addressCtrl,
+                    focusNode: _addressFocus,
                     decoration: InputDecoration(
                       labelText: l10n.physicalAssetFieldAddress,
                     ),
                     textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => _currencyFocus.requestFocus(),
                   ),
                   const SizedBox(height: Spacing.s12),
                 ],
@@ -133,6 +172,10 @@ class _PhysicalAssetCreateSheetState
                     Expanded(
                       child: TextFormField(
                         controller: _currencyCtrl,
+                        focusNode: _currencyFocus,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) =>
+                            _purchasePriceFocus.requestFocus(),
                         decoration: InputDecoration(
                           labelText: l10n.physicalAssetFieldCurrency,
                         ),
@@ -157,6 +200,10 @@ class _PhysicalAssetCreateSheetState
                 const SizedBox(height: Spacing.s12),
                 TextFormField(
                   controller: _purchasePriceCtrl,
+                  focusNode: _purchasePriceFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) =>
+                      _currentValuationFocus.requestFocus(),
                   decoration: InputDecoration(
                     labelText: l10n.physicalAssetFieldPurchasePrice,
                   ),
@@ -167,6 +214,11 @@ class _PhysicalAssetCreateSheetState
                 const SizedBox(height: Spacing.s12),
                 TextFormField(
                   controller: _currentValuationCtrl,
+                  focusNode: _currentValuationFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _isVehicle
+                      ? _residualRateFocus.requestFocus()
+                      : _linkedLiabilityFocus.requestFocus(),
                   decoration: InputDecoration(
                     labelText: l10n.physicalAssetFieldCurrentValuation,
                   ),
@@ -181,6 +233,9 @@ class _PhysicalAssetCreateSheetState
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _residualRateCtrl,
+                    focusNode: _residualRateFocus,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _saving ? null : _submit(),
                     decoration: InputDecoration(
                       labelText: l10n.physicalAssetFieldAnnualResidualRate,
                       helperText: '0.85',
@@ -214,6 +269,9 @@ class _PhysicalAssetCreateSheetState
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _linkedLiabilityCtrl,
+                    focusNode: _linkedLiabilityFocus,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _saving ? null : _submit(),
                     decoration: InputDecoration(
                       labelText: l10n.physicalAssetFieldLinkedLiability,
                     ),
@@ -282,6 +340,9 @@ class _PhysicalAssetCreateSheetState
                   ? null
                   : _linkedLiabilityCtrl.text.trim(),
             );
+      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
+            currency: _currencyCtrl.text.trim().toUpperCase(),
+          ));
       if (!mounted) return;
       Navigator.of(context).pop(created);
     } finally {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
+import '../data/recent_expense_categories.dart';
 import 'category_grid_picker.dart';
 
 /// Quick-entry page for a single expense. Shared between create and edit
@@ -30,6 +33,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
+  // amount → note. Note's keyboard action stays as `newline`, so we don't
+  // chain past it; the user submits via the FilledButton or by hitting
+  // done from the amount field when no note is desired.
+  final _amountFocus = FocusNode();
+  final _noteFocus = FocusNode();
+
   String? _categoryId;
   String? _accountId;
   String? _currency = 'CNY';
@@ -42,6 +51,17 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
     super.initState();
     if (widget.isEdit) {
       _loadInitial();
+    } else {
+      // Smart defaults from last entry. Concrete account / category may be
+      // re-validated against the live lists below; this is just the
+      // initial seed.
+      final defaults = ref.read(formDefaultsProvider);
+      _accountId = defaults.expenseAccountId;
+      _categoryId = defaults.expenseCategoryId;
+      if (defaults.expenseCurrency != null &&
+          defaults.expenseCurrency!.isNotEmpty) {
+        _currency = defaults.expenseCurrency;
+      }
     }
   }
 
@@ -103,6 +123,13 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
           clearNote: note == null && (_initial!.note ?? '').isNotEmpty,
         );
       }
+      // Persist last-used picks so the next entry skips category/account
+      // tapping. Async, but we don't gate navigation on it.
+      unawaited(ref.read(formDefaultsProvider.notifier).rememberExpense(
+            accountId: _accountId,
+            categoryId: _categoryId,
+            currency: _currency,
+          ));
       if (!mounted) return;
       context.go('/expenses');
     } finally {
@@ -146,6 +173,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _amountFocus.dispose();
+    _noteFocus.dispose();
     super.dispose();
   }
 
@@ -155,6 +184,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
     final loadingExisting = widget.isEdit && _initial == null;
     final accountsAsync = ref.watch(accountsStreamProvider);
     final categoriesAsync = ref.watch(expenseCategoriesStreamProvider);
+    final mostUsedCategoryId = ref.watch(mostUsedExpenseCategoryProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -175,13 +205,18 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: ListView(
                 padding: Spacing.pageMobile,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
                   AmountField(
                     label: l10n.expenseFormAmountLabel,
                     controller: _amountController,
                     currencyCode: _currency,
+                    focusNode: _amountFocus,
+                    onFieldSubmitted: (_) => _noteFocus.requestFocus(),
                   ),
                   const SizedBox(height: Spacing.s12),
                   CurrencyPicker(
@@ -199,16 +234,32 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                           child: Text(l10n.expenseFormCategoriesLoading),
                         );
                       }
-                      // First-render default: pick the seeded "其它"
-                      // bucket if it exists, else the last row in the list.
+                      // Picker only fires the default fallback if the
+                      // user hasn't already chosen something — including
+                      // the persisted last-used pick from initState. The
+                      // ranking goes: explicit pick > last used > recent
+                      // most-used > seeded "其它" > final list row.
                       final fallbackId =
                           ExpenseCategoryRepository.defaultIdFor('other');
-                      _categoryId ??= cats
+                      final candidates = <String?>[
+                        _categoryId,
+                        mostUsedCategoryId,
+                      ];
+                      String? resolved;
+                      for (final candidate in candidates) {
+                        if (candidate != null &&
+                            cats.any((c) => c.id == candidate)) {
+                          resolved = candidate;
+                          break;
+                        }
+                      }
+                      resolved ??= cats
                           .firstWhere(
                             (c) => c.id == fallbackId,
                             orElse: () => cats.last,
                           )
                           .id;
+                      _categoryId = resolved;
                       return CategoryGridPicker(
                         categories: cats,
                         selectedId: _categoryId,
@@ -228,7 +279,14 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                       if (accounts.isEmpty) {
                         return _NoAccountsHint();
                       }
-                      _accountId ??= accounts.first.id;
+                      // Drop a stale persisted account if it no longer
+                      // exists; otherwise honour the user's pick over the
+                      // first-row default.
+                      final hasCurrent = _accountId != null &&
+                          accounts.any((a) => a.id == _accountId);
+                      if (!hasCurrent) {
+                        _accountId = accounts.first.id;
+                      }
                       return AccountPicker(
                         accounts: accounts,
                         value: _accountId,
@@ -250,7 +308,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                     },
                   ),
                   const SizedBox(height: Spacing.s12),
-                  NoteField(controller: _noteController),
+                  NoteField(
+                    controller: _noteController,
+                    focusNode: _noteFocus,
+                  ),
                   const SizedBox(height: Spacing.s24),
                   FilledButton(
                     onPressed: _busy ? null : _save,

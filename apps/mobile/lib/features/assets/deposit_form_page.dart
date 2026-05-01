@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +33,14 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   final _ratePercentController = TextEditingController();
   final _valuationController = TextEditingController();
 
+  // Focus chain: name → principal → rate → valuation. Pickers and date
+  // taps interrupt the chain naturally — we don't try to push focus
+  // through them.
+  final _nameFocus = FocusNode();
+  final _principalFocus = FocusNode();
+  final _rateFocus = FocusNode();
+  final _valuationFocus = FocusNode();
+
   AssetType _kind = AssetType.bankDepositTerm;
   String? _accountId;
   String? _currency = 'CNY';
@@ -39,13 +49,22 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   bool _autoRenew = false;
   bool _busy = false;
   Asset? _initial;
+  bool _hydratedFromList = false;
 
   static const _eligibleAccountTypes = {AccountType.bank, AccountType.cash};
 
   @override
   void initState() {
     super.initState();
-    if (widget.isEdit) _loadInitial();
+    if (widget.isEdit) {
+      _loadInitial();
+    } else {
+      final defaults = ref.read(formDefaultsProvider);
+      _accountId = defaults.assetAccountId;
+      if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+        _currency = defaults.assetCurrency;
+      }
+    }
   }
 
   Future<void> _loadInitial() async {
@@ -122,6 +141,10 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           );
         }
       }
+      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
+            accountId: _accountId,
+            currency: _currency,
+          ));
       if (!mounted) return;
       context.go('/assets');
     } finally {
@@ -166,6 +189,10 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     _principalController.dispose();
     _ratePercentController.dispose();
     _valuationController.dispose();
+    _nameFocus.dispose();
+    _principalFocus.dispose();
+    _rateFocus.dispose();
+    _valuationFocus.dispose();
     super.dispose();
   }
 
@@ -199,10 +226,20 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     if (eligible.isEmpty) {
       return _PromptCreateAccount(onTap: () => context.go('/accounts/new'));
     }
+    if (!_hydratedFromList && !widget.isEdit) {
+      final hasCurrent = _accountId != null &&
+          eligible.any((a) => a.id == _accountId);
+      if (!hasCurrent) {
+        _accountId = eligible.first.id;
+      }
+      _hydratedFromList = true;
+    }
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
         padding: Spacing.pageMobile,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           SegmentedButton<AssetType>(
             segments: const [
@@ -229,6 +266,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           const SizedBox(height: Spacing.s12),
           TextFormField(
             controller: _nameController,
+            focusNode: _nameFocus,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _principalFocus.requestFocus(),
             decoration: const InputDecoration(
               labelText: '名称',
               helperText: '例如：招行 1 年期定期、工行活期储蓄',
@@ -246,10 +286,15 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             label: '本金',
             controller: _principalController,
             currencyCode: _currency,
+            focusNode: _principalFocus,
+            onFieldSubmitted: (_) => _rateFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
           TextFormField(
             controller: _ratePercentController,
+            focusNode: _rateFocus,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _valuationFocus.requestFocus(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
               labelText: '年化利率 (%)',
@@ -285,6 +330,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             currencyCode: _currency,
             required: false,
             helperText: '不填则使用本金作为当前估值',
+            focusNode: _valuationFocus,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
           const SizedBox(height: Spacing.s12),
           if (_kind == AssetType.bankDepositTerm)
