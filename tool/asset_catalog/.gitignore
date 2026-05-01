@@ -1,0 +1,8 @@
+# Local Python venv created by build-asset-catalog.sh --full
+.venv/
+__pycache__/
+*.pyc
+
+# Transient adapter outputs
+sources/*.csv.new
+sources/*.fallback.csv
