@@ -463,6 +463,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsBaseCurrencySheetTitle => '选择基础货币';
 
   @override
+  String get settingsFxRatesTitle => '汇率管理';
+
+  @override
+  String get settingsFxRatesSubtitle => '手动录入汇率，外币持仓将按此折算到基础货币。';
+
+  @override
+  String get fxRatesAppBarTitle => '汇率';
+
+  @override
+  String get fxRatesEmpty => '尚未录入任何汇率。点击右下角 + 添加，新汇率会即时应用到 Dashboard。';
+
+  @override
+  String get fxRatesAddAction => '添加汇率';
+
+  @override
+  String get fxRatesEntrySheetTitle => '新增汇率';
+
+  @override
+  String get fxRatesFromLabel => '源币种';
+
+  @override
+  String get fxRatesToLabel => '目标币种';
+
+  @override
+  String get fxRatesRateLabel => '汇率';
+
+  @override
+  String get fxRatesAsOfLabel => '日期';
+
+  @override
+  String get fxRatesSamePairError => '源币种与目标币种不能相同。';
+
+  @override
+  String get fxRatesInvalidRateError => '汇率必须为正数。';
+
+  @override
   String dashboardCurrencyMismatchBanner(int count, String currency) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
