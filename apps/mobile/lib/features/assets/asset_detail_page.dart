@@ -401,7 +401,7 @@ class _PnLCard extends ConsumerWidget {
             .toDecimal(scaleOnInfinitePrecision: 6)
             .toDouble();
 
-    final realized = realizedAsync.valueOrNull;
+    final realized = realizedAsync.value;
     final dailyChange = (snap == null || !hasPosition)
         ? null
         : _dailyChangeFromHistory(historyAsync, snap.quantity);
