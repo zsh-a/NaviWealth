@@ -34,6 +34,7 @@ import '../features/liabilities/ui/liabilities_page.dart'
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
+import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -280,6 +281,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   load: devices_lib.loadLibrary,
                   builder: (_) => devices_lib.DevicesPage(),
                 ),
+              ),
+              GoRoute(
+                path: 'fx-rates',
+                name: 'fx-rates',
+                builder: (context, state) => const FxRatesPage(),
               ),
             ],
           ),

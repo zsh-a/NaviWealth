@@ -94,6 +94,26 @@ class FxRateRepository {
     await (_db.delete(_db.fxRates)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Delete the row matching the natural key `(base, quote, day(date))`.
+  /// The domain [dom.FxRate] does not carry the Drift row id, so the
+  /// FX-rate management UI deletes via this helper after the user swipes
+  /// a row.
+  Future<void> deleteByNaturalKey({
+    required String base,
+    required String quote,
+    required DateTime date,
+  }) async {
+    final b = _normalize(base, 'base');
+    final q = _normalize(quote, 'quote');
+    final day = DateTime.utc(date.year, date.month, date.day);
+    await (_db.delete(_db.fxRates)
+          ..where((t) =>
+              t.baseCurrency.equals(b) &
+              t.quoteCurrency.equals(q) &
+              t.asOf.equals(day)))
+        .go();
+  }
+
   static String _normalize(String code, String field) {
     final trimmed = code.trim();
     if (trimmed.isEmpty) {
