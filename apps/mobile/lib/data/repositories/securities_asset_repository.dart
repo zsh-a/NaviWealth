@@ -137,6 +137,86 @@ class SecuritiesAssetRepository {
     );
   }
 
+  /// Fill **only** fields that are still null on the existing row. Used by
+  /// FIR-78's "同步元数据" / "从网络导入" actions: the network is treated as a
+  /// best-effort metadata enrichment, never as a source of truth, so any
+  /// field the user has already touched is left alone. Currency is
+  /// non-nullable in the schema and so is never overwritten through this
+  /// path — callers that genuinely need to change a currency must go
+  /// through [upsertSecurity] (or the type-specific edit form) and accept
+  /// the explicit overwrite.
+  ///
+  /// A no-op call (everything already set) returns the row untouched and
+  /// does **not** queue an update op, mirroring the contract of
+  /// [upsertSecurity]'s update path.
+  Future<Asset> enrichMetadata({
+    required String id,
+    String? name,
+    String? isin,
+    String? industry,
+    String? region,
+    String? logoUrl,
+  }) async {
+    final existing = await findById(id);
+    if (existing == null) {
+      throw StateError('asset not found: $id');
+    }
+
+    final diff = <String, Object?>{};
+    var pending = const AssetsCompanion();
+
+    if (name != null &&
+        name.isNotEmpty &&
+        (existing.name == null || existing.name!.isEmpty)) {
+      pending = pending.copyWith(name: Value(name));
+      diff['name'] = name;
+    }
+    if (isin != null && isin.isNotEmpty && existing.isin == null) {
+      pending = pending.copyWith(isin: Value(isin));
+      diff['isin'] = isin;
+    }
+    if (industry != null &&
+        industry.isNotEmpty &&
+        existing.industry == null) {
+      pending = pending.copyWith(industry: Value(industry));
+      diff['industry'] = industry;
+    }
+    if (region != null && region.isNotEmpty && existing.region == null) {
+      pending = pending.copyWith(region: Value(region));
+      diff['region'] = region;
+    }
+    if (logoUrl != null &&
+        logoUrl.isNotEmpty &&
+        existing.logoUrl == null) {
+      pending = pending.copyWith(logoUrl: Value(logoUrl));
+      diff['logo_url'] = logoUrl;
+    }
+
+    if (diff.isEmpty) return existing;
+
+    final stamp = await _stamper.stamp();
+    pending = pending.copyWith(
+      updatedAt: Value(stamp.now),
+      updatedByDevice: Value(stamp.deviceId),
+      hlc: Value(stamp.hlc),
+    );
+    diff['updated_at'] = stamp.now.toUtc().toIso8601String();
+    diff['updated_by_device'] = stamp.deviceId;
+    diff['hlc'] = stamp.hlc.toString();
+
+    await _db.transaction(() async {
+      await (_db.update(_db.assets)..where((t) => t.id.equals(existing.id)))
+          .write(pending);
+      await _enqueue(
+        opType: OpType.update,
+        rowId: existing.id,
+        fields: diff,
+        stamp: stamp,
+      );
+    });
+    return (await findById(existing.id))!;
+  }
+
   /// Soft-delete by deterministic id. Tombstones the row (`deletedAt =
   /// now`) and queues a `delete` op so peers honour LWW.
   Future<void> softDelete(String id) async {

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/domain/enums.dart';
+import '../../../data/market/market_data_providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../domain/entities/symbol_info.dart';
+import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 import 'currency_picker.dart';
 import 'local_securities_picker.dart';
@@ -11,17 +15,22 @@ import 'local_securities_picker.dart';
 /// caller can immediately use it without round-tripping through the
 /// repository — actual `upsertSecurity` happens at trade-submit time.
 ///
-/// Fully offline: every field is filled by the user, nothing is fetched.
-class ManualSecuritySheet extends StatefulWidget {
+/// Default flow is fully offline: every field is user-entered. FIR-78
+/// surfaces a "从网络导入" affordance that calls
+/// [MarketDataService.searchSymbol] for one-shot metadata import; that
+/// path is best-effort, falls back to manual entry on any failure, and
+/// never blocks the form from saving.
+class ManualSecuritySheet extends ConsumerStatefulWidget {
   const ManualSecuritySheet({super.key, this.prefillSymbol});
 
   final String? prefillSymbol;
 
   @override
-  State<ManualSecuritySheet> createState() => _ManualSecuritySheetState();
+  ConsumerState<ManualSecuritySheet> createState() =>
+      _ManualSecuritySheetState();
 }
 
-class _ManualSecuritySheetState extends State<ManualSecuritySheet> {
+class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
   final _formKey = GlobalKey<FormState>();
   final _symbolCtl = TextEditingController();
   final _nameCtl = TextEditingController();
@@ -30,6 +39,7 @@ class _ManualSecuritySheetState extends State<ManualSecuritySheet> {
   AssetMarket _market = AssetMarket.usStock;
   AssetType _type = AssetType.stock;
   String _currency = 'USD';
+  bool _importing = false;
 
   static const _supportedMarkets = <AssetMarket>[
     AssetMarket.cnA,
@@ -106,6 +116,125 @@ class _ManualSecuritySheetState extends State<ManualSecuritySheet> {
     }
   }
 
+  Future<void> _importFromNetwork() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final query = _symbolCtl.text.trim();
+    if (query.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('请先输入代码或名称')),
+      );
+      return;
+    }
+
+    setState(() => _importing = true);
+    final List<SymbolInfo> hits;
+    try {
+      final market = await ref.read(marketDataServiceProvider.future);
+      // Pass the user's current market pick as a hint so the routing chain
+      // can skip irrelevant providers (e.g. don't ask CoinGecko for a US
+      // ticker). Falls back to the unrestricted chain when unknown.
+      final response = await market.searchSymbol(
+        query,
+        market: _market == AssetMarket.unknown ? null : _market,
+      );
+      hits = response.data;
+    } catch (_) {
+      // The composite service throws NoMarketDataAvailableException when
+      // every provider fails (offline or upstream outage); per FIR-78 we
+      // collapse the whole failure surface to a single non-scary message
+      // and let the user fall through to manual entry.
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('网络不可用，请使用手动输入')),
+      );
+      setState(() => _importing = false);
+      return;
+    }
+
+    if (!mounted) return;
+    // Drop the spinner before opening the picker dialog. Otherwise the
+    // CircularProgressIndicator keeps ticking while we're awaiting the
+    // user's choice, which makes `pumpAndSettle` impossible in widget
+    // tests and adds zero signal — the search has already returned.
+    setState(() => _importing = false);
+
+    if (hits.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('未找到匹配项，请使用手动输入')),
+      );
+      return;
+    }
+    final picked = hits.length == 1
+        ? hits.single
+        : await _pickFromCandidates(hits);
+    if (picked == null || !mounted) return;
+    _applyImported(picked);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('已从网络导入元数据')),
+    );
+  }
+
+  Future<SymbolInfo?> _pickFromCandidates(List<SymbolInfo> hits) {
+    return showDialog<SymbolInfo>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('选择匹配项'),
+        children: [
+          // Each row uses a self-contained `ListTile.onTap` rather than
+          // wrapping in `SimpleDialogOption`. The ListTile's own gesture
+          // detector swallows taps from its parent, which made the
+          // `SimpleDialogOption` callback unreachable in widget tests.
+          // Two listings can share a symbol (e.g. cross-listings), so the
+          // key incorporates the exchange to stay unique in those cases.
+          for (final hit in hits)
+            ListTile(
+              key: Key(
+                'manual-security-import-candidate-${hit.symbol}-'
+                '${hit.exchange ?? 'unknown'}',
+              ),
+              title: Text(
+                hit.symbol,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                [
+                  hit.name,
+                  if (hit.exchange != null) hit.exchange!,
+                ].join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Text(hit.currency ?? '—'),
+              onTap: () => Navigator.of(ctx).pop(hit),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _applyImported(SymbolInfo info) {
+    setState(() {
+      _symbolCtl.text = info.symbol;
+      if (info.name.isNotEmpty) _nameCtl.text = info.name;
+      // Only adopt the imported market if the picker actually offers it —
+      // otherwise the dropdown's `value` would fall outside its `items`
+      // and Flutter would assert in debug.
+      if (_supportedMarkets.contains(info.market)) {
+        _market = info.market;
+        if (_market == AssetMarket.crypto) {
+          _type = AssetType.crypto;
+        } else if (_type == AssetType.crypto) {
+          _type = AssetType.stock;
+        }
+      }
+      if (info.currency != null && info.currency!.isNotEmpty) {
+        _currency = info.currency!;
+      } else {
+        _currency = _defaultCurrencyFor(_market);
+      }
+    });
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final symbol = _symbolCtl.text.trim();
@@ -147,7 +276,7 @@ class _ManualSecuritySheetState extends State<ManualSecuritySheet> {
               ),
               const SizedBox(height: Spacing.s4),
               Text(
-                '本地保存，不会联网。',
+                '本地保存。点击「从网络导入」可选择性地用 Yahoo / CoinGecko 元数据补全字段。',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: Spacing.s16),
@@ -165,6 +294,22 @@ class _ManualSecuritySheetState extends State<ManualSecuritySheet> {
                   if (t.contains(':')) return '代码不能包含 “:”';
                   return null;
                 },
+              ),
+              const SizedBox(height: Spacing.s8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const Key('manual-security-import'),
+                  onPressed: _importing ? null : _importFromNetwork,
+                  icon: _importing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_download_outlined),
+                  label: Text(_importing ? '导入中…' : '从网络导入'),
+                ),
               ),
               const SizedBox(height: Spacing.s12),
               TextFormField(
