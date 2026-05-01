@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/physical_asset.dart';
@@ -173,6 +174,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet> {
         note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       );
       if (!mounted) return;
+      Haptics.success();
       Navigator.of(context).pop(true);
     } finally {
       if (mounted) setState(() => _saving = false);

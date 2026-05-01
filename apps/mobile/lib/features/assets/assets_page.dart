@@ -51,7 +51,7 @@ class AssetsPage extends ConsumerWidget {
         manualAsync: manualAsync,
         physicalAsync: physicalAsync,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab.extended(
         onPressed: () => _showAddSheet(context),
         icon: const Icon(Icons.add),
         label: Text(l10n.assetsAddAction),

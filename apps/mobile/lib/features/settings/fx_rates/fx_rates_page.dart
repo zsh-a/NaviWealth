@@ -92,8 +92,8 @@ class _RateList extends ConsumerWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (ctx, i) {
         final r = ordered[i];
-        return Dismissible(
-          key: ValueKey('${r.base}-${r.quote}-${r.date.toIso8601String()}'),
+        return AppDismissibleListTile(
+          dismissibleKey: ValueKey('${r.base}-${r.quote}-${r.date.toIso8601String()}'),
           direction: DismissDirection.endToStart,
           background: Container(
             color: Theme.of(ctx).colorScheme.errorContainer,
