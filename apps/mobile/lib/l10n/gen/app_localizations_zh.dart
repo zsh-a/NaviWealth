@@ -466,13 +466,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsFxRatesTitle => '汇率管理';
 
   @override
-  String get settingsFxRatesSubtitle => '手动录入汇率，外币持仓将按此折算到基础货币。';
+  String get settingsFxRatesSubtitle => '汇率自动从 Yahoo Finance 同步，支持手动录入作为备用。';
 
   @override
   String get fxRatesAppBarTitle => '汇率';
 
   @override
-  String get fxRatesEmpty => '尚未录入任何汇率。点击右下角 + 添加，新汇率会即时应用到 Dashboard。';
+  String get fxRatesEmpty => '尚无汇率数据。汇率会在启动时自动同步 — 请先添加不同币种的账户。';
+
+  @override
+  String get fxRatesRefreshing => '正在同步汇率…';
+
+  @override
+  String get fxRatesSyncedFrom => '来源';
 
   @override
   String get fxRatesAddAction => '添加汇率';

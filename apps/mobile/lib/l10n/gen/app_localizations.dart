@@ -977,7 +977,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsFxRatesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Manually record exchange rates so foreign-currency holdings convert into the base currency.'**
+  /// **'Exchange rates are auto-synced from Yahoo Finance. Manual entry available as fallback.'**
   String get settingsFxRatesSubtitle;
 
   /// No description provided for @fxRatesAppBarTitle.
@@ -989,8 +989,20 @@ abstract class AppLocalizations {
   /// No description provided for @fxRatesEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No FX rates recorded yet. Tap the + button to add one — it will be picked up immediately by the dashboard.'**
+  /// **'No FX rates recorded yet. Rates are auto-synced on app launch — add accounts in different currencies to get started.'**
   String get fxRatesEmpty;
+
+  /// No description provided for @fxRatesRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing rates…'**
+  String get fxRatesRefreshing;
+
+  /// No description provided for @fxRatesSyncedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get fxRatesSyncedFrom;
 
   /// No description provided for @fxRatesAddAction.
   ///
