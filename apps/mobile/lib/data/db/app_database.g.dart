@@ -13168,6 +13168,994 @@ class MarketSymbolSearchesCompanion
   }
 }
 
+class $SecuritiesCatalogTable extends SecuritiesCatalog
+    with TableInfo<$SecuritiesCatalogTable, SecuritiesCatalogRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SecuritiesCatalogTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<AssetType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AssetType>($SecuritiesCatalogTable.$convertertype);
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameEnMeta = const VerificationMeta('nameEn');
+  @override
+  late final GeneratedColumn<String> nameEn = GeneratedColumn<String>(
+    'name_en',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameCnMeta = const VerificationMeta('nameCn');
+  @override
+  late final GeneratedColumn<String> nameCn = GeneratedColumn<String>(
+    'name_cn',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinyinMeta = const VerificationMeta('pinyin');
+  @override
+  late final GeneratedColumn<String> pinyin = GeneratedColumn<String>(
+    'pinyin',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinyinInitialsMeta = const VerificationMeta(
+    'pinyinInitials',
+  );
+  @override
+  late final GeneratedColumn<String> pinyinInitials = GeneratedColumn<String>(
+    'pinyin_initials',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _aliasesMeta = const VerificationMeta(
+    'aliases',
+  );
+  @override
+  late final GeneratedColumn<String> aliases = GeneratedColumn<String>(
+    'aliases',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    symbol,
+    market,
+    type,
+    currency,
+    nameEn,
+    nameCn,
+    pinyin,
+    pinyinInitials,
+    aliases,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'securities_catalog';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SecuritiesCatalogRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyMeta);
+    }
+    if (data.containsKey('name_en')) {
+      context.handle(
+        _nameEnMeta,
+        nameEn.isAcceptableOrUnknown(data['name_en']!, _nameEnMeta),
+      );
+    }
+    if (data.containsKey('name_cn')) {
+      context.handle(
+        _nameCnMeta,
+        nameCn.isAcceptableOrUnknown(data['name_cn']!, _nameCnMeta),
+      );
+    }
+    if (data.containsKey('pinyin')) {
+      context.handle(
+        _pinyinMeta,
+        pinyin.isAcceptableOrUnknown(data['pinyin']!, _pinyinMeta),
+      );
+    }
+    if (data.containsKey('pinyin_initials')) {
+      context.handle(
+        _pinyinInitialsMeta,
+        pinyinInitials.isAcceptableOrUnknown(
+          data['pinyin_initials']!,
+          _pinyinInitialsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('aliases')) {
+      context.handle(
+        _aliasesMeta,
+        aliases.isAcceptableOrUnknown(data['aliases']!, _aliasesMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SecuritiesCatalogRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SecuritiesCatalogRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      type: $SecuritiesCatalogTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      nameEn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name_en'],
+      ),
+      nameCn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name_cn'],
+      ),
+      pinyin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pinyin'],
+      ),
+      pinyinInitials: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pinyin_initials'],
+      ),
+      aliases: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}aliases'],
+      ),
+    );
+  }
+
+  @override
+  $SecuritiesCatalogTable createAlias(String alias) {
+    return $SecuritiesCatalogTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<AssetType, String> $convertertype =
+      const EnumStringConverter(AssetType.values);
+}
+
+class SecuritiesCatalogRow extends DataClass
+    implements Insertable<SecuritiesCatalogRow> {
+  final String id;
+  final String symbol;
+
+  /// Wire-form market label (`cn_a`, `us_stock`, …). Matches the value
+  /// space `assets.market` uses, so dedupe by `(market, symbol)` against
+  /// owned assets is a plain string compare and never has to round-trip
+  /// through `AssetMarket`.
+  final String market;
+  final AssetType type;
+  final String currency;
+  final String? nameEn;
+  final String? nameCn;
+
+  /// Lower-cased full pinyin without tone marks, no separators
+  /// (e.g. `guizhoumaotai`). Matches typed-as-pinyin queries
+  /// (`gzmaotai`, `kweichowmoutai`).
+  final String? pinyin;
+
+  /// Pinyin initials, no separators (e.g. `gzmt`). Matches the very
+  /// common abbreviated-pinyin search style.
+  final String? pinyinInitials;
+
+  /// Whitespace-separated bag of additional searchable terms — common
+  /// short forms, English aliases, ticker variants. Indexed by FTS5 like
+  /// any other column; kept out of the four canonical name fields so
+  /// rank doesn't get diluted on exact lookups.
+  final String? aliases;
+  const SecuritiesCatalogRow({
+    required this.id,
+    required this.symbol,
+    required this.market,
+    required this.type,
+    required this.currency,
+    this.nameEn,
+    this.nameCn,
+    this.pinyin,
+    this.pinyinInitials,
+    this.aliases,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['symbol'] = Variable<String>(symbol);
+    map['market'] = Variable<String>(market);
+    {
+      map['type'] = Variable<String>(
+        $SecuritiesCatalogTable.$convertertype.toSql(type),
+      );
+    }
+    map['currency'] = Variable<String>(currency);
+    if (!nullToAbsent || nameEn != null) {
+      map['name_en'] = Variable<String>(nameEn);
+    }
+    if (!nullToAbsent || nameCn != null) {
+      map['name_cn'] = Variable<String>(nameCn);
+    }
+    if (!nullToAbsent || pinyin != null) {
+      map['pinyin'] = Variable<String>(pinyin);
+    }
+    if (!nullToAbsent || pinyinInitials != null) {
+      map['pinyin_initials'] = Variable<String>(pinyinInitials);
+    }
+    if (!nullToAbsent || aliases != null) {
+      map['aliases'] = Variable<String>(aliases);
+    }
+    return map;
+  }
+
+  SecuritiesCatalogCompanion toCompanion(bool nullToAbsent) {
+    return SecuritiesCatalogCompanion(
+      id: Value(id),
+      symbol: Value(symbol),
+      market: Value(market),
+      type: Value(type),
+      currency: Value(currency),
+      nameEn: nameEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nameEn),
+      nameCn: nameCn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nameCn),
+      pinyin: pinyin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinyin),
+      pinyinInitials: pinyinInitials == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinyinInitials),
+      aliases: aliases == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aliases),
+    );
+  }
+
+  factory SecuritiesCatalogRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SecuritiesCatalogRow(
+      id: serializer.fromJson<String>(json['id']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      market: serializer.fromJson<String>(json['market']),
+      type: serializer.fromJson<AssetType>(json['type']),
+      currency: serializer.fromJson<String>(json['currency']),
+      nameEn: serializer.fromJson<String?>(json['nameEn']),
+      nameCn: serializer.fromJson<String?>(json['nameCn']),
+      pinyin: serializer.fromJson<String?>(json['pinyin']),
+      pinyinInitials: serializer.fromJson<String?>(json['pinyinInitials']),
+      aliases: serializer.fromJson<String?>(json['aliases']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'symbol': serializer.toJson<String>(symbol),
+      'market': serializer.toJson<String>(market),
+      'type': serializer.toJson<AssetType>(type),
+      'currency': serializer.toJson<String>(currency),
+      'nameEn': serializer.toJson<String?>(nameEn),
+      'nameCn': serializer.toJson<String?>(nameCn),
+      'pinyin': serializer.toJson<String?>(pinyin),
+      'pinyinInitials': serializer.toJson<String?>(pinyinInitials),
+      'aliases': serializer.toJson<String?>(aliases),
+    };
+  }
+
+  SecuritiesCatalogRow copyWith({
+    String? id,
+    String? symbol,
+    String? market,
+    AssetType? type,
+    String? currency,
+    Value<String?> nameEn = const Value.absent(),
+    Value<String?> nameCn = const Value.absent(),
+    Value<String?> pinyin = const Value.absent(),
+    Value<String?> pinyinInitials = const Value.absent(),
+    Value<String?> aliases = const Value.absent(),
+  }) => SecuritiesCatalogRow(
+    id: id ?? this.id,
+    symbol: symbol ?? this.symbol,
+    market: market ?? this.market,
+    type: type ?? this.type,
+    currency: currency ?? this.currency,
+    nameEn: nameEn.present ? nameEn.value : this.nameEn,
+    nameCn: nameCn.present ? nameCn.value : this.nameCn,
+    pinyin: pinyin.present ? pinyin.value : this.pinyin,
+    pinyinInitials: pinyinInitials.present
+        ? pinyinInitials.value
+        : this.pinyinInitials,
+    aliases: aliases.present ? aliases.value : this.aliases,
+  );
+  SecuritiesCatalogRow copyWithCompanion(SecuritiesCatalogCompanion data) {
+    return SecuritiesCatalogRow(
+      id: data.id.present ? data.id.value : this.id,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      market: data.market.present ? data.market.value : this.market,
+      type: data.type.present ? data.type.value : this.type,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      nameEn: data.nameEn.present ? data.nameEn.value : this.nameEn,
+      nameCn: data.nameCn.present ? data.nameCn.value : this.nameCn,
+      pinyin: data.pinyin.present ? data.pinyin.value : this.pinyin,
+      pinyinInitials: data.pinyinInitials.present
+          ? data.pinyinInitials.value
+          : this.pinyinInitials,
+      aliases: data.aliases.present ? data.aliases.value : this.aliases,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecuritiesCatalogRow(')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('type: $type, ')
+          ..write('currency: $currency, ')
+          ..write('nameEn: $nameEn, ')
+          ..write('nameCn: $nameCn, ')
+          ..write('pinyin: $pinyin, ')
+          ..write('pinyinInitials: $pinyinInitials, ')
+          ..write('aliases: $aliases')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    symbol,
+    market,
+    type,
+    currency,
+    nameEn,
+    nameCn,
+    pinyin,
+    pinyinInitials,
+    aliases,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SecuritiesCatalogRow &&
+          other.id == this.id &&
+          other.symbol == this.symbol &&
+          other.market == this.market &&
+          other.type == this.type &&
+          other.currency == this.currency &&
+          other.nameEn == this.nameEn &&
+          other.nameCn == this.nameCn &&
+          other.pinyin == this.pinyin &&
+          other.pinyinInitials == this.pinyinInitials &&
+          other.aliases == this.aliases);
+}
+
+class SecuritiesCatalogCompanion extends UpdateCompanion<SecuritiesCatalogRow> {
+  final Value<String> id;
+  final Value<String> symbol;
+  final Value<String> market;
+  final Value<AssetType> type;
+  final Value<String> currency;
+  final Value<String?> nameEn;
+  final Value<String?> nameCn;
+  final Value<String?> pinyin;
+  final Value<String?> pinyinInitials;
+  final Value<String?> aliases;
+  final Value<int> rowid;
+  const SecuritiesCatalogCompanion({
+    this.id = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.market = const Value.absent(),
+    this.type = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.nameEn = const Value.absent(),
+    this.nameCn = const Value.absent(),
+    this.pinyin = const Value.absent(),
+    this.pinyinInitials = const Value.absent(),
+    this.aliases = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SecuritiesCatalogCompanion.insert({
+    required String id,
+    required String symbol,
+    required String market,
+    required AssetType type,
+    required String currency,
+    this.nameEn = const Value.absent(),
+    this.nameCn = const Value.absent(),
+    this.pinyin = const Value.absent(),
+    this.pinyinInitials = const Value.absent(),
+    this.aliases = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       symbol = Value(symbol),
+       market = Value(market),
+       type = Value(type),
+       currency = Value(currency);
+  static Insertable<SecuritiesCatalogRow> custom({
+    Expression<String>? id,
+    Expression<String>? symbol,
+    Expression<String>? market,
+    Expression<String>? type,
+    Expression<String>? currency,
+    Expression<String>? nameEn,
+    Expression<String>? nameCn,
+    Expression<String>? pinyin,
+    Expression<String>? pinyinInitials,
+    Expression<String>? aliases,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (symbol != null) 'symbol': symbol,
+      if (market != null) 'market': market,
+      if (type != null) 'type': type,
+      if (currency != null) 'currency': currency,
+      if (nameEn != null) 'name_en': nameEn,
+      if (nameCn != null) 'name_cn': nameCn,
+      if (pinyin != null) 'pinyin': pinyin,
+      if (pinyinInitials != null) 'pinyin_initials': pinyinInitials,
+      if (aliases != null) 'aliases': aliases,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SecuritiesCatalogCompanion copyWith({
+    Value<String>? id,
+    Value<String>? symbol,
+    Value<String>? market,
+    Value<AssetType>? type,
+    Value<String>? currency,
+    Value<String?>? nameEn,
+    Value<String?>? nameCn,
+    Value<String?>? pinyin,
+    Value<String?>? pinyinInitials,
+    Value<String?>? aliases,
+    Value<int>? rowid,
+  }) {
+    return SecuritiesCatalogCompanion(
+      id: id ?? this.id,
+      symbol: symbol ?? this.symbol,
+      market: market ?? this.market,
+      type: type ?? this.type,
+      currency: currency ?? this.currency,
+      nameEn: nameEn ?? this.nameEn,
+      nameCn: nameCn ?? this.nameCn,
+      pinyin: pinyin ?? this.pinyin,
+      pinyinInitials: pinyinInitials ?? this.pinyinInitials,
+      aliases: aliases ?? this.aliases,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $SecuritiesCatalogTable.$convertertype.toSql(type.value),
+      );
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (nameEn.present) {
+      map['name_en'] = Variable<String>(nameEn.value);
+    }
+    if (nameCn.present) {
+      map['name_cn'] = Variable<String>(nameCn.value);
+    }
+    if (pinyin.present) {
+      map['pinyin'] = Variable<String>(pinyin.value);
+    }
+    if (pinyinInitials.present) {
+      map['pinyin_initials'] = Variable<String>(pinyinInitials.value);
+    }
+    if (aliases.present) {
+      map['aliases'] = Variable<String>(aliases.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecuritiesCatalogCompanion(')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('type: $type, ')
+          ..write('currency: $currency, ')
+          ..write('nameEn: $nameEn, ')
+          ..write('nameCn: $nameCn, ')
+          ..write('pinyin: $pinyin, ')
+          ..write('pinyinInitials: $pinyinInitials, ')
+          ..write('aliases: $aliases, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SecuritiesCatalogMetaTable extends SecuritiesCatalogMeta
+    with TableInfo<$SecuritiesCatalogMetaTable, SecuritiesCatalogMetaRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SecuritiesCatalogMetaTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<String> version = GeneratedColumn<String>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _checksumMeta = const VerificationMeta(
+    'checksum',
+  );
+  @override
+  late final GeneratedColumn<String> checksum = GeneratedColumn<String>(
+    'checksum',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rowCountMeta = const VerificationMeta(
+    'rowCount',
+  );
+  @override
+  late final GeneratedColumn<int> rowCount = GeneratedColumn<int>(
+    'row_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _loadedAtMeta = const VerificationMeta(
+    'loadedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> loadedAt = GeneratedColumn<DateTime>(
+    'loaded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    version,
+    checksum,
+    rowCount,
+    loadedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'securities_catalog_meta';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SecuritiesCatalogMetaRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('checksum')) {
+      context.handle(
+        _checksumMeta,
+        checksum.isAcceptableOrUnknown(data['checksum']!, _checksumMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_checksumMeta);
+    }
+    if (data.containsKey('row_count')) {
+      context.handle(
+        _rowCountMeta,
+        rowCount.isAcceptableOrUnknown(data['row_count']!, _rowCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rowCountMeta);
+    }
+    if (data.containsKey('loaded_at')) {
+      context.handle(
+        _loadedAtMeta,
+        loadedAt.isAcceptableOrUnknown(data['loaded_at']!, _loadedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_loadedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SecuritiesCatalogMetaRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SecuritiesCatalogMetaRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}version'],
+      )!,
+      checksum: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}checksum'],
+      )!,
+      rowCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}row_count'],
+      )!,
+      loadedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}loaded_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SecuritiesCatalogMetaTable createAlias(String alias) {
+    return $SecuritiesCatalogMetaTable(attachedDatabase, alias);
+  }
+}
+
+class SecuritiesCatalogMetaRow extends DataClass
+    implements Insertable<SecuritiesCatalogMetaRow> {
+  final int id;
+  final String version;
+  final String checksum;
+  final int rowCount;
+  final DateTime loadedAt;
+  const SecuritiesCatalogMetaRow({
+    required this.id,
+    required this.version,
+    required this.checksum,
+    required this.rowCount,
+    required this.loadedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['version'] = Variable<String>(version);
+    map['checksum'] = Variable<String>(checksum);
+    map['row_count'] = Variable<int>(rowCount);
+    map['loaded_at'] = Variable<DateTime>(loadedAt);
+    return map;
+  }
+
+  SecuritiesCatalogMetaCompanion toCompanion(bool nullToAbsent) {
+    return SecuritiesCatalogMetaCompanion(
+      id: Value(id),
+      version: Value(version),
+      checksum: Value(checksum),
+      rowCount: Value(rowCount),
+      loadedAt: Value(loadedAt),
+    );
+  }
+
+  factory SecuritiesCatalogMetaRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SecuritiesCatalogMetaRow(
+      id: serializer.fromJson<int>(json['id']),
+      version: serializer.fromJson<String>(json['version']),
+      checksum: serializer.fromJson<String>(json['checksum']),
+      rowCount: serializer.fromJson<int>(json['rowCount']),
+      loadedAt: serializer.fromJson<DateTime>(json['loadedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'version': serializer.toJson<String>(version),
+      'checksum': serializer.toJson<String>(checksum),
+      'rowCount': serializer.toJson<int>(rowCount),
+      'loadedAt': serializer.toJson<DateTime>(loadedAt),
+    };
+  }
+
+  SecuritiesCatalogMetaRow copyWith({
+    int? id,
+    String? version,
+    String? checksum,
+    int? rowCount,
+    DateTime? loadedAt,
+  }) => SecuritiesCatalogMetaRow(
+    id: id ?? this.id,
+    version: version ?? this.version,
+    checksum: checksum ?? this.checksum,
+    rowCount: rowCount ?? this.rowCount,
+    loadedAt: loadedAt ?? this.loadedAt,
+  );
+  SecuritiesCatalogMetaRow copyWithCompanion(
+    SecuritiesCatalogMetaCompanion data,
+  ) {
+    return SecuritiesCatalogMetaRow(
+      id: data.id.present ? data.id.value : this.id,
+      version: data.version.present ? data.version.value : this.version,
+      checksum: data.checksum.present ? data.checksum.value : this.checksum,
+      rowCount: data.rowCount.present ? data.rowCount.value : this.rowCount,
+      loadedAt: data.loadedAt.present ? data.loadedAt.value : this.loadedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecuritiesCatalogMetaRow(')
+          ..write('id: $id, ')
+          ..write('version: $version, ')
+          ..write('checksum: $checksum, ')
+          ..write('rowCount: $rowCount, ')
+          ..write('loadedAt: $loadedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, version, checksum, rowCount, loadedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SecuritiesCatalogMetaRow &&
+          other.id == this.id &&
+          other.version == this.version &&
+          other.checksum == this.checksum &&
+          other.rowCount == this.rowCount &&
+          other.loadedAt == this.loadedAt);
+}
+
+class SecuritiesCatalogMetaCompanion
+    extends UpdateCompanion<SecuritiesCatalogMetaRow> {
+  final Value<int> id;
+  final Value<String> version;
+  final Value<String> checksum;
+  final Value<int> rowCount;
+  final Value<DateTime> loadedAt;
+  const SecuritiesCatalogMetaCompanion({
+    this.id = const Value.absent(),
+    this.version = const Value.absent(),
+    this.checksum = const Value.absent(),
+    this.rowCount = const Value.absent(),
+    this.loadedAt = const Value.absent(),
+  });
+  SecuritiesCatalogMetaCompanion.insert({
+    this.id = const Value.absent(),
+    required String version,
+    required String checksum,
+    required int rowCount,
+    required DateTime loadedAt,
+  }) : version = Value(version),
+       checksum = Value(checksum),
+       rowCount = Value(rowCount),
+       loadedAt = Value(loadedAt);
+  static Insertable<SecuritiesCatalogMetaRow> custom({
+    Expression<int>? id,
+    Expression<String>? version,
+    Expression<String>? checksum,
+    Expression<int>? rowCount,
+    Expression<DateTime>? loadedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (version != null) 'version': version,
+      if (checksum != null) 'checksum': checksum,
+      if (rowCount != null) 'row_count': rowCount,
+      if (loadedAt != null) 'loaded_at': loadedAt,
+    });
+  }
+
+  SecuritiesCatalogMetaCompanion copyWith({
+    Value<int>? id,
+    Value<String>? version,
+    Value<String>? checksum,
+    Value<int>? rowCount,
+    Value<DateTime>? loadedAt,
+  }) {
+    return SecuritiesCatalogMetaCompanion(
+      id: id ?? this.id,
+      version: version ?? this.version,
+      checksum: checksum ?? this.checksum,
+      rowCount: rowCount ?? this.rowCount,
+      loadedAt: loadedAt ?? this.loadedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<String>(version.value);
+    }
+    if (checksum.present) {
+      map['checksum'] = Variable<String>(checksum.value);
+    }
+    if (rowCount.present) {
+      map['row_count'] = Variable<int>(rowCount.value);
+    }
+    if (loadedAt.present) {
+      map['loaded_at'] = Variable<DateTime>(loadedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecuritiesCatalogMetaCompanion(')
+          ..write('id: $id, ')
+          ..write('version: $version, ')
+          ..write('checksum: $checksum, ')
+          ..write('rowCount: $rowCount, ')
+          ..write('loadedAt: $loadedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -13194,6 +14182,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $MarketHistoryBarsTable(this);
   late final $MarketSymbolSearchesTable marketSymbolSearches =
       $MarketSymbolSearchesTable(this);
+  late final $SecuritiesCatalogTable securitiesCatalog =
+      $SecuritiesCatalogTable(this);
+  late final $SecuritiesCatalogMetaTable securitiesCatalogMeta =
+      $SecuritiesCatalogMetaTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -13218,6 +14210,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     marketQuotes,
     marketHistoryBars,
     marketSymbolSearches,
+    securitiesCatalog,
+    securitiesCatalogMeta,
   ];
 }
 
@@ -19441,6 +20435,530 @@ typedef $$MarketSymbolSearchesTableProcessedTableManager =
       MarketSymbolSearchRow,
       PrefetchHooks Function()
     >;
+typedef $$SecuritiesCatalogTableCreateCompanionBuilder =
+    SecuritiesCatalogCompanion Function({
+      required String id,
+      required String symbol,
+      required String market,
+      required AssetType type,
+      required String currency,
+      Value<String?> nameEn,
+      Value<String?> nameCn,
+      Value<String?> pinyin,
+      Value<String?> pinyinInitials,
+      Value<String?> aliases,
+      Value<int> rowid,
+    });
+typedef $$SecuritiesCatalogTableUpdateCompanionBuilder =
+    SecuritiesCatalogCompanion Function({
+      Value<String> id,
+      Value<String> symbol,
+      Value<String> market,
+      Value<AssetType> type,
+      Value<String> currency,
+      Value<String?> nameEn,
+      Value<String?> nameCn,
+      Value<String?> pinyin,
+      Value<String?> pinyinInitials,
+      Value<String?> aliases,
+      Value<int> rowid,
+    });
+
+class $$SecuritiesCatalogTableFilterComposer
+    extends Composer<_$AppDatabase, $SecuritiesCatalogTable> {
+  $$SecuritiesCatalogTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<AssetType, AssetType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nameEn => $composableBuilder(
+    column: $table.nameEn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nameCn => $composableBuilder(
+    column: $table.nameCn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinyin => $composableBuilder(
+    column: $table.pinyin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinyinInitials => $composableBuilder(
+    column: $table.pinyinInitials,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get aliases => $composableBuilder(
+    column: $table.aliases,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SecuritiesCatalogTableOrderingComposer
+    extends Composer<_$AppDatabase, $SecuritiesCatalogTable> {
+  $$SecuritiesCatalogTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nameEn => $composableBuilder(
+    column: $table.nameEn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nameCn => $composableBuilder(
+    column: $table.nameCn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pinyin => $composableBuilder(
+    column: $table.pinyin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pinyinInitials => $composableBuilder(
+    column: $table.pinyinInitials,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get aliases => $composableBuilder(
+    column: $table.aliases,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SecuritiesCatalogTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SecuritiesCatalogTable> {
+  $$SecuritiesCatalogTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<AssetType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get nameEn =>
+      $composableBuilder(column: $table.nameEn, builder: (column) => column);
+
+  GeneratedColumn<String> get nameCn =>
+      $composableBuilder(column: $table.nameCn, builder: (column) => column);
+
+  GeneratedColumn<String> get pinyin =>
+      $composableBuilder(column: $table.pinyin, builder: (column) => column);
+
+  GeneratedColumn<String> get pinyinInitials => $composableBuilder(
+    column: $table.pinyinInitials,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get aliases =>
+      $composableBuilder(column: $table.aliases, builder: (column) => column);
+}
+
+class $$SecuritiesCatalogTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SecuritiesCatalogTable,
+          SecuritiesCatalogRow,
+          $$SecuritiesCatalogTableFilterComposer,
+          $$SecuritiesCatalogTableOrderingComposer,
+          $$SecuritiesCatalogTableAnnotationComposer,
+          $$SecuritiesCatalogTableCreateCompanionBuilder,
+          $$SecuritiesCatalogTableUpdateCompanionBuilder,
+          (
+            SecuritiesCatalogRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SecuritiesCatalogTable,
+              SecuritiesCatalogRow
+            >,
+          ),
+          SecuritiesCatalogRow,
+          PrefetchHooks Function()
+        > {
+  $$SecuritiesCatalogTableTableManager(
+    _$AppDatabase db,
+    $SecuritiesCatalogTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SecuritiesCatalogTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SecuritiesCatalogTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SecuritiesCatalogTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<AssetType> type = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<String?> nameEn = const Value.absent(),
+                Value<String?> nameCn = const Value.absent(),
+                Value<String?> pinyin = const Value.absent(),
+                Value<String?> pinyinInitials = const Value.absent(),
+                Value<String?> aliases = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SecuritiesCatalogCompanion(
+                id: id,
+                symbol: symbol,
+                market: market,
+                type: type,
+                currency: currency,
+                nameEn: nameEn,
+                nameCn: nameCn,
+                pinyin: pinyin,
+                pinyinInitials: pinyinInitials,
+                aliases: aliases,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String symbol,
+                required String market,
+                required AssetType type,
+                required String currency,
+                Value<String?> nameEn = const Value.absent(),
+                Value<String?> nameCn = const Value.absent(),
+                Value<String?> pinyin = const Value.absent(),
+                Value<String?> pinyinInitials = const Value.absent(),
+                Value<String?> aliases = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SecuritiesCatalogCompanion.insert(
+                id: id,
+                symbol: symbol,
+                market: market,
+                type: type,
+                currency: currency,
+                nameEn: nameEn,
+                nameCn: nameCn,
+                pinyin: pinyin,
+                pinyinInitials: pinyinInitials,
+                aliases: aliases,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SecuritiesCatalogTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SecuritiesCatalogTable,
+      SecuritiesCatalogRow,
+      $$SecuritiesCatalogTableFilterComposer,
+      $$SecuritiesCatalogTableOrderingComposer,
+      $$SecuritiesCatalogTableAnnotationComposer,
+      $$SecuritiesCatalogTableCreateCompanionBuilder,
+      $$SecuritiesCatalogTableUpdateCompanionBuilder,
+      (
+        SecuritiesCatalogRow,
+        BaseReferences<
+          _$AppDatabase,
+          $SecuritiesCatalogTable,
+          SecuritiesCatalogRow
+        >,
+      ),
+      SecuritiesCatalogRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SecuritiesCatalogMetaTableCreateCompanionBuilder =
+    SecuritiesCatalogMetaCompanion Function({
+      Value<int> id,
+      required String version,
+      required String checksum,
+      required int rowCount,
+      required DateTime loadedAt,
+    });
+typedef $$SecuritiesCatalogMetaTableUpdateCompanionBuilder =
+    SecuritiesCatalogMetaCompanion Function({
+      Value<int> id,
+      Value<String> version,
+      Value<String> checksum,
+      Value<int> rowCount,
+      Value<DateTime> loadedAt,
+    });
+
+class $$SecuritiesCatalogMetaTableFilterComposer
+    extends Composer<_$AppDatabase, $SecuritiesCatalogMetaTable> {
+  $$SecuritiesCatalogMetaTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get checksum => $composableBuilder(
+    column: $table.checksum,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rowCount => $composableBuilder(
+    column: $table.rowCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get loadedAt => $composableBuilder(
+    column: $table.loadedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SecuritiesCatalogMetaTableOrderingComposer
+    extends Composer<_$AppDatabase, $SecuritiesCatalogMetaTable> {
+  $$SecuritiesCatalogMetaTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get checksum => $composableBuilder(
+    column: $table.checksum,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rowCount => $composableBuilder(
+    column: $table.rowCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get loadedAt => $composableBuilder(
+    column: $table.loadedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SecuritiesCatalogMetaTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SecuritiesCatalogMetaTable> {
+  $$SecuritiesCatalogMetaTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<String> get checksum =>
+      $composableBuilder(column: $table.checksum, builder: (column) => column);
+
+  GeneratedColumn<int> get rowCount =>
+      $composableBuilder(column: $table.rowCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get loadedAt =>
+      $composableBuilder(column: $table.loadedAt, builder: (column) => column);
+}
+
+class $$SecuritiesCatalogMetaTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SecuritiesCatalogMetaTable,
+          SecuritiesCatalogMetaRow,
+          $$SecuritiesCatalogMetaTableFilterComposer,
+          $$SecuritiesCatalogMetaTableOrderingComposer,
+          $$SecuritiesCatalogMetaTableAnnotationComposer,
+          $$SecuritiesCatalogMetaTableCreateCompanionBuilder,
+          $$SecuritiesCatalogMetaTableUpdateCompanionBuilder,
+          (
+            SecuritiesCatalogMetaRow,
+            BaseReferences<
+              _$AppDatabase,
+              $SecuritiesCatalogMetaTable,
+              SecuritiesCatalogMetaRow
+            >,
+          ),
+          SecuritiesCatalogMetaRow,
+          PrefetchHooks Function()
+        > {
+  $$SecuritiesCatalogMetaTableTableManager(
+    _$AppDatabase db,
+    $SecuritiesCatalogMetaTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SecuritiesCatalogMetaTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$SecuritiesCatalogMetaTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SecuritiesCatalogMetaTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> version = const Value.absent(),
+                Value<String> checksum = const Value.absent(),
+                Value<int> rowCount = const Value.absent(),
+                Value<DateTime> loadedAt = const Value.absent(),
+              }) => SecuritiesCatalogMetaCompanion(
+                id: id,
+                version: version,
+                checksum: checksum,
+                rowCount: rowCount,
+                loadedAt: loadedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String version,
+                required String checksum,
+                required int rowCount,
+                required DateTime loadedAt,
+              }) => SecuritiesCatalogMetaCompanion.insert(
+                id: id,
+                version: version,
+                checksum: checksum,
+                rowCount: rowCount,
+                loadedAt: loadedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SecuritiesCatalogMetaTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SecuritiesCatalogMetaTable,
+      SecuritiesCatalogMetaRow,
+      $$SecuritiesCatalogMetaTableFilterComposer,
+      $$SecuritiesCatalogMetaTableOrderingComposer,
+      $$SecuritiesCatalogMetaTableAnnotationComposer,
+      $$SecuritiesCatalogMetaTableCreateCompanionBuilder,
+      $$SecuritiesCatalogMetaTableUpdateCompanionBuilder,
+      (
+        SecuritiesCatalogMetaRow,
+        BaseReferences<
+          _$AppDatabase,
+          $SecuritiesCatalogMetaTable,
+          SecuritiesCatalogMetaRow
+        >,
+      ),
+      SecuritiesCatalogMetaRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19482,4 +21000,8 @@ class $AppDatabaseManager {
       $$MarketHistoryBarsTableTableManager(_db, _db.marketHistoryBars);
   $$MarketSymbolSearchesTableTableManager get marketSymbolSearches =>
       $$MarketSymbolSearchesTableTableManager(_db, _db.marketSymbolSearches);
+  $$SecuritiesCatalogTableTableManager get securitiesCatalog =>
+      $$SecuritiesCatalogTableTableManager(_db, _db.securitiesCatalog);
+  $$SecuritiesCatalogMetaTableTableManager get securitiesCatalogMeta =>
+      $$SecuritiesCatalogMetaTableTableManager(_db, _db.securitiesCatalogMeta);
 }

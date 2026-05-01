@@ -1,0 +1,78 @@
+{"version":"v1.20260501","checksum":"c8e8fcfb23c178bb","count":77}
+{"s":"000001","m":"cn_a","t":"stock","c":"CNY","ne":"Ping An Bank","nc":"平安银行","p":"pinganyinhang","pi":"payh","a":"payh"}
+{"s":"000002","m":"cn_a","t":"stock","c":"CNY","ne":"China Vanke","nc":"万科A","p":"wankea","pi":"wka","a":"vanke wk"}
+{"s":"000333","m":"cn_a","t":"stock","c":"CNY","ne":"Midea Group","nc":"美的集团","p":"meidejituan","pi":"mdjt","a":"md mdjt"}
+{"s":"000651","m":"cn_a","t":"stock","c":"CNY","ne":"Gree Electric Appliances","nc":"格力电器","p":"gelidianqi","pi":"gldq","a":"gree gldq"}
+{"s":"000858","m":"cn_a","t":"stock","c":"CNY","ne":"Wuliangye Yibin","nc":"五粮液","p":"wuliangye","pi":"wly","a":"wly"}
+{"s":"300059","m":"cn_a","t":"stock","c":"CNY","ne":"East Money Information","nc":"东方财富","p":"dongfangcaifu","pi":"dfcf","a":"dfcf"}
+{"s":"300750","m":"cn_a","t":"stock","c":"CNY","ne":"Contemporary Amperex Technology","nc":"宁德时代","p":"ningdeshidai","pi":"ndsd","a":"catl ndsd"}
+{"s":"510050","m":"cn_a","t":"etf","c":"CNY","ne":"China Asset Management SSE 50 ETF","nc":"上证50ETF","p":"shangzheng50etf","pi":"sz5","a":"sse50 sz50"}
+{"s":"510300","m":"cn_a","t":"etf","c":"CNY","ne":"Huatai-PineBridge CSI 300 ETF","nc":"华泰柏瑞沪深300ETF","p":"huataibairuihushen300etf","pi":"htbrhs3","a":"hs300 csi300"}
+{"s":"510500","m":"cn_a","t":"etf","c":"CNY","ne":"China Asset Management CSI 500 ETF","nc":"中证500ETF","p":"zhongzheng500etf","pi":"zz5","a":"csi500"}
+{"s":"512100","m":"cn_a","t":"etf","c":"CNY","ne":"China Asset Management CSI 1000 ETF","nc":"中证1000ETF","p":"zhongzheng1000etf","pi":"zz1","a":"csi1000"}
+{"s":"512880","m":"cn_a","t":"etf","c":"CNY","ne":"GF Securities ETF","nc":"证券ETF","p":"zhengquanetf","pi":"zqe","a":"securitiesetf"}
+{"s":"588000","m":"cn_a","t":"etf","c":"CNY","ne":"Huatai-PineBridge STAR50 ETF","nc":"科创50ETF","p":"kechuang50etf","pi":"kc5","a":"star50"}
+{"s":"600030","m":"cn_a","t":"stock","c":"CNY","ne":"CITIC Securities","nc":"中信证券","p":"zhongxinzhengquan","pi":"zxzq","a":"citic zxzq"}
+{"s":"600036","m":"cn_a","t":"stock","c":"CNY","ne":"China Merchants Bank","nc":"招商银行","p":"zhaoshangyinhang","pi":"zsyh","a":"zsyh cmb"}
+{"s":"600276","m":"cn_a","t":"stock","c":"CNY","ne":"Jiangsu Hengrui Pharmaceuticals","nc":"恒瑞医药","p":"hengruiyiyao","pi":"hryy","a":"hr hryy"}
+{"s":"600519","m":"cn_a","t":"stock","c":"CNY","ne":"Kweichow Moutai","nc":"贵州茅台","p":"guizhoumaotai","pi":"gzmt","a":"茅台 mt mtjt mtjituan"}
+{"s":"600887","m":"cn_a","t":"stock","c":"CNY","ne":"Inner Mongolia Yili Industrial Group","nc":"伊利股份","p":"yiligufen","pi":"ylgf","a":"yili"}
+{"s":"601012","m":"cn_a","t":"stock","c":"CNY","ne":"LONGi Green Energy Technology","nc":"隆基绿能","p":"longjilvneng","pi":"ljln","a":"longi"}
+{"s":"601318","m":"cn_a","t":"stock","c":"CNY","ne":"Ping An Insurance","nc":"中国平安","p":"zhongguopingan","pi":"zgpa","a":"pa pingan"}
+{"s":"601398","m":"cn_a","t":"stock","c":"CNY","ne":"Industrial and Commercial Bank of China","nc":"工商银行","p":"gongshangyinhang","pi":"gsyh","a":"icbc gsyh"}
+{"s":"ADA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cardano","nc":"卡尔达诺","p":"kaerdanuo","pi":"kedn","a":"cardano ada"}
+{"s":"AVAX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Avalanche","nc":"雪崩","p":"xuebeng","pi":"xb","a":"avalanche avax"}
+{"s":"BNB-USD","m":"crypto","t":"crypto","c":"USD","ne":"BNB","nc":"币安币","p":"bianbi","pi":"bab","a":"binance bnb"}
+{"s":"BTC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bitcoin","nc":"比特币","p":"bitebi","pi":"btb","a":"bitcoin btc"}
+{"s":"DOGE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Dogecoin","nc":"狗狗币","p":"gougoubi","pi":"ggb","a":"dogecoin doge"}
+{"s":"DOT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Polkadot","nc":"波卡","p":"boka","pi":"bk","a":"polkadot dot"}
+{"s":"ETH-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ethereum","nc":"以太坊","p":"yitaifang","pi":"ytf","a":"ethereum eth"}
+{"s":"LINK-USD","m":"crypto","t":"crypto","c":"USD","ne":"Chainlink","nc":"链接","p":"lianjie","pi":"lj","a":"chainlink link"}
+{"s":"LTC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Litecoin","nc":"莱特币","p":"laitebi","pi":"ltb","a":"litecoin ltc"}
+{"s":"SOL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Solana","nc":"索拉纳","p":"suolana","pi":"sln","a":"solana sol"}
+{"s":"TRX-USD","m":"crypto","t":"crypto","c":"USD","ne":"TRON","nc":"波场","p":"bochang","pi":"bc","a":"tron trx"}
+{"s":"USDC-USD","m":"crypto","t":"crypto","c":"USD","ne":"USD Coin","nc":"USD Coin","p":"usd coin","pi":"u","a":"usdc"}
+{"s":"USDT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tether USD","nc":"泰达币","p":"taidabi","pi":"tdb","a":"tether usdt"}
+{"s":"XRP-USD","m":"crypto","t":"crypto","c":"USD","ne":"XRP","nc":"瑞波币","p":"ruibobi","pi":"rbb","a":"xrp ripple"}
+{"s":"0005.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"HSBC Holdings","nc":"汇丰控股","p":"huifengkonggu","pi":"hfkg","a":"hsbc hf"}
+{"s":"0388.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Hong Kong Exchanges and Clearing","nc":"香港交易所","p":"xianggangjiaoyisuo","pi":"xgjys","a":"hkex xgjys"}
+{"s":"0700.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Tencent Holdings","nc":"腾讯控股","p":"tengxunkonggu","pi":"txkg","a":"tencent tx tencentholdings"}
+{"s":"0939.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"China Construction Bank H","nc":"建设银行H","p":"jiansheyinhangh","pi":"jsyhh","a":"ccb jsyh"}
+{"s":"1288.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Agricultural Bank of China H","nc":"农业银行H","p":"nongyeyinhangh","pi":"nyyhh","a":"abc nyyh"}
+{"s":"1398.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"ICBC H","nc":"工商银行H","p":"gongshangyinhangh","pi":"gsyhh","a":"icbc gsyh"}
+{"s":"1810.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Xiaomi","nc":"小米集团","p":"xiaomijituan","pi":"xmjt","a":"xiaomi xm xmjt"}
+{"s":"2318.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Ping An Insurance H","nc":"中国平安H","p":"zhongguopinganh","pi":"zgpah","a":"pingan pa"}
+{"s":"2628.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"China Life Insurance H","nc":"中国人寿H","p":"zhongguorenshouh","pi":"zgrsh","a":"clife zgrs"}
+{"s":"2800.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"Tracker Fund of Hong Kong","nc":"盈富基金","p":"yingfujijin","pi":"yfjj","a":"tracker yfjj"}
+{"s":"3033.HK","m":"hk_stock","t":"etf","c":"HKD","ne":"CSOP Hang Seng TECH ETF","nc":"恒生科技ETF","p":"hengshengkejietf","pi":"hskje","a":"hstech"}
+{"s":"3690.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Meituan","nc":"美团","p":"meituan","pi":"mt","a":"meituan mt"}
+{"s":"9988.HK","m":"hk_stock","t":"stock","c":"HKD","ne":"Alibaba Group","nc":"阿里巴巴","p":"alibaba","pi":"albb","a":"alibaba ali baba"}
+{"s":"AAPL","m":"us_stock","t":"stock","c":"USD","ne":"Apple Inc.","nc":"苹果公司","p":"pingguogongsi","pi":"pggs","a":"apple pg pingguo"}
+{"s":"AMZN","m":"us_stock","t":"stock","c":"USD","ne":"Amazon.com Inc.","nc":"亚马逊","p":"yamaxun","pi":"ymx","a":"amazon ymx"}
+{"s":"ARKK","m":"us_stock","t":"etf","c":"USD","ne":"ARK Innovation ETF","nc":"ARK 创新 ETF","p":"ark chuangxin etf","pi":"acx ","a":"ark cathie"}
+{"s":"BRK","m":"us_stock","t":"stock","c":"USD","ne":"Berkshire Hathaway B","nc":"伯克希尔哈撒韦B","p":"bokexierhasaweib","pi":"bkxehswb","a":"berkshire bks bk"}
+{"s":"DIS","m":"us_stock","t":"stock","c":"USD","ne":"The Walt Disney Company","nc":"迪士尼","p":"dishini","pi":"dsn","a":"disney dsn"}
+{"s":"EEM","m":"us_stock","t":"etf","c":"USD","ne":"iShares MSCI Emerging Markets ETF","nc":"MSCI新兴市场","p":"mscixinxingshichang","pi":"mxxsc","a":"msci em xxsc"}
+{"s":"EFA","m":"us_stock","t":"etf","c":"USD","ne":"iShares MSCI EAFE ETF","nc":"MSCI EAFE","p":"msci eafe","pi":"m","a":"msci eafe"}
+{"s":"GLD","m":"us_stock","t":"etf","c":"USD","ne":"SPDR Gold Shares","nc":"黄金 ETF","p":"huangjin etf","pi":"hj ","a":"gold hj"}
+{"s":"GOOG","m":"us_stock","t":"stock","c":"USD","ne":"Alphabet Inc. Class C","nc":"谷歌C","p":"gugec","pi":"ggc","a":"google alphabet"}
+{"s":"GOOGL","m":"us_stock","t":"stock","c":"USD","ne":"Alphabet Inc. Class A","nc":"谷歌A","p":"gugea","pi":"gga","a":"google alphabet"}
+{"s":"IWM","m":"us_stock","t":"etf","c":"USD","ne":"iShares Russell 2000 ETF","nc":"罗素2000 ETF","p":"luosu2000 etf","pi":"ls2","a":"russell rs2000"}
+{"s":"JNJ","m":"us_stock","t":"stock","c":"USD","ne":"Johnson & Johnson","nc":"强生","p":"qiangsheng","pi":"qs","a":"johnson qs"}
+{"s":"JPM","m":"us_stock","t":"stock","c":"USD","ne":"JPMorgan Chase","nc":"摩根大通","p":"mogendatong","pi":"mgdt","a":"jpmorgan jpm"}
+{"s":"KO","m":"us_stock","t":"stock","c":"USD","ne":"The Coca-Cola Company","nc":"可口可乐","p":"kekoukele","pi":"kkkl","a":"cocacola kkkl"}
+{"s":"MA","m":"us_stock","t":"stock","c":"USD","ne":"Mastercard Inc.","nc":"万事达卡","p":"wanshidaka","pi":"wsdk","a":"mastercard wsd"}
+{"s":"META","m":"us_stock","t":"stock","c":"USD","ne":"Meta Platforms Inc.","nc":"Meta平台","p":"metapingtai","pi":"mpt","a":"facebook fb meta"}
+{"s":"MSFT","m":"us_stock","t":"stock","c":"USD","ne":"Microsoft Corporation","nc":"微软","p":"weiruan","pi":"wr","a":"microsoft wr"}
+{"s":"NFLX","m":"us_stock","t":"stock","c":"USD","ne":"Netflix Inc.","nc":"奈飞","p":"naifei","pi":"nf","a":"netflix nf"}
+{"s":"NVDA","m":"us_stock","t":"stock","c":"USD","ne":"NVIDIA Corporation","nc":"英伟达","p":"yingweida","pi":"ywd","a":"nvidia ywd"}
+{"s":"PEP","m":"us_stock","t":"stock","c":"USD","ne":"PepsiCo Inc.","nc":"百事可乐","p":"baishikele","pi":"bskl","a":"pepsi bskl"}
+{"s":"PFE","m":"us_stock","t":"stock","c":"USD","ne":"Pfizer Inc.","nc":"辉瑞","p":"huirui","pi":"hr","a":"pfizer hr"}
+{"s":"QQQ","m":"us_stock","t":"etf","c":"USD","ne":"Invesco QQQ Trust","nc":"纳斯达克100 ETF","p":"nasidake100 etf","pi":"nsdk1","a":"nasdaq nasdaq100"}
+{"s":"SPY","m":"us_stock","t":"etf","c":"USD","ne":"SPDR S&P 500 ETF Trust","nc":"标普500 ETF","p":"biaopu500 etf","pi":"bp5","a":"sp500 spdr"}
+{"s":"TLT","m":"us_stock","t":"etf","c":"USD","ne":"iShares 20+ Year Treasury Bond ETF","nc":"长期国债 ETF","p":"changqiguozhai etf","pi":"cqgz ","a":"treasury gz"}
+{"s":"TSLA","m":"us_stock","t":"stock","c":"USD","ne":"Tesla Inc.","nc":"特斯拉","p":"tesila","pi":"tsl","a":"tesla tsl"}
+{"s":"V","m":"us_stock","t":"stock","c":"USD","ne":"Visa Inc.","nc":"Visa","p":"visa","pi":"v","a":"visa vs"}
+{"s":"VOO","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard S&P 500 ETF","nc":"先锋标普500","p":"xianfengbiaopu500","pi":"xfbp5","a":"vanguard"}
+{"s":"VTI","m":"us_stock","t":"etf","c":"USD","ne":"Vanguard Total Stock Market ETF","nc":"先锋全市场","p":"xianfengquanshichang","pi":"xfqsc","a":"vanguard"}
+{"s":"WMT","m":"us_stock","t":"stock","c":"USD","ne":"Walmart Inc.","nc":"沃尔玛","p":"woerma","pi":"wem","a":"walmart wem"}
