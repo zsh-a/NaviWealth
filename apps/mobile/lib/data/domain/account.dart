@@ -6,7 +6,7 @@ import 'sync_meta.dart';
 part 'account.freezed.dart';
 
 @freezed
-class Account with _$Account {
+abstract class Account with _$Account {
   const factory Account({
     required String id,
     required AccountType type,

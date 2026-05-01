@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +62,8 @@ Future<ProviderScope> _wrap({
       // Accounts stream isn't relevant to the report — empty list keeps the
       // loading state from sticking forever.
       accountsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      // FX rates stream — empty list is fine for single-currency tests.
+      fxRatesStreamProvider.overrideWith((ref) => Stream.value(const [])),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
@@ -92,9 +93,9 @@ void main() {
       _cat('transport', name: '交通'),
     ];
     final today = DateTime.now();
-    final inMonth = DateTime(today.year, today.month, 1).add(
-      const Duration(days: 5),
-    );
+    // Use a date safely inside the m3 range (5 days ago) to avoid
+    // flakiness when today is early in the month.
+    final inMonth = today.subtract(const Duration(days: 5));
     final expenses = [
       _expense(
         id: 'e1',
@@ -119,7 +120,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Pie chart mounts above the fold.
-    expect(find.byType(PieChart), findsOneWidget);
+    expect(find.byType(NwPieChart), findsOneWidget);
     expect(find.text('餐饮'), findsWidgets);
     expect(find.text('交通'), findsWidgets);
 
@@ -129,12 +130,12 @@ void main() {
     final reportList =
         find.descendant(of: find.byType(ExpenseReportPage), matching: find.byType(ListView)).first;
     await tester.dragUntilVisible(
-      find.byType(BarChart),
+      find.byType(NwBarChart),
       reportList,
       const Offset(0, -200),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(BarChart), findsOneWidget);
+    expect(find.byType(NwBarChart), findsOneWidget);
   });
 
   testWidgets('range chips switch the resolved range provider',

@@ -193,7 +193,7 @@ void main() {
     expect(api.loginCalls.single.email, 'a@b.com');
     expect(api.loginCalls.single.password, 'hunter22');
     expect(
-      container.read(authControllerProvider).valueOrNull,
+      container.read(authControllerProvider).value,
       isA<AuthLoggedIn>(),
     );
     expect(
@@ -227,7 +227,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      container.read(authControllerProvider).valueOrNull,
+      container.read(authControllerProvider).value,
       isA<AuthLoggedOut>(),
     );
   });

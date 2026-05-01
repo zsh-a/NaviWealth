@@ -15,7 +15,7 @@ part 'transaction.freezed.dart';
 /// `counterAccountId` is set on transfers to allow the matching leg to be
 /// found by id rather than scanning by date and amount.
 @freezed
-class Transaction with _$Transaction {
+abstract class Transaction with _$Transaction {
   const factory Transaction({
     required String id,
     required String accountId,

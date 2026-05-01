@@ -85,7 +85,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
     initialLocation: initialLocation,
     observers: <NavigatorObserver>[ref.read(routeAnalyticsObserverProvider)],
     refreshListenable: ref.read(routeRefreshListenableProvider),
-    redirect: (context, state) => routerRedirect(ref, context, state),
+    redirect: (context, state) => routerRedirect(ref.container, context, state),
     errorBuilder: (context, state) => RouteErrorPage(state: state),
     routes: [
       GoRoute(

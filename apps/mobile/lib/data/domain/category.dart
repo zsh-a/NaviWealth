@@ -8,7 +8,7 @@ part 'category.freezed.dart';
 /// most one parent and can express hierarchical roll-ups (e.g.
 /// `Tech > Semiconductors > Foundry`).
 @freezed
-class Category with _$Category {
+abstract class Category with _$Category {
   const factory Category({
     required String id,
     required String name,

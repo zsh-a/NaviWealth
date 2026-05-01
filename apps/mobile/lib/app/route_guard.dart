@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
 /// Decision returned by a [RouteGuard]. `null` means "let the requested route
@@ -43,8 +44,12 @@ final routeRefreshListenableProvider = Provider<Listenable>((ref) {
 /// Composes the registered [RouteGuard]s into a single `redirect` callback
 /// for [GoRouter]. Returns the first non-null redirect, or `null` if every
 /// guard says "go ahead".
-String? routerRedirect(Ref ref, BuildContext context, GoRouterState state) {
-  final guards = ref.read(routeGuardsProvider);
+String? routerRedirect(
+  ProviderContainer container,
+  BuildContext context,
+  GoRouterState state,
+) {
+  final guards = container.read(routeGuardsProvider);
   for (final guard in guards) {
     final target = guard.redirect(state);
     if (target != null && target != state.matchedLocation) return target;

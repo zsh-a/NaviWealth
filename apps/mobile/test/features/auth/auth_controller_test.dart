@@ -146,7 +146,7 @@ void main() {
           );
       await Future<void>.delayed(Duration.zero);
 
-      final state = container.read(authControllerProvider).valueOrNull;
+      final state = container.read(authControllerProvider).value;
       expect(state, isA<AuthLoggedIn>());
       expect((state as AuthLoggedIn).session.accessToken, 'fresh');
       expect(api.loginCalls, hasLength(1));
@@ -176,7 +176,7 @@ void main() {
         throwsA(isA<AuthException>()),
       );
       expect(
-        container.read(authControllerProvider).valueOrNull,
+        container.read(authControllerProvider).value,
         isA<AuthLoggedOut>(),
       );
     });
@@ -199,7 +199,7 @@ void main() {
       expect(api.logoutCalls, hasLength(1));
       expect(api.logoutCalls.single.deviceId, 'd-1');
 
-      final state = container.read(authControllerProvider).valueOrNull;
+      final state = container.read(authControllerProvider).value;
       expect(state, isA<AuthLoggedOut>());
       expect(
         (state as AuthLoggedOut).reason,
@@ -226,7 +226,7 @@ void main() {
           .logoutCurrent();
 
       expect(
-        container.read(authControllerProvider).valueOrNull,
+        container.read(authControllerProvider).value,
         isA<AuthLoggedOut>(),
       );
       expect(
@@ -255,7 +255,7 @@ void main() {
           .refreshIfPossible();
 
       expect(ok, isTrue);
-      final state = container.read(authControllerProvider).valueOrNull;
+      final state = container.read(authControllerProvider).value;
       expect(
         (state as AuthLoggedIn).session.accessToken,
         'rotated',
@@ -284,7 +284,7 @@ void main() {
             .refreshIfPossible();
 
         expect(ok, isFalse);
-        final state = container.read(authControllerProvider).valueOrNull;
+        final state = container.read(authControllerProvider).value;
         expect(state, isA<AuthLoggedOut>());
         expect(
           (state as AuthLoggedOut).reason,

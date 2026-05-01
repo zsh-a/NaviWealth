@@ -197,7 +197,7 @@ class NwBarChart extends StatelessWidget {
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
         getTooltipColor: (_) => palette.tooltipBackground,
-        tooltipRoundedRadius: 6,
+        tooltipBorderRadius: BorderRadius.circular(6),
         tooltipPadding: const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 6,

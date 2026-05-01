@@ -16,7 +16,7 @@ part 'op_log.freezed.dart';
 /// won't clobber each other; only the field with the higher HLC wins.
 /// `null` patch means a delete (entity-level tombstone).
 @freezed
-class OpLog with _$OpLog {
+abstract class OpLog with _$OpLog {
   const factory OpLog({
     required String id,
     required String ownerUserId,

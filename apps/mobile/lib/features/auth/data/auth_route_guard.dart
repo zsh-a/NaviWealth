@@ -25,7 +25,7 @@ class AuthRouteGuard implements RouteGuard {
   @override
   RedirectPath redirect(GoRouterState state) {
     final auth = _ref.read(authControllerProvider);
-    final value = auth.valueOrNull;
+    final value = auth.value;
     final location = state.matchedLocation;
 
     // While the controller is still booting (`AsyncLoading` with no prior

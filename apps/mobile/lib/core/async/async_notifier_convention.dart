@@ -76,12 +76,18 @@ abstract class ConventionalAsyncNotifier<T> extends AsyncNotifier<T> {
   ///   - it returns a Future the UI can await for end-of-refresh feedback
   ///   - it routes errors through `AsyncError` (no rethrow at the call site)
   Future<void> refresh() async {
-    final previous = state.valueOrNull;
-    state = keepPreviousOnRefresh && previous != null
-        ? AsyncLoading<T>().copyWithPrevious(AsyncData<T>(previous))
-        : const AsyncLoading();
-    final next = await AsyncValue.guard(fetch);
-    state = next;
+    if (keepPreviousOnRefresh) {
+      // In Riverpod 3.x, invalidateSelf(asReload: true) preserves previous
+      // data automatically by transitioning through AsyncLoading with the
+      // previous value attached.
+      ref.invalidateSelf(asReload: true);
+      // Wait for the rebuild to complete by reading the future.
+      await future;
+    } else {
+      state = const AsyncLoading();
+      final next = await AsyncValue.guard(fetch);
+      state = next;
+    }
   }
 
   /// Apply a mutation that doesn't change the public shape of [T] — e.g.

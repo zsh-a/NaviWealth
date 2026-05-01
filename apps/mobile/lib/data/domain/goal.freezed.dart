@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,336 +9,305 @@ part of 'goal.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
 /// @nodoc
 mixin _$Goal {
-  String get id => throw _privateConstructorUsedError;
-  GoalType get type => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  String? get currency => throw _privateConstructorUsedError;
-  Decimal? get targetAmount => throw _privateConstructorUsedError;
-  DateTime? get targetDate => throw _privateConstructorUsedError;
-  String? get targetAllocationJson => throw _privateConstructorUsedError;
-  String? get note => throw _privateConstructorUsedError;
-  SyncMeta get sync => throw _privateConstructorUsedError;
 
-  /// Create a copy of Goal
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $GoalCopyWith<Goal> get copyWith => throw _privateConstructorUsedError;
+ String get id; GoalType get type; String get name; String? get currency; Decimal? get targetAmount; DateTime? get targetDate; String? get targetAllocationJson; String? get note; SyncMeta get sync;
+/// Create a copy of Goal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GoalCopyWith<Goal> get copyWith => _$GoalCopyWithImpl<Goal>(this as Goal, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Goal&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.targetAmount, targetAmount) || other.targetAmount == targetAmount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.targetAllocationJson, targetAllocationJson) || other.targetAllocationJson == targetAllocationJson)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,targetAmount,targetDate,targetAllocationJson,note,sync);
+
+@override
+String toString() {
+  return 'Goal(id: $id, type: $type, name: $name, currency: $currency, targetAmount: $targetAmount, targetDate: $targetDate, targetAllocationJson: $targetAllocationJson, note: $note, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $GoalCopyWith<$Res> {
-  factory $GoalCopyWith(Goal value, $Res Function(Goal) then) =
-      _$GoalCopyWithImpl<$Res, Goal>;
-  @useResult
-  $Res call({
-    String id,
-    GoalType type,
-    String name,
-    String? currency,
-    Decimal? targetAmount,
-    DateTime? targetDate,
-    String? targetAllocationJson,
-    String? note,
-    SyncMeta sync,
-  });
+abstract mixin class $GoalCopyWith<$Res>  {
+  factory $GoalCopyWith(Goal value, $Res Function(Goal) _then) = _$GoalCopyWithImpl;
+@useResult
+$Res call({
+ String id, GoalType type, String name, String? currency, Decimal? targetAmount, DateTime? targetDate, String? targetAllocationJson, String? note, SyncMeta sync
+});
 
-  $SyncMetaCopyWith<$Res> get sync;
+
+$SyncMetaCopyWith<$Res> get sync;
+
 }
-
 /// @nodoc
-class _$GoalCopyWithImpl<$Res, $Val extends Goal>
+class _$GoalCopyWithImpl<$Res>
     implements $GoalCopyWith<$Res> {
-  _$GoalCopyWithImpl(this._value, this._then);
+  _$GoalCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Goal _self;
+  final $Res Function(Goal) _then;
 
-  /// Create a copy of Goal
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? type = null,
-    Object? name = null,
-    Object? currency = freezed,
-    Object? targetAmount = freezed,
-    Object? targetDate = freezed,
-    Object? targetAllocationJson = freezed,
-    Object? note = freezed,
-    Object? sync = null,
-  }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as GoalType,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            currency: freezed == currency
-                ? _value.currency
-                : currency // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            targetAmount: freezed == targetAmount
-                ? _value.targetAmount
-                : targetAmount // ignore: cast_nullable_to_non_nullable
-                      as Decimal?,
-            targetDate: freezed == targetDate
-                ? _value.targetDate
-                : targetDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            targetAllocationJson: freezed == targetAllocationJson
-                ? _value.targetAllocationJson
-                : targetAllocationJson // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            note: freezed == note
-                ? _value.note
-                : note // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            sync: null == sync
-                ? _value.sync
-                : sync // ignore: cast_nullable_to_non_nullable
-                      as SyncMeta,
-          )
-          as $Val,
-    );
-  }
-
-  /// Create a copy of Goal
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $SyncMetaCopyWith<$Res> get sync {
-    return $SyncMetaCopyWith<$Res>(_value.sync, (value) {
-      return _then(_value.copyWith(sync: value) as $Val);
-    });
-  }
+/// Create a copy of Goal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = freezed,Object? targetAmount = freezed,Object? targetDate = freezed,Object? targetAllocationJson = freezed,Object? note = freezed,Object? sync = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as GoalType,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,currency: freezed == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String?,targetAmount: freezed == targetAmount ? _self.targetAmount : targetAmount // ignore: cast_nullable_to_non_nullable
+as Decimal?,targetDate: freezed == targetDate ? _self.targetDate : targetDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,targetAllocationJson: freezed == targetAllocationJson ? _self.targetAllocationJson : targetAllocationJson // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
 }
-
-/// @nodoc
-abstract class _$$GoalImplCopyWith<$Res> implements $GoalCopyWith<$Res> {
-  factory _$$GoalImplCopyWith(
-    _$GoalImpl value,
-    $Res Function(_$GoalImpl) then,
-  ) = __$$GoalImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({
-    String id,
-    GoalType type,
-    String name,
-    String? currency,
-    Decimal? targetAmount,
-    DateTime? targetDate,
-    String? targetAllocationJson,
-    String? note,
-    SyncMeta sync,
+/// Create a copy of Goal
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
+}
+}
 
-  @override
-  $SyncMetaCopyWith<$Res> get sync;
+
+/// Adds pattern-matching-related methods to [Goal].
+extension GoalPatterns on Goal {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Goal value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Goal() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Goal value)  $default,){
+final _that = this;
+switch (_that) {
+case _Goal():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Goal value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Goal() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GoalType type,  String name,  String? currency,  Decimal? targetAmount,  DateTime? targetDate,  String? targetAllocationJson,  String? note,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Goal() when $default != null:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.targetAmount,_that.targetDate,_that.targetAllocationJson,_that.note,_that.sync);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GoalType type,  String name,  String? currency,  Decimal? targetAmount,  DateTime? targetDate,  String? targetAllocationJson,  String? note,  SyncMeta sync)  $default,) {final _that = this;
+switch (_that) {
+case _Goal():
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.targetAmount,_that.targetDate,_that.targetAllocationJson,_that.note,_that.sync);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GoalType type,  String name,  String? currency,  Decimal? targetAmount,  DateTime? targetDate,  String? targetAllocationJson,  String? note,  SyncMeta sync)?  $default,) {final _that = this;
+switch (_that) {
+case _Goal() when $default != null:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.targetAmount,_that.targetDate,_that.targetAllocationJson,_that.note,_that.sync);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
-class __$$GoalImplCopyWithImpl<$Res>
-    extends _$GoalCopyWithImpl<$Res, _$GoalImpl>
-    implements _$$GoalImplCopyWith<$Res> {
-  __$$GoalImplCopyWithImpl(_$GoalImpl _value, $Res Function(_$GoalImpl) _then)
-    : super(_value, _then);
 
-  /// Create a copy of Goal
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? type = null,
-    Object? name = null,
-    Object? currency = freezed,
-    Object? targetAmount = freezed,
-    Object? targetDate = freezed,
-    Object? targetAllocationJson = freezed,
-    Object? note = freezed,
-    Object? sync = null,
-  }) {
-    return _then(
-      _$GoalImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as GoalType,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        currency: freezed == currency
-            ? _value.currency
-            : currency // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        targetAmount: freezed == targetAmount
-            ? _value.targetAmount
-            : targetAmount // ignore: cast_nullable_to_non_nullable
-                  as Decimal?,
-        targetDate: freezed == targetDate
-            ? _value.targetDate
-            : targetDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        targetAllocationJson: freezed == targetAllocationJson
-            ? _value.targetAllocationJson
-            : targetAllocationJson // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        note: freezed == note
-            ? _value.note
-            : note // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        sync: null == sync
-            ? _value.sync
-            : sync // ignore: cast_nullable_to_non_nullable
-                  as SyncMeta,
-      ),
-    );
-  }
+
+class _Goal implements Goal {
+  const _Goal({required this.id, required this.type, required this.name, this.currency, this.targetAmount, this.targetDate, this.targetAllocationJson, this.note, required this.sync});
+  
+
+@override final  String id;
+@override final  GoalType type;
+@override final  String name;
+@override final  String? currency;
+@override final  Decimal? targetAmount;
+@override final  DateTime? targetDate;
+@override final  String? targetAllocationJson;
+@override final  String? note;
+@override final  SyncMeta sync;
+
+/// Create a copy of Goal
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GoalCopyWith<_Goal> get copyWith => __$GoalCopyWithImpl<_Goal>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Goal&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.targetAmount, targetAmount) || other.targetAmount == targetAmount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.targetAllocationJson, targetAllocationJson) || other.targetAllocationJson == targetAllocationJson)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,targetAmount,targetDate,targetAllocationJson,note,sync);
+
+@override
+String toString() {
+  return 'Goal(id: $id, type: $type, name: $name, currency: $currency, targetAmount: $targetAmount, targetDate: $targetDate, targetAllocationJson: $targetAllocationJson, note: $note, sync: $sync)';
+}
+
+
 }
 
 /// @nodoc
+abstract mixin class _$GoalCopyWith<$Res> implements $GoalCopyWith<$Res> {
+  factory _$GoalCopyWith(_Goal value, $Res Function(_Goal) _then) = __$GoalCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, GoalType type, String name, String? currency, Decimal? targetAmount, DateTime? targetDate, String? targetAllocationJson, String? note, SyncMeta sync
+});
 
-class _$GoalImpl implements _Goal {
-  const _$GoalImpl({
-    required this.id,
-    required this.type,
-    required this.name,
-    this.currency,
-    this.targetAmount,
-    this.targetDate,
-    this.targetAllocationJson,
-    this.note,
-    required this.sync,
+
+@override $SyncMetaCopyWith<$Res> get sync;
+
+}
+/// @nodoc
+class __$GoalCopyWithImpl<$Res>
+    implements _$GoalCopyWith<$Res> {
+  __$GoalCopyWithImpl(this._self, this._then);
+
+  final _Goal _self;
+  final $Res Function(_Goal) _then;
+
+/// Create a copy of Goal
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = freezed,Object? targetAmount = freezed,Object? targetDate = freezed,Object? targetAllocationJson = freezed,Object? note = freezed,Object? sync = null,}) {
+  return _then(_Goal(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as GoalType,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,currency: freezed == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String?,targetAmount: freezed == targetAmount ? _self.targetAmount : targetAmount // ignore: cast_nullable_to_non_nullable
+as Decimal?,targetDate: freezed == targetDate ? _self.targetDate : targetDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,targetAllocationJson: freezed == targetAllocationJson ? _self.targetAllocationJson : targetAllocationJson // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as SyncMeta,
+  ));
+}
+
+/// Create a copy of Goal
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SyncMetaCopyWith<$Res> get sync {
+  
+  return $SyncMetaCopyWith<$Res>(_self.sync, (value) {
+    return _then(_self.copyWith(sync: value));
   });
-
-  @override
-  final String id;
-  @override
-  final GoalType type;
-  @override
-  final String name;
-  @override
-  final String? currency;
-  @override
-  final Decimal? targetAmount;
-  @override
-  final DateTime? targetDate;
-  @override
-  final String? targetAllocationJson;
-  @override
-  final String? note;
-  @override
-  final SyncMeta sync;
-
-  @override
-  String toString() {
-    return 'Goal(id: $id, type: $type, name: $name, currency: $currency, targetAmount: $targetAmount, targetDate: $targetDate, targetAllocationJson: $targetAllocationJson, note: $note, sync: $sync)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$GoalImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.type, type) || other.type == type) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.currency, currency) ||
-                other.currency == currency) &&
-            (identical(other.targetAmount, targetAmount) ||
-                other.targetAmount == targetAmount) &&
-            (identical(other.targetDate, targetDate) ||
-                other.targetDate == targetDate) &&
-            (identical(other.targetAllocationJson, targetAllocationJson) ||
-                other.targetAllocationJson == targetAllocationJson) &&
-            (identical(other.note, note) || other.note == note) &&
-            (identical(other.sync, sync) || other.sync == sync));
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    type,
-    name,
-    currency,
-    targetAmount,
-    targetDate,
-    targetAllocationJson,
-    note,
-    sync,
-  );
-
-  /// Create a copy of Goal
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$GoalImplCopyWith<_$GoalImpl> get copyWith =>
-      __$$GoalImplCopyWithImpl<_$GoalImpl>(this, _$identity);
+}
 }
 
-abstract class _Goal implements Goal {
-  const factory _Goal({
-    required final String id,
-    required final GoalType type,
-    required final String name,
-    final String? currency,
-    final Decimal? targetAmount,
-    final DateTime? targetDate,
-    final String? targetAllocationJson,
-    final String? note,
-    required final SyncMeta sync,
-  }) = _$GoalImpl;
-
-  @override
-  String get id;
-  @override
-  GoalType get type;
-  @override
-  String get name;
-  @override
-  String? get currency;
-  @override
-  Decimal? get targetAmount;
-  @override
-  DateTime? get targetDate;
-  @override
-  String? get targetAllocationJson;
-  @override
-  String? get note;
-  @override
-  SyncMeta get sync;
-
-  /// Create a copy of Goal
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$GoalImplCopyWith<_$GoalImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

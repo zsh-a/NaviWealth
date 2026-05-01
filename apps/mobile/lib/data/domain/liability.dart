@@ -11,7 +11,7 @@ part 'liability.freezed.dart';
 /// [AmortizationEntry] for the override mechanism that lets users edit a
 /// single payment row.
 @freezed
-class Liability with _$Liability {
+abstract class Liability with _$Liability {
   const factory Liability({
     required String id,
     required LiabilityType type,

@@ -8,7 +8,7 @@ part 'fx_rate.freezed.dart';
 /// Not synced (rates are global market data, not user data); each client
 /// pulls them from the price feed and stores its own copy.
 @freezed
-class FxRate with _$FxRate {
+abstract class FxRate with _$FxRate {
   const factory FxRate({
     required String id,
     required String baseCurrency,

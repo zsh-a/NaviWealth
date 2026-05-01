@@ -7,7 +7,7 @@ import 'sync_meta.dart';
 part 'goal.freezed.dart';
 
 @freezed
-class Goal with _$Goal {
+abstract class Goal with _$Goal {
   const factory Goal({
     required String id,
     required GoalType type,

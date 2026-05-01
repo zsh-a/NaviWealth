@@ -25,7 +25,7 @@ part 'sync_meta.freezed.dart';
 ///    filter `deletedAt IS NULL` for the live view, but sync still ships
 ///    the row so peers learn about the delete.
 @freezed
-class SyncMeta with _$SyncMeta {
+abstract class SyncMeta with _$SyncMeta {
   const factory SyncMeta({
     required String ownerUserId,
     required DateTime updatedAt,

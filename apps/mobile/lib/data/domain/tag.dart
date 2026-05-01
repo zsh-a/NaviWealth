@@ -6,7 +6,7 @@ import 'sync_meta.dart';
 part 'tag.freezed.dart';
 
 @freezed
-class Tag with _$Tag {
+abstract class Tag with _$Tag {
   const factory Tag({
     required String id,
     required String name,
@@ -20,7 +20,7 @@ class Tag with _$Tag {
 /// or [Account], but we keep the entity table textual for forward
 /// flexibility).
 @freezed
-class TagLink with _$TagLink {
+abstract class TagLink with _$TagLink {
   const factory TagLink({
     required String id,
     required String tagId,

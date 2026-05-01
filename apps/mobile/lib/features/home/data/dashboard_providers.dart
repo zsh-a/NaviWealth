@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
@@ -302,7 +303,7 @@ Future<double?> _ytdRatio(
   required DateTime to,
 }) async {
   final serviceAsync = ref.watch(returnsServiceProvider);
-  final service = serviceAsync.valueOrNull;
+  final service = serviceAsync.value;
   if (service == null) return null;
   try {
     final report = await service.portfolioXirr(from: from, to: to);
