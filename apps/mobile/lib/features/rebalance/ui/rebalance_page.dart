@@ -147,7 +147,7 @@ class _SchemeSelector extends ConsumerWidget {
               spacing: Spacing.s8,
               children: [
                 for (final preset in AllocationSchemePreset.values)
-                  ChoiceChip(
+                  AppChoiceChip(
                     label: Text(_schemeLabel(l10n, preset)),
                     selected: current == preset,
                     onSelected: (selected) {

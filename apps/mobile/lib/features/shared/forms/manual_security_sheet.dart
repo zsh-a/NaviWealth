@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/market/market_data_providers.dart';
 import '../../../design_system/design_system.dart';
@@ -120,6 +121,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     final messenger = ScaffoldMessenger.of(context);
     final query = _symbolCtl.text.trim();
     if (query.isEmpty) {
+      Haptics.error();
       messenger.showSnackBar(
         const SnackBar(content: Text('请先输入代码或名称')),
       );
@@ -144,6 +146,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       // collapse the whole failure surface to a single non-scary message
       // and let the user fall through to manual entry.
       if (!mounted) return;
+      Haptics.error();
       messenger.showSnackBar(
         const SnackBar(content: Text('网络不可用，请使用手动输入')),
       );
@@ -159,6 +162,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     setState(() => _importing = false);
 
     if (hits.isEmpty) {
+      Haptics.error();
       messenger.showSnackBar(
         const SnackBar(content: Text('未找到匹配项，请使用手动输入')),
       );
@@ -249,6 +253,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       name: name.isEmpty ? null : name,
       isin: isin.isEmpty ? null : isin,
     );
+    Haptics.success();
     Navigator.of(context).pop(choice);
   }
 

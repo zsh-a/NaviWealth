@@ -38,7 +38,7 @@ class LiabilitiesPage extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab.extended(
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(

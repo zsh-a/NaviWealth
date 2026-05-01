@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
@@ -88,6 +89,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
         }
       }
       if (!mounted) return;
+      Haptics.success();
       context.go('/assets');
     } finally {
       if (mounted) setState(() => _busy = false);

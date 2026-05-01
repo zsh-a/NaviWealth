@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -274,7 +275,10 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
             ? int.tryParse(_paymentDueDay.text.trim())
             : null,
       );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Haptics.success();
+        Navigator.of(context).pop();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
