@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/domain/amortization_entry.dart';
@@ -5,6 +7,8 @@ import '../../../data/domain/asset.dart';
 import '../../../data/domain/liability.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../domain/services/currency_converter.dart';
+import '../../../domain/services/net_worth_service.dart';
+import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
 import '../../assets/physical/data/providers.dart';
 import '../../liabilities/data/providers.dart';
@@ -181,4 +185,116 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
     liabilitySchedules: schedules,
   );
   return AsyncValue.data(trend);
+});
+
+/// Header-strip metrics that complement the hero net-worth number with
+/// signed deltas: today's change in base currency, MTD change as a ratio,
+/// and YTD return as a ratio.
+///
+/// `dailyChange` is `nw(today) − nw(yesterday)` in base currency.
+///
+/// `monthlyChangePct` and `ytdChangePct` are `(nw(today) − nw(anchor)) /
+/// nw(anchor)` ratios (e.g. `0.0234` → `+2.34%`). They are `null` when the
+/// anchor net worth is zero, so the UI can render `—` instead of dividing
+/// by zero. `null` is also produced when the portfolio is empty.
+///
+/// FIR-85 acceptance asks for the YTD value to be sourced from
+/// `ReturnsService.portfolioXirr` (FIR-55). That service is implemented but
+/// not yet wired through Riverpod (no `holdingPriceSourceProvider` /
+/// `lotsSourceProvider`), so we currently fall back to the same percent-
+/// change formula used for `monthlyChangePct`. When the returns service
+/// gains a provider, swap the YTD branch in this provider to call
+/// `portfolioXirr(from: yearStart, to: today)` and use
+/// `solution.rate` — UI consumers (`DeltaText.percentFromRatio`) need no
+/// changes.
+@immutable
+class DashboardHeaderMetrics {
+  const DashboardHeaderMetrics({
+    required this.baseCurrency,
+    required this.dailyChange,
+    required this.monthlyChangePct,
+    required this.ytdChangePct,
+  });
+
+  final String baseCurrency;
+  final Money dailyChange;
+  final double? monthlyChangePct;
+  final double? ytdChangePct;
+}
+
+final dashboardHeaderMetricsProvider =
+    Provider<AsyncValue<DashboardHeaderMetrics>>((ref) {
+  final manual = ref.watch(manualAssetsStreamProvider);
+  final physical = ref.watch(physicalAssetsListProvider);
+  final liab = ref.watch(liabilitiesStreamProvider);
+  final converter = ref.watch(dashboardCurrencyConverterProvider);
+  final base = ref.watch(dashboardBaseCurrencyProvider);
+  final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
+
+  if (manual.isLoading || physical.isLoading || liab.isLoading) {
+    return const AsyncValue.loading();
+  }
+  final err = manual.error ?? physical.error ?? liab.error;
+  if (err != null) {
+    return AsyncValue.error(
+      err,
+      manual.stackTrace ??
+          physical.stackTrace ??
+          liab.stackTrace ??
+          StackTrace.current,
+    );
+  }
+  final manualList = manual.value ?? const <Asset>[];
+  final physicalList = physical.value ?? const <PhysicalAsset>[];
+  final liabList = liab.value ?? const <Liability>[];
+
+  final builder = DashboardTrendBuilder(
+    converter: converter,
+    baseCurrency: base,
+  );
+
+  Money nwAt(DateTime date) {
+    final range = DashboardTimeRange(
+      preset: DashboardRangePreset.custom,
+      from: date,
+      to: date,
+      granularity: NetWorthGranularity.day,
+    );
+    final trend = builder.build(
+      range: range,
+      manualAssets: manualList,
+      physicalAssets: physicalList,
+      liabilities: liabList,
+      liabilitySchedules: schedules,
+    );
+    return trend.points.isEmpty
+        ? Money.zero(base)
+        : trend.points.first.netWorth;
+  }
+
+  final now = DateTime.now().toUtc();
+  final today = DateTime.utc(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+  final monthStart = DateTime.utc(today.year, today.month, 1);
+  final yearStart = DateTime.utc(today.year, 1, 1);
+
+  final nwToday = nwAt(today);
+  final nwYesterday = nwAt(yesterday);
+  final nwMonthStart = nwAt(monthStart);
+  final nwYearStart = nwAt(yearStart);
+
+  double? pctChange(Money current, Money baseline) {
+    if (baseline.amount.sign == 0) return null;
+    final ratio = (current.amount - baseline.amount) / baseline.amount;
+    return ratio.toDecimal(scaleOnInfinitePrecision: 8).toDouble();
+  }
+
+  return AsyncValue.data(
+    DashboardHeaderMetrics(
+      baseCurrency: base,
+      dailyChange: nwToday - nwYesterday,
+      monthlyChangePct: pctChange(nwToday, nwMonthStart),
+      ytdChangePct: pctChange(nwToday, nwYearStart),
+    ),
+  );
 });

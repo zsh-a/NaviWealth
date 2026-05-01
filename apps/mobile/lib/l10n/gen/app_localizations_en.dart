@@ -872,6 +872,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Trend line is flat — no historical valuation snapshots yet for the assets in this window.';
 
   @override
+  String get dashboardHeaderDeltaTodayLabel => 'Today';
+
+  @override
+  String get dashboardHeaderDeltaMonthLabel => 'MTD';
+
+  @override
+  String get dashboardHeaderDeltaYtdLabel => 'YTD';
+
+  @override
   String get analyticsAppBarTitle => 'Analytics';
 
   @override

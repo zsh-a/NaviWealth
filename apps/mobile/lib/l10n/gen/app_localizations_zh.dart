@@ -833,6 +833,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardTrendFlatHint => '当前数据未提供历史估值，趋势线显示为平直。后续接入估值变动后将自动展现波动。';
 
   @override
+  String get dashboardHeaderDeltaTodayLabel => '今日';
+
+  @override
+  String get dashboardHeaderDeltaMonthLabel => '本月';
+
+  @override
+  String get dashboardHeaderDeltaYtdLabel => '年初至今';
+
+  @override
   String get analyticsAppBarTitle => '组合分析';
 
   @override
