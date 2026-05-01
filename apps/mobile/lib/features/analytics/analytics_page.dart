@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
 import '../../design_system/charts/charts.dart';
+import '../../design_system/tokens/breakpoints.dart';
 import '../../design_system/tokens/radius_tokens.dart';
 import '../../design_system/tokens/spacing_tokens.dart';
+import '../../design_system/widgets/responsive_two_column.dart';
 import '../../design_system/widgets/skeleton.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/providers.dart';
@@ -33,36 +35,51 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final view = ref.watch(equityAllocationViewProvider(_dimension));
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.analyticsAppBarTitle)),
-      body: ListView(
-        padding: Spacing.pageMobile,
-        children: [
-          _SectionHeader(
-            title: l10n.analyticsEquityTitle,
-            subtitle: l10n.analyticsEquitySubtitle,
-          ),
-          const SizedBox(height: Spacing.s12),
-          DimensionSegment(
-            value: _dimension,
-            onChanged: (d) => setState(() => _dimension = d),
-          ),
-          const SizedBox(height: Spacing.s16),
-          view.when(
-            data: (data) => EquityAllocationContent(view: data),
-            loading: () => const _LoadingState(),
-            error: (e, _) => _ErrorState(
-              message: l10n.analyticsLoadError,
-              onRetry: () => ref.invalidate(
-                equityAllocationViewProvider(_dimension),
-              ),
+    final equityColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(
+          title: l10n.analyticsEquityTitle,
+          subtitle: l10n.analyticsEquitySubtitle,
+        ),
+        const SizedBox(height: Spacing.s12),
+        DimensionSegment(
+          value: _dimension,
+          onChanged: (d) => setState(() => _dimension = d),
+        ),
+        const SizedBox(height: Spacing.s16),
+        view.when(
+          data: (data) => EquityAllocationContent(view: data),
+          loading: () => const _LoadingState(),
+          error: (e, _) => _ErrorState(
+            message: l10n.analyticsLoadError,
+            onRetry: () => ref.invalidate(
+              equityAllocationViewProvider(_dimension),
             ),
           ),
-          const SizedBox(height: Spacing.s24),
-          const RiskAlertPanel(),
-          const SizedBox(height: Spacing.s24),
-          const BenchmarkComparisonCard(),
-        ],
+        ),
+      ],
+    );
+    const riskColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        RiskAlertPanel(),
+        SizedBox(height: Spacing.s24),
+        BenchmarkComparisonCard(),
+      ],
+    );
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.analyticsAppBarTitle)),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+          return ListView(
+            padding: isWide ? Spacing.pageWide : Spacing.pageMobile,
+            children: [
+              ResponsiveTwoColumn(left: equityColumn, right: riskColumn),
+            ],
+          );
+        },
       ),
     );
   }

@@ -34,4 +34,15 @@ class Spacing {
 
   /// Padding inside a hero card (e.g. net worth header).
   static const EdgeInsets cardHero = EdgeInsets.all(s20);
+
+  /// Width of the AI Chat sessions side panel on desktop (FIR-93).
+  /// Sized to fit a session title + timestamp + per-row action without
+  /// truncating typical Chinese titles, while leaving the conversation
+  /// pane the bulk of the width on a 1240+ dp window.
+  static const double sessionsPanel = 320;
+
+  /// Maximum content width for chat message rows on extra-wide windows
+  /// (FIR-93). Caps line length on 4K monitors so messages stay readable
+  /// instead of stretching the full pane width.
+  static const double chatPaneMaxWidth = 960;
 }
