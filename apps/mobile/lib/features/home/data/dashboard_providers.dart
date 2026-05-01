@@ -11,6 +11,9 @@ import '../../../domain/services/net_worth_service.dart';
 import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
 import '../../assets/physical/data/providers.dart';
+import '../../investment/data/providers.dart';
+import '../../investment/domain/returns/returns_service.dart';
+import '../../investment/domain/returns/xirr_engine.dart';
 import '../../liabilities/data/providers.dart';
 import '../../liabilities/domain/liability_summary.dart';
 import '../../settings/data/base_currency_preference.dart';
@@ -189,24 +192,18 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
 
 /// Header-strip metrics that complement the hero net-worth number with
 /// signed deltas: today's change in base currency, MTD change as a ratio,
-/// and YTD return as a ratio.
+/// and YTD return as an annualized rate.
 ///
 /// `dailyChange` is `nw(today) − nw(yesterday)` in base currency.
 ///
-/// `monthlyChangePct` and `ytdChangePct` are `(nw(today) − nw(anchor)) /
-/// nw(anchor)` ratios (e.g. `0.0234` → `+2.34%`). They are `null` when the
-/// anchor net worth is zero, so the UI can render `—` instead of dividing
-/// by zero. `null` is also produced when the portfolio is empty.
+/// `monthlyChangePct` is `(nw(today) − nw(monthStart)) / nw(monthStart)`
+/// — a simple percent change suitable for short windows where path-
+/// dependent flows are noise. `null` when `nw(monthStart)` is zero.
 ///
-/// FIR-85 acceptance asks for the YTD value to be sourced from
-/// `ReturnsService.portfolioXirr` (FIR-55). That service is implemented but
-/// not yet wired through Riverpod (no `holdingPriceSourceProvider` /
-/// `lotsSourceProvider`), so we currently fall back to the same percent-
-/// change formula used for `monthlyChangePct`. When the returns service
-/// gains a provider, swap the YTD branch in this provider to call
-/// `portfolioXirr(from: yearStart, to: today)` and use
-/// `solution.rate` — UI consumers (`DeltaText.percentFromRatio`) need no
-/// changes.
+/// `ytdChangePct` is the **annualized XIRR** from year-start to today,
+/// computed by [ReturnsService.portfolioXirr]. `null` when the solver
+/// returns [XirrFallbackAbsolute] (no flows, all-same-sign, or failed
+/// convergence) — UI renders `—` for that case.
 @immutable
 class DashboardHeaderMetrics {
   const DashboardHeaderMetrics({
@@ -223,30 +220,13 @@ class DashboardHeaderMetrics {
 }
 
 final dashboardHeaderMetricsProvider =
-    Provider<AsyncValue<DashboardHeaderMetrics>>((ref) {
-  final manual = ref.watch(manualAssetsStreamProvider);
-  final physical = ref.watch(physicalAssetsListProvider);
-  final liab = ref.watch(liabilitiesStreamProvider);
+    FutureProvider<DashboardHeaderMetrics>((ref) async {
+  final manualList = await ref.watch(manualAssetsStreamProvider.future);
+  final physicalList = await ref.watch(physicalAssetsListProvider.future);
+  final liabList = await ref.watch(liabilitiesStreamProvider.future);
   final converter = ref.watch(dashboardCurrencyConverterProvider);
   final base = ref.watch(dashboardBaseCurrencyProvider);
   final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
-
-  if (manual.isLoading || physical.isLoading || liab.isLoading) {
-    return const AsyncValue.loading();
-  }
-  final err = manual.error ?? physical.error ?? liab.error;
-  if (err != null) {
-    return AsyncValue.error(
-      err,
-      manual.stackTrace ??
-          physical.stackTrace ??
-          liab.stackTrace ??
-          StackTrace.current,
-    );
-  }
-  final manualList = manual.value ?? const <Asset>[];
-  final physicalList = physical.value ?? const <PhysicalAsset>[];
-  final liabList = liab.value ?? const <Liability>[];
 
   final builder = DashboardTrendBuilder(
     converter: converter,
@@ -281,7 +261,6 @@ final dashboardHeaderMetricsProvider =
   final nwToday = nwAt(today);
   final nwYesterday = nwAt(yesterday);
   final nwMonthStart = nwAt(monthStart);
-  final nwYearStart = nwAt(yearStart);
 
   double? pctChange(Money current, Money baseline) {
     if (baseline.amount.sign == 0) return null;
@@ -289,12 +268,49 @@ final dashboardHeaderMetricsProvider =
     return ratio.toDecimal(scaleOnInfinitePrecision: 8).toDouble();
   }
 
-  return AsyncValue.data(
-    DashboardHeaderMetrics(
-      baseCurrency: base,
-      dailyChange: nwToday - nwYesterday,
-      monthlyChangePct: pctChange(nwToday, nwMonthStart),
-      ytdChangePct: pctChange(nwToday, nwYearStart),
-    ),
+  // Cap the XIRR window at `today + 1µs` so a year-to-date that starts on
+  // Jan 1 still satisfies the service's `to > from` precondition before
+  // any trades have been booked.
+  final xirrTo = today.isAfter(yearStart)
+      ? today
+      : yearStart.add(const Duration(microseconds: 1));
+  final ytdRatio = await _ytdRatio(ref, from: yearStart, to: xirrTo);
+
+  return DashboardHeaderMetrics(
+    baseCurrency: base,
+    dailyChange: nwToday - nwYesterday,
+    monthlyChangePct: pctChange(nwToday, nwMonthStart),
+    ytdChangePct: ytdRatio,
   );
 });
+
+/// YTD annualized return from [ReturnsService.portfolioXirr], degraded to
+/// `null` (UI renders `—`) when:
+///
+/// - the solver returns [XirrFallbackAbsolute] (no flows / all-same-sign /
+///   failed convergence),
+/// - the [returnsServiceProvider] is still loading or has errored — common
+///   on first launch while the database key store is hydrating, or in
+///   widget tests that don't override the provider. The dashboard should
+///   still render daily / MTD numbers, so we degrade YTD to `—` rather
+///   than blocking the whole header on the holdings pipeline, or
+/// - the XIRR computation itself throws (e.g. FX data missing for a
+///   cross-currency leg).
+Future<double?> _ytdRatio(
+  Ref ref, {
+  required DateTime from,
+  required DateTime to,
+}) async {
+  final serviceAsync = ref.watch(returnsServiceProvider);
+  final service = serviceAsync.valueOrNull;
+  if (service == null) return null;
+  try {
+    final report = await service.portfolioXirr(from: from, to: to);
+    return switch (report.solution) {
+      XirrConverged(:final rate) => rate,
+      XirrFallbackAbsolute() => null,
+    };
+  } catch (_) {
+    return null;
+  }
+}

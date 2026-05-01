@@ -78,6 +78,11 @@ abstract class HoldingService {
   /// as long as `tradeDate` is strictly less than `asOf`.
   Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf);
 
+  /// Lot inventory at [asOf]. Same replay pipeline as [computeAt] but
+  /// stops one step earlier — returns the raw [Lot]s without pricing them.
+  /// FIR-89's [ReturnsService] consumes this for XIRR bookend valuation.
+  Future<List<Lot>> lotsAt(DateTime asOf);
+
   /// Materialize and persist the lot inventory at end of [day].
   ///
   /// Intended to be called once per UTC trading day after market close (the
@@ -140,6 +145,9 @@ class DefaultHoldingService implements HoldingService {
       baseCurrency: baseCurrency,
     );
   }
+
+  @override
+  Future<List<Lot>> lotsAt(DateTime asOf) => _replayUpTo(asOf);
 
   @override
   Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) async {

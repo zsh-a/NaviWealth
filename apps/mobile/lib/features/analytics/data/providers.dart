@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/db/providers.dart';
 import '../../../data/domain/asset.dart';
-import '../../investment/domain/holding_service.dart';
+import '../../investment/data/providers.dart' show holdingServiceProvider;
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../domain/concentration_risk.dart';
 import '../domain/equity_allocation.dart';
@@ -47,15 +47,6 @@ final marketCapThresholdsProvider = Provider<MarketCapThresholds>(
   (ref) => MarketCapThresholds.defaults(),
 );
 
-/// Stub seam for the holdings pipeline. Until a transactions repository
-/// for equities is wired up (no securities entry has shipped yet), this
-/// returns an empty service so the analytics page can mount and render
-/// the empty state without crashing. Tests override this to feed in
-/// fixtures.
-final holdingServiceProvider = Provider<HoldingService>(
-  (ref) => _EmptyHoldingService(),
-);
-
 /// User's selected base currency. Until the settings repository exposes
 /// its row through Riverpod, fall back to the dashboard default so the
 /// totals row has *something* to label itself with.
@@ -67,7 +58,7 @@ final analyticsBaseCurrencyProvider = Provider<String>((ref) => 'CNY');
 final equityHoldingsSnapshotProvider =
     FutureProvider.autoDispose<Map<String, HoldingSnapshot>>(
   (ref) async {
-    final service = ref.watch(holdingServiceProvider);
+    final service = await ref.watch(holdingServiceProvider.future);
     final asOf = DateTime.now().toUtc();
     return service.computeAt(asOf);
   },
@@ -122,20 +113,3 @@ final concentrationAlertsProvider =
   );
 });
 
-/// Empty default — keeps the page renderable until a real holdings
-/// pipeline is wired up. The class is intentionally private; tests should
-/// override [holdingServiceProvider] with a fake rather than reach in here.
-class _EmptyHoldingService implements HoldingService {
-  @override
-  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async => const {};
-
-  @override
-  Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) {
-    throw UnsupportedError(
-      'persistDailySnapshot has no real holdings pipeline wired yet.',
-    );
-  }
-
-  @override
-  Future<void> invalidateFrom(DateTime from) async {}
-}
