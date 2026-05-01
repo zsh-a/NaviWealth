@@ -118,8 +118,8 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          flutter build apk --release --target-platform android-arm64
-          flutter build appbundle --release
+          flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
+          flutter build appbundle --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
       - name: Package web bundle
         run: |
           cd build/web
