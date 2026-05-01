@@ -7,6 +7,7 @@ import '../../../data/domain/expense.dart';
 import '../../../data/repositories/expense_category_repository.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import 'category_grid_picker.dart';
 
@@ -61,17 +62,18 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
     final amount = readAmount(_amountController);
     if (amount == null || amount <= Decimal.zero) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('金额必须大于 0')));
+      ).showSnackBar(SnackBar(content: Text(l10n.expenseFormAmountInvalid)));
       return;
     }
     if (_categoryId == null || _accountId == null || _currency == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请选择类目、账户和币种')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.expenseFormCategoryAccountRequired)),
+      );
       return;
     }
     setState(() => _busy = true);
@@ -110,19 +112,20 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
 
   Future<void> _delete() async {
     if (_initial == null) return;
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('删除支出'),
-        content: const Text('确认删除此支出？该操作可同步给其他设备。'),
+        title: Text(l10n.expenseFormDeleteDialogTitle),
+        content: Text(l10n.expenseFormDeleteDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
+            child: Text(l10n.commonDelete),
           ),
         ],
       ),
@@ -148,17 +151,22 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
     final accountsAsync = ref.watch(accountsStreamProvider);
     final categoriesAsync = ref.watch(expenseCategoriesStreamProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEdit ? '编辑支出' : '新建支出'),
+        title: Text(
+          widget.isEdit
+              ? l10n.expenseFormEditTitle
+              : l10n.expenseFormCreateTitle,
+        ),
         actions: [
           if (widget.isEdit)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: '删除',
+              tooltip: l10n.expenseFormDeleteTooltip,
               onPressed: _busy ? null : _delete,
             ),
         ],
@@ -171,7 +179,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                 padding: Spacing.pageMobile,
                 children: [
                   AmountField(
-                    label: '金额',
+                    label: l10n.expenseFormAmountLabel,
                     controller: _amountController,
                     currencyCode: _currency,
                   ),
@@ -184,9 +192,11 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                   categoriesAsync.when(
                     data: (cats) {
                       if (cats.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: Spacing.s12),
-                          child: Text('正在准备默认类目，请稍候…'),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Spacing.s12,
+                          ),
+                          child: Text(l10n.expenseFormCategoriesLoading),
                         );
                       }
                       // First-render default: pick the seeded "其它"
@@ -209,7 +219,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                       padding: EdgeInsets.symmetric(vertical: Spacing.s12),
                       child: LinearProgressIndicator(),
                     ),
-                    error: (e, _) => Text('类目加载失败：$e'),
+                    error: (e, _) =>
+                        Text(l10n.expenseFormCategoriesLoadError('$e')),
                   ),
                   const SizedBox(height: Spacing.s12),
                   accountsAsync.when(
@@ -222,15 +233,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                         accounts: accounts,
                         value: _accountId,
                         onChanged: (v) => setState(() => _accountId = v),
-                        label: '账户',
+                        label: l10n.expenseFormAccountLabel,
                       );
                     },
                     loading: () => const LinearProgressIndicator(),
-                    error: (e, _) => Text('账户加载失败：$e'),
+                    error: (e, _) =>
+                        Text(l10n.expenseFormAccountsLoadError('$e')),
                   ),
                   const SizedBox(height: Spacing.s12),
                   DateField(
-                    label: '日期',
+                    label: l10n.expenseFormDateLabel,
                     initialValue: _date,
                     required: true,
                     onChanged: (v) {
@@ -242,7 +254,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
                   const SizedBox(height: Spacing.s24),
                   FilledButton(
                     onPressed: _busy ? null : _save,
-                    child: Text(_busy ? '保存中…' : '保存'),
+                    child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
                   ),
                 ],
               ),
@@ -254,15 +266,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
 class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: ListTile(
         leading: const Icon(Icons.warning_amber_outlined),
-        title: const Text('先创建一个账户'),
-        subtitle: const Text('支出需要选择资金账户。前往「账户」新建后再来录入。'),
+        title: Text(l10n.expenseFormNoAccountsTitle),
+        subtitle: Text(l10n.expenseFormNoAccountsBody),
         trailing: TextButton(
           onPressed: () => GoRouter.of(context).go('/accounts/new'),
-          child: const Text('去创建'),
+          child: Text(l10n.expenseFormNoAccountsCta),
         ),
       ),
     );

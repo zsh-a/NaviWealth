@@ -140,6 +140,18 @@ abstract class AppLocalizations {
   /// **'Overview'**
   String get homeAppBarTitle;
 
+  /// Tooltip for the home AppBar action that opens the AI chat surface.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant'**
+  String get homeAiAssistantTooltip;
+
+  /// Tooltip for the home FAB that opens the trade-entry form.
+  ///
+  /// In en, this message translates to:
+  /// **'Record trade'**
+  String get homeRecordTradeTooltip;
+
   /// No description provided for @homeNetWorthTitle.
   ///
   /// In en, this message translates to:
@@ -197,7 +209,7 @@ abstract class AppLocalizations {
   /// No description provided for @assetsEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Asset entry & management (FIR-5) — coming soon'**
+  /// **'No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.'**
   String get assetsEmptyHint;
 
   /// No description provided for @assetsAddAction.
@@ -211,6 +223,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record corporate action'**
   String get assetsCorporateActionAction;
+
+  /// No description provided for @assetsAccountsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get assetsAccountsTooltip;
+
+  /// No description provided for @assetsLiabilitiesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities & repayment plans'**
+  String get assetsLiabilitiesTooltip;
+
+  /// No description provided for @assetsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String assetsLoadError(String error);
+
+  /// No description provided for @assetsAddCashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash / multi-currency balance'**
+  String get assetsAddCashTitle;
+
+  /// No description provided for @assetsAddCashSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track available balance in checking or cash accounts'**
+  String get assetsAddCashSubtitle;
+
+  /// No description provided for @assetsAddDepositTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit (term / demand)'**
+  String get assetsAddDepositTitle;
+
+  /// No description provided for @assetsAddDepositSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record interest rate, value date, and maturity'**
+  String get assetsAddDepositSubtitle;
+
+  /// No description provided for @assetsAddWealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth product'**
+  String get assetsAddWealthTitle;
+
+  /// No description provided for @assetsAddWealthSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain expected return and current valuation manually'**
+  String get assetsAddWealthSubtitle;
+
+  /// No description provided for @assetsAddRealEstateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Address, purchase price, current valuation; can link a mortgage'**
+  String get assetsAddRealEstateSubtitle;
+
+  /// No description provided for @assetsAddVehicleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase price, annual residual rate, automatic depreciation'**
+  String get assetsAddVehicleSubtitle;
+
+  /// No description provided for @assetsAddLiabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability (mortgage / car loan / credit card / consumer loan)'**
+  String get assetsAddLiabilityTitle;
+
+  /// No description provided for @assetsAddLiabilitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record and track repayment plans'**
+  String get assetsAddLiabilitySubtitle;
+
+  /// No description provided for @assetsAddCorporateActionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend / split / rights issue / bonus shares / DRIP'**
+  String get assetsAddCorporateActionSubtitle;
+
+  /// No description provided for @assetsAddTradeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Securities trade'**
+  String get assetsAddTradeTitle;
+
+  /// No description provided for @assetsAddTradeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy / sell stocks, ETFs, crypto'**
+  String get assetsAddTradeSubtitle;
+
+  /// No description provided for @assetsChipInterestRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate {rate}%'**
+  String assetsChipInterestRate(String rate);
+
+  /// No description provided for @assetsChipExpectedReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected {rate}%'**
+  String assetsChipExpectedReturn(String rate);
+
+  /// No description provided for @assetsChipMaturityDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Matures {date}'**
+  String assetsChipMaturityDate(String date);
+
+  /// No description provided for @assetTypeCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get assetTypeCash;
+
+  /// No description provided for @assetTypeBankDepositTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Term deposit'**
+  String get assetTypeBankDepositTerm;
+
+  /// No description provided for @assetTypeBankDepositDemand.
+  ///
+  /// In en, this message translates to:
+  /// **'Demand deposit'**
+  String get assetTypeBankDepositDemand;
+
+  /// No description provided for @assetTypeWealthProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth product'**
+  String get assetTypeWealthProduct;
 
   /// No description provided for @corpActionTitle.
   ///
@@ -1148,6 +1298,18 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get commonSave;
 
+  /// No description provided for @commonSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get commonSaving;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
   /// No description provided for @commonClose.
   ///
   /// In en, this message translates to:
@@ -1165,6 +1327,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong'**
   String get commonError;
+
+  /// No description provided for @commonLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String commonLoadError(String error);
 
   /// Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.).
   ///
@@ -2483,6 +2651,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset to defaults'**
   String get settingsRiskResetDefaults;
+
+  /// No description provided for @tradeEntryAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record trade'**
+  String get tradeEntryAppBarTitle;
+
+  /// No description provided for @tradeEntrySuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade recorded'**
+  String get tradeEntrySuccess;
+
+  /// No description provided for @tradeEntryFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t record trade: {error}'**
+  String tradeEntryFailure(String error);
+
+  /// No description provided for @tradeEntryQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get tradeEntryQuantityLabel;
+
+  /// No description provided for @tradeEntryPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get tradeEntryPriceLabel;
+
+  /// No description provided for @tradeEntryPriceHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to fetch from market data'**
+  String get tradeEntryPriceHelper;
+
+  /// No description provided for @tradeEntryDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade date'**
+  String get tradeEntryDateLabel;
+
+  /// No description provided for @tradeEntryFeeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get tradeEntryFeeLabel;
+
+  /// No description provided for @tradeEntryTaxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get tradeEntryTaxLabel;
+
+  /// No description provided for @tradeEntryCatalogLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load catalog: {error}'**
+  String tradeEntryCatalogLoadError(String error);
+
+  /// No description provided for @tradeEntryDecimalScaleHintGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 8 decimals for stocks/ETFs, 18 for crypto'**
+  String get tradeEntryDecimalScaleHintGeneric;
+
+  /// No description provided for @tradeEntryDecimalScaleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {scale} decimal places'**
+  String tradeEntryDecimalScaleHint(int scale);
+
+  /// No description provided for @tradeTypeBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get tradeTypeBuy;
+
+  /// No description provided for @tradeTypeSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get tradeTypeSell;
+
+  /// No description provided for @tradeTypeTransferIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer in'**
+  String get tradeTypeTransferIn;
+
+  /// No description provided for @tradeTypeTransferOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer out'**
+  String get tradeTypeTransferOut;
+
+  /// No description provided for @tradeTypeValuationAdjust.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation adjust'**
+  String get tradeTypeValuationAdjust;
+
+  /// No description provided for @expenseFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New expense'**
+  String get expenseFormCreateTitle;
+
+  /// No description provided for @expenseFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit expense'**
+  String get expenseFormEditTitle;
+
+  /// No description provided for @expenseFormDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get expenseFormDeleteTooltip;
+
+  /// No description provided for @expenseFormAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get expenseFormAmountLabel;
+
+  /// No description provided for @expenseFormAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount must be greater than 0'**
+  String get expenseFormAmountInvalid;
+
+  /// No description provided for @expenseFormCategoryAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category, account, and currency'**
+  String get expenseFormCategoryAccountRequired;
+
+  /// No description provided for @expenseFormCategoriesLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up default categories, please wait…'**
+  String get expenseFormCategoriesLoading;
+
+  /// No description provided for @expenseFormCategoriesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load categories: {error}'**
+  String expenseFormCategoriesLoadError(String error);
+
+  /// No description provided for @expenseFormAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get expenseFormAccountLabel;
+
+  /// No description provided for @expenseFormAccountsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load accounts: {error}'**
+  String expenseFormAccountsLoadError(String error);
+
+  /// No description provided for @expenseFormDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get expenseFormDateLabel;
+
+  /// No description provided for @expenseFormDeleteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete expense'**
+  String get expenseFormDeleteDialogTitle;
+
+  /// No description provided for @expenseFormDeleteDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this expense? This change syncs to your other devices.'**
+  String get expenseFormDeleteDialogBody;
+
+  /// No description provided for @expenseFormNoAccountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account first'**
+  String get expenseFormNoAccountsTitle;
+
+  /// No description provided for @expenseFormNoAccountsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses need a funding account. Create one under Accounts, then come back here.'**
+  String get expenseFormNoAccountsBody;
+
+  /// No description provided for @expenseFormNoAccountsCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get expenseFormNoAccountsCta;
 }
 
 class _AppLocalizationsDelegate

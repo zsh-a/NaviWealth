@@ -28,20 +28,21 @@ class AssetsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final manualAsync = ref.watch(manualAssetsStreamProvider);
     final physicalAsync = ref.watch(physicalAssetsListProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('资产'),
+        title: Text(l10n.assetsAppBarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_balance_outlined),
-            tooltip: '账户管理',
+            tooltip: l10n.assetsAccountsTooltip,
             onPressed: () => context.go('/accounts'),
           ),
           IconButton(
             icon: const Icon(Icons.payments_outlined),
-            tooltip: '负债与还款计划',
+            tooltip: l10n.assetsLiabilitiesTooltip,
             onPressed: () => context.push('/assets/liabilities'),
           ),
         ],
@@ -53,7 +54,7 @@ class AssetsPage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddSheet(context),
         icon: const Icon(Icons.add),
-        label: const Text('录入资产'),
+        label: Text(l10n.assetsAddAction),
       ),
     );
   }
@@ -69,8 +70,8 @@ class AssetsPage extends ConsumerWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.payments_outlined),
-              title: const Text('现金 / 多币种余额'),
-              subtitle: const Text('登记银行活期或现金账户中的可用余额'),
+              title: Text(l10n.assetsAddCashTitle),
+              subtitle: Text(l10n.assetsAddCashSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.go('/assets/new/cash');
@@ -78,8 +79,8 @@ class AssetsPage extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.savings_outlined),
-              title: const Text('存款（定期 / 活期）'),
-              subtitle: const Text('记录利率、起息日、到期日'),
+              title: Text(l10n.assetsAddDepositTitle),
+              subtitle: Text(l10n.assetsAddDepositSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.go('/assets/new/deposit');
@@ -87,8 +88,8 @@ class AssetsPage extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.auto_graph_outlined),
-              title: const Text('理财产品'),
-              subtitle: const Text('预期年化、当前估值手动维护'),
+              title: Text(l10n.assetsAddWealthTitle),
+              subtitle: Text(l10n.assetsAddWealthSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.go('/assets/new/wealth');
@@ -97,7 +98,7 @@ class AssetsPage extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.home_outlined),
               title: Text(l10n.physicalAssetAddRealEstate),
-              subtitle: const Text('地址、购入价、当前估值,可关联房贷'),
+              subtitle: Text(l10n.assetsAddRealEstateSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 _openPhysicalCreate(context, AssetType.realEstate);
@@ -106,7 +107,7 @@ class AssetsPage extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.directions_car_outlined),
               title: Text(l10n.physicalAssetAddVehicle),
-              subtitle: const Text('购入价、年度残值率、自动折旧'),
+              subtitle: Text(l10n.assetsAddVehicleSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 _openPhysicalCreate(context, AssetType.vehicle);
@@ -114,8 +115,8 @@ class AssetsPage extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.account_balance_outlined),
-              title: const Text('负债（房贷 / 车贷 / 信用卡 / 消费贷）'),
-              subtitle: const Text('录入并跟踪还款计划'),
+              title: Text(l10n.assetsAddLiabilityTitle),
+              subtitle: Text(l10n.assetsAddLiabilitySubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.push('/assets/liabilities');
@@ -124,7 +125,7 @@ class AssetsPage extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.account_tree_outlined),
               title: Text(l10n.assetsCorporateActionAction),
-              subtitle: const Text('分红 / 拆股 / 配股 / 红股 / DRIP'),
+              subtitle: Text(l10n.assetsAddCorporateActionSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.push('/assets/corporate-action');
@@ -132,8 +133,8 @@ class AssetsPage extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.swap_horiz_outlined),
-              title: const Text('证券交易'),
-              subtitle: const Text('买入 / 卖出股票、ETF、加密货币'),
+              title: Text(l10n.assetsAddTradeTitle),
+              subtitle: Text(l10n.assetsAddTradeSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
                 context.push('/assets/trade');
@@ -176,7 +177,11 @@ class _AssetsBody extends StatelessWidget {
     final manualErr = manualAsync.hasError ? manualAsync.error : null;
     final physicalErr = physicalAsync.hasError ? physicalAsync.error : null;
     if (manualErr != null && physicalErr != null) {
-      return Center(child: Text('加载失败：$manualErr'));
+      return Center(
+        child: Text(
+          AppLocalizations.of(context).assetsLoadError('$manualErr'),
+        ),
+      );
     }
     final manual = manualAsync.value ?? const <Asset>[];
     final physical = physicalAsync.value ?? const <PhysicalAsset>[];
@@ -269,16 +274,17 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final l10n = AppLocalizations.of(context);
+    return Center(
       child: Padding(
         padding: Spacing.pageMobile,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_balance_wallet_outlined, size: 48),
-            SizedBox(height: Spacing.s12),
+            const Icon(Icons.account_balance_wallet_outlined, size: 48),
+            const SizedBox(height: Spacing.s12),
             Text(
-              '尚未录入资产。点击右下角添加现金、存款、理财、房产或车辆。',
+              l10n.assetsEmptyHint,
               textAlign: TextAlign.center,
             ),
           ],
@@ -295,6 +301,7 @@ class _ManualAssetsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final grouped = <AssetType, List<Asset>>{};
     for (final a in assets) {
       grouped.putIfAbsent(a.type, () => []).add(a);
@@ -316,7 +323,7 @@ class _ManualAssetsSection extends StatelessWidget {
               bottom: Spacing.s8,
             ),
             child: Text(
-              manualAssetTypeLabel(type),
+              manualAssetTypeLabel(l10n, type),
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
@@ -374,8 +381,9 @@ class _AssetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final price = asset.lastPrice ?? Decimal.zero;
-    final chips = _chipsFor(asset);
+    final chips = _chipsFor(asset, l10n);
     return InkWell(
       onTap: () => context.go('/assets/${asset.id}'),
       child: Padding(
@@ -419,7 +427,7 @@ class _AssetTile extends StatelessWidget {
     );
   }
 
-  List<Widget> _chipsFor(Asset asset) {
+  List<Widget> _chipsFor(Asset asset, AppLocalizations l10n) {
     final chips = <Widget>[];
     if (asset.symbol.isNotEmpty &&
         asset.symbol != asset.name &&
@@ -429,18 +437,28 @@ class _AssetTile extends StatelessWidget {
     final meta = asset.manualMetadata;
     if (meta is DepositMetadata) {
       chips.add(
-        _MetaChip(label: '利率 ${_formatRatePercent(meta.interestRate)}%'),
+        _MetaChip(
+          label: l10n.assetsChipInterestRate(
+            _formatRatePercent(meta.interestRate),
+          ),
+        ),
       );
       if (meta.maturityDate != null) {
         final d = meta.maturityDate!;
         chips.add(
-          _MetaChip(label: '${d.year}-${_two(d.month)}-${_two(d.day)} 到期'),
+          _MetaChip(
+            label: l10n.assetsChipMaturityDate(
+              '${d.year}-${_two(d.month)}-${_two(d.day)}',
+            ),
+          ),
         );
       }
     } else if (meta is WealthProductMetadata) {
       chips.add(
         _MetaChip(
-          label: '预期 ${_formatRatePercent(meta.expectedAnnualReturn)}%',
+          label: l10n.assetsChipExpectedReturn(
+            _formatRatePercent(meta.expectedAnnualReturn),
+          ),
         ),
       );
       if (meta.issuer != null && meta.issuer!.isNotEmpty) {
@@ -492,12 +510,12 @@ class _MetaChip extends StatelessWidget {
   }
 }
 
-String manualAssetTypeLabel(AssetType t) {
+String manualAssetTypeLabel(AppLocalizations l10n, AssetType t) {
   return switch (t) {
-    AssetType.cash => '现金',
-    AssetType.bankDepositTerm => '定期存款',
-    AssetType.bankDepositDemand => '活期存款',
-    AssetType.wealthProduct => '理财产品',
+    AssetType.cash => l10n.assetTypeCash,
+    AssetType.bankDepositTerm => l10n.assetTypeBankDepositTerm,
+    AssetType.bankDepositDemand => l10n.assetTypeBankDepositDemand,
+    AssetType.wealthProduct => l10n.assetTypeWealthProduct,
     _ => t.name,
   };
 }

@@ -8,6 +8,7 @@ import '../../../data/domain/enums.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../data/securities_catalog/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/models/lot.dart';
@@ -57,13 +58,16 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
     TransactionType.valuationAdjust,
   ];
 
-  static const _typeLabels = {
-    TransactionType.buy: '买入',
-    TransactionType.sell: '卖出',
-    TransactionType.transferIn: '转入',
-    TransactionType.transferOut: '转出',
-    TransactionType.valuationAdjust: '估值调整',
-  };
+  String _typeLabel(AppLocalizations l10n, TransactionType type) {
+    return switch (type) {
+      TransactionType.buy => l10n.tradeTypeBuy,
+      TransactionType.sell => l10n.tradeTypeSell,
+      TransactionType.transferIn => l10n.tradeTypeTransferIn,
+      TransactionType.transferOut => l10n.tradeTypeTransferOut,
+      TransactionType.valuationAdjust => l10n.tradeTypeValuationAdjust,
+      _ => type.name,
+    };
+  }
 
   @override
   void initState() {
@@ -140,19 +144,22 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
       await repo.recordTrade(plan);
 
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('交易录入成功')),
+        SnackBar(content: Text(l10n.tradeEntrySuccess)),
       );
       context.pop();
     } on TradeEntryException catch (e) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('录入失败：${e.message}')),
+        SnackBar(content: Text(l10n.tradeEntryFailure(e.message))),
       );
     } catch (e) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('录入失败：$e')),
+        SnackBar(content: Text(l10n.tradeEntryFailure('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -161,21 +168,23 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('录入交易'),
+        title: Text(l10n.tradeEntryAppBarTitle),
       ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
         data: (accounts) => _buildForm(accounts),
       ),
     );
   }
 
   Widget _buildForm(List<Account> accounts) {
+    final l10n = AppLocalizations.of(context);
     final eligible = accounts
         .where((a) =>
             a.type == AccountType.brokerage ||
@@ -202,24 +211,24 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
 
           AmountField(
             key: const Key('trade-entry-quantity'),
-            label: '数量',
+            label: l10n.tradeEntryQuantityLabel,
             controller: _quantityController,
-            helperText: _decimalScaleHint(),
+            helperText: _decimalScaleHint(l10n),
           ),
           const SizedBox(height: Spacing.s12),
 
           AmountField(
             key: const Key('trade-entry-price'),
-            label: '价格',
+            label: l10n.tradeEntryPriceLabel,
             controller: _priceController,
             currencyCode: _currency,
             required: false,
-            helperText: '留空则自动从市场数据获取',
+            helperText: l10n.tradeEntryPriceHelper,
           ),
           const SizedBox(height: Spacing.s12),
 
           DateField(
-            label: '交易日期',
+            label: l10n.tradeEntryDateLabel,
             initialValue: _tradeDate,
             required: true,
             onChanged: (d) {
@@ -238,7 +247,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
             children: [
               Expanded(
                 child: AmountField(
-                  label: '手续费',
+                  label: l10n.tradeEntryFeeLabel,
                   controller: _feeController,
                   currencyCode: _currency,
                   required: false,
@@ -247,7 +256,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
               const SizedBox(width: Spacing.s12),
               Expanded(
                 child: AmountField(
-                  label: '税费',
+                  label: l10n.tradeEntryTaxLabel,
                   controller: _taxController,
                   currencyCode: _currency,
                   required: false,
@@ -263,7 +272,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
           FilledButton(
             key: const Key('trade-entry-submit'),
             onPressed: _busy ? null : _submit,
-            child: Text(_busy ? '保存中…' : '保存'),
+            child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
           ),
         ],
       ),
@@ -271,10 +280,11 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
   }
 
   Widget _buildAssetSearch() {
+    final l10n = AppLocalizations.of(context);
     final searchAsync = ref.watch(securitiesSearchServiceProvider);
     return searchAsync.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('目录加载失败：$e'),
+      error: (e, _) => Text(l10n.tradeEntryCatalogLoadError('$e')),
       data: (search) => LocalSecuritiesPicker(
         search: search,
         onSelected: (choice) {
@@ -290,13 +300,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
   }
 
   Widget _buildTypeSelector() {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         for (final t in _tradeTypes)
           ChoiceChip(
-            label: Text(_typeLabels[t]!),
+            label: Text(_typeLabel(l10n, t)),
             selected: _type == t,
             onSelected: (s) {
               if (s) setState(() => _type = t);
@@ -306,9 +317,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
     );
   }
 
-  String _decimalScaleHint() {
-    if (_selected == null) return '股票/ETF 最多 8 位小数，加密最多 18 位';
-    final scale = _decimalScale(_selected!.type);
-    return '最多 $scale 位小数';
+  String _decimalScaleHint(AppLocalizations l10n) {
+    if (_selected == null) return l10n.tradeEntryDecimalScaleHintGeneric;
+    return l10n.tradeEntryDecimalScaleHint(_decimalScale(_selected!.type));
   }
 }
