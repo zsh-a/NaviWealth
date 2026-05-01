@@ -101,7 +101,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       connectTimeout: const Duration(seconds: 5),
     ));
     try {
-      final resp = await testDio.get('/health');
+      final resp = await testDio.get<dynamic>('/health');
       logger.i('Backend health check: ${resp.statusCode} ${resp.data}');
     } on DioException catch (e) {
       logger.e(
