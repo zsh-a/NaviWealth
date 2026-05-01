@@ -20,3 +20,4 @@ export 'tokens/typography_tokens.dart';
 export 'widgets/delta_chip.dart';
 export 'widgets/delta_text.dart';
 export 'widgets/money_text.dart';
+export 'widgets/skeleton.dart';

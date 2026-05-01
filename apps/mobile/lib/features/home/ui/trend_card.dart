@@ -205,10 +205,7 @@ class _TrendSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 220,
-      child: Center(child: CircularProgressIndicator()),
-    );
+    return const SkeletonBox(height: 220, radius: Radii.sm);
   }
 }
 
