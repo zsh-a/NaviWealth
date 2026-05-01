@@ -1232,6 +1232,78 @@ abstract class AppLocalizations {
   /// **'Switch to tab {position} ({label})'**
   String shortcutSwitchTab(int position, String label);
 
+  /// Placeholder for the command palette search box (FIR-87)
+  ///
+  /// In en, this message translates to:
+  /// **'Search commands…'**
+  String get commandPaletteSearchHint;
+
+  /// Shown in the command palette when the query matches no commands
+  ///
+  /// In en, this message translates to:
+  /// **'No commands match your search'**
+  String get commandPaletteEmpty;
+
+  /// Command palette: navigate to the home/overview tab
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Overview'**
+  String get commandPaletteGoOverview;
+
+  /// Command palette: navigate to the assets tab
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Assets'**
+  String get commandPaletteGoAssets;
+
+  /// Command palette: navigate to the expenses tab
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Expenses'**
+  String get commandPaletteGoExpenses;
+
+  /// Command palette: navigate to the analytics tab
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Analytics'**
+  String get commandPaletteGoAnalytics;
+
+  /// Command palette: navigate to the FIRE dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Go to FIRE'**
+  String get commandPaletteGoFire;
+
+  /// Command palette: navigate to the settings tab
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Settings'**
+  String get commandPaletteGoSettings;
+
+  /// Command palette: open the trade entry form
+  ///
+  /// In en, this message translates to:
+  /// **'New trade'**
+  String get commandPaletteNewTrade;
+
+  /// Command palette: open the new expense form
+  ///
+  /// In en, this message translates to:
+  /// **'New expense'**
+  String get commandPaletteNewExpense;
+
+  /// Command palette: open the AI chat page
+  ///
+  /// In en, this message translates to:
+  /// **'Open AI assistant'**
+  String get commandPaletteOpenAi;
+
+  /// Command palette: open the shortcut help dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Show keyboard shortcuts'**
+  String get commandPaletteShortcutHelp;
+
   /// Banner shown when the PWA service worker has a new version waiting to activate
   ///
   /// In en, this message translates to:
