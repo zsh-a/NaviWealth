@@ -1,13 +1,21 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
+import '../../data/domain/transaction.dart';
 import '../../data/market/market_data_providers.dart';
 import '../../data/repositories/providers.dart';
+import '../../design_system/design_system.dart';
+import '../../domain/entities/historical_bar.dart';
 import '../../domain/entities/symbol_info.dart';
+import '../../domain/services/market_data_service.dart';
 import '../../domain/values/asset_market.dart';
+import '../investment/domain/models/holding_snapshot.dart';
+import 'asset_detail_providers.dart';
 import 'cash_form_page.dart';
 import 'deposit_form_page.dart';
 import 'wealth_product_form_page.dart';
@@ -67,8 +75,9 @@ class AssetDetailPage extends ConsumerWidget {
   }
 }
 
-/// Detail view for equity-type assets with a "new trade" action and
-/// FIR-78's "同步元数据" enrichment shortcut.
+/// Detail view for equity-type assets — renders a holding card, a P&L card,
+/// a 30-day mini price chart and the most recent transactions, plus the
+/// FIR-78 "同步元数据" enrichment shortcut.
 ///
 /// Watches the repository (rather than holding the [Asset] passed in)
 /// so a successful enrichment immediately reflects in the rendered card
@@ -197,30 +206,18 @@ class _EquityAssetDetailPageState
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.s16),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        asset.symbol,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      if (asset.name != null) ...[
-                        const SizedBox(height: 4),
-                        Text(asset.name!),
-                      ],
-                      const SizedBox(height: 8),
-                      Text('市场：${asset.market ?? "未知"}'),
-                      Text('币种：${asset.currency}'),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              _AssetSummaryCard(asset: asset),
+              const SizedBox(height: Spacing.s12),
+              _HoldingCard(asset: asset),
+              const SizedBox(height: Spacing.s12),
+              _PnLCard(asset: asset),
+              const SizedBox(height: Spacing.s12),
+              _TrendMiniChartCard(asset: asset),
+              const SizedBox(height: Spacing.s12),
+              _RecentTradesCard(asset: asset),
+              const SizedBox(height: Spacing.s16),
               FilledButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('新交易'),
@@ -232,5 +229,808 @@ class _EquityAssetDetailPageState
         );
       },
     );
+  }
+}
+
+class _AssetSummaryCard extends StatelessWidget {
+  const _AssetSummaryCard({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(asset.symbol, style: theme.textTheme.titleMedium),
+            if (asset.name != null) ...[
+              const SizedBox(height: Spacing.s4),
+              Text(asset.name!, style: theme.textTheme.bodyMedium),
+            ],
+            const SizedBox(height: Spacing.s8),
+            Text(
+              '${asset.market ?? "未知"} · ${asset.currency}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Quantity / average cost / market value, all in the asset's own currency
+/// per the FIR-48 snapshot. Base-currency totals are rendered on the P&L
+/// card alongside unrealized gain.
+class _HoldingCard extends ConsumerWidget {
+  const _HoldingCard({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
+    final theme = Theme.of(context);
+    return snapshotAsync.when(
+      loading: () => const SkeletonCard(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBox(width: 80, height: 14, radius: Radii.xs),
+            SizedBox(height: Spacing.s12),
+            SkeletonBox(height: 18),
+            SizedBox(height: Spacing.s8),
+            SkeletonBox(height: 18),
+          ],
+        ),
+      ),
+      error: (e, _) => _ErrorCard(message: '持仓加载失败：$e'),
+      data: (snap) {
+        final qty = snap?.quantity ?? Decimal.zero;
+        final hasPosition = qty.sign > 0;
+        final avgCost = hasPosition
+            ? (snap!.costBasisInAssetCurrency / qty)
+                .toDecimal(scaleOnInfinitePrecision: 8)
+            : null;
+        final marketValueAsset = snap?.marketValueInAssetCurrency;
+        return Card(
+          child: Padding(
+            padding: Spacing.card,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('持仓', style: theme.textTheme.titleSmall),
+                const SizedBox(height: Spacing.s12),
+                _MetricRow(
+                  label: '当前数量',
+                  value: hasPosition ? _formatQuantity(qty) : '—',
+                ),
+                const SizedBox(height: Spacing.s8),
+                _MetricRow(
+                  label: '平均成本',
+                  trailing: MoneyText(
+                    amount: avgCost?.toDouble(),
+                    currencyCode: asset.currency,
+                    fractionDigits: _priceFractionDigits(asset.type),
+                  ),
+                ),
+                const SizedBox(height: Spacing.s8),
+                _MetricRow(
+                  label: '当前市值',
+                  trailing: MoneyText(
+                    amount: marketValueAsset?.toDouble(),
+                    currencyCode: asset.currency,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Spacing.s8),
+                    child: Text(
+                      '价格暂不可用，市值显示为零',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Unrealized P&L (amount + %), realized P&L, and the current day's
+/// price-driven change. Unrealized + base-currency view come from the
+/// FIR-48 snapshot; daily change is derived from the same 30-day history
+/// the mini-chart uses, multiplied by the snapshot quantity.
+class _PnLCard extends ConsumerWidget {
+  const _PnLCard({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
+    final realizedAsync = ref.watch(assetRealizedPnlProvider(asset.id));
+    final marketKey = _historyKey(asset);
+    final historyAsync = marketKey == null
+        ? null
+        : ref.watch(assetPriceHistoryProvider(marketKey));
+    final theme = Theme.of(context);
+
+    if (snapshotAsync.isLoading) {
+      return const SkeletonCard(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBox(width: 80, height: 14, radius: Radii.xs),
+            SizedBox(height: Spacing.s12),
+            SkeletonBox(height: 22),
+            SizedBox(height: Spacing.s8),
+            SkeletonBox(height: 14),
+            SizedBox(height: Spacing.s8),
+            SkeletonBox(height: 14),
+          ],
+        ),
+      );
+    }
+    if (snapshotAsync.hasError) {
+      return _ErrorCard(message: '盈亏加载失败：${snapshotAsync.error}');
+    }
+
+    final snap = snapshotAsync.value;
+    final hasPosition = (snap?.quantity.sign ?? 0) > 0;
+    final unrealizedAsset = snap == null
+        ? null
+        : snap.marketValueInAssetCurrency - snap.costBasisInAssetCurrency;
+    final unrealizedPct = (snap == null ||
+            snap.costBasisInAssetCurrency.sign <= 0)
+        ? null
+        : (unrealizedAsset! / snap.costBasisInAssetCurrency)
+            .toDecimal(scaleOnInfinitePrecision: 6)
+            .toDouble();
+
+    final realized = realizedAsync.valueOrNull;
+    final dailyChange = (snap == null || !hasPosition)
+        ? null
+        : _dailyChangeFromHistory(historyAsync, snap.quantity);
+
+    return Card(
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('盈亏', style: theme.textTheme.titleSmall),
+            const SizedBox(height: Spacing.s12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '未实现盈亏',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.s4),
+                      DeltaText(
+                        value: unrealizedAsset?.toDouble(),
+                        currencyCode: asset.currency,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                DeltaChip(
+                  value: unrealizedPct == null ? null : unrealizedPct * 100,
+                  fractionDigits: 2,
+                ),
+              ],
+            ),
+            if (snap != null) ...[
+              const SizedBox(height: Spacing.s8),
+              Text(
+                '基础货币：${snap.baseCurrency} '
+                '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const Divider(height: Spacing.s24),
+            _MetricRow(
+              label: '已实现盈亏',
+              trailing: realizedAsync.isLoading
+                  ? const SizedBox(
+                      width: 80,
+                      child: SkeletonBox(height: 14, radius: Radii.xs),
+                    )
+                  : DeltaText(
+                      value: realized?.toDouble(),
+                      currencyCode: asset.currency,
+                    ),
+            ),
+            const SizedBox(height: Spacing.s8),
+            _MetricRow(
+              label: '今日变动',
+              trailing: _DailyChangeView(
+                value: dailyChange,
+                currency: asset.currency,
+                isLoading: historyAsync?.isLoading ?? false,
+                isStale: historyAsync?.value?.isStale ?? false,
+                hasHistory: marketKey != null,
+                hasPosition: hasPosition,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _formatBaseAmount(Decimal amount) {
+    final sign = amount.sign;
+    final fmt = NumberFormat.decimalPatternDigits(decimalDigits: 2);
+    final formatted = fmt.format(amount.abs().toDouble());
+    if (sign < 0) return '-$formatted';
+    if (sign > 0) return '+$formatted';
+    return formatted;
+  }
+}
+
+class _DailyChangeView extends StatelessWidget {
+  const _DailyChangeView({
+    required this.value,
+    required this.currency,
+    required this.isLoading,
+    required this.isStale,
+    required this.hasHistory,
+    required this.hasPosition,
+  });
+
+  final Decimal? value;
+  final String currency;
+  final bool isLoading;
+  final bool isStale;
+  final bool hasHistory;
+  final bool hasPosition;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!hasPosition || !hasHistory) {
+      return Text(
+        '—',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+    if (isLoading && value == null) {
+      return const SizedBox(
+        width: 80,
+        child: SkeletonBox(height: 14, radius: Radii.xs),
+      );
+    }
+    if (value == null) {
+      return Text(
+        isStale ? '行情滞后' : '行情不可用',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+      );
+    }
+    return DeltaText(value: value!.toDouble(), currencyCode: currency);
+  }
+}
+
+/// 30-day close price chart with the user's average-cost basis as a dashed
+/// reference line. Price comes from MarketDataService; the cost basis line
+/// is computed from the FIR-48 snapshot in asset currency so the two
+/// series share an axis.
+class _TrendMiniChartCard extends ConsumerWidget {
+  const _TrendMiniChartCard({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final marketKey = _historyKey(asset);
+    final theme = Theme.of(context);
+    if (marketKey == null) {
+      return Card(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('近 30 日走势', style: theme.textTheme.titleSmall),
+              const SizedBox(height: Spacing.s8),
+              Text(
+                '该资产暂未关联市场，无走势可显示',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final historyAsync = ref.watch(assetPriceHistoryProvider(marketKey));
+    final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
+
+    return Card(
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('近 30 日走势', style: theme.textTheme.titleSmall),
+                ),
+                if (historyAsync.value?.isStale == true)
+                  _StaleBadge(),
+              ],
+            ),
+            const SizedBox(height: Spacing.s12),
+            _ChartBody(
+              history: historyAsync,
+              snapshot: snapshotAsync.value,
+              currency: asset.currency,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChartBody extends StatelessWidget {
+  const _ChartBody({
+    required this.history,
+    required this.snapshot,
+    required this.currency,
+  });
+
+  final AsyncValue<MarketResponse<List<HistoricalBar>>> history;
+  final HoldingSnapshot? snapshot;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    if (history.isLoading && history.value == null) {
+      return const SizedBox(
+        height: 160,
+        child: SkeletonBox(height: 160, radius: Radii.sm),
+      );
+    }
+    if (history.hasError && history.value == null) {
+      return SizedBox(
+        height: 160,
+        child: Center(
+          child: Text(
+            '无法获取行情：${history.error}',
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    final bars = history.value?.data ?? const <HistoricalBar>[];
+    if (bars.isEmpty) {
+      return const SizedBox(
+        height: 160,
+        child: EmptyChartPlaceholder(),
+      );
+    }
+
+    final pricePoints = [
+      for (final b in bars)
+        ChartPoint(
+          x: b.asOf.millisecondsSinceEpoch.toDouble(),
+          y: b.close.toDouble(),
+        ),
+    ];
+    final qty = snapshot?.quantity ?? Decimal.zero;
+    final costBasisAvg = (qty.sign > 0)
+        ? (snapshot!.costBasisInAssetCurrency / qty)
+            .toDecimal(scaleOnInfinitePrecision: 8)
+            .toDouble()
+        : null;
+    final series = <ChartSeries>[
+      ChartSeries(
+        name: '收盘价',
+        points: pricePoints,
+      ),
+      if (costBasisAvg != null)
+        ChartSeries(
+          name: '成本基准',
+          intent: SeriesIntent.muted,
+          emphasis: SeriesEmphasis.dashed,
+          points: [
+            ChartPoint(x: pricePoints.first.x, y: costBasisAvg),
+            ChartPoint(x: pricePoints.last.x, y: costBasisAvg),
+          ],
+        ),
+    ];
+    return SizedBox(
+      height: 180,
+      child: NwLineChart(
+        series: series,
+        xAxis: const TimeAxis(format: AxisDateFormat.dayMonth, maxLabels: 4),
+        yAxis: ValueAxis.currency(currencyCode: currency, maxLabels: 4),
+        aspectRatio: 16 / 9,
+        semanticLabel: '近 30 日收盘价走势',
+      ),
+    );
+  }
+}
+
+class _StaleBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s8,
+        vertical: Spacing.s2,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: Radii.brSm,
+      ),
+      child: Text(
+        '行情滞后',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+/// Latest 10 trades for this asset, plus a "查看全部" entry that opens the
+/// full list as a draggable bottom sheet — avoids spawning a new route just
+/// to host the longer view.
+class _RecentTradesCard extends ConsumerWidget {
+  const _RecentTradesCard({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final txsAsync = ref.watch(assetTransactionsStreamProvider(asset.id));
+    final theme = Theme.of(context);
+    return txsAsync.when(
+      loading: () => const SkeletonCard(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBox(width: 80, height: 14, radius: Radii.xs),
+            SizedBox(height: Spacing.s12),
+            SkeletonBox(height: 14),
+            SizedBox(height: Spacing.s8),
+            SkeletonBox(height: 14),
+            SizedBox(height: Spacing.s8),
+            SkeletonBox(height: 14),
+          ],
+        ),
+      ),
+      error: (e, _) => _ErrorCard(message: '交易记录加载失败：$e'),
+      data: (txs) {
+        if (txs.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: Spacing.card,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('最近交易', style: theme.textTheme.titleSmall),
+                  const SizedBox(height: Spacing.s8),
+                  Text(
+                    '暂无交易记录',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final recent = txs.take(10).toList();
+        final hasMore = txs.length > recent.length;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.s16,
+                    Spacing.s8,
+                    Spacing.s16,
+                    Spacing.s8,
+                  ),
+                  child: Text('最近交易', style: theme.textTheme.titleSmall),
+                ),
+                for (final tx in recent)
+                  _TransactionTile(asset: asset, tx: tx),
+                if (hasMore)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => _showAll(context, txs),
+                      child: const Text('查看全部'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAll(BuildContext context, List<Transaction> txs) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          maxChildSize: 0.95,
+          minChildSize: 0.4,
+          builder: (_, controller) {
+            return Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: Spacing.s12),
+                  child: Text('全部交易'),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    controller: controller,
+                    itemCount: txs.length,
+                    itemBuilder: (_, i) =>
+                        _TransactionTile(asset: asset, tx: txs[i]),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _TransactionTile extends StatelessWidget {
+  const _TransactionTile({required this.asset, required this.tx});
+
+  final Asset asset;
+  final Transaction tx;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateLabel = DateFormat.yMMMd().format(tx.tradeDate.toLocal());
+    final notional = tx.quantity * tx.price;
+    final isBuySide = _isBuySide(tx.type);
+    final isSellSide = _isSellSide(tx.type);
+    final signedNotional = isSellSide
+        ? notional
+        : isBuySide
+            ? -notional
+            : Decimal.zero;
+    return ListTile(
+      dense: true,
+      title: Row(
+        children: [
+          Text(
+            _typeLabel(tx.type),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: Spacing.s8),
+          Expanded(
+            child: Text(
+              dateLabel,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: Text(
+        '${_formatQuantity(tx.quantity)} @ '
+        '${_formatPrice(tx.price, asset.type)} ${tx.currency}',
+        style: theme.textTheme.bodySmall,
+      ),
+      trailing: signedNotional.sign == 0
+          ? MoneyText(
+              amount: notional.toDouble(),
+              currencyCode: tx.currency,
+            )
+          : DeltaText(
+              value: signedNotional.toDouble(),
+              currencyCode: tx.currency,
+              showIcon: false,
+            ),
+    );
+  }
+}
+
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.label, this.value, this.trailing});
+
+  final String label;
+  final String? value;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        trailing ??
+            Text(
+              value ?? '—',
+              style: theme.textTheme.bodyMedium,
+            ),
+      ],
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: Spacing.card,
+        child: Text(
+          message,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.error,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+PriceHistoryKey? _historyKey(Asset asset) {
+  final market = assetMarketFromWire(asset.market);
+  if (market == null || market == AssetMarket.unknown) return null;
+  return PriceHistoryKey(symbol: asset.symbol, market: market, days: 30);
+}
+
+Decimal? _dailyChangeFromHistory(
+  AsyncValue<MarketResponse<List<HistoricalBar>>>? historyAsync,
+  Decimal quantity,
+) {
+  final bars = historyAsync?.value?.data;
+  if (bars == null || bars.length < 2) return null;
+  final last = bars[bars.length - 1].close;
+  final prev = bars[bars.length - 2].close;
+  return (last - prev) * quantity;
+}
+
+String _formatQuantity(Decimal qty) {
+  final fmt = NumberFormat.decimalPatternDigits(decimalDigits: 4);
+  // Trim trailing zeros so whole-share counts read cleanly.
+  final raw = fmt.format(qty.toDouble());
+  if (!raw.contains('.')) return raw;
+  return raw.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+}
+
+String _formatPrice(Decimal price, AssetType type) {
+  final digits = _priceFractionDigits(type);
+  final fmt = NumberFormat.decimalPatternDigits(decimalDigits: digits);
+  return fmt.format(price.toDouble());
+}
+
+int _priceFractionDigits(AssetType type) {
+  switch (type) {
+    case AssetType.crypto:
+      return 6;
+    case AssetType.stock:
+    case AssetType.etf:
+    case AssetType.mutualFund:
+    case AssetType.bond:
+      return 2;
+    default:
+      return 2;
+  }
+}
+
+bool _isBuySide(TransactionType type) {
+  switch (type) {
+    case TransactionType.buy:
+    case TransactionType.reinvest:
+    case TransactionType.transferIn:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool _isSellSide(TransactionType type) {
+  switch (type) {
+    case TransactionType.sell:
+    case TransactionType.transferOut:
+      return true;
+    default:
+      return false;
+  }
+}
+
+String _typeLabel(TransactionType type) {
+  switch (type) {
+    case TransactionType.buy:
+      return '买入';
+    case TransactionType.sell:
+      return '卖出';
+    case TransactionType.transferIn:
+      return '转入';
+    case TransactionType.transferOut:
+      return '转出';
+    case TransactionType.reinvest:
+      return '再投';
+    case TransactionType.dividend:
+      return '股息';
+    case TransactionType.interest:
+      return '利息';
+    case TransactionType.deposit:
+      return '存入';
+    case TransactionType.withdraw:
+      return '提取';
+    case TransactionType.fee:
+      return '费用';
+    case TransactionType.tax:
+      return '税费';
+    case TransactionType.valuationAdjust:
+      return '估值调整';
+    case TransactionType.split:
+      return '拆股';
+    case TransactionType.liabilityPayment:
+      return '负债还款';
+    case TransactionType.expense:
+      return '支出';
   }
 }
