@@ -302,6 +302,13 @@ class _RootShell extends StatelessWidget {
 
   final Widget child;
 
+  // Breakpoints mirror docs/design/01-responsive-layout.md. 1240 keeps a
+  // ≥720dp content column next to a ~256dp permanent drawer; 900 is where
+  // the rail has room to show its labels inline.
+  static const double _tabletBreakpoint = 600;
+  static const double _desktopBreakpoint = 1240;
+  static const double _railExtendedBreakpoint = 900;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -324,58 +331,204 @@ class _RootShell extends StatelessWidget {
     } else {
       index = 0;
     }
+    final destinations = _navDestinations(l10n);
+    void onSelected(int i) {
+      if (i < 0 || i >= kPrimaryTabPaths.length) return;
+      context.go(kPrimaryTabPaths[i]);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        if (width >= _desktopBreakpoint) {
+          return _DesktopShell(
+            destinations: destinations,
+            selectedIndex: index,
+            onDestinationSelected: onSelected,
+            child: child,
+          );
+        }
+        if (width >= _tabletBreakpoint) {
+          return _TabletShell(
+            destinations: destinations,
+            selectedIndex: index,
+            onDestinationSelected: onSelected,
+            extended: width >= _railExtendedBreakpoint,
+            child: child,
+          );
+        }
+        return _MobileShell(
+          destinations: destinations,
+          selectedIndex: index,
+          onDestinationSelected: onSelected,
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+class _NavDestination {
+  const _NavDestination({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+}
+
+List<_NavDestination> _navDestinations(AppLocalizations l10n) {
+  return <_NavDestination>[
+    _NavDestination(
+      icon: Icons.dashboard_outlined,
+      selectedIcon: Icons.dashboard,
+      label: l10n.navHome,
+    ),
+    _NavDestination(
+      icon: Icons.account_balance_wallet_outlined,
+      selectedIcon: Icons.account_balance_wallet,
+      label: l10n.navAssets,
+    ),
+    _NavDestination(
+      icon: Icons.receipt_long_outlined,
+      selectedIcon: Icons.receipt_long,
+      label: l10n.navExpenses,
+    ),
+    _NavDestination(
+      icon: Icons.pie_chart_outline,
+      selectedIcon: Icons.pie_chart,
+      label: l10n.navAnalytics,
+    ),
+    _NavDestination(
+      icon: Icons.flag_outlined,
+      selectedIcon: Icons.flag,
+      label: l10n.navFire,
+    ),
+    _NavDestination(
+      icon: Icons.settings_outlined,
+      selectedIcon: Icons.settings,
+      label: l10n.navSettings,
+    ),
+  ];
+}
+
+class _MobileShell extends StatelessWidget {
+  const _MobileShell({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.child,
+  });
+
+  final List<_NavDestination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
+        selectedIndex: selectedIndex,
         destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.dashboard_outlined),
-            selectedIcon: const Icon(Icons.dashboard),
-            label: l10n.navHome,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: const Icon(Icons.account_balance_wallet),
-            label: l10n.navAssets,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.receipt_long_outlined),
-            selectedIcon: const Icon(Icons.receipt_long),
-            label: l10n.navExpenses,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.pie_chart_outline),
-            selectedIcon: const Icon(Icons.pie_chart),
-            label: l10n.navAnalytics,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.flag_outlined),
-            selectedIcon: const Icon(Icons.flag),
-            label: l10n.navFire,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings),
-            label: l10n.navSettings,
-          ),
+          for (final d in destinations)
+            NavigationDestination(
+              icon: Icon(d.icon),
+              selectedIcon: Icon(d.selectedIcon),
+              label: d.label,
+            ),
         ],
-        onDestinationSelected: (i) {
-          switch (i) {
-            case 0:
-              context.goNamed('home');
-            case 1:
-              context.goNamed('assets');
-            case 2:
-              context.goNamed('expenses');
-            case 3:
-              context.goNamed('analytics');
-            case 4:
-              context.goNamed('fire');
-            case 5:
-              context.goNamed('settings');
-          }
-        },
+        onDestinationSelected: onDestinationSelected,
+      ),
+    );
+  }
+}
+
+class _TabletShell extends StatelessWidget {
+  const _TabletShell({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.extended,
+    required this.child,
+  });
+
+  final List<_NavDestination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final bool extended;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onDestinationSelected,
+              extended: extended,
+              labelType: extended
+                  ? NavigationRailLabelType.none
+                  : NavigationRailLabelType.all,
+              destinations: [
+                for (final d in destinations)
+                  NavigationRailDestination(
+                    icon: Icon(d.icon),
+                    selectedIcon: Icon(d.selectedIcon),
+                    label: Text(d.label),
+                  ),
+              ],
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopShell extends StatelessWidget {
+  const _DesktopShell({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.child,
+  });
+
+  final List<_NavDestination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Row(
+          children: [
+            NavigationDrawer(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onDestinationSelected,
+              children: [
+                for (final d in destinations)
+                  NavigationDrawerDestination(
+                    icon: Icon(d.icon),
+                    selectedIcon: Icon(d.selectedIcon),
+                    label: Text(d.label),
+                  ),
+              ],
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }
