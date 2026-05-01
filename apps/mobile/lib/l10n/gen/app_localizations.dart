@@ -1644,6 +1644,24 @@ abstract class AppLocalizations {
   /// **'Trend line is flat — no historical valuation snapshots yet for the assets in this window.'**
   String get dashboardTrendFlatHint;
 
+  /// Label for the today's net-worth change cell on the dashboard header (FIR-85).
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dashboardHeaderDeltaTodayLabel;
+
+  /// Label for the month-to-date net-worth change cell on the dashboard header.
+  ///
+  /// In en, this message translates to:
+  /// **'MTD'**
+  String get dashboardHeaderDeltaMonthLabel;
+
+  /// Label for the year-to-date return cell on the dashboard header.
+  ///
+  /// In en, this message translates to:
+  /// **'YTD'**
+  String get dashboardHeaderDeltaYtdLabel;
+
   /// AppBar title for the analytics tab.
   ///
   /// In en, this message translates to:
