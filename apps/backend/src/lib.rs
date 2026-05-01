@@ -7,11 +7,39 @@ mod hlc;
 mod routes;
 mod sync;
 
+/// Append CORS headers to a response.
+fn add_cors(resp: &mut Response, origin: &str) {
+    let h = resp.headers_mut();
+    h.set("Access-Control-Allow-Origin", origin).ok();
+    h.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        .ok();
+    h.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, Sync-Protocol-Version",
+    )
+    .ok();
+    h.set("Access-Control-Max-Age", "86400").ok();
+}
+
 #[event(fetch, respond_with_errors)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
 
-    Router::new()
+    let origin = req
+        .headers()
+        .get("Origin")
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| "*".to_string());
+
+    // Handle CORS preflight
+    if req.method() == Method::Options {
+        let mut resp = Response::empty()?;
+        add_cors(&mut resp, &origin);
+        return Ok(resp);
+    }
+
+    let mut resp = Router::new()
         .get("/", |_, _| Response::ok("naviwealth-backend"))
         .get("/health", routes::health::get)
         .get_async("/health/db", routes::health::get_db)
@@ -24,5 +52,8 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/sync/pull", routes::sync::pull)
         .post_async("/ai/chat", routes::ai::chat)
         .run(req, env)
-        .await
+        .await?;
+
+    add_cors(&mut resp, &origin);
+    Ok(resp)
 }
