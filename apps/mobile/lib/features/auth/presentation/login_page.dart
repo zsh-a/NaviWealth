@@ -122,12 +122,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     const SizedBox(height: Spacing.s24),
                     if (showExpiredBanner)
-                      _Banner.info(
+                      _Banner(
+                        kind: _BannerKind.info,
                         message: l10n.authLoginNoticeSessionExpired,
                       ),
                     if (_lastErrorKind != null) ...[
                       const SizedBox(height: Spacing.s8),
-                      _Banner.error(
+                      _Banner(
+                        kind: _BannerKind.error,
                         message: _errorMessage(l10n, _lastErrorKind!),
                         details: _lastErrorMessage,
                       ),
@@ -223,53 +225,45 @@ String? _validatePassword(String? raw, {required AppLocalizations l10n}) {
 
 final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
+enum _BannerKind { info, error }
+
 class _Banner extends StatelessWidget {
-  const _Banner._({
+  const _Banner({
+    required this.kind,
     required this.message,
-    required this.color,
-    required this.iconColor,
-    required this.icon,
     this.details,
   });
 
-  factory _Banner.info({required String message}) {
-    return _Banner._(
-      message: message,
-      icon: Icons.info_outline,
-      color: const Color(0x1A1976D2),
-      iconColor: const Color(0xFF1976D2),
-    );
-  }
-
-  factory _Banner.error({required String message, String? details}) {
-    return _Banner._(
-      message: message,
-      details: details,
-      icon: Icons.error_outline,
-      color: const Color(0x1AD32F2F),
-      iconColor: const Color(0xFFD32F2F),
-    );
-  }
-
+  final _BannerKind kind;
   final String message;
   final String? details;
-  final Color color;
-  final Color iconColor;
-  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final semantic = SemanticColors.of(context);
+    final (background, foreground, icon) = switch (kind) {
+      _BannerKind.info => (
+        semantic.infoContainer,
+        semantic.info,
+        Icons.info_outline,
+      ),
+      _BannerKind.error => (
+        semantic.dangerContainer,
+        semantic.danger,
+        Icons.error_outline,
+      ),
+    };
     return Container(
       padding: const EdgeInsets.all(Spacing.s12),
       decoration: BoxDecoration(
-        color: color,
+        color: background,
         borderRadius: Radii.brSm,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 20),
+          Icon(icon, color: foreground, size: 20),
           const SizedBox(width: Spacing.s8),
           Expanded(
             child: Column(

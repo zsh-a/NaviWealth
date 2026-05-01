@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/color_palette.dart';
 import '../tokens/radius_tokens.dart';
+import '../tokens/spacing_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'app_elevations.dart';
 import 'market_color_mode.dart';
@@ -72,21 +73,30 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.s16,
+            vertical: Spacing.s12,
+          ),
           textStyle: textTheme.labelLarge,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.s16,
+            vertical: Spacing.s12,
+          ),
           textStyle: textTheme.labelLarge,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.s12,
+            vertical: Spacing.s8,
+          ),
           textStyle: textTheme.labelLarge,
         ),
       ),
@@ -106,8 +116,8 @@ class AppTheme {
           borderSide: BorderSide(color: scheme.primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
+          horizontal: Spacing.s12,
+          vertical: Spacing.s12,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
