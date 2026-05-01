@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/logging/providers.dart';
+import '../core/command_palette/command_palette.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
@@ -16,7 +16,6 @@ class NaviWealthApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final logger = ref.watch(loggerProvider);
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
@@ -37,9 +36,14 @@ class NaviWealthApp extends ConsumerWidget {
             if (index < 0 || index >= kPrimaryTabPaths.length) return;
             router.go(kPrimaryTabPaths[index]);
           },
-          onOpenCommandPalette: () => logger.i(
-            'shortcut: command palette requested (UI ships in a follow-up)',
-          ),
+          onOpenCommandPalette: (BuildContext invokeCtx) {
+            showCommandPalette(
+              invokeCtx,
+              commands: defaultCommandPaletteEntries(
+                AppLocalizations.of(invokeCtx),
+              ),
+            );
+          },
           child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
         );
       },

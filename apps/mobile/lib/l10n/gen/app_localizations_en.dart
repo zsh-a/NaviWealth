@@ -632,6 +632,42 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commandPaletteSearchHint => 'Search commands…';
+
+  @override
+  String get commandPaletteEmpty => 'No commands match your search';
+
+  @override
+  String get commandPaletteGoOverview => 'Go to Overview';
+
+  @override
+  String get commandPaletteGoAssets => 'Go to Assets';
+
+  @override
+  String get commandPaletteGoExpenses => 'Go to Expenses';
+
+  @override
+  String get commandPaletteGoAnalytics => 'Go to Analytics';
+
+  @override
+  String get commandPaletteGoFire => 'Go to FIRE';
+
+  @override
+  String get commandPaletteGoSettings => 'Go to Settings';
+
+  @override
+  String get commandPaletteNewTrade => 'New trade';
+
+  @override
+  String get commandPaletteNewExpense => 'New expense';
+
+  @override
+  String get commandPaletteOpenAi => 'Open AI assistant';
+
+  @override
+  String get commandPaletteShortcutHelp => 'Show keyboard shortcuts';
+
+  @override
   String get pwaUpdateAvailable => 'A new version of NaviWealth is ready.';
 
   @override

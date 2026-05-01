@@ -608,6 +608,42 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get commandPaletteSearchHint => '搜索命令…';
+
+  @override
+  String get commandPaletteEmpty => '没有匹配的命令';
+
+  @override
+  String get commandPaletteGoOverview => '前往 总览';
+
+  @override
+  String get commandPaletteGoAssets => '前往 资产';
+
+  @override
+  String get commandPaletteGoExpenses => '前往 支出';
+
+  @override
+  String get commandPaletteGoAnalytics => '前往 分析';
+
+  @override
+  String get commandPaletteGoFire => '前往 FIRE';
+
+  @override
+  String get commandPaletteGoSettings => '前往 设置';
+
+  @override
+  String get commandPaletteNewTrade => '新增交易';
+
+  @override
+  String get commandPaletteNewExpense => '新增支出';
+
+  @override
+  String get commandPaletteOpenAi => '打开 AI 助手';
+
+  @override
+  String get commandPaletteShortcutHelp => '显示键盘快捷键';
+
+  @override
   String get pwaUpdateAvailable => 'NaviWealth 有新版本可用。';
 
   @override

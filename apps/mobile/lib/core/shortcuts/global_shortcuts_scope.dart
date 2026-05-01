@@ -24,10 +24,9 @@ class GlobalShortcutsScope extends StatelessWidget {
   final void Function(int index) onSwitchPrimaryTab;
 
   /// Called when the user invokes the global command palette (`Cmd/Ctrl+K`).
-  ///
-  /// The palette UI is delivered by a follow-up task; until it lands we wire
-  /// this to a logger breadcrumb so QA can verify the binding fires.
-  final VoidCallback onOpenCommandPalette;
+  /// The supplied [BuildContext] is a descendant of the navigator and is
+  /// suitable for `showDialog` / `GoRouter` calls.
+  final void Function(BuildContext context) onOpenCommandPalette;
 
   final Widget child;
 
@@ -40,9 +39,14 @@ class GlobalShortcutsScope extends StatelessWidget {
       shortcuts: globalShortcutMap(),
       child: Actions(
         actions: <Type, Action<Intent>>{
-          OpenCommandPaletteIntent: _GuardedAction<OpenCommandPaletteIntent>(
-            onInvoke: (_) => onOpenCommandPalette(),
-          ),
+          OpenCommandPaletteIntent:
+              _GuardedContextAction<OpenCommandPaletteIntent>(
+                onInvoke: (Intent _, BuildContext? ctx) {
+                  if (ctx != null) {
+                    onOpenCommandPalette(ctx);
+                  }
+                },
+              ),
           ShowShortcutHelpIntent: _GuardedContextAction<ShowShortcutHelpIntent>(
             onInvoke: (Intent _, BuildContext? ctx) {
               if (ctx != null) {
