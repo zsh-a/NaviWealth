@@ -17,6 +17,13 @@ void main() {
   });
 
   testWidgets('NaviWealthApp boots into the home shell', (tester) async {
+    // FIR-84: the shell now picks NavigationBar / Rail / Drawer by viewport
+    // width. Pin a mobile-sized surface so this smoke test keeps asserting
+    // bottom-nav behavior; the responsive switch is covered in router_test.
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(

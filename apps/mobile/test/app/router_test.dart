@@ -46,10 +46,23 @@ class _OfflineBenchmarkSource implements BenchmarkHistorySource {
   }) async => const [];
 }
 
+// Standard test surface sizes for the three responsive shell breakpoints.
+// _RootShell switches at 600 (rail) and 1240 (drawer); these sit comfortably
+// inside each band so a small change to the breakpoints doesn't accidentally
+// flip a test into a different layout.
+const Size _mobileSize = Size(400, 800);
+const Size _tabletSize = Size(800, 1000);
+const Size _desktopSize = Size(1440, 900);
+
 Future<ProviderContainer> _pumpAt(
   WidgetTester tester, {
   String initialLocation = '/',
+  Size viewportSize = _mobileSize,
 }) async {
+  tester.view.physicalSize = viewportSize;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final container = ProviderContainer(
@@ -198,6 +211,92 @@ void main() {
       await tester.pumpAndSettle();
       final updated = tester.widget<NavigationBar>(find.byType(NavigationBar));
       expect(updated.selectedIndex, 5);
+    });
+  });
+
+  group('responsive shell switches by viewport width', () {
+    // FIR-84: < 600 → NavigationBar (bottom), 600..1240 → NavigationRail
+    // (extended above 900), ≥ 1240 → NavigationDrawer. Tabs and selectedIndex
+    // stay consistent across the three layouts.
+
+    testWidgets('mobile width uses NavigationBar at the bottom', (tester) async {
+      await _pumpAt(tester, viewportSize: _mobileSize);
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(NavigationDrawer), findsNothing);
+    });
+
+    testWidgets('tablet width uses a collapsed NavigationRail', (tester) async {
+      // 800px is below the 900px extended-rail threshold.
+      await _pumpAt(tester, viewportSize: _tabletSize);
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(NavigationDrawer), findsNothing);
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.extended, isFalse);
+    });
+
+    testWidgets('tablet width ≥ 900 extends the NavigationRail', (tester) async {
+      await _pumpAt(tester, viewportSize: const Size(1100, 1000));
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.extended, isTrue);
+    });
+
+    testWidgets('desktop width uses a NavigationDrawer sidebar', (tester) async {
+      await _pumpAt(tester, viewportSize: _desktopSize);
+      expect(find.byType(NavigationDrawer), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(NavigationBar), findsNothing);
+    });
+
+    testWidgets('NavigationRail selectedIndex follows the current URL', (
+      tester,
+    ) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: '/analytics',
+        viewportSize: _tabletSize,
+      );
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.selectedIndex, 3);
+
+      container.read(appRouterProvider).go('/settings');
+      await tester.pumpAndSettle();
+      final updated = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(updated.selectedIndex, 5);
+    });
+
+    testWidgets('NavigationDrawer selectedIndex follows the current URL', (
+      tester,
+    ) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: '/fire',
+        viewportSize: _desktopSize,
+      );
+      final drawer = tester.widget<NavigationDrawer>(
+        find.byType(NavigationDrawer),
+      );
+      expect(drawer.selectedIndex, 4);
+
+      container.read(appRouterProvider).go('/');
+      await tester.pumpAndSettle();
+      final updated = tester.widget<NavigationDrawer>(
+        find.byType(NavigationDrawer),
+      );
+      expect(updated.selectedIndex, 0);
+    });
+
+    testWidgets('tapping a rail destination updates the URL', (tester) async {
+      final container = await _pumpAt(tester, viewportSize: _tabletSize);
+      expect(_currentPath(container), '/');
+
+      // The rail renders the same icons as the bottom bar; tap the Assets
+      // outlined icon to drive the same selection path.
+      await tester.tap(find.byIcon(Icons.account_balance_wallet_outlined));
+      await tester.pumpAndSettle();
+      expect(_currentPath(container), '/assets');
+      expect(find.byType(AssetsPage), findsOneWidget);
     });
   });
 
