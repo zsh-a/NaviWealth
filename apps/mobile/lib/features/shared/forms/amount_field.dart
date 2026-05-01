@@ -13,7 +13,7 @@ import '../../../design_system/design_system.dart';
 ///
 /// `validator` returns `null` on success, or the localised error string;
 /// callers compose it with [FormState.validate] in the usual way.
-class AmountField extends StatelessWidget {
+class AmountField extends StatefulWidget {
   const AmountField({
     super.key,
     required this.label,
@@ -36,40 +36,78 @@ class AmountField extends StatelessWidget {
   final void Function(Decimal? value)? onChanged;
 
   @override
+  State<AmountField> createState() => _AmountFieldState();
+}
+
+class _AmountFieldState extends State<AmountField> {
+  TextEditingController? _internalController;
+
+  TextEditingController get _effectiveController =>
+      widget.controller ?? _internalController!;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.controller == null) {
+      _internalController = TextEditingController(
+        text: widget.initialValue?.toString() ?? '',
+      );
+    }
+  }
+
+  @override
+  void didUpdateWidget(AmountField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller == null && oldWidget.controller != null) {
+      // Caller dropped their controller; take over with an internal one
+      // seeded from the last known text so we don't lose the user's input.
+      _internalController = TextEditingController(
+        text: oldWidget.controller!.text,
+      );
+    } else if (widget.controller != null && oldWidget.controller == null) {
+      _internalController?.dispose();
+      _internalController = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _internalController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final effectiveController =
-        controller ??
-        TextEditingController(text: initialValue?.toString() ?? '');
-    final pattern = allowNegative
+    final pattern = widget.allowNegative
         ? RegExp(r'^-?\d*\.?\d*$')
         : RegExp(r'^\d*\.?\d*$');
     return TextFormField(
-      controller: effectiveController,
+      controller: _effectiveController,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(pattern)],
       style: TypographyTokens.numericBody.copyWith(
         fontFeatures: TypographyTokens.tabularFigures,
       ),
       decoration: InputDecoration(
-        labelText: label,
-        prefixText: currencyCode == null ? null : '$currencyCode ',
-        helperText: helperText,
+        labelText: widget.label,
+        prefixText: widget.currencyCode == null ? null : '${widget.currencyCode} ',
+        helperText: widget.helperText,
         border: const OutlineInputBorder(),
       ),
       validator: (value) {
         final trimmed = value?.trim() ?? '';
         if (trimmed.isEmpty) {
-          return required ? '请输入金额' : null;
+          return widget.required ? '请输入金额' : null;
         }
         final parsed = Decimal.tryParse(trimmed);
         if (parsed == null) return '金额格式不正确';
-        if (!allowNegative && parsed < Decimal.zero) return '金额不能为负';
+        if (!widget.allowNegative && parsed < Decimal.zero) return '金额不能为负';
         return null;
       },
-      onChanged: onChanged == null
+      onChanged: widget.onChanged == null
           ? null
           : (raw) {
-              onChanged!(Decimal.tryParse(raw.trim()));
+              widget.onChanged!(Decimal.tryParse(raw.trim()));
             },
     );
   }
