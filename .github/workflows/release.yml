@@ -103,6 +103,7 @@ jobs:
         run: bash tool/build-cn-fonts.sh
       - name: Read backend API URL
         id: api-url
+        working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
       - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
       - name: Decode signing keystore
