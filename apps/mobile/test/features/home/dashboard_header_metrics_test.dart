@@ -7,12 +7,18 @@ import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/data/domain/transaction.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/holding_price_source.dart';
+import 'package:naviwealth/features/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/investment/domain/returns/returns_service.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,6 +52,36 @@ Liability _liab(String id, String principal) => Liability(
       sync: _meta(),
     );
 
+class _StubReturnsTxRepo implements ReturnsTransactionsRepository {
+  const _StubReturnsTxRepo();
+  @override
+  Future<List<Transaction>> transactionsInRange({
+    required String ownerUserId,
+    required DateTime from,
+    required DateTime to,
+  }) async => const [];
+}
+
+class _StubReturnsLotsSource implements ReturnsLotsSource {
+  const _StubReturnsLotsSource();
+  @override
+  Future<List<Lot>> lotsAt({
+    required String ownerUserId,
+    required DateTime asOf,
+  }) async => const [];
+}
+
+ReturnsService _stubReturnsService() {
+  return ReturnsService(
+    ownerUserId: 'u',
+    baseCurrency: 'CNY',
+    transactions: const _StubReturnsTxRepo(),
+    lots: const _StubReturnsLotsSource(),
+    prices: InMemoryHoldingPriceSource(const []),
+    converter: FxRateCurrencyConverter(InMemoryFxRateLookup(const [])),
+  );
+}
+
 ProviderScope _wrap({
   required Widget child,
   required SharedPreferences prefs,
@@ -65,6 +101,7 @@ ProviderScope _wrap({
       liabilitiesStreamProvider.overrideWith(
         (ref) => Stream.value(liabilities),
       ),
+      returnsServiceProvider.overrideWith((ref) async => _stubReturnsService()),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
@@ -134,12 +171,14 @@ void main() {
 
     final metrics =
         container.read(dashboardHeaderMetricsProvider).requireValue;
-    // The dashboard trend builder holds cash flat across history; with a
-    // non-amortising liability the daily / monthly / YTD deltas are all
-    // zero — the strip still renders, just with neutral arrows.
+    // The dashboard trend builder holds cash flat across history; daily and
+    // MTD deltas are zero — the strip still renders with neutral arrows.
+    // YTD reads from `ReturnsService.portfolioXirr`; an empty transaction
+    // log resolves to `XirrFallbackAbsolute`, which the provider exposes
+    // as null so the UI renders `—`.
     expect(metrics.dailyChange.amount, Decimal.zero);
     expect(metrics.monthlyChangePct, 0.0);
-    expect(metrics.ytdChangePct, 0.0);
+    expect(metrics.ytdChangePct, isNull);
   });
 
   testWidgets('empty portfolio collapses denominators to null pcts',
