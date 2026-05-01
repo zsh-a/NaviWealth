@@ -53,13 +53,10 @@ const String defaultDbFileName = 'naviwealth.db';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
-  /// Production constructor: opens an encrypted on-disk SQLCipher database.
-  AppDatabase.encrypted({required String encryptionKey, String? dbFileName})
+  /// Production constructor: opens an on-disk SQLite database.
+  AppDatabase.open({String? dbFileName})
     : super(
-        openAppConnection(
-          dbFileName: dbFileName ?? defaultDbFileName,
-          encryptionKey: encryptionKey,
-        ),
+        openAppConnection(dbFileName: dbFileName ?? defaultDbFileName),
       );
 
   /// Schema history:
