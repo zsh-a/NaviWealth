@@ -11,8 +11,11 @@ mod sync;
 fn add_cors(resp: &mut Response, origin: &str) {
     let h = resp.headers_mut();
     h.set("Access-Control-Allow-Origin", origin).ok();
-    h.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        .ok();
+    h.set(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, OPTIONS",
+    )
+    .ok();
     h.set(
         "Access-Control-Allow-Headers",
         "Content-Type, Authorization, Sync-Protocol-Version",

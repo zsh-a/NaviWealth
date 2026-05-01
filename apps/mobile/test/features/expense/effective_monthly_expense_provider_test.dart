@@ -75,7 +75,7 @@ void main() {
     addTearDown(container.dispose);
 
     // Listen to keep the entire dependency chain alive.
-    final sub = container.listen(effectiveMonthlyExpenseProvider, (_, __) {});
+    final sub = container.listen(effectiveMonthlyExpenseProvider, (p, n) {});
     addTearDown(sub.close);
     await container.read(expensesStreamProvider.future);
 
@@ -96,7 +96,7 @@ void main() {
       expenses: const [],
     );
     addTearDown(container.dispose);
-    final sub = container.listen(effectiveMonthlyExpenseProvider, (_, __) {});
+    final sub = container.listen(effectiveMonthlyExpenseProvider, (p, n) {});
     addTearDown(sub.close);
     await container.read(expensesStreamProvider.future);
 
@@ -119,7 +119,7 @@ void main() {
       expenses: const [],
     );
     addTearDown(container.dispose);
-    final sub = container.listen(effectiveMonthlyExpenseProvider, (_, __) {});
+    final sub = container.listen(effectiveMonthlyExpenseProvider, (p, n) {});
     addTearDown(sub.close);
     await container.read(expensesStreamProvider.future);
 
