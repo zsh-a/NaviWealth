@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/auth/auth_errors.dart';
 import '../../../design_system/design_system.dart';
@@ -109,6 +110,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    SvgPicture.asset(
+                      'assets/svg/logo.svg',
+                      width: 80,
+                      height: 80,
+                    ),
+                    const SizedBox(height: Spacing.s16),
                     Text(
                       l10n.appTitle,
                       style: Theme.of(context).textTheme.headlineSmall,
