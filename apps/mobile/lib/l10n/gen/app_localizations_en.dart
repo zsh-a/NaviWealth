@@ -486,14 +486,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsFxRatesSubtitle =>
-      'Manually record exchange rates so foreign-currency holdings convert into the base currency.';
+      'Exchange rates are auto-synced from Yahoo Finance. Manual entry available as fallback.';
 
   @override
   String get fxRatesAppBarTitle => 'FX rates';
 
   @override
   String get fxRatesEmpty =>
-      'No FX rates recorded yet. Tap the + button to add one — it will be picked up immediately by the dashboard.';
+      'No FX rates recorded yet. Rates are auto-synced on app launch — add accounts in different currencies to get started.';
+
+  @override
+  String get fxRatesRefreshing => 'Syncing rates…';
+
+  @override
+  String get fxRatesSyncedFrom => 'Source';
 
   @override
   String get fxRatesAddAction => 'Add rate';
