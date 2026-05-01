@@ -28,7 +28,7 @@ class HomePage extends ConsumerWidget {
         title: Text(l10n.homeAppBarTitle),
         actions: [
           IconButton(
-            tooltip: 'AI 助手',
+            tooltip: l10n.homeAiAssistantTooltip,
             icon: const Icon(Icons.auto_awesome_outlined),
             onPressed: () => context.push('/ai'),
           ),
@@ -47,7 +47,7 @@ class HomePage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/assets/trade'),
-        tooltip: '录入交易',
+        tooltip: l10n.homeRecordTradeTooltip,
         child: const Icon(Icons.add_chart),
       ),
     );

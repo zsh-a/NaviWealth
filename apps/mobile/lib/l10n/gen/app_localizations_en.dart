@@ -30,6 +30,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeAppBarTitle => 'Overview';
 
   @override
+  String get homeAiAssistantTooltip => 'AI assistant';
+
+  @override
+  String get homeRecordTradeTooltip => 'Record trade';
+
+  @override
   String get homeNetWorthTitle => 'Net Worth';
 
   @override
@@ -63,13 +69,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetsEmptyHint =>
-      'Asset entry & management (FIR-5) — coming soon';
+      'No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.';
 
   @override
   String get assetsAddAction => 'Add asset';
 
   @override
   String get assetsCorporateActionAction => 'Record corporate action';
+
+  @override
+  String get assetsAccountsTooltip => 'Accounts';
+
+  @override
+  String get assetsLiabilitiesTooltip => 'Liabilities & repayment plans';
+
+  @override
+  String assetsLoadError(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String get assetsAddCashTitle => 'Cash / multi-currency balance';
+
+  @override
+  String get assetsAddCashSubtitle =>
+      'Track available balance in checking or cash accounts';
+
+  @override
+  String get assetsAddDepositTitle => 'Deposit (term / demand)';
+
+  @override
+  String get assetsAddDepositSubtitle =>
+      'Record interest rate, value date, and maturity';
+
+  @override
+  String get assetsAddWealthTitle => 'Wealth product';
+
+  @override
+  String get assetsAddWealthSubtitle =>
+      'Maintain expected return and current valuation manually';
+
+  @override
+  String get assetsAddRealEstateSubtitle =>
+      'Address, purchase price, current valuation; can link a mortgage';
+
+  @override
+  String get assetsAddVehicleSubtitle =>
+      'Purchase price, annual residual rate, automatic depreciation';
+
+  @override
+  String get assetsAddLiabilityTitle =>
+      'Liability (mortgage / car loan / credit card / consumer loan)';
+
+  @override
+  String get assetsAddLiabilitySubtitle => 'Record and track repayment plans';
+
+  @override
+  String get assetsAddCorporateActionSubtitle =>
+      'Dividend / split / rights issue / bonus shares / DRIP';
+
+  @override
+  String get assetsAddTradeTitle => 'Securities trade';
+
+  @override
+  String get assetsAddTradeSubtitle => 'Buy / sell stocks, ETFs, crypto';
+
+  @override
+  String assetsChipInterestRate(String rate) {
+    return 'Rate $rate%';
+  }
+
+  @override
+  String assetsChipExpectedReturn(String rate) {
+    return 'Expected $rate%';
+  }
+
+  @override
+  String assetsChipMaturityDate(String date) {
+    return 'Matures $date';
+  }
+
+  @override
+  String get assetTypeCash => 'Cash';
+
+  @override
+  String get assetTypeBankDepositTerm => 'Term deposit';
+
+  @override
+  String get assetTypeBankDepositDemand => 'Demand deposit';
+
+  @override
+  String get assetTypeWealthProduct => 'Wealth product';
 
   @override
   String get corpActionTitle => 'Corporate Action';
@@ -592,6 +682,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSave => 'Save';
 
   @override
+  String get commonSaving => 'Saving…';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
   String get commonClose => 'Close';
 
   @override
@@ -599,6 +695,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonError => 'Something went wrong';
+
+  @override
+  String commonLoadError(String error) {
+    return 'Failed to load: $error';
+  }
 
   @override
   String get deferredLoadFailedTitle => 'Couldn\'t load this section';
@@ -1386,4 +1487,118 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsRiskResetDefaults => 'Reset to defaults';
+
+  @override
+  String get tradeEntryAppBarTitle => 'Record trade';
+
+  @override
+  String get tradeEntrySuccess => 'Trade recorded';
+
+  @override
+  String tradeEntryFailure(String error) {
+    return 'Couldn\'t record trade: $error';
+  }
+
+  @override
+  String get tradeEntryQuantityLabel => 'Quantity';
+
+  @override
+  String get tradeEntryPriceLabel => 'Price';
+
+  @override
+  String get tradeEntryPriceHelper => 'Leave blank to fetch from market data';
+
+  @override
+  String get tradeEntryDateLabel => 'Trade date';
+
+  @override
+  String get tradeEntryFeeLabel => 'Fee';
+
+  @override
+  String get tradeEntryTaxLabel => 'Tax';
+
+  @override
+  String tradeEntryCatalogLoadError(String error) {
+    return 'Couldn\'t load catalog: $error';
+  }
+
+  @override
+  String get tradeEntryDecimalScaleHintGeneric =>
+      'Up to 8 decimals for stocks/ETFs, 18 for crypto';
+
+  @override
+  String tradeEntryDecimalScaleHint(int scale) {
+    return 'Up to $scale decimal places';
+  }
+
+  @override
+  String get tradeTypeBuy => 'Buy';
+
+  @override
+  String get tradeTypeSell => 'Sell';
+
+  @override
+  String get tradeTypeTransferIn => 'Transfer in';
+
+  @override
+  String get tradeTypeTransferOut => 'Transfer out';
+
+  @override
+  String get tradeTypeValuationAdjust => 'Valuation adjust';
+
+  @override
+  String get expenseFormCreateTitle => 'New expense';
+
+  @override
+  String get expenseFormEditTitle => 'Edit expense';
+
+  @override
+  String get expenseFormDeleteTooltip => 'Delete';
+
+  @override
+  String get expenseFormAmountLabel => 'Amount';
+
+  @override
+  String get expenseFormAmountInvalid => 'Amount must be greater than 0';
+
+  @override
+  String get expenseFormCategoryAccountRequired =>
+      'Pick a category, account, and currency';
+
+  @override
+  String get expenseFormCategoriesLoading =>
+      'Setting up default categories, please wait…';
+
+  @override
+  String expenseFormCategoriesLoadError(String error) {
+    return 'Couldn\'t load categories: $error';
+  }
+
+  @override
+  String get expenseFormAccountLabel => 'Account';
+
+  @override
+  String expenseFormAccountsLoadError(String error) {
+    return 'Couldn\'t load accounts: $error';
+  }
+
+  @override
+  String get expenseFormDateLabel => 'Date';
+
+  @override
+  String get expenseFormDeleteDialogTitle => 'Delete expense';
+
+  @override
+  String get expenseFormDeleteDialogBody =>
+      'Delete this expense? This change syncs to your other devices.';
+
+  @override
+  String get expenseFormNoAccountsTitle => 'Create an account first';
+
+  @override
+  String get expenseFormNoAccountsBody =>
+      'Expenses need a funding account. Create one under Accounts, then come back here.';
+
+  @override
+  String get expenseFormNoAccountsCta => 'Create account';
 }

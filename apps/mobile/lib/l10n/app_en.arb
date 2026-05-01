@@ -17,6 +17,10 @@
   "@navSettings": { "description": "Bottom nav: settings tab" },
 
   "homeAppBarTitle": "Overview",
+  "homeAiAssistantTooltip": "AI assistant",
+  "@homeAiAssistantTooltip": { "description": "Tooltip for the home AppBar action that opens the AI chat surface." },
+  "homeRecordTradeTooltip": "Record trade",
+  "@homeRecordTradeTooltip": { "description": "Tooltip for the home FAB that opens the trade-entry form." },
   "homeNetWorthTitle": "Net Worth",
   "homeNetWorthSubtitle": "Base currency {currency} · shown once data is connected",
   "@homeNetWorthSubtitle": {
@@ -32,10 +36,45 @@
   "homeFireSubtitle": "FIR-9 will show days to financial independence and milestones.",
 
   "assetsAppBarTitle": "Assets",
-  "assetsEmptyHint": "Asset entry & management (FIR-5) — coming soon",
+  "assetsEmptyHint": "No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.",
   "assetsAddAction": "Add asset",
   "assetsCorporateActionAction": "Record corporate action",
   "@assetsCorporateActionAction": { "description": "Action that opens the corporate-action entry form (dividend, split, rights issue, DRIP)." },
+  "assetsAccountsTooltip": "Accounts",
+  "assetsLiabilitiesTooltip": "Liabilities & repayment plans",
+  "assetsLoadError": "Failed to load: {error}",
+  "@assetsLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "assetsAddCashTitle": "Cash / multi-currency balance",
+  "assetsAddCashSubtitle": "Track available balance in checking or cash accounts",
+  "assetsAddDepositTitle": "Deposit (term / demand)",
+  "assetsAddDepositSubtitle": "Record interest rate, value date, and maturity",
+  "assetsAddWealthTitle": "Wealth product",
+  "assetsAddWealthSubtitle": "Maintain expected return and current valuation manually",
+  "assetsAddRealEstateSubtitle": "Address, purchase price, current valuation; can link a mortgage",
+  "assetsAddVehicleSubtitle": "Purchase price, annual residual rate, automatic depreciation",
+  "assetsAddLiabilityTitle": "Liability (mortgage / car loan / credit card / consumer loan)",
+  "assetsAddLiabilitySubtitle": "Record and track repayment plans",
+  "assetsAddCorporateActionSubtitle": "Dividend / split / rights issue / bonus shares / DRIP",
+  "assetsAddTradeTitle": "Securities trade",
+  "assetsAddTradeSubtitle": "Buy / sell stocks, ETFs, crypto",
+  "assetsChipInterestRate": "Rate {rate}%",
+  "@assetsChipInterestRate": {
+    "placeholders": { "rate": { "type": "String", "example": "3.25" } }
+  },
+  "assetsChipExpectedReturn": "Expected {rate}%",
+  "@assetsChipExpectedReturn": {
+    "placeholders": { "rate": { "type": "String", "example": "4.5" } }
+  },
+  "assetsChipMaturityDate": "Matures {date}",
+  "@assetsChipMaturityDate": {
+    "placeholders": { "date": { "type": "String", "example": "2026-12-31" } }
+  },
+  "assetTypeCash": "Cash",
+  "assetTypeBankDepositTerm": "Term deposit",
+  "assetTypeBankDepositDemand": "Demand deposit",
+  "assetTypeWealthProduct": "Wealth product",
 
   "corpActionTitle": "Corporate Action",
   "corpActionSelectAsset": "Asset",
@@ -249,9 +288,15 @@
   "commonCancel": "Cancel",
   "commonConfirm": "Confirm",
   "commonSave": "Save",
+  "commonSaving": "Saving…",
+  "commonDelete": "Delete",
   "commonClose": "Close",
   "commonLoading": "Loading…",
   "commonError": "Something went wrong",
+  "commonLoadError": "Failed to load: {error}",
+  "@commonLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
 
   "deferredLoadFailedTitle": "Couldn't load this section",
   "@deferredLoadFailedTitle": {
@@ -683,5 +728,55 @@
   "settingsRiskRegionSubtitle": "Alert when one market / region exceeds this share.",
   "settingsRiskCurrencyLabel": "Currency limit",
   "settingsRiskCurrencySubtitle": "Alert when one currency exposure exceeds this share.",
-  "settingsRiskResetDefaults": "Reset to defaults"
+  "settingsRiskResetDefaults": "Reset to defaults",
+
+  "tradeEntryAppBarTitle": "Record trade",
+  "tradeEntrySuccess": "Trade recorded",
+  "tradeEntryFailure": "Couldn't record trade: {error}",
+  "@tradeEntryFailure": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "tradeEntryQuantityLabel": "Quantity",
+  "tradeEntryPriceLabel": "Price",
+  "tradeEntryPriceHelper": "Leave blank to fetch from market data",
+  "tradeEntryDateLabel": "Trade date",
+  "tradeEntryFeeLabel": "Fee",
+  "tradeEntryTaxLabel": "Tax",
+  "tradeEntryCatalogLoadError": "Couldn't load catalog: {error}",
+  "@tradeEntryCatalogLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "tradeEntryDecimalScaleHintGeneric": "Up to 8 decimals for stocks/ETFs, 18 for crypto",
+  "tradeEntryDecimalScaleHint": "Up to {scale} decimal places",
+  "@tradeEntryDecimalScaleHint": {
+    "placeholders": { "scale": { "type": "int" } }
+  },
+  "tradeTypeBuy": "Buy",
+  "tradeTypeSell": "Sell",
+  "tradeTypeTransferIn": "Transfer in",
+  "tradeTypeTransferOut": "Transfer out",
+  "tradeTypeValuationAdjust": "Valuation adjust",
+
+  "expenseFormCreateTitle": "New expense",
+  "expenseFormEditTitle": "Edit expense",
+  "expenseFormDeleteTooltip": "Delete",
+  "expenseFormAmountLabel": "Amount",
+  "expenseFormAmountInvalid": "Amount must be greater than 0",
+  "expenseFormCategoryAccountRequired": "Pick a category, account, and currency",
+  "expenseFormCategoriesLoading": "Setting up default categories, please wait…",
+  "expenseFormCategoriesLoadError": "Couldn't load categories: {error}",
+  "@expenseFormCategoriesLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "expenseFormAccountLabel": "Account",
+  "expenseFormAccountsLoadError": "Couldn't load accounts: {error}",
+  "@expenseFormAccountsLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "expenseFormDateLabel": "Date",
+  "expenseFormDeleteDialogTitle": "Delete expense",
+  "expenseFormDeleteDialogBody": "Delete this expense? This change syncs to your other devices.",
+  "expenseFormNoAccountsTitle": "Create an account first",
+  "expenseFormNoAccountsBody": "Expenses need a funding account. Create one under Accounts, then come back here.",
+  "expenseFormNoAccountsCta": "Create account"
 }

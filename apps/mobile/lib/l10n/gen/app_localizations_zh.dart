@@ -30,6 +30,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeAppBarTitle => '总览';
 
   @override
+  String get homeAiAssistantTooltip => 'AI 助手';
+
+  @override
+  String get homeRecordTradeTooltip => '录入交易';
+
+  @override
   String get homeNetWorthTitle => '净资产';
 
   @override
@@ -59,13 +65,90 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsAppBarTitle => '资产';
 
   @override
-  String get assetsEmptyHint => '资产录入与管理 (FIR-5) — 待实现';
+  String get assetsEmptyHint => '尚未录入资产。点击右下角添加现金、存款、理财、房产或车辆。';
 
   @override
-  String get assetsAddAction => '添加资产';
+  String get assetsAddAction => '录入资产';
 
   @override
   String get assetsCorporateActionAction => '录入公司行动';
+
+  @override
+  String get assetsAccountsTooltip => '账户管理';
+
+  @override
+  String get assetsLiabilitiesTooltip => '负债与还款计划';
+
+  @override
+  String assetsLoadError(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get assetsAddCashTitle => '现金 / 多币种余额';
+
+  @override
+  String get assetsAddCashSubtitle => '登记银行活期或现金账户中的可用余额';
+
+  @override
+  String get assetsAddDepositTitle => '存款（定期 / 活期）';
+
+  @override
+  String get assetsAddDepositSubtitle => '记录利率、起息日、到期日';
+
+  @override
+  String get assetsAddWealthTitle => '理财产品';
+
+  @override
+  String get assetsAddWealthSubtitle => '预期年化、当前估值手动维护';
+
+  @override
+  String get assetsAddRealEstateSubtitle => '地址、购入价、当前估值，可关联房贷';
+
+  @override
+  String get assetsAddVehicleSubtitle => '购入价、年度残值率、自动折旧';
+
+  @override
+  String get assetsAddLiabilityTitle => '负债（房贷 / 车贷 / 信用卡 / 消费贷）';
+
+  @override
+  String get assetsAddLiabilitySubtitle => '录入并跟踪还款计划';
+
+  @override
+  String get assetsAddCorporateActionSubtitle => '分红 / 拆股 / 配股 / 红股 / DRIP';
+
+  @override
+  String get assetsAddTradeTitle => '证券交易';
+
+  @override
+  String get assetsAddTradeSubtitle => '买入 / 卖出股票、ETF、加密货币';
+
+  @override
+  String assetsChipInterestRate(String rate) {
+    return '利率 $rate%';
+  }
+
+  @override
+  String assetsChipExpectedReturn(String rate) {
+    return '预期 $rate%';
+  }
+
+  @override
+  String assetsChipMaturityDate(String date) {
+    return '$date 到期';
+  }
+
+  @override
+  String get assetTypeCash => '现金';
+
+  @override
+  String get assetTypeBankDepositTerm => '定期存款';
+
+  @override
+  String get assetTypeBankDepositDemand => '活期存款';
+
+  @override
+  String get assetTypeWealthProduct => '理财产品';
 
   @override
   String get corpActionTitle => '公司行动';
@@ -568,6 +651,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonSave => '保存';
 
   @override
+  String get commonSaving => '保存中…';
+
+  @override
+  String get commonDelete => '删除';
+
+  @override
   String get commonClose => '关闭';
 
   @override
@@ -575,6 +664,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonError => '出错了';
+
+  @override
+  String commonLoadError(String error) {
+    return '加载失败：$error';
+  }
 
   @override
   String get deferredLoadFailedTitle => '该页面加载失败';
@@ -1323,4 +1417,113 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsRiskResetDefaults => '恢复默认';
+
+  @override
+  String get tradeEntryAppBarTitle => '录入交易';
+
+  @override
+  String get tradeEntrySuccess => '交易录入成功';
+
+  @override
+  String tradeEntryFailure(String error) {
+    return '录入失败：$error';
+  }
+
+  @override
+  String get tradeEntryQuantityLabel => '数量';
+
+  @override
+  String get tradeEntryPriceLabel => '价格';
+
+  @override
+  String get tradeEntryPriceHelper => '留空则自动从市场数据获取';
+
+  @override
+  String get tradeEntryDateLabel => '交易日期';
+
+  @override
+  String get tradeEntryFeeLabel => '手续费';
+
+  @override
+  String get tradeEntryTaxLabel => '税费';
+
+  @override
+  String tradeEntryCatalogLoadError(String error) {
+    return '目录加载失败：$error';
+  }
+
+  @override
+  String get tradeEntryDecimalScaleHintGeneric => '股票/ETF 最多 8 位小数，加密最多 18 位';
+
+  @override
+  String tradeEntryDecimalScaleHint(int scale) {
+    return '最多 $scale 位小数';
+  }
+
+  @override
+  String get tradeTypeBuy => '买入';
+
+  @override
+  String get tradeTypeSell => '卖出';
+
+  @override
+  String get tradeTypeTransferIn => '转入';
+
+  @override
+  String get tradeTypeTransferOut => '转出';
+
+  @override
+  String get tradeTypeValuationAdjust => '估值调整';
+
+  @override
+  String get expenseFormCreateTitle => '新建支出';
+
+  @override
+  String get expenseFormEditTitle => '编辑支出';
+
+  @override
+  String get expenseFormDeleteTooltip => '删除';
+
+  @override
+  String get expenseFormAmountLabel => '金额';
+
+  @override
+  String get expenseFormAmountInvalid => '金额必须大于 0';
+
+  @override
+  String get expenseFormCategoryAccountRequired => '请选择类目、账户和币种';
+
+  @override
+  String get expenseFormCategoriesLoading => '正在准备默认类目，请稍候…';
+
+  @override
+  String expenseFormCategoriesLoadError(String error) {
+    return '类目加载失败：$error';
+  }
+
+  @override
+  String get expenseFormAccountLabel => '账户';
+
+  @override
+  String expenseFormAccountsLoadError(String error) {
+    return '账户加载失败：$error';
+  }
+
+  @override
+  String get expenseFormDateLabel => '日期';
+
+  @override
+  String get expenseFormDeleteDialogTitle => '删除支出';
+
+  @override
+  String get expenseFormDeleteDialogBody => '确认删除此支出？该操作可同步给其他设备。';
+
+  @override
+  String get expenseFormNoAccountsTitle => '先创建一个账户';
+
+  @override
+  String get expenseFormNoAccountsBody => '支出需要选择资金账户。前往「账户」新建后再来录入。';
+
+  @override
+  String get expenseFormNoAccountsCta => '去创建';
 }

@@ -26,6 +26,7 @@ import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/data/transaction_repository.dart';
 import 'package:naviwealth/features/investment/domain/trade_entry/default_trade_entry_service.dart';
 import 'package:naviwealth/features/investment/presentation/trade_entry_form_page.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
@@ -133,6 +134,8 @@ ProviderScope _wrap(_Harness h, {List<Account>? accounts}) {
       ),
     ],
     child: const MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: TradeEntryFormPage(accountId: 'acct-1'),
     ),
   );
