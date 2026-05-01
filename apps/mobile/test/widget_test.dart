@@ -7,6 +7,7 @@ import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,6 +44,12 @@ void main() {
           ),
           accountsStreamProvider.overrideWith(
             (ref) => Stream<List<Account>>.value(const []),
+          ),
+          // Dashboard's FX-rate converter (FIR-73) reads from a Drift
+          // stream; without an override it tries to open the real DB,
+          // which fails in widget tests and leaks a pending timer.
+          fxRatesStreamProvider.overrideWith(
+            (ref) => Stream<List<FxRate>>.value(const []),
           ),
         ],
         child: const NaviWealthApp(),
