@@ -240,6 +240,90 @@ void main() {
     );
   });
 
+  test('enrichMetadata fills only fields that are still null', () async {
+    await repo.upsertSecurity(
+      symbol: 'AAPL',
+      market: AssetMarket.usStock,
+      type: AssetType.stock,
+      currency: 'USD',
+      name: 'User-edited name',
+    );
+    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+
+    final enriched = await repo.enrichMetadata(
+      id: 'us_stock:AAPL',
+      // Should be ignored — the user already named the row.
+      name: 'Apple Inc.',
+      // Should be filled — column is null on the existing row.
+      isin: 'US0378331005',
+      industry: 'Information Technology',
+    );
+
+    expect(enriched.name, 'User-edited name',
+        reason: 'enrichment must not overwrite a user-supplied name');
+    expect(enriched.isin, 'US0378331005');
+    expect(enriched.industry, 'Information Technology');
+
+    final batch = await outbox.peekBatch();
+    expect(batch.single.opType, OpType.update);
+    final diff = batch.single.fieldsDiff!;
+    expect(diff.containsKey('name'), isFalse,
+        reason: 'name was already populated; must not appear in the diff');
+    expect(diff['isin'], 'US0378331005');
+    expect(diff['industry'], 'Information Technology');
+  });
+
+  test('enrichMetadata is a no-op when every requested field is already set',
+      () async {
+    await repo.upsertSecurity(
+      symbol: 'AAPL',
+      market: AssetMarket.usStock,
+      type: AssetType.stock,
+      currency: 'USD',
+      name: 'Apple Inc.',
+    );
+    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+
+    final hlcBefore = (await repo.findById('us_stock:AAPL'))!.sync.hlc;
+    final enriched = await repo.enrichMetadata(
+      id: 'us_stock:AAPL',
+      name: 'something else',
+    );
+
+    expect(enriched.sync.hlc, hlcBefore,
+        reason: 'no-op enrichment must not bump the HLC');
+    expect(await outbox.peekBatch(), isEmpty,
+        reason: 'no-op enrichment must not enqueue an op');
+  });
+
+  test('enrichMetadata fills empty name when the existing row has none',
+      () async {
+    await repo.upsertSecurity(
+      symbol: 'AAPL',
+      market: AssetMarket.usStock,
+      type: AssetType.stock,
+      currency: 'USD',
+    );
+    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+
+    final enriched = await repo.enrichMetadata(
+      id: 'us_stock:AAPL',
+      name: 'Apple Inc.',
+    );
+    expect(enriched.name, 'Apple Inc.');
+
+    final batch = await outbox.peekBatch();
+    expect(batch.single.opType, OpType.update);
+    expect(batch.single.fieldsDiff!['name'], 'Apple Inc.');
+  });
+
+  test('enrichMetadata throws when the asset does not exist', () async {
+    expect(
+      () => repo.enrichMetadata(id: 'us_stock:NOPE', name: 'whatever'),
+      throwsStateError,
+    );
+  });
+
   test('upsertSecurity refuses non-securities asset types', () async {
     expect(
       () => repo.upsertSecurity(
