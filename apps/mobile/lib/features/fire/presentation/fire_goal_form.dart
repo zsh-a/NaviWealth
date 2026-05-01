@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../design_system/tokens/spacing_tokens.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_goal_preferences.dart';
@@ -156,7 +157,10 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
       inflationRate: _inflation,
     );
     await ref.read(fireGoalProvider.notifier).save(goal);
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) {
+      Haptics.success();
+      Navigator.of(context).pop();
+    }
   }
 
   static String _decimalToText(Decimal value) {
