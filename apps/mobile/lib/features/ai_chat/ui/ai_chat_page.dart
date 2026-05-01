@@ -105,7 +105,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
-                  width: 320,
+                  width: Spacing.sessionsPanel,
                   child: SessionsPanel(
                     activeSessionId: activeId,
                     onSelect: (id) => setState(() => _activeSessionId = id),
@@ -223,33 +223,42 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
       next.whenData((_) => _scrollToBottom());
     });
 
-    return Column(
-      children: [
-        Expanded(
-          child: messagesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('加载失败：$e')),
-            data: (messages) => _MessagesList(
-              sessionId: widget.sessionId,
-              messages: messages,
-              scroll: _scroll,
-              onSuggest: (text) => ref
-                  .read(chatControllerProvider(widget.sessionId).notifier)
-                  .send(text),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Spacing.chatPaneMaxWidth),
+        child: Column(
+          children: [
+            Expanded(
+              child: messagesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('加载失败：$e')),
+                data: (messages) => _MessagesList(
+                  sessionId: widget.sessionId,
+                  messages: messages,
+                  scroll: _scroll,
+                  onSuggest: (text) => ref
+                      .read(chatControllerProvider(widget.sessionId).notifier)
+                      .send(text),
+                ),
+              ),
             ),
-          ),
+            ChatComposer(
+              isStreaming: turn.isStreaming,
+              isFlushing: turn.isFlushing,
+              onSend: (text) {
+                ref
+                    .read(chatControllerProvider(widget.sessionId).notifier)
+                    .send(text);
+              },
+              onCancel: () {
+                ref
+                    .read(chatControllerProvider(widget.sessionId).notifier)
+                    .cancel();
+              },
+            ),
+          ],
         ),
-        ChatComposer(
-          isStreaming: turn.isStreaming,
-          isFlushing: turn.isFlushing,
-          onSend: (text) {
-            ref.read(chatControllerProvider(widget.sessionId).notifier).send(text);
-          },
-          onCancel: () {
-            ref.read(chatControllerProvider(widget.sessionId).notifier).cancel();
-          },
-        ),
-      ],
+      ),
     );
   }
 }
