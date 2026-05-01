@@ -4,15 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/domain/account.dart';
-import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
-import '../../../data/domain/hlc.dart';
-import '../../../data/domain/sync_meta.dart';
-import '../../../data/market/market_data_providers.dart';
 import '../../../data/repositories/providers.dart';
+import '../../../data/securities_catalog/providers.dart';
 import '../../../design_system/design_system.dart';
-import '../../../domain/entities/symbol_info.dart';
-import '../../../domain/values/asset_market.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/models/lot.dart';
@@ -21,14 +16,15 @@ import '../domain/trade_entry/trade_entry_errors.dart';
 
 /// Create / edit form for a security trade (stock / ETF / crypto).
 ///
-/// The form collects a [TradeDraft], calls [TradeEntryService.buildPlan],
-/// then persists via [TransactionRepository.recordTrade]. When [assetId] is
-/// supplied the form pre-selects the asset and skips the search field (edit
-/// mode is a future follow-up).
+/// Asset lookup is fully local (FIR-77): the picker reads from the seed
+/// catalog + owned securities and never makes a network call. Selecting a
+/// catalog row that the user has never traded triggers an `upsertSecurity`
+/// at submit-time so the resulting `transactions.assetId` always points
+/// at a real `assets` row, satisfying the FIR-75 foreign-key contract.
 class TradeEntryFormPage extends ConsumerStatefulWidget {
   const TradeEntryFormPage({super.key, this.assetId, this.accountId});
 
-  /// Pre-selected asset id. When null the user picks via [AssetSearchField].
+  /// Pre-selected asset id. When null the user picks via [LocalSecuritiesPicker].
   final String? assetId;
 
   /// Pre-selected account id.
@@ -50,7 +46,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
   String? _accountId;
   String? _currency = 'CNY';
   DateTime _tradeDate = DateTime.now();
-  SymbolInfo? _selectedSymbol;
+  LocalSecurityChoice? _selected;
   bool _busy = false;
 
   static const _tradeTypes = [
@@ -85,14 +81,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
     super.dispose();
   }
 
-  AssetType _inferAssetType(SymbolInfo info) {
-    final tag = info.assetType?.toUpperCase() ?? '';
-    if (tag.contains('ETF')) return AssetType.etf;
-    if (tag.contains('CRYPTO')) return AssetType.crypto;
-    if (info.market == AssetMarket.crypto) return AssetType.crypto;
-    return AssetType.stock;
-  }
-
   int _decimalScale(AssetType type) {
     switch (type) {
       case AssetType.crypto:
@@ -106,40 +94,26 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
     }
   }
 
-  String? _marketTag(SymbolInfo info) {
-    switch (info.market) {
-      case AssetMarket.cnA:
-        return 'cn';
-      case AssetMarket.hkStock:
-        return 'hk';
-      case AssetMarket.usStock:
-        return 'us';
-      default:
-        return null;
-    }
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final symbol = _selectedSymbol;
-    if (symbol == null) return;
+    final selected = _selected;
+    if (selected == null) return;
 
     setState(() => _busy = true);
     try {
-      final assetType = _inferAssetType(symbol);
-      final asset = Asset(
-        id: symbol.symbol,
-        type: assetType,
-        symbol: symbol.symbol,
-        currency: symbol.currency ?? _currency!,
-        name: symbol.name,
-        market: _marketTag(symbol),
-        sync: SyncMeta(
-          ownerUserId: 'local-user',
-          updatedAt: DateTime.now().toUtc(),
-          updatedByDevice: '',
-          hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),
-        ),
+      final securitiesRepo =
+          await ref.read(securitiesAssetRepositoryProvider.future);
+      // Persist the catalog row into `assets` (or hand-entered row, if it
+      // came from the manual sheet). `upsertSecurity` is idempotent on
+      // (market, symbol), so re-recording trades on the same instrument
+      // does not bloat the outbox.
+      final asset = await securitiesRepo.upsertSecurity(
+        symbol: selected.symbol,
+        market: selected.market,
+        type: selected.type,
+        currency: selected.currency,
+        name: selected.name,
+        isin: selected.isin,
       );
 
       final draft = TradeDraft(
@@ -213,15 +187,12 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
       child: ListView(
         padding: Spacing.pageMobile,
         children: [
-          // Asset search
           _buildAssetSearch(),
           const SizedBox(height: Spacing.s12),
 
-          // Transaction type selector
           _buildTypeSelector(),
           const SizedBox(height: Spacing.s12),
 
-          // Account picker
           AccountPicker(
             accounts: eligible.isEmpty ? accounts : eligible,
             value: _accountId,
@@ -229,16 +200,16 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
 
-          // Quantity
           AmountField(
+            key: const Key('trade-entry-quantity'),
             label: '数量',
             controller: _quantityController,
             helperText: _decimalScaleHint(),
           ),
           const SizedBox(height: Spacing.s12),
 
-          // Price (optional — service backfills from market)
           AmountField(
+            key: const Key('trade-entry-price'),
             label: '价格',
             controller: _priceController,
             currencyCode: _currency,
@@ -247,7 +218,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
 
-          // Trade date
           DateField(
             label: '交易日期',
             initialValue: _tradeDate,
@@ -258,14 +228,12 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
 
-          // Currency
           CurrencyPicker(
             value: _currency,
             onChanged: (v) => setState(() => _currency = v),
           ),
           const SizedBox(height: Spacing.s12),
 
-          // Fee & Tax row
           Row(
             children: [
               Expanded(
@@ -289,12 +257,11 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
 
-          // Note
           NoteField(controller: _noteController),
           const SizedBox(height: Spacing.s24),
 
-          // Submit
           FilledButton(
+            key: const Key('trade-entry-submit'),
             onPressed: _busy ? null : _submit,
             child: Text(_busy ? '保存中…' : '保存'),
           ),
@@ -304,24 +271,21 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
   }
 
   Widget _buildAssetSearch() {
-    return FutureBuilder(
-      future: ref.read(marketDataServiceProvider.future),
-      builder: (ctx, snapshot) {
-        if (!snapshot.hasData) {
-          return const LinearProgressIndicator();
-        }
-        return AssetSearchField(
-          marketData: snapshot.data!,
-          onSelected: (info) {
-            setState(() {
-              _selectedSymbol = info;
-              if (info?.currency != null) {
-                _currency = info!.currency;
-              }
-            });
-          },
-        );
-      },
+    final searchAsync = ref.watch(securitiesSearchServiceProvider);
+    return searchAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('目录加载失败：$e'),
+      data: (search) => LocalSecuritiesPicker(
+        search: search,
+        onSelected: (choice) {
+          setState(() {
+            _selected = choice;
+            if (choice != null) {
+              _currency = choice.currency;
+            }
+          });
+        },
+      ),
     );
   }
 
@@ -343,9 +307,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
   }
 
   String _decimalScaleHint() {
-    if (_selectedSymbol == null) return '股票/ETF 最多 8 位小数，加密最多 18 位';
-    final type = _inferAssetType(_selectedSymbol!);
-    final scale = _decimalScale(type);
+    if (_selected == null) return '股票/ETF 最多 8 位小数，加密最多 18 位';
+    final scale = _decimalScale(_selected!.type);
     return '最多 $scale 位小数';
   }
 }
