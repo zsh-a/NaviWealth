@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -519,13 +517,17 @@ class _NetWorthSparkline extends StatelessWidget {
       return const _EmptyResult(message: '区间内没有净资产数据');
     }
     points.sort((a, b) => a.$1.compareTo(b.$1));
-    final values = points.map((p) => p.$2).toList(growable: false);
-    final start = values.first;
-    final end = values.last;
+    final start = points.first.$2;
+    final end = points.last.$2;
     final delta = end - start;
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final chartPoints = <ChartPoint>[
+      for (final p in points)
+        ChartPoint(x: p.$1.millisecondsSinceEpoch.toDouble(), y: p.$2),
+    ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.s8,
@@ -562,12 +564,20 @@ class _NetWorthSparkline extends StatelessWidget {
           const SizedBox(height: Spacing.s8),
           SizedBox(
             height: 40,
-            child: CustomPaint(
-              painter: _SparklinePainter(
-                values: values,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              child: const SizedBox.expand(),
+            child: NwLineChart(
+              series: [
+                ChartSeries(
+                  name: '净资产',
+                  points: chartPoints,
+                  intent: SeriesIntent.primary,
+                  fillOpacity: 0.12,
+                ),
+              ],
+              xAxis: const TimeAxis(showGrid: false, maxLabels: 0),
+              yAxis: const ValueAxis(showGrid: false, maxLabels: 0),
+              aspectRatio: 4,
+              filled: true,
+              downsample: false,
             ),
           ),
           const SizedBox(height: Spacing.s4),
@@ -581,53 +591,6 @@ class _NetWorthSparkline extends StatelessWidget {
   }
 }
 
-class _SparklinePainter extends CustomPainter {
-  _SparklinePainter({required this.values, required this.color});
-  final List<double> values;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.length < 2 || size.width <= 0 || size.height <= 0) return;
-    final minV = values.reduce(math.min);
-    final maxV = values.reduce(math.max);
-    final range = (maxV - minV).abs();
-    final span = range == 0 ? 1.0 : range;
-    final stride = size.width / (values.length - 1);
-    final path = Path();
-    for (var i = 0; i < values.length; i++) {
-      final x = stride * i;
-      final norm = range == 0 ? 0.5 : (values[i] - minV) / span;
-      final y = size.height - norm * size.height;
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    final fill = Path.from(path)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      fill,
-      Paint()..color = color.withValues(alpha: 0.12),
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparklinePainter old) =>
-      old.values != values || old.color != color;
-}
 
 // ---------------------------------------------------------------------------
 // get_*_breakdown → compact pie + top 3 categories.
@@ -669,6 +632,15 @@ class _BreakdownView extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    final slices = <Slice>[
+      for (var i = 0; i < buckets.length; i++)
+        Slice(
+          label: buckets[i].label,
+          value: buckets[i].share.clamp(0.0, 1.0) * 100,
+          colorOverride: palette.accentAt(i),
+        ),
+    ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.s8,
@@ -680,14 +652,10 @@ class _BreakdownView extends StatelessWidget {
           SizedBox(
             width: 64,
             height: 64,
-            child: CustomPaint(
-              painter: _DonutPainter(
-                slices: [for (final b in buckets) b.share.clamp(0.0, 1.0)],
-                colors: [
-                  for (var i = 0; i < buckets.length; i++) palette.accentAt(i),
-                ],
-                background: cs.surfaceContainerHighest,
-              ),
+            child: NwPieChart(
+              slices: slices,
+              hole: 0.62,
+              minLabelPercent: 100, // hide in-slice labels for mini view
             ),
           ),
           const SizedBox(width: Spacing.s12),
@@ -766,49 +734,6 @@ class _BreakdownBucket {
   final String currency;
 }
 
-class _DonutPainter extends CustomPainter {
-  _DonutPainter({
-    required this.slices,
-    required this.colors,
-    required this.background,
-  });
-  final List<double> slices;
-  final List<Color> colors;
-  final Color background;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final radius = math.min(size.width, size.height) / 2;
-    final center = size.center(Offset.zero);
-    final stroke = radius * 0.32;
-    final rect = Rect.fromCircle(center: center, radius: radius - stroke / 2);
-    final ringPaint = Paint()
-      ..color = background
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke;
-    canvas.drawCircle(center, radius - stroke / 2, ringPaint);
-
-    final total = slices.fold<double>(0, (s, v) => s + v);
-    if (total <= 0) return;
-    var start = -math.pi / 2;
-    for (var i = 0; i < slices.length; i++) {
-      final share = slices[i] / total;
-      if (share <= 0) continue;
-      final sweep = share * math.pi * 2;
-      final paint = Paint()
-        ..color = colors[i % colors.length]
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(rect, start, sweep, false, paint);
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DonutPainter old) =>
-      old.slices != slices || old.colors != colors;
-}
 
 // ---------------------------------------------------------------------------
 // get_risk_alerts → severity-tinted list.
