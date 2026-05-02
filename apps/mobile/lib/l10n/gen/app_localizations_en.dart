@@ -2189,6 +2189,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountTypeOther => 'Other account';
 
   @override
+  String get accountCategoryAsset => 'Asset';
+
+  @override
+  String get accountCategoryLiability => 'Liability';
+
+  @override
+  String get accountCategoryIncome => 'Income';
+
+  @override
+  String get accountCategoryExpense => 'Expense';
+
+  @override
+  String get accountCategoryEquity => 'Equity';
+
+  @override
   String get accountFormCreateTitle => 'New account';
 
   @override
@@ -2213,6 +2228,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormTypeLabel => 'Account type';
+
+  @override
+  String get accountFormCategoryLabel => 'Accounting category';
+
+  @override
+  String get accountFormCategoryHelper =>
+      'Where this account sits in the accounting identity. Defaults from the account type — change it if the suggestion doesn\'t match.';
 
   @override
   String get accountFormNameLabel => 'Account name';

@@ -3912,6 +3912,36 @@ abstract class AppLocalizations {
   /// **'Other account'**
   String get accountTypeOther;
 
+  /// No description provided for @accountCategoryAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get accountCategoryAsset;
+
+  /// No description provided for @accountCategoryLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability'**
+  String get accountCategoryLiability;
+
+  /// No description provided for @accountCategoryIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get accountCategoryIncome;
+
+  /// No description provided for @accountCategoryExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get accountCategoryExpense;
+
+  /// No description provided for @accountCategoryEquity.
+  ///
+  /// In en, this message translates to:
+  /// **'Equity'**
+  String get accountCategoryEquity;
+
   /// No description provided for @accountFormCreateTitle.
   ///
   /// In en, this message translates to:
@@ -3959,6 +3989,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account type'**
   String get accountFormTypeLabel;
+
+  /// No description provided for @accountFormCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounting category'**
+  String get accountFormCategoryLabel;
+
+  /// No description provided for @accountFormCategoryHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this account sits in the accounting identity. Defaults from the account type — change it if the suggestion doesn\'t match.'**
+  String get accountFormCategoryHelper;
 
   /// No description provided for @accountFormNameLabel.
   ///

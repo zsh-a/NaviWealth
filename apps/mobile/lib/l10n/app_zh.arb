@@ -702,6 +702,12 @@
   "accountTypeCash": "现金账户",
   "accountTypeOther": "其他账户",
 
+  "accountCategoryAsset": "资产",
+  "accountCategoryLiability": "负债",
+  "accountCategoryIncome": "收入",
+  "accountCategoryExpense": "支出",
+  "accountCategoryEquity": "权益",
+
   "accountFormCreateTitle": "新建账户",
   "accountFormEditTitle": "编辑账户",
   "accountFormDeleteTooltip": "删除",
@@ -710,6 +716,8 @@
   "accountFormCancelAction": "取消",
   "accountFormDeleteAction": "删除",
   "accountFormTypeLabel": "账户类型",
+  "accountFormCategoryLabel": "账户类别",
+  "accountFormCategoryHelper": "用于复式记账的会计分类。默认根据账户类型推荐，可手动调整。",
   "accountFormNameLabel": "账户名称",
   "accountFormNameRequired": "请输入账户名称",
   "accountFormInstitutionLabel": "机构",

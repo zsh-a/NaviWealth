@@ -1107,6 +1107,12 @@
   "accountTypeCash": "Cash account",
   "accountTypeOther": "Other account",
 
+  "accountCategoryAsset": "Asset",
+  "accountCategoryLiability": "Liability",
+  "accountCategoryIncome": "Income",
+  "accountCategoryExpense": "Expense",
+  "accountCategoryEquity": "Equity",
+
   "accountFormCreateTitle": "New account",
   "accountFormEditTitle": "Edit account",
   "accountFormDeleteTooltip": "Delete",
@@ -1118,6 +1124,8 @@
   "accountFormCancelAction": "Cancel",
   "accountFormDeleteAction": "Delete",
   "accountFormTypeLabel": "Account type",
+  "accountFormCategoryLabel": "Accounting category",
+  "accountFormCategoryHelper": "Where this account sits in the accounting identity. Defaults from the account type — change it if the suggestion doesn't match.",
   "accountFormNameLabel": "Account name",
   "accountFormNameRequired": "Enter the account name",
   "accountFormInstitutionLabel": "Institution",

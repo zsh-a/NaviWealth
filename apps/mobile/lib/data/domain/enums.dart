@@ -18,6 +18,47 @@ enum AccountType {
   other,
 }
 
+/// FIR-126 — accounting classification orthogonal to [AccountType].
+///
+/// [AccountType] describes the *carrier shape* of an account ("is this a
+/// bank card or a brokerage account?"). [AccountCategory] describes which
+/// side of the standard double-entry bookkeeping identity the account
+/// belongs to. The two are intentionally independent: the same `bank`
+/// carrier might back an asset (a savings deposit) or a liability (a credit
+/// card) depending on the user's intent.
+///
+/// The full five-category set (P1-A scope) is required so that future
+/// double-entry posting (P2-A) has a complete account taxonomy to lean on:
+/// every transaction will resolve to a debit + credit pair across asset /
+/// liability / income / expense / equity buckets.
+///
+/// The seeded virtual system accounts ([systemAccountSlugForCategory]) for
+/// income / expense / equity give cash flows a counter-account to settle
+/// against before the proper posting model lands. Storage uses the
+/// generic [EnumStringConverter], so adding new values must be appended at
+/// the end and no value may be reordered or renamed without a migration.
+enum AccountCategory { asset, liability, income, expense, equity }
+
+/// Default [AccountCategory] suggestion for a given [AccountType].
+///
+/// Mirrors the v8 backfill rules so the create-account form, the AI
+/// proposal applier and the migration agree on the same heuristic. UI
+/// callers always let the user override the suggestion before saving.
+AccountCategory defaultCategoryForAccountType(AccountType type) {
+  switch (type) {
+    case AccountType.brokerage:
+    case AccountType.bank:
+    case AccountType.cryptoWallet:
+    case AccountType.cash:
+    case AccountType.realEstate:
+    case AccountType.vehicle:
+    case AccountType.other:
+      return AccountCategory.asset;
+    case AccountType.liability:
+      return AccountCategory.liability;
+  }
+}
+
 /// Static classification of an [Asset]. Used to drive UI affordances and
 /// cost-basis behavior.
 ///

@@ -50,18 +50,29 @@ final manualAssetRepositoryProvider = FutureProvider<ManualAssetRepository>((
 /// the same `assets` table but own different identity schemes.
 final securitiesAssetRepositoryProvider =
     FutureProvider<SecuritiesAssetRepository>((ref) async {
-  final db = await ref.watch(appDatabaseProvider.future);
-  final outbox = await ref.watch(outboxStoreProvider.future);
-  final stamper = await ref.watch(mutationStamperProvider.future);
-  return SecuritiesAssetRepository(db: db, outbox: outbox, stamper: stamper);
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      final outbox = await ref.watch(outboxStoreProvider.future);
+      final stamper = await ref.watch(mutationStamperProvider.future);
+      return SecuritiesAssetRepository(
+        db: db,
+        outbox: outbox,
+        stamper: stamper,
+      );
+    });
 
 /// Live stream of all non-archived, non-deleted accounts. UIs watch this
 /// for the account list / picker.
+///
+/// FIR-126: also seeds the income / expense / equity virtual system
+/// accounts the first time the user opens any account-aware surface, so
+/// the P2-A double-entry posting model has counter-accounts ready before
+/// the first cash flow is recorded. The seed is idempotent (deterministic
+/// ids) so doing it on every cold start is cheap.
 final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
   final repo = await ref.watch(accountRepositoryProvider.future);
+  await repo.seedSystemAccounts();
   yield* repo.watchActive();
 });
 
@@ -79,8 +90,9 @@ final manualAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
 /// portfolio's tradable instruments surface alongside cash and physical
 /// assets — without it, freshly recorded trades have no listing surface
 /// outside the holdings/dashboard pipeline.
-final securitiesAssetsStreamProvider =
-    StreamProvider.autoDispose<List<Asset>>((ref) async* {
+final securitiesAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
+  ref,
+) async* {
   final repo = await ref.watch(securitiesAssetRepositoryProvider.future);
   yield* repo.watchSecurities(types: kSecuritiesAssetTypes);
 });
@@ -142,8 +154,7 @@ final expensesStreamProvider = StreamProvider.autoDispose<List<Expense>>((
 
 /// Repository for the local `fx_rates` table. Not synced (FX rates are
 /// global market data, not user data) so this repo bypasses the outbox.
-final fxRateRepositoryProvider =
-    FutureProvider<FxRateRepository>((ref) async {
+final fxRateRepositoryProvider = FutureProvider<FxRateRepository>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return FxRateRepository(db: db);
 });
@@ -151,8 +162,9 @@ final fxRateRepositoryProvider =
 /// Live stream of every recorded FX rate. The dashboard converter and the
 /// FX-rate management page both watch this so a manual rate insert
 /// reactively flows into every consumer.
-final fxRatesStreamProvider =
-    StreamProvider.autoDispose<List<dom.FxRate>>((ref) async* {
+final fxRatesStreamProvider = StreamProvider.autoDispose<List<dom.FxRate>>((
+  ref,
+) async* {
   final repo = await ref.watch(fxRateRepositoryProvider.future);
   yield* repo.watchAll();
 });
