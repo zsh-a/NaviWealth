@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'shortcut_bindings.dart';
 
@@ -9,17 +10,17 @@ import 'shortcut_bindings.dart';
 Future<void> showShortcutHelpDialog(BuildContext context) {
   if (_isOpen) return Future<void>.value();
   _isOpen = true;
-  return showDialog<void>(
+  return showGlassModalBottomSheet<void>(
     context: context,
-    barrierDismissible: true,
-    builder: (BuildContext ctx) => const _ShortcutHelpDialog(),
+    isScrollControlled: true,
+    builder: (BuildContext ctx) => const _ShortcutHelpSheet(),
   ).whenComplete(() => _isOpen = false);
 }
 
 bool _isOpen = false;
 
-class _ShortcutHelpDialog extends StatelessWidget {
-  const _ShortcutHelpDialog();
+class _ShortcutHelpSheet extends StatelessWidget {
+  const _ShortcutHelpSheet();
 
   @override
   Widget build(BuildContext context) {
@@ -33,36 +34,107 @@ class _ShortcutHelpDialog extends StatelessWidget {
       dedup.putIfAbsent(b.descriptionKey, () => b);
     }
 
-    return AlertDialog(
-      title: Text(l10n.shortcutsHelpTitle),
-      content: SizedBox(
-        width: 360,
+    // Add vim-style navigation entries that aren't in the bindings map.
+    final List<_ManualShortcutEntry> manualEntries = <_ManualShortcutEntry>[
+      _ManualShortcutEntry(
+        label: l10n.shortcutVimGoto(l10n.navHome),
+        keys: 'g h',
+      ),
+      _ManualShortcutEntry(
+        label: l10n.shortcutVimGoto(l10n.navAssets),
+        keys: 'g a',
+      ),
+      _ManualShortcutEntry(
+        label: l10n.shortcutVimGoto('AI'),
+        keys: 'g i',
+      ),
+      _ManualShortcutEntry(
+        label: l10n.shortcutVimGoto(l10n.navFire),
+        keys: 'g f',
+      ),
+      _ManualShortcutEntry(
+        label: l10n.shortcutVimGoto(l10n.navSettings),
+        keys: 'g s',
+      ),
+      // Master-detail list navigation (only active in list panes).
+      _ManualShortcutEntry(
+        label: l10n.shortcutListSearch,
+        keys: '/',
+      ),
+      _ManualShortcutEntry(
+        label: l10n.shortcutListNext,
+        keys: 'j',
+      ),
+      _ManualShortcutEntry(
+        label: l10n.shortcutListPrevious,
+        keys: 'k',
+      ),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.s24,
+          Spacing.s12,
+          Spacing.s24,
+          Spacing.s24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final ShortcutBinding b in dedup.values)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
+            // Drag handle indicator
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: Spacing.s16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.4,
+                ),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text(
+              l10n.shortcutsHelpTitle,
+              style: theme.textTheme.titleLarge,
+            ),
+            const SizedBox(height: Spacing.s16),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Text(_descriptionFor(l10n, b.descriptionKey)),
-                    ),
-                    _ActivatorBadge(activator: b.activator),
+                    for (final ShortcutBinding b in dedup.values)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _descriptionFor(l10n, b.descriptionKey),
+                              ),
+                            ),
+                            _ActivatorBadge(activator: b.activator),
+                          ],
+                        ),
+                      ),
+                    for (final _ManualShortcutEntry e in manualEntries)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            Expanded(child: Text(e.label)),
+                            _KeyLabelBadge(label: e.keys),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
+            ),
           ],
         ),
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonClose),
-        ),
-      ],
-      // Keep title color predictable across themes.
-      titleTextStyle: theme.textTheme.titleLarge,
     );
   }
 
@@ -72,6 +144,8 @@ class _ShortcutHelpDialog extends StatelessWidget {
         return l10n.shortcutCommandPalette;
       case 'shortcutShowHelp':
         return l10n.shortcutShowHelp;
+      case 'shortcutOpenAiChat':
+        return l10n.shortcutOpenAiChat;
       case 'shortcutDismissOverlay':
         return l10n.shortcutDismissOverlay;
       case 'shortcutToggleSidebar':
@@ -91,6 +165,12 @@ class _ShortcutHelpDialog extends StatelessWidget {
     }
     return key;
   }
+}
+
+class _ManualShortcutEntry {
+  const _ManualShortcutEntry({required this.label, required this.keys});
+  final String label;
+  final String keys;
 }
 
 class _ActivatorBadge extends StatelessWidget {
@@ -142,5 +222,31 @@ class _ActivatorBadge extends StatelessWidget {
     if (key == LogicalKeyboardKey.slash) return '/';
     final String label = key.keyLabel;
     return label.isEmpty ? key.debugName ?? '?' : label;
+  }
+}
+
+/// Badge for key sequences (e.g. "g h") that aren't a single [ShortcutActivator].
+class _KeyLabelBadge extends StatelessWidget {
+  const _KeyLabelBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+        ),
+      ),
+    );
   }
 }

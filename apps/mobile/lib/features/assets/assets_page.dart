@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/master_detail_layout.dart';
 import '../../app/selection_query.dart';
+import '../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
@@ -77,34 +78,72 @@ class _AssetsMaster extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final manualAsync = ref.watch(manualAssetsStreamProvider);
     final physicalAsync = ref.watch(physicalAssetsListProvider);
-    return Scaffold(
-      appBar: GlassAppBar(
-        title: Text(l10n.assetsAppBarTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_balance_outlined),
-            tooltip: l10n.assetsAccountsTooltip,
-            onPressed: () => context.go('/accounts'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.payments_outlined),
-            tooltip: l10n.assetsLiabilitiesTooltip,
-            onPressed: () => context.push('/assets/liabilities'),
-          ),
-        ],
-      ),
-      body: _AssetsBody(
-        manualAsync: manualAsync,
-        physicalAsync: physicalAsync,
-        selectedAssetId: selectedAssetId,
-        inMasterDetail: inMasterDetail,
-      ),
-      floatingActionButton: AppFab.extended(
-        onPressed: () => _showAddSheet(context),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.assetsAddAction),
+
+    // Build a flat ordered list of all asset IDs for j/k navigation.
+    final allIds = <String>[
+      ...?(manualAsync.value?.map((a) => a.id)),
+      ...?(physicalAsync.value?.map((a) => a.id)),
+    ];
+
+    return MasterDetailShortcuts(
+      onSelectNext: allIds.isEmpty
+          ? null
+          : () => _selectAdjacent(context, allIds, delta: 1),
+      onSelectPrevious: allIds.isEmpty
+          ? null
+          : () => _selectAdjacent(context, allIds, delta: -1),
+      child: Scaffold(
+        appBar: GlassAppBar(
+          title: Text(l10n.assetsAppBarTitle),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.account_balance_outlined),
+              tooltip: l10n.assetsAccountsTooltip,
+              onPressed: () => context.go('/accounts'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.payments_outlined),
+              tooltip: l10n.assetsLiabilitiesTooltip,
+              onPressed: () => context.push('/assets/liabilities'),
+            ),
+          ],
+        ),
+        body: _AssetsBody(
+          manualAsync: manualAsync,
+          physicalAsync: physicalAsync,
+          selectedAssetId: selectedAssetId,
+          inMasterDetail: inMasterDetail,
+        ),
+        floatingActionButton: AppFab.extended(
+          onPressed: () => _showAddSheet(context),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.assetsAddAction),
+        ),
       ),
     );
+  }
+
+  /// Move selection by [delta] positions in [allIds], wrapping at boundaries.
+  void _selectAdjacent(
+    BuildContext context,
+    List<String> allIds, {
+    required int delta,
+  }) {
+    if (allIds.isEmpty) return;
+    final current = selectedAssetId;
+    int nextIndex;
+    if (current == null) {
+      nextIndex = delta > 0 ? 0 : allIds.length - 1;
+    } else {
+      final idx = allIds.indexOf(current);
+      if (idx < 0) {
+        nextIndex = 0;
+      } else {
+        nextIndex = (idx + delta) % allIds.length;
+        if (nextIndex < 0) nextIndex += allIds.length;
+      }
+    }
+    replaceSelectedQuery(context, path: '/assets', selected: allIds[nextIndex]);
   }
 
   void _showAddSheet(BuildContext context) {

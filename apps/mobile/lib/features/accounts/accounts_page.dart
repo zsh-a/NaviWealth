@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/master_detail_layout.dart';
 import '../../app/selection_query.dart';
+import '../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
@@ -67,24 +68,62 @@ class _AccountsMaster extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.accountsAppBarTitle)),
-      body: accountsAsync.when(
-        data: (accounts) => accounts.isEmpty
-            ? const _EmptyAccounts()
-            : _AccountsByType(
-                accounts: accounts,
-                selectedId: selectedId,
-                inMasterDetail: inMasterDetail,
-              ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
+
+    // Flat ordered list of account IDs for j/k navigation.
+    final allIds = accountsAsync.value?.map((a) => a.id).toList();
+
+    return MasterDetailShortcuts(
+      onSelectNext: allIds == null || allIds.isEmpty
+          ? null
+          : () => _selectAdjacent(context, allIds, delta: 1),
+      onSelectPrevious: allIds == null || allIds.isEmpty
+          ? null
+          : () => _selectAdjacent(context, allIds, delta: -1),
+      child: Scaffold(
+        appBar: GlassAppBar(title: Text(l10n.accountsAppBarTitle)),
+        body: accountsAsync.when(
+          data: (accounts) => accounts.isEmpty
+              ? const _EmptyAccounts()
+              : _AccountsByType(
+                  accounts: accounts,
+                  selectedId: selectedId,
+                  inMasterDetail: inMasterDetail,
+                ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
+        ),
+        floatingActionButton: AppFab.extended(
+          onPressed: () => context.go('/accounts/new'),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.accountsCreateAction),
+        ),
       ),
-      floatingActionButton: AppFab.extended(
-        onPressed: () => context.go('/accounts/new'),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.accountsCreateAction),
-      ),
+    );
+  }
+
+  void _selectAdjacent(
+    BuildContext context,
+    List<String> allIds, {
+    required int delta,
+  }) {
+    if (allIds.isEmpty) return;
+    final current = selectedId;
+    int nextIndex;
+    if (current == null) {
+      nextIndex = delta > 0 ? 0 : allIds.length - 1;
+    } else {
+      final idx = allIds.indexOf(current);
+      if (idx < 0) {
+        nextIndex = 0;
+      } else {
+        nextIndex = (idx + delta) % allIds.length;
+        if (nextIndex < 0) nextIndex += allIds.length;
+      }
+    }
+    replaceSelectedQuery(
+      context,
+      path: '/accounts',
+      selected: allIds[nextIndex],
     );
   }
 }

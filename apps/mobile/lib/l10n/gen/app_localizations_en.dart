@@ -728,16 +728,41 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shortcutOpenAiChat => 'Open AI chat';
+
+  @override
+  String shortcutVimGoto(String target) {
+    return 'Vim-style go to $target';
+  }
+
+  @override
+  String get shortcutListSearch => 'Focus list search';
+
+  @override
+  String get shortcutListNext => 'Select next item';
+
+  @override
+  String get shortcutListPrevious => 'Select previous item';
+
+  @override
   String get commandPaletteSearchHint => 'Search commands…';
 
   @override
   String get commandPaletteEmpty => 'No commands match your search';
 
   @override
+  String commandPaletteAskAi(String query) {
+    return 'Ask AI: $query';
+  }
+
+  @override
   String get commandPaletteGoOverview => 'Go to Overview';
 
   @override
   String get commandPaletteGoAssets => 'Go to Assets';
+
+  @override
+  String get commandPaletteGoAccounts => 'Go to Accounts';
 
   @override
   String get commandPaletteGoExpenses => 'Go to Expenses';
@@ -759,6 +784,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commandPaletteOpenAi => 'Open AI assistant';
+
+  @override
+  String get commandPaletteToggleTheme => 'Toggle theme (light / dark)';
+
+  @override
+  String get commandPaletteToggleColorMode => 'Toggle market color mode';
+
+  @override
+  String get commandPaletteToggleLanguage => 'Toggle language';
 
   @override
   String get commandPaletteShortcutHelp => 'Show keyboard shortcuts';

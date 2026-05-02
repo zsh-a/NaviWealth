@@ -66,3 +66,53 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
     await _prefs.setString(_key, mode.name);
   }
 }
+
+/// User preference: locale override (en / zh / system).
+///
+/// When `null`, the app follows the system locale.
+final localeProvider = StateNotifierProvider<LocaleController, Locale?>(
+  (ref) {
+    return LocaleController(ref.watch(sharedPreferencesProvider));
+  },
+);
+
+class LocaleController extends StateNotifier<Locale?> {
+  LocaleController(this._prefs) : super(_load(_prefs));
+
+  static const String _key = 'naviwealth.locale';
+  final SharedPreferences _prefs;
+
+  static Locale? _load(SharedPreferences p) {
+    final raw = p.getString(_key);
+    if (raw == null) return null;
+    return Locale(raw);
+  }
+
+  /// Cycle to the next supported locale: en → zh → system → en …
+  void cycle() {
+    final supported = <Locale>[
+      const Locale('en'),
+      const Locale('zh'),
+    ];
+    if (state == null) {
+      // system → first supported
+      set(supported.first);
+    } else {
+      final idx = supported.indexOf(state!);
+      if (idx < 0 || idx >= supported.length - 1) {
+        set(null); // back to system
+      } else {
+        set(supported[idx + 1]);
+      }
+    }
+  }
+
+  Future<void> set(Locale? locale) async {
+    state = locale;
+    if (locale == null) {
+      await _prefs.remove(_key);
+    } else {
+      await _prefs.setString(_key, locale.languageCode);
+    }
+  }
+}
