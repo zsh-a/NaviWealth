@@ -1,16 +1,18 @@
 import 'package:flutter/widgets.dart';
 
 /// Open the global command palette. Bound to `Cmd/Ctrl+K`.
-///
-/// The palette UI itself ships with a later task — for now the action wires a
-/// logger breadcrumb so we can verify the binding fires end-to-end.
 class OpenCommandPaletteIntent extends Intent {
   const OpenCommandPaletteIntent();
 }
 
-/// Show the keyboard shortcut help overlay. Bound to `Cmd/Ctrl+/`.
+/// Show the keyboard shortcut help overlay. Bound to `?`.
 class ShowShortcutHelpIntent extends Intent {
   const ShowShortcutHelpIntent();
+}
+
+/// Open the AI chat sheet. Bound to `Cmd/Ctrl+/`.
+class OpenAiChatIntent extends Intent {
+  const OpenAiChatIntent();
 }
 
 /// Dismiss the topmost dialog / popup / route. Bound to `Esc`.
@@ -19,7 +21,7 @@ class DismissOverlayIntent extends Intent {
 }
 
 /// Switch the root shell to the primary tab at [index] (0-based).
-/// Bound to digit keys `1`-`4`.
+/// Bound to digit keys `1`-`6`.
 class SwitchPrimaryTabIntent extends Intent {
   const SwitchPrimaryTabIntent(this.index);
 
@@ -34,4 +36,27 @@ class SwitchPrimaryTabIntent extends Intent {
 /// only mounts the sidebar when the viewport is wide enough.
 class ToggleSidebarIntent extends Intent {
   const ToggleSidebarIntent();
+}
+
+/// Navigate via vim-style `g` then a key. Fired after the second keypress
+/// within the timeout window.
+class VimGotoIntent extends Intent {
+  const VimGotoIntent(this.target);
+
+  final String target;
+}
+
+/// Focus the search/filter field in a master-detail list pane. Bound to `/`.
+class ListSearchFocusIntent extends Intent {
+  const ListSearchFocusIntent();
+}
+
+/// Select the next item in a master-detail list. Bound to `j`.
+class ListSelectNextIntent extends Intent {
+  const ListSelectNextIntent();
+}
+
+/// Select the previous item in a master-detail list. Bound to `k`.
+class ListSelectPreviousIntent extends Intent {
+  const ListSelectPreviousIntent();
 }

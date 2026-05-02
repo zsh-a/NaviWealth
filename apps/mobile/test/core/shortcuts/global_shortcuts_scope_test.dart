@@ -45,6 +45,8 @@ void main() {
               onSwitchPrimaryTab: dispatched.add,
               onOpenCommandPalette: (_) {},
               onToggleSidebar: () {},
+              onOpenAiChat: (_) {},
+              onVimGoto: (_) {},
               child: const Scaffold(
                 body: Focus(autofocus: true, child: SizedBox()),
               ),
@@ -69,6 +71,8 @@ void main() {
               onSwitchPrimaryTab: (_) {},
               onOpenCommandPalette: (_) => called++,
               onToggleSidebar: () {},
+              onOpenAiChat: (_) {},
+              onVimGoto: (_) {},
               child: const Scaffold(
                 body: Focus(autofocus: true, child: SizedBox()),
               ),
@@ -99,6 +103,8 @@ void main() {
               onSwitchPrimaryTab: dispatched.add,
               onOpenCommandPalette: (_) {},
               onToggleSidebar: () {},
+              onOpenAiChat: (_) {},
+              onVimGoto: (_) {},
               child: Scaffold(
                 body: Center(
                   child: TextField(controller: controller, autofocus: true),
@@ -133,6 +139,8 @@ void main() {
               onSwitchPrimaryTab: (_) {},
               onOpenCommandPalette: (_) {},
               onToggleSidebar: () {},
+              onOpenAiChat: (_) {},
+              onVimGoto: (_) {},
               child: const Scaffold(body: SizedBox.expand()),
             ),
           ),
@@ -172,6 +180,8 @@ void main() {
             onSwitchPrimaryTab: dispatched.add,
             onOpenCommandPalette: (_) {},
             onToggleSidebar: () {},
+            onOpenAiChat: (_) {},
+            onVimGoto: (_) {},
             child: const Scaffold(
               body: Focus(autofocus: true, child: SizedBox()),
             ),

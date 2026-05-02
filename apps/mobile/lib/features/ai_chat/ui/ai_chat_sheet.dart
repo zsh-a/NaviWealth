@@ -16,23 +16,25 @@ import 'message_bubble.dart';
 /// On mobile (< 600 dp) this is a 70-vh glass modal bottom sheet.
 /// On tablet / desktop it is a 480 × 600 floating card anchored to
 /// the bottom-right corner of the screen.
-Future<void> showAiChatSheet(BuildContext context) {
+///
+/// When [prefill] is non-null, the chat composer is pre-filled with that text.
+Future<void> showAiChatSheet(BuildContext context, {String? prefill}) {
   final width = MediaQuery.sizeOf(context).width;
   if (Breakpoints.isMobile(width)) {
-    return _showMobileSheet(context);
+    return _showMobileSheet(context, prefill: prefill);
   }
-  return _showDesktopSheet(context);
+  return _showDesktopSheet(context, prefill: prefill);
 }
 
-Future<void> _showMobileSheet(BuildContext context) {
+Future<void> _showMobileSheet(BuildContext context, {String? prefill}) {
   return showGlassModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => const _SheetSized(child: AiChatSheetBody()),
+    builder: (_) => _SheetSized(child: AiChatSheetBody(prefill: prefill)),
   );
 }
 
-Future<void> _showDesktopSheet(BuildContext context) {
+Future<void> _showDesktopSheet(BuildContext context, {String? prefill}) {
   return showGeneralDialog<void>(
     context: context,
     barrierLabel: 'ai-chat-sheet',
@@ -40,7 +42,7 @@ Future<void> _showDesktopSheet(BuildContext context) {
     barrierColor: Colors.transparent,
     transitionDuration: Motion.medium,
     pageBuilder: (ctx, animation, secondaryAnimation) =>
-        const _DesktopSheetOverlay(),
+        _DesktopSheetOverlay(prefill: prefill),
   );
 }
 
@@ -61,7 +63,9 @@ class _SheetSized extends StatelessWidget {
 /// Position defaults to bottom-right and is persisted to
 /// SharedPreferences so the sheet re-opens where the user left it.
 class _DesktopSheetOverlay extends ConsumerStatefulWidget {
-  const _DesktopSheetOverlay();
+  const _DesktopSheetOverlay({this.prefill});
+
+  final String? prefill;
 
   @override
   ConsumerState<_DesktopSheetOverlay> createState() =>
@@ -173,7 +177,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                           ),
                         ),
                       ),
-                      const Expanded(child: AiChatSheetBody()),
+                      Expanded(child: AiChatSheetBody(prefill: widget.prefill)),
                     ],
                   ),
                 ),
@@ -189,7 +193,10 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
 /// The actual chat sheet content — shared between mobile and desktop
 /// variants.
 class AiChatSheetBody extends ConsumerStatefulWidget {
-  const AiChatSheetBody({super.key});
+  const AiChatSheetBody({super.key, this.prefill});
+
+  /// Optional text to pre-fill the chat composer with.
+  final String? prefill;
 
   @override
   ConsumerState<AiChatSheetBody> createState() => _AiChatSheetBodyState();
@@ -271,7 +278,8 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
               : _SheetMessages(sessionId: activeId),
         ),
         // ── Composer ──
-        if (activeId != null) _SheetComposer(sessionId: activeId),
+        if (activeId != null)
+          _SheetComposer(sessionId: activeId, prefill: widget.prefill),
       ],
     );
   }
@@ -391,8 +399,9 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
 }
 
 class _SheetComposer extends ConsumerWidget {
-  const _SheetComposer({required this.sessionId});
+  const _SheetComposer({required this.sessionId, this.prefill});
   final String sessionId;
+  final String? prefill;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -402,6 +411,7 @@ class _SheetComposer extends ConsumerWidget {
     return ChatComposer(
       isStreaming: turn.isStreaming,
       isFlushing: turn.isFlushing,
+      initialText: prefill,
       onSend: (text) {
         ref.read(chatControllerProvider(sessionId).notifier).send(
               text,

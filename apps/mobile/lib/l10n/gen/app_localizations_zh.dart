@@ -699,16 +699,41 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get shortcutOpenAiChat => '打开 AI 对话';
+
+  @override
+  String shortcutVimGoto(String target) {
+    return 'Vim 风格跳转到 $target';
+  }
+
+  @override
+  String get shortcutListSearch => '聚焦列表搜索';
+
+  @override
+  String get shortcutListNext => '选择下一项';
+
+  @override
+  String get shortcutListPrevious => '选择上一项';
+
+  @override
   String get commandPaletteSearchHint => '搜索命令…';
 
   @override
   String get commandPaletteEmpty => '没有匹配的命令';
 
   @override
+  String commandPaletteAskAi(String query) {
+    return '问 AI：$query';
+  }
+
+  @override
   String get commandPaletteGoOverview => '前往 总览';
 
   @override
   String get commandPaletteGoAssets => '前往 资产';
+
+  @override
+  String get commandPaletteGoAccounts => '前往 账户';
 
   @override
   String get commandPaletteGoExpenses => '前往 支出';
@@ -730,6 +755,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commandPaletteOpenAi => '打开 AI 助手';
+
+  @override
+  String get commandPaletteToggleTheme => '切换主题（亮色 / 暗色）';
+
+  @override
+  String get commandPaletteToggleColorMode => '切换涨跌颜色模式';
+
+  @override
+  String get commandPaletteToggleLanguage => '切换语言';
 
   @override
   String get commandPaletteShortcutHelp => '显示键盘快捷键';

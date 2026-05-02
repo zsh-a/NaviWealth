@@ -1394,6 +1394,36 @@ abstract class AppLocalizations {
   /// **'Switch to tab {position} ({label})'**
   String shortcutSwitchTab(int position, String label);
 
+  /// Help-dialog label for the Cmd/Ctrl+/ AI chat shortcut (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Open AI chat'**
+  String get shortcutOpenAiChat;
+
+  /// Help-dialog label for vim-style g+key navigation (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Vim-style go to {target}'**
+  String shortcutVimGoto(String target);
+
+  /// Help-dialog label for / key to focus search in master-detail lists (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Focus list search'**
+  String get shortcutListSearch;
+
+  /// Help-dialog label for j key to select next list item in master-detail (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Select next item'**
+  String get shortcutListNext;
+
+  /// Help-dialog label for k key to select previous list item in master-detail (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Select previous item'**
+  String get shortcutListPrevious;
+
   /// Placeholder for the command palette search box (FIR-87)
   ///
   /// In en, this message translates to:
@@ -1406,6 +1436,12 @@ abstract class AppLocalizations {
   /// **'No commands match your search'**
   String get commandPaletteEmpty;
 
+  /// Dynamic command palette entry that opens AI chat with the user's query prefilled (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI: {query}'**
+  String commandPaletteAskAi(String query);
+
   /// Command palette: navigate to the home/overview tab
   ///
   /// In en, this message translates to:
@@ -1417,6 +1453,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to Assets'**
   String get commandPaletteGoAssets;
+
+  /// Command palette: navigate to the accounts page (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Accounts'**
+  String get commandPaletteGoAccounts;
 
   /// Command palette: navigate to the expenses tab
   ///
@@ -1459,6 +1501,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open AI assistant'**
   String get commandPaletteOpenAi;
+
+  /// Command palette: cycle between light and dark theme (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle theme (light / dark)'**
+  String get commandPaletteToggleTheme;
+
+  /// Command palette: cycle market direction colors (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle market color mode'**
+  String get commandPaletteToggleColorMode;
+
+  /// Command palette: cycle between supported languages (FIR-112)
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle language'**
+  String get commandPaletteToggleLanguage;
 
   /// Command palette: open the shortcut help dialog
   ///

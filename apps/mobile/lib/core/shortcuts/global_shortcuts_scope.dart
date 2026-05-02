@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'keyboard_platform.dart';
@@ -11,16 +14,18 @@ import 'shortcut_intents.dart';
 /// On platforms where [areKeyboardShortcutsAvailable] is `false` (iOS /
 /// Android native), this widget is a transparent passthrough — no listener,
 /// no overhead, no chance of a Bluetooth keyboard hijacking the shell.
-class GlobalShortcutsScope extends StatelessWidget {
+class GlobalShortcutsScope extends StatefulWidget {
   const GlobalShortcutsScope({
     required this.onSwitchPrimaryTab,
     required this.onOpenCommandPalette,
     required this.onToggleSidebar,
+    required this.onOpenAiChat,
+    required this.onVimGoto,
     required this.child,
     super.key,
   });
 
-  /// Called when the user requests the n-th primary tab (`1`-`4`).
+  /// Called when the user requests the n-th primary tab (`1`-`6`).
   /// `index` is 0-based.
   final void Function(int index) onSwitchPrimaryTab;
 
@@ -32,12 +37,60 @@ class GlobalShortcutsScope extends StatelessWidget {
   /// Called when the user invokes the sidebar toggle (`Cmd/Ctrl+B`).
   final VoidCallback onToggleSidebar;
 
+  /// Called when the user opens the AI chat sheet (`Cmd/Ctrl+/`).
+  final void Function(BuildContext context) onOpenAiChat;
+
+  /// Called when a vim-style `g`+key sequence completes.
+  final void Function(String target) onVimGoto;
+
   final Widget child;
+
+  @override
+  State<GlobalShortcutsScope> createState() => _GlobalShortcutsScopeState();
+}
+
+class _GlobalShortcutsScopeState extends State<GlobalShortcutsScope> {
+  bool _gPending = false;
+  Timer? _gTimer;
+
+  static const _kVimTimeout = Duration(milliseconds: 150);
+
+  void _onVimG(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) return;
+    if (event.logicalKey == LogicalKeyboardKey.keyG) {
+      _gPending = true;
+      _gTimer?.cancel();
+      _gTimer = Timer(_kVimTimeout, () {
+        _gPending = false;
+      });
+    } else if (_gPending) {
+      _gPending = false;
+      _gTimer?.cancel();
+      final key = event.logicalKey;
+      if (key == LogicalKeyboardKey.keyH) {
+        widget.onVimGoto('home');
+      } else if (key == LogicalKeyboardKey.keyA) {
+        widget.onVimGoto('assets');
+      } else if (key == LogicalKeyboardKey.keyI) {
+        widget.onVimGoto('ai');
+      } else if (key == LogicalKeyboardKey.keyF) {
+        widget.onVimGoto('fire');
+      } else if (key == LogicalKeyboardKey.keyS) {
+        widget.onVimGoto('settings');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _gTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     if (!areKeyboardShortcutsAvailable) {
-      return child;
+      return widget.child;
     }
     return Shortcuts(
       shortcuts: globalShortcutMap(),
@@ -47,7 +100,7 @@ class GlobalShortcutsScope extends StatelessWidget {
               _GuardedContextAction<OpenCommandPaletteIntent>(
                 onInvoke: (Intent _, BuildContext? ctx) {
                   if (ctx != null) {
-                    onOpenCommandPalette(ctx);
+                    widget.onOpenCommandPalette(ctx);
                   }
                 },
               ),
@@ -58,20 +111,56 @@ class GlobalShortcutsScope extends StatelessWidget {
               }
             },
           ),
+          OpenAiChatIntent: _GuardedContextAction<OpenAiChatIntent>(
+            onInvoke: (Intent _, BuildContext? ctx) {
+              if (ctx != null) {
+                widget.onOpenAiChat(ctx);
+              }
+            },
+          ),
           DismissOverlayIntent: _DismissOverlayAction(),
           SwitchPrimaryTabIntent: _GuardedAction<SwitchPrimaryTabIntent>(
             onInvoke: (Intent intent) {
               final SwitchPrimaryTabIntent i = intent as SwitchPrimaryTabIntent;
               if (i.index < 0 || i.index >= kPrimaryTabCount) return;
-              onSwitchPrimaryTab(i.index);
+              widget.onSwitchPrimaryTab(i.index);
             },
           ),
           ToggleSidebarIntent: _GuardedAction<ToggleSidebarIntent>(
-            onInvoke: (_) => onToggleSidebar(),
+            onInvoke: (_) => widget.onToggleSidebar(),
           ),
         },
-        child: child,
+        child: _VimKeyHandler(
+          onKey: _onVimG,
+          child: widget.child,
+        ),
       ),
+    );
+  }
+}
+
+/// Wraps [child] with a [Focus] node that forwards raw key events to [onKey]
+/// for vim-style `g`+key sequence handling. The focus node does not request
+/// focus itself and is skipped from traversal — it only receives events that
+/// bubble up from the shortcut scope.
+class _VimKeyHandler extends StatelessWidget {
+  const _VimKeyHandler({required this.onKey, required this.child});
+
+  final void Function(KeyEvent event) onKey;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (!isTextInputFocused()) {
+          onKey(event);
+        }
+        return KeyEventResult.ignored;
+      },
+      child: child,
     );
   }
 }

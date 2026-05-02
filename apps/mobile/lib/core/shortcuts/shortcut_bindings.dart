@@ -43,11 +43,16 @@ List<ShortcutBinding> globalShortcutBindings() {
     ),
     const ShortcutBinding(
       activator: SingleActivator(LogicalKeyboardKey.slash, meta: true),
-      intent: ShowShortcutHelpIntent(),
-      descriptionKey: 'shortcutShowHelp',
+      intent: OpenAiChatIntent(),
+      descriptionKey: 'shortcutOpenAiChat',
     ),
     const ShortcutBinding(
       activator: SingleActivator(LogicalKeyboardKey.slash, control: true),
+      intent: OpenAiChatIntent(),
+      descriptionKey: 'shortcutOpenAiChat',
+    ),
+    const ShortcutBinding(
+      activator: SingleActivator(LogicalKeyboardKey.slash, shift: true),
       intent: ShowShortcutHelpIntent(),
       descriptionKey: 'shortcutShowHelp',
     ),
