@@ -37,6 +37,7 @@ class DeltaText extends StatelessWidget {
     this.showIcon = true,
     this.showSign = true,
     this.locale,
+    this.semanticLabel,
   });
 
   /// Convenience constructor — pass a 0..1 ratio (e.g. `0.0234` for
@@ -49,6 +50,7 @@ class DeltaText extends StatelessWidget {
     bool showIcon = true,
     bool showSign = true,
     String? locale,
+    String? semanticLabel,
   }) {
     return DeltaText(
       key: key,
@@ -59,6 +61,7 @@ class DeltaText extends StatelessWidget {
       showIcon: showIcon,
       showSign: showSign,
       locale: locale,
+      semanticLabel: semanticLabel,
     );
   }
 
@@ -79,6 +82,12 @@ class DeltaText extends StatelessWidget {
 
   final String? locale;
 
+  /// Override the screen-reader label. Defaults to a sign-aware spoken
+  /// form (e.g. `"up 2.34 percent"`, `"down 1234.50 CNY"`, or `"unchanged"`)
+  /// so colour + arrow direction reach assistive tech the same way they
+  /// reach sighted users.
+  final String? semanticLabel;
+
   @override
   Widget build(BuildContext context) {
     final market = MarketColors.of(context);
@@ -88,7 +97,7 @@ class DeltaText extends StatelessWidget {
       fontFeatures: TypographyTokens.tabularFigures,
     );
 
-    return DefaultTextStyle.merge(
+    final body = DefaultTextStyle.merge(
       style: effectiveStyle,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -116,6 +125,41 @@ class DeltaText extends StatelessWidget {
         ],
       ),
     );
+
+    return Semantics(
+      label: semanticLabel ?? _semanticLabel(),
+      excludeSemantics: true,
+      container: true,
+      child: body,
+    );
+  }
+
+  String _semanticLabel() {
+    if (value == null) return _unitNoun();
+    final v = value!;
+    final digits = fractionDigits ?? 2;
+    final magnitude = v.abs().toStringAsFixed(digits);
+    final direction = v == 0
+        ? 'unchanged'
+        : (v > 0 ? 'up' : 'down');
+    if (format == DeltaFormat.currency) {
+      if (v == 0) return 'unchanged $currencyCode';
+      return '$direction $magnitude $currencyCode';
+    }
+    final unit = _unitNoun();
+    if (v == 0) return 'unchanged';
+    return '$direction $magnitude $unit';
+  }
+
+  String _unitNoun() {
+    switch (format) {
+      case DeltaFormat.currency:
+        return currencyCode;
+      case DeltaFormat.percent:
+        return 'percent';
+      case DeltaFormat.decimal:
+        return '';
+    }
   }
 
   String _formatNonCurrency(BuildContext context) {

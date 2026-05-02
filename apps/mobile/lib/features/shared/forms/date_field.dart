@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/format/formatters.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Tap-to-pick date input, rendered as a read-only [TextFormField] so it
 /// inherits Material's outline + focus styling and lines up visually with
@@ -78,6 +79,7 @@ class _DateFieldState extends State<DateField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     if (_value != null) {
       _controller.text = formatter.date(_value!);
@@ -93,7 +95,7 @@ class _DateFieldState extends State<DateField> {
             ? const Icon(Icons.calendar_today_outlined)
             : IconButton(
                 icon: const Icon(Icons.clear),
-                tooltip: '清除',
+                tooltip: l10n.formDateFieldClearTooltip,
                 onPressed: widget.required
                     ? null
                     : () {
@@ -105,7 +107,7 @@ class _DateFieldState extends State<DateField> {
         border: const OutlineInputBorder(),
       ),
       validator: (_) {
-        if (widget.required && _value == null) return '请选择日期';
+        if (widget.required && _value == null) return l10n.formDateFieldRequired;
         return null;
       },
     );

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../liabilities/ui/liability_l10n.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
 
@@ -229,53 +230,78 @@ class _LegendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: Spacing.s6,
-          horizontal: Spacing.s4,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration:
-                  BoxDecoration(color: color, shape: BoxShape.circle),
+    // The legend row is the only way to drill into a category from the
+    // dashboard, so it has to clear the WCAG / Material 48dp tap target.
+    // Wrapping the existing visual layout in a fixed-height InkWell keeps
+    // the slim card aesthetic while giving the hit-test rectangle the
+    // size assistive-tech and finger-tip users actually need.
+    final percentPart = percent == null
+        ? ''
+        : ', ${(percent! * 100).toStringAsFixed(1)} percent of total';
+    final semanticsLabel =
+        '$label, $valueInBase $currencyCode$percentPart';
+    return Semantics(
+      label: semanticsLabel,
+      button: true,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: Spacing.s8,
+              horizontal: Spacing.s4,
             ),
-            const SizedBox(width: Spacing.s8),
-            Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(width: Spacing.s8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: theme.textTheme.bodyMedium),
-                  if (percent != null)
-                    Text(
-                      '${(percent! * 100).toStringAsFixed(1)}%',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: Spacing.s8),
+                Icon(
+                  icon,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: Spacing.s8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(label, style: theme.textTheme.bodyMedium),
+                      if (percent != null)
+                        Text(
+                          '${(percent! * 100).toStringAsFixed(1)}%',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                MoneyText(
+                  amount: valueInBase,
+                  currencyCode: currencyCode,
+                  compact: true,
+                  showSign: valueInBase < 0,
+                ),
+                const SizedBox(width: Spacing.s4),
+                Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
             ),
-            MoneyText(
-              amount: valueInBase,
-              currencyCode: currencyCode,
-              compact: true,
-              showSign: valueInBase < 0,
-            ),
-            const SizedBox(width: Spacing.s4),
-            Icon(
-              Icons.chevron_right,
-              size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -363,9 +389,9 @@ class CategoryDrillDownSheet extends StatelessWidget {
                       ),
                     ),
                     title: Text(item.name),
-                    subtitle: item.subtitle == null
+                    subtitle: _itemSubtitle(l10n, item) == null
                         ? null
-                        : Text(item.subtitle!),
+                        : Text(_itemSubtitle(l10n, item)!),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -402,5 +428,16 @@ class CategoryDrillDownSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Picks the localised secondary line for a drill-down row. Liability
+  /// rows carry a [LiabilityType]; everything else uses the pre-rendered
+  /// [CategoryItem.subtitle] (which the aggregator builds from rate /
+  /// currency hints). Returns null when there's nothing meaningful to show.
+  String? _itemSubtitle(AppLocalizations l10n, CategoryItem item) {
+    if (item.liabilityType != null) {
+      return liabilityTypeLabel(l10n, item.liabilityType!);
+    }
+    return item.subtitle;
   }
 }

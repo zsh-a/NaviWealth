@@ -33,27 +33,25 @@ lib/features/ai_chat/ui/tool_invocation_renderers.dart
 # ship i18n-aware seeding.
 lib/data/repositories/expense_category_repository.dart
 
+# ─── command palette search keywords (intentional) ──────────────────
+# default_commands.dart ships bilingual search aliases for the Cmd+K
+# command palette ("总览" matches "overview" etc.). The displayed
+# label is already routed through AppLocalizations; the CN strings
+# are non-displayed search terms that let CN-keyboard users find
+# entries by typing in their language. Re-localising would defeat the
+# point — the alias has to match the user's typed input regardless of
+# their app locale.
+lib/core/command_palette/default_commands.dart
+
 # ─── 散落 features 子文件 — i18n 第三波 ──────────────────────────────
 # All entries below need migration in a follow-up PR. Listed here so
 # CI can baseline the codebase today and fail fast on any new CN
 # literal introduced anywhere outside this list.
-lib/core/command_palette/default_commands.dart
-lib/features/accounts/account_form_page.dart
-lib/features/accounts/accounts_page.dart
 lib/features/assets/asset_detail_page.dart
-lib/features/assets/cash_form_page.dart
 lib/features/assets/deposit_form_page.dart
-lib/features/assets/physical/ui/valuation_trend_chart.dart
 lib/features/assets/wealth_product_form_page.dart
-lib/features/expense/ui/category_grid_picker.dart
 lib/features/expense/ui/expense_categories_page.dart
 lib/features/expense/ui/expense_list_page.dart
 lib/features/expense/ui/expense_report_page.dart
-lib/features/home/domain/dashboard_aggregator.dart
-lib/features/shared/forms/account_picker.dart
-lib/features/shared/forms/amount_field.dart
-lib/features/shared/forms/currency_picker.dart
-lib/features/shared/forms/date_field.dart
 lib/features/shared/forms/local_securities_picker.dart
 lib/features/shared/forms/manual_security_sheet.dart
-lib/features/shared/forms/note_field.dart

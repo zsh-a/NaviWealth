@@ -6,6 +6,7 @@ import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// Lists every active account, grouped by [AccountType].
 ///
@@ -18,20 +19,21 @@ class AccountsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('账户')),
+      appBar: AppBar(title: Text(l10n.accountsAppBarTitle)),
       body: accountsAsync.when(
         data: (accounts) => accounts.isEmpty
             ? const _EmptyAccounts()
             : _AccountsByType(accounts: accounts),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+        error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
       ),
       floatingActionButton: AppFab.extended(
         onPressed: () => context.go('/accounts/new'),
         icon: const Icon(Icons.add),
-        label: const Text('新建账户'),
+        label: Text(l10n.accountsCreateAction),
       ),
     );
   }
@@ -42,15 +44,16 @@ class _EmptyAccounts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final l10n = AppLocalizations.of(context);
+    return Center(
       child: Padding(
         padding: Spacing.pageMobile,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_balance_outlined, size: 48),
-            SizedBox(height: Spacing.s12),
-            Text('还没有账户。点击右下角新建一个，再去录入资产。', textAlign: TextAlign.center),
+            const Icon(Icons.account_balance_outlined, size: 48),
+            const SizedBox(height: Spacing.s12),
+            Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -65,6 +68,7 @@ class _AccountsByType extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final grouped = <AccountType, List<Account>>{};
     for (final a in accounts) {
       grouped.putIfAbsent(a.type, () => []).add(a);
@@ -88,7 +92,7 @@ class _AccountsByType extends StatelessWidget {
                 bottom: Spacing.s8,
               ),
               child: Text(
-                accountTypeLabel(type),
+                accountTypeLabel(l10n, type),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -122,18 +126,18 @@ class _AccountsByType extends StatelessWidget {
   }
 }
 
-/// Localisable label for an [AccountType]. Kept here rather than in the
-/// l10n bundle for now — these labels are also used inside the entry
-/// forms and we don't want to fork the strings while the UX still moves.
-String accountTypeLabel(AccountType t) {
+/// Localised display label for an [AccountType]. Resolved through the ARB
+/// tables so list, detail, and form screens stay in sync without each one
+/// carrying its own switch.
+String accountTypeLabel(AppLocalizations l10n, AccountType t) {
   return switch (t) {
-    AccountType.brokerage => '券商账户',
-    AccountType.bank => '银行账户',
-    AccountType.cryptoWallet => '加密钱包',
-    AccountType.realEstate => '不动产账户',
-    AccountType.vehicle => '车辆账户',
-    AccountType.liability => '负债账户',
-    AccountType.cash => '现金账户',
-    AccountType.other => '其他账户',
+    AccountType.brokerage => l10n.accountTypeBrokerage,
+    AccountType.bank => l10n.accountTypeBank,
+    AccountType.cryptoWallet => l10n.accountTypeCryptoWallet,
+    AccountType.realEstate => l10n.accountTypeRealEstate,
+    AccountType.vehicle => l10n.accountTypeVehicle,
+    AccountType.liability => l10n.accountTypeLiability,
+    AccountType.cash => l10n.accountTypeCash,
+    AccountType.other => l10n.accountTypeOther,
   };
 }

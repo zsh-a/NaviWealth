@@ -105,7 +105,10 @@ jobs:
         id: api-url
         working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
+      - run: |
+          flutter build web --release --source-maps \
+            --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} \
+            --dart-define=APP_VERSION=${{ needs.meta.outputs.semver }}
       - name: Decode signing keystore
         if: env.KEYSTORE_BASE64 != ''
         env:
@@ -118,8 +121,12 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
-          flutter build appbundle --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
+          flutter build apk --release --target-platform android-arm64 \
+            --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} \
+            --dart-define=APP_VERSION=${{ needs.meta.outputs.semver }}
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} \
+            --dart-define=APP_VERSION=${{ needs.meta.outputs.semver }}
       - name: Package web bundle
         run: |
           cd build/web

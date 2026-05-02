@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -128,7 +129,7 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(l10n.settingsAboutTitle),
-            subtitle: Text(l10n.settingsAboutSubtitle('0.1.0')),
+            subtitle: Text(l10n.settingsAboutSubtitle(kAppVersion)),
           ),
         ],
       ),
@@ -166,13 +167,13 @@ class SettingsPage extends ConsumerWidget {
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    for (final option in kCommonCurrencies)
+                    for (final code in kCommonCurrencies)
                       ListTile(
-                        title: Text(option.label),
-                        trailing: option.code == current
+                        title: Text(currencyDisplayLabel(l10n, code)),
+                        trailing: code == current
                             ? const Icon(Icons.check)
                             : null,
-                        onTap: () => Navigator.of(ctx).pop(option.code),
+                        onTap: () => Navigator.of(ctx).pop(code),
                       ),
                   ],
                 ),

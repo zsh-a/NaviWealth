@@ -164,42 +164,6 @@ abstract class AppLocalizations {
   /// **'Base currency {currency} · shown once data is connected'**
   String homeNetWorthSubtitle(String currency);
 
-  /// No description provided for @homeTodayReturnTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Today\'s Return'**
-  String get homeTodayReturnTitle;
-
-  /// No description provided for @homeTodayReturnSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Live quotes pending. FIR-4 will populate this card.'**
-  String get homeTodayReturnSubtitle;
-
-  /// No description provided for @homeAllocationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Asset Allocation'**
-  String get homeAllocationTitle;
-
-  /// No description provided for @homeAllocationSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'FIR-7 will surface category, sector, and region breakdowns here.'**
-  String get homeAllocationSubtitle;
-
-  /// No description provided for @homeFireTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'FIRE Progress'**
-  String get homeFireTitle;
-
-  /// No description provided for @homeFireSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'FIR-9 will show days to financial independence and milestones.'**
-  String get homeFireSubtitle;
-
   /// No description provided for @assetsAppBarTitle.
   ///
   /// In en, this message translates to:
@@ -3449,6 +3413,432 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No data yet'**
   String get chartEmptyDefault;
+
+  /// Default label for the shared AmountField when no caller-provided label is supplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get formAmountFieldLabelDefault;
+
+  /// AmountField validator: empty input.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount'**
+  String get formAmountFieldRequired;
+
+  /// AmountField validator: not a parseable Decimal.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid amount format'**
+  String get formAmountFieldInvalid;
+
+  /// AmountField validator: negative value where the caller forbids them.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount cannot be negative'**
+  String get formAmountFieldNegativeNotAllowed;
+
+  /// Default label for the shared NoteField.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get formNoteFieldLabelDefault;
+
+  /// Tooltip on the icon that clears a tap-to-pick DateField.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get formDateFieldClearTooltip;
+
+  /// DateField validator when the field is required and empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get formDateFieldRequired;
+
+  /// Default label for the shared AccountPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get formAccountPickerLabelDefault;
+
+  /// AccountPicker validator when no account is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an account'**
+  String get formAccountPickerRequired;
+
+  /// Default label for the shared CurrencyPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get formCurrencyPickerLabelDefault;
+
+  /// CurrencyPicker validator when no currency is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a currency'**
+  String get formCurrencyPickerRequired;
+
+  /// Picker entry for a currency, e.g. "USD · US Dollar".
+  ///
+  /// In en, this message translates to:
+  /// **'{code} · {name}'**
+  String currencyOptionLabel(String code, String name);
+
+  /// No description provided for @currencyNameCNY.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese Yuan'**
+  String get currencyNameCNY;
+
+  /// No description provided for @currencyNameUSD.
+  ///
+  /// In en, this message translates to:
+  /// **'US Dollar'**
+  String get currencyNameUSD;
+
+  /// No description provided for @currencyNameHKD.
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong Dollar'**
+  String get currencyNameHKD;
+
+  /// No description provided for @currencyNameEUR.
+  ///
+  /// In en, this message translates to:
+  /// **'Euro'**
+  String get currencyNameEUR;
+
+  /// No description provided for @currencyNameJPY.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese Yen'**
+  String get currencyNameJPY;
+
+  /// No description provided for @currencyNameGBP.
+  ///
+  /// In en, this message translates to:
+  /// **'British Pound'**
+  String get currencyNameGBP;
+
+  /// No description provided for @currencyNameSGD.
+  ///
+  /// In en, this message translates to:
+  /// **'Singapore Dollar'**
+  String get currencyNameSGD;
+
+  /// No description provided for @currencyNameAUD.
+  ///
+  /// In en, this message translates to:
+  /// **'Australian Dollar'**
+  String get currencyNameAUD;
+
+  /// No description provided for @currencyNameCAD.
+  ///
+  /// In en, this message translates to:
+  /// **'Canadian Dollar'**
+  String get currencyNameCAD;
+
+  /// No description provided for @currencyNameTWD.
+  ///
+  /// In en, this message translates to:
+  /// **'New Taiwan Dollar'**
+  String get currencyNameTWD;
+
+  /// Default label above the expense-form category grid picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get expenseCategoryPickerLabelDefault;
+
+  /// Validator message when no expense category is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get expenseCategoryPickerRequired;
+
+  /// Legend label for the projected-valuation curve on a physical asset's trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Projected valuation'**
+  String get physicalAssetValuationProjected;
+
+  /// Legend label for the historical-valuation curve on a physical asset's trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical valuation'**
+  String get physicalAssetValuationHistorical;
+
+  /// Accessibility label for the physical asset valuation-trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation trend'**
+  String get physicalAssetValuationTrendSemanticLabel;
+
+  /// No description provided for @accountsAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accountsAppBarTitle;
+
+  /// No description provided for @accountsCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get accountsCreateAction;
+
+  /// No description provided for @accountsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String accountsLoadError(String error);
+
+  /// No description provided for @accountsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts yet. Tap the bottom-right button to add one, then come back to record assets.'**
+  String get accountsEmptyHint;
+
+  /// No description provided for @accountTypeBrokerage.
+  ///
+  /// In en, this message translates to:
+  /// **'Brokerage account'**
+  String get accountTypeBrokerage;
+
+  /// No description provided for @accountTypeBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank account'**
+  String get accountTypeBank;
+
+  /// No description provided for @accountTypeCryptoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto wallet'**
+  String get accountTypeCryptoWallet;
+
+  /// No description provided for @accountTypeRealEstate.
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate account'**
+  String get accountTypeRealEstate;
+
+  /// No description provided for @accountTypeVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle account'**
+  String get accountTypeVehicle;
+
+  /// No description provided for @accountTypeLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability account'**
+  String get accountTypeLiability;
+
+  /// No description provided for @accountTypeCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash account'**
+  String get accountTypeCash;
+
+  /// No description provided for @accountTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other account'**
+  String get accountTypeOther;
+
+  /// No description provided for @accountFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get accountFormCreateTitle;
+
+  /// No description provided for @accountFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit account'**
+  String get accountFormEditTitle;
+
+  /// No description provided for @accountFormDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get accountFormDeleteTooltip;
+
+  /// No description provided for @accountFormDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get accountFormDeleteTitle;
+
+  /// No description provided for @accountFormDeleteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}”? This sync to other devices.'**
+  String accountFormDeleteContent(String name);
+
+  /// No description provided for @accountFormCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get accountFormCancelAction;
+
+  /// No description provided for @accountFormDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get accountFormDeleteAction;
+
+  /// No description provided for @accountFormTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account type'**
+  String get accountFormTypeLabel;
+
+  /// No description provided for @accountFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get accountFormNameLabel;
+
+  /// No description provided for @accountFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the account name'**
+  String get accountFormNameRequired;
+
+  /// No description provided for @accountFormInstitutionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get accountFormInstitutionLabel;
+
+  /// No description provided for @accountFormInstitutionHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank / brokerage / platform (optional)'**
+  String get accountFormInstitutionHelper;
+
+  /// No description provided for @accountFormAccountNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account number / last digits (optional)'**
+  String get accountFormAccountNumberLabel;
+
+  /// No description provided for @accountFormArchivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get accountFormArchivedTitle;
+
+  /// No description provided for @accountFormArchivedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived accounts are hidden from the main list.'**
+  String get accountFormArchivedSubtitle;
+
+  /// No description provided for @accountFormSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get accountFormSaving;
+
+  /// No description provided for @accountFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get accountFormSave;
+
+  /// No description provided for @cashFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record cash balance'**
+  String get cashFormCreateTitle;
+
+  /// No description provided for @cashFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit cash balance'**
+  String get cashFormEditTitle;
+
+  /// No description provided for @cashFormDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get cashFormDeleteTooltip;
+
+  /// No description provided for @cashFormLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String cashFormLoadError(String error);
+
+  /// No description provided for @cashFormNeedAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Please create a bank / cash account first.'**
+  String get cashFormNeedAccountHint;
+
+  /// No description provided for @cashFormCreateAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get cashFormCreateAccountAction;
+
+  /// No description provided for @cashFormBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get cashFormBalanceLabel;
+
+  /// No description provided for @cashFormNicknameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname (optional)'**
+  String get cashFormNicknameLabel;
+
+  /// No description provided for @cashFormNicknameHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. CMB HKD demand, Yu’e Bao'**
+  String get cashFormNicknameHelper;
+
+  /// No description provided for @cashFormSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get cashFormSaving;
+
+  /// No description provided for @cashFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get cashFormSave;
+
+  /// No description provided for @manualAssetDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete asset'**
+  String get manualAssetDeleteTitle;
+
+  /// No description provided for @manualAssetDeleteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this asset record?'**
+  String get manualAssetDeleteContent;
+
+  /// No description provided for @manualAssetDeleteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get manualAssetDeleteCancel;
+
+  /// No description provided for @manualAssetDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get manualAssetDeleteConfirm;
 }
 
 class _AppLocalizationsDelegate

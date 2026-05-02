@@ -44,24 +44,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get homeTodayReturnTitle => '今日收益';
-
-  @override
-  String get homeTodayReturnSubtitle => '尚未接入实时行情。FIR-4 完成后此处显示当日净值变动。';
-
-  @override
-  String get homeAllocationTitle => '资产分布';
-
-  @override
-  String get homeAllocationSubtitle => '将在 FIR-7 完成后显示大类饼图与行业 / 地域分布。';
-
-  @override
-  String get homeFireTitle => 'FIRE 进度';
-
-  @override
-  String get homeFireSubtitle => 'FIR-9 完成后显示距离财务自由的天数与里程碑。';
-
-  @override
   String get assetsAppBarTitle => '资产';
 
   @override
@@ -1856,4 +1838,225 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chartEmptyDefault => '暂无数据';
+
+  @override
+  String get formAmountFieldLabelDefault => '金额';
+
+  @override
+  String get formAmountFieldRequired => '请输入金额';
+
+  @override
+  String get formAmountFieldInvalid => '金额格式不正确';
+
+  @override
+  String get formAmountFieldNegativeNotAllowed => '金额不能为负';
+
+  @override
+  String get formNoteFieldLabelDefault => '备注';
+
+  @override
+  String get formDateFieldClearTooltip => '清除';
+
+  @override
+  String get formDateFieldRequired => '请选择日期';
+
+  @override
+  String get formAccountPickerLabelDefault => '账户';
+
+  @override
+  String get formAccountPickerRequired => '请选择账户';
+
+  @override
+  String get formCurrencyPickerLabelDefault => '币种';
+
+  @override
+  String get formCurrencyPickerRequired => '请选择币种';
+
+  @override
+  String currencyOptionLabel(String code, String name) {
+    return '$code · $name';
+  }
+
+  @override
+  String get currencyNameCNY => '人民币';
+
+  @override
+  String get currencyNameUSD => '美元';
+
+  @override
+  String get currencyNameHKD => '港币';
+
+  @override
+  String get currencyNameEUR => '欧元';
+
+  @override
+  String get currencyNameJPY => '日元';
+
+  @override
+  String get currencyNameGBP => '英镑';
+
+  @override
+  String get currencyNameSGD => '新加坡元';
+
+  @override
+  String get currencyNameAUD => '澳大利亚元';
+
+  @override
+  String get currencyNameCAD => '加拿大元';
+
+  @override
+  String get currencyNameTWD => '新台币';
+
+  @override
+  String get expenseCategoryPickerLabelDefault => '类目';
+
+  @override
+  String get expenseCategoryPickerRequired => '请选择类目';
+
+  @override
+  String get physicalAssetValuationProjected => '预计估值';
+
+  @override
+  String get physicalAssetValuationHistorical => '历史估值';
+
+  @override
+  String get physicalAssetValuationTrendSemanticLabel => '估值走势';
+
+  @override
+  String get accountsAppBarTitle => '账户';
+
+  @override
+  String get accountsCreateAction => '新建账户';
+
+  @override
+  String accountsLoadError(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get accountsEmptyHint => '还没有账户。点击右下角新建一个，再去录入资产。';
+
+  @override
+  String get accountTypeBrokerage => '券商账户';
+
+  @override
+  String get accountTypeBank => '银行账户';
+
+  @override
+  String get accountTypeCryptoWallet => '加密钱包';
+
+  @override
+  String get accountTypeRealEstate => '不动产账户';
+
+  @override
+  String get accountTypeVehicle => '车辆账户';
+
+  @override
+  String get accountTypeLiability => '负债账户';
+
+  @override
+  String get accountTypeCash => '现金账户';
+
+  @override
+  String get accountTypeOther => '其他账户';
+
+  @override
+  String get accountFormCreateTitle => '新建账户';
+
+  @override
+  String get accountFormEditTitle => '编辑账户';
+
+  @override
+  String get accountFormDeleteTooltip => '删除';
+
+  @override
+  String get accountFormDeleteTitle => '删除账户';
+
+  @override
+  String accountFormDeleteContent(String name) {
+    return '确认删除“$name”？该操作可同步给其他设备。';
+  }
+
+  @override
+  String get accountFormCancelAction => '取消';
+
+  @override
+  String get accountFormDeleteAction => '删除';
+
+  @override
+  String get accountFormTypeLabel => '账户类型';
+
+  @override
+  String get accountFormNameLabel => '账户名称';
+
+  @override
+  String get accountFormNameRequired => '请输入账户名称';
+
+  @override
+  String get accountFormInstitutionLabel => '机构';
+
+  @override
+  String get accountFormInstitutionHelper => '银行 / 券商 / 平台名称（可选）';
+
+  @override
+  String get accountFormAccountNumberLabel => '账号 / 末位号（可选）';
+
+  @override
+  String get accountFormArchivedTitle => '归档';
+
+  @override
+  String get accountFormArchivedSubtitle => '归档后不会出现在主列表中。';
+
+  @override
+  String get accountFormSaving => '保存中…';
+
+  @override
+  String get accountFormSave => '保存';
+
+  @override
+  String get cashFormCreateTitle => '录入现金余额';
+
+  @override
+  String get cashFormEditTitle => '编辑现金余额';
+
+  @override
+  String get cashFormDeleteTooltip => '删除';
+
+  @override
+  String cashFormLoadError(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get cashFormNeedAccountHint => '请先创建一个银行 / 现金账户。';
+
+  @override
+  String get cashFormCreateAccountAction => '新建账户';
+
+  @override
+  String get cashFormBalanceLabel => '余额';
+
+  @override
+  String get cashFormNicknameLabel => '备注名（可选）';
+
+  @override
+  String get cashFormNicknameHelper => '例如：招行港币活期、零钱通';
+
+  @override
+  String get cashFormSaving => '保存中…';
+
+  @override
+  String get cashFormSave => '保存';
+
+  @override
+  String get manualAssetDeleteTitle => '删除资产';
+
+  @override
+  String get manualAssetDeleteContent => '确认删除该资产记录？';
+
+  @override
+  String get manualAssetDeleteCancel => '取消';
+
+  @override
+  String get manualAssetDeleteConfirm => '删除';
 }

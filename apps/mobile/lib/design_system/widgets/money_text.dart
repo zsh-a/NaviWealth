@@ -34,6 +34,7 @@ class MoneyText extends StatelessWidget {
     this.textAlign,
     this.compact = false,
     this.showSign = false,
+    this.semanticLabel,
   });
 
   /// Amount in the major unit (e.g. `1234.5` = ¥1,234.50). Accepts `num` so
@@ -72,19 +73,58 @@ class MoneyText extends StatelessWidget {
   /// delta. Negative numbers always show `-`.
   final bool showSign;
 
+  /// Override the screen-reader label. Defaults to `"<amount> <currencyCode>"`
+  /// (e.g. `"1234.50 CNY"`) which reads more naturally than the rendered
+  /// glyph form (`¥1,234.50` would be read as "yen sign one comma two
+  /// three..."). Pass an explicit label when you need locale-aware phrasing
+  /// or want to combine the amount with surrounding context.
+  final String? semanticLabel;
+
   @override
   Widget build(BuildContext context) {
     final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
       color: color,
       fontFeatures: TypographyTokens.tabularFigures,
     );
-    return Text(
+    // Clamp the user's text-scale on numeric displays. The hero net-worth
+    // figure uses [TypographyTokens.numericDisplay] (32pt @ -0.25 letter
+    // spacing) and overflows on cards at the system max of 2.0×; the
+    // tabular-figure layout doesn't reflow gracefully because monetary
+    // figures must stay on a single line. Body / caption sizes still
+    // honour the user's preference fully.
+    final fontSize = effectiveStyle.fontSize ?? 14;
+    final mq = MediaQuery.maybeOf(context);
+    final scaler = mq == null
+        ? TextScaler.noScaling
+        : (fontSize >= 24
+              ? mq.textScaler.clamp(maxScaleFactor: 1.4)
+              : mq.textScaler);
+    final text = Text(
       _format(context),
       style: effectiveStyle,
       textAlign: textAlign,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
+      textScaler: scaler,
     );
+    return Semantics(
+      label: semanticLabel ?? _semanticLabel(),
+      excludeSemantics: true,
+      child: text,
+    );
+  }
+
+  /// Locale-agnostic spoken form so VoiceOver/TalkBack reads numbers
+  /// correctly without misreading currency glyphs as their literal name.
+  String _semanticLabel() {
+    if (amount == null) return currencyCode;
+    final value = amount!;
+    final digits = fractionDigits ?? 2;
+    final magnitude = value.abs().toStringAsFixed(digits);
+    final sign = value < 0
+        ? '-'
+        : (showSign && value > 0 ? '+' : '');
+    return '$sign$magnitude $currencyCode';
   }
 
   String _format(BuildContext context) {

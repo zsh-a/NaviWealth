@@ -13,6 +13,7 @@ import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
 /// Create / edit form for a cash balance asset.
@@ -116,7 +117,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
 
   Future<void> _delete() async {
     if (_initial == null) return;
-    final ok = await _confirmDelete(context);
+    final ok = await confirmManualAssetDelete(context);
     if (ok != true) return;
     setState(() => _busy = true);
     try {
@@ -140,28 +141,31 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEdit ? '编辑现金余额' : '录入现金余额'),
+        title: Text(
+          widget.isEdit ? l10n.cashFormEditTitle : l10n.cashFormCreateTitle,
+        ),
         actions: [
           if (widget.isEdit)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: '删除',
+              tooltip: l10n.cashFormDeleteTooltip,
               onPressed: _busy ? null : _delete,
             ),
         ],
       ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
-        data: (accounts) => _buildForm(accounts),
+        error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
+        data: (accounts) => _buildForm(l10n, accounts),
       ),
     );
   }
 
-  Widget _buildForm(List<Account> accounts) {
+  Widget _buildForm(AppLocalizations l10n, List<Account> accounts) {
     final eligible = accounts
         .where((a) => _eligibleAccountTypes.contains(a.type))
         .toList(growable: false);
@@ -172,11 +176,14 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('请先创建一个银行 / 现金账户。', textAlign: TextAlign.center),
+              Text(
+                l10n.cashFormNeedAccountHint,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: Spacing.s12),
               FilledButton.tonalIcon(
                 icon: const Icon(Icons.add),
-                label: const Text('新建账户'),
+                label: Text(l10n.cashFormCreateAccountAction),
                 onPressed: () => context.go('/accounts/new'),
               ),
             ],
@@ -187,7 +194,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     if (!_hydratedFromList && !widget.isEdit) {
       // Make sure the persisted last-used account is still around. If
       // the user archived/deleted it the persistence is stale; fall back
-      // to the first eligible row instead of a hard "请选择账户" error.
+      // to the first eligible row instead of forcing the user to pick.
       final hasCurrent = _accountId != null &&
           eligible.any((a) => a.id == _accountId);
       if (!hasCurrent) {
@@ -214,7 +221,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
           AmountField(
-            label: '余额',
+            label: l10n.cashFormBalanceLabel,
             controller: _balanceController,
             currencyCode: _currency,
             focusNode: _balanceFocus,
@@ -226,16 +233,16 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             focusNode: _nicknameFocus,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
-            decoration: const InputDecoration(
-              labelText: '备注名（可选）',
-              border: OutlineInputBorder(),
-              helperText: '例如：招行港币活期、零钱通',
+            decoration: InputDecoration(
+              labelText: l10n.cashFormNicknameLabel,
+              border: const OutlineInputBorder(),
+              helperText: l10n.cashFormNicknameHelper,
             ),
           ),
           const SizedBox(height: Spacing.s24),
           FilledButton(
             onPressed: _busy ? null : _save,
-            child: Text(_busy ? '保存中…' : '保存'),
+            child: Text(_busy ? l10n.cashFormSaving : l10n.cashFormSave),
           ),
         ],
       ),
@@ -243,20 +250,24 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
   }
 }
 
-Future<bool?> _confirmDelete(BuildContext context) {
+/// Shared confirmation dialog for soft-deleting a manually-tracked asset
+/// (cash, deposit, wealth product). Returns `true` when the user confirms.
+/// The strings live in ARB so every "delete asset" surface stays in sync.
+Future<bool?> confirmManualAssetDelete(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('删除资产'),
-      content: const Text('确认删除该资产记录？'),
+      title: Text(l10n.manualAssetDeleteTitle),
+      content: Text(l10n.manualAssetDeleteContent),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('取消'),
+          child: Text(l10n.manualAssetDeleteCancel),
         ),
         FilledButton.tonal(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('删除'),
+          child: Text(l10n.manualAssetDeleteConfirm),
         ),
       ],
     ),
