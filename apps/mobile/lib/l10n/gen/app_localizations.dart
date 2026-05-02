@@ -1346,6 +1346,12 @@ abstract class AppLocalizations {
   /// **'Failed to load: {error}'**
   String commonLoadError(String error);
 
+  /// Generic failure snackbar shown when an optimistic form submit (FIR-98) fails after the form has already popped.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your changes. Tap retry.'**
+  String get commonSaveFailed;
+
   /// Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.).
   ///
   /// In en, this message translates to:

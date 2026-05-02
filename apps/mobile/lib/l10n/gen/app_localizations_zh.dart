@@ -671,6 +671,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get commonSaveFailed => '保存失败，点击重试';
+
+  @override
   String get deferredLoadFailedTitle => '该页面加载失败';
 
   @override

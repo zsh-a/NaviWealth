@@ -217,6 +217,7 @@
   "commonLoading": "加载中…",
   "commonError": "出错了",
   "commonLoadError": "加载失败：{error}",
+  "commonSaveFailed": "保存失败，点击重试",
 
   "deferredLoadFailedTitle": "该页面加载失败",
   "deferredLoadRetry": "重试",

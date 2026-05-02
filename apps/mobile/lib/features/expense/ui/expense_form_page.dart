@@ -29,7 +29,8 @@ class ExpenseFormPage extends ConsumerStatefulWidget {
   ConsumerState<ExpenseFormPage> createState() => _ExpenseFormPageState();
 }
 
-class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
+class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
+    with OptimisticFormSubmit<ExpenseFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
@@ -100,45 +101,63 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage> {
       return;
     }
     setState(() => _busy = true);
-    try {
-      final repo = await ref.read(expenseRepositoryProvider.future);
-      final note = _noteController.text.trim().isEmpty
-          ? null
-          : _noteController.text.trim();
-      if (_initial == null) {
-        await repo.create(
-          accountId: _accountId!,
-          categoryId: _categoryId!,
-          amount: amount,
-          currency: _currency!,
-          tradeDate: _date,
-          note: note,
-        );
-      } else {
-        await repo.update(
-          _initial!.id,
-          accountId: _accountId,
-          amount: amount,
-          currency: _currency,
-          tradeDate: _date,
-          categoryId: _categoryId,
-          note: note,
-          clearNote: note == null && (_initial!.note ?? '').isNotEmpty,
-        );
-      }
-      // Persist last-used picks so the next entry skips category/account
-      // tapping. Async, but we don't gate navigation on it.
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberExpense(
-            accountId: _accountId,
-            categoryId: _categoryId,
-            currency: _currency,
-          ));
-      if (!mounted) return;
-      Haptics.success();
-      context.go('/expenses');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    final repo = await ref.read(expenseRepositoryProvider.future);
+    final note = _noteController.text.trim().isEmpty
+        ? null
+        : _noteController.text.trim();
+    final accountId = _accountId!;
+    final categoryId = _categoryId!;
+    final currency = _currency!;
+    final date = _date;
+    final initial = _initial;
+    if (!mounted) return;
+    // Persist last-used picks so the next entry skips category/account
+    // tapping. Fire-and-forget: it's a SharedPreferences write that doesn't
+    // gate the user-visible flow, and the user has already committed by
+    // tapping save.
+    unawaited(
+      ref.read(formDefaultsProvider.notifier).rememberExpense(
+            accountId: accountId,
+            categoryId: categoryId,
+            currency: currency,
+          ),
+    );
+    await submitOptimistic(
+      pop: () {
+        // Fire the success haptic at pop time — the user feels confirmation
+        // the moment the form closes, even though the write is still
+        // in flight. Failure replays via Haptics.error() inside the
+        // OptimisticFormSubmit failure path.
+        Haptics.success();
+        context.go('/expenses');
+      },
+      tag: 'expense',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      retryLabel: l10n.commonRetry,
+      write: () async {
+        if (initial == null) {
+          await repo.create(
+            accountId: accountId,
+            categoryId: categoryId,
+            amount: amount,
+            currency: currency,
+            tradeDate: date,
+            note: note,
+          );
+        } else {
+          await repo.update(
+            initial.id,
+            accountId: accountId,
+            amount: amount,
+            currency: currency,
+            tradeDate: date,
+            categoryId: categoryId,
+            note: note,
+            clearNote: note == null && (initial.note ?? '').isNotEmpty,
+          );
+        }
+      },
+    );
   }
 
   Future<void> _delete() async {
