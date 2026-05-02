@@ -92,4 +92,22 @@ void main() {
     expect(numAt('breakpoint.mobile'), Breakpoints.mobile);
     expect(numAt('breakpoint.desktop'), Breakpoints.desktop);
   });
+
+  test('emerald / crimson migration values match palette', () {
+    // FIR-104 — profit migrated to emerald, loss to soft crimson. The
+    // 500 / 600 pair is what MarketColors hands to dark / light fg.
+    expect(colorAt('color.accent.green.500'), '#10B981');
+    expect(colorAt('color.accent.green.600'), '#059669');
+    expect(colorAt('color.accent.red.500'), '#E11D48');
+    expect(colorAt('color.accent.red.600'), '#BE123C');
+  });
+
+  test('glass tokens declared for both brightnesses', () {
+    // The Dart side carries these as a ThemeExtension (GlassTokens); the
+    // JSON side mirrors them so Tokens Studio / Figma can pick them up.
+    expect(numAt('glass.dark.blurSigma'), 24);
+    expect(numAt('glass.light.blurSigma'), 16);
+    expect(numAt('glass.dark.borderRadius'), 20);
+    expect(numAt('glass.light.borderRadius'), 20);
+  });
 }
