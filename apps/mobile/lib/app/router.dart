@@ -34,6 +34,7 @@ import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import '../features/investment/presentation/trade_entry_form_page.dart';
+import '../features/investment/presentation/transactions_list_page.dart';
 import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
@@ -225,6 +226,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/transactions',
+            name: 'transactions',
+            builder: (context, state) => const TransactionsListPage(),
           ),
           GoRoute(
             path: '/expenses',

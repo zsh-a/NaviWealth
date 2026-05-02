@@ -9,6 +9,8 @@ import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/assets/assets_page.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';
@@ -47,6 +49,12 @@ void main() {
             _cash('cash-2', '现金账户', '8500'),
             _cash('cash-3', '美元活期', '12000'),
           ]),
+        ),
+        securitiesAssetsStreamProvider.overrideWith(
+          (_) => Stream.value(const <Asset>[]),
+        ),
+        holdingsSnapshotProvider.overrideWith(
+          (ref) async => const <String, HoldingSnapshot>{},
         ),
         physicalAssetsListProvider.overrideWith(
           (_) => Stream.value(const <PhysicalAsset>[]),

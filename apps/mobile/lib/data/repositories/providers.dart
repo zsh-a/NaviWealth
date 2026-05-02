@@ -6,6 +6,7 @@ import '../../domain/entities/fx_rate.dart' as dom;
 import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
+import '../domain/enums.dart';
 import '../domain/expense.dart';
 import '../domain/expense_category.dart';
 import 'account_repository.dart';
@@ -69,6 +70,17 @@ final manualAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
 ) async* {
   final repo = await ref.watch(manualAssetRepositoryProvider.future);
   yield* repo.watchManual();
+});
+
+/// Live stream of all non-deleted securities-class assets (stock / ETF /
+/// mutual fund / bond / crypto). The Assets tab subscribes to this so the
+/// portfolio's tradable instruments surface alongside cash and physical
+/// assets — without it, freshly recorded trades have no listing surface
+/// outside the holdings/dashboard pipeline.
+final securitiesAssetsStreamProvider =
+    StreamProvider.autoDispose<List<Asset>>((ref) async* {
+  final repo = await ref.watch(securitiesAssetRepositoryProvider.future);
+  yield* repo.watchSecurities(types: kSecuritiesAssetTypes);
 });
 
 final expenseCategoryRepositoryProvider =
