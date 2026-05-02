@@ -866,6 +866,33 @@
   "expenseFormNoAccountsBody": "Expenses need a funding account. Create one under Accounts, then come back here.",
   "expenseFormNoAccountsCta": "Create account",
 
+  "expenseHistorySectionTitle": "Change history",
+  "expenseHistoryEmpty": "No changes recorded yet.",
+  "expenseHistoryLoadError": "Couldn't load history: {error}",
+  "@expenseHistoryLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "expenseHistoryEventCreated": "Created",
+  "expenseHistoryEventChanged": "Updated",
+  "expenseHistoryEventDeleted": "Deleted",
+  "expenseHistoryEventRestored": "Restored",
+  "expenseHistoryCreatedBody": "Expense recorded.",
+  "expenseHistoryDeletedBody": "Expense deleted.",
+  "expenseHistoryRestoredBody": "Expense restored.",
+  "expenseHistoryFieldAmount": "Amount",
+  "expenseHistoryFieldCurrency": "Currency",
+  "expenseHistoryFieldAccount": "Account",
+  "expenseHistoryFieldCategory": "Category",
+  "expenseHistoryFieldDate": "Date",
+  "expenseHistoryFieldNote": "Note",
+  "expenseHistoryFieldTags": "Tags",
+  "expenseHistoryEmptyValue": "—",
+  "expenseHistoryUnknownReference": "(unknown)",
+  "expenseHistoryReasonLabel": "Reason: {reason}",
+  "@expenseHistoryReasonLabel": {
+    "placeholders": { "reason": { "type": "String" } }
+  },
+
   "aiChatAppBarTitle": "AI assistant",
   "aiChatHistoryTooltip": "Conversation history",
   "aiChatNewSessionTooltip": "New conversation",
