@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+/// FIR-113 visual baseline harness.
+///
+/// All page goldens go through [pumpGoldenPage] so the device profile,
+/// font fallback, theme, and surface size are identical across the suite.
+/// Adding a new page golden should not require re-deriving any of this.
+
+/// Logical mobile profile used for every golden in this directory:
+/// iPhone 14 Pro size at 2x dpr, no text scaling. The width is just under
+/// the [Breakpoints.mobile] cutoff so pages render their single-column
+/// (mobile) layout — desktop two-column / master-detail variants are
+/// out of scope per FIR-113.
+const Size kGoldenLogicalSize = Size(390, 844);
+const double kGoldenDpr = 2.0;
+
+enum GoldenTheme {
+  light,
+  dark,
+  colorblind,
+}
+
+extension GoldenThemeData on GoldenTheme {
+  String get filenameSuffix {
+    switch (this) {
+      case GoldenTheme.light:
+        return 'light';
+      case GoldenTheme.dark:
+        return 'dark';
+      case GoldenTheme.colorblind:
+        return 'colorblind';
+    }
+  }
+
+  ThemeData buildTheme() {
+    switch (this) {
+      case GoldenTheme.light:
+        return AppTheme.light();
+      case GoldenTheme.dark:
+        return AppTheme.dark();
+      case GoldenTheme.colorblind:
+        return AppTheme.dark(marketColorMode: MarketColorMode.colorblind);
+    }
+  }
+}
+
+bool _fontsLoaded = false;
+
+/// Load every font declared in `pubspec.yaml` (Inter, Outfit, AppCnSans).
+///
+/// On CI and on a fresh dev checkout the .woff2 files are gitignored
+/// build artifacts that are stubbed empty by the build system. Loading
+/// them is harmless — the FontLoader call succeeds even when the bytes
+/// don't decode as a real font, and Flutter falls through to its
+/// built-in "Roboto" stub for actual glyph rasterisation. That stub is
+/// the same on Linux CI and developer machines, which is what makes the
+/// baseline reproducible.
+Future<void> loadGoldenFonts() async {
+  if (_fontsLoaded) return;
+  await loadAppFonts();
+  _fontsLoaded = true;
+}
+
+/// Pump a single mobile-size golden of [child] under [variant] and write
+/// the snapshot to `goldens/<name>_<variant>.png` next to the test file.
+///
+/// [overrides] are forwarded to the wrapping [ProviderScope] so each page
+/// stubs its own data providers without leaking dependencies into the
+/// shared harness.
+///
+/// Wrap the call in [testGoldens] from `golden_toolkit` and add the
+/// `'golden'` tag so `flutter test --tags=golden` picks it up. See any of
+/// the page tests in this directory for the canonical pattern.
+Future<void> pumpAndSnapshotMobile(
+  WidgetTester tester, {
+  required String name,
+  required GoldenTheme variant,
+  required Widget child,
+  List<Override> overrides = const [],
+  Locale locale = const Locale('en'),
+}) async {
+  await loadGoldenFonts();
+  await tester.binding.setSurfaceSize(kGoldenLogicalSize);
+  tester.view.physicalSize = Size(
+    kGoldenLogicalSize.width * kGoldenDpr,
+    kGoldenLogicalSize.height * kGoldenDpr,
+  );
+  tester.view.devicePixelRatio = kGoldenDpr;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+  // Wrap every page in a GoRouter so calls like `selectedQueryOf(context)`
+  // and `context.push(...)` resolve. The router serves [child] at `/` and
+  // declares the path-only `/_unused/...` catch-all so any context.push
+  // target invoked from the page (FAB onPressed, etc.) doesn't fail at
+  // build time — pushes into nowhere are silently absorbed at the lookup,
+  // since the test never actually triggers them.
+  final router = GoRouter(
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => child),
+    ],
+    errorBuilder: (_, _) => const SizedBox.shrink(),
+  );
+  addTearDown(router.dispose);
+
+  await tester.pumpWidget(
+    // `disableAnimations: true` quiets the SkeletonBox shimmer
+    // AnimationController (it gates on MediaQuery.disableAnimationsOf in
+    // _syncAnimation) and stops fl_chart entry tweens. Without it the
+    // ticker stays live past the test body and the framework asserts
+    // "A Timer is still pending after the widget tree was disposed."
+    // Goldens want a still frame, not a partial paint of a moving band,
+    // so disabling motion is the right call regardless of the timer fix.
+    MediaQuery(
+      data: const MediaQueryData(disableAnimations: true),
+      child: ProviderScope(
+        overrides: overrides,
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          theme: variant.buildTheme(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: locale,
+          routerConfig: router,
+        ),
+      ),
+    ),
+  );
+  // Drain skeleton → first data frame, glass blur first paint, intro
+  // tweens, etc. Some pages (skeleton shimmer, AI composer cursor) hold
+  // a Ticker open forever; bail after a few seconds and accept whatever
+  // the surface looks like. Goldens are about *visual* steady state, not
+  // about reaching an absent ticker.
+  try {
+    await tester.pumpAndSettle(
+      const Duration(milliseconds: 100),
+      EnginePhase.sendSemanticsUpdate,
+      const Duration(seconds: 4),
+    );
+  } catch (_) {
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+
+  await screenMatchesGolden(tester, '${name}_${variant.filenameSuffix}');
+}
+
+/// Convenience: declare a `testGoldens` block that captures a page in all
+/// three theme variants. The closure receives the variant so callers can
+/// pass it to [pumpAndSnapshotMobile].
+void runAllVariants(
+  String pageName,
+  Future<void> Function(WidgetTester tester, GoldenTheme variant) body,
+) {
+  for (final variant in GoldenTheme.values) {
+    testGoldens(
+      '$pageName — ${variant.filenameSuffix}',
+      (tester) => body(tester, variant),
+      tags: 'golden',
+    );
+  }
+}
