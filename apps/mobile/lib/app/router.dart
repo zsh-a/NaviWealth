@@ -8,7 +8,6 @@ import '../design_system/design_system.dart';
 // is loaded the first time the user navigates to that route. Home ships in
 // main.dart.js to avoid a part-file fetch on first paint. See
 // docs/web-bundle.md for the resulting bundle layout.
-import '../design_system/widgets/glass_navigation_bar.dart';
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
