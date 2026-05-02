@@ -7,6 +7,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
+import '../state/route_context_provider.dart';
 import 'chat_composer.dart';
 import 'message_bubble.dart';
 import 'sessions_panel.dart';
@@ -226,6 +227,8 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
     });
 
     final l10n = AppLocalizations.of(context);
+    final routeCtx = ref.watch(aiRouteContextProvider);
+    final systemContext = routeCtx.toSystemContext();
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Spacing.chatPaneMaxWidth),
@@ -245,6 +248,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
                       .send(
                         text,
                         staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                        systemContext: systemContext,
                       ),
                 ),
               ),
@@ -258,6 +262,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
                     .send(
                       text,
                       staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                      systemContext: systemContext,
                     );
               },
               onCancel: () {

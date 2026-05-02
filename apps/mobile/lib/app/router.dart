@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../design_system/widgets/glass_navigation_bar.dart';
+import '../design_system/design_system.dart';
 
 // Tabs other than home are split into their own dart2js part files; each part
 // is loaded the first time the user navigates to that route. Home ships in
@@ -10,7 +10,10 @@ import '../design_system/widgets/glass_navigation_bar.dart';
 // docs/web-bundle.md for the resulting bundle layout.
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
+import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
+import '../features/ai_chat/ui/ai_chat_sheet.dart';
+import '../features/ai_chat/ui/ai_floating_pill.dart';
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
 import '../features/assets/assets_page.dart' deferred as assets_lib;
@@ -299,7 +302,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
 
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
 
-class _RootShell extends StatelessWidget {
+class _RootShell extends ConsumerWidget {
   const _RootShell({required this.child});
 
   final Widget child;
@@ -312,11 +315,18 @@ class _RootShell extends StatelessWidget {
   static const double _railExtendedBreakpoint = 900;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final location = GoRouter.of(
       context,
     ).routeInformationProvider.value.uri.path;
+
+    // Keep the route context provider in sync with navigation.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(aiRouteContextProvider.notifier).state = AiRouteContext(
+        path: location,
+      );
+    });
     // Sub-routes under `/assets` and `/accounts` keep the Assets tab
     // highlighted: e.g. `/assets/new/cash` is "still" assets-tab content.
     final int index;
@@ -339,31 +349,53 @@ class _RootShell extends StatelessWidget {
       context.go(kPrimaryTabPaths[i]);
     }
 
+    final showPill = !location.startsWith('/ai');
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        if (width >= _desktopBreakpoint) {
-          return _DesktopShell(
+        final isDesktop = width >= _desktopBreakpoint;
+
+        Widget shell;
+        if (isDesktop) {
+          shell = _DesktopShell(
             destinations: destinations,
             selectedIndex: index,
             onDestinationSelected: onSelected,
             child: child,
           );
-        }
-        if (width >= _tabletBreakpoint) {
-          return _TabletShell(
+        } else if (width >= _tabletBreakpoint) {
+          shell = _TabletShell(
             destinations: destinations,
             selectedIndex: index,
             onDestinationSelected: onSelected,
             extended: width >= _railExtendedBreakpoint,
             child: child,
           );
+        } else {
+          shell = _MobileShell(
+            destinations: destinations,
+            selectedIndex: index,
+            onDestinationSelected: onSelected,
+            child: child,
+          );
         }
-        return _MobileShell(
-          destinations: destinations,
-          selectedIndex: index,
-          onDestinationSelected: onSelected,
-          child: child,
+
+        if (!showPill) return shell;
+
+        return Stack(
+          children: [
+            shell,
+            Positioned(
+              right: Spacing.s16,
+              top: isDesktop ? Spacing.s16 : null,
+              bottom: isDesktop ? null : kBottomNavigationBarHeight + Spacing.s16,
+              child: AiFloatingPill(
+                onTap: () => showAiChatSheet(context),
+                onLongPress: () => context.go('/ai'),
+              ),
+            ),
+          ],
         );
       },
     );

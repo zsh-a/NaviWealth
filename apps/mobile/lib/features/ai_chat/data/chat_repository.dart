@@ -84,6 +84,7 @@ class ChatRepository {
     required String sessionId,
     required String ownerUserId,
     required String content,
+    String? systemContext,
     String? model,
     CancelToken? cancelToken,
   }) async {
@@ -128,6 +129,13 @@ class ChatRepository {
     await _store.insertMessage(assistant);
 
     final ctx = buildContextWindow(history: history, pending: content);
+
+    // Prepend route context so the AI knows where the user is.
+    final wireMessages = <WireMessage>[
+      if (systemContext != null && systemContext.isNotEmpty)
+        WireMessage(role: 'system', content: systemContext),
+      ...ctx.wire,
+    ];
     if (ctx.droppedTurns > 0) {
       await insertSystemNotice(
         sessionId: sessionId,
@@ -145,7 +153,7 @@ class ChatRepository {
     try {
       final stream = _api.chat(
         session: session,
-        messages: ctx.wire,
+        messages: wireMessages,
         model: model,
         cancelToken: localCancel,
       );

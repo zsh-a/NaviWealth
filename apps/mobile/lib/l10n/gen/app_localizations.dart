@@ -3414,6 +3414,30 @@ abstract class AppLocalizations {
   /// **'Back to compact view'**
   String get aiChatToolShowCompactView;
 
+  /// No description provided for @aiFloatingPillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get aiFloatingPillLabel;
+
+  /// No description provided for @aiChatSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant'**
+  String get aiChatSheetTitle;
+
+  /// No description provided for @aiChatSheetEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask anything about your finances.'**
+  String get aiChatSheetEmpty;
+
+  /// No description provided for @aiChatSheetExpandTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand to full screen'**
+  String get aiChatSheetExpandTooltip;
+
   /// No description provided for @chartEmptyDefault.
   ///
   /// In en, this message translates to:

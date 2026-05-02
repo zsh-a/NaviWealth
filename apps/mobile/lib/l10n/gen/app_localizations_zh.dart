@@ -1840,6 +1840,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatToolShowCompactView => '返回精简视图';
 
   @override
+  String get aiFloatingPillLabel => '问问 AI';
+
+  @override
+  String get aiChatSheetTitle => 'AI 助手';
+
+  @override
+  String get aiChatSheetEmpty => '随便问问你的财务情况。';
+
+  @override
+  String get aiChatSheetExpandTooltip => '展开全屏';
+
+  @override
   String get chartEmptyDefault => '暂无数据';
 
   @override
