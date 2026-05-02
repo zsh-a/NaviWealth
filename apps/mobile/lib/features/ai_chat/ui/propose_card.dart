@@ -210,7 +210,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onEdit(ReadyProposalPlan plan) async {
-    final result = await showModalBottomSheet<Map<String, Object?>>(
+    final result = await showGlassModalBottomSheet<Map<String, Object?>>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => ProposalEditSheet(

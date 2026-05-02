@@ -32,7 +32,7 @@ class AssetsPage extends ConsumerWidget {
     final manualAsync = ref.watch(manualAssetsStreamProvider);
     final physicalAsync = ref.watch(physicalAssetsListProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l10n.assetsAppBarTitle),
         actions: [
           IconButton(
@@ -61,7 +61,7 @@ class AssetsPage extends ConsumerWidget {
 
   void _showAddSheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    showModalBottomSheet<void>(
+    showGlassModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (ctx) => SafeArea(

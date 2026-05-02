@@ -214,7 +214,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l10n.tradeEntryAppBarTitle),
       ),
       body: accountsAsync.when(

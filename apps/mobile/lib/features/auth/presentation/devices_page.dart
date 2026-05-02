@@ -62,7 +62,7 @@ class DevicesPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(devicesProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l10n.authDevicesTitle),
         actions: [
           IconButton(

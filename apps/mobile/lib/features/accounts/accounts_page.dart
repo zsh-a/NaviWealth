@@ -22,7 +22,7 @@ class AccountsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.accountsAppBarTitle)),
+      appBar: GlassAppBar(title: Text(l10n.accountsAppBarTitle)),
       body: accountsAsync.when(
         data: (accounts) => accounts.isEmpty
             ? const _EmptyAccounts()

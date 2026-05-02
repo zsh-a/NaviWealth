@@ -58,18 +58,36 @@ class AppTheme {
         space: 1,
       ),
       appBarTheme: AppBarTheme(
+        // Glass-aware default: GlassAppBar paints its own backdrop, so
+        // any plain Material AppBar still in the tree should sit on the
+        // canvas surface and tint nothing on scroll.
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge,
       ),
       cardTheme: CardThemeData(
+        // Cards get their depth from a 1-px hairline + a subtle surface
+        // tint, not from a Material drop shadow. In dark mode we drop
+        // shadows entirely; light mode keeps the hairline as a quiet
+        // separator (Sheet/Modal still use AppElevations.level1 directly
+        // when they need extra lift).
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(borderRadius: Radii.brLg),
+        shape: RoundedRectangleBorder(
+          borderRadius: Radii.brLg,
+          side: BorderSide(
+            color: isDark
+                ? const Color(0x0FFFFFFF) // rgba(255,255,255,0.06)
+                : const Color(0x0F000000), // rgba(0,0,0,0.06)
+            width: 1,
+          ),
+        ),
         color: scheme.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
         clipBehavior: Clip.antiAlias,
       ),
       filledButtonTheme: FilledButtonThemeData(

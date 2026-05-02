@@ -24,7 +24,7 @@ class HomePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l10n.homeAppBarTitle),
         actions: [
           IconButton(

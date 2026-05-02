@@ -30,7 +30,7 @@ class PhysicalAssetCreateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required AssetType type,
   }) {
-    return showModalBottomSheet<PhysicalAsset>(
+    return showGlassModalBottomSheet<PhysicalAsset>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,

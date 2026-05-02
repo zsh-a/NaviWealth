@@ -21,7 +21,7 @@ class SettingsPage extends ConsumerWidget {
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsAppBarTitle)),
+      appBar: GlassAppBar(title: Text(l10n.settingsAppBarTitle)),
       body: ListView(
         children: [
           ListTile(
@@ -138,7 +138,7 @@ class SettingsPage extends ConsumerWidget {
     String current,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showGlassModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,

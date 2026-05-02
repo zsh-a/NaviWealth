@@ -144,7 +144,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(
           widget.isEdit ? l10n.cashFormEditTitle : l10n.cashFormCreateTitle,
         ),

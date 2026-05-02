@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../design_system/widgets/glass_navigation_bar.dart';
+
 // Tabs other than home are split into their own dart2js part files; each part
 // is loaded the first time the user navigates to that route. Home ships in
 // main.dart.js to avoid a part-file fetch on first paint. See
@@ -430,9 +432,13 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // `extendBody: true` lets the body paint underneath the bottom nav,
+    // which is what the glass blur composes over — without it, the bar
+    // sits on a solid scaffold gap and the blur has nothing to read.
     return Scaffold(
+      extendBody: true,
       body: child,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: GlassNavigationBar(
         selectedIndex: selectedIndex,
         destinations: [
           for (final d in destinations)

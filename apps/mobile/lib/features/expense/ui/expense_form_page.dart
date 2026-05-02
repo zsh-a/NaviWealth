@@ -209,7 +209,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final categoriesAsync = ref.watch(expenseCategoriesStreamProvider);
     final mostUsedCategoryId = ref.watch(mostUsedExpenseCategoryProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(
           widget.isEdit
               ? l10n.expenseFormEditTitle

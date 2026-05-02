@@ -76,7 +76,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     final categoriesAsync = ref.watch(allExpenseCategoriesStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: const Text('支出'),
         actions: [
           IconButton(
@@ -230,7 +230,7 @@ class _FiltersBar extends StatelessWidget {
                   active: filters.accountId != null,
                   onClear: () => onChanged(filters.copyWith(accountId: null)),
                   onPick: () async {
-                    final picked = await showModalBottomSheet<String?>(
+                    final picked = await showGlassModalBottomSheet<String?>(
                       context: context,
                       builder: (ctx) => SafeArea(
                         child: Column(
@@ -267,7 +267,7 @@ class _FiltersBar extends StatelessWidget {
                   active: filters.categoryId != null,
                   onClear: () => onChanged(filters.copyWith(categoryId: null)),
                   onPick: () async {
-                    final picked = await showModalBottomSheet<String?>(
+                    final picked = await showGlassModalBottomSheet<String?>(
                       context: context,
                       builder: (ctx) => SafeArea(
                         child: ListView(
