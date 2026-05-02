@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Drop-down picker over the user's existing accounts.
 ///
@@ -14,14 +15,17 @@ class AccountPicker extends StatelessWidget {
     required this.accounts,
     required this.value,
     required this.onChanged,
-    this.label = '账户',
+    this.label,
     this.allowedTypes,
   });
 
   final List<Account> accounts;
   final String? value;
   final ValueChanged<String?> onChanged;
-  final String label;
+
+  /// Override the label. When null the localised default
+  /// (`formAccountPickerLabelDefault`) is used.
+  final String? label;
 
   /// If non-null, only accounts whose [AccountType] is in this set are
   /// shown. Asset forms restrict by appropriate account family — e.g.
@@ -30,6 +34,7 @@ class AccountPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final filtered = allowedTypes == null
         ? accounts
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
@@ -37,7 +42,7 @@ class AccountPicker extends StatelessWidget {
       // ignore: deprecated_member_use
       value: value,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: label ?? l10n.formAccountPickerLabelDefault,
         border: const OutlineInputBorder(),
       ),
       items: [
@@ -51,7 +56,8 @@ class AccountPicker extends StatelessWidget {
           ),
       ],
       onChanged: filtered.isEmpty ? null : onChanged,
-      validator: (v) => (v == null || v.isEmpty) ? '请选择账户' : null,
+      validator: (v) =>
+          (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,
     );
   }
 }

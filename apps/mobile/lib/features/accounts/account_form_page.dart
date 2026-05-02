@@ -133,19 +133,20 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
 
   Future<void> _delete() async {
     if (_initial == null) return;
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('删除账户'),
-        content: Text('确认删除“${_initial!.name}”？该操作可同步给其他设备。'),
+        title: Text(l10n.accountFormDeleteTitle),
+        content: Text(l10n.accountFormDeleteContent(_initial!.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            child: Text(l10n.accountFormCancelAction),
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
+            child: Text(l10n.accountFormDeleteAction),
           ),
         ],
       ),
@@ -182,15 +183,20 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEdit ? '编辑账户' : '新建账户'),
+        title: Text(
+          widget.isEdit
+              ? l10n.accountFormEditTitle
+              : l10n.accountFormCreateTitle,
+        ),
         actions: [
           if (widget.isEdit)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: '删除',
+              tooltip: l10n.accountFormDeleteTooltip,
               onPressed: _busy ? null : _delete,
             ),
         ],
@@ -208,15 +214,15 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   DropdownButtonFormField<AccountType>(
                     // ignore: deprecated_member_use
                     value: _type,
-                    decoration: const InputDecoration(
-                      labelText: '账户类型',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormTypeLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     items: [
                       for (final t in AccountType.values)
                         DropdownMenuItem(
                           value: t,
-                          child: Text(accountTypeLabel(t)),
+                          child: Text(accountTypeLabel(l10n, t)),
                         ),
                     ],
                     onChanged: (v) {
@@ -230,12 +236,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     focusNode: _nameFocus,
                     textInputAction: TextInputAction.next,
                     onFieldSubmitted: (_) => _institutionFocus.requestFocus(),
-                    decoration: const InputDecoration(
-                      labelText: '账户名称',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormNameLabel,
+                      border: const OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? '请输入账户名称' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? l10n.accountFormNameRequired
+                        : null,
                   ),
                   const SizedBox(height: Spacing.s12),
                   CurrencyPicker(
@@ -249,10 +256,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     textInputAction: TextInputAction.next,
                     onFieldSubmitted: (_) =>
                         _accountNumberFocus.requestFocus(),
-                    decoration: const InputDecoration(
-                      labelText: '机构',
-                      helperText: '银行 / 券商 / 平台名称（可选）',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormInstitutionLabel,
+                      helperText: l10n.accountFormInstitutionHelper,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: Spacing.s12),
@@ -261,9 +268,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     focusNode: _accountNumberFocus,
                     textInputAction: TextInputAction.next,
                     onFieldSubmitted: (_) => _noteFocus.requestFocus(),
-                    decoration: const InputDecoration(
-                      labelText: '账号 / 末位号（可选）',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormAccountNumberLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: Spacing.s12),
@@ -274,8 +281,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   if (widget.isEdit) ...[
                     const SizedBox(height: Spacing.s12),
                     SwitchListTile(
-                      title: const Text('归档'),
-                      subtitle: const Text('归档后不会出现在主列表中。'),
+                      title: Text(l10n.accountFormArchivedTitle),
+                      subtitle: Text(l10n.accountFormArchivedSubtitle),
                       value: _archived,
                       onChanged: (v) => setState(() => _archived = v),
                     ),
@@ -283,7 +290,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   const SizedBox(height: Spacing.s24),
                   FilledButton(
                     onPressed: _busy ? null : _save,
-                    child: Text(_busy ? '保存中…' : '保存'),
+                    child: Text(
+                      _busy ? l10n.accountFormSaving : l10n.accountFormSave,
+                    ),
                   ),
                 ],
               ),

@@ -10,6 +10,7 @@ import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/shared/forms/local_securities_picker.dart';
 import 'package:naviwealth/features/shared/forms/manual_security_sheet.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Configurable [MarketDataService] stub for the FIR-78 enrichment tests.
 ///
@@ -78,6 +79,13 @@ Future<LocalSecurityChoice?> _openSheet(
         marketDataServiceProvider.overrideWith((_) async => market),
       ],
       child: MaterialApp(
+        // The sheet now reads validator messages and the picker labels via
+        // AppLocalizations; without these delegates the shared widgets
+        // throw at build time. The sheet itself still renders Chinese
+        // strings ("从网络导入" et al) directly, so we pin the locale to zh.
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('zh'),
         home: Builder(
           builder: (ctx) => Scaffold(
             body: Center(
@@ -204,6 +212,9 @@ void main() {
           marketDataServiceProvider.overrideWith((_) async => market),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('zh'),
           home: Builder(
             builder: (ctx) => Scaffold(
               body: Center(

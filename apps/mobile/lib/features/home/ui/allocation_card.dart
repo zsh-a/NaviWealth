@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../liabilities/ui/liability_l10n.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
 
@@ -372,9 +373,9 @@ class CategoryDrillDownSheet extends StatelessWidget {
                       ),
                     ),
                     title: Text(item.name),
-                    subtitle: item.subtitle == null
+                    subtitle: _itemSubtitle(l10n, item) == null
                         ? null
-                        : Text(item.subtitle!),
+                        : Text(_itemSubtitle(l10n, item)!),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -411,5 +412,16 @@ class CategoryDrillDownSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Picks the localised secondary line for a drill-down row. Liability
+  /// rows carry a [LiabilityType]; everything else uses the pre-rendered
+  /// [CategoryItem.subtitle] (which the aggregator builds from rate /
+  /// currency hints). Returns null when there's nothing meaningful to show.
+  String? _itemSubtitle(AppLocalizations l10n, CategoryItem item) {
+    if (item.liabilityType != null) {
+      return liabilityTypeLabel(l10n, item.liabilityType!);
+    }
+    return item.subtitle;
   }
 }

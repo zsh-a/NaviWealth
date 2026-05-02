@@ -1,22 +1,62 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/gen/app_localizations.dart';
+
 /// ISO-4217 codes the app surfaces in the picker by default.
 ///
 /// The DB-side currency dictionary (FIR-19's `currencies` table) is the
 /// long-tail source of truth; this list is the short, opinionated default
 /// the form ships with so users don't have to hunt for the common ones.
-const List<({String code, String label})> kCommonCurrencies = [
-  (code: 'CNY', label: 'CNY · 人民币'),
-  (code: 'USD', label: 'USD · US Dollar'),
-  (code: 'HKD', label: 'HKD · Hong Kong Dollar'),
-  (code: 'EUR', label: 'EUR · Euro'),
-  (code: 'JPY', label: 'JPY · 日元'),
-  (code: 'GBP', label: 'GBP · British Pound'),
-  (code: 'SGD', label: 'SGD · Singapore Dollar'),
-  (code: 'AUD', label: 'AUD · Australian Dollar'),
-  (code: 'CAD', label: 'CAD · Canadian Dollar'),
-  (code: 'TWD', label: 'TWD · 新台币'),
+/// Display labels resolve through [currencyDisplayLabel] so each currency
+/// reads in the user's locale.
+const List<String> kCommonCurrencies = [
+  'CNY',
+  'USD',
+  'HKD',
+  'EUR',
+  'JPY',
+  'GBP',
+  'SGD',
+  'AUD',
+  'CAD',
+  'TWD',
 ];
+
+/// Look up the localised display name for an ISO-4217 currency code.
+/// Falls back to the bare code when no entry exists in the ARB tables.
+String currencyDisplayName(AppLocalizations l10n, String code) {
+  switch (code) {
+    case 'CNY':
+      return l10n.currencyNameCNY;
+    case 'USD':
+      return l10n.currencyNameUSD;
+    case 'HKD':
+      return l10n.currencyNameHKD;
+    case 'EUR':
+      return l10n.currencyNameEUR;
+    case 'JPY':
+      return l10n.currencyNameJPY;
+    case 'GBP':
+      return l10n.currencyNameGBP;
+    case 'SGD':
+      return l10n.currencyNameSGD;
+    case 'AUD':
+      return l10n.currencyNameAUD;
+    case 'CAD':
+      return l10n.currencyNameCAD;
+    case 'TWD':
+      return l10n.currencyNameTWD;
+    default:
+      return code;
+  }
+}
+
+/// Picker-row label (`"USD · US Dollar"` / `"USD · 美元"`). Composed via
+/// the `currencyOptionLabel` ARB so locales that prefer a different
+/// separator can override the template.
+String currencyDisplayLabel(AppLocalizations l10n, String code) {
+  return l10n.currencyOptionLabel(code, currencyDisplayName(l10n, code));
+}
 
 /// Form-friendly currency dropdown.
 ///
@@ -27,17 +67,21 @@ class CurrencyPicker extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
-    this.label = '币种',
+    this.label,
     this.options = kCommonCurrencies,
   });
 
   final String? value;
   final ValueChanged<String?> onChanged;
-  final String label;
-  final List<({String code, String label})> options;
+
+  /// Override the label. When null the localised default
+  /// (`formCurrencyPickerLabelDefault`) is used.
+  final String? label;
+  final List<String> options;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return DropdownButtonFormField<String>(
       // `value` is deprecated for `initialValue` after Flutter 3.33, but the
       // replacement is one-shot: it only honours the prop on first build.
@@ -46,15 +90,19 @@ class CurrencyPicker extends StatelessWidget {
       // ignore: deprecated_member_use
       value: value,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: label ?? l10n.formCurrencyPickerLabelDefault,
         border: const OutlineInputBorder(),
       ),
       items: [
-        for (final option in options)
-          DropdownMenuItem(value: option.code, child: Text(option.label)),
+        for (final code in options)
+          DropdownMenuItem(
+            value: code,
+            child: Text(currencyDisplayLabel(l10n, code)),
+          ),
       ],
       onChanged: onChanged,
-      validator: (v) => (v == null || v.isEmpty) ? '请选择币种' : null,
+      validator: (v) =>
+          (v == null || v.isEmpty) ? l10n.formCurrencyPickerRequired : null,
     );
   }
 }

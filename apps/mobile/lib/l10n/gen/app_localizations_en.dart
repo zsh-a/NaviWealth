@@ -44,27 +44,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get homeTodayReturnTitle => 'Today\'s Return';
-
-  @override
-  String get homeTodayReturnSubtitle =>
-      'Live quotes pending. FIR-4 will populate this card.';
-
-  @override
-  String get homeAllocationTitle => 'Asset Allocation';
-
-  @override
-  String get homeAllocationSubtitle =>
-      'FIR-7 will surface category, sector, and region breakdowns here.';
-
-  @override
-  String get homeFireTitle => 'FIRE Progress';
-
-  @override
-  String get homeFireSubtitle =>
-      'FIR-9 will show days to financial independence and milestones.';
-
-  @override
   String get assetsAppBarTitle => 'Assets';
 
   @override
@@ -1937,4 +1916,230 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartEmptyDefault => 'No data yet';
+
+  @override
+  String get formAmountFieldLabelDefault => 'Amount';
+
+  @override
+  String get formAmountFieldRequired => 'Enter an amount';
+
+  @override
+  String get formAmountFieldInvalid => 'Invalid amount format';
+
+  @override
+  String get formAmountFieldNegativeNotAllowed => 'Amount cannot be negative';
+
+  @override
+  String get formNoteFieldLabelDefault => 'Notes';
+
+  @override
+  String get formDateFieldClearTooltip => 'Clear';
+
+  @override
+  String get formDateFieldRequired => 'Pick a date';
+
+  @override
+  String get formAccountPickerLabelDefault => 'Account';
+
+  @override
+  String get formAccountPickerRequired => 'Pick an account';
+
+  @override
+  String get formCurrencyPickerLabelDefault => 'Currency';
+
+  @override
+  String get formCurrencyPickerRequired => 'Pick a currency';
+
+  @override
+  String currencyOptionLabel(String code, String name) {
+    return '$code · $name';
+  }
+
+  @override
+  String get currencyNameCNY => 'Chinese Yuan';
+
+  @override
+  String get currencyNameUSD => 'US Dollar';
+
+  @override
+  String get currencyNameHKD => 'Hong Kong Dollar';
+
+  @override
+  String get currencyNameEUR => 'Euro';
+
+  @override
+  String get currencyNameJPY => 'Japanese Yen';
+
+  @override
+  String get currencyNameGBP => 'British Pound';
+
+  @override
+  String get currencyNameSGD => 'Singapore Dollar';
+
+  @override
+  String get currencyNameAUD => 'Australian Dollar';
+
+  @override
+  String get currencyNameCAD => 'Canadian Dollar';
+
+  @override
+  String get currencyNameTWD => 'New Taiwan Dollar';
+
+  @override
+  String get expenseCategoryPickerLabelDefault => 'Category';
+
+  @override
+  String get expenseCategoryPickerRequired => 'Pick a category';
+
+  @override
+  String get physicalAssetValuationProjected => 'Projected valuation';
+
+  @override
+  String get physicalAssetValuationHistorical => 'Historical valuation';
+
+  @override
+  String get physicalAssetValuationTrendSemanticLabel => 'Valuation trend';
+
+  @override
+  String get accountsAppBarTitle => 'Accounts';
+
+  @override
+  String get accountsCreateAction => 'New account';
+
+  @override
+  String accountsLoadError(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String get accountsEmptyHint =>
+      'No accounts yet. Tap the bottom-right button to add one, then come back to record assets.';
+
+  @override
+  String get accountTypeBrokerage => 'Brokerage account';
+
+  @override
+  String get accountTypeBank => 'Bank account';
+
+  @override
+  String get accountTypeCryptoWallet => 'Crypto wallet';
+
+  @override
+  String get accountTypeRealEstate => 'Real estate account';
+
+  @override
+  String get accountTypeVehicle => 'Vehicle account';
+
+  @override
+  String get accountTypeLiability => 'Liability account';
+
+  @override
+  String get accountTypeCash => 'Cash account';
+
+  @override
+  String get accountTypeOther => 'Other account';
+
+  @override
+  String get accountFormCreateTitle => 'New account';
+
+  @override
+  String get accountFormEditTitle => 'Edit account';
+
+  @override
+  String get accountFormDeleteTooltip => 'Delete';
+
+  @override
+  String get accountFormDeleteTitle => 'Delete account';
+
+  @override
+  String accountFormDeleteContent(String name) {
+    return 'Delete “$name”? This sync to other devices.';
+  }
+
+  @override
+  String get accountFormCancelAction => 'Cancel';
+
+  @override
+  String get accountFormDeleteAction => 'Delete';
+
+  @override
+  String get accountFormTypeLabel => 'Account type';
+
+  @override
+  String get accountFormNameLabel => 'Account name';
+
+  @override
+  String get accountFormNameRequired => 'Enter the account name';
+
+  @override
+  String get accountFormInstitutionLabel => 'Institution';
+
+  @override
+  String get accountFormInstitutionHelper =>
+      'Bank / brokerage / platform (optional)';
+
+  @override
+  String get accountFormAccountNumberLabel =>
+      'Account number / last digits (optional)';
+
+  @override
+  String get accountFormArchivedTitle => 'Archived';
+
+  @override
+  String get accountFormArchivedSubtitle =>
+      'Archived accounts are hidden from the main list.';
+
+  @override
+  String get accountFormSaving => 'Saving…';
+
+  @override
+  String get accountFormSave => 'Save';
+
+  @override
+  String get cashFormCreateTitle => 'Record cash balance';
+
+  @override
+  String get cashFormEditTitle => 'Edit cash balance';
+
+  @override
+  String get cashFormDeleteTooltip => 'Delete';
+
+  @override
+  String cashFormLoadError(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String get cashFormNeedAccountHint =>
+      'Please create a bank / cash account first.';
+
+  @override
+  String get cashFormCreateAccountAction => 'New account';
+
+  @override
+  String get cashFormBalanceLabel => 'Balance';
+
+  @override
+  String get cashFormNicknameLabel => 'Nickname (optional)';
+
+  @override
+  String get cashFormNicknameHelper => 'e.g. CMB HKD demand, Yu’e Bao';
+
+  @override
+  String get cashFormSaving => 'Saving…';
+
+  @override
+  String get cashFormSave => 'Save';
+
+  @override
+  String get manualAssetDeleteTitle => 'Delete asset';
+
+  @override
+  String get manualAssetDeleteContent => 'Delete this asset record?';
+
+  @override
+  String get manualAssetDeleteCancel => 'Cancel';
+
+  @override
+  String get manualAssetDeleteConfirm => 'Delete';
 }

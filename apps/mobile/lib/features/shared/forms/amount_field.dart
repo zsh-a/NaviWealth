@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Decimal-precision amount entry.
 ///
@@ -96,6 +97,7 @@ class _AmountFieldState extends State<AmountField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final pattern = widget.allowNegative
         ? RegExp(r'^-?\d*\.?\d*$')
         : RegExp(r'^\d*\.?\d*$');
@@ -118,11 +120,13 @@ class _AmountFieldState extends State<AmountField> {
       validator: (value) {
         final trimmed = value?.trim() ?? '';
         if (trimmed.isEmpty) {
-          return widget.required ? '请输入金额' : null;
+          return widget.required ? l10n.formAmountFieldRequired : null;
         }
         final parsed = Decimal.tryParse(trimmed);
-        if (parsed == null) return '金额格式不正确';
-        if (!widget.allowNegative && parsed < Decimal.zero) return '金额不能为负';
+        if (parsed == null) return l10n.formAmountFieldInvalid;
+        if (!widget.allowNegative && parsed < Decimal.zero) {
+          return l10n.formAmountFieldNegativeNotAllowed;
+        }
         return null;
       },
       onChanged: widget.onChanged == null

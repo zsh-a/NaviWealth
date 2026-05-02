@@ -163,13 +163,13 @@ class SettingsPage extends ConsumerWidget {
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    for (final option in kCommonCurrencies)
+                    for (final code in kCommonCurrencies)
                       ListTile(
-                        title: Text(option.label),
-                        trailing: option.code == current
+                        title: Text(currencyDisplayLabel(l10n, code)),
+                        trailing: code == current
                             ? const Icon(Icons.check)
                             : null,
-                        onTap: () => Navigator.of(ctx).pop(option.code),
+                        onTap: () => Navigator.of(ctx).pop(code),
                       ),
                   ],
                 ),
