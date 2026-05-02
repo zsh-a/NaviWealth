@@ -75,6 +75,19 @@ class Accounts extends Table with SyncableTable {
   TextColumn get note => text().nullable()();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
+  /// FIR-126 — accounting classification (asset / liability / income /
+  /// expense / equity). See [AccountCategory] for the why and the
+  /// migration in `app_database.dart` (v8) for the back-fill rules.
+  ///
+  /// Defaulting to `asset` at the column level lets us add the column
+  /// non-null in the v8 ALTER TABLE without a separate UPDATE step on
+  /// users who only ever held positive balances; the migration still
+  /// rewrites the seven non-`liability` AccountTypes explicitly so the
+  /// fact stays expressed in code rather than relying on the SQL default.
+  TextColumn get category => text()
+      .map(const EnumStringConverter(AccountCategory.values))
+      .withDefault(Constant(AccountCategory.asset.name))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -138,14 +151,12 @@ class Liabilities extends Table with SyncableTable {
   TextColumn get principal => text().map(const DecimalConverter())();
   TextColumn get interestRate => text().map(const DecimalConverter())();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
-  TextColumn get paymentMethod =>
-      text().map(const EnumStringConverter(RepaymentMethod.values)).withDefault(
-        Constant(RepaymentMethod.equalInstallment.name),
-      )();
-  TextColumn get rateType =>
-      text().map(const EnumStringConverter(LiabilityRateType.values)).withDefault(
-        Constant(LiabilityRateType.fixed.name),
-      )();
+  TextColumn get paymentMethod => text()
+      .map(const EnumStringConverter(RepaymentMethod.values))
+      .withDefault(Constant(RepaymentMethod.equalInstallment.name))();
+  TextColumn get rateType => text()
+      .map(const EnumStringConverter(LiabilityRateType.values))
+      .withDefault(Constant(LiabilityRateType.fixed.name))();
   TextColumn get accountId => text().nullable()();
   DateTimeColumn get startDate => dateTime().nullable()();
   DateTimeColumn get endDate => dateTime().nullable()();

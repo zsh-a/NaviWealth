@@ -55,9 +55,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Production constructor: opens an on-disk SQLite database.
   AppDatabase.open({String? dbFileName})
-    : super(
-        openAppConnection(dbFileName: dbFileName ?? defaultDbFileName),
-      );
+    : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   /// Schema history:
   ///  - v2 (FIR-34) — SyncEngine outbox + cursor key/value store.
@@ -85,8 +83,18 @@ class AppDatabase extends _$AppDatabase {
   ///    on first launch from a versioned asset bundle (see
   ///    `SecuritiesCatalogLoader`); it is local-only and does not
   ///    participate in OpLog sync.
+  ///  - v8 (FIR-126) — Adds `accounts.category` (asset / liability /
+  ///    income / expense / equity), the accounting classification that
+  ///    P2-A's double-entry posting model leans on. Existing rows are
+  ///    back-filled from `accounts.type`: `liability` carriers map to
+  ///    [AccountCategory.liability] and everything else to
+  ///    [AccountCategory.asset] — see [backfillAccountCategory]. The
+  ///    income / expense / equity virtual *system accounts* are seeded at
+  ///    repository level (see `AccountRepository.seedSystemAccounts`)
+  ///    rather than in the migration so the seed shares the outbox /
+  ///    HLC plumbing every other repo write goes through.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -122,6 +130,9 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(securitiesCatalogMeta);
             await _createSecuritiesCatalogFts(this);
             await _createSecuritiesCatalogIndexes(this);
+          case 8:
+            await m.addColumn(accounts, accounts.category);
+            await backfillAccountCategory(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -315,9 +326,7 @@ Future<SecuritiesBackfillReport> backfillSecuritiesAssetsFromTransactions(
     // the new asset row from. Picking the *latest* transaction per asset
     // matches the LWW intuition — if a user has been trading AAPL since
     // 2019, we anchor the asset row to their most recent trade.
-    final rows = await db
-        .customSelect(
-          '''
+    final rows = await db.customSelect('''
           SELECT
             t.asset_id      AS asset_id,
             t.currency      AS currency,
@@ -342,9 +351,7 @@ Future<SecuritiesBackfillReport> backfillSecuritiesAssetsFromTransactions(
           WHERE t.asset_id IS NOT NULL
             AND t.deleted_at IS NULL
           GROUP BY t.asset_id, t.currency
-          ''',
-        )
-        .get();
+          ''').get();
 
     final report = SecuritiesBackfillReport();
     for (final row in rows) {
@@ -438,6 +445,24 @@ bool _looksLikeCanonicalAssetId(String id) {
   if (colon <= 0) return false;
   final prefix = id.substring(0, colon);
   return assetMarketFromWire(prefix) != null;
+}
+
+/// FIR-126 v8 backfill: rewrites every existing `accounts.category` value
+/// from the prior `accounts.type` carrier shape, mirroring the rules
+/// documented on the issue. Public so the migration test can invoke it
+/// directly against a hand-rolled fixture without rehearsing the full
+/// schema-version-bump dance.
+///
+/// The column was added with a column-level default of `'asset'`, so this
+/// step is mostly explicit-about-its-intent: we only have to overwrite
+/// rows whose carrier is [AccountType.liability]. Doing so as a single
+/// `UPDATE` keeps the migration cheap on installs with many accounts and
+/// avoids opening a transaction we don't otherwise need.
+Future<void> backfillAccountCategory(AppDatabase db) async {
+  await db.customStatement('UPDATE accounts SET category = ? WHERE type = ?', [
+    AccountCategory.liability.name,
+    AccountType.liability.name,
+  ]);
 }
 
 /// FIR-76 — contentless FTS5 index over the seed catalog. We use

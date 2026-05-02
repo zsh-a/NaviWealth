@@ -10,7 +10,7 @@ import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../settings/data/base_currency_preference.dart';
 import '../shared/forms/forms.dart';
-import 'accounts_page.dart' show accountTypeLabel;
+import 'accounts_page.dart' show accountCategoryLabel, accountTypeLabel;
 
 /// Create / edit page for a single [Account].
 ///
@@ -45,6 +45,15 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   final _noteFocus = FocusNode();
 
   AccountType _type = AccountType.bank;
+  AccountCategory _category = defaultCategoryForAccountType(AccountType.bank);
+
+  /// Tracks whether the user has explicitly picked a [_category] yet. Until
+  /// they do, switching [_type] auto-syncs the suggestion (so picking
+  /// "Liability account" snaps the category to liability without needing
+  /// a second tap). Once the user touches the category dropdown we leave
+  /// the value alone — they may legitimately want a non-default mapping
+  /// (e.g. classifying an "Other" carrier as income).
+  bool _categoryUserPicked = false;
   String? _currency;
   bool _archived = false;
   bool _busy = false;
@@ -74,6 +83,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       _accountNumberController.text = existing.accountNumber ?? '';
       _noteController.text = existing.note ?? '';
       _type = existing.type;
+      _category = existing.category;
+      // The persisted value already reflects the user's choice; treat it
+      // as user-picked so changing the type doesn't silently re-default
+      // the category in an edit flow.
+      _categoryUserPicked = true;
       _currency = existing.currency;
       _archived = existing.archived;
     });
@@ -87,6 +101,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     if (!mounted) return;
 
     final type = _type;
+    final category = _category;
     final name = _nameController.text.trim();
     final currency = _currency!;
     final institution = _emptyToNull(_institutionController.text);
@@ -109,6 +124,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
             type: type,
             name: name,
             currency: currency,
+            category: category,
             institution: institution,
             accountNumber: accountNumber,
             note: note,
@@ -118,6 +134,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
             initial.id,
             name: name,
             currency: currency,
+            category: category != initial.category ? category : null,
             institution: institution ?? '',
             clearInstitution: institution == null,
             accountNumber: accountNumber ?? '',
@@ -188,11 +205,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     final initial = _initial;
     final title = widget.isEdit
         ? (initial != null
-            ? OptionalHero(
-                tag: 'account-${initial.id}-name',
-                child: Text(initial.name),
-              )
-            : Text(l10n.accountFormEditTitle))
+              ? OptionalHero(
+                  tag: 'account-${initial.id}-name',
+                  child: Text(initial.name),
+                )
+              : Text(l10n.accountFormEditTitle))
         : Text(l10n.accountFormCreateTitle);
     return Scaffold(
       appBar: GlassAppBar(
@@ -232,7 +249,36 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     ],
                     onChanged: (v) {
                       if (v == null) return;
-                      setState(() => _type = v);
+                      setState(() {
+                        _type = v;
+                        if (!_categoryUserPicked) {
+                          _category = defaultCategoryForAccountType(v);
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: Spacing.s12),
+                  DropdownButtonFormField<AccountCategory>(
+                    // ignore: deprecated_member_use
+                    value: _category,
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormCategoryLabel,
+                      helperText: l10n.accountFormCategoryHelper,
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: [
+                      for (final c in AccountCategory.values)
+                        DropdownMenuItem(
+                          value: c,
+                          child: Text(accountCategoryLabel(l10n, c)),
+                        ),
+                    ],
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() {
+                        _category = v;
+                        _categoryUserPicked = true;
+                      });
                     },
                   ),
                   const SizedBox(height: Spacing.s12),
@@ -259,8 +305,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     controller: _institutionController,
                     focusNode: _institutionFocus,
                     textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) =>
-                        _accountNumberFocus.requestFocus(),
+                    onFieldSubmitted: (_) => _accountNumberFocus.requestFocus(),
                     decoration: InputDecoration(
                       labelText: l10n.accountFormInstitutionLabel,
                       helperText: l10n.accountFormInstitutionHelper,
@@ -279,10 +324,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     ),
                   ),
                   const SizedBox(height: Spacing.s12),
-                  NoteField(
-                    controller: _noteController,
-                    focusNode: _noteFocus,
-                  ),
+                  NoteField(controller: _noteController, focusNode: _noteFocus),
                   if (widget.isEdit) ...[
                     const SizedBox(height: Spacing.s12),
                     SwitchListTile(
@@ -294,7 +336,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   ],
                   const SizedBox(height: Spacing.s24),
                   AppButton.primary(
-                    label: _busy ? l10n.accountFormSaving : l10n.accountFormSave,
+                    label: _busy
+                        ? l10n.accountFormSaving
+                        : l10n.accountFormSave,
                     onPressed: _busy ? null : _save,
                   ),
                 ],
