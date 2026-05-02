@@ -52,7 +52,7 @@ class ValueAxis {
     this.currencyCode,
     this.fractionDigits,
     this.maxLabels = 5,
-    this.showGrid = true,
+    this.showGrid = false,
     this.locale,
   });
 
@@ -61,7 +61,7 @@ class ValueAxis {
     String currencyCode = 'CNY',
     int? fractionDigits,
     int maxLabels = 5,
-    bool showGrid = true,
+    bool showGrid = false,
     String? locale,
   }) {
     return ValueAxis(
@@ -79,7 +79,7 @@ class ValueAxis {
   factory ValueAxis.percent({
     int? fractionDigits = 0,
     int maxLabels = 5,
-    bool showGrid = true,
+    bool showGrid = false,
     String? locale,
   }) {
     return ValueAxis(

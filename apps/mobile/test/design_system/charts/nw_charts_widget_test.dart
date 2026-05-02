@@ -130,6 +130,103 @@ void main() {
       final chart = tester.widget<LineChart>(find.byType(LineChart));
       expect(chart.data.lineBarsData.first.dashArray, isNotNull);
     });
+
+    testWidgets('renders curved lines by default', (tester) async {
+      await tester.pumpWidget(
+        _wrap(NwLineChart(
+          series: [
+            ChartSeries(
+              name: 'main',
+              points: List.generate(
+                10,
+                (i) => ChartPoint(x: i.toDouble(), y: i.toDouble()),
+              ),
+            ),
+          ],
+          xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+        )),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.isCurved, isTrue);
+    });
+
+    testWidgets('filled: true uses gradient for area fill', (tester) async {
+      await tester.pumpWidget(
+        _wrap(NwLineChart(
+          filled: true,
+          series: [
+            ChartSeries(
+              name: 'area',
+              points: List.generate(
+                5,
+                (i) => ChartPoint(x: i.toDouble(), y: i * 10.0),
+              ),
+            ),
+          ],
+          xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+        )),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      final bar = chart.data.lineBarsData.first;
+      expect(bar.belowBarData.show, isTrue);
+      expect(bar.belowBarData.gradient, isNotNull);
+    });
+
+    testWidgets(
+        'multi-series: comparison series have reduced opacity',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(NwLineChart(
+          series: [
+            ChartSeries(
+              name: 'primary',
+              points: List.generate(
+                5,
+                (i) => ChartPoint(x: i.toDouble(), y: i * 10.0),
+              ),
+            ),
+            ChartSeries(
+              name: 'benchmark',
+              intent: SeriesIntent.benchmark,
+              points: List.generate(
+                5,
+                (i) => ChartPoint(x: i.toDouble(), y: i * 5.0),
+              ),
+            ),
+          ],
+          xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+        )),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      // Primary series should be at full opacity.
+      final primary = chart.data.lineBarsData[0];
+      expect(primary.color!.a, closeTo(1.0, 0.01));
+      // Comparison series should be at 60% opacity.
+      final comparison = chart.data.lineBarsData[1];
+      expect(comparison.color!.a, closeTo(0.6, 0.05));
+      expect(comparison.dashArray, isNotNull);
+    });
+
+    testWidgets('ValueAxis.showGrid defaults to false', (tester) async {
+      late ValueAxis captured;
+      await tester.pumpWidget(
+        _wrap(Builder(builder: (ctx) {
+          captured = const ValueAxis();
+          return const NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'p',
+                points: [
+                  ChartPoint(x: 0, y: 0),
+                  ChartPoint(x: 1, y: 1),
+                ],
+              ),
+            ],
+          );
+        })),
+      );
+      expect(captured.showGrid, isFalse);
+    });
   });
 
   group('NwAreaChart', () {
@@ -247,6 +344,43 @@ void main() {
         Slice(label: 'b', value: 0),
       ])));
       expect(find.byType(EmptyChartPlaceholder), findsOneWidget);
+    });
+
+    testWidgets('center slot shows total by default', (tester) async {
+      await tester.pumpWidget(_wrap(const NwPieChart(
+        slices: [
+          Slice(label: 'Stocks', value: 60),
+          Slice(label: 'Bonds', value: 30),
+          Slice(label: 'Cash', value: 10),
+        ],
+      )));
+      // Total = 100, should display "100" and "Total" in center.
+      expect(find.text('100'), findsOneWidget);
+      expect(find.text('Total'), findsOneWidget);
+    });
+
+    testWidgets('sectionsSpace defaults to 3', (tester) async {
+      await tester.pumpWidget(_wrap(const NwPieChart(
+        slices: [
+          Slice(label: 'A', value: 50),
+          Slice(label: 'B', value: 50),
+        ],
+      )));
+      final pie = tester.widget<PieChart>(find.byType(PieChart));
+      expect(pie.data.sectionsSpace, 3);
+    });
+
+    testWidgets('hole defaults to 0.62', (tester) async {
+      // Verify the default hole value by checking centerSpaceRadius.
+      // centerSpaceRadius = hole * 80 = 0.62 * 80 = 49.6
+      await tester.pumpWidget(_wrap(const NwPieChart(
+        slices: [
+          Slice(label: 'A', value: 50),
+          Slice(label: 'B', value: 50),
+        ],
+      )));
+      final pie = tester.widget<PieChart>(find.byType(PieChart));
+      expect(pie.data.centerSpaceRadius, closeTo(49.6, 0.1));
     });
   });
 }
