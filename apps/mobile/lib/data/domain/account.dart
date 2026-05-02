@@ -16,6 +16,13 @@ abstract class Account with _$Account {
     String? accountNumber,
     String? note,
     @Default(false) bool archived,
+
+    /// FIR-126 — accounting classification of the account
+    /// (asset / liability / income / expense / equity). Defaults to
+    /// [AccountCategory.asset] for back-compat with code paths that still
+    /// construct an [Account] without a category; UI / repo callers
+    /// always supply an explicit value.
+    @Default(AccountCategory.asset) AccountCategory category,
     required SyncMeta sync,
   }) = _Account;
 }

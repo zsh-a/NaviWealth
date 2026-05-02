@@ -42,10 +42,18 @@ class AccountRepository {
   // ---------- Reads ----------
 
   /// Live stream of non-archived, non-deleted accounts ordered by name.
+  ///
+  /// FIR-126: virtual system accounts (`system-account:*`) are filtered
+  /// out so they never appear in the user-facing list / picker. They
+  /// remain queryable via [findById] and through the system-account
+  /// helpers on this repository — the caller doing posting work always
+  /// resolves them deliberately, so hiding them everywhere else keeps the
+  /// "real account" surface from getting cluttered.
   Stream<List<Account>> watchActive() {
     final query = _db.select(_db.accounts)
       ..where((t) => t.deletedAt.isNull())
       ..where((t) => t.archived.equals(false))
+      ..where((t) => t.id.like('$_systemAccountIdPrefix%').not())
       ..orderBy([(t) => OrderingTerm(expression: t.name)]);
     return query.watch().map((rows) => rows.map(_toAccount).toList());
   }
@@ -55,6 +63,7 @@ class AccountRepository {
         await (_db.select(_db.accounts)
               ..where((t) => t.deletedAt.isNull())
               ..where((t) => t.archived.equals(false))
+              ..where((t) => t.id.like('$_systemAccountIdPrefix%').not())
               ..orderBy([(t) => OrderingTerm(expression: t.name)]))
             .get();
     return rows.map(_toAccount).toList();
@@ -73,17 +82,20 @@ class AccountRepository {
     required AccountType type,
     required String name,
     required String currency,
+    AccountCategory? category,
     String? institution,
     String? accountNumber,
     String? note,
   }) async {
     final stamp = await _stamper.stamp();
     final id = _uuid.v4();
+    final resolvedCategory = category ?? defaultCategoryForAccountType(type);
     final companion = AccountsCompanion.insert(
       id: id,
       type: type,
       name: name,
       currency: currency,
+      category: Value(resolvedCategory),
       institution: Value(institution),
       accountNumber: Value(accountNumber),
       note: Value(note),
@@ -97,6 +109,7 @@ class AccountRepository {
       type: type,
       name: name,
       currency: currency,
+      category: resolvedCategory,
       institution: institution,
       accountNumber: accountNumber,
       note: note,
@@ -123,6 +136,7 @@ class AccountRepository {
           'type': type.name,
           'name': name,
           'currency': currency,
+          'category': resolvedCategory.name,
           'institution': institution,
           'account_number': accountNumber,
           'note': note,
@@ -142,6 +156,7 @@ class AccountRepository {
     String id, {
     String? name,
     String? currency,
+    AccountCategory? category,
     String? institution,
     bool? clearInstitution,
     String? accountNumber,
@@ -166,6 +181,10 @@ class AccountRepository {
     if (currency != null) {
       pending = pending.copyWith(currency: Value(currency));
       diff['currency'] = currency;
+    }
+    if (category != null) {
+      pending = pending.copyWith(category: Value(category));
+      diff['category'] = category.name;
     }
     if (clearInstitution == true) {
       pending = pending.copyWith(institution: const Value(null));
@@ -228,6 +247,10 @@ class AccountRepository {
         if (diff.containsKey('currency')) {
           auditBefore['currency'] = priorRow.currency;
           auditAfter['currency'] = diff['currency'];
+        }
+        if (diff.containsKey('category')) {
+          auditBefore['category'] = priorRow.category.name;
+          auditAfter['category'] = diff['category'];
         }
         if (diff.containsKey('institution')) {
           auditBefore['institution'] = priorRow.institution;
@@ -314,6 +337,7 @@ class AccountRepository {
     required AccountType type,
     required String name,
     required String currency,
+    required AccountCategory category,
     required String? institution,
     required String? accountNumber,
     required String? note,
@@ -328,6 +352,7 @@ class AccountRepository {
       'type': type.name,
       'name': name,
       'currency': currency,
+      'category': category.name,
       'institution': institution,
       'account_number': accountNumber,
       'note': note,
@@ -345,6 +370,7 @@ class AccountRepository {
       type: row.type,
       name: row.name,
       currency: row.currency,
+      category: row.category,
       institution: row.institution,
       accountNumber: row.accountNumber,
       note: row.note,
@@ -358,4 +384,150 @@ class AccountRepository {
       ),
     );
   }
+
+  // ---------- System / virtual accounts (FIR-126) ----------
+
+  /// Stable id prefix for the seeded system accounts. Keeps the seed
+  /// idempotent across devices: every install resolves "income / expense
+  /// / equity" to the same id, so the LWW merge never duplicates them.
+  static const String _systemAccountIdPrefix = 'system-account:';
+
+  /// Set of [AccountCategory] values that have a seeded virtual system
+  /// account. Asset / liability accounts represent real balances the user
+  /// owns, so we never auto-seed those; the income / expense / equity
+  /// buckets are abstract counter-accounts that exist purely so future
+  /// double-entry posting (P2-A) has somewhere to credit / debit cash
+  /// flows that don't terminate on a real account.
+  static const List<AccountCategory> systemAccountCategories = [
+    AccountCategory.income,
+    AccountCategory.expense,
+    AccountCategory.equity,
+  ];
+
+  /// Returns the stable id assigned to the system account for [category].
+  /// Tests and migration helpers use this directly when they need to
+  /// reference the seeded row.
+  static String systemAccountIdFor(
+    AccountCategory category, {
+    required String ownerUserId,
+  }) => '$_systemAccountIdPrefix$ownerUserId:${category.name}';
+
+  /// Display name for the seeded system account in [category]. Kept in
+  /// Chinese (the app's primary locale today) so the picker labels look
+  /// natural; the proper localised label is resolved at render time and
+  /// the row's `name` is only used as a fallback when l10n hasn't been
+  /// hooked up yet (e.g. the AI assistant referencing the account by
+  /// name in chat).
+  static String systemAccountDisplayName(AccountCategory category) {
+    switch (category) {
+      case AccountCategory.income:
+        return '系统收入账户';
+      case AccountCategory.expense:
+        return '系统支出账户';
+      case AccountCategory.equity:
+        return '系统权益账户';
+      case AccountCategory.asset:
+      case AccountCategory.liability:
+        // Defensive: the seeder never reaches this branch because
+        // [systemAccountCategories] excludes asset / liability.
+        throw ArgumentError.value(
+          category,
+          'category',
+          'systemAccountDisplayName is only defined for income / expense / '
+              'equity',
+        );
+    }
+  }
+
+  /// Idempotently inserts the income / expense / equity virtual system
+  /// accounts the active user needs as cash-flow counter-accounts before
+  /// the P2-A double-entry posting model lands. Mirrors
+  /// [ExpenseCategoryRepository.seedDefaults]: deterministic id, queues
+  /// an outbox `insert` so peers learn about the seed when they next
+  /// pull, and re-running is a free no-op.
+  ///
+  /// Returns the number of rows actually inserted (0 on a no-op call) so
+  /// callers can decide whether to surface a "system accounts ready"
+  /// hint, or just ignore the result.
+  ///
+  /// [currency] picks the carrier currency for the seeded rows. The
+  /// dashboard converts everything through FX, so the currency choice is
+  /// largely cosmetic — defaulting to `CNY` matches the app's primary
+  /// locale and keeps system rows out of the FX-mismatch banner on
+  /// fresh installs that haven't yet pulled an FX rate table.
+  Future<int> seedSystemAccounts({String currency = 'CNY'}) async {
+    var inserted = 0;
+    for (final category in systemAccountCategories) {
+      final stamp = await _stamper.stamp();
+      final id = systemAccountIdFor(category, ownerUserId: stamp.ownerUserId);
+      final existing = await (_db.select(
+        _db.accounts,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (existing != null) continue;
+
+      final type = _systemAccountType(category);
+      final name = systemAccountDisplayName(category);
+      final companion = AccountsCompanion.insert(
+        id: id,
+        type: type,
+        name: name,
+        currency: currency,
+        category: Value(category),
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      );
+      final fields = _accountInsertFields(
+        id: id,
+        type: type,
+        name: name,
+        currency: currency,
+        category: category,
+        institution: null,
+        accountNumber: null,
+        note: null,
+        archived: false,
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      );
+      await _db.transaction(() async {
+        await _db.into(_db.accounts).insert(companion);
+        await _enqueue(
+          opType: OpType.insert,
+          rowId: id,
+          fields: fields,
+          stamp: stamp,
+        );
+        // Mirror the audit shape `create` uses so an account-history view
+        // can replay system-account seeding the same way it replays user
+        // account creates.
+        await _eventLog.recordCreated(
+          entityTable: _tableName,
+          entityId: id,
+          stamp: stamp,
+          after: <String, Object?>{
+            'type': type.name,
+            'name': name,
+            'currency': currency,
+            'category': category.name,
+            'institution': null,
+            'account_number': null,
+            'note': null,
+            'archived': false,
+          },
+        );
+      });
+      inserted++;
+    }
+    return inserted;
+  }
+
+  /// Resolves the [AccountType] carrier we materialise the seeded system
+  /// row with. The carrier is a UI hint — system accounts never represent
+  /// a real card or wallet — so we always pick `other`, which the form
+  /// already treats as the catch-all bucket.
+  AccountType _systemAccountType(AccountCategory category) => AccountType.other;
 }

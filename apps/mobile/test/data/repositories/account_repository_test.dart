@@ -130,4 +130,108 @@ void main() {
     expect(diff.containsKey('institution'), isTrue);
     expect(diff['institution'], isNull);
   });
+
+  group('FIR-126 — accountCategory', () {
+    test('create defaults the category from the carrier type', () async {
+      final bank = await repo.create(
+        type: AccountType.bank,
+        name: 'Bank',
+        currency: 'CNY',
+      );
+      expect(bank.category, AccountCategory.asset);
+
+      final liability = await repo.create(
+        type: AccountType.liability,
+        name: 'Mortgage',
+        currency: 'CNY',
+      );
+      expect(liability.category, AccountCategory.liability);
+
+      // The insert op carries the category so peers learn the new
+      // accounting classification on their next pull.
+      final batch = await outbox.peekBatch();
+      expect(batch, hasLength(2));
+      expect(batch.first.fieldsDiff!['category'], 'asset');
+      expect(batch.last.fieldsDiff!['category'], 'liability');
+    });
+
+    test('create honours an explicit category override', () async {
+      final acc = await repo.create(
+        type: AccountType.other,
+        name: '工资',
+        currency: 'CNY',
+        category: AccountCategory.income,
+      );
+      expect(acc.category, AccountCategory.income);
+    });
+
+    test('update with a new category emits a single-field diff', () async {
+      final acc = await repo.create(
+        type: AccountType.other,
+        name: 'TBD',
+        currency: 'CNY',
+      );
+      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+
+      final updated = await repo.update(
+        acc.id,
+        category: AccountCategory.equity,
+      );
+      expect(updated.category, AccountCategory.equity);
+
+      final batch = await outbox.peekBatch();
+      expect(batch, hasLength(1));
+      final diff = batch.single.fieldsDiff!;
+      expect(diff['category'], 'equity');
+      expect(diff.containsKey('name'), isFalse);
+      expect(diff.containsKey('type'), isFalse);
+    });
+
+    test('seedSystemAccounts inserts income / expense / equity once', () async {
+      final inserted = await repo.seedSystemAccounts();
+      expect(inserted, 3);
+
+      // Re-running is a free no-op — same primary keys, no duplicates.
+      final reseeded = await repo.seedSystemAccounts();
+      expect(reseeded, 0);
+
+      final ops = await outbox.peekBatch();
+      // Three inserts on the first call only; the no-op doesn't queue.
+      expect(ops, hasLength(3));
+      expect(ops.map((o) => o.fieldsDiff!['category']).toSet(), {
+        'income',
+        'expense',
+        'equity',
+      });
+    });
+
+    test(
+      'seedSystemAccounts uses deterministic ids per (user, category)',
+      () async {
+        await repo.seedSystemAccounts();
+        final id = AccountRepository.systemAccountIdFor(
+          AccountCategory.income,
+          ownerUserId: 'u-test',
+        );
+        final row = await repo.findById(id);
+        expect(row, isNotNull);
+        expect(row!.category, AccountCategory.income);
+      },
+    );
+
+    test(
+      'listActive hides system accounts but keeps user accounts visible',
+      () async {
+        await repo.seedSystemAccounts();
+        final user = await repo.create(
+          type: AccountType.bank,
+          name: '招行储蓄',
+          currency: 'CNY',
+        );
+
+        final active = await repo.listActive();
+        expect(active.map((a) => a.id), [user.id]);
+      },
+    );
+  });
 }

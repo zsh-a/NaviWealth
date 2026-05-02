@@ -2107,6 +2107,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountTypeOther => '其他账户';
 
   @override
+  String get accountCategoryAsset => '资产';
+
+  @override
+  String get accountCategoryLiability => '负债';
+
+  @override
+  String get accountCategoryIncome => '收入';
+
+  @override
+  String get accountCategoryExpense => '支出';
+
+  @override
+  String get accountCategoryEquity => '权益';
+
+  @override
   String get accountFormCreateTitle => '新建账户';
 
   @override
@@ -2131,6 +2146,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountFormTypeLabel => '账户类型';
+
+  @override
+  String get accountFormCategoryLabel => '账户类别';
+
+  @override
+  String get accountFormCategoryHelper => '用于复式记账的会计分类。默认根据账户类型推荐，可手动调整。';
 
   @override
   String get accountFormNameLabel => '账户名称';

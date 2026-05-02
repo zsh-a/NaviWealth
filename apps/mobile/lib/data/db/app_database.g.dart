@@ -1388,6 +1388,16 @@ class $AccountsTable extends Accounts
     defaultValue: const Constant(false),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<AccountCategory, String>
+  category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: Constant(AccountCategory.asset.name),
+  ).withConverter<AccountCategory>($AccountsTable.$convertercategory);
+  @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
     updatedAt,
@@ -1402,6 +1412,7 @@ class $AccountsTable extends Accounts
     accountNumber,
     note,
     archived,
+    category,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1567,6 +1578,12 @@ class $AccountsTable extends Accounts
         DriftSqlType.bool,
         data['${effectivePrefix}archived'],
       )!,
+      category: $AccountsTable.$convertercategory.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}category'],
+        )!,
+      ),
     );
   }
 
@@ -1578,6 +1595,8 @@ class $AccountsTable extends Accounts
   static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
   static TypeConverter<AccountType, String> $convertertype =
       const EnumStringConverter(AccountType.values);
+  static TypeConverter<AccountCategory, String> $convertercategory =
+      const EnumStringConverter(AccountCategory.values);
 }
 
 class AccountRow extends DataClass implements Insertable<AccountRow> {
@@ -1610,6 +1629,17 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   final String? accountNumber;
   final String? note;
   final bool archived;
+
+  /// FIR-126 — accounting classification (asset / liability / income /
+  /// expense / equity). See [AccountCategory] for the why and the
+  /// migration in `app_database.dart` (v8) for the back-fill rules.
+  ///
+  /// Defaulting to `asset` at the column level lets us add the column
+  /// non-null in the v8 ALTER TABLE without a separate UPDATE step on
+  /// users who only ever held positive balances; the migration still
+  /// rewrites the seven non-`liability` AccountTypes explicitly so the
+  /// fact stays expressed in code rather than relying on the SQL default.
+  final AccountCategory category;
   const AccountRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -1624,6 +1654,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
     this.accountNumber,
     this.note,
     required this.archived,
+    required this.category,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1653,6 +1684,11 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
       map['note'] = Variable<String>(note);
     }
     map['archived'] = Variable<bool>(archived);
+    {
+      map['category'] = Variable<String>(
+        $AccountsTable.$convertercategory.toSql(category),
+      );
+    }
     return map;
   }
 
@@ -1677,6 +1713,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
           : Value(accountNumber),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       archived: Value(archived),
+      category: Value(category),
     );
   }
 
@@ -1699,6 +1736,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
       accountNumber: serializer.fromJson<String?>(json['accountNumber']),
       note: serializer.fromJson<String?>(json['note']),
       archived: serializer.fromJson<bool>(json['archived']),
+      category: serializer.fromJson<AccountCategory>(json['category']),
     );
   }
   @override
@@ -1718,6 +1756,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
       'accountNumber': serializer.toJson<String?>(accountNumber),
       'note': serializer.toJson<String?>(note),
       'archived': serializer.toJson<bool>(archived),
+      'category': serializer.toJson<AccountCategory>(category),
     };
   }
 
@@ -1735,6 +1774,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
     Value<String?> accountNumber = const Value.absent(),
     Value<String?> note = const Value.absent(),
     bool? archived,
+    AccountCategory? category,
   }) => AccountRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1751,6 +1791,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
         : this.accountNumber,
     note: note.present ? note.value : this.note,
     archived: archived ?? this.archived,
+    category: category ?? this.category,
   );
   AccountRow copyWithCompanion(AccountsCompanion data) {
     return AccountRow(
@@ -1775,6 +1816,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
           : this.accountNumber,
       note: data.note.present ? data.note.value : this.note,
       archived: data.archived.present ? data.archived.value : this.archived,
+      category: data.category.present ? data.category.value : this.category,
     );
   }
 
@@ -1793,7 +1835,8 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
           ..write('institution: $institution, ')
           ..write('accountNumber: $accountNumber, ')
           ..write('note: $note, ')
-          ..write('archived: $archived')
+          ..write('archived: $archived, ')
+          ..write('category: $category')
           ..write(')'))
         .toString();
   }
@@ -1813,6 +1856,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
     accountNumber,
     note,
     archived,
+    category,
   );
   @override
   bool operator ==(Object other) =>
@@ -1830,7 +1874,8 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
           other.institution == this.institution &&
           other.accountNumber == this.accountNumber &&
           other.note == this.note &&
-          other.archived == this.archived);
+          other.archived == this.archived &&
+          other.category == this.category);
 }
 
 class AccountsCompanion extends UpdateCompanion<AccountRow> {
@@ -1847,6 +1892,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
   final Value<String?> accountNumber;
   final Value<String?> note;
   final Value<bool> archived;
+  final Value<AccountCategory> category;
   final Value<int> rowid;
   const AccountsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -1862,6 +1908,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     this.accountNumber = const Value.absent(),
     this.note = const Value.absent(),
     this.archived = const Value.absent(),
+    this.category = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AccountsCompanion.insert({
@@ -1878,6 +1925,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     this.accountNumber = const Value.absent(),
     this.note = const Value.absent(),
     this.archived = const Value.absent(),
+    this.category = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -1901,6 +1949,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     Expression<String>? accountNumber,
     Expression<String>? note,
     Expression<bool>? archived,
+    Expression<String>? category,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1917,6 +1966,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
       if (accountNumber != null) 'account_number': accountNumber,
       if (note != null) 'note': note,
       if (archived != null) 'archived': archived,
+      if (category != null) 'category': category,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1935,6 +1985,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     Value<String?>? accountNumber,
     Value<String?>? note,
     Value<bool>? archived,
+    Value<AccountCategory>? category,
     Value<int>? rowid,
   }) {
     return AccountsCompanion(
@@ -1951,6 +2002,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
       accountNumber: accountNumber ?? this.accountNumber,
       note: note ?? this.note,
       archived: archived ?? this.archived,
+      category: category ?? this.category,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2001,6 +2053,11 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     if (archived.present) {
       map['archived'] = Variable<bool>(archived.value);
     }
+    if (category.present) {
+      map['category'] = Variable<String>(
+        $AccountsTable.$convertercategory.toSql(category.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2023,6 +2080,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
           ..write('accountNumber: $accountNumber, ')
           ..write('note: $note, ')
           ..write('archived: $archived, ')
+          ..write('category: $category, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -14815,6 +14873,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<String?> accountNumber,
       Value<String?> note,
       Value<bool> archived,
+      Value<AccountCategory> category,
       Value<int> rowid,
     });
 typedef $$AccountsTableUpdateCompanionBuilder =
@@ -14832,6 +14891,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<String?> accountNumber,
       Value<String?> note,
       Value<bool> archived,
+      Value<AccountCategory> category,
       Value<int> rowid,
     });
 
@@ -14910,6 +14970,12 @@ class $$AccountsTableFilterComposer
     column: $table.archived,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<AccountCategory, AccountCategory, String>
+  get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
 }
 
 class $$AccountsTableOrderingComposer
@@ -14985,6 +15051,11 @@ class $$AccountsTableOrderingComposer
     column: $table.archived,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AccountsTableAnnotationComposer
@@ -15042,6 +15113,9 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<bool> get archived =>
       $composableBuilder(column: $table.archived, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<AccountCategory, String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
 }
 
 class $$AccountsTableTableManager
@@ -15088,6 +15162,7 @@ class $$AccountsTableTableManager
                 Value<String?> accountNumber = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
+                Value<AccountCategory> category = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AccountsCompanion(
                 ownerUserId: ownerUserId,
@@ -15103,6 +15178,7 @@ class $$AccountsTableTableManager
                 accountNumber: accountNumber,
                 note: note,
                 archived: archived,
+                category: category,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -15120,6 +15196,7 @@ class $$AccountsTableTableManager
                 Value<String?> accountNumber = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
+                Value<AccountCategory> category = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AccountsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -15135,6 +15212,7 @@ class $$AccountsTableTableManager
                 accountNumber: accountNumber,
                 note: note,
                 archived: archived,
+                category: category,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

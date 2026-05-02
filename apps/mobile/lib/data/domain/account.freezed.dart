@@ -14,7 +14,12 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Account {
 
- String get id; AccountType get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived; SyncMeta get sync;
+ String get id; AccountType get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived;/// FIR-126 — accounting classification of the account
+/// (asset / liability / income / expense / equity). Defaults to
+/// [AccountCategory.asset] for back-compat with code paths that still
+/// construct an [Account] without a category; UI / repo callers
+/// always supply an explicit value.
+ AccountCategory get category; SyncMeta get sync;
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +30,16 @@ $AccountCopyWith<Account> get copyWith => _$AccountCopyWithImpl<Account>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,sync);
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,sync);
 
 @override
 String toString() {
-  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, sync: $sync)';
+  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, sync: $sync)';
 }
 
 
@@ -45,7 +50,7 @@ abstract mixin class $AccountCopyWith<$Res>  {
   factory $AccountCopyWith(Account value, $Res Function(Account) _then) = _$AccountCopyWithImpl;
 @useResult
 $Res call({
- String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, SyncMeta sync
+ String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, SyncMeta sync
 });
 
 
@@ -62,7 +67,7 @@ class _$AccountCopyWithImpl<$Res>
 
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? sync = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? category = null,Object? sync = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -72,7 +77,8 @@ as String,institution: freezed == institution ? _self.institution : institution 
 as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
-as bool,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as bool,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as AccountCategory,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));
 }
@@ -167,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Account() when $default != null:
-return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.sync);case _:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.sync);case _:
   return orElse();
 
 }
@@ -188,10 +194,10 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _Account():
-return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.sync);case _:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.sync);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +214,10 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _Account() when $default != null:
-return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.sync);case _:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.sync);case _:
   return null;
 
 }
@@ -223,7 +229,7 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 
 
 class _Account implements Account {
-  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, required this.sync});
+  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, this.category = AccountCategory.asset, required this.sync});
   
 
 @override final  String id;
@@ -234,6 +240,12 @@ class _Account implements Account {
 @override final  String? accountNumber;
 @override final  String? note;
 @override@JsonKey() final  bool archived;
+/// FIR-126 — accounting classification of the account
+/// (asset / liability / income / expense / equity). Defaults to
+/// [AccountCategory.asset] for back-compat with code paths that still
+/// construct an [Account] without a category; UI / repo callers
+/// always supply an explicit value.
+@override@JsonKey() final  AccountCategory category;
 @override final  SyncMeta sync;
 
 /// Create a copy of Account
@@ -246,16 +258,16 @@ _$AccountCopyWith<_Account> get copyWith => __$AccountCopyWithImpl<_Account>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,sync);
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,sync);
 
 @override
 String toString() {
-  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, sync: $sync)';
+  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, sync: $sync)';
 }
 
 
@@ -266,7 +278,7 @@ abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
   factory _$AccountCopyWith(_Account value, $Res Function(_Account) _then) = __$AccountCopyWithImpl;
 @override @useResult
 $Res call({
- String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, SyncMeta sync
+ String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, SyncMeta sync
 });
 
 
@@ -283,7 +295,7 @@ class __$AccountCopyWithImpl<$Res>
 
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? sync = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? category = null,Object? sync = null,}) {
   return _then(_Account(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -293,7 +305,8 @@ as String,institution: freezed == institution ? _self.institution : institution 
 as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
-as bool,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as bool,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as AccountCategory,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));
 }
