@@ -64,11 +64,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   bool _busy = false;
   bool _hydratedDefaults = false;
 
+  // FIR-124: transferIn / transferOut are deliberately absent — they can
+  // never be created as a single user-entered leg from this form. Cash
+  // transfers go through `TransactionRepository.recordTransfer`, which
+  // writes both legs atomically. Single-leg transfers used to silently
+  // unbalance the net-worth pool when the user forgot the matching leg.
   static const _tradeTypes = [
     TransactionType.buy,
     TransactionType.sell,
-    TransactionType.transferIn,
-    TransactionType.transferOut,
     TransactionType.valuationAdjust,
   ];
 
@@ -76,8 +79,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     return switch (type) {
       TransactionType.buy => l10n.tradeTypeBuy,
       TransactionType.sell => l10n.tradeTypeSell,
-      TransactionType.transferIn => l10n.tradeTypeTransferIn,
-      TransactionType.transferOut => l10n.tradeTypeTransferOut,
       TransactionType.valuationAdjust => l10n.tradeTypeValuationAdjust,
       _ => type.name,
     };
