@@ -384,13 +384,7 @@ class _AssetTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final price = asset.lastPrice ?? Decimal.zero;
     final chips = _chipsFor(asset, l10n);
-    final displayName = asset.name ?? asset.symbol;
-    final semanticsLabel =
-        '$displayName, ${price.toDouble()} ${asset.currency}';
-    return Semantics(
-      label: semanticsLabel,
-      button: true,
-      excludeSemantics: true,
+    return MergeSemantics(
       child: InkWell(
         onTap: () => context.go('/assets/${asset.id}'),
         child: ConstrainedBox(
@@ -408,7 +402,7 @@ class _AssetTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        displayName,
+                        asset.name ?? asset.symbol,
                         style: theme.textTheme.bodyLarge,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

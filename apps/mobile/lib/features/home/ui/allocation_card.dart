@@ -230,56 +230,40 @@ class _LegendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // The legend row is the only way to drill into a category from the
-    // dashboard, so it has to clear the WCAG / Material 48dp tap target.
-    // Wrapping the existing visual layout in a fixed-height InkWell keeps
-    // the slim card aesthetic while giving the hit-test rectangle the
-    // size assistive-tech and finger-tip users actually need.
-    final percentPart = percent == null
-        ? ''
-        : ', ${(percent! * 100).toStringAsFixed(1)} percent of total';
-    final semanticsLabel =
-        '$label, $valueInBase $currencyCode$percentPart';
-    return Semantics(
-      label: semanticsLabel,
-      button: true,
-      excludeSemantics: true,
+    final pctText =
+        percent == null ? null : '${(percent! * 100).toStringAsFixed(1)}%';
+    return MergeSemantics(
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: ConstrainedBox(
+          // Material 48dp touch-target floor — the visual row is shorter
+          // than this, so the InkWell pads itself out vertically.
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              vertical: Spacing.s8,
-              horizontal: Spacing.s4,
+              vertical: Spacing.s12,
+              horizontal: Spacing.s8,
             ),
             child: Row(
               children: [
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
+                  decoration:
+                      BoxDecoration(color: color, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: Spacing.s8),
-                Icon(
-                  icon,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: Spacing.s8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(label, style: theme.textTheme.bodyMedium),
-                      if (percent != null)
+                      if (pctText != null)
                         Text(
-                          '${(percent! * 100).toStringAsFixed(1)}%',
+                          pctText,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),

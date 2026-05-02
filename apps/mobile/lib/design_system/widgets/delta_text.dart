@@ -37,7 +37,6 @@ class DeltaText extends StatelessWidget {
     this.showIcon = true,
     this.showSign = true,
     this.locale,
-    this.semanticLabel,
   });
 
   /// Convenience constructor — pass a 0..1 ratio (e.g. `0.0234` for
@@ -50,7 +49,6 @@ class DeltaText extends StatelessWidget {
     bool showIcon = true,
     bool showSign = true,
     String? locale,
-    String? semanticLabel,
   }) {
     return DeltaText(
       key: key,
@@ -61,7 +59,6 @@ class DeltaText extends StatelessWidget {
       showIcon: showIcon,
       showSign: showSign,
       locale: locale,
-      semanticLabel: semanticLabel,
     );
   }
 
@@ -82,12 +79,6 @@ class DeltaText extends StatelessWidget {
 
   final String? locale;
 
-  /// Override the screen-reader label. Defaults to a sign-aware spoken
-  /// form (e.g. `"up 2.34 percent"`, `"down 1234.50 CNY"`, or `"unchanged"`)
-  /// so colour + arrow direction reach assistive tech the same way they
-  /// reach sighted users.
-  final String? semanticLabel;
-
   @override
   Widget build(BuildContext context) {
     final market = MarketColors.of(context);
@@ -97,69 +88,58 @@ class DeltaText extends StatelessWidget {
       fontFeatures: TypographyTokens.tabularFigures,
     );
 
-    final body = DefaultTextStyle.merge(
-      style: effectiveStyle,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showIcon)
-            Padding(
-              padding: const EdgeInsets.only(right: Spacing.s2),
-              child: Icon(
-                _iconFor(value, market.mode),
-                size: (effectiveStyle.fontSize ?? 14) + 2,
-                color: tone,
+    return Semantics(
+      container: true,
+      label: _spokenLabel(context),
+      excludeSemantics: true,
+      child: DefaultTextStyle.merge(
+        style: effectiveStyle,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showIcon)
+              Padding(
+                padding: const EdgeInsets.only(right: Spacing.s2),
+                child: Icon(
+                  _iconFor(value, market.mode),
+                  size: (effectiveStyle.fontSize ?? 14) + 2,
+                  color: tone,
+                ),
               ),
-            ),
-          if (format == DeltaFormat.currency)
-            MoneyText(
-              amount: value,
-              currencyCode: currencyCode,
-              fractionDigits: fractionDigits,
-              style: effectiveStyle,
-              showSign: showSign,
-              locale: locale,
-            )
-          else
-            Text(_formatNonCurrency(context), style: effectiveStyle),
-        ],
+            if (format == DeltaFormat.currency)
+              MoneyText(
+                amount: value,
+                currencyCode: currencyCode,
+                fractionDigits: fractionDigits,
+                style: effectiveStyle,
+                showSign: showSign,
+                locale: locale,
+              )
+            else
+              Text(_formatNonCurrency(context), style: effectiveStyle),
+          ],
+        ),
       ),
     );
-
-    return Semantics(
-      label: semanticLabel ?? _semanticLabel(),
-      excludeSemantics: true,
-      container: true,
-      child: body,
-    );
   }
 
-  String _semanticLabel() {
-    if (value == null) return _unitNoun();
-    final v = value!;
-    final digits = fractionDigits ?? 2;
-    final magnitude = v.abs().toStringAsFixed(digits);
-    final direction = v == 0
-        ? 'unchanged'
-        : (v > 0 ? 'up' : 'down');
+  String _spokenLabel(BuildContext context) {
+    if (value == null) return '—';
+    final direction = value! > 0
+        ? '+'
+        : value! < 0
+            ? '-'
+            : '';
     if (format == DeltaFormat.currency) {
-      if (v == 0) return 'unchanged $currencyCode';
-      return '$direction $magnitude $currencyCode';
+      final loc = locale ?? Localizations.maybeLocaleOf(context)?.toString();
+      final digits = fractionDigits ?? 2;
+      final formatter = NumberFormat.decimalPatternDigits(
+        locale: loc,
+        decimalDigits: digits,
+      );
+      return '$direction${formatter.format(value!.abs())} $currencyCode';
     }
-    final unit = _unitNoun();
-    if (v == 0) return 'unchanged';
-    return '$direction $magnitude $unit';
-  }
-
-  String _unitNoun() {
-    switch (format) {
-      case DeltaFormat.currency:
-        return currencyCode;
-      case DeltaFormat.percent:
-        return 'percent';
-      case DeltaFormat.decimal:
-        return '';
-    }
+    return '$direction${_formatNonCurrency(context).replaceAll(RegExp(r'^[+-]'), '')}';
   }
 
   String _formatNonCurrency(BuildContext context) {

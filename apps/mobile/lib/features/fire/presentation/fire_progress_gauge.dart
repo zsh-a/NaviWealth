@@ -55,27 +55,35 @@ class FireProgressGauge extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  centerLabel,
-                  style: TypographyTokens.numericTitle.copyWith(
-                    fontSize: diameter * 0.18,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                if (caption != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    caption!,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+            // Cap text scaling inside the fixed-size gauge so 200% system
+            // font doesn't overflow the donut hole.
+            child: MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.3,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      centerLabel,
+                      style: TypographyTokens.numericTitle.copyWith(
+                        fontSize: diameter * 0.18,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                   ),
+                  if (caption != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      caption!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],

@@ -24,15 +24,3 @@ class AppConfig {
 }
 
 enum AppEnvironment { dev, staging, prod }
-
-/// Semver of this build, stamped at compile time by the release workflow
-/// (and `tool/bump-version.sh` for tagged dev builds). Falls back to a
-/// dev-friendly placeholder when the define is missing so unstamped local
-/// builds don't ship the wrong number to the about screen.
-///
-/// Pass at build time:
-///   flutter build web --dart-define APP_VERSION=0.2.0
-const String kAppVersion = String.fromEnvironment(
-  'APP_VERSION',
-  defaultValue: 'dev',
-);

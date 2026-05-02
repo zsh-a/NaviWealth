@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/app_version.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -126,11 +126,7 @@ class SettingsPage extends ConsumerWidget {
           _SectionHeader(label: l10n.settingsRiskSection),
           const _RiskThresholdSettings(),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: Text(l10n.settingsAboutTitle),
-            subtitle: Text(l10n.settingsAboutSubtitle(kAppVersion)),
-          ),
+          const _AboutTile(),
         ],
       ),
     );
@@ -201,6 +197,38 @@ class SettingsPage extends ConsumerWidget {
         MarketColorMode.greenUpRedDown => l10n.marketColorGreenUpRedDown,
         MarketColorMode.colorblind => l10n.marketColorColorblind,
       };
+}
+
+/// "About NaviWealth" tile — version + build + commit SHA, sourced from
+/// `package_info_plus` so the binary's actual identity is shown rather
+/// than a hard-coded string.
+class _AboutTile extends ConsumerWidget {
+  const _AboutTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final versionAsync = ref.watch(appVersionProvider);
+    final subtitle = versionAsync.when(
+      loading: () => l10n.settingsAboutSubtitle('…'),
+      error: (_, _) => l10n.settingsAboutSubtitle('?'),
+      data: (info) {
+        final base = l10n.settingsAboutSubtitle('${info.version}+${info.buildNumber}');
+        // Hide the SHA in dev builds so the line stays compact when the
+        // define isn't passed (local `flutter run`).
+        if (info.commitSha == 'dev' || info.commitSha.isEmpty) return base;
+        final shortSha = info.commitSha.length >= 7
+            ? info.commitSha.substring(0, 7)
+            : info.commitSha;
+        return '$base · $shortSha';
+      },
+    );
+    return ListTile(
+      leading: const Icon(Icons.info_outline),
+      title: Text(l10n.settingsAboutTitle),
+      subtitle: Text(subtitle),
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
