@@ -64,7 +64,7 @@ class AssetDetailPage extends ConsumerWidget {
               AssetType.mutualFund =>
                 _EquityAssetDetailPage(assetId: asset.id),
               _ => Scaffold(
-                appBar: AppBar(title: Text(asset.name ?? asset.symbol)),
+                appBar: GlassAppBar(title: Text(asset.name ?? asset.symbol)),
                 body: const Center(child: Text('该资产类型暂不支持手动编辑')),
               ),
             };
@@ -188,7 +188,7 @@ class _EquityAssetDetailPageState
           return const Scaffold(body: Center(child: Text('资产不存在或已删除')));
         }
         return Scaffold(
-          appBar: AppBar(
+          appBar: GlassAppBar(
             title: Text(asset.name ?? asset.symbol),
             actions: [
               IconButton(
@@ -791,7 +791,7 @@ class _RecentTradesCard extends ConsumerWidget {
   }
 
   void _showAll(BuildContext context, List<Transaction> txs) {
-    showModalBottomSheet<void>(
+    showGlassModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {

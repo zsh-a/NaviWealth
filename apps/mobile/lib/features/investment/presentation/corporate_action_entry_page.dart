@@ -265,7 +265,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final asset = _selectedAsset;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.corpActionTitle)),
+      appBar: GlassAppBar(title: Text(l10n.corpActionTitle)),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,

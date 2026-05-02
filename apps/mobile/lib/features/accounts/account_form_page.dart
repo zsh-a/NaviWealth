@@ -186,7 +186,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(
           widget.isEdit
               ? l10n.accountFormEditTitle

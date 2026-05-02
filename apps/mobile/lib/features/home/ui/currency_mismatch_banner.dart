@@ -74,7 +74,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
     String baseCurrency,
   ) {
     final l10n = AppLocalizations.of(context);
-    showModalBottomSheet<void>(
+    showGlassModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (ctx) => SafeArea(

@@ -21,7 +21,7 @@ class LiabilitiesPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final asyncList = ref.watch(liabilitiesStreamProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.liabilitiesAppBarTitle)),
+      appBar: GlassAppBar(title: Text(l10n.liabilitiesAppBarTitle)),
       body: asyncList.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),

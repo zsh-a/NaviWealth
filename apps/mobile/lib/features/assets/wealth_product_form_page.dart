@@ -211,7 +211,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   Widget build(BuildContext context) {
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(widget.isEdit ? '编辑理财产品' : '录入理财产品'),
         actions: [
           if (widget.isEdit)

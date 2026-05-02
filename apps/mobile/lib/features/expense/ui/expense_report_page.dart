@@ -26,7 +26,7 @@ class ExpenseReportPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(expenseReportProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('支出报表')),
+      appBar: const GlassAppBar(title: Text('支出报表')),
       body: reportAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('报表加载失败：$e')),
@@ -341,7 +341,7 @@ class _Pie extends StatelessWidget {
         drillDown: SliceDrillDown((slice) {
           final breakdown = slice.meta;
           if (breakdown is! CategoryBreakdown) return;
-          showModalBottomSheet<void>(
+          showGlassModalBottomSheet<void>(
             context: context,
             showDragHandle: true,
             isScrollControlled: true,
@@ -381,7 +381,7 @@ class _PieLegend extends StatelessWidget {
             percent: total == 0
                 ? 0
                 : report.byCategory[i].total.amount.toDouble() / total,
-            onTap: () => showModalBottomSheet<void>(
+            onTap: () => showGlassModalBottomSheet<void>(
               context: context,
               showDragHandle: true,
               isScrollControlled: true,
@@ -595,7 +595,7 @@ class _CategoryTile extends StatelessWidget {
     final accent =
         category?.accentColor ?? theme.colorScheme.primary;
     return ListTile(
-      onTap: () => showModalBottomSheet<void>(
+      onTap: () => showGlassModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
         isScrollControlled: true,

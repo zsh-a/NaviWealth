@@ -10,6 +10,8 @@ import '../../design_system/charts/charts.dart';
 import '../../design_system/tokens/breakpoints.dart';
 import '../../design_system/tokens/radius_tokens.dart';
 import '../../design_system/tokens/spacing_tokens.dart';
+import '../../design_system/widgets/glass_app_bar.dart';
+import '../../design_system/widgets/glass_modal_bottom_sheet.dart';
 import '../../design_system/widgets/responsive_two_column.dart';
 import '../../design_system/widgets/skeleton.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -70,7 +72,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       ],
     );
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.analyticsAppBarTitle)),
+      appBar: GlassAppBar(title: Text(l10n.analyticsAppBarTitle)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = !Breakpoints.isMobile(constraints.maxWidth);
@@ -240,7 +242,7 @@ class EquityAllocationContent extends ConsumerWidget {
     EquityAllocationBucket bucket,
     String baseCurrency,
   ) {
-    showModalBottomSheet<void>(
+    showGlassModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,

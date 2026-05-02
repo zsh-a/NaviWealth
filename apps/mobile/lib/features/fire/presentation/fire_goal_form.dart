@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/tokens/spacing_tokens.dart';
+import '../../../design_system/widgets/glass_modal_bottom_sheet.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_goal_preferences.dart';
 import '../domain/fire_goal.dart';
@@ -15,7 +16,7 @@ import '../domain/fire_goal.dart';
 /// [fireGoalProvider], lets the user edit it, and persists via
 /// [FireGoalController.save] on submit. Cancellation discards changes.
 Future<void> showFireGoalSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
+  return showGlassModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
