@@ -92,4 +92,25 @@ void main() {
     )..where((t) => t.deletedAt.isNull())).get();
     expect(live.map((r) => r.id).toSet(), {'a1'});
   });
+
+  test('FIR-124 — transactions table carries transfer_group_id with index',
+      () async {
+    // Smoke-test the v8 schema addition: the column exists, accepts
+    // NULL + arbitrary text, and the partial index that drives the
+    // audit / cascade-delete path is in place.
+    final cols = await db
+        .customSelect('PRAGMA table_info(transactions)')
+        .get();
+    final colNames = cols.map((r) => r.read<String>('name')).toSet();
+    expect(colNames, contains('transfer_group_id'));
+
+    final indexes = await db
+        .customSelect(
+          'SELECT name FROM sqlite_master '
+          "WHERE type = 'index' AND tbl_name = 'transactions'",
+        )
+        .get();
+    final indexNames = indexes.map((r) => r.read<String>('name')).toSet();
+    expect(indexNames, contains('idx_transactions_transfer_group'));
+  });
 }

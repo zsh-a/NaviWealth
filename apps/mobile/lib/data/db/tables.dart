@@ -138,6 +138,15 @@ class Transactions extends Table with SyncableTable {
   /// that aren't expenses.
   TextColumn get expenseMetadataJson => text().nullable()();
 
+  /// FIR-124: shared id linking the two legs of a transfer. Both the
+  /// `transferOut` row on the source account and the matching `transferIn`
+  /// row on the destination account carry the same id, so the pair can be
+  /// joined, displayed and tombstoned as a single unit. NULL on every
+  /// non-transfer transaction; legacy single-leg transfers from before
+  /// FIR-124 also leave it NULL and are surfaced by the unbalanced-group
+  /// audit query.
+  TextColumn get transferGroupId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

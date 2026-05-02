@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Transaction {
 
- String get id; String get accountId; String? get assetId; TransactionType get type; Decimal get quantity; Decimal get price; String get currency; DateTime get tradeDate; DateTime? get settleDate; Decimal? get fee; Decimal? get tax; String? get counterAccountId; String? get lotId; String? get note; SyncMeta get sync;
+ String get id; String get accountId; String? get assetId; TransactionType get type; Decimal get quantity; Decimal get price; String get currency; DateTime get tradeDate; DateTime? get settleDate; Decimal? get fee; Decimal? get tax; String? get counterAccountId; String? get lotId; String? get note; String? get transferGroupId; SyncMeta get sync;
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TransactionCopyWith<Transaction> get copyWith => _$TransactionCopyWithImpl<Tran
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.type, type) || other.type == type)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&(identical(other.settleDate, settleDate) || other.settleDate == settleDate)&&(identical(other.fee, fee) || other.fee == fee)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.type, type) || other.type == type)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&(identical(other.settleDate, settleDate) || other.settleDate == settleDate)&&(identical(other.fee, fee) || other.fee == fee)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.note, note) || other.note == note)&&(identical(other.transferGroupId, transferGroupId) || other.transferGroupId == transferGroupId)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,accountId,assetId,type,quantity,price,currency,tradeDate,settleDate,fee,tax,counterAccountId,lotId,note,sync);
+int get hashCode => Object.hash(runtimeType,id,accountId,assetId,type,quantity,price,currency,tradeDate,settleDate,fee,tax,counterAccountId,lotId,note,transferGroupId,sync);
 
 @override
 String toString() {
-  return 'Transaction(id: $id, accountId: $accountId, assetId: $assetId, type: $type, quantity: $quantity, price: $price, currency: $currency, tradeDate: $tradeDate, settleDate: $settleDate, fee: $fee, tax: $tax, counterAccountId: $counterAccountId, lotId: $lotId, note: $note, sync: $sync)';
+  return 'Transaction(id: $id, accountId: $accountId, assetId: $assetId, type: $type, quantity: $quantity, price: $price, currency: $currency, tradeDate: $tradeDate, settleDate: $settleDate, fee: $fee, tax: $tax, counterAccountId: $counterAccountId, lotId: $lotId, note: $note, transferGroupId: $transferGroupId, sync: $sync)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TransactionCopyWith<$Res>  {
   factory $TransactionCopyWith(Transaction value, $Res Function(Transaction) _then) = _$TransactionCopyWithImpl;
 @useResult
 $Res call({
- String id, String accountId, String? assetId, TransactionType type, Decimal quantity, Decimal price, String currency, DateTime tradeDate, DateTime? settleDate, Decimal? fee, Decimal? tax, String? counterAccountId, String? lotId, String? note, SyncMeta sync
+ String id, String accountId, String? assetId, TransactionType type, Decimal quantity, Decimal price, String currency, DateTime tradeDate, DateTime? settleDate, Decimal? fee, Decimal? tax, String? counterAccountId, String? lotId, String? note, String? transferGroupId, SyncMeta sync
 });
 
 
@@ -62,7 +62,7 @@ class _$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? accountId = null,Object? assetId = freezed,Object? type = null,Object? quantity = null,Object? price = null,Object? currency = null,Object? tradeDate = null,Object? settleDate = freezed,Object? fee = freezed,Object? tax = freezed,Object? counterAccountId = freezed,Object? lotId = freezed,Object? note = freezed,Object? sync = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? accountId = null,Object? assetId = freezed,Object? type = null,Object? quantity = null,Object? price = null,Object? currency = null,Object? tradeDate = null,Object? settleDate = freezed,Object? fee = freezed,Object? tax = freezed,Object? counterAccountId = freezed,Object? lotId = freezed,Object? note = freezed,Object? transferGroupId = freezed,Object? sync = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
@@ -78,6 +78,7 @@ as Decimal?,tax: freezed == tax ? _self.tax : tax // ignore: cast_nullable_to_no
 as Decimal?,counterAccountId: freezed == counterAccountId ? _self.counterAccountId : counterAccountId // ignore: cast_nullable_to_non_nullable
 as String?,lotId: freezed == lotId ? _self.lotId : lotId // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,transferGroupId: freezed == transferGroupId ? _self.transferGroupId : transferGroupId // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));
@@ -173,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String accountId,  String? assetId,  TransactionType type,  Decimal quantity,  Decimal price,  String currency,  DateTime tradeDate,  DateTime? settleDate,  Decimal? fee,  Decimal? tax,  String? counterAccountId,  String? lotId,  String? note,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String accountId,  String? assetId,  TransactionType type,  Decimal quantity,  Decimal price,  String currency,  DateTime tradeDate,  DateTime? settleDate,  Decimal? fee,  Decimal? tax,  String? counterAccountId,  String? lotId,  String? note,  String? transferGroupId,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity,_that.price,_that.currency,_that.tradeDate,_that.settleDate,_that.fee,_that.tax,_that.counterAccountId,_that.lotId,_that.note,_that.sync);case _:
+return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity,_that.price,_that.currency,_that.tradeDate,_that.settleDate,_that.fee,_that.tax,_that.counterAccountId,_that.lotId,_that.note,_that.transferGroupId,_that.sync);case _:
   return orElse();
 
 }
@@ -194,10 +195,10 @@ return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String accountId,  String? assetId,  TransactionType type,  Decimal quantity,  Decimal price,  String currency,  DateTime tradeDate,  DateTime? settleDate,  Decimal? fee,  Decimal? tax,  String? counterAccountId,  String? lotId,  String? note,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String accountId,  String? assetId,  TransactionType type,  Decimal quantity,  Decimal price,  String currency,  DateTime tradeDate,  DateTime? settleDate,  Decimal? fee,  Decimal? tax,  String? counterAccountId,  String? lotId,  String? note,  String? transferGroupId,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _Transaction():
-return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity,_that.price,_that.currency,_that.tradeDate,_that.settleDate,_that.fee,_that.tax,_that.counterAccountId,_that.lotId,_that.note,_that.sync);case _:
+return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity,_that.price,_that.currency,_that.tradeDate,_that.settleDate,_that.fee,_that.tax,_that.counterAccountId,_that.lotId,_that.note,_that.transferGroupId,_that.sync);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +215,10 @@ return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String accountId,  String? assetId,  TransactionType type,  Decimal quantity,  Decimal price,  String currency,  DateTime tradeDate,  DateTime? settleDate,  Decimal? fee,  Decimal? tax,  String? counterAccountId,  String? lotId,  String? note,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String accountId,  String? assetId,  TransactionType type,  Decimal quantity,  Decimal price,  String currency,  DateTime tradeDate,  DateTime? settleDate,  Decimal? fee,  Decimal? tax,  String? counterAccountId,  String? lotId,  String? note,  String? transferGroupId,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity,_that.price,_that.currency,_that.tradeDate,_that.settleDate,_that.fee,_that.tax,_that.counterAccountId,_that.lotId,_that.note,_that.sync);case _:
+return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity,_that.price,_that.currency,_that.tradeDate,_that.settleDate,_that.fee,_that.tax,_that.counterAccountId,_that.lotId,_that.note,_that.transferGroupId,_that.sync);case _:
   return null;
 
 }
@@ -229,7 +230,7 @@ return $default(_that.id,_that.accountId,_that.assetId,_that.type,_that.quantity
 
 
 class _Transaction implements Transaction {
-  const _Transaction({required this.id, required this.accountId, this.assetId, required this.type, required this.quantity, required this.price, required this.currency, required this.tradeDate, this.settleDate, this.fee, this.tax, this.counterAccountId, this.lotId, this.note, required this.sync});
+  const _Transaction({required this.id, required this.accountId, this.assetId, required this.type, required this.quantity, required this.price, required this.currency, required this.tradeDate, this.settleDate, this.fee, this.tax, this.counterAccountId, this.lotId, this.note, this.transferGroupId, required this.sync});
   
 
 @override final  String id;
@@ -246,6 +247,7 @@ class _Transaction implements Transaction {
 @override final  String? counterAccountId;
 @override final  String? lotId;
 @override final  String? note;
+@override final  String? transferGroupId;
 @override final  SyncMeta sync;
 
 /// Create a copy of Transaction
@@ -258,16 +260,16 @@ _$TransactionCopyWith<_Transaction> get copyWith => __$TransactionCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.type, type) || other.type == type)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&(identical(other.settleDate, settleDate) || other.settleDate == settleDate)&&(identical(other.fee, fee) || other.fee == fee)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.type, type) || other.type == type)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&(identical(other.settleDate, settleDate) || other.settleDate == settleDate)&&(identical(other.fee, fee) || other.fee == fee)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.note, note) || other.note == note)&&(identical(other.transferGroupId, transferGroupId) || other.transferGroupId == transferGroupId)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,accountId,assetId,type,quantity,price,currency,tradeDate,settleDate,fee,tax,counterAccountId,lotId,note,sync);
+int get hashCode => Object.hash(runtimeType,id,accountId,assetId,type,quantity,price,currency,tradeDate,settleDate,fee,tax,counterAccountId,lotId,note,transferGroupId,sync);
 
 @override
 String toString() {
-  return 'Transaction(id: $id, accountId: $accountId, assetId: $assetId, type: $type, quantity: $quantity, price: $price, currency: $currency, tradeDate: $tradeDate, settleDate: $settleDate, fee: $fee, tax: $tax, counterAccountId: $counterAccountId, lotId: $lotId, note: $note, sync: $sync)';
+  return 'Transaction(id: $id, accountId: $accountId, assetId: $assetId, type: $type, quantity: $quantity, price: $price, currency: $currency, tradeDate: $tradeDate, settleDate: $settleDate, fee: $fee, tax: $tax, counterAccountId: $counterAccountId, lotId: $lotId, note: $note, transferGroupId: $transferGroupId, sync: $sync)';
 }
 
 
@@ -278,7 +280,7 @@ abstract mixin class _$TransactionCopyWith<$Res> implements $TransactionCopyWith
   factory _$TransactionCopyWith(_Transaction value, $Res Function(_Transaction) _then) = __$TransactionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String accountId, String? assetId, TransactionType type, Decimal quantity, Decimal price, String currency, DateTime tradeDate, DateTime? settleDate, Decimal? fee, Decimal? tax, String? counterAccountId, String? lotId, String? note, SyncMeta sync
+ String id, String accountId, String? assetId, TransactionType type, Decimal quantity, Decimal price, String currency, DateTime tradeDate, DateTime? settleDate, Decimal? fee, Decimal? tax, String? counterAccountId, String? lotId, String? note, String? transferGroupId, SyncMeta sync
 });
 
 
@@ -295,7 +297,7 @@ class __$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? accountId = null,Object? assetId = freezed,Object? type = null,Object? quantity = null,Object? price = null,Object? currency = null,Object? tradeDate = null,Object? settleDate = freezed,Object? fee = freezed,Object? tax = freezed,Object? counterAccountId = freezed,Object? lotId = freezed,Object? note = freezed,Object? sync = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? accountId = null,Object? assetId = freezed,Object? type = null,Object? quantity = null,Object? price = null,Object? currency = null,Object? tradeDate = null,Object? settleDate = freezed,Object? fee = freezed,Object? tax = freezed,Object? counterAccountId = freezed,Object? lotId = freezed,Object? note = freezed,Object? transferGroupId = freezed,Object? sync = null,}) {
   return _then(_Transaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
@@ -311,6 +313,7 @@ as Decimal?,tax: freezed == tax ? _self.tax : tax // ignore: cast_nullable_to_no
 as Decimal?,counterAccountId: freezed == counterAccountId ? _self.counterAccountId : counterAccountId // ignore: cast_nullable_to_non_nullable
 as String?,lotId: freezed == lotId ? _self.lotId : lotId // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,transferGroupId: freezed == transferGroupId ? _self.transferGroupId : transferGroupId // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));

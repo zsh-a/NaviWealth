@@ -3324,6 +3324,17 @@ class $TransactionsTable extends Transactions
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _transferGroupIdMeta = const VerificationMeta(
+    'transferGroupId',
+  );
+  @override
+  late final GeneratedColumn<String> transferGroupId = GeneratedColumn<String>(
+    'transfer_group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -3346,6 +3357,7 @@ class $TransactionsTable extends Transactions
     lotId,
     note,
     expenseMetadataJson,
+    transferGroupId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3466,6 +3478,15 @@ class $TransactionsTable extends Transactions
         ),
       );
     }
+    if (data.containsKey('transfer_group_id')) {
+      context.handle(
+        _transferGroupIdMeta,
+        transferGroupId.isAcceptableOrUnknown(
+          data['transfer_group_id']!,
+          _transferGroupIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3567,6 +3588,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}expense_metadata_json'],
       ),
+      transferGroupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transfer_group_id'],
+      ),
     );
   }
 
@@ -3635,6 +3660,15 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   /// expense-only columns would bloat the row for the 95% of transactions
   /// that aren't expenses.
   final String? expenseMetadataJson;
+
+  /// FIR-124: shared id linking the two legs of a transfer. Both the
+  /// `transferOut` row on the source account and the matching `transferIn`
+  /// row on the destination account carry the same id, so the pair can be
+  /// joined, displayed and tombstoned as a single unit. NULL on every
+  /// non-transfer transaction; legacy single-leg transfers from before
+  /// FIR-124 also leave it NULL and are surfaced by the unbalanced-group
+  /// audit query.
+  final String? transferGroupId;
   const TransactionRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -3656,6 +3690,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     this.lotId,
     this.note,
     this.expenseMetadataJson,
+    this.transferGroupId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3718,6 +3753,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     if (!nullToAbsent || expenseMetadataJson != null) {
       map['expense_metadata_json'] = Variable<String>(expenseMetadataJson);
     }
+    if (!nullToAbsent || transferGroupId != null) {
+      map['transfer_group_id'] = Variable<String>(transferGroupId);
+    }
     return map;
   }
 
@@ -3755,6 +3793,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       expenseMetadataJson: expenseMetadataJson == null && nullToAbsent
           ? const Value.absent()
           : Value(expenseMetadataJson),
+      transferGroupId: transferGroupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transferGroupId),
     );
   }
 
@@ -3786,6 +3827,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       expenseMetadataJson: serializer.fromJson<String?>(
         json['expenseMetadataJson'],
       ),
+      transferGroupId: serializer.fromJson<String?>(json['transferGroupId']),
     );
   }
   @override
@@ -3812,6 +3854,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'lotId': serializer.toJson<String?>(lotId),
       'note': serializer.toJson<String?>(note),
       'expenseMetadataJson': serializer.toJson<String?>(expenseMetadataJson),
+      'transferGroupId': serializer.toJson<String?>(transferGroupId),
     };
   }
 
@@ -3836,6 +3879,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     Value<String?> lotId = const Value.absent(),
     Value<String?> note = const Value.absent(),
     Value<String?> expenseMetadataJson = const Value.absent(),
+    Value<String?> transferGroupId = const Value.absent(),
   }) => TransactionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3861,6 +3905,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     expenseMetadataJson: expenseMetadataJson.present
         ? expenseMetadataJson.value
         : this.expenseMetadataJson,
+    transferGroupId: transferGroupId.present
+        ? transferGroupId.value
+        : this.transferGroupId,
   );
   TransactionRow copyWithCompanion(TransactionsCompanion data) {
     return TransactionRow(
@@ -3894,6 +3941,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       expenseMetadataJson: data.expenseMetadataJson.present
           ? data.expenseMetadataJson.value
           : this.expenseMetadataJson,
+      transferGroupId: data.transferGroupId.present
+          ? data.transferGroupId.value
+          : this.transferGroupId,
     );
   }
 
@@ -3919,13 +3969,14 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ..write('counterAccountId: $counterAccountId, ')
           ..write('lotId: $lotId, ')
           ..write('note: $note, ')
-          ..write('expenseMetadataJson: $expenseMetadataJson')
+          ..write('expenseMetadataJson: $expenseMetadataJson, ')
+          ..write('transferGroupId: $transferGroupId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     ownerUserId,
     updatedAt,
     updatedByDevice,
@@ -3946,7 +3997,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     lotId,
     note,
     expenseMetadataJson,
-  );
+    transferGroupId,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3970,7 +4022,8 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           other.counterAccountId == this.counterAccountId &&
           other.lotId == this.lotId &&
           other.note == this.note &&
-          other.expenseMetadataJson == this.expenseMetadataJson);
+          other.expenseMetadataJson == this.expenseMetadataJson &&
+          other.transferGroupId == this.transferGroupId);
 }
 
 class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
@@ -3994,6 +4047,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<String?> lotId;
   final Value<String?> note;
   final Value<String?> expenseMetadataJson;
+  final Value<String?> transferGroupId;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -4016,6 +4070,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.lotId = const Value.absent(),
     this.note = const Value.absent(),
     this.expenseMetadataJson = const Value.absent(),
+    this.transferGroupId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -4039,6 +4094,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.lotId = const Value.absent(),
     this.note = const Value.absent(),
     this.expenseMetadataJson = const Value.absent(),
+    this.transferGroupId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -4072,6 +4128,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Expression<String>? lotId,
     Expression<String>? note,
     Expression<String>? expenseMetadataJson,
+    Expression<String>? transferGroupId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4096,6 +4153,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (note != null) 'note': note,
       if (expenseMetadataJson != null)
         'expense_metadata_json': expenseMetadataJson,
+      if (transferGroupId != null) 'transfer_group_id': transferGroupId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4121,6 +4179,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Value<String?>? lotId,
     Value<String?>? note,
     Value<String?>? expenseMetadataJson,
+    Value<String?>? transferGroupId,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -4144,6 +4203,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       lotId: lotId ?? this.lotId,
       note: note ?? this.note,
       expenseMetadataJson: expenseMetadataJson ?? this.expenseMetadataJson,
+      transferGroupId: transferGroupId ?? this.transferGroupId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4225,6 +4285,9 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
         expenseMetadataJson.value,
       );
     }
+    if (transferGroupId.present) {
+      map['transfer_group_id'] = Variable<String>(transferGroupId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4254,6 +4317,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
           ..write('lotId: $lotId, ')
           ..write('note: $note, ')
           ..write('expenseMetadataJson: $expenseMetadataJson, ')
+          ..write('transferGroupId: $transferGroupId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -15711,6 +15775,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> lotId,
       Value<String?> note,
       Value<String?> expenseMetadataJson,
+      Value<String?> transferGroupId,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -15735,6 +15800,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> lotId,
       Value<String?> note,
       Value<String?> expenseMetadataJson,
+      Value<String?> transferGroupId,
       Value<int> rowid,
     });
 
@@ -15852,6 +15918,11 @@ class $$TransactionsTableFilterComposer
     column: $table.expenseMetadataJson,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get transferGroupId => $composableBuilder(
+    column: $table.transferGroupId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$TransactionsTableOrderingComposer
@@ -15962,6 +16033,11 @@ class $$TransactionsTableOrderingComposer
     column: $table.expenseMetadataJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get transferGroupId => $composableBuilder(
+    column: $table.transferGroupId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -16042,6 +16118,11 @@ class $$TransactionsTableAnnotationComposer
     column: $table.expenseMetadataJson,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get transferGroupId => $composableBuilder(
+    column: $table.transferGroupId,
+    builder: (column) => column,
+  );
 }
 
 class $$TransactionsTableTableManager
@@ -16095,6 +16176,7 @@ class $$TransactionsTableTableManager
                 Value<String?> lotId = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<String?> expenseMetadataJson = const Value.absent(),
+                Value<String?> transferGroupId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 ownerUserId: ownerUserId,
@@ -16117,6 +16199,7 @@ class $$TransactionsTableTableManager
                 lotId: lotId,
                 note: note,
                 expenseMetadataJson: expenseMetadataJson,
+                transferGroupId: transferGroupId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -16141,6 +16224,7 @@ class $$TransactionsTableTableManager
                 Value<String?> lotId = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<String?> expenseMetadataJson = const Value.absent(),
+                Value<String?> transferGroupId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -16163,6 +16247,7 @@ class $$TransactionsTableTableManager
                 lotId: lotId,
                 note: note,
                 expenseMetadataJson: expenseMetadataJson,
+                transferGroupId: transferGroupId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

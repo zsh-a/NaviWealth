@@ -100,8 +100,13 @@ class AppDatabase extends _$AppDatabase {
   ///    repository level (see `AccountRepository.seedSystemAccounts`)
   ///    rather than in the migration so the seed shares the outbox /
   ///    HLC plumbing every other repo write goes through.
+  ///  - v10 (FIR-124) — `transactions.transfer_group_id`. Two legs of a
+  ///    transfer (transferOut on the source account + transferIn on the
+  ///    destination) carry the same id so the pair can be joined,
+  ///    rendered and tombstoned as a single unit. Legacy single-leg
+  ///    rows leave it NULL and surface in the unbalanced-group audit.
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -143,6 +148,9 @@ class AppDatabase extends _$AppDatabase {
           case 9:
             await m.addColumn(accounts, accounts.category);
             await backfillAccountCategory(this);
+          case 10:
+            await m.addColumn(transactions, transactions.transferGroupId);
+            await _createTransferGroupIndex(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -274,6 +282,13 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON transactions(account_id, trade_date)',
     'CREATE INDEX IF NOT EXISTS idx_transactions_asset_trade_date '
         'ON transactions(asset_id, trade_date)',
+    // FIR-124: groups two legs of a transfer. Drives both the audit query
+    // (find rows where COUNT != 2) and the cascading soft-delete path
+    // (tombstone the partner leg when one side is removed). Partial index
+    // keeps it tiny — only transfer rows actually carry a group id.
+    'CREATE INDEX IF NOT EXISTS idx_transactions_transfer_group '
+        'ON transactions(transfer_group_id) '
+        'WHERE transfer_group_id IS NOT NULL',
     // Amortization rows are always read by liability + period order.
     'CREATE INDEX IF NOT EXISTS idx_amort_liability_period '
         'ON amortization_entries(liability_id, period_index)',
@@ -319,6 +334,17 @@ Future<void> _createSecuritiesAssetIndexes(AppDatabase db) async {
   for (final stmt in _securitiesAssetIndexStmts) {
     await db.customStatement(stmt);
   }
+}
+
+/// FIR-124 v8 migration helper: index that anchors transfer-group lookups
+/// (audit query + cascade soft-delete). Pulled out so the upgrade path
+/// matches the same statement [_createIndexes] runs on a fresh install.
+Future<void> _createTransferGroupIndex(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_transactions_transfer_group '
+    'ON transactions(transfer_group_id) '
+    'WHERE transfer_group_id IS NOT NULL',
+  );
 }
 
 /// FIR-75 v6 backfill: every distinct `(asset_id, currency)` pair recorded

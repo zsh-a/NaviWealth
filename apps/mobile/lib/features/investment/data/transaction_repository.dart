@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
@@ -203,51 +204,256 @@ class TransactionRepository {
     }
   }
 
+  /// FIR-124: persist an account-to-account cash transfer as **two** rows
+  /// inside one Drift transaction so the pair can never end up half-written.
+  ///
+  /// Both legs share the returned `transferGroupId`:
+  ///   - `transferOut`: `accountId = fromAccountId`,
+  ///     `counterAccountId = toAccountId`
+  ///   - `transferIn`:  `accountId = toAccountId`,
+  ///     `counterAccountId = fromAccountId`
+  ///
+  /// Cash-flow shape mirrors the existing transferIn/transferOut convention
+  /// the rest of the codebase already understands (`net_worth_service` ⋯
+  /// `cash_flow_extractor`): the row carries `quantity = 1` and
+  /// `price = amount`, so `notional = quantity * price = amount`. No asset
+  /// is referenced — pure cash movement.
+  ///
+  /// `fee`, when present, is charged to the **outgoing** leg (the source
+  /// account is the one the bank debits). The incoming leg lands the full
+  /// `amount`. Cross-currency transfers are out of scope for v1; both legs
+  /// share [currency].
+  ///
+  /// Both inserts and both outbox `Op`s ride the same Drift transaction.
+  /// If any statement throws, the whole pair rolls back — neither leg
+  /// reaches the database, neither op reaches the outbox, so peers can
+  /// never observe a partial transfer.
+  Future<TransferRecord> recordTransfer({
+    required String fromAccountId,
+    required String toAccountId,
+    required Decimal amount,
+    required String currency,
+    required DateTime tradeDate,
+    Decimal? fee,
+    String? note,
+    DateTime? settleDate,
+    String? transferGroupId,
+    String? outgoingId,
+    String? incomingId,
+  }) async {
+    if (fromAccountId.isEmpty || toAccountId.isEmpty) {
+      throw ArgumentError('fromAccountId and toAccountId must be non-empty.');
+    }
+    if (fromAccountId == toAccountId) {
+      throw ArgumentError(
+        'A transfer must move cash between two different accounts.',
+      );
+    }
+    if (amount.sign <= 0) {
+      throw ArgumentError.value(amount, 'amount', 'must be > 0');
+    }
+    if (fee != null && fee.sign < 0) {
+      throw ArgumentError.value(fee, 'fee', 'must be >= 0');
+    }
+    if (currency.trim().isEmpty) {
+      throw ArgumentError.value(currency, 'currency', 'must not be empty');
+    }
+
+    final groupId = transferGroupId ?? _uuid.v4();
+    final outId = outgoingId ?? _uuid.v4();
+    final inId = incomingId ?? _uuid.v4();
+    if (outId == inId) {
+      throw ArgumentError('outgoingId and incomingId must differ.');
+    }
+    final stamp = await _stamper.stamp();
+
+    final outgoingTx = _buildTransferLeg(
+      id: outId,
+      type: TransactionType.transferOut,
+      accountId: fromAccountId,
+      counterAccountId: toAccountId,
+      amount: amount,
+      currency: currency,
+      tradeDate: tradeDate,
+      settleDate: settleDate,
+      fee: fee,
+      note: note,
+      transferGroupId: groupId,
+      stamp: stamp,
+    );
+    final incomingTx = _buildTransferLeg(
+      id: inId,
+      type: TransactionType.transferIn,
+      accountId: toAccountId,
+      counterAccountId: fromAccountId,
+      amount: amount,
+      currency: currency,
+      tradeDate: tradeDate,
+      settleDate: settleDate,
+      // Fee is borne by the source account; the incoming leg receives the
+      // full amount intact.
+      fee: null,
+      note: note,
+      transferGroupId: groupId,
+      stamp: stamp,
+    );
+
+    await _db.transaction(() async {
+      await _db.into(_db.transactions).insert(_toCompanion(outgoingTx, stamp));
+      await _enqueue(
+        opType: OpType.insert,
+        rowId: outgoingTx.id,
+        fields: _insertFields(outgoingTx, stamp),
+        stamp: stamp,
+      );
+      await _db.into(_db.transactions).insert(_toCompanion(incomingTx, stamp));
+      await _enqueue(
+        opType: OpType.insert,
+        rowId: incomingTx.id,
+        fields: _insertFields(incomingTx, stamp),
+        stamp: stamp,
+      );
+    });
+
+    final outReloaded = (await findById(outgoingTx.id))!;
+    final inReloaded = (await findById(incomingTx.id))!;
+    return TransferRecord(
+      transferGroupId: groupId,
+      outgoing: outReloaded,
+      incoming: inReloaded,
+    );
+  }
+
+  Transaction _buildTransferLeg({
+    required String id,
+    required TransactionType type,
+    required String accountId,
+    required String counterAccountId,
+    required Decimal amount,
+    required String currency,
+    required DateTime tradeDate,
+    DateTime? settleDate,
+    Decimal? fee,
+    String? note,
+    required String transferGroupId,
+    required MutationStamp stamp,
+  }) {
+    return Transaction(
+      id: id,
+      accountId: accountId,
+      assetId: null,
+      type: type,
+      // Conventional cash-flow shape: quantity = 1, price = amount, so
+      // `notional = amount` and downstream services (net worth, returns)
+      // continue to reason about the row without a special case.
+      quantity: Decimal.one,
+      price: amount,
+      currency: currency,
+      tradeDate: tradeDate,
+      settleDate: settleDate,
+      fee: fee,
+      tax: null,
+      counterAccountId: counterAccountId,
+      lotId: null,
+      note: note,
+      transferGroupId: transferGroupId,
+      sync: SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      ),
+    );
+  }
+
   /// Soft-delete a transaction by id and enqueue a delete op. Used by the
   /// FIR-67 propose-card 60s undo path, which knows the row id but not the
   /// originally-created lots; lot bookkeeping is replayed by HoldingService
   /// so dropping the transaction is sufficient.
-  Future<void> softDeleteById(String transactionId) async {
+  ///
+  /// FIR-124: if the row belongs to a transfer group, the partner leg is
+  /// soft-deleted in the same Drift transaction and its delete op queued
+  /// alongside. Removing one half of a transfer would otherwise leave
+  /// account balances unbalanced — the audit query would flag it, but by
+  /// then the user has already seen the wrong number.
+  Future<void> softDeleteById(String transactionId) =>
+      _softDeleteRespectingGroup(transactionId);
+
+  /// Soft-delete a transaction and enqueue a delete op.
+  Future<void> deleteTrade(TransactionDeletePlan plan) =>
+      _softDeleteRespectingGroup(plan.transactionId);
+
+  Future<void> _softDeleteRespectingGroup(String transactionId) async {
     final stamp = await _stamper.stamp();
-    final companion = TransactionsCompanion(
-      updatedAt: Value(stamp.now),
-      updatedByDevice: Value(stamp.deviceId),
-      hlc: Value(stamp.hlc),
-      deletedAt: Value(stamp.now),
-    );
     await _db.transaction(() async {
-      await (_db.update(_db.transactions)
-            ..where((t) => t.id.equals(transactionId)))
-          .write(companion);
-      await _enqueue(
-        opType: OpType.delete,
-        rowId: transactionId,
-        fields: null,
-        stamp: stamp,
+      // Look up the target row's transfer group id while we're inside the
+      // transaction so a concurrent edit cannot race the lookup against
+      // the delete.
+      final groupRow = await (_db.selectOnly(_db.transactions)
+            ..addColumns([_db.transactions.transferGroupId])
+            ..where(_db.transactions.id.equals(transactionId)))
+          .getSingleOrNull();
+      final groupId = groupRow?.read(_db.transactions.transferGroupId);
+
+      final ids = <String>{transactionId};
+      if (groupId != null && groupId.isNotEmpty) {
+        // Pull every still-live leg in the same group. Already-tombstoned
+        // legs stay tombstoned (their `deleted_at` is preserved by the
+        // `deleted_at IS NULL` filter).
+        final partnerRows = await (_db.selectOnly(_db.transactions)
+              ..addColumns([_db.transactions.id])
+              ..where(_db.transactions.transferGroupId.equals(groupId) &
+                  _db.transactions.id.equals(transactionId).not() &
+                  _db.transactions.deletedAt.isNull()))
+            .get();
+        for (final r in partnerRows) {
+          ids.add(r.read(_db.transactions.id)!);
+        }
+      }
+
+      final companion = TransactionsCompanion(
+        updatedAt: Value(stamp.now),
+        updatedByDevice: Value(stamp.deviceId),
+        hlc: Value(stamp.hlc),
+        deletedAt: Value(stamp.now),
       );
+      for (final id in ids) {
+        await (_db.update(_db.transactions)
+              ..where((t) => t.id.equals(id)))
+            .write(companion);
+        await _enqueue(
+          opType: OpType.delete,
+          rowId: id,
+          fields: null,
+          stamp: stamp,
+        );
+      }
     });
   }
 
-  /// Soft-delete a transaction and enqueue a delete op.
-  Future<void> deleteTrade(TransactionDeletePlan plan) async {
-    final stamp = await _stamper.stamp();
-    final companion = TransactionsCompanion(
-      updatedAt: Value(stamp.now),
-      updatedByDevice: Value(stamp.deviceId),
-      hlc: Value(stamp.hlc),
-      deletedAt: Value(stamp.now),
-    );
-    await _db.transaction(() async {
-      await (_db.update(_db.transactions)
-            ..where((t) => t.id.equals(plan.transactionId)))
-          .write(companion);
-      await _enqueue(
-        opType: OpType.delete,
-        rowId: plan.transactionId,
-        fields: null,
-        stamp: stamp,
-      );
-    });
+  /// FIR-124 audit query: every `transfer_group_id` whose live leg count
+  /// is not exactly 2. Returns an empty list when the ledger is balanced.
+  ///
+  /// Wired into the same admin / sync-monitoring surfaces that flag other
+  /// data-integrity drift; CI tests assert it returns 0 rows after every
+  /// representative scenario.
+  Future<List<TransferGroupAuditRow>> findUnbalancedTransferGroups() async {
+    final rows = await _db.customSelect(
+      'SELECT transfer_group_id AS gid, COUNT(*) AS leg_count '
+      'FROM transactions '
+      "WHERE type IN ('transferIn', 'transferOut') "
+      'AND deleted_at IS NULL '
+      'AND transfer_group_id IS NOT NULL '
+      'GROUP BY transfer_group_id '
+      'HAVING COUNT(*) != 2',
+      readsFrom: {_db.transactions},
+    ).get();
+    return rows
+        .map((r) => TransferGroupAuditRow(
+              transferGroupId: r.read<String>('gid'),
+              legCount: r.read<int>('leg_count'),
+            ))
+        .toList(growable: false);
   }
 
   // ---------- Helpers ----------
@@ -286,6 +492,7 @@ class TransactionRepository {
       counterAccountId: Value(tx.counterAccountId),
       lotId: Value(tx.lotId),
       note: Value(tx.note),
+      transferGroupId: Value(tx.transferGroupId),
       ownerUserId: stamp.ownerUserId,
       updatedAt: stamp.now,
       updatedByDevice: stamp.deviceId,
@@ -309,6 +516,7 @@ class TransactionRepository {
       'counter_account_id': tx.counterAccountId,
       'lot_id': tx.lotId,
       'note': tx.note,
+      'transfer_group_id': tx.transferGroupId,
       'owner_user_id': stamp.ownerUserId,
       'updated_at': stamp.now.toUtc().toIso8601String(),
       'updated_by_device': stamp.deviceId,
@@ -332,6 +540,7 @@ class TransactionRepository {
       counterAccountId: row.counterAccountId,
       lotId: row.lotId,
       note: row.note,
+      transferGroupId: row.transferGroupId,
       sync: SyncMeta(
         ownerUserId: row.ownerUserId,
         updatedAt: row.updatedAt,
@@ -341,4 +550,37 @@ class TransactionRepository {
       ),
     );
   }
+}
+
+/// Result of [TransactionRepository.recordTransfer]: the two persisted
+/// rows (transferOut + transferIn) plus the shared `transferGroupId` that
+/// links them. Callers that need to display the pair (e.g. to undo the
+/// transfer) can hold onto either id.
+class TransferRecord {
+  const TransferRecord({
+    required this.transferGroupId,
+    required this.outgoing,
+    required this.incoming,
+  });
+
+  final String transferGroupId;
+  final Transaction outgoing;
+  final Transaction incoming;
+}
+
+/// One row returned by
+/// [TransactionRepository.findUnbalancedTransferGroups]: a
+/// `transfer_group_id` whose live leg count is anything other than 2.
+/// `legCount == 1` is the canonical "user dropped a leg" case; values of
+/// 0 or >2 indicate a sync replay bug or hand-edited data and should be
+/// surfaced to monitoring.
+class TransferGroupAuditRow {
+  const TransferGroupAuditRow({required this.transferGroupId, required this.legCount});
+
+  final String transferGroupId;
+  final int legCount;
+
+  @override
+  String toString() =>
+      'TransferGroupAuditRow($transferGroupId, legCount=$legCount)';
 }
