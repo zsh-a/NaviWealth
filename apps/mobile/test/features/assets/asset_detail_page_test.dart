@@ -202,6 +202,9 @@ void main() {
     expect(find.text('已补全元数据'), findsOneWidget);
     final asset = await harness.secRepo.findById('us_stock:AAPL');
     expect(asset!.name, 'Apple Inc.');
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('"同步元数据" leaves an existing user-edited name alone',
@@ -234,6 +237,9 @@ void main() {
     final asset = await harness.secRepo.findById('us_stock:AAPL');
     expect(asset!.name, 'My Apple',
         reason: 'enrichment must not overwrite a user-supplied name');
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('"同步元数据" failure surfaces a friendly offline message',
@@ -258,6 +264,9 @@ void main() {
     final asset = await harness.secRepo.findById('us_stock:AAPL');
     expect(asset!.name, isNull,
         reason: 'a failed sync must not write a placeholder name');
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('renders holding / P&L / mini-chart cards from snapshot data',

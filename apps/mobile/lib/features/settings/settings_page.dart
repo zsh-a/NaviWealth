@@ -316,11 +316,11 @@ class _RiskThresholdSettings extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: TextButton(
+            child: AppButton.tertiary(
+              label: l10n.settingsRiskResetDefaults,
               onPressed: () => ref
                   .read(concentrationThresholdsProvider.notifier)
                   .resetToDefaults(),
-              child: Text(l10n.settingsRiskResetDefaults),
             ),
           ),
         ),

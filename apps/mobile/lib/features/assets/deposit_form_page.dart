@@ -94,9 +94,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
       Haptics.error();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('定期存款必须填写到期日')));
+      AppMessenger.show(context, ToastKind.error, '定期存款必须填写到期日');
       return;
     }
     setState(() => _busy = true);
@@ -163,13 +161,13 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         title: const Text('删除存款'),
         content: const Text('确认删除该存款记录？'),
         actions: [
-          TextButton(
+          AppButton.tertiary(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            label: '取消',
           ),
-          FilledButton.tonal(
+          AppButton.secondary(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
+            label: '删除',
           ),
         ],
       ),
@@ -349,9 +347,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               onChanged: (v) => setState(() => _autoRenew = v),
             ),
           const SizedBox(height: Spacing.s24),
-          FilledButton(
+          AppButton.primary(
             onPressed: _busy ? null : _save,
-            child: Text(_busy ? '保存中…' : '保存'),
+            label: _busy ? '保存中…' : '保存',
           ),
         ],
       ),
@@ -374,9 +372,9 @@ class _PromptCreateAccount extends StatelessWidget {
           children: [
             const Text('请先创建一个银行账户。', textAlign: TextAlign.center),
             const SizedBox(height: Spacing.s12),
-            FilledButton.tonalIcon(
-              icon: const Icon(Icons.add),
-              label: const Text('新建账户'),
+            AppButton.secondary(
+              icon: Icons.add,
+              label: '新建账户',
               onPressed: onTap,
             ),
           ],

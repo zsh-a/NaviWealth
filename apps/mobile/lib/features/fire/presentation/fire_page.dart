@@ -83,9 +83,9 @@ class _UnconfiguredBody extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: Spacing.s24),
-            FilledButton.icon(
-              icon: const Icon(Icons.add),
-              label: Text(l10n.fireEmptySetGoalCta),
+            AppButton.primary(
+              label: l10n.fireEmptySetGoalCta,
+              icon: Icons.add,
               onPressed: () => showFireGoalSheet(context),
             ),
           ],
@@ -133,9 +133,9 @@ class _ConfiguredBody extends ConsumerWidget {
           children: [
             ResponsiveTwoColumn(left: left, right: right),
             const SizedBox(height: Spacing.s16),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.edit_outlined),
-              label: Text(l10n.fireEditGoal),
+            AppButton.secondary(
+              label: l10n.fireEditGoal,
+              icon: Icons.edit_outlined,
               onPressed: () => showFireGoalSheet(context),
             ),
           ],
@@ -666,7 +666,7 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: Spacing.s8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: Spacing.s8),
-          TextButton(onPressed: onRetry, child: Text(l10n.fireRetry)),
+          AppButton.tertiary(label: l10n.fireRetry, onPressed: onRetry),
         ],
       ),
     );

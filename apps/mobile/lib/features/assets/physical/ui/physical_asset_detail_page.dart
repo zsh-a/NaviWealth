@@ -63,13 +63,13 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
         title: Text(l10n.physicalAssetDeleteConfirmTitle),
         content: Text(l10n.physicalAssetDeleteConfirmBody),
         actions: [
-          TextButton(
+          AppButton.tertiary(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
+            label: l10n.commonCancel,
           ),
-          FilledButton.tonal(
+          AppButton.secondary(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.physicalAssetDeleteAction),
+            label: l10n.physicalAssetDeleteAction,
           ),
         ],
       ),
@@ -139,11 +139,11 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ],
                 const SizedBox(height: Spacing.s16),
-                FilledButton.icon(
+                AppButton.primary(
                   onPressed: () =>
                       ValuationUpdateSheet.show(context, asset: asset),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: Text(l10n.physicalAssetUpdateValuationAction),
+                  icon: Icons.edit_outlined,
+                  label: l10n.physicalAssetUpdateValuationAction,
                 ),
               ],
             ),

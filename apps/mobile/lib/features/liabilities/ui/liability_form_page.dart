@@ -89,9 +89,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
       appBar: GlassAppBar(
         title: Text(l10n.liabilitiesAddAction),
         actions: [
-          TextButton(
+          AppButton.tertiary(
+            label: l10n.liabilitySaveAction,
             onPressed: _saving ? null : _save,
-            child: Text(l10n.liabilitySaveAction),
           ),
         ],
       ),

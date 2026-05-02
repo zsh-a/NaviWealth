@@ -162,13 +162,13 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
         title: const Text('删除理财产品'),
         content: const Text('确认删除该理财产品记录？'),
         actions: [
-          TextButton(
+          AppButton.tertiary(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            label: '取消',
           ),
-          FilledButton.tonal(
+          AppButton.secondary(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
+            label: '删除',
           ),
         ],
       ),
@@ -243,9 +243,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             children: [
               const Text('请先创建银行 / 券商账户。', textAlign: TextAlign.center),
               const SizedBox(height: Spacing.s12),
-              FilledButton.tonalIcon(
-                icon: const Icon(Icons.add),
-                label: const Text('新建账户'),
+              AppButton.secondary(
+                icon: Icons.add,
+                label: '新建账户',
                 onPressed: () => context.go('/accounts/new'),
               ),
             ],
@@ -365,9 +365,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
           const SizedBox(height: Spacing.s24),
-          FilledButton(
+          AppButton.primary(
             onPressed: _busy ? null : _save,
-            child: Text(_busy ? '保存中…' : '保存'),
+            label: _busy ? '保存中…' : '保存',
           ),
         ],
       ),

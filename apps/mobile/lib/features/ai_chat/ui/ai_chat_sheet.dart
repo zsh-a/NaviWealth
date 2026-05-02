@@ -347,7 +347,7 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
       _scroll.animateTo(
         _scroll.position.maxScrollExtent,
         duration: Motion.fast,
-        curve: Curves.easeOut,
+        curve: Motion.standardDecelerate,
       );
     });
   }

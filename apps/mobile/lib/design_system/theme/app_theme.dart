@@ -70,8 +70,20 @@ class AppTheme {
       visualDensity: VisualDensity.adaptivePlatformDensity,
       textTheme: textTheme,
       scaffoldBackgroundColor: scheme.surface,
+      // Global ripple removal — T11 item 1.
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
       hoverColor: hoverOverlay,
       focusColor: focusOverlay,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
       dividerTheme: DividerThemeData(
         color: semantic.divider,
         thickness: 1,
@@ -158,24 +170,47 @@ class AppTheme {
         labelStyle: textTheme.labelMedium,
       ),
       inputDecorationTheme: InputDecorationTheme(
-        border: const OutlineInputBorder(borderRadius: Radii.brSm),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: Radii.brSm,
+        // T11 item 4: Stripe-style bottom-rule underline.
+        border: UnderlineInputBorder(
           borderSide: BorderSide(color: semantic.divider),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: Radii.brSm,
-          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: semantic.divider),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s12,
-          vertical: Spacing.s12,
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: ColorPalette.green500, width: 1.5),
         ),
+        errorBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: ColorPalette.red500, width: 1),
+        ),
+        focusedErrorBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: ColorPalette.red500, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.only(
+          top: Spacing.s8,
+          bottom: Spacing.s8,
+        ),
+        isDense: true,
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: scheme.surface,
-        indicatorColor: scheme.primaryContainer,
-        labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium),
+      navigationBarTheme: const NavigationBarThemeData(
+        // T11 item 2: transparent indicator — custom lines drawn by
+        // GlassNavigationBar instead of M3 capsule.
+        indicatorColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+      ),
+      // T11 item 8: surfaceTintColor zeroed on all elevated surfaces.
+      dialogTheme: const DialogThemeData(
+        surfaceTintColor: Colors.transparent,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        surfaceTintColor: Colors.transparent,
+      ),
+      navigationRailTheme: const NavigationRailThemeData(),
+      popupMenuTheme: const PopupMenuThemeData(
+        surfaceTintColor: Colors.transparent,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
       ),
       listTileTheme: ListTileThemeData(
         // Pointer hover on rows reads as a 4% primary tint; pressed reads

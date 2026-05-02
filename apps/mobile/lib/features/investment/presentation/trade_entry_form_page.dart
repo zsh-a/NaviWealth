@@ -335,10 +335,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           NoteField(controller: _noteController, focusNode: _noteFocus),
           const SizedBox(height: Spacing.s24),
 
-          FilledButton(
+          AppButton.primary(
             key: const Key('trade-entry-submit'),
+            label: _busy ? l10n.commonSaving : l10n.commonSave,
             onPressed: _busy ? null : _submit,
-            child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
           ),
         ],
       ),

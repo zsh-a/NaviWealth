@@ -192,16 +192,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     const SizedBox(height: Spacing.s24),
-                    FilledButton(
+                    AppButton.primary(
                       key: const ValueKey('login.submit'),
+                      label: _submitting ? '' : l10n.authLoginSubmit,
                       onPressed: _submitting ? null : _submit,
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l10n.authLoginSubmit),
                     ),
                   ],
                 ),

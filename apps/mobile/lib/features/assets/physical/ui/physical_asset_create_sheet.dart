@@ -279,15 +279,9 @@ class _PhysicalAssetCreateSheetState
                   ),
                 ],
                 const SizedBox(height: Spacing.s24),
-                FilledButton(
+                AppButton.primary(
                   onPressed: _saving ? null : _submit,
-                  child: _saving
-                      ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.physicalAssetCreateSubmit),
+                  label: l10n.physicalAssetCreateSubmit,
                 ),
               ],
             ),
