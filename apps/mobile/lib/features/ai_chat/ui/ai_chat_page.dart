@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/master_detail_layout.dart';
+import '../../../app/selection_query.dart';
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -97,30 +99,34 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isDesktop = Breakpoints.isDesktop(width);
+        final isDesktop = MasterDetailLayout.shouldUseMasterDetail(width);
         final activeId = _activeSessionId;
+        // At desktop width the URL is the source of truth for the active
+        // session — the master-detail surface follows `?selected=`. We
+        // still keep `_activeSessionId` populated so the bootstrap path
+        // can pick a default.
+        final selectedFromQuery = isDesktop ? selectedQueryOf(context) : null;
+        final desktopActiveId = selectedFromQuery ?? activeId;
 
         if (isDesktop) {
           return Scaffold(
             appBar: GlassAppBar(title: Text(l10n.aiChatAppBarTitle)),
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: Spacing.sessionsPanel,
-                  child: SessionsPanel(
-                    activeSessionId: activeId,
-                    onSelect: (id) => setState(() => _activeSessionId = id),
-                    onNew: () => _newSession(session.userId),
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: activeId == null
-                      ? const _BootstrappingPane()
-                      : _ChatPane(sessionId: activeId),
-                ),
-              ],
+            body: MasterDetailLayout(
+              master: SessionsPanel(
+                activeSessionId: desktopActiveId,
+                onSelect: (id) {
+                  setState(() => _activeSessionId = id);
+                  replaceSelectedQuery(
+                    context,
+                    path: '/ai',
+                    selected: id,
+                  );
+                },
+                onNew: () => _newSession(session.userId),
+              ),
+              detail: desktopActiveId == null
+                  ? const _BootstrappingPane()
+                  : _ChatPane(sessionId: desktopActiveId),
             ),
           );
         }

@@ -44,6 +44,7 @@ void main() {
             GlobalShortcutsScope(
               onSwitchPrimaryTab: dispatched.add,
               onOpenCommandPalette: (_) {},
+              onToggleSidebar: () {},
               child: const Scaffold(
                 body: Focus(autofocus: true, child: SizedBox()),
               ),
@@ -67,6 +68,7 @@ void main() {
             GlobalShortcutsScope(
               onSwitchPrimaryTab: (_) {},
               onOpenCommandPalette: (_) => called++,
+              onToggleSidebar: () {},
               child: const Scaffold(
                 body: Focus(autofocus: true, child: SizedBox()),
               ),
@@ -96,6 +98,7 @@ void main() {
             GlobalShortcutsScope(
               onSwitchPrimaryTab: dispatched.add,
               onOpenCommandPalette: (_) {},
+              onToggleSidebar: () {},
               child: Scaffold(
                 body: Center(
                   child: TextField(controller: controller, autofocus: true),
@@ -129,6 +132,7 @@ void main() {
             home: GlobalShortcutsScope(
               onSwitchPrimaryTab: (_) {},
               onOpenCommandPalette: (_) {},
+              onToggleSidebar: () {},
               child: const Scaffold(body: SizedBox.expand()),
             ),
           ),
@@ -167,6 +171,7 @@ void main() {
           GlobalShortcutsScope(
             onSwitchPrimaryTab: dispatched.add,
             onOpenCommandPalette: (_) {},
+            onToggleSidebar: () {},
             child: const Scaffold(
               body: Focus(autofocus: true, child: SizedBox()),
             ),

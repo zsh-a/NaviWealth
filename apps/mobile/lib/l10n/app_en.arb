@@ -29,6 +29,8 @@
     }
   },
   "assetsAppBarTitle": "Assets",
+  "assetsDetailEmpty": "Select an asset on the left to see its details.",
+  "@assetsDetailEmpty": { "description": "Master-detail empty state for /assets at desktop width (FIR-106)" },
   "assetsEmptyHint": "No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.",
   "assetsAddAction": "Add asset",
   "assetsCorporateActionAction": "Record corporate action",
@@ -320,6 +322,8 @@
   "shortcutCommandPalette": "Open command palette",
   "shortcutShowHelp": "Show keyboard shortcut help",
   "shortcutDismissOverlay": "Close current dialog",
+  "shortcutToggleSidebar": "Collapse / expand sidebar",
+  "@shortcutToggleSidebar": { "description": "Help-dialog label for the Cmd/Ctrl+B sidebar toggle (FIR-106)" },
   "shortcutSwitchTab": "Switch to tab {position} ({label})",
   "@shortcutSwitchTab": {
     "placeholders": {
@@ -996,6 +1000,8 @@
   "@physicalAssetValuationTrendSemanticLabel": { "description": "Accessibility label for the physical asset valuation-trend chart." },
 
   "accountsAppBarTitle": "Accounts",
+  "accountsDetailEmpty": "Select an account on the left to edit its details.",
+  "@accountsDetailEmpty": { "description": "Master-detail empty state for /accounts at desktop width (FIR-106)" },
   "accountsCreateAction": "New account",
   "accountsLoadError": "Failed to load: {error}",
   "@accountsLoadError": {

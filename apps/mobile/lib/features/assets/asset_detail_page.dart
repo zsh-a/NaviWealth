@@ -666,14 +666,19 @@ class _ChartBody extends StatelessWidget {
           ],
         ),
     ];
-    return SizedBox(
-      height: 180,
-      child: NwLineChart(
-        series: series,
-        xAxis: const TimeAxis(format: AxisDateFormat.dayMonth, maxLabels: 4),
-        yAxis: ValueAxis.currency(currencyCode: currency, maxLabels: 4),
-        aspectRatio: 16 / 9,
-        semanticLabel: '近 30 日收盘价走势',
+    return LayoutBuilder(
+      builder: (context, constraints) => SizedBox(
+        height: 180,
+        child: NwLineChart(
+          series: series,
+          xAxis: const TimeAxis(
+            format: AxisDateFormat.dayMonth,
+            maxLabels: 4,
+          ),
+          yAxis: ValueAxis.currency(currencyCode: currency, maxLabels: 4),
+          aspectRatio: chartAspectFor(constraints.maxWidth),
+          semanticLabel: '近 30 日收盘价走势',
+        ),
       ),
     );
   }
