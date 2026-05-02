@@ -203,7 +203,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Widget build(BuildContext context) {
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(widget.isEdit ? '编辑存款' : '录入存款'),
         actions: [
           if (widget.isEdit)

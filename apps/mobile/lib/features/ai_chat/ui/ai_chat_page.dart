@@ -81,7 +81,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final session = ref.watch(authSessionReaderProvider)();
     if (session == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.aiChatAppBarTitle)),
+        appBar: GlassAppBar(title: Text(l10n.aiChatAppBarTitle)),
         body: const _LoginRequired(),
       );
     }
@@ -102,7 +102,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
         if (isDesktop) {
           return Scaffold(
-            appBar: AppBar(title: Text(l10n.aiChatAppBarTitle)),
+            appBar: GlassAppBar(title: Text(l10n.aiChatAppBarTitle)),
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -127,7 +127,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
         // mobile + tablet: drawer for sessions.
         return Scaffold(
-          appBar: AppBar(
+          appBar: GlassAppBar(
             title: Text(_titleForActive(session.userId, activeId, l10n)),
             actions: [
               Builder(

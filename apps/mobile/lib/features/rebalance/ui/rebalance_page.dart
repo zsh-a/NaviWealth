@@ -21,7 +21,7 @@ class RebalancePage extends ConsumerWidget {
     final scheme = ref.watch(selectedSchemeProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l10n.rebalanceTitle),
         actions: [
           IconButton(
@@ -38,7 +38,7 @@ class RebalancePage extends ConsumerWidget {
   }
 
   void _openSettings(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet<void>(
+    showGlassModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,

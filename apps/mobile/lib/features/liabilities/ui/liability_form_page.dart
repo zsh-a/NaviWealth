@@ -86,7 +86,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l10n.liabilitiesAddAction),
         actions: [
           TextButton(

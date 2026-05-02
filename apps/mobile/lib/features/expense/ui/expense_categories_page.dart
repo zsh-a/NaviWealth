@@ -16,7 +16,7 @@ class ExpenseCategoriesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final all = ref.watch(allExpenseCategoriesStreamProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('支出类目')),
+      appBar: const GlassAppBar(title: Text('支出类目')),
       body: all.when(
         data: (cats) => _CategoryList(categories: cats),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -239,7 +239,7 @@ class _ArchivedTile extends StatelessWidget {
 }
 
 void _showEditor(BuildContext context, WidgetRef ref, ExpenseCategory? cat) {
-  showModalBottomSheet<void>(
+  showGlassModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     builder: (ctx) {

@@ -20,7 +20,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final assetAsync = ref.watch(physicalAssetDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: assetAsync.maybeWhen(
           data: (a) => Text(a?.name ?? l10n.physicalAssetNotFound),
           orElse: () => const SizedBox.shrink(),

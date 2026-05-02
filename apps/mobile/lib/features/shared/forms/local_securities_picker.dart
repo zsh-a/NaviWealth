@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/securities_catalog/asset_search_hit.dart';
 import '../../../data/securities_catalog/securities_search_service.dart';
+import '../../../design_system/widgets/glass_modal_bottom_sheet.dart';
 import '../../../domain/values/asset_market.dart';
 import 'manual_security_sheet.dart';
 
@@ -160,7 +161,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
   }
 
   Future<void> _openManualSheet({String? prefillSymbol}) async {
-    final result = await showModalBottomSheet<LocalSecurityChoice>(
+    final result = await showGlassModalBottomSheet<LocalSecurityChoice>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => ManualSecuritySheet(prefillSymbol: prefillSymbol),

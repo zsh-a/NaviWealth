@@ -22,7 +22,7 @@ class LiabilityDetailPage extends ConsumerWidget {
     final summaryAsync = ref.watch(liabilitySummaryProvider(id));
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.liabilitiesAppBarTitle)),
+      appBar: GlassAppBar(title: Text(l10n.liabilitiesAppBarTitle)),
       body: summaryAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
