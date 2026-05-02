@@ -41,6 +41,7 @@ class ManualAssetRepository {
   final Uuid _uuid;
 
   static const String _tableName = 'assets';
+  static const String _transactionsTableName = 'transactions';
 
   // ---------- Reads ----------
 
@@ -105,6 +106,7 @@ class ManualAssetRepository {
       lastPrice: balance,
       lastPriceAt: stamp.now,
       metadataJson: metadata.encode(),
+      accountId: accountId,
     );
     return (await findById(id))!;
   }
@@ -163,6 +165,7 @@ class ManualAssetRepository {
       lastPrice: price,
       lastPriceAt: stamp.now,
       metadataJson: metadata.encode(),
+      accountId: accountId,
     );
     return (await findById(id))!;
   }
@@ -219,70 +222,134 @@ class ManualAssetRepository {
       lastPrice: price,
       lastPriceAt: stamp.now,
       metadataJson: metadata.encode(),
+      accountId: accountId,
     );
     return (await findById(id))!;
   }
 
   // ---------- Generic update / valuation / delete ----------
 
-  /// Updates the manually-tracked valuation of an existing asset, leaving
-  /// the rest of its fields alone. The deposit/wealth-product specifics
-  /// stay in `metadataJson`; only `last_price` + `last_price_at` change.
-  Future<Asset> updateValuation({
-    required String id,
+  /// Append a [TransactionType.valuationAdjust] event recording a manual
+  /// valuation change for [assetId].
+  ///
+  /// FIR-123: cash / deposit / wealth-product valuations used to flow
+  /// straight into `assets.last_price` via in-place UPDATE, which made the
+  /// "100 → 300" jump unanswerable ("where did the 200 come from?"). The
+  /// new contract is event-sourced:
+  ///
+  ///   - A `valuationAdjust` row is appended with `quantity = 0` (no
+  ///     position change), `price = newValuation`, `currency =
+  ///     asset.currency`, `tradeDate = asOf ?? stamp.now`, and `accountId`
+  ///     resolved from the asset's metadata blob.
+  ///   - `assets.last_price` / `last_price_at` are still updated in the
+  ///     same Drift transaction as a denormalized read cache, so existing
+  ///     readers (dashboard, asset list) keep rendering without a query
+  ///     rewrite. The transaction stream remains the source of truth — see
+  ///     `NetWorthService._applyTransaction` which folds these rows into
+  ///     the cash-class valuation line.
+  ///   - Two outbox `Op`s are enqueued (one for the inserted transaction,
+  ///     one for the cached `last_price` update). Both ride the same
+  ///     Drift transaction so peers never observe a half-written change.
+  ///   - An audit `field_changed` event is recorded so the local-only
+  ///     domain event log keeps showing before/after on the asset row.
+  Future<Asset> recordValuationAdjust({
+    required String assetId,
     required Decimal newValuation,
+    DateTime? asOf,
     String? reason,
   }) async {
     final stamp = await _stamper.stamp();
-    final companion = AssetsCompanion(
+    final priorRow = await (_db.select(
+      _db.assets,
+    )..where((t) => t.id.equals(assetId))).getSingleOrNull();
+    if (priorRow == null) {
+      throw StateError('Asset $assetId does not exist');
+    }
+    final tradeDate = asOf ?? stamp.now;
+    final txId = _uuid.v4();
+    final txAccountId = _accountIdForAsset(priorRow);
+    final assetCompanion = AssetsCompanion(
       lastPrice: Value(newValuation),
-      lastPriceAt: Value(stamp.now),
+      lastPriceAt: Value(tradeDate),
       updatedAt: Value(stamp.now),
       updatedByDevice: Value(stamp.deviceId),
       hlc: Value(stamp.hlc),
     );
-    final diff = <String, Object?>{
+    final assetDiff = <String, Object?>{
       'last_price': newValuation.toString(),
-      'last_price_at': stamp.now.toUtc().toIso8601String(),
+      'last_price_at': tradeDate.toUtc().toIso8601String(),
       'updated_at': stamp.now.toUtc().toIso8601String(),
       'updated_by_device': stamp.deviceId,
       'hlc': stamp.hlc.toString(),
     };
     await _db.transaction(() async {
-      // Snapshot the prior valuation *inside* the transaction so the
-      // before-value the audit row records is the row state we're
-      // about to overwrite — never a stale read from before the
-      // transaction acquired its lock.
-      final priorRow = await (_db.select(
-        _db.assets,
-      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.assets,
-      )..where((t) => t.id.equals(id))).write(companion);
+      )..where((t) => t.id.equals(assetId))).write(assetCompanion);
       await _enqueue(
         opType: OpType.update,
-        rowId: id,
-        fields: diff,
+        rowId: assetId,
+        fields: assetDiff,
         stamp: stamp,
       );
-      if (priorRow != null) {
-        await _eventLog.recordFieldChanged(
-          entityTable: _tableName,
-          entityId: id,
-          stamp: stamp,
-          before: <String, Object?>{
-            'last_price': priorRow.lastPrice?.toString(),
-            'last_price_at': priorRow.lastPriceAt?.toUtc().toIso8601String(),
-          },
-          after: <String, Object?>{
-            'last_price': newValuation.toString(),
-            'last_price_at': stamp.now.toUtc().toIso8601String(),
-          },
-          reason: reason,
-        );
-      }
+
+      await _db
+          .into(_db.transactions)
+          .insert(
+            TransactionsCompanion.insert(
+              id: txId,
+              accountId: txAccountId,
+              assetId: Value(assetId),
+              type: TransactionType.valuationAdjust,
+              // Quantity = 0 distinguishes "manual cash-class valuation"
+              // (no underlying unit) from the physical-asset flow which
+              // uses quantity = 1 for unitary real-estate / vehicle rows.
+              quantity: Decimal.zero,
+              price: newValuation,
+              currency: priorRow.currency,
+              tradeDate: tradeDate,
+              note: Value(reason),
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          );
+      await _enqueueTransaction(
+        rowId: txId,
+        fields: <String, Object?>{
+          'id': txId,
+          'account_id': txAccountId,
+          'asset_id': assetId,
+          'type': TransactionType.valuationAdjust.name,
+          'quantity': '0',
+          'price': newValuation.toString(),
+          'currency': priorRow.currency,
+          'trade_date': tradeDate.toUtc().toIso8601String(),
+          'note': ?reason,
+          'owner_user_id': stamp.ownerUserId,
+          'updated_at': stamp.now.toUtc().toIso8601String(),
+          'updated_by_device': stamp.deviceId,
+          'hlc': stamp.hlc.toString(),
+        },
+        stamp: stamp,
+      );
+      await _eventLog.recordFieldChanged(
+        entityTable: _tableName,
+        entityId: assetId,
+        stamp: stamp,
+        before: <String, Object?>{
+          'last_price': priorRow.lastPrice?.toString(),
+          'last_price_at': priorRow.lastPriceAt?.toUtc().toIso8601String(),
+        },
+        after: <String, Object?>{
+          'last_price': newValuation.toString(),
+          'last_price_at': tradeDate.toUtc().toIso8601String(),
+        },
+        reason: reason,
+      );
     });
-    return (await findById(id))!;
+    return (await findById(assetId))!;
   }
 
   /// Replaces the typed metadata blob (e.g. updating a deposit's interest
@@ -430,6 +497,7 @@ class ManualAssetRepository {
     required Decimal? lastPrice,
     required DateTime? lastPriceAt,
     required String? metadataJson,
+    required String accountId,
   }) async {
     final fields = <String, Object?>{
       'id': id,
@@ -469,6 +537,51 @@ class ManualAssetRepository {
           'metadata_json': metadataJson,
         },
       );
+      // FIR-123: seed the genesis valuationAdjust transaction so the
+      // event-sourced view of this asset has at least one row to fold
+      // from. Future updates flow through `recordValuationAdjust`, which
+      // appends additional rows; the transaction stream — never the
+      // assets table — is the authoritative valuation timeline.
+      if (lastPrice != null) {
+        final txId = _uuid.v4();
+        final tradeDate = lastPriceAt ?? stamp.now;
+        await _db
+            .into(_db.transactions)
+            .insert(
+              TransactionsCompanion.insert(
+                id: txId,
+                accountId: accountId,
+                assetId: Value(id),
+                type: TransactionType.valuationAdjust,
+                quantity: Decimal.zero,
+                price: lastPrice,
+                currency: currency,
+                tradeDate: tradeDate,
+                ownerUserId: stamp.ownerUserId,
+                updatedAt: stamp.now,
+                updatedByDevice: stamp.deviceId,
+                hlc: stamp.hlc,
+              ),
+            );
+        await _enqueueTransaction(
+          rowId: txId,
+          fields: <String, Object?>{
+            'id': txId,
+            'account_id': accountId,
+            'asset_id': id,
+            'type': TransactionType.valuationAdjust.name,
+            'quantity': '0',
+            'price': lastPrice.toString(),
+            'currency': currency,
+            'trade_date': tradeDate.toUtc().toIso8601String(),
+            'owner_user_id': stamp.ownerUserId,
+            'updated_at': stamp.now.toUtc().toIso8601String(),
+            'updated_by_device': stamp.deviceId,
+            'hlc': stamp.hlc.toString(),
+          },
+          stamp: stamp,
+        );
+      }
     });
   }
 
@@ -488,6 +601,33 @@ class ManualAssetRepository {
       deviceId: stamp.deviceId,
     );
     await _outbox.enqueue(op);
+  }
+
+  Future<void> _enqueueTransaction({
+    required String rowId,
+    required Map<String, Object?> fields,
+    required MutationStamp stamp,
+  }) async {
+    final op = Op(
+      opId: _uuid.v4(),
+      tableName: _transactionsTableName,
+      rowId: rowId,
+      opType: OpType.insert,
+      fieldsDiff: fields,
+      hlc: stamp.hlc,
+      deviceId: stamp.deviceId,
+    );
+    await _outbox.enqueue(op);
+  }
+
+  /// Resolve the cash-flow account that a `valuationAdjust` event should
+  /// be booked against. For manually-tracked assets the account id lives
+  /// inside the typed metadata blob — falling back to the asset id keeps
+  /// the transaction insertable on rows whose metadata could not be
+  /// decoded (e.g. legacy seed rows in tests).
+  String _accountIdForAsset(AssetRow row) {
+    final meta = ManualAssetMetadata.decode(row.metadataJson);
+    return meta?.accountId ?? row.id;
   }
 
   Asset _toAsset(AssetRow row) {

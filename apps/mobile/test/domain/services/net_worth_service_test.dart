@@ -812,6 +812,152 @@ void main() {
     });
   });
 
+  group('FIR-123 — manual cash-class valuationAdjust drives net worth', () {
+    Transaction adjust({
+      required String id,
+      required String assetId,
+      required String price,
+      required DateTime tradeDate,
+      String accountId = 'acct-cash',
+      String currency = 'USD',
+    }) =>
+        tx(
+          id: id,
+          accountId: accountId,
+          assetId: assetId,
+          type: TransactionType.valuationAdjust,
+          quantity: '0',
+          price: price,
+          currency: currency,
+          tradeDate: tradeDate,
+        );
+
+    test(
+      'a single quantity=0 valuationAdjust counts toward asset value at '
+      'and after its trade date',
+      () {
+        final svc = _service();
+        final series = svc.timeSeries(
+          transactions: [
+            adjust(
+              id: 'v1',
+              assetId: 'cash-1',
+              price: '1000',
+              tradeDate: day(2026, 4, 2),
+            ),
+          ],
+          from: day(2026, 4, 1),
+          to: day(2026, 4, 3),
+          granularity: NetWorthGranularity.day,
+          baseCurrency: 'USD',
+        );
+        expect(series.samples[0].assets, Money.zero('USD'));
+        expect(series.samples[1].assets, Money.parse('1000', 'USD'));
+        expect(series.samples[2].assets, Money.parse('1000', 'USD'));
+      },
+    );
+
+    test(
+      'subsequent valuationAdjust events replace the prior reading rather '
+      'than accumulating (acceptance: 100 → 200 → 250 fold to 250)',
+      () {
+        final svc = _service();
+        final series = svc.timeSeries(
+          transactions: [
+            adjust(
+              id: 'v1',
+              assetId: 'wp-1',
+              price: '100',
+              tradeDate: day(2026, 4, 1),
+            ),
+            adjust(
+              id: 'v2',
+              assetId: 'wp-1',
+              price: '200',
+              tradeDate: day(2026, 4, 2),
+            ),
+            adjust(
+              id: 'v3',
+              assetId: 'wp-1',
+              price: '250',
+              tradeDate: day(2026, 4, 3),
+            ),
+          ],
+          from: day(2026, 4, 1),
+          to: day(2026, 4, 3),
+          granularity: NetWorthGranularity.day,
+          baseCurrency: 'USD',
+        );
+        expect(series.samples[0].assets, Money.parse('100', 'USD'));
+        expect(series.samples[1].assets, Money.parse('200', 'USD'));
+        expect(series.samples[2].assets, Money.parse('250', 'USD'));
+      },
+    );
+
+    test(
+      'two manual assets settle independently — one assetId per running '
+      'valuation entry',
+      () {
+        final svc = _service();
+        final series = svc.timeSeries(
+          transactions: [
+            adjust(
+              id: 'va',
+              assetId: 'cash-cny',
+              price: '700',
+              tradeDate: day(2026, 4, 1),
+              currency: 'USD',
+            ),
+            adjust(
+              id: 'vb',
+              assetId: 'cash-usd',
+              price: '500',
+              tradeDate: day(2026, 4, 1),
+              currency: 'USD',
+            ),
+          ],
+          from: day(2026, 4, 1),
+          to: day(2026, 4, 1),
+          granularity: NetWorthGranularity.day,
+          baseCurrency: 'USD',
+        );
+        expect(series.samples.single.assets, Money.parse('1200', 'USD'));
+      },
+    );
+
+    test(
+      'physical-asset valuationAdjust (quantity=1) does NOT double-count '
+      'into the manual-valuation bucket',
+      () {
+        // A physical asset row carries quantity=1 and is valued via
+        // [AssetPriceSource]; no contribution should fall into the
+        // manual-valuation map. Without a backing position transaction
+        // (`buy`) the asset stays at zero — the manual-valuation path
+        // must remain inert for quantity != 0 events.
+        final svc = _service();
+        final series = svc.timeSeries(
+          transactions: [
+            tx(
+              id: 'phys-1',
+              accountId: 'acct-house',
+              assetId: 'house-1',
+              type: TransactionType.valuationAdjust,
+              quantity: '1',
+              price: '1000000',
+              currency: 'USD',
+              tradeDate: day(2026, 4, 1),
+            ),
+          ],
+          from: day(2026, 4, 1),
+          to: day(2026, 4, 1),
+          granularity: NetWorthGranularity.day,
+          baseCurrency: 'USD',
+        );
+        expect(series.samples.single.assets, Money.zero('USD'));
+      },
+    );
+  });
+
   group('AmortizationLiabilitySource', () {
     test('returns initial principal before any schedule entry', () {
       final src = AmortizationLiabilitySource([

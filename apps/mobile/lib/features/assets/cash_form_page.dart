@@ -95,7 +95,10 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
               : _nicknameController.text.trim(),
         );
       } else {
-        await repo.updateValuation(id: _initial!.id, newValuation: balance);
+        await repo.recordValuationAdjust(
+          assetId: _initial!.id,
+          newValuation: balance,
+        );
         if (_nicknameController.text.trim() != (_initial!.name ?? '')) {
           await repo.updateBasics(
             id: _initial!.id,
