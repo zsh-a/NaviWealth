@@ -2136,6 +2136,12 @@ abstract class AppLocalizations {
   /// **'Target'**
   String get fireProgressTarget;
 
+  /// No description provided for @fireProgressGap.
+  ///
+  /// In en, this message translates to:
+  /// **'Gap to FIRE'**
+  String get fireProgressGap;
+
   /// No description provided for @fireCountdownTitle.
   ///
   /// In en, this message translates to:

@@ -568,6 +568,7 @@
   "fireProgressGaugeCaption": "of FIRE target",
   "fireProgressCurrent": "Current net worth",
   "fireProgressTarget": "Target",
+  "fireProgressGap": "Gap to FIRE",
 
   "fireCountdownTitle": "Time to FIRE · {scenario}",
   "@fireCountdownTitle": {

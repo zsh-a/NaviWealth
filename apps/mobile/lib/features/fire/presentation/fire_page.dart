@@ -32,75 +32,20 @@ class FirePage extends ConsumerWidget {
     final viewAsync = ref.watch(fireDashboardViewProvider);
     return Scaffold(
       appBar: GlassAppBar(title: Text(l10n.fireAppBarTitle)),
-      body: viewAsync.when(
-        loading: () => const _FireSkeleton(),
-        error: (e, _) => _ErrorState(
-          message: l10n.fireLoadError('$e'),
-          onRetry: () => ref.invalidate(fireDashboardViewProvider),
+      body: PageSkeletonShell<FireDashboardView>(
+        skeleton: const FireSkeleton(),
+        isLoading: viewAsync.isLoading,
+        child: viewAsync.when(
+          loading: () => const FireSkeleton(),
+          error: (e, _) => _ErrorState(
+            message: l10n.fireLoadError('$e'),
+            onRetry: () => ref.invalidate(fireDashboardViewProvider),
+          ),
+          data: (view) => view.goal.isConfigured
+              ? _ConfiguredBody(view: view)
+              : const _UnconfiguredBody(),
         ),
-        data: (view) => view.goal.isConfigured
-            ? _ConfiguredBody(view: view)
-            : const _UnconfiguredBody(),
       ),
-    );
-  }
-}
-
-class _FireSkeleton extends StatelessWidget {
-  const _FireSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: Spacing.pageMobile,
-      children: const [
-        SkeletonCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 120, height: 18),
-              SizedBox(height: Spacing.s12),
-              Center(
-                child: SkeletonBox(
-                  width: 200,
-                  height: 200,
-                  radius: Radii.full,
-                ),
-              ),
-              SizedBox(height: Spacing.s16),
-              SkeletonBox(height: 14),
-              SizedBox(height: Spacing.s4),
-              SkeletonBox(height: 14, width: 220),
-            ],
-          ),
-        ),
-        SizedBox(height: Spacing.s12),
-        SkeletonCard(
-          padding: Spacing.card,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 140, height: 16),
-              SizedBox(height: Spacing.s8),
-              SkeletonBox(width: 200, height: 28, radius: Radii.sm),
-              SizedBox(height: Spacing.s4),
-              SkeletonBox(width: 160, height: 12),
-            ],
-          ),
-        ),
-        SizedBox(height: Spacing.s12),
-        SkeletonCard(
-          padding: Spacing.card,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 160, height: 16),
-              SizedBox(height: Spacing.s12),
-              SkeletonBox(height: 180, radius: Radii.sm),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -213,6 +158,9 @@ class _ProgressHeaderCard extends StatelessWidget {
     final ratio = view.progressRatio ?? 0;
     final percentLabel =
         formatters.percent(ratio, decimalDigits: ratio >= 0.1 ? 0 : 1);
+    final current = view.currentNetWorth.toDouble();
+    final target = view.goal.targetAmount.toDouble();
+    final gap = target - current;
 
     return Card(
       child: Padding(
@@ -232,17 +180,28 @@ class _ProgressHeaderCard extends StatelessWidget {
             const SizedBox(height: Spacing.s16),
             _LabelValueRow(
               label: l10n.fireProgressCurrent,
-              value: formatters.currency(
-                view.currentNetWorth,
-                code: view.baseCurrency,
+              child: AnimatedMoneyText(
+                amount: current,
+                currencyCode: view.baseCurrency,
+                style: theme.textTheme.titleSmall,
               ),
             ),
             const SizedBox(height: Spacing.s4),
             _LabelValueRow(
               label: l10n.fireProgressTarget,
-              value: formatters.currency(
-                view.goal.targetAmount,
-                code: view.baseCurrency,
+              child: AnimatedMoneyText(
+                amount: target,
+                currencyCode: view.baseCurrency,
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(height: Spacing.s4),
+            _LabelValueRow(
+              label: l10n.fireProgressGap,
+              child: AnimatedMoneyText(
+                amount: gap > 0 ? gap : 0,
+                currencyCode: view.baseCurrency,
+                style: theme.textTheme.titleSmall,
               ),
             ),
           ],
@@ -620,10 +579,13 @@ class _SensitivityCard extends StatelessWidget {
 }
 
 class _LabelValueRow extends StatelessWidget {
-  const _LabelValueRow({required this.label, required this.value});
+  const _LabelValueRow({required this.label, this.value, this.child})
+      : assert(value != null || child != null,
+            'either value or child must be provided');
 
   final String label;
-  final String value;
+  final String? value;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -640,7 +602,7 @@ class _LabelValueRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: Spacing.s8),
-        Text(value, style: theme.textTheme.titleSmall),
+        child ?? Text(value!, style: theme.textTheme.titleSmall),
       ],
     );
   }

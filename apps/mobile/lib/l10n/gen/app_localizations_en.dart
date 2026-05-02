@@ -1166,6 +1166,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fireProgressTarget => 'Target';
 
   @override
+  String get fireProgressGap => 'Gap to FIRE';
+
+  @override
   String fireCountdownTitle(String scenario) {
     return 'Time to FIRE · $scenario';
   }
