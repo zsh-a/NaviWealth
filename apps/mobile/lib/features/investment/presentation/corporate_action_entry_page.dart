@@ -251,9 +251,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     Haptics.success();
     final l10n = AppLocalizations.of(context);
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.corpActionSubmitted)));
+      AppMessenger.show(context, ToastKind.success, l10n.corpActionSubmitted);
     }
   }
 
@@ -297,9 +295,10 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
               leading: const Icon(Icons.event),
               title: Text(l10n.corpActionEffectiveDate),
               subtitle: Text(dateFmt.format(_effectiveDate)),
-              trailing: TextButton(
+              trailing: AppButton.tertiary(
+                label: '',
+                icon: Icons.edit_calendar,
                 onPressed: _pickEffectiveDate,
-                child: const Icon(Icons.edit_calendar),
               ),
             ),
             const Divider(height: 32),
@@ -317,16 +316,16 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             // Action buttons.
             Row(
               children: [
-                FilledButton.tonal(
+                AppButton.secondary(
                   key: const Key('corp-action-preview'),
+                  label: l10n.corpActionPreviewAction,
                   onPressed: asset == null ? null : _runPreview,
-                  child: Text(l10n.corpActionPreviewAction),
                 ),
                 const SizedBox(width: 12),
-                FilledButton(
+                AppButton.primary(
                   key: const Key('corp-action-submit'),
+                  label: l10n.corpActionSubmitAction,
                   onPressed: _preview == null ? null : _submit,
-                  child: Text(l10n.corpActionSubmitAction),
                 ),
               ],
             ),

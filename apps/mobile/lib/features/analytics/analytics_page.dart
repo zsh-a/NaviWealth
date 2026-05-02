@@ -467,7 +467,7 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: Spacing.s8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: Spacing.s8),
-          TextButton(onPressed: onRetry, child: Text(l10n.analyticsRetry)),
+          AppButton.tertiary(label: l10n.analyticsRetry, onPressed: onRetry),
         ],
       ),
     );

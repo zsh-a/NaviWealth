@@ -118,13 +118,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
   }
 
   Future<void> _importFromNetwork() async {
-    final messenger = ScaffoldMessenger.of(context);
     final query = _symbolCtl.text.trim();
     if (query.isEmpty) {
       Haptics.error();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('请先输入代码或名称')),
-      );
+      AppMessenger.show(context, ToastKind.error, '请先输入代码或名称');
       return;
     }
 
@@ -147,9 +144,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       // and let the user fall through to manual entry.
       if (!mounted) return;
       Haptics.error();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('网络不可用，请使用手动输入')),
-      );
+      AppMessenger.show(context, ToastKind.error, '网络不可用，请使用手动输入');
       setState(() => _importing = false);
       return;
     }
@@ -163,9 +158,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
     if (hits.isEmpty) {
       Haptics.error();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('未找到匹配项，请使用手动输入')),
-      );
+      AppMessenger.show(context, ToastKind.error, '未找到匹配项，请使用手动输入');
       return;
     }
     final picked = hits.length == 1
@@ -173,9 +166,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
         : await _pickFromCandidates(hits);
     if (picked == null || !mounted) return;
     _applyImported(picked);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('已从网络导入元数据')),
-    );
+    AppMessenger.show(context, ToastKind.success, '已从网络导入元数据');
   }
 
   Future<SymbolInfo?> _pickFromCandidates(List<SymbolInfo> hits) {
@@ -303,17 +294,11 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               const SizedBox(height: Spacing.s8),
               Align(
                 alignment: Alignment.centerLeft,
-                child: TextButton.icon(
+                child: AppButton.tertiary(
                   key: const Key('manual-security-import'),
+                  label: _importing ? '导入中…' : '从网络导入',
+                  icon: Icons.cloud_download_outlined,
                   onPressed: _importing ? null : _importFromNetwork,
-                  icon: _importing
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.cloud_download_outlined),
-                  label: Text(_importing ? '导入中…' : '从网络导入'),
                 ),
               ),
               const SizedBox(height: Spacing.s12),
@@ -396,17 +381,17 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: AppButton.secondary(
+                      label: '取消',
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('取消'),
                     ),
                   ),
                   const SizedBox(width: Spacing.s12),
                   Expanded(
-                    child: FilledButton(
+                    child: AppButton.primary(
                       key: const Key('manual-security-submit'),
+                      label: '添加',
                       onPressed: _submit,
-                      child: const Text('添加'),
                     ),
                   ),
                 ],

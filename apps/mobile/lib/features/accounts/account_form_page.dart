@@ -140,13 +140,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
         title: Text(l10n.accountFormDeleteTitle),
         content: Text(l10n.accountFormDeleteContent(_initial!.name)),
         actions: [
-          TextButton(
+          AppButton.tertiary(
+            label: l10n.accountFormCancelAction,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.accountFormCancelAction),
           ),
-          FilledButton.tonal(
+          AppButton.secondary(
+            label: l10n.accountFormDeleteAction,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.accountFormDeleteAction),
           ),
         ],
       ),
@@ -293,11 +293,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     ),
                   ],
                   const SizedBox(height: Spacing.s24),
-                  FilledButton(
+                  AppButton.primary(
+                    label: _busy ? l10n.accountFormSaving : l10n.accountFormSave,
                     onPressed: _busy ? null : _save,
-                    child: Text(
-                      _busy ? l10n.accountFormSaving : l10n.accountFormSave,
-                    ),
                   ),
                 ],
               ),

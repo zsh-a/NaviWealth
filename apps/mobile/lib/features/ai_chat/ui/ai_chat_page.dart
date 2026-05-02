@@ -214,8 +214,8 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
       if (!_scroll.hasClients) return;
       _scroll.animateTo(
         _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        duration: Motion.fast,
+        curve: Motion.standardDecelerate,
       );
     });
   }

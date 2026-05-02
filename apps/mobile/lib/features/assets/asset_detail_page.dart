@@ -106,7 +106,6 @@ class _EquityAssetDetailPageState
   }
 
   Future<void> _syncMetadata(Asset asset) async {
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _syncing = true);
     try {
       final market = await ref.read(marketDataServiceProvider.future);
@@ -120,9 +119,7 @@ class _EquityAssetDetailPageState
       final SymbolInfo? best = _pickBest(response.data, asset);
       if (best == null) {
         if (!mounted) return;
-        messenger.showSnackBar(
-          const SnackBar(content: Text('未找到匹配的元数据')),
-        );
+        AppMessenger.show(context, ToastKind.error, '未找到匹配的元数据');
         return;
       }
 
@@ -135,17 +132,11 @@ class _EquityAssetDetailPageState
       if (!mounted) return;
 
       final filledName = before.name == null && best.name.isNotEmpty;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(filledName ? '已补全元数据' : '元数据已是最新'),
-        ),
-      );
+      AppMessenger.show(context, ToastKind.success, filledName ? '已补全元数据' : '元数据已是最新');
       setState(_reload);
     } catch (_) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text('网络不可用，无法同步元数据')),
-      );
+      AppMessenger.show(context, ToastKind.error, '网络不可用，无法同步元数据');
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
@@ -218,9 +209,9 @@ class _EquityAssetDetailPageState
               const SizedBox(height: Spacing.s12),
               _RecentTradesCard(asset: asset),
               const SizedBox(height: Spacing.s16),
-              FilledButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('新交易'),
+              AppButton.primary(
+                icon: Icons.add,
+                label: '新交易',
                 onPressed: () =>
                     context.push('/assets/trade?assetId=${asset.id}'),
               ),
@@ -785,9 +776,9 @@ class _RecentTradesCard extends ConsumerWidget {
                 if (hasMore)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: TextButton(
+                    child: AppButton.tertiary(
                       onPressed: () => _showAll(context, txs),
-                      child: const Text('查看全部'),
+                      label: '查看全部',
                     ),
                   ),
               ],

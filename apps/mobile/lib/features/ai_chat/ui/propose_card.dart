@@ -324,30 +324,22 @@ class _ExpandedView extends StatelessWidget {
             spacing: Spacing.s8,
             runSpacing: Spacing.s4,
             children: [
-              FilledButton.icon(
+              AppButton.primary(
                 onPressed: isApplying ? null : onConfirm,
-                icon: isApplying
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check, size: 16),
-                label: Text(
-                  isApplying
-                      ? l10n.aiChatProposalApplying
-                      : l10n.aiChatProposalConfirm,
-                ),
+                icon: Icons.check,
+                label: isApplying
+                    ? l10n.aiChatProposalApplying
+                    : l10n.aiChatProposalConfirm,
               ),
-              OutlinedButton.icon(
+              AppButton.secondary(
                 onPressed: isApplying ? null : onCancel,
-                icon: const Icon(Icons.close, size: 16),
-                label: Text(l10n.commonCancel),
+                icon: Icons.close,
+                label: l10n.commonCancel,
               ),
-              TextButton.icon(
+              AppButton.tertiary(
                 onPressed: isApplying ? null : onEdit,
-                icon: const Icon(Icons.edit_outlined, size: 16),
-                label: Text(l10n.aiChatProposalEdit),
+                icon: Icons.edit_outlined,
+                label: l10n.aiChatProposalEdit,
               ),
             ],
           ),
@@ -421,10 +413,10 @@ class _CollapsedView extends StatelessWidget {
             ),
           ),
           if (onUndo != null && secondsLeft > 0)
-            TextButton.icon(
+            AppButton.tertiary(
               onPressed: onUndo,
-              icon: const Icon(Icons.undo, size: 16),
-              label: Text(l10n.aiChatProposalUndoCountdown(secondsLeft)),
+              icon: Icons.undo,
+              label: l10n.aiChatProposalUndoCountdown(secondsLeft),
             ),
         ],
       ),
@@ -676,9 +668,9 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
               ),
               const SizedBox(height: Spacing.s12),
             ],
-            FilledButton(
+            AppButton.primary(
               onPressed: () => Navigator.of(context).pop(_collect()),
-              child: Text(l10n.aiChatProposalSaveEdits),
+              label: l10n.aiChatProposalSaveEdits,
             ),
           ],
         ),
@@ -958,16 +950,10 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
               style: tt.labelMedium?.copyWith(color: cs.onPrimaryContainer),
             ),
           ),
-          FilledButton.icon(
+          AppButton.primary(
             onPressed: _busy ? null : _confirmAll,
-            icon: _busy
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.done_all, size: 16),
-            label: Text(l10n.aiChatProposalBatchConfirmAll),
+            icon: Icons.done_all,
+            label: l10n.aiChatProposalBatchConfirmAll,
           ),
         ],
       ),
