@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
+import '../audit/event_log_writer.dart';
 import '../db/app_database.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
@@ -25,15 +26,18 @@ class ManualAssetRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    EventLogWriter? eventLog,
     Uuid uuid = const Uuid(),
   }) : _db = db,
        _outbox = outbox,
        _stamper = stamper,
+       _eventLog = eventLog ?? EventLogWriter(db: db, uuid: uuid),
        _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final EventLogWriter _eventLog;
   final Uuid _uuid;
 
   static const String _tableName = 'assets';
@@ -227,6 +231,7 @@ class ManualAssetRepository {
   Future<Asset> updateValuation({
     required String id,
     required Decimal newValuation,
+    String? reason,
   }) async {
     final stamp = await _stamper.stamp();
     final companion = AssetsCompanion(
@@ -244,6 +249,13 @@ class ManualAssetRepository {
       'hlc': stamp.hlc.toString(),
     };
     await _db.transaction(() async {
+      // Snapshot the prior valuation *inside* the transaction so the
+      // before-value the audit row records is the row state we're
+      // about to overwrite — never a stale read from before the
+      // transaction acquired its lock.
+      final priorRow = await (_db.select(
+        _db.assets,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(id))).write(companion);
@@ -253,6 +265,22 @@ class ManualAssetRepository {
         fields: diff,
         stamp: stamp,
       );
+      if (priorRow != null) {
+        await _eventLog.recordFieldChanged(
+          entityTable: _tableName,
+          entityId: id,
+          stamp: stamp,
+          before: <String, Object?>{
+            'last_price': priorRow.lastPrice?.toString(),
+            'last_price_at': priorRow.lastPriceAt?.toUtc().toIso8601String(),
+          },
+          after: <String, Object?>{
+            'last_price': newValuation.toString(),
+            'last_price_at': stamp.now.toUtc().toIso8601String(),
+          },
+          reason: reason,
+        );
+      }
     });
     return (await findById(id))!;
   }
@@ -263,6 +291,7 @@ class ManualAssetRepository {
   Future<Asset> updateMetadata({
     required String id,
     required ManualAssetMetadata metadata,
+    String? reason,
   }) async {
     final stamp = await _stamper.stamp();
     final encoded = metadata.encode();
@@ -279,6 +308,9 @@ class ManualAssetRepository {
       'hlc': stamp.hlc.toString(),
     };
     await _db.transaction(() async {
+      final priorRow = await (_db.select(
+        _db.assets,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(id))).write(companion);
@@ -288,6 +320,16 @@ class ManualAssetRepository {
         fields: diff,
         stamp: stamp,
       );
+      if (priorRow != null) {
+        await _eventLog.recordFieldChanged(
+          entityTable: _tableName,
+          entityId: id,
+          stamp: stamp,
+          before: <String, Object?>{'metadata_json': priorRow.metadataJson},
+          after: <String, Object?>{'metadata_json': encoded},
+          reason: reason,
+        );
+      }
     });
     return (await findById(id))!;
   }
@@ -296,6 +338,7 @@ class ManualAssetRepository {
     required String id,
     String? name,
     String? note,
+    String? reason,
   }) async {
     final stamp = await _stamper.stamp();
     final diff = <String, Object?>{};
@@ -313,6 +356,9 @@ class ManualAssetRepository {
     diff['updated_by_device'] = stamp.deviceId;
     diff['hlc'] = stamp.hlc.toString();
     await _db.transaction(() async {
+      final priorRow = await (_db.select(
+        _db.assets,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(id))).write(companion);
@@ -322,11 +368,29 @@ class ManualAssetRepository {
         fields: diff,
         stamp: stamp,
       );
+      if (priorRow != null) {
+        final before = <String, Object?>{};
+        final after = <String, Object?>{};
+        if (name != null) {
+          before['name'] = priorRow.name;
+          after['name'] = name;
+        }
+        if (after.isNotEmpty) {
+          await _eventLog.recordFieldChanged(
+            entityTable: _tableName,
+            entityId: id,
+            stamp: stamp,
+            before: before,
+            after: after,
+            reason: reason,
+          );
+        }
+      }
     });
     return (await findById(id))!;
   }
 
-  Future<void> softDelete(String id) async {
+  Future<void> softDelete(String id, {String? reason}) async {
     final stamp = await _stamper.stamp();
     final companion = AssetsCompanion(
       updatedAt: Value(stamp.now),
@@ -343,6 +407,12 @@ class ManualAssetRepository {
         rowId: id,
         fields: null,
         stamp: stamp,
+      );
+      await _eventLog.recordSoftDeleted(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        reason: reason,
       );
     });
   }
@@ -382,6 +452,22 @@ class ManualAssetRepository {
         rowId: id,
         fields: fields,
         stamp: stamp,
+      );
+      // Audit ledger gets the user-visible field set; sync columns are
+      // already captured by the stamp on the event row itself.
+      await _eventLog.recordCreated(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        after: <String, Object?>{
+          'type': type.name,
+          'symbol': symbol,
+          'currency': currency,
+          'name': name,
+          'last_price': lastPrice?.toString(),
+          'last_price_at': lastPriceAt?.toUtc().toIso8601String(),
+          'metadata_json': metadataJson,
+        },
       );
     });
   }
