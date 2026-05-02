@@ -81,6 +81,9 @@ mixin OptimisticFormSubmit<W extends ConsumerStatefulWidget>
   }) async {
     final logger = ref.read(loggerProvider);
     final ctx = context;
+    // Cache the Navigator's overlay before popping so that
+    // AppMessenger.show can find it after this widget is disposed.
+    AppMessenger.cacheOverlay(context);
     pop();
     await runOptimisticWrite(
       write: write,
@@ -115,7 +118,7 @@ Future<void> runOptimisticWrite({
       stackTrace: stack,
     );
     Haptics.error();
-    if (context == null || !context.mounted) return;
+    if (context == null) return;
     AppMessenger.show(
       context,
       ToastKind.error,

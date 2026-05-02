@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/investment/domain/corporate_action_preview.dart';
 import 'package:naviwealth/features/investment/domain/cost_basis/fifo_strategy.dart';
 import 'package:naviwealth/features/investment/domain/cost_basis_engine.dart';
@@ -123,6 +124,9 @@ void main() {
       expect(cd.amountPerShare, Decimal.parse('0.50'));
       expect(cd.withholdingTax, Decimal.parse('5'));
       expect(cd.effectiveDate, DateTime.utc(2026, 6, 1));
+
+      // Expire the 6-second dismiss timer from AppMessenger.show().
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('stock dividend → preview shows quantity-up / cost-down '
@@ -136,6 +140,9 @@ void main() {
       // After 10 % bonus on 100 shares: 100 → 110, cost 150 → 13636…(infinite).
       // The localized template renders as "Lot l-1: 100 → 110 @ 150 → 136…".
       expect(find.textContaining('100 → 110'), findsOneWidget);
+
+      // Expire the 6-second dismiss timer from AppMessenger.show().
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('split → preview shows doubled quantity, halved cost',
@@ -153,6 +160,9 @@ void main() {
       await _tapSubmit(tester);
       expect(captured!.action, isA<SplitAction>());
       expect((captured!.action as SplitAction).ratio, Decimal.parse('2'));
+
+      // Expire the 6-second dismiss timer from AppMessenger.show().
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('rights issue → preview includes new lot and negative '
@@ -175,6 +185,9 @@ void main() {
       expect(ri.subscribedQuantity, Decimal.parse('50'));
       expect(ri.pricePerUnit, Decimal.parse('15'));
       expect(ri.fee, Decimal.parse('5'));
+
+      // Expire the 6-second dismiss timer from AppMessenger.show().
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('DRIP → preview includes the reinvested lot', (tester) async {
@@ -194,6 +207,9 @@ void main() {
       expect(d.amountPerShare, Decimal.parse('1'));
       expect(d.pricePerUnit, Decimal.parse('500'));
       expect(captured!.cashDividend!.reinvested, isTrue);
+
+      // Expire the 6-second dismiss timer from AppMessenger.show().
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('preview without filling required fields stays blank and '
@@ -210,7 +226,7 @@ void main() {
       );
 
       // Submit button disabled while preview is null.
-      final submit = tester.widget<FilledButton>(
+      final submit = tester.widget<AppButton>(
         find.byKey(const Key('corp-action-submit')),
       );
       expect(submit.onPressed, isNull);

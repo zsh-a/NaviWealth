@@ -7,6 +7,7 @@ import 'package:naviwealth/core/config/app_config.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/logging/crash_reporter.dart';
 import 'package:naviwealth/core/logging/providers.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/shared/forms/optimistic_form_submit.dart';
 
 void main() {
@@ -24,7 +25,9 @@ void main() {
       'runs the write and surfaces no toast on success',
       (tester) async {
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          AppMessenger.init(
+            child: const MaterialApp(home: Scaffold(body: SizedBox())),
+          ),
         );
         final context = tester.element(find.byType(SizedBox));
         var calls = 0;
@@ -45,7 +48,9 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        AppMessenger.init(
+          child: const MaterialApp(home: Scaffold(body: SizedBox())),
+        ),
       );
       final context = tester.element(find.byType(SizedBox));
       await runOptimisticWrite(
@@ -56,13 +61,18 @@ void main() {
       );
       await tester.pump();
       expect(find.text('oops: Bad state: boom'), findsOneWidget);
+      // Expire the AppMessenger dismiss timer so the test framework
+      // does not complain about pending timers.
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('retry action re-invokes write and dismisses on success', (
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        AppMessenger.init(
+          child: const MaterialApp(home: Scaffold(body: SizedBox())),
+        ),
       );
       final context = tester.element(find.byType(SizedBox));
       final attempts = <int>[];
@@ -91,13 +101,17 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 750));
       expect(attempts, [1, 2]);
+      // Expire any remaining AppMessenger dismiss timer.
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('omits the retry action when retryLabel is null', (
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        AppMessenger.init(
+          child: const MaterialApp(home: Scaffold(body: SizedBox())),
+        ),
       );
       final context = tester.element(find.byType(SizedBox));
       await runOptimisticWrite(
@@ -109,6 +123,8 @@ void main() {
       await tester.pump();
       expect(find.text('no retry here'), findsOneWidget);
       expect(find.text('Retry'), findsNothing);
+      // Expire the AppMessenger dismiss timer.
+      await tester.pump(const Duration(seconds: 7));
     });
   });
 
@@ -125,29 +141,31 @@ void main() {
         var didPop = false;
 
         await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              loggerProvider.overrideWithValue(logger),
-            ],
-            child: MaterialApp(
-              home: Scaffold(
-                body: Builder(
-                  builder: (ctx) => Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(ctx).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => _ProbeForm(
-                              onPop: () {
-                                didPop = true;
-                                Navigator.of(ctx).pop();
-                              },
-                              write: () => completer.future,
+          AppMessenger.init(
+            child: ProviderScope(
+              overrides: [
+                loggerProvider.overrideWithValue(logger),
+              ],
+              child: MaterialApp(
+                home: Scaffold(
+                  body: Builder(
+                    builder: (ctx) => Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => _ProbeForm(
+                                onPop: () {
+                                  didPop = true;
+                                  Navigator.of(ctx).pop();
+                                },
+                                write: () => completer.future,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      child: const Text('open'),
+                          );
+                        },
+                        child: const Text('open'),
+                      ),
                     ),
                   ),
                 ),
@@ -169,8 +187,12 @@ void main() {
 
         // Resolve the write with an error; the global messenger surfaces it.
         completer.completeError(StateError('write blew up'));
-        await tester.pumpAndSettle();
+        // Flush the microtask (error delivery) then render one frame.
+        await Future<void>.value();
+        await tester.pump();
         expect(find.textContaining('write blew up'), findsOneWidget);
+        // Expire the dismiss timer to avoid pending-timer errors.
+        await tester.pump(const Duration(seconds: 7));
       },
     );
   });

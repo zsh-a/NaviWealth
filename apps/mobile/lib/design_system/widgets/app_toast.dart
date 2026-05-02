@@ -34,9 +34,24 @@ class AppMessenger {
   OverlayEntry? _currentEntry;
   Timer? _dismissTimer;
 
+  /// Cached overlay reference. On first [show] call with a valid context
+  /// the overlay is captured; subsequent calls reuse it even when the
+  /// originating context has been disposed (e.g. after Navigator.pop).
+  OverlayState? _cachedOverlay;
+
   /// Install the toast overlay host. Call in [MaterialApp.builder].
   static Widget init({required Widget child}) {
     return _ToastHost(child: child);
+  }
+
+  /// Caches the overlay found via [context] so that [show] can insert
+  /// toasts even after the context is unmounted (e.g. after a pop).
+  static void cacheOverlay(BuildContext context) {
+    try {
+      _instance._cachedOverlay ??= Overlay.maybeOf(context);
+    } catch (_) {
+      // Context may already be unmounted.
+    }
   }
 
   /// Show a toast. Automatically dismisses after [duration].
@@ -63,8 +78,17 @@ class AppMessenger {
     _currentEntry?.remove();
     _currentEntry = null;
 
-    final overlay = _ToastHost.overlayOf(context);
+    // Try the caller's context first; fall back to the cached overlay
+    // (which survives after the originating widget is popped).
+    OverlayState? overlay;
+    try {
+      overlay = Overlay.maybeOf(context);
+    } catch (_) {
+      // Context may be unmounted after a Navigator.pop.
+    }
+    overlay ??= _cachedOverlay;
     if (overlay == null) return;
+    _cachedOverlay = overlay;
 
     final entry = OverlayEntry(
       builder: (_) => _ToastWidget(
@@ -95,15 +119,17 @@ class _ToastHost extends StatefulWidget {
 
   final Widget child;
 
-  static OverlayState? overlayOf(BuildContext context) {
-    return Overlay.maybeOf(context);
-  }
-
   @override
   State<_ToastHost> createState() => _ToastHostState();
 }
 
 class _ToastHostState extends State<_ToastHost> {
+  @override
+  void dispose() {
+    AppMessenger._instance._cachedOverlay = null;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => widget.child;
 }

@@ -295,9 +295,8 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
               leading: const Icon(Icons.event),
               title: Text(l10n.corpActionEffectiveDate),
               subtitle: Text(dateFmt.format(_effectiveDate)),
-              trailing: AppButton.tertiary(
-                label: '',
-                icon: Icons.edit_calendar,
+              trailing: IconButton(
+                icon: const Icon(Icons.edit_calendar),
                 onPressed: _pickEffectiveDate,
               ),
             ),
