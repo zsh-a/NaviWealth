@@ -171,8 +171,17 @@ class _AssetsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loading = manualAsync.isLoading || physicalAsync.isLoading;
+    return PageSkeletonShell<void>(
+      skeleton: const AssetsListSkeleton(),
+      isLoading: loading,
+      child: _resolveBody(context),
+    );
+  }
+
+  Widget _resolveBody(BuildContext context) {
     if (manualAsync.isLoading || physicalAsync.isLoading) {
-      return const _AssetsSkeleton();
+      return const AssetsListSkeleton();
     }
     final manualErr = manualAsync.hasError ? manualAsync.error : null;
     final physicalErr = physicalAsync.hasError ? physicalAsync.error : null;
@@ -193,77 +202,6 @@ class _AssetsBody extends StatelessWidget {
       children: [
         if (manual.isNotEmpty) _ManualAssetsSection(assets: manual),
         if (physical.isNotEmpty) _PhysicalAssetsSection(assets: physical),
-      ],
-    );
-  }
-}
-
-class _AssetsSkeleton extends StatelessWidget {
-  const _AssetsSkeleton();
-
-  Widget _row() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s12,
-      ),
-      child: Row(
-        children: [
-          SkeletonBox(width: 36, height: 36, radius: Radii.full),
-          SizedBox(width: Spacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SkeletonBox(width: 140, height: 14),
-                SizedBox(height: Spacing.s6),
-                SkeletonBox(width: 88, height: 12),
-              ],
-            ),
-          ),
-          SizedBox(width: Spacing.s12),
-          SkeletonBox(width: 80, height: 16),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: Spacing.pageMobile,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: Spacing.s8),
-          child: SkeletonBox(width: 100, height: 18),
-        ),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              _row(),
-              const Divider(height: 1),
-              _row(),
-              const Divider(height: 1),
-              _row(),
-            ],
-          ),
-        ),
-        const SizedBox(height: Spacing.s12),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: Spacing.s8),
-          child: SkeletonBox(width: 120, height: 18),
-        ),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              _row(),
-              const Divider(height: 1),
-              _row(),
-            ],
-          ),
-        ),
       ],
     );
   }

@@ -233,7 +233,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
           children: [
             Expanded(
               child: messagesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const AiChatSkeleton(),
                 error: (e, _) =>
                     Center(child: Text(l10n.commonLoadError(e.toString()))),
                 data: (messages) => _MessagesList(

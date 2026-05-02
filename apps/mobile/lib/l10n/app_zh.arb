@@ -373,6 +373,7 @@
   "fireProgressGaugeCaption": "已达成目标比例",
   "fireProgressCurrent": "当前净资产",
   "fireProgressTarget": "目标",
+  "fireProgressGap": "距 FIRE 差额",
 
   "fireCountdownTitle": "倒计时 · {scenario}",
   "fireCountdownReachedTitle": "已达成 FIRE",
