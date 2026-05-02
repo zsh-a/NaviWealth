@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/color_palette.dart';
+import '../tokens/glass_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import '../tokens/typography_tokens.dart';
@@ -34,6 +35,7 @@ class AppTheme {
     final isDark = brightness == Brightness.dark;
     final semantic = isDark ? SemanticColors.dark() : SemanticColors.light();
     final elevations = isDark ? AppElevations.dark() : AppElevations.light();
+    final glass = isDark ? GlassTokens.dark() : GlassTokens.light();
     final marketColors = MarketColors.fromMode(
       marketMode,
       brightness: brightness,
@@ -125,7 +127,12 @@ class AppTheme {
         indicatorColor: scheme.primaryContainer,
         labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium),
       ),
-      extensions: <ThemeExtension<dynamic>>[semantic, marketColors, elevations],
+      extensions: <ThemeExtension<dynamic>>[
+        semantic,
+        marketColors,
+        elevations,
+        glass,
+      ],
     );
   }
 }

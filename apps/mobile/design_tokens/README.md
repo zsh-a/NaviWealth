@@ -17,12 +17,13 @@ is a future task once the surface stabilises.
 |--------------|---------------------|---------------------------------------------------|
 | Brand        | `color.brand.*`     | `tokens/color_palette.dart` (`brand50`–`brand900`) |
 | Neutral      | `color.neutral.*`   | `tokens/color_palette.dart` (`neutral0`–`neutral1000`) |
-| Accent       | `color.accent.*`    | `tokens/color_palette.dart`                        |
+| Accent       | `color.accent.*`    | `tokens/color_palette.dart` — `green` is now Tailwind emerald, `red` is Tailwind rose / soft crimson (FIR-104) |
 | Semantic     | `color.semantic.*`  | `theme/semantic_colors.dart` (light + dark)        |
-| Market       | `color.market.*`    | `theme/market_colors.dart` (cn / intl / colorblind, light + dark) |
+| Market       | `color.market.*`    | `theme/market_colors.dart` — adds `upMuted` / `downMuted` (80% saturation) and `profitGlow` (FIR-104) |
+| Glass        | `glass.*`           | `tokens/glass_tokens.dart` (`GlassTokens` ThemeExtension, FIR-104) |
 | Spacing      | `spacing.*`         | `tokens/spacing_tokens.dart` (`Spacing`)           |
 | Radius       | `radius.*`          | `tokens/radius_tokens.dart` (`Radii`)              |
-| Typography   | `typography.*`      | `tokens/typography_tokens.dart` (`TypographyTokens`) |
+| Typography   | `typography.*`      | `tokens/typography_tokens.dart` — Inter primary, Outfit reserved for Display 2XL (FIR-104) |
 | Shadow       | `shadow.*`          | `theme/app_elevations.dart` (`AppElevations`)      |
 | Motion       | `motion.*`          | `tokens/motion_tokens.dart` (`Motion`)             |
 | Breakpoint   | `breakpoint.*`      | `tokens/breakpoints.dart` (`Breakpoints`)          |

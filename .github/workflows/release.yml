@@ -101,6 +101,8 @@ jobs:
             --sources hk_stock,us_stock,crypto
       - name: Build CN web font subsets
         run: bash tool/build-cn-fonts.sh
+      - name: Build Latin font subsets (Inter + Outfit)
+        run: bash tool/build-latin-fonts.sh
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}

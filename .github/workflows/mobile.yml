@@ -34,9 +34,16 @@ jobs:
       - run: flutter --version
       - run: flutter pub get
       - name: Stub web-only font assets so test asset bundle resolves
+        # All five files are gitignored build artifacts (see
+        # tool/build-{cn,latin}-fonts.sh). flutter analyze + flutter test
+        # don't actually rasterise glyphs; the asset bundler just needs
+        # readable files at the registered paths. Empty stubs are enough.
         run: |
           mkdir -p assets/fonts
           touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
+          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
+                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
+                assets/fonts/outfit-bold.woff2
       - run: flutter analyze --fatal-infos
       - name: Lint — no Chinese literals in source (FIR-99)
         run: dart tool/check_cn_literals.dart
@@ -79,6 +86,10 @@ jobs:
       - name: Build CN web font subsets (app-cn-base.woff2 + app-cn-ext.woff2)
         # Fails the build if app-cn-base.woff2 exceeds the 250 KB budget.
         run: tool/build-cn-fonts.sh
+      - name: Build Latin font subsets (Inter + Outfit, FIR-104)
+        # Fails the build if the combined Inter + Outfit subset exceeds
+        # the 200 KB budget.
+        run: tool/build-latin-fonts.sh
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}
