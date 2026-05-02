@@ -51,7 +51,15 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// Send [content] as the next user turn. Concurrent calls are
   /// rejected — the UI disables the send button while the pipeline is
   /// running.
-  Future<void> send(String content) async {
+  ///
+  /// [staleSyncNotice] is the localized message persisted into the
+  /// timeline if the pre-chat sync gate (FIR-71) drains in `degraded`
+  /// status. The UI passes the localized string so the controller does
+  /// not need a BuildContext to reach AppLocalizations.
+  Future<void> send(
+    String content, {
+    required String staleSyncNotice,
+  }) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty || state.isBusy) return;
 
@@ -81,7 +89,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
         await repo.insertSystemNotice(
           sessionId: sessionId,
           ownerUserId: session.userId,
-          content: '本地数据未完成同步，回答可能滞后于你刚刚的录入。',
+          content: staleSyncNotice,
         );
       }
       await repo.sendMessage(

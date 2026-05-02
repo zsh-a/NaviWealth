@@ -23,6 +23,7 @@ import 'package:naviwealth/features/investment/domain/holding_computer.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../data/db/test_database.dart';
 import '../../data/repositories/_stub_stamper.dart';
@@ -151,6 +152,9 @@ ProviderScope _wrap(_Harness h, MarketDataService market, String assetId) {
       ),
     ],
     child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('zh'),
       home: AssetDetailPage(assetId: assetId),
     ),
   );

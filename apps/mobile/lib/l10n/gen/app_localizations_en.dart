@@ -1601,4 +1601,337 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseFormNoAccountsCta => 'Create account';
+
+  @override
+  String get aiChatAppBarTitle => 'AI assistant';
+
+  @override
+  String get aiChatHistoryTooltip => 'Conversation history';
+
+  @override
+  String get aiChatNewSessionTooltip => 'New conversation';
+
+  @override
+  String get aiChatLoginRequired => 'Sign in to use the AI assistant.';
+
+  @override
+  String get aiChatEmptyTitle => 'Your financial assistant';
+
+  @override
+  String get aiChatEmptyBody =>
+      'Answers grounded in your holdings and transactions. Numbers come from your locally-synced ledger; the model never invents key figures.';
+
+  @override
+  String get aiChatEmptySuggestion1 =>
+      'How much have I made in the last three months?';
+
+  @override
+  String get aiChatEmptySuggestion2 => 'Which holdings carry the highest risk?';
+
+  @override
+  String get aiChatEmptySuggestion3 =>
+      'What does my industry breakdown look like?';
+
+  @override
+  String get aiChatEmptySuggestion4 => 'What\'s my XIRR since inception?';
+
+  @override
+  String get aiChatSessionsHeader => 'Conversations';
+
+  @override
+  String get aiChatSessionsEmpty =>
+      'Tap the + button to start your first conversation.';
+
+  @override
+  String get aiChatSessionMoreTooltip => 'More';
+
+  @override
+  String get aiChatSessionRenameAction => 'Rename';
+
+  @override
+  String get aiChatSessionRenameTitle => 'Rename';
+
+  @override
+  String get aiChatSessionTitleLabel => 'Title';
+
+  @override
+  String get aiChatSessionDeleteTitle => 'Delete conversation?';
+
+  @override
+  String aiChatSessionDeleteBody(String title) {
+    return 'All messages in \"$title\" will be deleted.';
+  }
+
+  @override
+  String get aiChatRelativeJustNow => 'just now';
+
+  @override
+  String aiChatRelativeMinutesAgo(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String aiChatRelativeHoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String aiChatRelativeDaysAgo(int days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get aiChatComposerHintIdle =>
+      'Ask NaviWealth, e.g. \"How much did I earn last month?\"';
+
+  @override
+  String get aiChatComposerHintStreaming => 'Generating answer…';
+
+  @override
+  String get aiChatComposerHintFlushing => 'Syncing local data…';
+
+  @override
+  String get aiChatComposerSendTooltip => 'Send (⌘/Ctrl + Enter)';
+
+  @override
+  String get aiChatComposerStopTooltip => 'Stop generating';
+
+  @override
+  String get aiChatThinking => 'Thinking…';
+
+  @override
+  String get aiChatStaleSyncNotice =>
+      'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
+
+  @override
+  String get aiChatProposalKindTrade => 'Trade';
+
+  @override
+  String get aiChatProposalKindExpense => 'Expense';
+
+  @override
+  String get aiChatProposalKindLiabilityPayment => 'Repayment';
+
+  @override
+  String get aiChatProposalKindAccountCreate => 'New account';
+
+  @override
+  String get aiChatProposalKindAssetValuation => 'Valuation update';
+
+  @override
+  String get aiChatProposalKindUnknown => 'Unknown';
+
+  @override
+  String aiChatProposalPendingHeader(String kind) {
+    return 'Awaiting confirmation · $kind';
+  }
+
+  @override
+  String aiChatProposalNeedsClarificationHeader(String kind) {
+    return 'Needs clarification · $kind';
+  }
+
+  @override
+  String get aiChatProposalCandidatesHeading => 'Options:';
+
+  @override
+  String aiChatProposalSummaryEdited(String summary) {
+    return '$summary (edited)';
+  }
+
+  @override
+  String get aiChatProposalConfirm => 'Confirm';
+
+  @override
+  String get aiChatProposalApplying => 'Recording…';
+
+  @override
+  String get aiChatProposalEdit => 'Edit';
+
+  @override
+  String aiChatProposalEditKindTitle(String kind) {
+    return 'Edit $kind';
+  }
+
+  @override
+  String get aiChatProposalSaveEdits => 'Save changes';
+
+  @override
+  String aiChatProposalFailure(String error) {
+    return 'Failed: $error';
+  }
+
+  @override
+  String aiChatProposalUndoFailure(String error) {
+    return 'Undo failed: $error';
+  }
+
+  @override
+  String aiChatProposalAppliedFallback(String summary) {
+    return 'Recorded $summary';
+  }
+
+  @override
+  String aiChatProposalUndoneLabel(String summary) {
+    return 'Undid $summary';
+  }
+
+  @override
+  String aiChatProposalCancelledLabel(String summary) {
+    return 'Cancelled: $summary';
+  }
+
+  @override
+  String aiChatProposalUndoCountdown(int seconds) {
+    return 'Undo (${seconds}s)';
+  }
+
+  @override
+  String aiChatProposalBatchPending(int count) {
+    return '$count items awaiting confirmation in this turn';
+  }
+
+  @override
+  String get aiChatProposalBatchConfirmAll => 'Confirm all';
+
+  @override
+  String get aiChatFieldQuantity => 'Quantity';
+
+  @override
+  String get aiChatFieldPrice => 'Price (leave blank to backfill from market)';
+
+  @override
+  String get aiChatFieldFee => 'Fee';
+
+  @override
+  String get aiChatFieldTax => 'Tax';
+
+  @override
+  String get aiChatFieldNote => 'Note';
+
+  @override
+  String get aiChatFieldAmount => 'Amount';
+
+  @override
+  String get aiChatFieldDate => 'Date (RFC3339)';
+
+  @override
+  String get aiChatFieldDateHint => '2026-04-30T12:00:00Z';
+
+  @override
+  String get aiChatFieldAccountName => 'Account name';
+
+  @override
+  String get aiChatFieldInstitution => 'Institution (optional)';
+
+  @override
+  String get aiChatFieldNewValuation => 'New valuation';
+
+  @override
+  String get aiChatRowOperation => 'Operation';
+
+  @override
+  String get aiChatRowAsset => 'Asset';
+
+  @override
+  String get aiChatRowAccount => 'Account';
+
+  @override
+  String get aiChatRowQuantity => 'Quantity';
+
+  @override
+  String get aiChatRowPrice => 'Price';
+
+  @override
+  String get aiChatRowFee => 'Fee';
+
+  @override
+  String get aiChatRowDate => 'Date';
+
+  @override
+  String get aiChatRowNote => 'Note';
+
+  @override
+  String get aiChatRowAmount => 'Amount';
+
+  @override
+  String get aiChatRowCategory => 'Category';
+
+  @override
+  String get aiChatRowLiability => 'Liability';
+
+  @override
+  String get aiChatRowRepayAccount => 'Repayment account';
+
+  @override
+  String get aiChatRowName => 'Name';
+
+  @override
+  String get aiChatRowType => 'Type';
+
+  @override
+  String get aiChatRowCurrency => 'Currency';
+
+  @override
+  String get aiChatRowInstitution => 'Institution';
+
+  @override
+  String get aiChatRowNewValue => 'New valuation';
+
+  @override
+  String get aiChatToolGetHoldings => 'Query holdings';
+
+  @override
+  String get aiChatToolGetTransactions => 'Query transactions';
+
+  @override
+  String get aiChatToolComputeXirr => 'Compute XIRR';
+
+  @override
+  String get aiChatToolComputeNetWorth => 'Compute net worth';
+
+  @override
+  String get aiChatToolGetIndustryBreakdown => 'Industry breakdown';
+
+  @override
+  String get aiChatToolGetGeoBreakdown => 'Region breakdown';
+
+  @override
+  String get aiChatToolGetMarketCapBreakdown => 'Market-cap breakdown';
+
+  @override
+  String get aiChatToolGetRiskAlerts => 'Risk alerts';
+
+  @override
+  String get aiChatToolFallback => 'Tool';
+
+  @override
+  String get aiChatToolInputLabel => 'Input';
+
+  @override
+  String get aiChatToolOutputLabel => 'Output';
+
+  @override
+  String aiChatToolJumpAsset(String id) {
+    return 'Asset $id';
+  }
+
+  @override
+  String aiChatToolJumpAccount(String id) {
+    return 'Account $id';
+  }
+
+  @override
+  String aiChatToolJumpLiability(String id) {
+    return 'Liability $id';
+  }
+
+  @override
+  String get aiChatToolShowRawJson => 'View raw JSON';
+
+  @override
+  String get aiChatToolShowCompactView => 'Back to compact view';
+
+  @override
+  String get chartEmptyDefault => 'No data yet';
 }

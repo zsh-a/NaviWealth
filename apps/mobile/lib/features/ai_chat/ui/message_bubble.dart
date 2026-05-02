@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
@@ -240,6 +241,7 @@ class _AssistantBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     if (text.isEmpty && isStreaming) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -253,7 +255,10 @@ class _AssistantBody extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Spacing.s8),
-          Text('正在思考…', style: tt.bodyMedium?.copyWith(color: textColor)),
+          Text(
+            l10n.aiChatThinking,
+            style: tt.bodyMedium?.copyWith(color: textColor),
+          ),
         ],
       );
     }

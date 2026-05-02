@@ -778,5 +778,165 @@
   "expenseFormDeleteDialogBody": "Delete this expense? This change syncs to your other devices.",
   "expenseFormNoAccountsTitle": "Create an account first",
   "expenseFormNoAccountsBody": "Expenses need a funding account. Create one under Accounts, then come back here.",
-  "expenseFormNoAccountsCta": "Create account"
+  "expenseFormNoAccountsCta": "Create account",
+
+  "aiChatAppBarTitle": "AI assistant",
+  "aiChatHistoryTooltip": "Conversation history",
+  "aiChatNewSessionTooltip": "New conversation",
+  "aiChatLoginRequired": "Sign in to use the AI assistant.",
+  "aiChatEmptyTitle": "Your financial assistant",
+  "aiChatEmptyBody": "Answers grounded in your holdings and transactions. Numbers come from your locally-synced ledger; the model never invents key figures.",
+  "aiChatEmptySuggestion1": "How much have I made in the last three months?",
+  "aiChatEmptySuggestion2": "Which holdings carry the highest risk?",
+  "aiChatEmptySuggestion3": "What does my industry breakdown look like?",
+  "aiChatEmptySuggestion4": "What's my XIRR since inception?",
+
+  "aiChatSessionsHeader": "Conversations",
+  "aiChatSessionsEmpty": "Tap the + button to start your first conversation.",
+  "aiChatSessionMoreTooltip": "More",
+  "aiChatSessionRenameAction": "Rename",
+  "aiChatSessionRenameTitle": "Rename",
+  "aiChatSessionTitleLabel": "Title",
+  "aiChatSessionDeleteTitle": "Delete conversation?",
+  "aiChatSessionDeleteBody": "All messages in \"{title}\" will be deleted.",
+  "@aiChatSessionDeleteBody": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "aiChatRelativeJustNow": "just now",
+  "aiChatRelativeMinutesAgo": "{minutes}m ago",
+  "@aiChatRelativeMinutesAgo": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "aiChatRelativeHoursAgo": "{hours}h ago",
+  "@aiChatRelativeHoursAgo": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "aiChatRelativeDaysAgo": "{days}d ago",
+  "@aiChatRelativeDaysAgo": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+
+  "aiChatComposerHintIdle": "Ask NaviWealth, e.g. \"How much did I earn last month?\"",
+  "aiChatComposerHintStreaming": "Generating answer…",
+  "aiChatComposerHintFlushing": "Syncing local data…",
+  "aiChatComposerSendTooltip": "Send (⌘/Ctrl + Enter)",
+  "aiChatComposerStopTooltip": "Stop generating",
+  "aiChatThinking": "Thinking…",
+  "aiChatStaleSyncNotice": "Local data hasn't finished syncing; answers may lag behind your most recent edits.",
+
+  "aiChatProposalKindTrade": "Trade",
+  "aiChatProposalKindExpense": "Expense",
+  "aiChatProposalKindLiabilityPayment": "Repayment",
+  "aiChatProposalKindAccountCreate": "New account",
+  "aiChatProposalKindAssetValuation": "Valuation update",
+  "aiChatProposalKindUnknown": "Unknown",
+
+  "aiChatProposalPendingHeader": "Awaiting confirmation · {kind}",
+  "@aiChatProposalPendingHeader": {
+    "placeholders": { "kind": { "type": "String" } }
+  },
+  "aiChatProposalNeedsClarificationHeader": "Needs clarification · {kind}",
+  "@aiChatProposalNeedsClarificationHeader": {
+    "placeholders": { "kind": { "type": "String" } }
+  },
+  "aiChatProposalCandidatesHeading": "Options:",
+  "aiChatProposalSummaryEdited": "{summary} (edited)",
+  "@aiChatProposalSummaryEdited": {
+    "placeholders": { "summary": { "type": "String" } }
+  },
+  "aiChatProposalConfirm": "Confirm",
+  "aiChatProposalApplying": "Recording…",
+  "aiChatProposalEdit": "Edit",
+  "aiChatProposalEditKindTitle": "Edit {kind}",
+  "@aiChatProposalEditKindTitle": {
+    "placeholders": { "kind": { "type": "String" } }
+  },
+  "aiChatProposalSaveEdits": "Save changes",
+  "aiChatProposalFailure": "Failed: {error}",
+  "@aiChatProposalFailure": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "aiChatProposalUndoFailure": "Undo failed: {error}",
+  "@aiChatProposalUndoFailure": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "aiChatProposalAppliedFallback": "Recorded {summary}",
+  "@aiChatProposalAppliedFallback": {
+    "placeholders": { "summary": { "type": "String" } }
+  },
+  "aiChatProposalUndoneLabel": "Undid {summary}",
+  "@aiChatProposalUndoneLabel": {
+    "placeholders": { "summary": { "type": "String" } }
+  },
+  "aiChatProposalCancelledLabel": "Cancelled: {summary}",
+  "@aiChatProposalCancelledLabel": {
+    "placeholders": { "summary": { "type": "String" } }
+  },
+  "aiChatProposalUndoCountdown": "Undo ({seconds}s)",
+  "@aiChatProposalUndoCountdown": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "aiChatProposalBatchPending": "{count} items awaiting confirmation in this turn",
+  "@aiChatProposalBatchPending": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiChatProposalBatchConfirmAll": "Confirm all",
+
+  "aiChatFieldQuantity": "Quantity",
+  "aiChatFieldPrice": "Price (leave blank to backfill from market)",
+  "aiChatFieldFee": "Fee",
+  "aiChatFieldTax": "Tax",
+  "aiChatFieldNote": "Note",
+  "aiChatFieldAmount": "Amount",
+  "aiChatFieldDate": "Date (RFC3339)",
+  "aiChatFieldDateHint": "2026-04-30T12:00:00Z",
+  "aiChatFieldAccountName": "Account name",
+  "aiChatFieldInstitution": "Institution (optional)",
+  "aiChatFieldNewValuation": "New valuation",
+
+  "aiChatRowOperation": "Operation",
+  "aiChatRowAsset": "Asset",
+  "aiChatRowAccount": "Account",
+  "aiChatRowQuantity": "Quantity",
+  "aiChatRowPrice": "Price",
+  "aiChatRowFee": "Fee",
+  "aiChatRowDate": "Date",
+  "aiChatRowNote": "Note",
+  "aiChatRowAmount": "Amount",
+  "aiChatRowCategory": "Category",
+  "aiChatRowLiability": "Liability",
+  "aiChatRowRepayAccount": "Repayment account",
+  "aiChatRowName": "Name",
+  "aiChatRowType": "Type",
+  "aiChatRowCurrency": "Currency",
+  "aiChatRowInstitution": "Institution",
+  "aiChatRowNewValue": "New valuation",
+
+  "aiChatToolGetHoldings": "Query holdings",
+  "aiChatToolGetTransactions": "Query transactions",
+  "aiChatToolComputeXirr": "Compute XIRR",
+  "aiChatToolComputeNetWorth": "Compute net worth",
+  "aiChatToolGetIndustryBreakdown": "Industry breakdown",
+  "aiChatToolGetGeoBreakdown": "Region breakdown",
+  "aiChatToolGetMarketCapBreakdown": "Market-cap breakdown",
+  "aiChatToolGetRiskAlerts": "Risk alerts",
+  "aiChatToolFallback": "Tool",
+  "aiChatToolInputLabel": "Input",
+  "aiChatToolOutputLabel": "Output",
+  "aiChatToolJumpAsset": "Asset {id}",
+  "@aiChatToolJumpAsset": {
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "aiChatToolJumpAccount": "Account {id}",
+  "@aiChatToolJumpAccount": {
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "aiChatToolJumpLiability": "Liability {id}",
+  "@aiChatToolJumpLiability": {
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "aiChatToolShowRawJson": "View raw JSON",
+  "aiChatToolShowCompactView": "Back to compact view",
+
+  "chartEmptyDefault": "No data yet"
 }
