@@ -59,6 +59,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
   Future<void> send(
     String content, {
     required String staleSyncNotice,
+    String? systemContext,
   }) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty || state.isBusy) return;
@@ -96,6 +97,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
         sessionId: sessionId,
         ownerUserId: session.userId,
         content: trimmed,
+        systemContext: systemContext,
         cancelToken: cancelToken,
       );
     } finally {

@@ -1925,6 +1925,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatToolShowCompactView => 'Back to compact view';
 
   @override
+  String get aiFloatingPillLabel => 'Ask AI';
+
+  @override
+  String get aiChatSheetTitle => 'AI assistant';
+
+  @override
+  String get aiChatSheetEmpty => 'Ask anything about your finances.';
+
+  @override
+  String get aiChatSheetExpandTooltip => 'Expand to full screen';
+
+  @override
   String get chartEmptyDefault => 'No data yet';
 
   @override

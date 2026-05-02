@@ -940,6 +940,11 @@
   "aiChatToolShowRawJson": "View raw JSON",
   "aiChatToolShowCompactView": "Back to compact view",
 
+  "aiFloatingPillLabel": "Ask AI",
+  "aiChatSheetTitle": "AI assistant",
+  "aiChatSheetEmpty": "Ask anything about your finances.",
+  "aiChatSheetExpandTooltip": "Expand to full screen",
+
   "chartEmptyDefault": "No data yet",
 
   "formAmountFieldLabelDefault": "Amount",
