@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/master_detail_layout.dart';
+import '../../app/selection_query.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'account_form_page.dart';
 
 /// Lists every active account, grouped by [AccountType].
 ///
@@ -14,8 +17,41 @@ import '../../l10n/gen/app_localizations.dart';
 /// creates a new one. Soft-deleted / archived accounts hide here — the
 /// archived-accounts surface is intentionally separate so the primary list
 /// stays focused on the user's day-to-day book of accounts.
+///
+/// At desktop width (≥ 1240) the page renders as a master-detail surface
+/// (FIR-106): the list lives on the left, and the account edit form for
+/// the `?selected=<id>` row lives on the right.
 class AccountsPage extends ConsumerWidget {
   const AccountsPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
+          constraints.maxWidth,
+        );
+        final selected = selectedQueryOf(context);
+        if (masterDetail) {
+          return Scaffold(
+            body: MasterDetailLayout(
+              master: _AccountsMaster(selectedId: selected),
+              detail: selected == null
+                  ? const _AccountsDetailEmpty()
+                  : AccountFormPage(accountId: selected),
+            ),
+          );
+        }
+        return const _AccountsMaster(selectedId: null);
+      },
+    );
+  }
+}
+
+class _AccountsMaster extends ConsumerWidget {
+  const _AccountsMaster({required this.selectedId});
+
+  final String? selectedId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +62,7 @@ class AccountsPage extends ConsumerWidget {
       body: accountsAsync.when(
         data: (accounts) => accounts.isEmpty
             ? const _EmptyAccounts()
-            : _AccountsByType(accounts: accounts),
+            : _AccountsByType(accounts: accounts, selectedId: selectedId),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
       ),
@@ -34,6 +70,22 @@ class AccountsPage extends ConsumerWidget {
         onPressed: () => context.go('/accounts/new'),
         icon: const Icon(Icons.add),
         label: Text(l10n.accountsCreateAction),
+      ),
+    );
+  }
+}
+
+class _AccountsDetailEmpty extends StatelessWidget {
+  const _AccountsDetailEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: GlassAppBar(title: Text(l10n.accountsAppBarTitle)),
+      body: MasterDetailEmpty(
+        icon: Icons.account_balance_outlined,
+        message: l10n.accountsDetailEmpty,
       ),
     );
   }
@@ -62,13 +114,15 @@ class _EmptyAccounts extends StatelessWidget {
 }
 
 class _AccountsByType extends StatelessWidget {
-  const _AccountsByType({required this.accounts});
+  const _AccountsByType({required this.accounts, required this.selectedId});
 
   final List<Account> accounts;
+  final String? selectedId;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final grouped = <AccountType, List<Account>>{};
     for (final a in accounts) {
       grouped.putIfAbsent(a.type, () => []).add(a);
@@ -93,7 +147,7 @@ class _AccountsByType extends StatelessWidget {
               ),
               child: Text(
                 accountTypeLabel(l10n, type),
-                style: Theme.of(context).textTheme.titleMedium,
+                style: theme.textTheme.titleMedium,
               ),
             ),
             Card(
@@ -101,11 +155,9 @@ class _AccountsByType extends StatelessWidget {
               child: Column(
                 children: [
                   for (final a in group)
-                    ListTile(
-                      title: Text(a.name),
-                      subtitle: Text(_subtitleFor(a)),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.go('/accounts/${a.id}'),
+                    _AccountTile(
+                      account: a,
+                      selected: a.id == selectedId,
                     ),
                 ],
               ),
@@ -115,6 +167,42 @@ class _AccountsByType extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _AccountTile extends StatelessWidget {
+  const _AccountTile({required this.account, required this.selected});
+
+  final Account account;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      color: selected
+          ? theme.colorScheme.primary.withValues(alpha: 0.10)
+          : null,
+      child: ListTile(
+        title: Text(account.name),
+        subtitle: Text(_subtitleFor(account)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _onTap(context),
+      ),
+    );
+  }
+
+  void _onTap(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (MasterDetailLayout.shouldUseMasterDetail(width)) {
+      replaceSelectedQuery(
+        context,
+        path: '/accounts',
+        selected: account.id,
+      );
+    } else {
+      context.go('/accounts/${account.id}');
+    }
   }
 
   String _subtitleFor(Account a) {

@@ -174,9 +174,11 @@ class _BenchmarkContent extends StatelessWidget {
   Widget build(BuildContext context) {
     if (result.portfolioPoints.isEmpty &&
         result.benchmarks.every((b) => b.points.isEmpty)) {
-      return const AspectRatio(
-        aspectRatio: 16 / 9,
-        child: EmptyChartPlaceholder(),
+      return LayoutBuilder(
+        builder: (context, c) => AspectRatio(
+          aspectRatio: chartAspectFor(c.maxWidth),
+          child: const EmptyChartPlaceholder(),
+        ),
       );
     }
     return Column(
@@ -245,18 +247,20 @@ class _ComparisonChart extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      height: 220,
-      child: NwLineChart(
-        series: series,
-        xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
-        yAxis: const ValueAxis(
-          format: ValueAxisFormat.decimal,
-          fractionDigits: 0,
-          maxLabels: 4,
+    return LayoutBuilder(
+      builder: (context, c) => SizedBox(
+        height: 220,
+        child: NwLineChart(
+          series: series,
+          xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
+          yAxis: const ValueAxis(
+            format: ValueAxisFormat.decimal,
+            fractionDigits: 0,
+            maxLabels: 4,
+          ),
+          aspectRatio: chartAspectFor(c.maxWidth),
+          semanticLabel: l10n.benchmarkComparisonTitle,
         ),
-        aspectRatio: 16 / 9,
-        semanticLabel: l10n.benchmarkComparisonTitle,
       ),
     );
   }

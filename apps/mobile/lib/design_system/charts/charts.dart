@@ -7,6 +7,7 @@
 library;
 
 export 'axes.dart';
+export 'chart_layout.dart';
 export 'chart_palette.dart'
     show ChartPalette, SeriesIntent, SeriesEmphasis, resolveSeriesColor;
 export 'chart_series.dart';
