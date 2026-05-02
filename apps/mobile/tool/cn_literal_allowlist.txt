@@ -32,6 +32,14 @@ lib/features/ai_chat/ui/tool_invocation_renderers.dart
 # design for the initial CN-only release; will be revisited when we
 # ship i18n-aware seeding.
 lib/data/repositories/expense_category_repository.dart
+# FIR-126: system account seed names ('系统收入账户', '系统支出账户',
+# '系统权益账户') are persisted into the synced `accounts` table at
+# first launch. The display label that users actually see is resolved
+# via `accountCategoryLabel` in AppLocalizations; this constant is the
+# fallback row name surfaced only when l10n isn't available (e.g. AI
+# assistant referring to the row in raw chat). Will be revisited
+# alongside expense_category_repository when i18n-aware seeding lands.
+lib/data/repositories/account_repository.dart
 
 # ─── command palette search keywords (intentional) ──────────────────
 # default_commands.dart ships bilingual search aliases for the Cmd+K
