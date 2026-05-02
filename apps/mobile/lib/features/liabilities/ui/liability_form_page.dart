@@ -25,7 +25,8 @@ class LiabilityFormPage extends ConsumerStatefulWidget {
       _LiabilityFormPageState();
 }
 
-class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
+class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
+    with OptimisticFormSubmit<LiabilityFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _principal = TextEditingController();
@@ -307,41 +308,60 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    try {
-      final repo = await ref.read(liabilityRepositoryProvider.future);
-      // Convert percent (e.g. "4.85") to fraction (0.0485) since the model
-      // stores rates as fractions but humans type percents.
-      final ratePercent = Decimal.parse(_rate.text.trim());
-      final rateFraction = (ratePercent / Decimal.fromInt(100)).toDecimal(
-        scaleOnInfinitePrecision: 10,
-      );
-      await repo.create(
-        type: _type,
-        name: _name.text.trim(),
-        principal: Decimal.parse(_principal.text.trim()),
-        interestRate: rateFraction,
-        currency: _currency.text.trim().toUpperCase(),
-        paymentMethod: _method,
-        rateType: _rateType,
-        startDate: _isCreditCard ? null : _startDate,
-        termMonths: _isCreditCard ? null : int.parse(_term.text.trim()),
-        statementDay: _isCreditCard
-            ? int.tryParse(_statementDay.text.trim())
-            : null,
-        paymentDueDay: _isCreditCard
-            ? int.tryParse(_paymentDueDay.text.trim())
-            : null,
-      );
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
-            currency: _currency.text.trim().toUpperCase(),
-          ));
-      if (mounted) {
+    final l10n = AppLocalizations.of(context);
+    final repo = await ref.read(liabilityRepositoryProvider.future);
+    if (!mounted) return;
+
+    // Convert percent (e.g. "4.85") to fraction (0.0485) since the model
+    // stores rates as fractions but humans type percents.
+    final ratePercent = Decimal.parse(_rate.text.trim());
+    final rateFraction = (ratePercent / Decimal.fromInt(100)).toDecimal(
+      scaleOnInfinitePrecision: 10,
+    );
+    final type = _type;
+    final name = _name.text.trim();
+    final principal = Decimal.parse(_principal.text.trim());
+    final currency = _currency.text.trim().toUpperCase();
+    final method = _method;
+    final rateType = _rateType;
+    final startDate = _isCreditCard ? null : _startDate;
+    final termMonths = _isCreditCard ? null : int.parse(_term.text.trim());
+    final statementDay = _isCreditCard
+        ? int.tryParse(_statementDay.text.trim())
+        : null;
+    final paymentDueDay = _isCreditCard
+        ? int.tryParse(_paymentDueDay.text.trim())
+        : null;
+    unawaited(
+      ref.read(formDefaultsProvider.notifier).rememberAsset(
+            currency: currency,
+          ),
+    );
+
+    await submitOptimistic(
+      pop: () {
         Haptics.success();
         Navigator.of(context).pop();
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+      },
+      tag: 'liability',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      retryLabel: l10n.commonRetry,
+      write: () async {
+        await repo.create(
+          type: type,
+          name: name,
+          principal: principal,
+          interestRate: rateFraction,
+          currency: currency,
+          paymentMethod: method,
+          rateType: rateType,
+          startDate: startDate,
+          termMonths: termMonths,
+          statementDay: statementDay,
+          paymentDueDay: paymentDueDay,
+        );
+      },
+    );
   }
 }
 

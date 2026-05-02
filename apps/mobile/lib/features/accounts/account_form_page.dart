@@ -7,6 +7,7 @@ import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../settings/data/base_currency_preference.dart';
 import '../shared/forms/forms.dart';
 import 'accounts_page.dart' show accountTypeLabel;
@@ -29,7 +30,8 @@ class AccountFormPage extends ConsumerStatefulWidget {
   ConsumerState<AccountFormPage> createState() => _AccountFormPageState();
 }
 
-class _AccountFormPageState extends ConsumerState<AccountFormPage> {
+class _AccountFormPageState extends ConsumerState<AccountFormPage>
+    with OptimisticFormSubmit<AccountFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _institutionController = TextEditingController();
@@ -80,37 +82,53 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
-    try {
-      final repo = await ref.read(accountRepositoryProvider.future);
-      if (_initial == null) {
-        await repo.create(
-          type: _type,
-          name: _nameController.text.trim(),
-          currency: _currency!,
-          institution: _emptyToNull(_institutionController.text),
-          accountNumber: _emptyToNull(_accountNumberController.text),
-          note: _emptyToNull(_noteController.text),
-        );
-      } else {
-        await repo.update(
-          _initial!.id,
-          name: _nameController.text.trim(),
-          currency: _currency,
-          institution: _institutionController.text.trim(),
-          clearInstitution: _institutionController.text.trim().isEmpty,
-          accountNumber: _accountNumberController.text.trim(),
-          clearAccountNumber: _accountNumberController.text.trim().isEmpty,
-          note: _noteController.text.trim(),
-          clearNote: _noteController.text.trim().isEmpty,
-          archived: _archived,
-        );
-      }
-      if (!mounted) return;
-      Haptics.success();
-      context.go('/accounts');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    final repo = await ref.read(accountRepositoryProvider.future);
+    if (!mounted) return;
+
+    final type = _type;
+    final name = _nameController.text.trim();
+    final currency = _currency!;
+    final institution = _emptyToNull(_institutionController.text);
+    final accountNumber = _emptyToNull(_accountNumberController.text);
+    final note = _emptyToNull(_noteController.text);
+    final archived = _archived;
+    final initial = _initial;
+
+    await submitOptimistic(
+      pop: () {
+        Haptics.success();
+        context.go('/accounts');
+      },
+      tag: 'account',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      retryLabel: l10n.commonRetry,
+      write: () async {
+        if (initial == null) {
+          await repo.create(
+            type: type,
+            name: name,
+            currency: currency,
+            institution: institution,
+            accountNumber: accountNumber,
+            note: note,
+          );
+        } else {
+          await repo.update(
+            initial.id,
+            name: name,
+            currency: currency,
+            institution: institution ?? '',
+            clearInstitution: institution == null,
+            accountNumber: accountNumber ?? '',
+            clearAccountNumber: accountNumber == null,
+            note: note ?? '',
+            clearNote: note == null,
+            archived: archived,
+          );
+        }
+      },
+    );
   }
 
   Future<void> _delete() async {

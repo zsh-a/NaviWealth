@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../shared/forms/forms.dart';
 import '../data/physical_asset.dart';
 import '../data/providers.dart';
 
@@ -36,7 +37,8 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
   }
 }
 
-class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet> {
+class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
+    with OptimisticFormSubmit<ValuationUpdateSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _amountCtrl;
   final TextEditingController _noteCtrl = TextEditingController();
@@ -164,20 +166,29 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
-    try {
-      final repo =
-          await ref.read(physicalAssetRepositoryProvider.future);
-      await repo.updateValuation(
-        assetId: widget.asset.id,
-        newValuation: Decimal.parse(_amountCtrl.text.trim()),
-        asOf: _asOf,
-        note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-      );
-      if (!mounted) return;
-      Haptics.success();
-      Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    final repo = await ref.read(physicalAssetRepositoryProvider.future);
+    if (!mounted) return;
+
+    final assetId = widget.asset.id;
+    final amount = Decimal.parse(_amountCtrl.text.trim());
+    final asOf = _asOf;
+    final note = _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim();
+
+    await submitOptimistic(
+      pop: () {
+        Haptics.success();
+        Navigator.of(context).pop(true);
+      },
+      tag: 'valuation',
+      failureMessage: (_) => l10n.commonSaveFailed,
+      retryLabel: l10n.commonRetry,
+      write: () => repo.updateValuation(
+        assetId: assetId,
+        newValuation: amount,
+        asOf: asOf,
+        note: note,
+      ),
+    );
   }
 }
