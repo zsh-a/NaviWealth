@@ -9,7 +9,9 @@ import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../settings/data/base_currency_preference.dart';
+import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
+import 'account_icon_catalog.dart';
 import 'accounts_page.dart' show accountCategoryLabel, accountTypeLabel;
 
 /// Create / edit page for a single [Account].
@@ -59,6 +61,16 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   bool _busy = false;
   Account? _initial;
 
+  /// FIR-131 wave 3b — selected parent in the Beancount tree. `null`
+  /// means top-level. Constrained on save to a same-category account
+  /// (asset under asset, etc.) so the tree never crosses categories.
+  String? _parentId;
+  /// Icon name; `null` falls back to the bullet glyph in the picker /
+  /// list rows. See [account_icon_catalog.dart] for the canonical set.
+  String? _icon;
+  /// Hex colour (`#RRGGBB`) from [kAccountColorPalette], or `null`.
+  String? _color;
+
   @override
   void initState() {
     super.initState();
@@ -90,6 +102,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       _categoryUserPicked = true;
       _currency = existing.currency;
       _archived = existing.archived;
+      _parentId = existing.parentId;
+      _icon = existing.icon;
+      _color = existing.color;
     });
   }
 
@@ -109,6 +124,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     final note = _emptyToNull(_noteController.text);
     final archived = _archived;
     final initial = _initial;
+    final parentId = _parentId;
+    final icon = _icon;
+    final color = _color;
 
     await submitOptimistic(
       pop: () {
@@ -128,6 +146,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
             institution: institution,
             accountNumber: accountNumber,
             note: note,
+            parentId: parentId,
+            icon: icon,
+            color: color,
           );
         } else {
           await repo.update(
@@ -142,6 +163,12 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
             note: note ?? '',
             clearNote: note == null,
             archived: archived,
+            parentId: parentId ?? '',
+            clearParentId: parentId == null,
+            icon: icon ?? '',
+            clearIcon: icon == null,
+            color: color ?? '',
+            clearColor: color == null,
           );
         }
       },
@@ -296,6 +323,24 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         : null,
                   ),
                   const SizedBox(height: Spacing.s12),
+                  _ParentAccountPickerSection(
+                    currentAccountId: _initial?.id,
+                    category: _category,
+                    parentId: _parentId,
+                    onChanged: (v) => setState(() => _parentId = v),
+                  ),
+                  const SizedBox(height: Spacing.s12),
+                  _IconPickerSection(
+                    selected: _icon,
+                    color: _color,
+                    onChanged: (v) => setState(() => _icon = v),
+                  ),
+                  const SizedBox(height: Spacing.s12),
+                  _ColorPickerSection(
+                    selected: _color,
+                    onChanged: (v) => setState(() => _color = v),
+                  ),
+                  const SizedBox(height: Spacing.s12),
                   CurrencyPicker(
                     value: _currency,
                     onChanged: (v) => setState(() => _currency = v),
@@ -346,4 +391,305 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
             ),
     );
   }
+}
+
+/// FIR-131 wave 3b — parent picker + clear button. Filters the
+/// candidate list to same-category accounts and excludes the current
+/// account plus its descendants so the tree can never form a cycle.
+class _ParentAccountPickerSection extends ConsumerWidget {
+  const _ParentAccountPickerSection({
+    required this.currentAccountId,
+    required this.category,
+    required this.parentId,
+    required this.onChanged,
+  });
+
+  /// `null` in the create flow.
+  final String? currentAccountId;
+  final AccountCategory category;
+  final String? parentId;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsStreamProvider);
+    final accounts = accountsAsync.value ?? const <Account>[];
+    final filtered = _candidates(accounts);
+
+    return Row(
+      children: [
+        Expanded(
+          child: AccountTreePicker(
+            accounts: filtered,
+            value: parentId,
+            onChanged: onChanged,
+            category: category,
+            label: 'Parent account (optional)',
+            helperText: 'Group this account under another in the tree.',
+            allowSystemAccounts: false,
+          ),
+        ),
+        if (parentId != null)
+          IconButton(
+            icon: const Icon(Icons.clear),
+            tooltip: 'Make top-level',
+            onPressed: () => onChanged(null),
+          ),
+      ],
+    );
+  }
+
+  /// Same-category accounts minus self minus self's descendants.
+  List<Account> _candidates(List<Account> all) {
+    final selfId = currentAccountId;
+    if (selfId == null) {
+      return all.where((a) => a.category == category).toList();
+    }
+    final descendants = _descendantIds(selfId, all);
+    return all
+        .where((a) =>
+            a.id != selfId &&
+            !descendants.contains(a.id) &&
+            a.category == category)
+        .toList();
+  }
+
+  Set<String> _descendantIds(String rootId, List<Account> all) {
+    final byParent = <String, List<Account>>{};
+    for (final a in all) {
+      final pid = a.parentId;
+      if (pid == null) continue;
+      byParent.putIfAbsent(pid, () => []).add(a);
+    }
+    final out = <String>{};
+    final stack = <String>[rootId];
+    while (stack.isNotEmpty) {
+      final cur = stack.removeLast();
+      for (final child in byParent[cur] ?? const <Account>[]) {
+        if (out.add(child.id)) stack.add(child.id);
+      }
+    }
+    return out;
+  }
+}
+
+/// FIR-131 wave 3b — horizontal grid of icon options keyed off
+/// [kAccountIconCatalogue]. Selecting an icon snaps the form's
+/// `_icon`; the leading "None" tile clears it.
+class _IconPickerSection extends StatelessWidget {
+  const _IconPickerSection({
+    required this.selected,
+    required this.color,
+    required this.onChanged,
+  });
+
+  final String? selected;
+  final String? color;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tint = _parseHexColor(color) ?? scheme.primary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Icon',
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: Spacing.s4),
+        SizedBox(
+          height: 56,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: kAccountIconCatalogue.length + 1,
+            separatorBuilder: (_, _) => const SizedBox(width: Spacing.s8),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                final isSelected = selected == null;
+                return _IconChip(
+                  isSelected: isSelected,
+                  selectionTint: tint,
+                  onTap: () => onChanged(null),
+                  tooltip: 'No icon',
+                  child: Icon(
+                    Icons.do_not_disturb_on_outlined,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                );
+              }
+              final entry = kAccountIconCatalogue[index - 1];
+              final isSelected = selected == entry.name;
+              return _IconChip(
+                isSelected: isSelected,
+                selectionTint: tint,
+                onTap: () => onChanged(entry.name),
+                tooltip: entry.name,
+                child: Icon(
+                  entry.icon,
+                  color: isSelected ? tint : scheme.onSurface,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _IconChip extends StatelessWidget {
+  const _IconChip({
+    required this.isSelected,
+    required this.selectionTint,
+    required this.onTap,
+    required this.child,
+    required this.tooltip,
+  });
+
+  final bool isSelected;
+  final Color selectionTint;
+  final VoidCallback onTap;
+  final Widget child;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: Radii.brSm,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            borderRadius: Radii.brSm,
+            color: isSelected
+                ? selectionTint.withValues(alpha: 0.1)
+                : scheme.surfaceContainerLow,
+            border: Border.all(
+              color: isSelected ? selectionTint : scheme.outlineVariant,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Center(child: child),
+        ),
+      ),
+    );
+  }
+}
+
+/// FIR-131 wave 3b — horizontal palette of preset hex colours from
+/// [kAccountColorPalette]. Tapping a swatch snaps `_color`; the leading
+/// "None" tile clears it.
+class _ColorPickerSection extends StatelessWidget {
+  const _ColorPickerSection({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Color',
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: Spacing.s4),
+        Wrap(
+          spacing: Spacing.s8,
+          runSpacing: Spacing.s8,
+          children: [
+            _ColorSwatch(
+              isSelected: selected == null,
+              onTap: () => onChanged(null),
+              tooltip: 'No color',
+              fill: scheme.surfaceContainerLow,
+              border: scheme.outlineVariant,
+              child: Icon(
+                Icons.do_not_disturb_on_outlined,
+                size: 16,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            for (final hex in kAccountColorPalette)
+              _ColorSwatch(
+                isSelected: selected == hex,
+                onTap: () => onChanged(hex),
+                fill: _parseHexColor(hex) ?? scheme.surfaceContainerHighest,
+                tooltip: hex,
+                border: selected == hex ? scheme.primary : scheme.outlineVariant,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ColorSwatch extends StatelessWidget {
+  const _ColorSwatch({
+    required this.isSelected,
+    required this.onTap,
+    required this.fill,
+    required this.border,
+    required this.tooltip,
+    this.child,
+  });
+
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color fill;
+  final Color border;
+  final String tooltip;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: fill,
+            border: Border.all(
+              color: border,
+              width: isSelected ? 3 : 1,
+            ),
+          ),
+          child: child == null ? null : Center(child: child),
+        ),
+      ),
+    );
+  }
+}
+
+/// `#RRGGBB` (with or without leading `#`) → [Color]; returns `null`
+/// for any malformed input. Mirrors the helper in `account_tree_picker.dart`
+/// — duplicated here on purpose so the form file stays self-contained
+/// for the picker sub-widgets above.
+Color? _parseHexColor(String? value) {
+  if (value == null || value.isEmpty) return null;
+  var hex = value.replaceFirst('#', '');
+  if (hex.length == 6) hex = 'FF$hex';
+  if (hex.length != 8) return null;
+  final parsed = int.tryParse(hex, radix: 16);
+  if (parsed == null) return null;
+  return Color(parsed);
 }

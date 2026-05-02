@@ -25,6 +25,8 @@ Account _account({
   String? parentId,
   bool archived = false,
   DateTime? deletedAt,
+  String? icon,
+  String? color,
 }) =>
     Account(
       id: id,
@@ -33,6 +35,8 @@ Account _account({
       currency: currency,
       category: category,
       parentId: parentId,
+      icon: icon,
+      color: color,
       archived: archived,
       sync: SyncMeta(
         ownerUserId: 'u',
@@ -197,5 +201,51 @@ void main() {
       ),
     );
     expect(find.text('Pick a category'), findsOneWidget);
+  });
+
+  testWidgets(
+    'renders a leading icon when account.icon resolves to the catalogue',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          AccountTreePicker(
+            accounts: [
+              _account(
+                id: 'a',
+                name: 'Bank',
+                icon: 'account_balance',
+                color: '#3B82F6',
+              ),
+            ],
+            value: null,
+            onChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.byType(AccountTreePicker));
+      await tester.pumpAndSettle();
+      // The catalogued icon shows up; the bullet-glyph fallback does
+      // *not* (otherwise the row reads as `• Bank` which would
+      // duplicate the leading affordance).
+      expect(find.byIcon(Icons.account_balance), findsAtLeastNWidgets(1));
+      expect(find.text('• Bank'), findsNothing);
+    },
+  );
+
+  testWidgets('falls back to bullet glyph when account.icon is unknown', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        AccountTreePicker(
+          accounts: [_account(id: 'a', name: 'Bank', icon: 'no_such_icon')],
+          value: null,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.tap(find.byType(AccountTreePicker));
+    await tester.pumpAndSettle();
+    expect(find.text('• Bank'), findsOneWidget);
   });
 }
