@@ -180,7 +180,7 @@ HLC state is persisted in D1 (`sync_state` table, single row).
 | Field | Type | Notes |
 |-------|------|-------|
 | `op_id` | UUIDv4 string | Globally unique. Idempotency key. |
-| `table` | enum string | One of: `accounts`, `assets`, `transactions`, `liabilities`, `fx_rates`, `tags`, `goals`, `devices`. Other tables (e.g. `app_meta`) are **not** synced. |
+| `table` | enum string | One of: `accounts`, `assets`, `transactions`, `liabilities`, `fx_rates`, `tags`, `tag_links`, `categories`, `expense_categories`, `amortization_entries`, `goals`, `devices`, `users`, `settings`, `journal_entries`, `postings`, `prices`. Other tables (e.g. `app_meta`, the local market-data caches and `domain_event_log`) are **not** synced. The `journal_entries` / `postings` / `prices` triple was added in FIR-130 as the foundation of the Beancount-style ledger; they sync independently so a posting-level edit ships as a single op rather than a JE-wide rewrite. `transactions` and `expense_categories` remain in the wire enum during the FIR-131 / FIR-132 write/read cutover and will be retired after both ship. |
 | `row_id` | string | Primary key of the row. For composite keys (e.g. `fx_rates`) the canonical form is `<base>:<quote>:<as_of_iso>`. |
 | `op_type` | enum | `insert` \| `update` \| `delete`. |
 | `fields_diff` | object \| null | See §4.2. |
