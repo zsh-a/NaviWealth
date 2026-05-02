@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,12 +37,21 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   final _issuerController = TextEditingController();
   final _productCodeController = TextEditingController();
 
+  // Focus chain: name → issuer → productCode → principal → return → valuation.
+  final _nameFocus = FocusNode();
+  final _issuerFocus = FocusNode();
+  final _productCodeFocus = FocusNode();
+  final _principalFocus = FocusNode();
+  final _returnFocus = FocusNode();
+  final _valuationFocus = FocusNode();
+
   String? _accountId;
   String? _currency = 'CNY';
   DateTime? _startDate;
   DateTime? _maturityDate;
   bool _busy = false;
   Asset? _initial;
+  bool _hydratedFromList = false;
 
   static const _eligibleAccountTypes = {
     AccountType.bank,
@@ -51,7 +62,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.isEdit) _loadInitial();
+    if (widget.isEdit) {
+      _loadInitial();
+    } else {
+      final defaults = ref.read(formDefaultsProvider);
+      _accountId = defaults.assetAccountId;
+      if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+        _currency = defaults.assetCurrency;
+      }
+    }
   }
 
   Future<void> _loadInitial() async {
@@ -123,6 +142,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           );
         }
       }
+      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
+            accountId: _accountId,
+            currency: _currency,
+          ));
       if (!mounted) return;
       Haptics.success();
       context.go('/assets');
@@ -175,6 +198,12 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     _valuationController.dispose();
     _issuerController.dispose();
     _productCodeController.dispose();
+    _nameFocus.dispose();
+    _issuerFocus.dispose();
+    _productCodeFocus.dispose();
+    _principalFocus.dispose();
+    _returnFocus.dispose();
+    _valuationFocus.dispose();
     super.dispose();
   }
 
@@ -224,10 +253,20 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
         ),
       );
     }
+    if (!_hydratedFromList && !widget.isEdit) {
+      final hasCurrent = _accountId != null &&
+          eligible.any((a) => a.id == _accountId);
+      if (!hasCurrent) {
+        _accountId = eligible.first.id;
+      }
+      _hydratedFromList = true;
+    }
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
         padding: Spacing.pageMobile,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           AccountPicker(
             accounts: eligible,
@@ -237,6 +276,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           const SizedBox(height: Spacing.s12),
           TextFormField(
             controller: _nameController,
+            focusNode: _nameFocus,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _issuerFocus.requestFocus(),
             decoration: const InputDecoration(
               labelText: '产品名称',
               border: OutlineInputBorder(),
@@ -247,6 +289,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           const SizedBox(height: Spacing.s12),
           TextFormField(
             controller: _issuerController,
+            focusNode: _issuerFocus,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _productCodeFocus.requestFocus(),
             decoration: const InputDecoration(
               labelText: '发行机构（可选）',
               border: OutlineInputBorder(),
@@ -255,6 +300,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           const SizedBox(height: Spacing.s12),
           TextFormField(
             controller: _productCodeController,
+            focusNode: _productCodeFocus,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _principalFocus.requestFocus(),
             decoration: const InputDecoration(
               labelText: '产品代码（可选）',
               border: OutlineInputBorder(),
@@ -270,10 +318,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             label: '认购金额',
             controller: _principalController,
             currencyCode: _currency,
+            focusNode: _principalFocus,
+            onFieldSubmitted: (_) => _returnFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
           TextFormField(
             controller: _expectedReturnPctController,
+            focusNode: _returnFocus,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _valuationFocus.requestFocus(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
               labelText: '预期年化收益率 (%)',
@@ -307,6 +360,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             currencyCode: _currency,
             required: false,
             helperText: '不填则以认购金额作为当前估值',
+            focusNode: _valuationFocus,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
           const SizedBox(height: Spacing.s24),
           FilledButton(
