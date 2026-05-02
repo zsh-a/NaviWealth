@@ -19,7 +19,17 @@ mixin _$Account {
 /// [AccountCategory.asset] for back-compat with code paths that still
 /// construct an [Account] without a category; UI / repo callers
 /// always supply an explicit value.
- AccountCategory get category; SyncMeta get sync;
+ AccountCategory get category;/// FIR-130 — Beancount-style account tree. NULL on top-level
+/// accounts; on a child the parent's [id] forms the chain. The tree
+/// is enforced as a parent / child relationship at the application
+/// level (no DB constraint) so a sync-borne reorder doesn't fight
+/// foreign-key checks during eventual-consistency replay.
+ String? get parentId;/// FIR-130 — Material icon name driving the account's avatar in the
+/// picker / list. Lifted off the legacy `expense_categories.icon`
+/// surface so a single account-tree picker can render every category.
+ String? get icon;/// FIR-130 — colour token for the account's avatar (hex or design
+/// token id). Same provenance as [icon].
+ String? get color; SyncMeta get sync;
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +40,16 @@ $AccountCopyWith<Account> get copyWith => _$AccountCopyWithImpl<Account>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,sync);
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,parentId,icon,color,sync);
 
 @override
 String toString() {
-  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, sync: $sync)';
+  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, parentId: $parentId, icon: $icon, color: $color, sync: $sync)';
 }
 
 
@@ -50,7 +60,7 @@ abstract mixin class $AccountCopyWith<$Res>  {
   factory $AccountCopyWith(Account value, $Res Function(Account) _then) = _$AccountCopyWithImpl;
 @useResult
 $Res call({
- String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, SyncMeta sync
+ String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, String? parentId, String? icon, String? color, SyncMeta sync
 });
 
 
@@ -67,7 +77,7 @@ class _$AccountCopyWithImpl<$Res>
 
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? category = null,Object? sync = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? category = null,Object? parentId = freezed,Object? icon = freezed,Object? color = freezed,Object? sync = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -78,7 +88,10 @@ as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accou
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
 as bool,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as AccountCategory,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as AccountCategory,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
+as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
+as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));
 }
@@ -173,10 +186,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Account() when $default != null:
-return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.sync);case _:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.parentId,_that.icon,_that.color,_that.sync);case _:
   return orElse();
 
 }
@@ -194,10 +207,10 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _Account():
-return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.sync);case _:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.parentId,_that.icon,_that.color,_that.sync);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +227,10 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _Account() when $default != null:
-return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.sync);case _:
+return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.parentId,_that.icon,_that.color,_that.sync);case _:
   return null;
 
 }
@@ -229,7 +242,7 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 
 
 class _Account implements Account {
-  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, this.category = AccountCategory.asset, required this.sync});
+  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, this.category = AccountCategory.asset, this.parentId, this.icon, this.color, required this.sync});
   
 
 @override final  String id;
@@ -246,6 +259,19 @@ class _Account implements Account {
 /// construct an [Account] without a category; UI / repo callers
 /// always supply an explicit value.
 @override@JsonKey() final  AccountCategory category;
+/// FIR-130 — Beancount-style account tree. NULL on top-level
+/// accounts; on a child the parent's [id] forms the chain. The tree
+/// is enforced as a parent / child relationship at the application
+/// level (no DB constraint) so a sync-borne reorder doesn't fight
+/// foreign-key checks during eventual-consistency replay.
+@override final  String? parentId;
+/// FIR-130 — Material icon name driving the account's avatar in the
+/// picker / list. Lifted off the legacy `expense_categories.icon`
+/// surface so a single account-tree picker can render every category.
+@override final  String? icon;
+/// FIR-130 — colour token for the account's avatar (hex or design
+/// token id). Same provenance as [icon].
+@override final  String? color;
 @override final  SyncMeta sync;
 
 /// Create a copy of Account
@@ -258,16 +284,16 @@ _$AccountCopyWith<_Account> get copyWith => __$AccountCopyWithImpl<_Account>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,sync);
+int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,parentId,icon,color,sync);
 
 @override
 String toString() {
-  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, sync: $sync)';
+  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, parentId: $parentId, icon: $icon, color: $color, sync: $sync)';
 }
 
 
@@ -278,7 +304,7 @@ abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
   factory _$AccountCopyWith(_Account value, $Res Function(_Account) _then) = __$AccountCopyWithImpl;
 @override @useResult
 $Res call({
- String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, SyncMeta sync
+ String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, String? parentId, String? icon, String? color, SyncMeta sync
 });
 
 
@@ -295,7 +321,7 @@ class __$AccountCopyWithImpl<$Res>
 
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? category = null,Object? sync = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? name = null,Object? currency = null,Object? institution = freezed,Object? accountNumber = freezed,Object? note = freezed,Object? archived = null,Object? category = null,Object? parentId = freezed,Object? icon = freezed,Object? color = freezed,Object? sync = null,}) {
   return _then(_Account(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -306,7 +332,10 @@ as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accou
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
 as bool,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as AccountCategory,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
+as AccountCategory,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
+as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
+as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));
 }

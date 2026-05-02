@@ -22,8 +22,18 @@ const Set<String> kSyncableTables = {
   'users',
   // FIR-68: dedicated expense category taxonomy. Distinct from the generic
   // `categories` table which is reserved for asset/holding hierarchies and
-  // doesn't carry icon/color/archive metadata.
+  // doesn't carry icon/color/archive metadata. Slated for removal once
+  // FIR-131 / FIR-132 retire the legacy single-row write/read paths in
+  // favour of `journal_entries` + `postings`.
   'expense_categories',
+  // FIR-130 — Beancount-style ledger foundation. JE and posting rows
+  // sync independently so a posting-level edit (re-order, fix a typo in
+  // a single leg) ships as a single op rather than a JE-wide rewrite.
+  // `prices` is the append-only valuation time-series that replaces the
+  // legacy `valuationAdjust` event row.
+  'journal_entries',
+  'postings',
+  'prices',
 };
 
 enum OpType { insert, update, delete }

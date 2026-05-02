@@ -182,3 +182,19 @@ enum DevicePlatform { ios, android, web, macos, windows, linux, unknown }
 /// OpLog operation kind. Together with `entityTable` + `entityId` this is
 /// enough to reconstruct any state change on the receiving side.
 enum OpKind { insert, update, delete }
+
+/// FIR-130 — Beancount-style lifecycle flag for a `JournalEntry` row. Maps
+/// 1:1 to Beancount's `*` / `!` / `#` prefix syntax so the eventual
+/// `.beancount` exporter (FIR-134) can serialise the column without a
+/// translation table.
+///
+///   - [confirmed] — the user has reviewed and accepted the entry; the
+///     default for hand-entered rows.
+///   - [pending] — the entry is provisional (e.g. drafted from an AI
+///     proposal that hasn't been confirmed yet). Reports may exclude
+///     pending entries from "actuals" buckets.
+///   - [padding] — synthetic balance assertion / opening-balance row.
+///     Padding rows skip the standard balance check; their purpose is to
+///     reconcile against an externally-known total rather than describe
+///     an economic event.
+enum EntryFlag { confirmed, pending, padding }

@@ -52,6 +52,12 @@ const String defaultDbFileName = 'naviwealth.db';
     MarketSymbolSearches,
     SecuritiesCatalog,
     SecuritiesCatalogMeta,
+    // FIR-130 — Beancount-style journal: an entry + its postings + the
+    // append-only price observation series. Listed last so the migration
+    // step that creates them is a clean tail-append on the schema.
+    JournalEntries,
+    Postings,
+    Prices,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -117,8 +123,17 @@ class AppDatabase extends _$AppDatabase {
   ///    for the SQL and tradeoffs. Existing manual assets keep their
   ///    cached `last_price`; the seeded transactions become the single
   ///    starting point future valuations append to.
+  ///  - v12 (FIR-130) — Beancount-style ledger foundation. Adds three
+  ///    new synced tables — `journal_entries`, `postings`, `prices` —
+  ///    along with the supporting indexes, and grows `accounts` with
+  ///    `parent_id`, `icon`, `color` so the new account-tree picker can
+  ///    replace the legacy expense-category surface. The legacy
+  ///    `transactions` / `expense_categories` tables stay in place for
+  ///    this revision; FIR-131 / 132 (write- and read-path rewrites)
+  ///    will tombstone them once the new repositories take over the
+  ///    write-side responsibilities.
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -165,6 +180,14 @@ class AppDatabase extends _$AppDatabase {
             await _createTransferGroupIndex(this);
           case 11:
             await seedManualAssetValuationAdjusts(this);
+          case 12:
+            await m.createTable(journalEntries);
+            await m.createTable(postings);
+            await m.createTable(prices);
+            await m.addColumn(accounts, accounts.parentId);
+            await m.addColumn(accounts, accounts.icon);
+            await m.addColumn(accounts, accounts.color);
+            await _createJournalEntryIndexes(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -321,8 +344,51 @@ Future<void> _createIndexes(AppDatabase db) async {
     'CREATE INDEX IF NOT EXISTS idx_op_logs_owner_hlc '
         'ON op_logs(owner_user_id, hlc)',
     ..._securitiesAssetIndexStmts,
+    ..._journalEntryIndexStmts,
   ];
   for (final stmt in stmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+/// FIR-130 — indexes anchoring the JE / posting / price tables. Pulled
+/// out so the v11 → v12 onUpgrade step can re-use the same DDL the
+/// onCreate path runs for fresh installs.
+const List<String> _journalEntryIndexStmts = [
+  // Sync diff queries on the JE side. `entity_id` of an op points at
+  // `journal_entries.id`, but the diff loop filters by partition + HLC
+  // first.
+  'CREATE INDEX IF NOT EXISTS idx_journal_entries_owner_hlc '
+      'ON journal_entries(owner_user_id, hlc)',
+  // Timeline reads: "everything in this user's ledger between dates X
+  // and Y." Composite (owner, date) keeps the partition-then-range plan.
+  'CREATE INDEX IF NOT EXISTS idx_journal_entries_owner_date '
+      'ON journal_entries(owner_user_id, date)',
+  // Posting fan-out: each JE read pulls its postings via this index.
+  'CREATE INDEX IF NOT EXISTS idx_postings_je '
+      'ON postings(journal_entry_id)',
+  // Account balance queries: posting timeline scoped to one account.
+  'CREATE INDEX IF NOT EXISTS idx_postings_account_je '
+      'ON postings(account_id, journal_entry_id)',
+  // Holdings rollup: postings grouped by `unit` (asset id or fiat ccy).
+  // The unit column is high-cardinality across the user's portfolio so
+  // a dedicated index pays for itself on the assets-tab read path.
+  'CREATE INDEX IF NOT EXISTS idx_postings_unit_je '
+      'ON postings(unit, journal_entry_id)',
+  // Standard sync diff index on postings.
+  'CREATE INDEX IF NOT EXISTS idx_postings_owner_hlc '
+      'ON postings(owner_user_id, hlc)',
+  // Price observation lookups: "latest price for unit U in currency C
+  // on or before date D." Composite covers both the time-series scan
+  // and the "show me everything I know about AAPL" view.
+  'CREATE INDEX IF NOT EXISTS idx_prices_unit_quote_date '
+      'ON prices(unit, quote_currency, observed_on)',
+  'CREATE INDEX IF NOT EXISTS idx_prices_owner_hlc '
+      'ON prices(owner_user_id, hlc)',
+];
+
+Future<void> _createJournalEntryIndexes(AppDatabase db) async {
+  for (final stmt in _journalEntryIndexStmts) {
     await db.customStatement(stmt);
   }
 }
@@ -535,28 +601,30 @@ Future<void> seedManualAssetValuationAdjusts(AppDatabase db) async {
     'wealthProduct',
   ];
   final placeholders = List.filled(manualTypes.length, '?').join(', ');
-  final rows = await db.customSelect(
-    'SELECT a.id AS id, a.currency AS currency, a.last_price AS last_price, '
-    '       a.last_price_at AS last_price_at, a.metadata_json AS metadata_json, '
-    '       a.owner_user_id AS owner_user_id, '
-    '       a.updated_at AS updated_at, '
-    '       a.updated_by_device AS updated_by_device, '
-    '       a.hlc AS hlc '
-    'FROM assets AS a '
-    'WHERE a.type IN ($placeholders) '
-    '  AND a.last_price IS NOT NULL '
-    '  AND a.deleted_at IS NULL '
-    '  AND NOT EXISTS ('
-    '    SELECT 1 FROM transactions AS t '
-    '    WHERE t.asset_id = a.id '
-    '      AND t.type = ? '
-    '      AND t.deleted_at IS NULL'
-    '  )',
-    variables: [
-      ...manualTypes.map(Variable<String>.new),
-      const Variable<String>('valuationAdjust'),
-    ],
-  ).get();
+  final rows = await db
+      .customSelect(
+        'SELECT a.id AS id, a.currency AS currency, a.last_price AS last_price, '
+        '       a.last_price_at AS last_price_at, a.metadata_json AS metadata_json, '
+        '       a.owner_user_id AS owner_user_id, '
+        '       a.updated_at AS updated_at, '
+        '       a.updated_by_device AS updated_by_device, '
+        '       a.hlc AS hlc '
+        'FROM assets AS a '
+        'WHERE a.type IN ($placeholders) '
+        '  AND a.last_price IS NOT NULL '
+        '  AND a.deleted_at IS NULL '
+        '  AND NOT EXISTS ('
+        '    SELECT 1 FROM transactions AS t '
+        '    WHERE t.asset_id = a.id '
+        '      AND t.type = ? '
+        '      AND t.deleted_at IS NULL'
+        '  )',
+        variables: [
+          ...manualTypes.map(Variable<String>.new),
+          const Variable<String>('valuationAdjust'),
+        ],
+      )
+      .get();
   if (rows.isEmpty) return;
   const uuid = Uuid();
   await db.transaction(() async {
