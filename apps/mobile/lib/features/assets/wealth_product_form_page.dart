@@ -133,7 +133,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
         );
         await repo.updateMetadata(id: _initial!.id, metadata: newMeta);
         if (valuation != null) {
-          await repo.updateValuation(id: _initial!.id, newValuation: valuation);
+          await repo.recordValuationAdjust(
+            assetId: _initial!.id,
+            newValuation: valuation,
+          );
         }
         if (_nameController.text.trim() != (_initial!.name ?? '')) {
           await repo.updateBasics(

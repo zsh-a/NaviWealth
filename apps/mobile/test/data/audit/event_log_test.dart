@@ -139,7 +139,7 @@ void main() {
   });
 
   group('ManualAssetRepository writes audit rows', () {
-    test('updateValuation 100 → 300 records before/after of last_price',
+    test('recordValuationAdjust 100 → 300 records before/after of last_price',
         () async {
       final repo = ManualAssetRepository(
         db: db,
@@ -151,8 +151,8 @@ void main() {
         currency: 'CNY',
         balance: Decimal.parse('100'),
       );
-      await repo.updateValuation(
-        id: asset.id,
+      await repo.recordValuationAdjust(
+        assetId: asset.id,
         newValuation: Decimal.parse('300'),
         reason: '对账修正',
       );

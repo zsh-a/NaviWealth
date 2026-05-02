@@ -156,6 +156,12 @@ class NetWorthService {
     final sampleDates = _generateSampleDates(fromDay, toDay, granularity);
     final positions = <_PositionKey, Decimal>{};
     final cashBalances = <_CashKey, Decimal>{};
+    // FIR-123: latest manual cash-class valuation per asset, captured by
+    // walking `valuationAdjust` transactions whose `quantity == 0`. The
+    // value is "absolute" (not a delta) — each new event replaces the
+    // prior reading at that asset, so the running map at sample time `T`
+    // already holds the most recent observation at-or-before `T`.
+    final manualValuations = <String, _ManualValuation>{};
     final cashFlows = <NetWorthCashFlow>[];
     final samples = <NetWorthSample>[];
 
@@ -166,7 +172,7 @@ class NetWorthService {
       while (txIdx < txs.length &&
           !_floorToDay(txs[txIdx].tradeDate).isAfter(date)) {
         final tx = txs[txIdx];
-        _applyTransaction(tx, positions, cashBalances);
+        _applyTransaction(tx, positions, cashBalances, manualValuations);
         final external = _externalCashFlow(tx);
         if (external != null) {
           final converted = converter.convert(external, base, on: tx.tradeDate);
@@ -183,7 +189,13 @@ class NetWorthService {
         txIdx++;
       }
 
-      final assets = _valueAssets(date, positions, cashBalances, base);
+      final assets = _valueAssets(
+        date,
+        positions,
+        cashBalances,
+        manualValuations,
+        base,
+      );
       final liabilities = _valueLiabilities(date, base);
       samples.add(
         NetWorthSample(
@@ -218,6 +230,7 @@ class NetWorthService {
     DateTime date,
     Map<_PositionKey, Decimal> positions,
     Map<_CashKey, Decimal> cashBalances,
+    Map<String, _ManualValuation> manualValuations,
     String base,
   ) {
     var total = Money.zero(base);
@@ -235,6 +248,15 @@ class NetWorthService {
       final native = Money(balance, key.currency);
       total = total + converter.convert(native, base, on: date);
     });
+    // FIR-123: cash / deposit / wealth-product assets contribute their
+    // most recent manually-entered valuation. The map only holds the
+    // *latest* event per asset at the current replay position, so this
+    // is just a sum (not a delta-fold) over the affected assets.
+    manualValuations.forEach((assetId, val) {
+      if (val.price.sign == 0) return;
+      final native = Money(val.price, val.currency);
+      total = total + converter.convert(native, base, on: date);
+    });
     return total;
   }
 
@@ -250,6 +272,7 @@ class NetWorthService {
     Transaction tx,
     Map<_PositionKey, Decimal> positions,
     Map<_CashKey, Decimal> cashBalances,
+    Map<String, _ManualValuation> manualValuations,
   ) {
     final fee = tx.fee ?? Decimal.zero;
     final tax = tx.tax ?? Decimal.zero;
@@ -302,9 +325,24 @@ class NetWorthService {
         // Stock split / bonus shares: only the share count moves.
         addPosition(qty);
       case TransactionType.valuationAdjust:
-        // Mark-to-market for non-quoted assets (real estate, vehicles).
-        // The new valuation is fed in via the AssetPriceSource — the
-        // transaction itself does not move the position quantity.
+        // Two flavours coexist on this row type:
+        //
+        //   1. quantity == 0 — manual cash-class valuation event
+        //      (FIR-123 — cash, bank deposits, 理财产品). The asset
+        //      itself has no underlying "unit", so we record the
+        //      latest absolute valuation per assetId; subsequent events
+        //      replace the prior reading. _valueAssets sums these into
+        //      the total.
+        //   2. quantity != 0 (typically 1) — physical-asset
+        //      mark-to-market (real estate / vehicles). The valuation is
+        //      delivered via [AssetPriceSource] by an upstream pipeline,
+        //      so the row alone does not move the position quantity.
+        if (qty.sign == 0 && tx.assetId != null) {
+          manualValuations[tx.assetId!] = _ManualValuation(
+            price: tx.price,
+            currency: _normalizeCurrency(tx.currency),
+          );
+        }
         break;
     }
   }
@@ -422,6 +460,12 @@ class _PositionKey {
 
   @override
   int get hashCode => Object.hash(accountId, assetId);
+}
+
+class _ManualValuation {
+  const _ManualValuation({required this.price, required this.currency});
+  final Decimal price;
+  final String currency;
 }
 
 class _CashKey {

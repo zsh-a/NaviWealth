@@ -74,17 +74,21 @@ class ProposalApplier {
       case 'accounts':
         await accountRepo.softDelete(id);
       case 'assets':
-        // Valuation undo restores the previous `last_price`. We capture it
-        // pre-write into `undoData['previous_value']` so the revert is a
-        // straight-up assignment back, not a "delete". Restoring null is
-        // legitimate (the asset never had a price before) and we round-trip
-        // it through `Decimal.zero` because `updateValuation` requires a
-        // value — the alternative would need a new repo method.
+        // Valuation undo restores the previous `last_price` by appending a
+        // compensating `valuationAdjust` event (FIR-123 — there is no
+        // direct UPDATE path on `assets.last_price` any more). We capture
+        // the prior value pre-write into `undoData['previous_value']`;
+        // restoring null is legitimate (the asset never had a price
+        // before) and round-trips through `Decimal.zero`.
         final raw = state.undoData?['previous_value'];
         final prev = raw == null
             ? Decimal.zero
             : Decimal.tryParse(raw.toString()) ?? Decimal.zero;
-        await manualAssetRepo.updateValuation(id: id, newValuation: prev);
+        await manualAssetRepo.recordValuationAdjust(
+          assetId: id,
+          newValuation: prev,
+          reason: 'undo',
+        );
       default:
         throw ProposalApplyException('unknown undo table: $table');
     }
@@ -262,7 +266,10 @@ class ProposalApplier {
       throw ProposalApplyException('asset $assetId 不存在或不是手工估值类型');
     }
     final previousValue = existing.lastPrice?.toString();
-    await manualAssetRepo.updateValuation(id: assetId, newValuation: newValue);
+    await manualAssetRepo.recordValuationAdjust(
+      assetId: assetId,
+      newValuation: newValue,
+    );
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: assetId,

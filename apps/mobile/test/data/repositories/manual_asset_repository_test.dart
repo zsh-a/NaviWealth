@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/op.dart';
@@ -29,24 +30,35 @@ void main() {
     await db.close();
   });
 
-  test('createCash inserts a cash row and enqueues an op', () async {
-    final asset = await repo.createCash(
-      accountId: 'acc-1',
-      currency: 'CNY',
-      balance: Decimal.parse('1234.56'),
-    );
+  test(
+    'createCash inserts a cash row, seeds a genesis valuationAdjust '
+    'transaction, and enqueues both ops',
+    () async {
+      final asset = await repo.createCash(
+        accountId: 'acc-1',
+        currency: 'CNY',
+        balance: Decimal.parse('1234.56'),
+      );
 
-    expect(asset.type, AssetType.cash);
-    expect(asset.currency, 'CNY');
-    expect(asset.lastPrice, Decimal.parse('1234.56'));
-    final meta = asset.manualMetadata;
-    expect(meta, isA<CashMetadata>());
-    expect((meta as CashMetadata).accountId, 'acc-1');
+      expect(asset.type, AssetType.cash);
+      expect(asset.currency, 'CNY');
+      expect(asset.lastPrice, Decimal.parse('1234.56'));
+      final meta = asset.manualMetadata;
+      expect(meta, isA<CashMetadata>());
+      expect((meta as CashMetadata).accountId, 'acc-1');
 
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.insert);
-    expect(batch.single.tableName, 'assets');
-  });
+      final batch = await outbox.peekBatch();
+      expect(batch.map((o) => o.tableName).toList(),
+          unorderedEquals(<String>['assets', 'transactions']));
+      final assetOp = batch.firstWhere((o) => o.tableName == 'assets');
+      expect(assetOp.opType, OpType.insert);
+      final txOp = batch.firstWhere((o) => o.tableName == 'transactions');
+      expect(txOp.opType, OpType.insert);
+      expect(txOp.fieldsDiff!['type'], 'valuationAdjust');
+      expect(txOp.fieldsDiff!['quantity'], '0');
+      expect(txOp.fieldsDiff!['price'], '1234.56');
+    },
+  );
 
   test('createDeposit persists rate + dates inside metadata blob', () async {
     final asset = await repo.createDeposit(
@@ -92,28 +104,86 @@ void main() {
     expect(asset.symbol, 'CMBWM-001');
   });
 
-  test('updateValuation only diffs price + sync metadata', () async {
-    final asset = await repo.createCash(
-      accountId: 'acc-1',
-      currency: 'USD',
-      balance: Decimal.parse('100'),
-    );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+  test(
+    'recordValuationAdjust appends a transaction event and refreshes the '
+    'denormalized last_price cache',
+    () async {
+      final asset = await repo.createCash(
+        accountId: 'acc-1',
+        currency: 'USD',
+        balance: Decimal.parse('100'),
+      );
+      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
-    await repo.updateValuation(
-      id: asset.id,
-      newValuation: Decimal.parse('150'),
-    );
-    final reloaded = await repo.findById(asset.id);
-    expect(reloaded!.lastPrice, Decimal.parse('150'));
+      await repo.recordValuationAdjust(
+        assetId: asset.id,
+        newValuation: Decimal.parse('150'),
+      );
+      final reloaded = await repo.findById(asset.id);
+      expect(reloaded!.lastPrice, Decimal.parse('150'));
 
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.update);
-    final diff = batch.single.fieldsDiff!;
-    expect(diff['last_price'], '150');
-    expect(diff.containsKey('metadata_json'), isFalse);
-    expect(diff.containsKey('name'), isFalse);
-  });
+      // Two ops: the assets cache update and the appended transaction row.
+      final batch = await outbox.peekBatch();
+      expect(batch.map((o) => o.tableName).toList(), unorderedEquals(<String>['assets', 'transactions']));
+
+      final assetOp = batch.firstWhere((o) => o.tableName == 'assets');
+      expect(assetOp.opType, OpType.update);
+      final assetDiff = assetOp.fieldsDiff!;
+      expect(assetDiff['last_price'], '150');
+      expect(assetDiff.containsKey('metadata_json'), isFalse);
+      expect(assetDiff.containsKey('name'), isFalse);
+
+      final txOp = batch.firstWhere((o) => o.tableName == 'transactions');
+      expect(txOp.opType, OpType.insert);
+      final txDiff = txOp.fieldsDiff!;
+      expect(txDiff['type'], 'valuationAdjust');
+      expect(txDiff['quantity'], '0');
+      expect(txDiff['price'], '150');
+      expect(txDiff['account_id'], 'acc-1');
+      expect(txDiff['asset_id'], asset.id);
+    },
+  );
+
+  test(
+    'three sequential recordValuationAdjust calls produce three '
+    'transactions on the timeline (FIR-123 acceptance)',
+    () async {
+      final asset = await repo.createWealthProduct(
+        accountId: 'acc-1',
+        name: '稳健 30 天',
+        currency: 'CNY',
+        principal: Decimal.parse('100'),
+        expectedAnnualReturn: Decimal.parse('0.04'),
+      );
+      // The createWealthProduct call already seeded a genesis valuationAdjust
+      // event at price = 100. Subsequent record* calls append additional
+      // rows so the full timeline is replayable.
+      await repo.recordValuationAdjust(
+        assetId: asset.id,
+        newValuation: Decimal.parse('200'),
+        asOf: DateTime.utc(2026, 4, 2),
+      );
+      await repo.recordValuationAdjust(
+        assetId: asset.id,
+        newValuation: Decimal.parse('250'),
+        asOf: DateTime.utc(2026, 4, 3),
+      );
+
+      final txRows = await (db.select(db.transactions)
+            ..where(
+              (t) => t.assetId.equals(asset.id) &
+                  t.type.equalsValue(TransactionType.valuationAdjust),
+            )
+            ..orderBy([(t) => OrderingTerm(expression: t.tradeDate)]))
+          .get();
+      expect(txRows.map((r) => r.price.toString()).toList(),
+          ['100', '200', '250']);
+      expect(txRows.every((r) => r.quantity == Decimal.zero), isTrue);
+
+      final reloaded = await repo.findById(asset.id);
+      expect(reloaded!.lastPrice, Decimal.parse('250'));
+    },
+  );
 
   test('updateMetadata replaces the typed blob', () async {
     final asset = await repo.createDeposit(
