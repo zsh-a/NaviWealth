@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
+import '../audit/event_log_writer.dart';
 import '../db/app_database.dart';
 import '../domain/account.dart';
 import '../domain/enums.dart';
@@ -22,15 +23,18 @@ class AccountRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    EventLogWriter? eventLog,
     Uuid uuid = const Uuid(),
   }) : _db = db,
        _outbox = outbox,
        _stamper = stamper,
+       _eventLog = eventLog ?? EventLogWriter(db: db, uuid: uuid),
        _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final EventLogWriter _eventLog;
   final Uuid _uuid;
 
   static const String _tableName = 'accounts';
@@ -111,6 +115,20 @@ class AccountRepository {
         fields: fields,
         stamp: stamp,
       );
+      await _eventLog.recordCreated(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        after: <String, Object?>{
+          'type': type.name,
+          'name': name,
+          'currency': currency,
+          'institution': institution,
+          'account_number': accountNumber,
+          'note': note,
+          'archived': false,
+        },
+      );
     });
     return (await findById(id))!;
   }
@@ -131,6 +149,7 @@ class AccountRepository {
     String? note,
     bool? clearNote,
     bool? archived,
+    String? reason,
   }) async {
     final stamp = await _stamper.stamp();
     final diff = <String, Object?>{};
@@ -183,6 +202,13 @@ class AccountRepository {
     diff['hlc'] = stamp.hlc.toString();
 
     await _db.transaction(() async {
+      // Capture prior values *for the changed columns only* before
+      // writing — so the audit row has a faithful before/after pair
+      // for every key in the diff. We re-read inside the txn so a
+      // concurrent writer can't race the snapshot.
+      final priorRow = await (_db.select(
+        _db.accounts,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.accounts,
       )..where((t) => t.id.equals(id))).write(pending);
@@ -192,13 +218,51 @@ class AccountRepository {
         fields: diff,
         stamp: stamp,
       );
+      if (priorRow != null) {
+        final auditBefore = <String, Object?>{};
+        final auditAfter = <String, Object?>{};
+        if (diff.containsKey('name')) {
+          auditBefore['name'] = priorRow.name;
+          auditAfter['name'] = diff['name'];
+        }
+        if (diff.containsKey('currency')) {
+          auditBefore['currency'] = priorRow.currency;
+          auditAfter['currency'] = diff['currency'];
+        }
+        if (diff.containsKey('institution')) {
+          auditBefore['institution'] = priorRow.institution;
+          auditAfter['institution'] = diff['institution'];
+        }
+        if (diff.containsKey('account_number')) {
+          auditBefore['account_number'] = priorRow.accountNumber;
+          auditAfter['account_number'] = diff['account_number'];
+        }
+        if (diff.containsKey('note')) {
+          auditBefore['note'] = priorRow.note;
+          auditAfter['note'] = diff['note'];
+        }
+        if (diff.containsKey('archived')) {
+          auditBefore['archived'] = priorRow.archived;
+          auditAfter['archived'] = diff['archived'];
+        }
+        if (auditAfter.isNotEmpty) {
+          await _eventLog.recordFieldChanged(
+            entityTable: _tableName,
+            entityId: id,
+            stamp: stamp,
+            before: auditBefore,
+            after: auditAfter,
+            reason: reason,
+          );
+        }
+      }
     });
     return (await findById(id))!;
   }
 
   /// Soft-delete: writes a tombstone (`deletedAt = now`) and queues a
   /// `delete` op. Peers honour the tombstone via LWW.
-  Future<void> softDelete(String id) async {
+  Future<void> softDelete(String id, {String? reason}) async {
     final stamp = await _stamper.stamp();
     final companion = AccountsCompanion(
       updatedAt: Value(stamp.now),
@@ -215,6 +279,12 @@ class AccountRepository {
         rowId: id,
         fields: null,
         stamp: stamp,
+      );
+      await _eventLog.recordSoftDeleted(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        reason: reason,
       );
     });
   }

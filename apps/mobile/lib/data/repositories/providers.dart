@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/sync/drift_sync_storage.dart';
 import '../../core/sync/op_outbox.dart';
 import '../../domain/entities/fx_rate.dart' as dom;
+import '../audit/domain_event.dart';
+import '../audit/event_log_reader.dart';
 import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
@@ -154,3 +156,26 @@ final fxRatesStreamProvider =
   final repo = await ref.watch(fxRateRepositoryProvider.future);
   yield* repo.watchAll();
 });
+
+/// FIR-125 — read access over the local audit ledger (`domain_event_log`).
+/// UIs that render an entity's "change history" subscribe to one of the
+/// per-entity providers below; this provider exposes the raw reader for
+/// dev / maintenance tooling.
+final eventLogReaderProvider = FutureProvider<EventLogReader>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return EventLogReader(db);
+});
+
+/// Per-entity event timeline. Family is keyed by `(table, id)` pair,
+/// matching the storage shape, so e.g. asset detail pages call
+/// `eventTimelineProvider((entityTable: 'assets', entityId: assetId))`.
+final eventTimelineProvider = StreamProvider.autoDispose
+    .family<List<DomainEvent>, ({String entityTable, String entityId})>(
+  (ref, key) async* {
+    final reader = await ref.watch(eventLogReaderProvider.future);
+    yield* reader.watchByEntity(
+      entityTable: key.entityTable,
+      entityId: key.entityId,
+    );
+  },
+);
