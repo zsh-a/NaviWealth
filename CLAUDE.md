@@ -246,6 +246,7 @@ test/
 | `docs/sync-monitoring.md` | Monitoring baseline: latency targets, alert tiers, D1 sampling |
 | `docs/web-compat-matrix.md` | Cross-browser compatibility matrix and known issues |
 | `docs/web-routing.md` | Web routing verification checklist |
+| `docs/visual-baseline/README.md` | FIR-113 visual baseline: golden suite, Figma sync contract, FIR-103 §10 walkthrough |
 | `docs/branch-protection.md` | Branch protection rules for main |
 | `apps/mobile/README.md` | Mobile engineering baseline |
 | `apps/mobile/design_tokens/README.md` | W3C Design Token system |

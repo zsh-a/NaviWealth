@@ -1,0 +1,10 @@
+# dart_test.yaml — registered tags. Anything in `tags:` is a known tag
+# that `flutter test --tags=<name>` can filter on without warnings.
+#
+# golden: Visual regression goldens (FIR-113). Tag is applied via the
+# `tags: 'golden'` argument on each `testGoldens(...)` call under
+# `test/golden/`. CI runs them in a dedicated job after `flutter test`
+# so a font / theme regression doesn't get masked by the unit suite.
+tags:
+  golden:
+    timeout: 2x

@@ -55,7 +55,7 @@ jobs:
             git --no-pager diff --stat -- '*.g.dart' '*.freezed.dart'
             exit 1
           fi
-      - run: flutter test --coverage --reporter=expanded
+      - run: flutter test --coverage --reporter=expanded --exclude-tags=golden
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -69,6 +69,42 @@ jobs:
           name: mobile-coverage
           path: apps/mobile/coverage/lcov.info
           if-no-files-found: error
+
+  golden-regression:
+    name: golden regression (mobile)
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Stub web-only font assets so test asset bundle resolves
+        # Same stubs as analyze-and-test — see that job for context.
+        run: |
+          mkdir -p assets/fonts
+          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
+          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
+                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
+                assets/fonts/outfit-bold.woff2
+      - name: Run mobile golden suite (FIR-113)
+        # The visual baseline is locked to Linux rasterisation. Devs on
+        # macOS / Windows skip the comparison via flutter_test_config.dart;
+        # this job is the source of truth. A failed match dumps the diff
+        # PNG next to the golden so it's recoverable from the artifact.
+        run: flutter test test/golden --tags=golden --reporter=expanded
+      - name: Upload golden diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-golden-failures
+          path: |
+            apps/mobile/test/golden/failures/**
+            apps/mobile/test/golden/goldens/**
+          if-no-files-found: ignore
+          retention-days: 7
 
   build-web:
     name: build web
