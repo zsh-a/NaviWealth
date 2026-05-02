@@ -67,6 +67,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsLiabilitiesTooltip => 'Liabilities & repayment plans';
 
   @override
+  String get assetsTransactionsTooltip => 'Transactions';
+
+  @override
   String assetsLoadError(String error) {
     return 'Failed to load: $error';
   }
@@ -143,6 +146,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetTypeWealthProduct => 'Wealth product';
+
+  @override
+  String get assetTypeStock => 'Stock';
+
+  @override
+  String get assetTypeEtf => 'ETF';
+
+  @override
+  String get assetTypeMutualFund => 'Mutual fund';
+
+  @override
+  String get assetTypeBond => 'Bond';
+
+  @override
+  String get assetTypeCrypto => 'Crypto';
+
+  @override
+  String securitiesHoldingQuantity(String quantity) {
+    return 'Qty $quantity';
+  }
+
+  @override
+  String get securitiesHoldingFlat => 'Not held';
 
   @override
   String get corpActionTitle => 'Corporate Action';
@@ -1571,6 +1597,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeTypeValuationAdjust => 'Valuation adjust';
+
+  @override
+  String get tradeTypeDividend => 'Dividend';
+
+  @override
+  String get tradeTypeReinvest => 'Reinvest';
+
+  @override
+  String get tradeTypeInterest => 'Interest';
+
+  @override
+  String get tradeTypeDeposit => 'Deposit';
+
+  @override
+  String get tradeTypeWithdraw => 'Withdraw';
+
+  @override
+  String get tradeTypeFee => 'Fee';
+
+  @override
+  String get tradeTypeTax => 'Tax';
+
+  @override
+  String get tradeTypeSplit => 'Split';
+
+  @override
+  String get tradeTypeLiabilityPayment => 'Loan payment';
+
+  @override
+  String get tradeTypeExpense => 'Expense';
+
+  @override
+  String get transactionsAppBarTitle => 'Transactions';
+
+  @override
+  String get transactionsEmptyHint =>
+      'No trades recorded yet. Tap the button below to log your first buy or sell.';
+
+  @override
+  String get transactionsAddAction => 'Record trade';
+
+  @override
+  String transactionsLoadError(String error) {
+    return 'Failed to load transactions: $error';
+  }
+
+  @override
+  String transactionsRowTitle(String type, String symbol) {
+    return '$type · $symbol';
+  }
+
+  @override
+  String transactionsRowQuantityPrice(String quantity, String price) {
+    return '$quantity @ $price';
+  }
+
+  @override
+  String transactionsMonthHeader(String year, String month) {
+    return '$year-$month';
+  }
+
+  @override
+  String get commandPaletteGoTransactions => 'Go to transactions';
 
   @override
   String get expenseFormCreateTitle => 'New expense';

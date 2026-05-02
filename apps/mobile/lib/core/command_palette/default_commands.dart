@@ -50,6 +50,19 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go('/expenses'),
     ),
     CommandPaletteEntry(
+      id: 'nav.transactions',
+      label: l10n.commandPaletteGoTransactions,
+      icon: Icons.swap_horiz_outlined,
+      keywords: const <String>[
+        '/transactions',
+        'transactions',
+        'trades',
+        '交易',
+        '交易记录',
+      ],
+      run: (BuildContext ctx) => ctx.push('/transactions'),
+    ),
+    CommandPaletteEntry(
       id: 'nav.analytics',
       label: l10n.commandPaletteGoAnalytics,
       icon: Icons.pie_chart_outline,

@@ -13,6 +13,8 @@ import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../investment/data/providers.dart';
+import '../investment/domain/models/holding_snapshot.dart';
 import 'asset_detail_page.dart';
 import 'physical/data/physical_asset.dart';
 import 'physical/data/providers.dart';
@@ -78,10 +80,17 @@ class _AssetsMaster extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final manualAsync = ref.watch(manualAssetsStreamProvider);
     final physicalAsync = ref.watch(physicalAssetsListProvider);
+    final securitiesAsync = ref.watch(securitiesAssetsStreamProvider);
+    final holdingsAsync = ref.watch(holdingsSnapshotProvider);
 
-    // Build a flat ordered list of all asset IDs for j/k navigation.
+    final securitiesOrdered = _orderedSecurities(securitiesAsync.value);
+
+    // Build a flat ordered list of all asset IDs for j/k navigation. Mirrors
+    // the visual order of the body: manual assets, then securities, then
+    // physical, so `j`/`k` traverse the same sequence the user reads.
     final allIds = <String>[
       ...?(manualAsync.value?.map((a) => a.id)),
+      ...securitiesOrdered.map((a) => a.id),
       ...?(physicalAsync.value?.map((a) => a.id)),
     ];
 
@@ -97,6 +106,12 @@ class _AssetsMaster extends ConsumerWidget {
           title: Text(l10n.assetsAppBarTitle),
           actions: [
             IconButton(
+              key: const Key('assets-appbar-transactions'),
+              icon: const Icon(Icons.receipt_long_outlined),
+              tooltip: l10n.assetsTransactionsTooltip,
+              onPressed: () => context.push('/transactions'),
+            ),
+            IconButton(
               icon: const Icon(Icons.account_balance_outlined),
               tooltip: l10n.assetsAccountsTooltip,
               onPressed: () => context.go('/accounts'),
@@ -111,6 +126,9 @@ class _AssetsMaster extends ConsumerWidget {
         body: _AssetsBody(
           manualAsync: manualAsync,
           physicalAsync: physicalAsync,
+          securitiesAsync: securitiesAsync,
+          securities: securitiesOrdered,
+          holdings: holdingsAsync.value ?? const <String, HoldingSnapshot>{},
           selectedAssetId: selectedAssetId,
           inMasterDetail: inMasterDetail,
         ),
@@ -267,18 +285,26 @@ class _AssetsBody extends StatelessWidget {
   const _AssetsBody({
     required this.manualAsync,
     required this.physicalAsync,
+    required this.securitiesAsync,
+    required this.securities,
+    required this.holdings,
     required this.selectedAssetId,
     required this.inMasterDetail,
   });
 
   final AsyncValue<List<Asset>> manualAsync;
   final AsyncValue<List<PhysicalAsset>> physicalAsync;
+  final AsyncValue<List<Asset>> securitiesAsync;
+  final List<Asset> securities;
+  final Map<String, HoldingSnapshot> holdings;
   final String? selectedAssetId;
   final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
-    final loading = manualAsync.isLoading || physicalAsync.isLoading;
+    final loading = manualAsync.isLoading ||
+        physicalAsync.isLoading ||
+        securitiesAsync.isLoading;
     return PageSkeletonShell<void>(
       skeleton: const AssetsListSkeleton(),
       isLoading: loading,
@@ -287,12 +313,16 @@ class _AssetsBody extends StatelessWidget {
   }
 
   Widget _resolveBody(BuildContext context) {
-    if (manualAsync.isLoading || physicalAsync.isLoading) {
+    if (manualAsync.isLoading ||
+        physicalAsync.isLoading ||
+        securitiesAsync.isLoading) {
       return const AssetsListSkeleton();
     }
     final manualErr = manualAsync.hasError ? manualAsync.error : null;
     final physicalErr = physicalAsync.hasError ? physicalAsync.error : null;
-    if (manualErr != null && physicalErr != null) {
+    final securitiesErr =
+        securitiesAsync.hasError ? securitiesAsync.error : null;
+    if (manualErr != null && physicalErr != null && securitiesErr != null) {
       return Center(
         child: Text(
           AppLocalizations.of(context).assetsLoadError('$manualErr'),
@@ -301,7 +331,7 @@ class _AssetsBody extends StatelessWidget {
     }
     final manual = manualAsync.value ?? const <Asset>[];
     final physical = physicalAsync.value ?? const <PhysicalAsset>[];
-    if (manual.isEmpty && physical.isEmpty) {
+    if (manual.isEmpty && physical.isEmpty && securities.isEmpty) {
       return const _EmptyHint();
     }
     return ListView(
@@ -310,6 +340,13 @@ class _AssetsBody extends StatelessWidget {
         if (manual.isNotEmpty)
           _ManualAssetsSection(
             assets: manual,
+            selectedAssetId: selectedAssetId,
+            inMasterDetail: inMasterDetail,
+          ),
+        if (securities.isNotEmpty)
+          _SecuritiesAssetsSection(
+            assets: securities,
+            holdings: holdings,
             selectedAssetId: selectedAssetId,
             inMasterDetail: inMasterDetail,
           ),
@@ -404,6 +441,207 @@ class _ManualAssetsSection extends StatelessWidget {
         ],
       ],
     );
+  }
+}
+
+/// Stable display order for the securities section: type bucket first
+/// (stocks → ETFs → funds → bonds → crypto), then symbol within bucket.
+/// Drives both the visible list order and the j/k navigation order, so
+/// they stay in sync without a second sort step.
+const List<AssetType> _kSecuritiesTypeOrder = <AssetType>[
+  AssetType.stock,
+  AssetType.etf,
+  AssetType.mutualFund,
+  AssetType.bond,
+  AssetType.crypto,
+];
+
+List<Asset> _orderedSecurities(List<Asset>? assets) {
+  if (assets == null || assets.isEmpty) return const <Asset>[];
+  final ordered = [...assets];
+  ordered.sort((a, b) {
+    final ai = _kSecuritiesTypeOrder.indexOf(a.type);
+    final bi = _kSecuritiesTypeOrder.indexOf(b.type);
+    final aIdx = ai < 0 ? _kSecuritiesTypeOrder.length : ai;
+    final bIdx = bi < 0 ? _kSecuritiesTypeOrder.length : bi;
+    if (aIdx != bIdx) return aIdx.compareTo(bIdx);
+    return a.symbol.compareTo(b.symbol);
+  });
+  return ordered;
+}
+
+String securitiesAssetTypeLabel(AppLocalizations l10n, AssetType t) {
+  return switch (t) {
+    AssetType.stock => l10n.assetTypeStock,
+    AssetType.etf => l10n.assetTypeEtf,
+    AssetType.mutualFund => l10n.assetTypeMutualFund,
+    AssetType.bond => l10n.assetTypeBond,
+    AssetType.crypto => l10n.assetTypeCrypto,
+    _ => t.name,
+  };
+}
+
+class _SecuritiesAssetsSection extends StatelessWidget {
+  const _SecuritiesAssetsSection({
+    required this.assets,
+    required this.holdings,
+    required this.selectedAssetId,
+    required this.inMasterDetail,
+  });
+
+  final List<Asset> assets;
+  final Map<String, HoldingSnapshot> holdings;
+  final String? selectedAssetId;
+  final bool inMasterDetail;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final grouped = <AssetType, List<Asset>>{};
+    for (final a in assets) {
+      grouped.putIfAbsent(a.type, () => []).add(a);
+    }
+    final order = _kSecuritiesTypeOrder
+        .where(grouped.containsKey)
+        .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final type in order) ...[
+          Padding(
+            padding: const EdgeInsets.only(
+              top: Spacing.s8,
+              bottom: Spacing.s8,
+            ),
+            child: Text(
+              securitiesAssetTypeLabel(l10n, type),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                for (final asset in grouped[type]!)
+                  _SecurityTile(
+                    asset: asset,
+                    snapshot: holdings[asset.id],
+                    selected: asset.id == selectedAssetId,
+                    heroEnabled: !inMasterDetail,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Spacing.s12),
+        ],
+      ],
+    );
+  }
+}
+
+class _SecurityTile extends StatelessWidget {
+  const _SecurityTile({
+    required this.asset,
+    required this.snapshot,
+    required this.selected,
+    required this.heroEnabled,
+  });
+
+  final Asset asset;
+  final HoldingSnapshot? snapshot;
+  final bool selected;
+  final bool heroEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final qty = snapshot?.quantity;
+    final mvNative = snapshot?.marketValueInAssetCurrency;
+    // Fall back to qty * lastPrice when the holding pipeline hasn't yet
+    // produced a snapshot — the salvage in TransactionRepository.recordTrade
+    // populates lastPrice synchronously, so a freshly recorded trade
+    // already shows non-zero market value here.
+    final fallbackPrice = asset.lastPrice;
+    final displayValue = mvNative ??
+        ((qty != null && fallbackPrice != null) ? qty * fallbackPrice : null);
+    final hasQty = qty != null && qty.sign != 0;
+    final qtyLabel = hasQty
+        ? l10n.securitiesHoldingQuantity('$qty')
+        : l10n.securitiesHoldingFlat;
+
+    return MergeSemantics(
+      child: InkWell(
+        onTap: () => _onTap(context),
+        child: Container(
+          color: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.10)
+              : null,
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.s16,
+              vertical: Spacing.s12,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      OptionalHero(
+                        tag: 'asset-${asset.id}-name',
+                        enabled: heroEnabled,
+                        child: Text(
+                          asset.name == null || asset.name!.isEmpty
+                              ? asset.symbol
+                              : '${asset.symbol} · ${asset.name}',
+                          style: theme.textTheme.bodyLarge,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.s4),
+                      Text(
+                        qtyLabel,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontFeatures: hasQty
+                              ? TypographyTokens.tabularFigures
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: Spacing.s12),
+                if (displayValue != null)
+                  OptionalHero(
+                    tag: 'asset-${asset.id}-value',
+                    enabled: heroEnabled,
+                    child: MoneyText(
+                      amount: displayValue.toDouble(),
+                      currencyCode: asset.currency,
+                      style: TypographyTokens.numericBody,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onTap(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (MasterDetailLayout.shouldUseMasterDetail(width)) {
+      replaceSelectedQuery(context, path: '/assets', selected: asset.id);
+    } else {
+      context.go('/assets/${asset.id}');
+    }
   }
 }
 
