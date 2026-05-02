@@ -303,7 +303,8 @@ void main() {
       expect(build.postings[1].units, Decimal.parse('1000'));
     });
 
-    test('cross-currency transfer balances via FxRateSource', () {
+    test('cross-currency transfer attaches a Price annotation pinning '
+        'the user-chosen rate', () {
       final build = JournalEntryBuilders.transfer(
         date: DateTime.utc(2026, 4, 1),
         fromAccountId: 'a-usd',
@@ -313,12 +314,65 @@ void main() {
         toAmount: Decimal.parse('7100'),
         toCurrency: 'CNY',
       );
-      // Build alone is unbalanced under identity FX (-1000 USD vs 7100 CNY).
-      // The FX adapter folds them: 1 USD = 7.1 CNY ⇒ both legs weigh
-      // ±7100 CNY ⇒ Σ = 0.
+      // Source leg is plain fiat; destination carries the price
+      // annotation expressed as "1 CNY = 0.140... USD" — i.e.
+      // amount / toAmount.
+      expect(build.postings[0].price, isNull);
+      final destPrice = build.postings[1].price;
+      expect(destPrice, isNotNull);
+      expect(destPrice!.currency, 'USD');
+      // 1000 / 7100 = 0.140845070... — kept at 12 decimals to
+      // preserve the user's rate without infinite-precision loss.
+      expect(
+        destPrice.perUnit,
+        Decimal.parse('0.140845070422'),
+      );
+    });
+
+    test('cross-currency transfer balances under identity FX because the '
+        'price annotation overrides any source-table lookup', () {
+      // Identity FX would otherwise crash on a non-trivial cross —
+      // the price annotation makes the JE self-balancing without ever
+      // calling fx.rate(USD, CNY, ...).
+      final build = JournalEntryBuilders.transfer(
+        date: DateTime.utc(2026, 4, 1),
+        fromAccountId: 'a-usd',
+        toAccountId: 'a-cny',
+        amount: Decimal.parse('1000'),
+        currency: 'USD',
+        toAmount: Decimal.parse('7100'),
+        toCurrency: 'CNY',
+      );
+      // Folded base = USD: source = -1000 USD; dest = 7100 CNY @
+      // 0.140... USD/CNY = +1000 USD; sum = 0.
+      final report = _checkBalance(build, baseCurrency: 'USD');
+      expect(
+        report.isBalanced,
+        isTrue,
+        reason: 'totalBaseWeight=${report.totalBaseWeight}',
+      );
+    });
+
+    test('cross-currency transfer balances under any FxRateSource '
+        '(price annotation wins over the lookup)', () {
+      // A wildly-wrong FxRateSource shouldn't unbalance the JE — the
+      // user said "I converted at this rate", and the price annotation
+      // pins exactly that conversion. This is the elegant outcome of
+      // moving from FX-source-driven balance to price-annotation-driven
+      // balance.
+      final build = JournalEntryBuilders.transfer(
+        date: DateTime.utc(2026, 4, 1),
+        fromAccountId: 'a-usd',
+        toAccountId: 'a-cny',
+        amount: Decimal.parse('1000'),
+        currency: 'USD',
+        toAmount: Decimal.parse('7100'),
+        toCurrency: 'CNY',
+      );
       final fx = _MapFxRateSource({
-        'USD:CNY': Decimal.parse('7.1'),
-        'CNY:USD': Decimal.parse('0.140845070422535211267605633802'),
+        // Deliberately wrong: claims 1 USD = 100 CNY.
+        'USD:CNY': Decimal.parse('100'),
+        'CNY:USD': Decimal.parse('0.01'),
       });
       final report = _checkBalance(build, fx: fx, baseCurrency: 'CNY');
       expect(
@@ -326,6 +380,17 @@ void main() {
         isTrue,
         reason: 'totalBaseWeight=${report.totalBaseWeight}',
       );
+    });
+
+    test('same-currency transfer skips the price annotation', () {
+      final build = JournalEntryBuilders.transfer(
+        date: DateTime.utc(2026, 4, 1),
+        fromAccountId: 'a',
+        toAccountId: 'b',
+        amount: Decimal.parse('1000'),
+        currency: 'CNY',
+      );
+      expect(build.postings.every((p) => p.price == null), isTrue);
     });
 
     test('rejects zero amount', () {

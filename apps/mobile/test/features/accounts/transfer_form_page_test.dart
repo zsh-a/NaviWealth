@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/db/providers.dart';
@@ -12,6 +13,7 @@ import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/mutation_context.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/accounts/transfer_form_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,11 +34,16 @@ class _Harness {
   final MutationStamper stamper;
   final SharedPreferences prefs;
 
-  static Future<_Harness> create() async {
+  static Future<_Harness> create({String baseCurrency = 'CNY'}) async {
     final db = makeTestDatabase();
     final outbox = InMemoryOutboxStore();
     final stamper = makeStubStamper();
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      // Same key the BaseCurrencyController persists under. Bypass
+      // the controller's runtime save so cold-start reads pick up
+      // the test override on the first build.
+      'naviwealth.settings.base_currency': baseCurrency,
+    });
     final prefs = await SharedPreferences.getInstance();
     return _Harness(db: db, outbox: outbox, stamper: stamper, prefs: prefs);
   }
@@ -85,7 +92,11 @@ Account _account({
       ),
     );
 
-Widget _wrap(_Harness h, {required List<Account> accounts}) {
+Widget _wrap(
+  _Harness h, {
+  required List<Account> accounts,
+  List<FxRate> fxRates = const <FxRate>[],
+}) {
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(h.prefs),
@@ -93,11 +104,32 @@ Widget _wrap(_Harness h, {required List<Account> accounts}) {
       outboxStoreProvider.overrideWith((_) async => h.outbox),
       mutationStamperProvider.overrideWith((_) async => h.stamper),
       accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
+      // Closed stream so the ProviderScope teardown doesn't leak a
+      // pending Drift StreamQueryStore timer past pumpAndSettle.
+      // Tests that exercise the FX-defaulted to-amount path pass a
+      // non-empty list here.
+      fxRatesStreamProvider.overrideWith((_) => Stream.value(fxRates)),
     ],
-    child: const MaterialApp(
+    child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: TransferFormPage(),
+      // Minimal router so the form's `context.go('/accounts')` on
+      // submit lands on a valid stub instead of silently failing —
+      // which matters for the cross-currency submit test that
+      // inspects DB state *after* the optimistic pop.
+      routerConfig: GoRouter(
+        initialLocation: '/transfer',
+        routes: [
+          GoRoute(
+            path: '/transfer',
+            builder: (_, _) => const TransferFormPage(),
+          ),
+          GoRoute(
+            path: '/accounts',
+            builder: (_, _) => const SizedBox(),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -174,25 +206,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Pick the From account.
-    await tester.tap(find.byKey(const Key('')).evaluate().isEmpty
-        ? find.text('From account')
-        : find.text('From account'));
-    // Open the dropdown by tapping the field.
     await tester.tap(find.text('From account'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('• Bank A').last);
     await tester.pumpAndSettle();
 
-    // Pick the To account.
     await tester.tap(find.text('To account'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('• Bank B').last);
     await tester.pumpAndSettle();
 
-    // Enter an amount.
+    // The amount field labels include the from-account currency once
+    // the from picker is filled.
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Amount'),
+      find.widgetWithText(TextFormField, 'Amount (CNY)'),
       '1000',
     );
     await tester.pumpAndSettle();
@@ -201,7 +228,6 @@ void main() {
     expect(find.text('-1000 CNY'), findsOneWidget);
     expect(find.text('1000 CNY'), findsOneWidget);
 
-    // Submit is now enabled.
     final submit = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Transfer'),
     );
@@ -240,7 +266,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Amount'),
+      find.widgetWithText(TextFormField, 'Amount (CNY)'),
       '500',
     );
     await tester.pumpAndSettle();
@@ -256,7 +282,7 @@ void main() {
   });
 
   testWidgets(
-    'cross-currency picks render an inline error and disable submit',
+    'cross-currency picks reveal the To-amount field + rate hint',
     (tester) async {
       await _enlarge(tester);
       await tester.pumpWidget(
@@ -264,16 +290,16 @@ void main() {
           h,
           accounts: [
             _account(
-              id: 'a-cny',
-              name: 'CNY Bank',
-              category: AccountCategory.asset,
-              currency: 'CNY',
-            ),
-            _account(
               id: 'a-usd',
               name: 'USD Bank',
               category: AccountCategory.asset,
               currency: 'USD',
+            ),
+            _account(
+              id: 'a-cny',
+              name: 'CNY Bank',
+              category: AccountCategory.asset,
+              currency: 'CNY',
             ),
           ],
         ),
@@ -282,22 +308,121 @@ void main() {
 
       await tester.tap(find.text('From account'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('• CNY Bank').last);
+      await tester.tap(find.text('• USD Bank').last);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('To account'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('• USD Bank').last);
+      await tester.tap(find.text('• CNY Bank').last);
       await tester.pumpAndSettle();
 
-      // Picking the second account doesn't auto-snap currency because
-      // the first account already has its own currency. The user is
-      // explicitly mixing CNY/USD; the form surfaces the inline
-      // warning until cross-currency support lands in wave 3b.
+      // The To-amount field appears once both accounts disagree on
+      // currency. Its label includes the destination currency.
+      expect(find.widgetWithText(TextFormField, 'To amount (CNY)'), findsOneWidget);
+
+      // No FX rate on file → helper prompts the user to enter the
+      // converted amount manually.
       expect(
-        find.textContaining('Cross-currency transfers are not supported'),
+        find.textContaining('No FX rate on file'),
         findsOneWidget,
       );
+
+      // Enter both sides of the exchange.
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Amount (USD)'),
+        '1000',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'To amount (CNY)'),
+        '7100',
+      );
+      await tester.pumpAndSettle();
+
+      // Rate label surfaces underneath the to-amount input.
+      expect(find.textContaining('1 USD = 7.1 CNY'), findsOneWidget);
+
+      // PostingsPreview shows both legs in their respective currencies.
+      expect(find.text('-1000 USD'), findsOneWidget);
+      expect(find.text('7100 CNY'), findsOneWidget);
+
+      // Submit is enabled.
+      final submit = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Transfer'),
+      );
+      expect(submit.onPressed, isNotNull);
+    },
+  );
+
+  testWidgets(
+    'cross-currency submit attaches a Price annotation pinning the user rate',
+    (tester) async {
+      // The price annotation makes the destination leg's weight
+      // resolve in the source currency (USD), so a base of USD lets
+      // the JE balance without any FX rate on file. This mirrors the
+      // builder unit-test that exercises the same path.
+      h = await _Harness.create(baseCurrency: 'USD');
+      await _enlarge(tester);
+      await tester.pumpWidget(
+        _wrap(
+          h,
+          accounts: [
+            _account(
+              id: 'a-usd',
+              name: 'USD Bank',
+              category: AccountCategory.asset,
+              currency: 'USD',
+            ),
+            _account(
+              id: 'a-cny',
+              name: 'CNY Bank',
+              category: AccountCategory.asset,
+              currency: 'CNY',
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('From account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('• USD Bank').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('To account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('• CNY Bank').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Amount (USD)'),
+        '1000',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'To amount (CNY)'),
+        '7100',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Transfer'));
+      await tester.pumpAndSettle();
+
+      // The repo persisted both legs; the destination posting carries
+      // a Price annotation = amount / toAmount in the source currency.
+      final postings = await h.db.select(h.db.postings).get();
+      expect(postings, hasLength(2));
+      final destLeg = postings.firstWhere((p) => p.unit == 'CNY');
+      expect(destLeg.priceCurrency, 'USD');
+      // 1000 / 7100 ≈ 0.140845070422
+      expect(destLeg.pricePerUnit, isNotNull);
+      expect(
+        destLeg.pricePerUnit.toString(),
+        '0.140845070422',
+      );
+
+      // Source leg has no price annotation; same-currency invariant
+      // (the price annotation is only on the dest leg).
+      final srcLeg = postings.firstWhere((p) => p.unit == 'USD');
+      expect(srcLeg.priceCurrency, isNull);
+      expect(srcLeg.pricePerUnit, isNull);
     },
   );
 }
