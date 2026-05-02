@@ -5,11 +5,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/proposal_applier.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
+
+String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
+    switch (kind) {
+      ProposalKind.trade => l10n.aiChatProposalKindTrade,
+      ProposalKind.expense => l10n.aiChatProposalKindExpense,
+      ProposalKind.liabilityPayment => l10n.aiChatProposalKindLiabilityPayment,
+      ProposalKind.accountCreate => l10n.aiChatProposalKindAccountCreate,
+      ProposalKind.assetValuation => l10n.aiChatProposalKindAssetValuation,
+      ProposalKind.unknown => l10n.aiChatProposalKindUnknown,
+    };
 
 /// FIR-67 — confirmation card rendered for `propose_*` tool calls.
 ///
@@ -173,6 +184,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onUndo() async {
+    final l10n = AppLocalizations.of(context);
     final state = _applyState;
     if (state.status != ProposalApplyStatus.applied) return;
     try {
@@ -184,14 +196,14 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       await _persist(
         state.copyWith(
           status: ProposalApplyStatus.errored,
-          errorMessage: '撤销失败：${e.message}',
+          errorMessage: l10n.aiChatProposalUndoFailure(e.message),
         ),
       );
     } catch (e) {
       await _persist(
         state.copyWith(
           status: ProposalApplyStatus.errored,
-          errorMessage: '撤销失败：$e',
+          errorMessage: l10n.aiChatProposalUndoFailure(e.toString()),
         ),
       );
     }
@@ -232,11 +244,12 @@ class _ExpandedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final isApplying = applyState.status == ProposalApplyStatus.applying;
     final isErrored = applyState.status == ProposalApplyStatus.errored;
     final summary = overrides == null
         ? plan.summaryZh
-        : '${plan.summaryZh}（已编辑）';
+        : l10n.aiChatProposalSummaryEdited(plan.summaryZh);
 
     return Container(
       margin: const EdgeInsets.only(top: Spacing.s8),
@@ -256,7 +269,9 @@ class _ExpandedView extends StatelessWidget {
               Icon(_iconFor(plan.kind), size: 18, color: cs.onTertiaryContainer),
               const SizedBox(width: Spacing.s8),
               Text(
-                '待确认 · ${plan.kind.zhLabel}',
+                l10n.aiChatProposalPendingHeader(
+                  proposalKindLabel(l10n, plan.kind),
+                ),
                 style: tt.labelMedium?.copyWith(color: cs.onTertiaryContainer),
               ),
             ],
@@ -300,7 +315,7 @@ class _ExpandedView extends StatelessWidget {
           if (isErrored && applyState.errorMessage != null) ...[
             const SizedBox(height: Spacing.s8),
             Text(
-              '失败：${applyState.errorMessage}',
+              l10n.aiChatProposalFailure(applyState.errorMessage!),
               style: tt.bodySmall?.copyWith(color: cs.error),
             ),
           ],
@@ -318,17 +333,21 @@ class _ExpandedView extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check, size: 16),
-                label: Text(isApplying ? '记录中…' : '确认'),
+                label: Text(
+                  isApplying
+                      ? l10n.aiChatProposalApplying
+                      : l10n.aiChatProposalConfirm,
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: isApplying ? null : onCancel,
                 icon: const Icon(Icons.close, size: 16),
-                label: const Text('取消'),
+                label: Text(l10n.commonCancel),
               ),
               TextButton.icon(
                 onPressed: isApplying ? null : onEdit,
                 icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('编辑'),
+                label: Text(l10n.aiChatProposalEdit),
               ),
             ],
           ),
@@ -353,6 +372,7 @@ class _CollapsedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final IconData icon;
     final Color color;
     final String label;
@@ -360,15 +380,16 @@ class _CollapsedView extends StatelessWidget {
       case ProposalApplyStatus.applied:
         icon = Icons.check_circle;
         color = cs.primary;
-        label = applyState.shortLabel ?? '已记录${plan.summaryZh}';
+        label = applyState.shortLabel ??
+            l10n.aiChatProposalAppliedFallback(plan.summaryZh);
       case ProposalApplyStatus.undone:
         icon = Icons.undo;
         color = cs.onSurfaceVariant;
-        label = '已撤销${plan.summaryZh}';
+        label = l10n.aiChatProposalUndoneLabel(plan.summaryZh);
       case ProposalApplyStatus.cancelled:
         icon = Icons.cancel_outlined;
         color = cs.onSurfaceVariant;
-        label = '已取消：${plan.summaryZh}';
+        label = l10n.aiChatProposalCancelledLabel(plan.summaryZh);
       default:
         return const SizedBox.shrink();
     }
@@ -403,7 +424,7 @@ class _CollapsedView extends StatelessWidget {
             TextButton.icon(
               onPressed: onUndo,
               icon: const Icon(Icons.undo, size: 16),
-              label: Text('撤销 (${secondsLeft}s)'),
+              label: Text(l10n.aiChatProposalUndoCountdown(secondsLeft)),
             ),
         ],
       ),
@@ -420,6 +441,7 @@ class _ClarificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(top: Spacing.s8),
       padding: const EdgeInsets.all(Spacing.s12),
@@ -436,7 +458,9 @@ class _ClarificationView extends StatelessWidget {
               Icon(Icons.help_outline, size: 18, color: cs.tertiary),
               const SizedBox(width: Spacing.s8),
               Text(
-                '需要澄清 · ${plan.kind.zhLabel}',
+                l10n.aiChatProposalNeedsClarificationHeader(
+                  proposalKindLabel(l10n, plan.kind),
+                ),
                 style: tt.labelMedium?.copyWith(color: cs.onSurface),
               ),
             ],
@@ -449,7 +473,7 @@ class _ClarificationView extends StatelessWidget {
           if (plan.candidates.isNotEmpty) ...[
             const SizedBox(height: Spacing.s8),
             Text(
-              '候选：',
+              l10n.aiChatProposalCandidatesHeading,
               style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: Spacing.s4),
@@ -490,7 +514,8 @@ class ProposalPayloadDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final rows = _rowsFor(plan, overrides);
+    final l10n = AppLocalizations.of(context);
+    final rows = _rowsFor(l10n, plan, overrides);
     if (rows.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -556,18 +581,23 @@ class ProposalEditSheet extends StatefulWidget {
 
 class _ProposalEditSheetState extends State<ProposalEditSheet> {
   late final Map<String, TextEditingController> _controllers;
-  late final List<_EditableField> _fields;
+  late List<_EditableField> _fields;
 
   @override
   void initState() {
     super.initState();
-    _fields = _editableFieldsFor(widget.plan.kind);
-    _controllers = {
-      for (final f in _fields)
-        f.payloadKey: TextEditingController(
-          text: _initialFor(f.payloadKey),
-        ),
-    };
+    _fields = const <_EditableField>[];
+    _controllers = {};
+  }
+
+  void _ensureFieldsInitialized(AppLocalizations l10n) {
+    if (_fields.isNotEmpty) return;
+    _fields = _editableFieldsFor(l10n, widget.plan.kind);
+    for (final f in _fields) {
+      _controllers[f.payloadKey] = TextEditingController(
+        text: _initialFor(f.payloadKey),
+      );
+    }
   }
 
   String _initialFor(String key) {
@@ -602,6 +632,8 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    _ensureFieldsInitialized(l10n);
     final padding = MediaQuery.of(context).viewInsets.bottom;
     return SafeArea(
       child: Padding(
@@ -618,7 +650,9 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
             Row(
               children: [
                 Text(
-                  '编辑${widget.plan.kind.zhLabel}',
+                  l10n.aiChatProposalEditKindTitle(
+                    proposalKindLabel(l10n, widget.plan.kind),
+                  ),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
@@ -644,7 +678,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
             ],
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_collect()),
-              child: const Text('保存修改'),
+              child: Text(l10n.aiChatProposalSaveEdits),
             ),
           ],
         ),
@@ -666,51 +700,85 @@ class _EditableField {
   final bool numeric;
 }
 
-List<_EditableField> _editableFieldsFor(ProposalKind kind) {
+List<_EditableField> _editableFieldsFor(
+  AppLocalizations l10n,
+  ProposalKind kind,
+) {
   switch (kind) {
     case ProposalKind.trade:
-      return const [
-        _EditableField(payloadKey: 'quantity', label: '数量', numeric: true),
-        _EditableField(payloadKey: 'price', label: '价格 (留空则市场回填)', numeric: true),
-        _EditableField(payloadKey: 'fee', label: '手续费', numeric: true),
-        _EditableField(payloadKey: 'tax', label: '税费', numeric: true),
-        _EditableField(payloadKey: 'note', label: '备注'),
+      return [
+        _EditableField(
+          payloadKey: 'quantity',
+          label: l10n.aiChatFieldQuantity,
+          numeric: true,
+        ),
+        _EditableField(
+          payloadKey: 'price',
+          label: l10n.aiChatFieldPrice,
+          numeric: true,
+        ),
+        _EditableField(
+          payloadKey: 'fee',
+          label: l10n.aiChatFieldFee,
+          numeric: true,
+        ),
+        _EditableField(
+          payloadKey: 'tax',
+          label: l10n.aiChatFieldTax,
+          numeric: true,
+        ),
+        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
       ];
     case ProposalKind.expense:
-      return const [
-        _EditableField(payloadKey: 'amount', label: '金额', numeric: true),
+      return [
+        _EditableField(
+          payloadKey: 'amount',
+          label: l10n.aiChatFieldAmount,
+          numeric: true,
+        ),
         _EditableField(
           payloadKey: 'date',
-          label: '日期 (RFC3339)',
-          hint: '2026-04-30T12:00:00Z',
+          label: l10n.aiChatFieldDate,
+          hint: l10n.aiChatFieldDateHint,
         ),
-        _EditableField(payloadKey: 'note', label: '备注'),
+        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
       ];
     case ProposalKind.liabilityPayment:
-      return const [
-        _EditableField(payloadKey: 'amount', label: '金额', numeric: true),
+      return [
+        _EditableField(
+          payloadKey: 'amount',
+          label: l10n.aiChatFieldAmount,
+          numeric: true,
+        ),
         _EditableField(
           payloadKey: 'date',
-          label: '日期 (RFC3339)',
-          hint: '2026-04-30T12:00:00Z',
+          label: l10n.aiChatFieldDate,
+          hint: l10n.aiChatFieldDateHint,
         ),
-        _EditableField(payloadKey: 'note', label: '备注'),
+        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
       ];
     case ProposalKind.accountCreate:
-      return const [
-        _EditableField(payloadKey: 'name', label: '账户名'),
-        _EditableField(payloadKey: 'institution', label: '机构 (可选)'),
-        _EditableField(payloadKey: 'note', label: '备注'),
+      return [
+        _EditableField(payloadKey: 'name', label: l10n.aiChatFieldAccountName),
+        _EditableField(
+          payloadKey: 'institution',
+          label: l10n.aiChatFieldInstitution,
+        ),
+        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
       ];
     case ProposalKind.assetValuation:
-      return const [
-        _EditableField(payloadKey: 'new_value', label: '新估值', numeric: true),
+      return [
+        _EditableField(
+          payloadKey: 'new_value',
+          label: l10n.aiChatFieldNewValuation,
+          numeric: true,
+        ),
         _EditableField(
           payloadKey: 'date',
-          label: '日期 (RFC3339)',
-          hint: '2026-04-30T12:00:00Z',
+          label: l10n.aiChatFieldDate,
+          hint: l10n.aiChatFieldDateHint,
         ),
-        _EditableField(payloadKey: 'note', label: '备注'),
+        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
       ];
     case ProposalKind.unknown:
       return const [];
@@ -724,6 +792,7 @@ class _Row {
 }
 
 List<_Row> _rowsFor(
+  AppLocalizations l10n,
   ReadyProposalPlan plan,
   Map<String, Object?>? overrides,
 ) {
@@ -739,60 +808,79 @@ List<_Row> _rowsFor(
   switch (plan.kind) {
     case ProposalKind.trade:
       return [
-        if (read('type') != null) _Row('操作', _tradeTypeLabel(read('type')!)),
+        if (read('type') != null)
+          _Row(l10n.aiChatRowOperation, _tradeTypeLabel(l10n, read('type')!)),
         if (read('asset_symbol') != null || read('asset_name') != null)
           _Row(
-            '资产',
+            l10n.aiChatRowAsset,
             read('asset_name') != null && read('asset_symbol') != null
                 ? '${read('asset_name')} (${read('asset_symbol')})'
                 : (read('asset_name') ?? read('asset_symbol')!),
           ),
-        if (read('account_name') != null) _Row('账户', read('account_name')!),
-        if (read('quantity') != null) _Row('数量', read('quantity')!),
+        if (read('account_name') != null)
+          _Row(l10n.aiChatRowAccount, read('account_name')!),
+        if (read('quantity') != null)
+          _Row(l10n.aiChatRowQuantity, read('quantity')!),
         if (read('price') != null)
-          _Row('价格', '${read('price')} ${read('currency') ?? ''}'.trim()),
+          _Row(
+            l10n.aiChatRowPrice,
+            '${read('price')} ${read('currency') ?? ''}'.trim(),
+          ),
         if (read('fee') != null && read('fee') != '0' && read('fee') != '0.0')
-          _Row('手续费', read('fee')!),
-        if (read('trade_date') != null) _Row('日期', read('trade_date')!),
-        if (read('note') != null) _Row('备注', read('note')!),
+          _Row(l10n.aiChatRowFee, read('fee')!),
+        if (read('trade_date') != null)
+          _Row(l10n.aiChatRowDate, read('trade_date')!),
+        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
       ];
     case ProposalKind.expense:
       return [
         if (read('amount') != null)
-          _Row('金额', '${read('amount')} ${read('currency') ?? ''}'.trim()),
-        if (read('category') != null) _Row('类目', read('category')!),
-        if (read('account_name') != null) _Row('账户', read('account_name')!),
-        if (read('date') != null) _Row('日期', read('date')!),
-        if (read('note') != null) _Row('备注', read('note')!),
+          _Row(
+            l10n.aiChatRowAmount,
+            '${read('amount')} ${read('currency') ?? ''}'.trim(),
+          ),
+        if (read('category') != null)
+          _Row(l10n.aiChatRowCategory, read('category')!),
+        if (read('account_name') != null)
+          _Row(l10n.aiChatRowAccount, read('account_name')!),
+        if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
+        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
       ];
     case ProposalKind.liabilityPayment:
       return [
-        if (read('liability_name') != null) _Row('负债', read('liability_name')!),
+        if (read('liability_name') != null)
+          _Row(l10n.aiChatRowLiability, read('liability_name')!),
         if (read('amount') != null)
-          _Row('金额', '${read('amount')} ${read('currency') ?? ''}'.trim()),
+          _Row(
+            l10n.aiChatRowAmount,
+            '${read('amount')} ${read('currency') ?? ''}'.trim(),
+          ),
         if (read('from_account_name') != null)
-          _Row('还款账户', read('from_account_name')!),
-        if (read('date') != null) _Row('日期', read('date')!),
-        if (read('note') != null) _Row('备注', read('note')!),
+          _Row(l10n.aiChatRowRepayAccount, read('from_account_name')!),
+        if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
+        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
       ];
     case ProposalKind.accountCreate:
       return [
-        if (read('name') != null) _Row('名称', read('name')!),
-        if (read('type') != null) _Row('类型', read('type')!),
-        if (read('currency') != null) _Row('币种', read('currency')!),
-        if (read('institution') != null) _Row('机构', read('institution')!),
-        if (read('note') != null) _Row('备注', read('note')!),
+        if (read('name') != null) _Row(l10n.aiChatRowName, read('name')!),
+        if (read('type') != null) _Row(l10n.aiChatRowType, read('type')!),
+        if (read('currency') != null)
+          _Row(l10n.aiChatRowCurrency, read('currency')!),
+        if (read('institution') != null)
+          _Row(l10n.aiChatRowInstitution, read('institution')!),
+        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
       ];
     case ProposalKind.assetValuation:
       return [
-        if (read('asset_name') != null) _Row('资产', read('asset_name')!),
+        if (read('asset_name') != null)
+          _Row(l10n.aiChatRowAsset, read('asset_name')!),
         if (read('new_value') != null)
           _Row(
-            '新估值',
+            l10n.aiChatRowNewValue,
             '${read('new_value')} ${read('currency') ?? ''}'.trim(),
           ),
-        if (read('date') != null) _Row('日期', read('date')!),
-        if (read('note') != null) _Row('备注', read('note')!),
+        if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
+        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
       ];
     case ProposalKind.unknown:
       return const [];
@@ -808,12 +896,12 @@ IconData _iconFor(ProposalKind kind) => switch (kind) {
       ProposalKind.unknown => Icons.help_outline,
     };
 
-String _tradeTypeLabel(String wire) => switch (wire) {
-      'buy' => '买入',
-      'sell' => '卖出',
-      'transferIn' => '转入',
-      'transferOut' => '转出',
-      'valuationAdjust' => '估值调整',
+String _tradeTypeLabel(AppLocalizations l10n, String wire) => switch (wire) {
+      'buy' => l10n.tradeTypeBuy,
+      'sell' => l10n.tradeTypeSell,
+      'transferIn' => l10n.tradeTypeTransferIn,
+      'transferOut' => l10n.tradeTypeTransferOut,
+      'valuationAdjust' => l10n.tradeTypeValuationAdjust,
       _ => wire,
     };
 
@@ -848,6 +936,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     if (widget.pending.length < 2) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(top: Spacing.s8),
@@ -865,7 +954,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
           const SizedBox(width: Spacing.s8),
           Expanded(
             child: Text(
-              '本轮共有 ${widget.pending.length} 项待确认',
+              l10n.aiChatProposalBatchPending(widget.pending.length),
               style: tt.labelMedium?.copyWith(color: cs.onPrimaryContainer),
             ),
           ),
@@ -878,7 +967,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.done_all, size: 16),
-            label: const Text('全部确认'),
+            label: Text(l10n.aiChatProposalBatchConfirmAll),
           ),
         ],
       ),

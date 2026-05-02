@@ -4,10 +4,14 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 import 'package:naviwealth/features/ai_chat/ui/tool_invocation_card.dart';
 import 'package:naviwealth/features/ai_chat/ui/tool_invocation_renderers.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('zh'),
     home: Scaffold(body: SingleChildScrollView(child: child)),
   );
 }

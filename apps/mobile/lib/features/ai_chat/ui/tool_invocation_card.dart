@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import 'tool_invocation_renderers.dart';
 
@@ -32,11 +33,12 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final invocation = widget.invocation;
     final pending = invocation.output == null;
-    final friendlyName = _friendlyToolName(invocation.name);
+    final friendlyName = _friendlyToolName(l10n, invocation.name);
     final summary = _summarizeInput(invocation.input);
-    final jumps = _extractJumps(invocation.output);
+    final jumps = _extractJumps(l10n, invocation.output);
 
     return Container(
       margin: const EdgeInsets.only(top: Spacing.s8),
@@ -138,10 +140,10 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _kvBlock(context, '参数', invocation.input),
+                  _kvBlock(context, l10n.aiChatToolInputLabel, invocation.input),
                   if (invocation.output != null) ...[
                     const SizedBox(height: Spacing.s8),
-                    _resultBlock(context, invocation),
+                    _resultBlock(context, l10n, invocation),
                   ],
                 ],
               ),
@@ -167,7 +169,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   /// renderer threw. The user can always toggle into raw JSON for debugging,
   /// and we force the raw view when the payload is too large for the inline
   /// renderer to be useful (see [isOversizedToolPayload]).
-  Widget _resultBlock(BuildContext context, ToolInvocation invocation) {
+  Widget _resultBlock(
+    BuildContext context,
+    AppLocalizations l10n,
+    ToolInvocation invocation,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final oversized = isOversizedToolPayload(invocation.name, invocation.output);
@@ -181,7 +187,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         Row(
           children: [
             Text(
-              '结果',
+              l10n.aiChatToolOutputLabel,
               style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
             ),
             const Spacer(),
@@ -195,7 +201,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                     vertical: 2,
                   ),
                   child: Text(
-                    '查看 raw JSON',
+                    l10n.aiChatToolShowRawJson,
                     style: tt.labelSmall?.copyWith(color: cs.primary),
                   ),
                 ),
@@ -212,7 +218,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                     vertical: 2,
                   ),
                   child: Text(
-                    '返回精简视图',
+                    l10n.aiChatToolShowCompactView,
                     style: tt.labelSmall?.copyWith(color: cs.primary),
                   ),
                 ),
@@ -294,17 +300,17 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   }
 }
 
-String _friendlyToolName(String wireName) {
+String _friendlyToolName(AppLocalizations l10n, String wireName) {
   return switch (wireName) {
-    'get_holdings' => '查询持仓',
-    'get_transactions' => '查询交易',
-    'compute_xirr' => '计算 XIRR',
-    'compute_net_worth' => '计算净资产',
-    'get_industry_breakdown' => '行业分布',
-    'get_geo_breakdown' => '地域分布',
-    'get_market_cap_breakdown' => '市值分布',
-    'get_risk_alerts' => '风险预警',
-    _ => wireName.isEmpty ? '工具' : wireName,
+    'get_holdings' => l10n.aiChatToolGetHoldings,
+    'get_transactions' => l10n.aiChatToolGetTransactions,
+    'compute_xirr' => l10n.aiChatToolComputeXirr,
+    'compute_net_worth' => l10n.aiChatToolComputeNetWorth,
+    'get_industry_breakdown' => l10n.aiChatToolGetIndustryBreakdown,
+    'get_geo_breakdown' => l10n.aiChatToolGetGeoBreakdown,
+    'get_market_cap_breakdown' => l10n.aiChatToolGetMarketCapBreakdown,
+    'get_risk_alerts' => l10n.aiChatToolGetRiskAlerts,
+    _ => wireName.isEmpty ? l10n.aiChatToolFallback : wireName,
   };
 }
 
@@ -349,7 +355,7 @@ class _Jump {
 /// `liability_id` fields (anywhere in the tree, including inside
 /// arrays). Surface up to four unique ids so the chip row stays
 /// readable.
-List<_Jump> _extractJumps(Object? output) {
+List<_Jump> _extractJumps(AppLocalizations l10n, Object? output) {
   final seen = <String>{};
   final out = <_Jump>[];
   void visit(Object? node) {
@@ -366,15 +372,15 @@ List<_Jump> _extractJumps(Object? output) {
             case 'asset_id':
               kind = _JumpKind.asset;
               icon = Icons.account_balance_wallet_outlined;
-              label = '资产 ${_shortId(value)}';
+              label = l10n.aiChatToolJumpAsset(_shortId(value));
             case 'account_id':
               kind = _JumpKind.account;
               icon = Icons.account_box_outlined;
-              label = '账户 ${_shortId(value)}';
+              label = l10n.aiChatToolJumpAccount(_shortId(value));
             case 'liability_id':
               kind = _JumpKind.liability;
               icon = Icons.credit_card_outlined;
-              label = '负债 ${_shortId(value)}';
+              label = l10n.aiChatToolJumpLiability(_shortId(value));
           }
           if (kind != null && seen.add('$kind:$value')) {
             out.add(_Jump(kind: kind, id: value, label: label!, icon: icon!));

@@ -1,0 +1,59 @@
+# FIR-99: cn-literal-check baseline.
+#
+# Files listed here may contain Chinese-character string literals.
+# This is an exemption baseline — every entry is a TODO to migrate to
+# AppLocalizations. New entries should be rare and need a follow-up issue.
+#
+# To clear an entry, migrate every CN literal in the file to an ARB key
+# and remove the line below. The scanner reports stale entries on every
+# CI run, which keeps the list shrinking instead of bit-rotting.
+
+# ─── ai_chat persisted-data layer (FIR-99 follow-up) ─────────────────
+# proposal_applier.dart writes shortLabel and exception messages that
+# are persisted into the chat timeline (DB). Migrating requires
+# either re-rendering at display time from a structured handle, or a
+# data migration of historical rows.
+lib/features/ai_chat/data/proposal_applier.dart
+# chat_repository.dart owns the autotitle fallback ("新对话") and the
+# in-band system notice content stored in the messages table.
+lib/features/ai_chat/data/chat_repository.dart
+# proposal_plan.dart hosts the ProposalKind.zhLabel extension used by
+# tests; its UI consumers already route through AppLocalizations via
+# `proposalKindLabel(l10n, kind)` in propose_card.dart.
+lib/features/ai_chat/domain/proposal_plan.dart
+# tool_invocation_renderers.dart landed on main via FIR-83 (per-tool
+# renderers). ~38 UI strings spread across const widgets and helper
+# switches; migration wants its own focused PR so the renderer test
+# suite can be ported in lockstep.
+lib/features/ai_chat/ui/tool_invocation_renderers.dart
+
+# ─── seed data (intentional) ─────────────────────────────────────────
+# Default expense categories seeded at first launch. Names are CN by
+# design for the initial CN-only release; will be revisited when we
+# ship i18n-aware seeding.
+lib/data/repositories/expense_category_repository.dart
+
+# ─── 散落 features 子文件 — i18n 第三波 ──────────────────────────────
+# All entries below need migration in a follow-up PR. Listed here so
+# CI can baseline the codebase today and fail fast on any new CN
+# literal introduced anywhere outside this list.
+lib/core/command_palette/default_commands.dart
+lib/features/accounts/account_form_page.dart
+lib/features/accounts/accounts_page.dart
+lib/features/assets/asset_detail_page.dart
+lib/features/assets/cash_form_page.dart
+lib/features/assets/deposit_form_page.dart
+lib/features/assets/physical/ui/valuation_trend_chart.dart
+lib/features/assets/wealth_product_form_page.dart
+lib/features/expense/ui/category_grid_picker.dart
+lib/features/expense/ui/expense_categories_page.dart
+lib/features/expense/ui/expense_list_page.dart
+lib/features/expense/ui/expense_report_page.dart
+lib/features/home/domain/dashboard_aggregator.dart
+lib/features/shared/forms/account_picker.dart
+lib/features/shared/forms/amount_field.dart
+lib/features/shared/forms/currency_picker.dart
+lib/features/shared/forms/date_field.dart
+lib/features/shared/forms/local_securities_picker.dart
+lib/features/shared/forms/manual_security_sheet.dart
+lib/features/shared/forms/note_field.dart

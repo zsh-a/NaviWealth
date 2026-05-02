@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
@@ -76,10 +77,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final session = ref.watch(authSessionReaderProvider)();
     if (session == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('AI 助手')),
+        appBar: AppBar(title: Text(l10n.aiChatAppBarTitle)),
         body: const _LoginRequired(),
       );
     }
@@ -100,7 +102,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
         if (isDesktop) {
           return Scaffold(
-            appBar: AppBar(title: const Text('AI 助手')),
+            appBar: AppBar(title: Text(l10n.aiChatAppBarTitle)),
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -126,11 +128,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         // mobile + tablet: drawer for sessions.
         return Scaffold(
           appBar: AppBar(
-            title: Text(_titleForActive(session.userId, activeId)),
+            title: Text(_titleForActive(session.userId, activeId, l10n)),
             actions: [
               Builder(
                 builder: (ctx) => IconButton(
-                  tooltip: '历史对话',
+                  tooltip: l10n.aiChatHistoryTooltip,
                   icon: const Icon(Icons.history),
                   onPressed: () {
                     Scaffold.of(ctx).openEndDrawer();
@@ -138,7 +140,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                 ),
               ),
               IconButton(
-                tooltip: '新建对话',
+                tooltip: l10n.aiChatNewSessionTooltip,
                 icon: const Icon(Icons.add),
                 onPressed: () => _newSession(session.userId),
               ),
@@ -167,17 +169,17 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     );
   }
 
-  String _titleForActive(String userId, String? id) {
-    if (id == null) return 'AI 助手';
+  String _titleForActive(String userId, String? id, AppLocalizations l10n) {
+    if (id == null) return l10n.aiChatAppBarTitle;
     final sessionsAsync = ref.watch(chatSessionsStreamProvider(userId));
     return sessionsAsync.maybeWhen(
       data: (sessions) {
         for (final s in sessions) {
           if (s.id == id) return s.title;
         }
-        return 'AI 助手';
+        return l10n.aiChatAppBarTitle;
       },
-      orElse: () => 'AI 助手',
+      orElse: () => l10n.aiChatAppBarTitle,
     );
   }
 }
@@ -223,6 +225,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
       next.whenData((_) => _scrollToBottom());
     });
 
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Spacing.chatPaneMaxWidth),
@@ -231,14 +234,18 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
             Expanded(
               child: messagesAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('加载失败：$e')),
+                error: (e, _) =>
+                    Center(child: Text(l10n.commonLoadError(e.toString()))),
                 data: (messages) => _MessagesList(
                   sessionId: widget.sessionId,
                   messages: messages,
                   scroll: _scroll,
                   onSuggest: (text) => ref
                       .read(chatControllerProvider(widget.sessionId).notifier)
-                      .send(text),
+                      .send(
+                        text,
+                        staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                      ),
                 ),
               ),
             ),
@@ -248,7 +255,10 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
               onSend: (text) {
                 ref
                     .read(chatControllerProvider(widget.sessionId).notifier)
-                    .send(text);
+                    .send(
+                      text,
+                      staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                    );
               },
               onCancel: () {
                 ref
@@ -301,17 +311,17 @@ class _EmptyConversation extends StatelessWidget {
 
   final ValueChanged<String> onSuggest;
 
-  static const _suggestions = <String>[
-    '我最近三个月赚了多少？',
-    '帮我看看持仓里风险最高的资产。',
-    '我的行业分布是怎样的？',
-    '从开户到现在我的 XIRR 是多少？',
-  ];
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+    final suggestions = <String>[
+      l10n.aiChatEmptySuggestion1,
+      l10n.aiChatEmptySuggestion2,
+      l10n.aiChatEmptySuggestion3,
+      l10n.aiChatEmptySuggestion4,
+    ];
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
@@ -324,12 +334,12 @@ class _EmptyConversation extends StatelessWidget {
               Icon(Icons.auto_awesome, size: 44, color: cs.primary),
               const SizedBox(height: Spacing.s12),
               Text(
-                '你的财务助手',
+                l10n.aiChatEmptyTitle,
                 style: tt.headlineSmall?.copyWith(color: cs.onSurface),
               ),
               const SizedBox(height: Spacing.s8),
               Text(
-                '基于你的持仓与交易回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。',
+                l10n.aiChatEmptyBody,
                 textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
@@ -339,7 +349,7 @@ class _EmptyConversation extends StatelessWidget {
                 runSpacing: Spacing.s8,
                 alignment: WrapAlignment.center,
                 children: [
-                  for (final q in _suggestions)
+                  for (final q in suggestions)
                     ActionChip(
                       label: Text(q),
                       onPressed: () => onSuggest(q),
@@ -370,6 +380,7 @@ class _LoginRequired extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(Spacing.s24),
@@ -379,7 +390,7 @@ class _LoginRequired extends StatelessWidget {
             Icon(Icons.lock_outline, size: 36, color: cs.onSurfaceVariant),
             const SizedBox(height: Spacing.s12),
             Text(
-              '请先登录后再使用 AI 助手',
+              l10n.aiChatLoginRequired,
               style: tt.titleMedium?.copyWith(color: cs.onSurface),
             ),
           ],

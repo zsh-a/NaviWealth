@@ -1526,4 +1526,331 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseFormNoAccountsCta => '去创建';
+
+  @override
+  String get aiChatAppBarTitle => 'AI 助手';
+
+  @override
+  String get aiChatHistoryTooltip => '历史对话';
+
+  @override
+  String get aiChatNewSessionTooltip => '新建对话';
+
+  @override
+  String get aiChatLoginRequired => '请先登录后再使用 AI 助手。';
+
+  @override
+  String get aiChatEmptyTitle => '你的财务助手';
+
+  @override
+  String get aiChatEmptyBody => '基于你的持仓与交易回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。';
+
+  @override
+  String get aiChatEmptySuggestion1 => '我最近三个月赚了多少？';
+
+  @override
+  String get aiChatEmptySuggestion2 => '帮我看看持仓里风险最高的资产。';
+
+  @override
+  String get aiChatEmptySuggestion3 => '我的行业分布是怎样的？';
+
+  @override
+  String get aiChatEmptySuggestion4 => '从开户到现在我的 XIRR 是多少？';
+
+  @override
+  String get aiChatSessionsHeader => '对话';
+
+  @override
+  String get aiChatSessionsEmpty => '点击右上角的 + 开始第一个对话。';
+
+  @override
+  String get aiChatSessionMoreTooltip => '更多';
+
+  @override
+  String get aiChatSessionRenameAction => '重命名';
+
+  @override
+  String get aiChatSessionRenameTitle => '重命名';
+
+  @override
+  String get aiChatSessionTitleLabel => '标题';
+
+  @override
+  String get aiChatSessionDeleteTitle => '删除对话？';
+
+  @override
+  String aiChatSessionDeleteBody(String title) {
+    return '「$title」中的所有消息都会被删除。';
+  }
+
+  @override
+  String get aiChatRelativeJustNow => '刚刚';
+
+  @override
+  String aiChatRelativeMinutesAgo(int minutes) {
+    return '$minutes 分钟前';
+  }
+
+  @override
+  String aiChatRelativeHoursAgo(int hours) {
+    return '$hours 小时前';
+  }
+
+  @override
+  String aiChatRelativeDaysAgo(int days) {
+    return '$days 天前';
+  }
+
+  @override
+  String get aiChatComposerHintIdle => '问问 NaviWealth：例如\"我最近一个月赚了多少？\"';
+
+  @override
+  String get aiChatComposerHintStreaming => '正在生成回答…';
+
+  @override
+  String get aiChatComposerHintFlushing => '正在同步本地数据…';
+
+  @override
+  String get aiChatComposerSendTooltip => '发送 (⌘/Ctrl + Enter)';
+
+  @override
+  String get aiChatComposerStopTooltip => '停止生成';
+
+  @override
+  String get aiChatThinking => '正在思考…';
+
+  @override
+  String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
+
+  @override
+  String get aiChatProposalKindTrade => '交易';
+
+  @override
+  String get aiChatProposalKindExpense => '支出';
+
+  @override
+  String get aiChatProposalKindLiabilityPayment => '还款';
+
+  @override
+  String get aiChatProposalKindAccountCreate => '新账户';
+
+  @override
+  String get aiChatProposalKindAssetValuation => '估值更新';
+
+  @override
+  String get aiChatProposalKindUnknown => '未知';
+
+  @override
+  String aiChatProposalPendingHeader(String kind) {
+    return '待确认 · $kind';
+  }
+
+  @override
+  String aiChatProposalNeedsClarificationHeader(String kind) {
+    return '需要澄清 · $kind';
+  }
+
+  @override
+  String get aiChatProposalCandidatesHeading => '候选：';
+
+  @override
+  String aiChatProposalSummaryEdited(String summary) {
+    return '$summary（已编辑）';
+  }
+
+  @override
+  String get aiChatProposalConfirm => '确认';
+
+  @override
+  String get aiChatProposalApplying => '记录中…';
+
+  @override
+  String get aiChatProposalEdit => '编辑';
+
+  @override
+  String aiChatProposalEditKindTitle(String kind) {
+    return '编辑$kind';
+  }
+
+  @override
+  String get aiChatProposalSaveEdits => '保存修改';
+
+  @override
+  String aiChatProposalFailure(String error) {
+    return '失败：$error';
+  }
+
+  @override
+  String aiChatProposalUndoFailure(String error) {
+    return '撤销失败：$error';
+  }
+
+  @override
+  String aiChatProposalAppliedFallback(String summary) {
+    return '已记录$summary';
+  }
+
+  @override
+  String aiChatProposalUndoneLabel(String summary) {
+    return '已撤销$summary';
+  }
+
+  @override
+  String aiChatProposalCancelledLabel(String summary) {
+    return '已取消：$summary';
+  }
+
+  @override
+  String aiChatProposalUndoCountdown(int seconds) {
+    return '撤销 (${seconds}s)';
+  }
+
+  @override
+  String aiChatProposalBatchPending(int count) {
+    return '本轮共有 $count 项待确认';
+  }
+
+  @override
+  String get aiChatProposalBatchConfirmAll => '全部确认';
+
+  @override
+  String get aiChatFieldQuantity => '数量';
+
+  @override
+  String get aiChatFieldPrice => '价格 (留空则市场回填)';
+
+  @override
+  String get aiChatFieldFee => '手续费';
+
+  @override
+  String get aiChatFieldTax => '税费';
+
+  @override
+  String get aiChatFieldNote => '备注';
+
+  @override
+  String get aiChatFieldAmount => '金额';
+
+  @override
+  String get aiChatFieldDate => '日期 (RFC3339)';
+
+  @override
+  String get aiChatFieldDateHint => '2026-04-30T12:00:00Z';
+
+  @override
+  String get aiChatFieldAccountName => '账户名';
+
+  @override
+  String get aiChatFieldInstitution => '机构 (可选)';
+
+  @override
+  String get aiChatFieldNewValuation => '新估值';
+
+  @override
+  String get aiChatRowOperation => '操作';
+
+  @override
+  String get aiChatRowAsset => '资产';
+
+  @override
+  String get aiChatRowAccount => '账户';
+
+  @override
+  String get aiChatRowQuantity => '数量';
+
+  @override
+  String get aiChatRowPrice => '价格';
+
+  @override
+  String get aiChatRowFee => '手续费';
+
+  @override
+  String get aiChatRowDate => '日期';
+
+  @override
+  String get aiChatRowNote => '备注';
+
+  @override
+  String get aiChatRowAmount => '金额';
+
+  @override
+  String get aiChatRowCategory => '类目';
+
+  @override
+  String get aiChatRowLiability => '负债';
+
+  @override
+  String get aiChatRowRepayAccount => '还款账户';
+
+  @override
+  String get aiChatRowName => '名称';
+
+  @override
+  String get aiChatRowType => '类型';
+
+  @override
+  String get aiChatRowCurrency => '币种';
+
+  @override
+  String get aiChatRowInstitution => '机构';
+
+  @override
+  String get aiChatRowNewValue => '新估值';
+
+  @override
+  String get aiChatToolGetHoldings => '查询持仓';
+
+  @override
+  String get aiChatToolGetTransactions => '查询交易';
+
+  @override
+  String get aiChatToolComputeXirr => '计算 XIRR';
+
+  @override
+  String get aiChatToolComputeNetWorth => '计算净资产';
+
+  @override
+  String get aiChatToolGetIndustryBreakdown => '行业分布';
+
+  @override
+  String get aiChatToolGetGeoBreakdown => '地域分布';
+
+  @override
+  String get aiChatToolGetMarketCapBreakdown => '市值分布';
+
+  @override
+  String get aiChatToolGetRiskAlerts => '风险预警';
+
+  @override
+  String get aiChatToolFallback => '工具';
+
+  @override
+  String get aiChatToolInputLabel => '参数';
+
+  @override
+  String get aiChatToolOutputLabel => '结果';
+
+  @override
+  String aiChatToolJumpAsset(String id) {
+    return '资产 $id';
+  }
+
+  @override
+  String aiChatToolJumpAccount(String id) {
+    return '账户 $id';
+  }
+
+  @override
+  String aiChatToolJumpLiability(String id) {
+    return '负债 $id';
+  }
+
+  @override
+  String get aiChatToolShowRawJson => '查看 raw JSON';
+
+  @override
+  String get aiChatToolShowCompactView => '返回精简视图';
+
+  @override
+  String get chartEmptyDefault => '暂无数据';
 }

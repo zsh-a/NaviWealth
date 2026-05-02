@@ -2861,6 +2861,588 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create account'**
   String get expenseFormNoAccountsCta;
+
+  /// No description provided for @aiChatAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assistant'**
+  String get aiChatAppBarTitle;
+
+  /// No description provided for @aiChatHistoryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation history'**
+  String get aiChatHistoryTooltip;
+
+  /// No description provided for @aiChatNewSessionTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get aiChatNewSessionTooltip;
+
+  /// No description provided for @aiChatLoginRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to use the AI assistant.'**
+  String get aiChatLoginRequired;
+
+  /// No description provided for @aiChatEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your financial assistant'**
+  String get aiChatEmptyTitle;
+
+  /// No description provided for @aiChatEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers grounded in your holdings and transactions. Numbers come from your locally-synced ledger; the model never invents key figures.'**
+  String get aiChatEmptyBody;
+
+  /// No description provided for @aiChatEmptySuggestion1.
+  ///
+  /// In en, this message translates to:
+  /// **'How much have I made in the last three months?'**
+  String get aiChatEmptySuggestion1;
+
+  /// No description provided for @aiChatEmptySuggestion2.
+  ///
+  /// In en, this message translates to:
+  /// **'Which holdings carry the highest risk?'**
+  String get aiChatEmptySuggestion2;
+
+  /// No description provided for @aiChatEmptySuggestion3.
+  ///
+  /// In en, this message translates to:
+  /// **'What does my industry breakdown look like?'**
+  String get aiChatEmptySuggestion3;
+
+  /// No description provided for @aiChatEmptySuggestion4.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s my XIRR since inception?'**
+  String get aiChatEmptySuggestion4;
+
+  /// No description provided for @aiChatSessionsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get aiChatSessionsHeader;
+
+  /// No description provided for @aiChatSessionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the + button to start your first conversation.'**
+  String get aiChatSessionsEmpty;
+
+  /// No description provided for @aiChatSessionMoreTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get aiChatSessionMoreTooltip;
+
+  /// No description provided for @aiChatSessionRenameAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get aiChatSessionRenameAction;
+
+  /// No description provided for @aiChatSessionRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get aiChatSessionRenameTitle;
+
+  /// No description provided for @aiChatSessionTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get aiChatSessionTitleLabel;
+
+  /// No description provided for @aiChatSessionDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete conversation?'**
+  String get aiChatSessionDeleteTitle;
+
+  /// No description provided for @aiChatSessionDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All messages in \"{title}\" will be deleted.'**
+  String aiChatSessionDeleteBody(String title);
+
+  /// No description provided for @aiChatRelativeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get aiChatRelativeJustNow;
+
+  /// No description provided for @aiChatRelativeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String aiChatRelativeMinutesAgo(int minutes);
+
+  /// No description provided for @aiChatRelativeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String aiChatRelativeHoursAgo(int hours);
+
+  /// No description provided for @aiChatRelativeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d ago'**
+  String aiChatRelativeDaysAgo(int days);
+
+  /// No description provided for @aiChatComposerHintIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask NaviWealth, e.g. \"How much did I earn last month?\"'**
+  String get aiChatComposerHintIdle;
+
+  /// No description provided for @aiChatComposerHintStreaming.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating answer…'**
+  String get aiChatComposerHintStreaming;
+
+  /// No description provided for @aiChatComposerHintFlushing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing local data…'**
+  String get aiChatComposerHintFlushing;
+
+  /// No description provided for @aiChatComposerSendTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send (⌘/Ctrl + Enter)'**
+  String get aiChatComposerSendTooltip;
+
+  /// No description provided for @aiChatComposerStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop generating'**
+  String get aiChatComposerStopTooltip;
+
+  /// No description provided for @aiChatThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get aiChatThinking;
+
+  /// No description provided for @aiChatStaleSyncNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.'**
+  String get aiChatStaleSyncNotice;
+
+  /// No description provided for @aiChatProposalKindTrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade'**
+  String get aiChatProposalKindTrade;
+
+  /// No description provided for @aiChatProposalKindExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get aiChatProposalKindExpense;
+
+  /// No description provided for @aiChatProposalKindLiabilityPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Repayment'**
+  String get aiChatProposalKindLiabilityPayment;
+
+  /// No description provided for @aiChatProposalKindAccountCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get aiChatProposalKindAccountCreate;
+
+  /// No description provided for @aiChatProposalKindAssetValuation.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation update'**
+  String get aiChatProposalKindAssetValuation;
+
+  /// No description provided for @aiChatProposalKindUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get aiChatProposalKindUnknown;
+
+  /// No description provided for @aiChatProposalPendingHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting confirmation · {kind}'**
+  String aiChatProposalPendingHeader(String kind);
+
+  /// No description provided for @aiChatProposalNeedsClarificationHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs clarification · {kind}'**
+  String aiChatProposalNeedsClarificationHeader(String kind);
+
+  /// No description provided for @aiChatProposalCandidatesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Options:'**
+  String get aiChatProposalCandidatesHeading;
+
+  /// No description provided for @aiChatProposalSummaryEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary} (edited)'**
+  String aiChatProposalSummaryEdited(String summary);
+
+  /// No description provided for @aiChatProposalConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get aiChatProposalConfirm;
+
+  /// No description provided for @aiChatProposalApplying.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording…'**
+  String get aiChatProposalApplying;
+
+  /// No description provided for @aiChatProposalEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get aiChatProposalEdit;
+
+  /// No description provided for @aiChatProposalEditKindTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {kind}'**
+  String aiChatProposalEditKindTitle(String kind);
+
+  /// No description provided for @aiChatProposalSaveEdits.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get aiChatProposalSaveEdits;
+
+  /// No description provided for @aiChatProposalFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {error}'**
+  String aiChatProposalFailure(String error);
+
+  /// No description provided for @aiChatProposalUndoFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo failed: {error}'**
+  String aiChatProposalUndoFailure(String error);
+
+  /// No description provided for @aiChatProposalAppliedFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded {summary}'**
+  String aiChatProposalAppliedFallback(String summary);
+
+  /// No description provided for @aiChatProposalUndoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Undid {summary}'**
+  String aiChatProposalUndoneLabel(String summary);
+
+  /// No description provided for @aiChatProposalCancelledLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled: {summary}'**
+  String aiChatProposalCancelledLabel(String summary);
+
+  /// No description provided for @aiChatProposalUndoCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo ({seconds}s)'**
+  String aiChatProposalUndoCountdown(int seconds);
+
+  /// No description provided for @aiChatProposalBatchPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items awaiting confirmation in this turn'**
+  String aiChatProposalBatchPending(int count);
+
+  /// No description provided for @aiChatProposalBatchConfirmAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm all'**
+  String get aiChatProposalBatchConfirmAll;
+
+  /// No description provided for @aiChatFieldQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get aiChatFieldQuantity;
+
+  /// No description provided for @aiChatFieldPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price (leave blank to backfill from market)'**
+  String get aiChatFieldPrice;
+
+  /// No description provided for @aiChatFieldFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get aiChatFieldFee;
+
+  /// No description provided for @aiChatFieldTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get aiChatFieldTax;
+
+  /// No description provided for @aiChatFieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get aiChatFieldNote;
+
+  /// No description provided for @aiChatFieldAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get aiChatFieldAmount;
+
+  /// No description provided for @aiChatFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date (RFC3339)'**
+  String get aiChatFieldDate;
+
+  /// No description provided for @aiChatFieldDateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'2026-04-30T12:00:00Z'**
+  String get aiChatFieldDateHint;
+
+  /// No description provided for @aiChatFieldAccountName.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get aiChatFieldAccountName;
+
+  /// No description provided for @aiChatFieldInstitution.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution (optional)'**
+  String get aiChatFieldInstitution;
+
+  /// No description provided for @aiChatFieldNewValuation.
+  ///
+  /// In en, this message translates to:
+  /// **'New valuation'**
+  String get aiChatFieldNewValuation;
+
+  /// No description provided for @aiChatRowOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation'**
+  String get aiChatRowOperation;
+
+  /// No description provided for @aiChatRowAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get aiChatRowAsset;
+
+  /// No description provided for @aiChatRowAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get aiChatRowAccount;
+
+  /// No description provided for @aiChatRowQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get aiChatRowQuantity;
+
+  /// No description provided for @aiChatRowPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get aiChatRowPrice;
+
+  /// No description provided for @aiChatRowFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get aiChatRowFee;
+
+  /// No description provided for @aiChatRowDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get aiChatRowDate;
+
+  /// No description provided for @aiChatRowNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get aiChatRowNote;
+
+  /// No description provided for @aiChatRowAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get aiChatRowAmount;
+
+  /// No description provided for @aiChatRowCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get aiChatRowCategory;
+
+  /// No description provided for @aiChatRowLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability'**
+  String get aiChatRowLiability;
+
+  /// No description provided for @aiChatRowRepayAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Repayment account'**
+  String get aiChatRowRepayAccount;
+
+  /// No description provided for @aiChatRowName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get aiChatRowName;
+
+  /// No description provided for @aiChatRowType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get aiChatRowType;
+
+  /// No description provided for @aiChatRowCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get aiChatRowCurrency;
+
+  /// No description provided for @aiChatRowInstitution.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get aiChatRowInstitution;
+
+  /// No description provided for @aiChatRowNewValue.
+  ///
+  /// In en, this message translates to:
+  /// **'New valuation'**
+  String get aiChatRowNewValue;
+
+  /// No description provided for @aiChatToolGetHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'Query holdings'**
+  String get aiChatToolGetHoldings;
+
+  /// No description provided for @aiChatToolGetTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Query transactions'**
+  String get aiChatToolGetTransactions;
+
+  /// No description provided for @aiChatToolComputeXirr.
+  ///
+  /// In en, this message translates to:
+  /// **'Compute XIRR'**
+  String get aiChatToolComputeXirr;
+
+  /// No description provided for @aiChatToolComputeNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compute net worth'**
+  String get aiChatToolComputeNetWorth;
+
+  /// No description provided for @aiChatToolGetIndustryBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Industry breakdown'**
+  String get aiChatToolGetIndustryBreakdown;
+
+  /// No description provided for @aiChatToolGetGeoBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Region breakdown'**
+  String get aiChatToolGetGeoBreakdown;
+
+  /// No description provided for @aiChatToolGetMarketCapBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Market-cap breakdown'**
+  String get aiChatToolGetMarketCapBreakdown;
+
+  /// No description provided for @aiChatToolGetRiskAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk alerts'**
+  String get aiChatToolGetRiskAlerts;
+
+  /// No description provided for @aiChatToolFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool'**
+  String get aiChatToolFallback;
+
+  /// No description provided for @aiChatToolInputLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Input'**
+  String get aiChatToolInputLabel;
+
+  /// No description provided for @aiChatToolOutputLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Output'**
+  String get aiChatToolOutputLabel;
+
+  /// No description provided for @aiChatToolJumpAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset {id}'**
+  String aiChatToolJumpAsset(String id);
+
+  /// No description provided for @aiChatToolJumpAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {id}'**
+  String aiChatToolJumpAccount(String id);
+
+  /// No description provided for @aiChatToolJumpLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability {id}'**
+  String aiChatToolJumpLiability(String id);
+
+  /// No description provided for @aiChatToolShowRawJson.
+  ///
+  /// In en, this message translates to:
+  /// **'View raw JSON'**
+  String get aiChatToolShowRawJson;
+
+  /// No description provided for @aiChatToolShowCompactView.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to compact view'**
+  String get aiChatToolShowCompactView;
+
+  /// No description provided for @chartEmptyDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get chartEmptyDefault;
 }
 
 class _AppLocalizationsDelegate

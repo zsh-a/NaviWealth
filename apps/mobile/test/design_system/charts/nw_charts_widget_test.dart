@@ -1,18 +1,14 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
   return MaterialApp(
     theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
-    localizationsDelegates: const [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
-    supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en', 'US'),
     home: Scaffold(body: SizedBox(width: 400, height: 250, child: child)),
   );
