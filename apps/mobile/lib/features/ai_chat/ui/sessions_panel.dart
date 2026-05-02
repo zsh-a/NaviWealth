@@ -109,13 +109,13 @@ class SessionsPanel extends ConsumerWidget {
         title: Text(l10n.aiChatSessionDeleteTitle),
         content: Text(l10n.aiChatSessionDeleteBody(session.title)),
         actions: [
-          TextButton(
+          AppButton.tertiary(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
+            label: l10n.commonCancel,
           ),
-          FilledButton.tonal(
+          AppButton.secondary(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
+            label: l10n.commonDelete,
           ),
         ],
       ),
@@ -143,13 +143,13 @@ class SessionsPanel extends ConsumerWidget {
           decoration: InputDecoration(labelText: l10n.aiChatSessionTitleLabel),
         ),
         actions: [
-          TextButton(
+          AppButton.tertiary(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.commonCancel),
+            label: l10n.commonCancel,
           ),
-          FilledButton(
+          AppButton.primary(
             onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: Text(l10n.commonSave),
+            label: l10n.commonSave,
           ),
         ],
       ),

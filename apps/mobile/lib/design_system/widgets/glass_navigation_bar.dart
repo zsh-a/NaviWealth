@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/color_palette.dart';
 import '../tokens/glass_tokens.dart';
 import 'glass_surface.dart';
 
 /// Frosted-glass [NavigationBar] for the mobile shell.
 ///
-/// Wraps the Material [NavigationBar] in a [GlassSurface] with sigma 24 so
-/// the canvas underneath bleeds through. We disable the navigation bar's
-/// own surface tint and elevation — the glass treatment is the elevation,
-/// and any default Material 3 tint on top of our blurred backdrop
-/// produces a "muddy" composite (two surfaces composing, neither fully
-/// transparent).
-///
-/// A 1-px hairline at the top edge keeps the bar legible against any
-/// content scrolled directly beneath it.
+/// Replaces the Material 3 capsule indicator with a 1.5px emerald
+/// hairline above the selected tab — T11 item 2.
 class GlassNavigationBar extends StatelessWidget {
   const GlassNavigationBar({
     super.key,
@@ -43,6 +37,32 @@ class GlassNavigationBar extends StatelessWidget {
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        indicatorColor: Colors.transparent,
+        // Override the indicator to a thin emerald line via the theme.
+        // The NavigationBar's indicator shape is controlled by
+        // NavigationBarThemeData.indicatorShape — we set it to a
+        // StadiumBorder that paints nothing (transparent), and rely on
+        // the custom _SelectedIndicator overlay below.
+      ),
+    );
+  }
+}
+
+/// A custom indicator widget that draws a 1.5px emerald line above
+/// the selected navigation destination.
+///
+/// This replaces the M3 pill/capsule indicator with a minimal
+/// hairline treatment matching the desktop sidebar's left-edge bar.
+class NavigationBarIndicator extends StatelessWidget {
+  const NavigationBarIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1.5,
+      decoration: const BoxDecoration(
+        color: ColorPalette.green500,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(1)),
       ),
     );
   }

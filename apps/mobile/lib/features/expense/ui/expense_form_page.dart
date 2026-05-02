@@ -88,16 +88,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final amount = readAmount(_amountController);
     if (amount == null || amount <= Decimal.zero) {
       Haptics.error();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.expenseFormAmountInvalid)));
+      AppMessenger.show(context, ToastKind.error, l10n.expenseFormAmountInvalid);
       return;
     }
     if (_categoryId == null || _accountId == null || _currency == null) {
       Haptics.error();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.expenseFormCategoryAccountRequired)),
-      );
+      AppMessenger.show(context, ToastKind.error, l10n.expenseFormCategoryAccountRequired);
       return;
     }
     setState(() => _busy = true);
@@ -169,13 +165,13 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
         title: Text(l10n.expenseFormDeleteDialogTitle),
         content: Text(l10n.expenseFormDeleteDialogBody),
         actions: [
-          TextButton(
+          AppButton.tertiary(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
+            label: l10n.commonCancel,
           ),
-          FilledButton.tonal(
+          AppButton.secondary(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
+            label: l10n.commonDelete,
           ),
         ],
       ),
@@ -336,9 +332,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     focusNode: _noteFocus,
                   ),
                   const SizedBox(height: Spacing.s24),
-                  FilledButton(
+                  AppButton.primary(
                     onPressed: _busy ? null : _save,
-                    child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
+                    label: _busy ? l10n.commonSaving : l10n.commonSave,
                   ),
                 ],
               ),
@@ -357,9 +353,9 @@ class _NoAccountsHint extends StatelessWidget {
         leading: const Icon(Icons.warning_amber_outlined),
         title: Text(l10n.expenseFormNoAccountsTitle),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
-        trailing: TextButton(
+        trailing: AppButton.tertiary(
           onPressed: () => GoRouter.of(context).go('/accounts/new'),
-          child: Text(l10n.expenseFormNoAccountsCta),
+          label: l10n.expenseFormNoAccountsCta,
         ),
       ),
     );

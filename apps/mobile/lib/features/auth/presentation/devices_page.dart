@@ -95,13 +95,13 @@ class DevicesPage extends ConsumerWidget {
         title: Text(l10n.authLogoutDialogTitle),
         content: Text(l10n.authLogoutDialogBody),
         actions: [
-          TextButton(
+          AppButton.tertiary(
+            label: l10n.commonCancel,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
           ),
-          FilledButton(
+          AppButton.primary(
+            label: l10n.authLogoutDialogConfirm,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.authLogoutDialogConfirm),
           ),
         ],
       ),
@@ -170,9 +170,6 @@ class _DevicesList extends ConsumerWidget {
     AuthDevice device,
   ) async {
     final l10n = AppLocalizations.of(context);
-    // Capture the messenger up-front so we don't reach for `context` after
-    // the awaited revoke (use_build_context_synchronously).
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final fallback = l10n.authDeviceRevokeError;
     final ok = await showDialog<bool>(
       context: context,
@@ -186,13 +183,13 @@ class _DevicesList extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
+          AppButton.tertiary(
+            label: l10n.commonCancel,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
           ),
-          FilledButton(
+          AppButton.primary(
+            label: l10n.authDeviceRevokeConfirm,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.authDeviceRevokeConfirm),
           ),
         ],
       ),
@@ -202,9 +199,8 @@ class _DevicesList extends ConsumerWidget {
       await ref.read(devicesProvider.notifier).revoke(device.id);
     } on AuthException catch (e) {
       Haptics.error();
-      messenger?.showSnackBar(
-        SnackBar(content: Text(e.message ?? fallback)),
-      );
+      if (!context.mounted) return;
+      AppMessenger.show(context, ToastKind.error, e.message ?? fallback);
     }
   }
 }
@@ -239,9 +235,9 @@ class _ErrorView extends StatelessWidget {
           ],
           if (onRetry != null) ...[
             const SizedBox(height: Spacing.s16),
-            OutlinedButton(
+            AppButton.secondary(
+              label: AppLocalizations.of(context).commonRetry,
               onPressed: onRetry,
-              child: Text(AppLocalizations.of(context).commonRetry),
             ),
           ],
         ],

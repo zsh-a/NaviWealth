@@ -181,9 +181,9 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: Spacing.s12),
-              FilledButton.tonalIcon(
-                icon: const Icon(Icons.add),
-                label: Text(l10n.cashFormCreateAccountAction),
+              AppButton.secondary(
+                icon: Icons.add,
+                label: l10n.cashFormCreateAccountAction,
                 onPressed: () => context.go('/accounts/new'),
               ),
             ],
@@ -240,9 +240,9 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             ),
           ),
           const SizedBox(height: Spacing.s24),
-          FilledButton(
+          AppButton.primary(
             onPressed: _busy ? null : _save,
-            child: Text(_busy ? l10n.cashFormSaving : l10n.cashFormSave),
+            label: _busy ? l10n.cashFormSaving : l10n.cashFormSave,
           ),
         ],
       ),
@@ -261,13 +261,13 @@ Future<bool?> confirmManualAssetDelete(BuildContext context) {
       title: Text(l10n.manualAssetDeleteTitle),
       content: Text(l10n.manualAssetDeleteContent),
       actions: [
-        TextButton(
+        AppButton.tertiary(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(l10n.manualAssetDeleteCancel),
+          label: l10n.manualAssetDeleteCancel,
         ),
-        FilledButton.tonal(
+        AppButton.secondary(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(l10n.manualAssetDeleteConfirm),
+          label: l10n.manualAssetDeleteConfirm,
         ),
       ],
     ),

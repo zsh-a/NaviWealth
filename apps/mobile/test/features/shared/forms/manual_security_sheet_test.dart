@@ -147,6 +147,9 @@ void main() {
     );
     expect(nameField.controller!.text, 'Apple Inc.');
     expect(find.text('已从网络导入元数据'), findsOneWidget);
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('"从网络导入" lets the user pick from multiple candidates',
@@ -192,6 +195,9 @@ void main() {
       find.byKey(const Key('manual-security-name')),
     );
     expect(nameField.controller!.text, 'Apple (other listing)');
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets(
@@ -252,6 +258,9 @@ void main() {
     expect(choice, isNotNull);
     expect(choice!.symbol, 'AAPL');
     expect(choice!.fromCatalog, isFalse);
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets(
@@ -266,5 +275,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('未找到匹配项，请使用手动输入'), findsOneWidget);
+
+    // Expire the AppMessenger dismiss timer so the test ends cleanly.
+    await tester.pump(const Duration(seconds: 7));
   });
 }

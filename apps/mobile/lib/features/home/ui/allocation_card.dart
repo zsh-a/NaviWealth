@@ -98,10 +98,10 @@ class AllocationCard extends StatelessWidget {
                 const SizedBox(height: Spacing.s8),
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
-                  child: TextButton.icon(
+                  child: AppButton.tertiary(
                     onPressed: () => context.push('/rebalance'),
-                    icon: const Icon(Icons.balance, size: 18),
-                    label: Text(l10n.rebalanceNavLink),
+                    icon: Icons.balance,
+                    label: l10n.rebalanceNavLink,
                   ),
                 ),
               ],

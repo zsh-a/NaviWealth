@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
+import '../../../design_system/design_system.dart';
 
 /// Holds the [ScaffoldMessenger] used by [OptimisticFormSubmit] so a
 /// background-scoped failure toast can still surface after the originating
@@ -79,13 +80,16 @@ mixin OptimisticFormSubmit<W extends ConsumerStatefulWidget>
     String tag = 'form',
   }) async {
     final logger = ref.read(loggerProvider);
-    final messengerKey = ref.read(scaffoldMessengerKeyProvider);
+    final ctx = context;
+    // Cache the Navigator's overlay before popping so that
+    // AppMessenger.show can find it after this widget is disposed.
+    AppMessenger.cacheOverlay(context);
     pop();
     await runOptimisticWrite(
       write: write,
       failureMessage: failureMessage,
       logger: logger,
-      messengerKey: messengerKey,
+      context: ctx,
       retryLabel: retryLabel,
       tag: tag,
     );
@@ -101,7 +105,7 @@ Future<void> runOptimisticWrite({
   required Future<void> Function() write,
   required OptimisticFailureMessageBuilder failureMessage,
   required AppLogger logger,
-  required GlobalKey<ScaffoldMessengerState> messengerKey,
+  BuildContext? context,
   String? retryLabel,
   String tag = 'form',
 }) async {
@@ -114,27 +118,23 @@ Future<void> runOptimisticWrite({
       stackTrace: stack,
     );
     Haptics.error();
-    final messenger = messengerKey.currentState;
-    if (messenger == null) return;
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(failureMessage(error)),
-        duration: const Duration(seconds: 6),
-        action: retryLabel == null
-            ? null
-            : SnackBarAction(
-                label: retryLabel,
-                onPressed: () => runOptimisticWrite(
-                  write: write,
-                  failureMessage: failureMessage,
-                  logger: logger,
-                  messengerKey: messengerKey,
-                  retryLabel: retryLabel,
-                  tag: tag,
-                ),
+    if (context == null) return;
+    AppMessenger.show(
+      context, // ignore: use_build_context_synchronously — overlay cached before pop
+      ToastKind.error,
+      failureMessage(error),
+      duration: const Duration(seconds: 6),
+      actionLabel: retryLabel,
+      onAction: retryLabel == null
+          ? null
+          : () => runOptimisticWrite(
+                write: write,
+                failureMessage: failureMessage,
+                logger: logger,
+                context: context,
+                retryLabel: retryLabel,
+                tag: tag,
               ),
-      ),
     );
   }
 }

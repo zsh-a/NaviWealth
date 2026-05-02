@@ -4,8 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/haptics/haptics.dart';
-import '../../../design_system/tokens/spacing_tokens.dart';
-import '../../../design_system/widgets/glass_modal_bottom_sheet.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_goal_preferences.dart';
 import '../domain/fire_goal.dart';
@@ -127,16 +126,16 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: AppButton.secondary(
+                        label: l10n.fireGoalSheetCancel,
                         onPressed: () => Navigator.of(context).pop(),
-                        child: Text(l10n.fireGoalSheetCancel),
                       ),
                     ),
                     const SizedBox(width: Spacing.s12),
                     Expanded(
-                      child: FilledButton(
+                      child: AppButton.primary(
+                        label: l10n.fireGoalSheetSave,
                         onPressed: _submit,
-                        child: Text(l10n.fireGoalSheetSave),
                       ),
                     ),
                   ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 
 /// Rendered by [GoRouter.errorBuilder] when routing fails — typically because
@@ -59,10 +60,10 @@ class RouteErrorPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                FilledButton.icon(
+                AppButton.primary(
+                  label: l10n.routeGoHome,
+                  icon: Icons.home_outlined,
                   onPressed: () => context.go('/'),
-                  icon: const Icon(Icons.home_outlined),
-                  label: Text(l10n.routeGoHome),
                 ),
               ],
             ),

@@ -301,14 +301,14 @@ class _AmortizationTable extends ConsumerWidget {
                             backgroundColor:
                                 theme.colorScheme.secondaryContainer,
                           )
-                        : TextButton(
+                        : AppButton.tertiary(
+                            label: l10n.liabilityScheduleMarkPaid,
                             onPressed: () => _confirmMarkPaid(
                               context,
                               ref,
                               row,
                               liability,
                             ),
-                            child: Text(l10n.liabilityScheduleMarkPaid),
                           ),
                   ),
                 ],
@@ -328,11 +328,7 @@ class _AmortizationTable extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     if (liability.accountId == null) {
       Haptics.error();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.liabilityScheduleMarkPaidNoAccount),
-        ),
-      );
+      AppMessenger.show(context, ToastKind.error, l10n.liabilityScheduleMarkPaidNoAccount);
       return;
     }
     final formatters = context.formatters(ref);
@@ -351,13 +347,13 @@ class _AmortizationTable extends ConsumerWidget {
             l10n.liabilityScheduleMarkPaidConfirmBody(amount),
           ),
           actions: [
-            TextButton(
+            AppButton.tertiary(
+              label: l10n.commonCancel,
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.commonCancel),
             ),
-            TextButton(
+            AppButton.tertiary(
+              label: l10n.commonConfirm,
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.commonConfirm),
             ),
           ],
         );

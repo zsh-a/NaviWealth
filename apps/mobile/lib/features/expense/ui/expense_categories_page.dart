@@ -103,13 +103,13 @@ class _CategoryList extends ConsumerWidget {
                   title: const Text('删除类目'),
                   content: Text('彻底删除「${cat.name}」？历史支出仍会保留，但不再标注此类目。'),
                   actions: [
-                    TextButton(
+                    AppButton.tertiary(
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      child: const Text('取消'),
+                      label: '取消',
                     ),
-                    FilledButton.tonal(
+                    AppButton.secondary(
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('删除'),
+                      label: '删除',
                     ),
                   ],
                 ),
@@ -226,7 +226,7 @@ class _ArchivedTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextButton(onPressed: onUnarchive, child: const Text('恢复')),
+          AppButton.tertiary(onPressed: onUnarchive, label: '恢复'),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: '彻底删除',
@@ -351,14 +351,14 @@ class _CategoryEditorState extends ConsumerState<_CategoryEditor> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
+                AppButton.tertiary(
                   onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                  child: const Text('取消'),
+                  label: '取消',
                 ),
                 const SizedBox(width: Spacing.s8),
-                FilledButton(
+                AppButton.primary(
                   onPressed: _busy ? null : _save,
-                  child: Text(_busy ? '保存中…' : '保存'),
+                  label: _busy ? '保存中…' : '保存',
                 ),
               ],
             ),

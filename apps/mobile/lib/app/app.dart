@@ -49,7 +49,8 @@ class NaviWealthApp extends ConsumerWidget {
       // update banner sits inside that scope so it stacks above all
       // routes on web; on non-web builds it's a transparent passthrough.
       builder: (BuildContext ctx, Widget? child) {
-        return GlobalShortcutsScope(
+        return AppMessenger.init(
+        child: GlobalShortcutsScope(
           onSwitchPrimaryTab: (int index) {
             if (index < 0 || index >= kPrimaryTabPaths.length) return;
             router.go(kPrimaryTabPaths[index]);
@@ -92,6 +93,7 @@ class NaviWealthApp extends ConsumerWidget {
             if (path != null) router.go(path);
           },
           child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
+        ),
         );
       },
     );

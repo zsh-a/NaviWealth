@@ -43,12 +43,8 @@ class FxRatesPage extends ConsumerWidget {
 
   Future<void> _refresh(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-
-    // Show a brief snackbar while syncing.
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.fxRatesRefreshing)),
-    );
+    // Show a brief toast while syncing.
+    AppMessenger.show(context, ToastKind.info, l10n.fxRatesRefreshing);
 
     try {
       final service = await ref.read(fxRateSyncServiceProvider.future);
