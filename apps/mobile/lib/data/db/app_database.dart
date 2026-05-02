@@ -8,6 +8,7 @@ import '../domain/enums.dart';
 import '../domain/hlc.dart';
 import 'connection.dart';
 import 'converters.dart';
+import 'event_log_tables.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -85,8 +86,14 @@ class AppDatabase extends _$AppDatabase {
   ///    on first launch from a versioned asset bundle (see
   ///    `SecuritiesCatalogLoader`); it is local-only and does not
   ///    participate in OpLog sync.
+  ///  - v8 (FIR-125) — Local-only `domain_event_log` audit ledger.
+  ///    Append-only; never deleted by sync. Repositories pair every row
+  ///    write with an event-log entry inside the same Drift transaction
+  ///    so before/after snapshots survive after the OpLog row is acked
+  ///    and removed. Strategy (a) per the issue: not synced; each
+  ///    device retains its own "what I did" view.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -97,6 +104,7 @@ class AppDatabase extends _$AppDatabase {
       await _createChatTables(this);
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
+      await _createDomainEventLog(this);
     },
     onUpgrade: (m, from, to) async {
       for (var v = from + 1; v <= to; v++) {
@@ -122,6 +130,8 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(securitiesCatalogMeta);
             await _createSecuritiesCatalogFts(this);
             await _createSecuritiesCatalogIndexes(this);
+          case 8:
+            await _createDomainEventLog(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -185,6 +195,15 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 
 Future<void> _createSyncTables(AppDatabase db) async {
   for (final stmt in syncTableDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+/// FIR-125 — append-only audit ledger. See `event_log_tables.dart` for
+/// the rationale; the helper mirrors `_createSyncTables` so the same
+/// statements run on a fresh install and on a v7→v8 upgrade.
+Future<void> _createDomainEventLog(AppDatabase db) async {
+  for (final stmt in domainEventLogDdl) {
     await db.customStatement(stmt);
   }
 }
