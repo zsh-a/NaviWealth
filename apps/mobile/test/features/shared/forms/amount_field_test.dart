@@ -58,6 +58,63 @@ void main() {
   });
 
   testWidgets(
+    'inline-validates as the user types when the parent Form opts in',
+    (tester) async {
+      // FIR-95: hosting Form sets `autovalidateMode = onUserInteraction`
+      // so the user sees a format error the moment they paste garbage,
+      // not only after they hit submit.
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Form(
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: AmountField(label: '金额'),
+            ),
+          ),
+        ),
+      );
+      // Empty stays clean — onUserInteraction kicks in only after the
+      // first interaction, so we shouldn't see "请输入金额" yet.
+      expect(find.text('请输入金额'), findsNothing);
+
+      // Type something then clear it to trigger the validator without
+      // submitting the form.
+      await tester.enterText(find.byType(TextFormField), '12.34');
+      await tester.pump();
+      expect(find.text('请输入金额'), findsNothing);
+
+      await tester.enterText(find.byType(TextFormField), '');
+      await tester.pump();
+      expect(find.text('请输入金额'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'forwards the keyboard action to onFieldSubmitted',
+    (tester) async {
+      var submitted = false;
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AmountField(
+              label: '金额',
+              focusNode: focus,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => submitted = true,
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextFormField), '99');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(submitted, isTrue);
+    },
+  );
+
+  testWidgets(
     'preserves text and cursor across rebuilds when no controller is supplied',
     (tester) async {
       var counter = 0;
