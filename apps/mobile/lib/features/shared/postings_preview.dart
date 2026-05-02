@@ -1,0 +1,256 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
+
+import '../../data/domain/account.dart';
+import '../../data/domain/posting.dart';
+import '../../design_system/tokens/radius_tokens.dart';
+import '../../design_system/tokens/spacing_tokens.dart';
+
+/// FIR-128 §1.3 — read-only ledger card that mirrors the Beancount
+/// posting layout: account path on the left, signed `units` and (when
+/// present) cost / price annotations on the right, with a Σ row at the
+/// bottom that surfaces the per-currency unit-balance check.
+///
+/// Used in:
+///   * Journal-entry list expanded row (FIR-132 wave 1).
+///   * AI proposal cards (FIR-131 wave 3).
+///   * Trade / expense form preview before submit (editable mode lives
+///     alongside the forms in FIR-131 wave 3 — this widget is the
+///     read-only sibling).
+///
+/// The widget intentionally takes a flat `accounts` lookup and
+/// resolves names + parent paths internally so callers don't have to
+/// pre-compute display strings. When an account id is unknown (most
+/// often during a fresh sync) the widget falls back to the raw id —
+/// the JE still renders, just with the bare id as a placeholder name.
+class PostingsPreview extends StatelessWidget {
+  const PostingsPreview({
+    super.key,
+    required this.postings,
+    required this.accounts,
+    this.title,
+    this.showUnitBalanceTotals = true,
+  });
+
+  final List<Posting> postings;
+
+  /// Account dictionary keyed by id. Only used for display; the
+  /// invariant validator runs against the postings directly.
+  final Map<String, Account> accounts;
+
+  /// Optional title rendered above the leg list (typically the JE
+  /// narration). Kept optional so AI proposal cards that already render
+  /// their own header don't double up.
+  final String? title;
+
+  /// When `true`, a Σ-per-unit footer surfaces unbalanced amounts so
+  /// the editor preview can flag a draft as not-yet-balanced. Read-only
+  /// callers (list expansion) keep this `true` since a balanced JE
+  /// renders zeros and is invisible enough.
+  final bool showUnitBalanceTotals;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final unitTotals = _computeUnitTotals(postings);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: Radii.brSm,
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      padding: const EdgeInsets.all(Spacing.s8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (title != null && title!.isNotEmpty) ...[
+            Text(
+              title!,
+              style: theme.textTheme.titleSmall,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: Spacing.s8),
+          ],
+          for (final p in postings) ...[
+            _PostingRow(
+              posting: p,
+              accounts: accounts,
+            ),
+            const SizedBox(height: Spacing.s4),
+          ],
+          if (showUnitBalanceTotals && unitTotals.isNotEmpty) ...[
+            Divider(color: scheme.outlineVariant, height: Spacing.s16),
+            ...unitTotals.entries.map(
+              (e) => _UnitBalanceRow(unit: e.key, total: e.value),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PostingRow extends StatelessWidget {
+  const _PostingRow({required this.posting, required this.accounts});
+
+  final Posting posting;
+  final Map<String, Account> accounts;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final account = accounts[posting.accountId];
+    final accountLabel = account == null
+        ? posting.accountId
+        : _accountPath(account, accounts);
+
+    final isDebit = posting.units >= Decimal.zero;
+    final amountColor = isDebit ? scheme.onSurface : scheme.error;
+
+    final cost = posting.cost;
+    final price = posting.price;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                accountLabel,
+                style: theme.textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (cost != null)
+                Text(
+                  _costLabel(cost),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              if (price != null)
+                Text(
+                  '@ ${price.perUnit} ${price.currency}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: Spacing.s8),
+        Text(
+          '${_format(posting.units)} ${posting.unit}',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: amountColor,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _UnitBalanceRow extends StatelessWidget {
+  const _UnitBalanceRow({required this.unit, required this.total});
+
+  final String unit;
+  final Decimal total;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final balanced = total == Decimal.zero;
+    final tone = balanced ? scheme.tertiary : scheme.error;
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s2),
+      child: Row(
+        children: [
+          Icon(
+            balanced ? Icons.check_circle_outline : Icons.error_outline,
+            size: 14,
+            color: tone,
+          ),
+          const SizedBox(width: Spacing.s4),
+          Expanded(
+            child: Text(
+              'Σ $unit',
+              style: theme.textTheme.labelSmall?.copyWith(color: tone),
+            ),
+          ),
+          Text(
+            _format(total),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: tone,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Build a Beancount-style `›`-separated path by walking parent ids.
+/// Cheap enough to recompute on every rebuild because the chain is
+/// bounded by the seeded tree depth (≤ 4 today).
+String _accountPath(Account leaf, Map<String, Account> accounts) {
+  final parts = <String>[leaf.name];
+  Account? cursor = leaf;
+  var hops = 0;
+  while (true) {
+    final parentId = cursor!.parentId;
+    if (parentId == null) break;
+    final parent = accounts[parentId];
+    if (parent == null) break;
+    parts.add(parent.name);
+    cursor = parent;
+    hops += 1;
+    if (hops > 64) break;
+  }
+  return parts.reversed.join(' › ');
+}
+
+String _costLabel(Cost cost) {
+  final lot = cost.lotId;
+  return lot == null
+      ? '{${_format(cost.perUnit)} ${cost.currency}}'
+      : '{${_format(cost.perUnit)} ${cost.currency}, $lot}';
+}
+
+/// Render a [Decimal] without trailing zeros — keeps the right column
+/// from sprawling when most amounts are integer share counts.
+String _format(Decimal d) {
+  if (d == Decimal.zero) return '0';
+  final s = d.toString();
+  if (!s.contains('.')) return s;
+  final trimmed = s.replaceFirst(RegExp(r'\.?0+$'), '');
+  return trimmed.isEmpty ? '0' : trimmed;
+}
+
+/// Per-unit Σ over the postings, **without** running them through the
+/// FxRateSource. The footer is meant to flag *unit-level* imbalance —
+/// which is what users care about during entry — and the cross-currency
+/// invariant check still runs on the repo's create path. Returns a map
+/// keyed by `unit` with the running total, dropping units that already
+/// sum to exactly zero so a balanced JE renders an empty footer.
+Map<String, Decimal> _computeUnitTotals(List<Posting> postings) {
+  final totals = <String, Decimal>{};
+  for (final p in postings) {
+    totals.update(
+      p.unit,
+      (existing) => existing + p.units,
+      ifAbsent: () => p.units,
+    );
+  }
+  totals.removeWhere((_, v) => v == Decimal.zero);
+  return totals;
+}
