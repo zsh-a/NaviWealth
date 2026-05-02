@@ -47,6 +47,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsAppBarTitle => '资产';
 
   @override
+  String get assetsDetailEmpty => '请在左侧选择资产以查看详情。';
+
+  @override
   String get assetsEmptyHint => '尚未录入资产。点击右下角添加现金、存款、理财、房产或车辆。';
 
   @override
@@ -686,6 +689,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutDismissOverlay => '关闭当前弹窗';
+
+  @override
+  String get shortcutToggleSidebar => '收起 / 展开侧边栏';
 
   @override
   String shortcutSwitchTab(int position, String label) {
@@ -1939,6 +1945,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountsAppBarTitle => '账户';
+
+  @override
+  String get accountsDetailEmpty => '请在左侧选择账户以编辑详情。';
 
   @override
   String get accountsCreateAction => '新建账户';

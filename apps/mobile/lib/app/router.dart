@@ -8,6 +8,7 @@ import '../design_system/design_system.dart';
 // is loaded the first time the user navigates to that route. Home ships in
 // main.dart.js to avoid a part-file fetch on first paint. See
 // docs/web-bundle.md for the resulting bundle layout.
+import '../design_system/widgets/glass_navigation_bar.dart';
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
@@ -43,9 +44,11 @@ import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
+import 'desktop_sidebar.dart';
 import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
+import 'shell_preferences.dart';
 
 /// Paths of the six primary tabs in the root shell, in display order.
 ///
@@ -532,7 +535,7 @@ class _TabletShell extends StatelessWidget {
   }
 }
 
-class _DesktopShell extends StatelessWidget {
+class _DesktopShell extends ConsumerWidget {
   const _DesktopShell({
     required this.destinations,
     required this.selectedIndex,
@@ -546,25 +549,36 @@ class _DesktopShell extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final collapsed = ref.watch(sidebarCollapsedProvider);
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
-            NavigationDrawer(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-              children: [
+            DesktopSidebar(
+              destinations: [
                 for (final d in destinations)
-                  NavigationDrawerDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon),
-                    label: Text(d.label),
+                  DesktopSidebarDestination(
+                    icon: d.icon,
+                    selectedIcon: d.selectedIcon,
+                    label: d.label,
                   ),
               ],
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onDestinationSelected,
             ),
-            const VerticalDivider(width: 1, thickness: 1),
-            Expanded(child: child),
+            Expanded(
+              child: collapsed
+                  ? Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: kCollapsedContentMaxWidth,
+                        ),
+                        child: child,
+                      ),
+                    )
+                  : child,
+            ),
           ],
         ),
       ),

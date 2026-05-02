@@ -25,3 +25,13 @@ class SwitchPrimaryTabIntent extends Intent {
 
   final int index;
 }
+
+/// Collapse / expand the desktop sidebar. Bound to `Cmd/Ctrl+B`.
+///
+/// The handler talks to [SidebarCollapsedController] so the chevron in
+/// the sidebar UI and the keyboard path stay in sync. On non-desktop
+/// builds the action still fires but has no visible effect — the shell
+/// only mounts the sidebar when the viewport is wide enough.
+class ToggleSidebarIntent extends Intent {
+  const ToggleSidebarIntent();
+}

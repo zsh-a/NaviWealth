@@ -14,6 +14,7 @@
   "homeNetWorthTitle": "净资产",
   "homeNetWorthSubtitle": "基础货币 {currency} · 等数据接入后展示",
   "assetsAppBarTitle": "资产",
+  "assetsDetailEmpty": "请在左侧选择资产以查看详情。",
   "assetsEmptyHint": "尚未录入资产。点击右下角添加现金、存款、理财、房产或车辆。",
   "assetsAddAction": "录入资产",
   "assetsCorporateActionAction": "录入公司行动",
@@ -224,6 +225,7 @@
   "shortcutCommandPalette": "打开命令面板",
   "shortcutShowHelp": "显示快捷键帮助",
   "shortcutDismissOverlay": "关闭当前弹窗",
+  "shortcutToggleSidebar": "收起 / 展开侧边栏",
   "shortcutSwitchTab": "切换到第 {position} 个标签 ({label})",
 
   "commandPaletteSearchHint": "搜索命令…",
@@ -648,6 +650,7 @@
   "physicalAssetValuationTrendSemanticLabel": "估值走势",
 
   "accountsAppBarTitle": "账户",
+  "accountsDetailEmpty": "请在左侧选择账户以编辑详情。",
   "accountsCreateAction": "新建账户",
   "accountsLoadError": "加载失败：{error}",
   "accountsEmptyHint": "还没有账户。点击右下角新建一个，再去录入资产。",

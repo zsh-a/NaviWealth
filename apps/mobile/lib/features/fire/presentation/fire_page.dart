@@ -327,11 +327,14 @@ class _ProjectionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: Spacing.s12),
-            FireScenariosChart(
-              scenarios: view.scenarios,
-              baseCurrency: view.baseCurrency,
-              locale: Localizations.localeOf(context).toString(),
-              scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
+            LayoutBuilder(
+              builder: (context, c) => FireScenariosChart(
+                scenarios: view.scenarios,
+                baseCurrency: view.baseCurrency,
+                locale: Localizations.localeOf(context).toString(),
+                scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
+                aspectRatio: chartAspectFor(c.maxWidth),
+              ),
             ),
             const SizedBox(height: Spacing.s8),
             _ScenarioLegend(view: view),

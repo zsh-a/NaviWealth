@@ -145,57 +145,64 @@ class _TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (trend.isEmpty) {
-      return const AspectRatio(
-        aspectRatio: 16 / 9,
-        child: EmptyChartPlaceholder(),
-      );
-    }
-    final allFlat =
-        trend.points.every((p) => p.netWorth.amount == trend.points.first.netWorth.amount);
-    final theme = Theme.of(context);
-    final points = [
-      for (final p in trend.points)
-        ChartPoint(
-          x: p.asOf.millisecondsSinceEpoch.toDouble(),
-          y: p.netWorth.amount.toDouble(),
-          meta: p,
-        ),
-    ];
-    final series = ChartSeries(name: 'netWorth', points: points);
-    final dateFmt = trend.range.spanDays <= 30
-        ? AxisDateFormat.dayMonth
-        : trend.range.spanDays <= 730
-            ? AxisDateFormat.monthYear
-            : AxisDateFormat.yearOnly;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 220,
-          child: NwLineChart(
-            series: [series],
-            xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
-            yAxis: ValueAxis.currency(
-              currencyCode: trend.baseCurrency,
-              maxLabels: 4,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final aspect = chartAspectFor(constraints.maxWidth);
+        if (trend.isEmpty) {
+          return AspectRatio(
+            aspectRatio: aspect,
+            child: const EmptyChartPlaceholder(),
+          );
+        }
+        final allFlat = trend.points.every(
+          (p) => p.netWorth.amount == trend.points.first.netWorth.amount,
+        );
+        final theme = Theme.of(context);
+        final points = [
+          for (final p in trend.points)
+            ChartPoint(
+              x: p.asOf.millisecondsSinceEpoch.toDouble(),
+              y: p.netWorth.amount.toDouble(),
+              meta: p,
             ),
-            filled: true,
-            aspectRatio: 16 / 9,
-            semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
-          ),
-        ),
-        if (allFlat)
-          Padding(
-            padding: const EdgeInsets.only(top: Spacing.s8),
-            child: Text(
-              AppLocalizations.of(context).dashboardTrendFlatHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+        ];
+        final series = ChartSeries(name: 'netWorth', points: points);
+        final dateFmt = trend.range.spanDays <= 30
+            ? AxisDateFormat.dayMonth
+            : trend.range.spanDays <= 730
+                ? AxisDateFormat.monthYear
+                : AxisDateFormat.yearOnly;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 220,
+              child: NwLineChart(
+                series: [series],
+                xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
+                yAxis: ValueAxis.currency(
+                  currencyCode: trend.baseCurrency,
+                  maxLabels: 4,
+                ),
+                filled: true,
+                aspectRatio: aspect,
+                semanticLabel:
+                    AppLocalizations.of(context).dashboardTrendTitle,
               ),
             ),
-          ),
-      ],
+            if (allFlat)
+              Padding(
+                padding: const EdgeInsets.only(top: Spacing.s8),
+                child: Text(
+                  AppLocalizations.of(context).dashboardTrendFlatHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

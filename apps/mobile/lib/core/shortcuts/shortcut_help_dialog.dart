@@ -74,6 +74,8 @@ class _ShortcutHelpDialog extends StatelessWidget {
         return l10n.shortcutShowHelp;
       case 'shortcutDismissOverlay':
         return l10n.shortcutDismissOverlay;
+      case 'shortcutToggleSidebar':
+        return l10n.shortcutToggleSidebar;
       case 'shortcutSwitchTab0':
         return l10n.shortcutSwitchTab(1, l10n.navHome);
       case 'shortcutSwitchTab1':

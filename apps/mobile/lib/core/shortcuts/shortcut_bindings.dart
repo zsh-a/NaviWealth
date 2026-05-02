@@ -56,6 +56,16 @@ List<ShortcutBinding> globalShortcutBindings() {
       intent: DismissOverlayIntent(),
       descriptionKey: 'shortcutDismissOverlay',
     ),
+    const ShortcutBinding(
+      activator: SingleActivator(LogicalKeyboardKey.keyB, meta: true),
+      intent: ToggleSidebarIntent(),
+      descriptionKey: 'shortcutToggleSidebar',
+    ),
+    const ShortcutBinding(
+      activator: SingleActivator(LogicalKeyboardKey.keyB, control: true),
+      intent: ToggleSidebarIntent(),
+      descriptionKey: 'shortcutToggleSidebar',
+    ),
     for (int i = 0; i < kPrimaryTabCount; i++)
       ShortcutBinding(
         activator: SingleActivator(_digitForIndex(i)),

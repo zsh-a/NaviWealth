@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Assets'**
   String get assetsAppBarTitle;
 
+  /// Master-detail empty state for /assets at desktop width (FIR-106)
+  ///
+  /// In en, this message translates to:
+  /// **'Select an asset on the left to see its details.'**
+  String get assetsDetailEmpty;
+
   /// No description provided for @assetsEmptyHint.
   ///
   /// In en, this message translates to:
@@ -1375,6 +1381,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close current dialog'**
   String get shortcutDismissOverlay;
+
+  /// Help-dialog label for the Cmd/Ctrl+B sidebar toggle (FIR-106)
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse / expand sidebar'**
+  String get shortcutToggleSidebar;
 
   /// No description provided for @shortcutSwitchTab.
   ///
@@ -3611,6 +3623,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accounts'**
   String get accountsAppBarTitle;
+
+  /// Master-detail empty state for /accounts at desktop width (FIR-106)
+  ///
+  /// In en, this message translates to:
+  /// **'Select an account on the left to edit its details.'**
+  String get accountsDetailEmpty;
 
   /// No description provided for @accountsCreateAction.
   ///

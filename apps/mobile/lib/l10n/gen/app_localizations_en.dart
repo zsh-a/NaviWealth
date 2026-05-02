@@ -47,6 +47,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsAppBarTitle => 'Assets';
 
   @override
+  String get assetsDetailEmpty =>
+      'Select an asset on the left to see its details.';
+
+  @override
   String get assetsEmptyHint =>
       'No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.';
 
@@ -714,6 +718,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutDismissOverlay => 'Close current dialog';
+
+  @override
+  String get shortcutToggleSidebar => 'Collapse / expand sidebar';
 
   @override
   String shortcutSwitchTab(int position, String label) {
@@ -2017,6 +2024,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsAppBarTitle => 'Accounts';
+
+  @override
+  String get accountsDetailEmpty =>
+      'Select an account on the left to edit its details.';
 
   @override
   String get accountsCreateAction => 'New account';

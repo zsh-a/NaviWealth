@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/master_detail_layout.dart';
+import '../../app/selection_query.dart';
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
@@ -10,6 +12,7 @@ import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'asset_detail_page.dart';
 import 'physical/data/physical_asset.dart';
 import 'physical/data/providers.dart';
 import 'physical/ui/physical_asset_card.dart';
@@ -20,11 +23,44 @@ import 'physical/ui/physical_asset_create_sheet.dart';
 /// & vehicles" section for non-financial assets, and a FAB that opens a
 /// bottom sheet to choose which kind of asset to add.
 ///
-/// Securities / crypto holdings will be appended once their feature ticket
-/// lands; this page intentionally only knows about manually-valued rows so
-/// the two surfaces can evolve independently.
+/// At desktop width (≥ 1240) the page renders as a master-detail surface
+/// (FIR-106): a 380dp asset list on the left and the asset detail page
+/// on the right, driven by the `?selected=` query parameter. Tapping a
+/// row at narrower widths still pushes the detail route in the usual
+/// way.
 class AssetsPage extends ConsumerWidget {
   const AssetsPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final masterDetail = MasterDetailLayout.shouldUseMasterDetail(
+          constraints.maxWidth,
+        );
+        final selected = selectedQueryOf(context);
+        if (masterDetail) {
+          return Scaffold(
+            body: MasterDetailLayout(
+              master: _AssetsMaster(selectedAssetId: selected),
+              detail: selected == null
+                  ? const _AssetsDetailEmpty()
+                  : AssetDetailPage(assetId: selected),
+            ),
+          );
+        }
+        return const _AssetsMaster(selectedAssetId: null);
+      },
+    );
+  }
+}
+
+/// The standalone "master" (list) surface — used both as the only column
+/// at < 1240dp and as the left pane at ≥ 1240dp.
+class _AssetsMaster extends ConsumerWidget {
+  const _AssetsMaster({required this.selectedAssetId});
+
+  final String? selectedAssetId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,6 +86,7 @@ class AssetsPage extends ConsumerWidget {
       body: _AssetsBody(
         manualAsync: manualAsync,
         physicalAsync: physicalAsync,
+        selectedAssetId: selectedAssetId,
       ),
       floatingActionButton: AppFab.extended(
         onPressed: () => _showAddSheet(context),
@@ -160,14 +197,32 @@ class AssetsPage extends ConsumerWidget {
   }
 }
 
+class _AssetsDetailEmpty extends StatelessWidget {
+  const _AssetsDetailEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: GlassAppBar(title: Text(l10n.assetsAppBarTitle)),
+      body: MasterDetailEmpty(
+        icon: Icons.account_balance_wallet_outlined,
+        message: l10n.assetsDetailEmpty,
+      ),
+    );
+  }
+}
+
 class _AssetsBody extends StatelessWidget {
   const _AssetsBody({
     required this.manualAsync,
     required this.physicalAsync,
+    required this.selectedAssetId,
   });
 
   final AsyncValue<List<Asset>> manualAsync;
   final AsyncValue<List<PhysicalAsset>> physicalAsync;
+  final String? selectedAssetId;
 
   @override
   Widget build(BuildContext context) {
@@ -200,8 +255,16 @@ class _AssetsBody extends StatelessWidget {
     return ListView(
       padding: Spacing.pageMobile,
       children: [
-        if (manual.isNotEmpty) _ManualAssetsSection(assets: manual),
-        if (physical.isNotEmpty) _PhysicalAssetsSection(assets: physical),
+        if (manual.isNotEmpty)
+          _ManualAssetsSection(
+            assets: manual,
+            selectedAssetId: selectedAssetId,
+          ),
+        if (physical.isNotEmpty)
+          _PhysicalAssetsSection(
+            assets: physical,
+            selectedAssetId: selectedAssetId,
+          ),
       ],
     );
   }
@@ -233,9 +296,13 @@ class _EmptyHint extends StatelessWidget {
 }
 
 class _ManualAssetsSection extends StatelessWidget {
-  const _ManualAssetsSection({required this.assets});
+  const _ManualAssetsSection({
+    required this.assets,
+    required this.selectedAssetId,
+  });
 
   final List<Asset> assets;
+  final String? selectedAssetId;
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +336,11 @@ class _ManualAssetsSection extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
-                for (final asset in grouped[type]!) _AssetTile(asset: asset),
+                for (final asset in grouped[type]!)
+                  _AssetTile(
+                    asset: asset,
+                    selected: asset.id == selectedAssetId,
+                  ),
               ],
             ),
           ),
@@ -281,9 +352,13 @@ class _ManualAssetsSection extends StatelessWidget {
 }
 
 class _PhysicalAssetsSection extends StatelessWidget {
-  const _PhysicalAssetsSection({required this.assets});
+  const _PhysicalAssetsSection({
+    required this.assets,
+    required this.selectedAssetId,
+  });
 
   final List<PhysicalAsset> assets;
+  final String? selectedAssetId;
 
   @override
   Widget build(BuildContext context) {
@@ -312,9 +387,10 @@ class _PhysicalAssetsSection extends StatelessWidget {
 }
 
 class _AssetTile extends StatelessWidget {
-  const _AssetTile({required this.asset});
+  const _AssetTile({required this.asset, required this.selected});
 
   final Asset asset;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -324,8 +400,11 @@ class _AssetTile extends StatelessWidget {
     final chips = _chipsFor(asset, l10n);
     return MergeSemantics(
       child: InkWell(
-        onTap: () => context.go('/assets/${asset.id}'),
-        child: ConstrainedBox(
+        onTap: () => _onTap(context),
+        child: Container(
+          color: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.10)
+              : null,
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -368,6 +447,15 @@ class _AssetTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _onTap(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (MasterDetailLayout.shouldUseMasterDetail(width)) {
+      replaceSelectedQuery(context, path: '/assets', selected: asset.id);
+    } else {
+      context.go('/assets/${asset.id}');
+    }
   }
 
   List<Widget> _chipsFor(Asset asset, AppLocalizations l10n) {
