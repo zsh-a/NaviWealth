@@ -206,6 +206,12 @@ abstract class AppLocalizations {
   /// **'Liabilities & repayment plans'**
   String get assetsLiabilitiesTooltip;
 
+  /// AppBar action that opens the transaction list page from /assets.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get assetsTransactionsTooltip;
+
   /// No description provided for @assetsLoadError.
   ///
   /// In en, this message translates to:
@@ -331,6 +337,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wealth product'**
   String get assetTypeWealthProduct;
+
+  /// No description provided for @assetTypeStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get assetTypeStock;
+
+  /// No description provided for @assetTypeEtf.
+  ///
+  /// In en, this message translates to:
+  /// **'ETF'**
+  String get assetTypeEtf;
+
+  /// No description provided for @assetTypeMutualFund.
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual fund'**
+  String get assetTypeMutualFund;
+
+  /// No description provided for @assetTypeBond.
+  ///
+  /// In en, this message translates to:
+  /// **'Bond'**
+  String get assetTypeBond;
+
+  /// No description provided for @assetTypeCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get assetTypeCrypto;
+
+  /// Compact quantity badge in the securities list — e.g. 'Qty 100'.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty {quantity}'**
+  String securitiesHoldingQuantity(String quantity);
+
+  /// Subtitle when the user has zero shares of a known securities asset.
+  ///
+  /// In en, this message translates to:
+  /// **'Not held'**
+  String get securitiesHoldingFlat;
 
   /// No description provided for @corpActionTitle.
   ///
@@ -2813,6 +2861,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Valuation adjust'**
   String get tradeTypeValuationAdjust;
+
+  /// No description provided for @tradeTypeDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend'**
+  String get tradeTypeDividend;
+
+  /// No description provided for @tradeTypeReinvest.
+  ///
+  /// In en, this message translates to:
+  /// **'Reinvest'**
+  String get tradeTypeReinvest;
+
+  /// No description provided for @tradeTypeInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get tradeTypeInterest;
+
+  /// No description provided for @tradeTypeDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit'**
+  String get tradeTypeDeposit;
+
+  /// No description provided for @tradeTypeWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get tradeTypeWithdraw;
+
+  /// No description provided for @tradeTypeFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get tradeTypeFee;
+
+  /// No description provided for @tradeTypeTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get tradeTypeTax;
+
+  /// No description provided for @tradeTypeSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get tradeTypeSplit;
+
+  /// No description provided for @tradeTypeLiabilityPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan payment'**
+  String get tradeTypeLiabilityPayment;
+
+  /// No description provided for @tradeTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get tradeTypeExpense;
+
+  /// No description provided for @transactionsAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get transactionsAppBarTitle;
+
+  /// No description provided for @transactionsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No trades recorded yet. Tap the button below to log your first buy or sell.'**
+  String get transactionsEmptyHint;
+
+  /// No description provided for @transactionsAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Record trade'**
+  String get transactionsAddAction;
+
+  /// No description provided for @transactionsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load transactions: {error}'**
+  String transactionsLoadError(String error);
+
+  /// List row primary line — '{type chip} · {asset symbol}'.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} · {symbol}'**
+  String transactionsRowTitle(String type, String symbol);
+
+  /// Quantity and unit price summary on a transaction row.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} @ {price}'**
+  String transactionsRowQuantityPrice(String quantity, String price);
+
+  /// Sticky-style header that groups transactions by calendar month.
+  ///
+  /// In en, this message translates to:
+  /// **'{year}-{month}'**
+  String transactionsMonthHeader(String year, String month);
+
+  /// No description provided for @commandPaletteGoTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to transactions'**
+  String get commandPaletteGoTransactions;
 
   /// No description provided for @expenseFormCreateTitle.
   ///

@@ -94,6 +94,11 @@ Future<ProviderContainer> _pumpAt(
       manualAssetsStreamProvider.overrideWith(
         (ref) => Stream<List<Asset>>.value(const []),
       ),
+      // FIR-120: the assets tab also subscribes to securities so freshly
+      // recorded trades surface there. No DB in widget tests, so stub.
+      securitiesAssetsStreamProvider.overrideWith(
+        (ref) => Stream<List<Asset>>.value(const []),
+      ),
       accountsStreamProvider.overrideWith(
         (ref) => Stream<List<Account>>.value(const []),
       ),

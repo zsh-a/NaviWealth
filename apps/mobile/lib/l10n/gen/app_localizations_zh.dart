@@ -65,6 +65,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsLiabilitiesTooltip => '负债与还款计划';
 
   @override
+  String get assetsTransactionsTooltip => '交易记录';
+
+  @override
   String assetsLoadError(String error) {
     return '加载失败：$error';
   }
@@ -134,6 +137,29 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetTypeWealthProduct => '理财产品';
+
+  @override
+  String get assetTypeStock => '股票';
+
+  @override
+  String get assetTypeEtf => 'ETF';
+
+  @override
+  String get assetTypeMutualFund => '基金';
+
+  @override
+  String get assetTypeBond => '债券';
+
+  @override
+  String get assetTypeCrypto => '加密货币';
+
+  @override
+  String securitiesHoldingQuantity(String quantity) {
+    return '持仓 $quantity';
+  }
+
+  @override
+  String get securitiesHoldingFlat => '暂无持仓';
 
   @override
   String get corpActionTitle => '公司行动';
@@ -1502,6 +1528,68 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeTypeValuationAdjust => '估值调整';
+
+  @override
+  String get tradeTypeDividend => '分红';
+
+  @override
+  String get tradeTypeReinvest => '再投资';
+
+  @override
+  String get tradeTypeInterest => '利息';
+
+  @override
+  String get tradeTypeDeposit => '存入';
+
+  @override
+  String get tradeTypeWithdraw => '取出';
+
+  @override
+  String get tradeTypeFee => '费用';
+
+  @override
+  String get tradeTypeTax => '税费';
+
+  @override
+  String get tradeTypeSplit => '拆股';
+
+  @override
+  String get tradeTypeLiabilityPayment => '还款';
+
+  @override
+  String get tradeTypeExpense => '支出';
+
+  @override
+  String get transactionsAppBarTitle => '交易记录';
+
+  @override
+  String get transactionsEmptyHint => '尚未录入交易。点击下方按钮记录第一笔买入或卖出。';
+
+  @override
+  String get transactionsAddAction => '录入交易';
+
+  @override
+  String transactionsLoadError(String error) {
+    return '加载交易失败：$error';
+  }
+
+  @override
+  String transactionsRowTitle(String type, String symbol) {
+    return '$type · $symbol';
+  }
+
+  @override
+  String transactionsRowQuantityPrice(String quantity, String price) {
+    return '$quantity @ $price';
+  }
+
+  @override
+  String transactionsMonthHeader(String year, String month) {
+    return '$year-$month';
+  }
+
+  @override
+  String get commandPaletteGoTransactions => '前往 交易记录';
 
   @override
   String get expenseFormCreateTitle => '新建支出';
