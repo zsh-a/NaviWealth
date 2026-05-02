@@ -187,22 +187,22 @@ void main() {
       expect(diff.containsKey('type'), isFalse);
     });
 
-    test('seedSystemAccounts inserts income / expense / equity once', () async {
+    test('seedSystemAccounts inserts the full tree once', () async {
       final inserted = await repo.seedSystemAccounts();
-      expect(inserted, 3);
+      // 3 roots (income / expense / equity) plus 16 children — the
+      // FIR-133 default tree.
+      expect(inserted, 19);
 
       // Re-running is a free no-op — same primary keys, no duplicates.
       final reseeded = await repo.seedSystemAccounts();
       expect(reseeded, 0);
 
       final ops = await outbox.peekBatch();
-      // Three inserts on the first call only; the no-op doesn't queue.
-      expect(ops, hasLength(3));
-      expect(ops.map((o) => o.fieldsDiff!['category']).toSet(), {
-        'income',
-        'expense',
-        'equity',
-      });
+      // Inserts on the first call only; the no-op doesn't queue.
+      expect(ops, hasLength(19));
+      // The tree's three top-level buckets are present.
+      final categories = ops.map((o) => o.fieldsDiff!['category']).toSet();
+      expect(categories, {'income', 'expense', 'equity'});
     });
 
     test(
@@ -233,5 +233,208 @@ void main() {
         expect(active.map((a) => a.id), [user.id]);
       },
     );
+  });
+
+  group('FIR-133 — account tree', () {
+    test('create round-trips parentId / icon / color', () async {
+      final parent = await repo.create(
+        type: AccountType.other,
+        name: 'Bills',
+        currency: 'CNY',
+        category: AccountCategory.expense,
+        icon: 'receipt_long',
+        color: '#EF4444',
+      );
+      expect(parent.parentId, isNull);
+      expect(parent.icon, 'receipt_long');
+      expect(parent.color, '#EF4444');
+
+      final child = await repo.create(
+        type: AccountType.other,
+        name: 'Electricity',
+        currency: 'CNY',
+        category: AccountCategory.expense,
+        parentId: parent.id,
+        icon: 'bolt',
+        color: '#F97316',
+      );
+      expect(child.parentId, parent.id);
+      expect(child.icon, 'bolt');
+      expect(child.color, '#F97316');
+
+      final ops = await outbox.peekBatch();
+      // Both rows carry the new columns in their insert op so peers
+      // reconstruct the tree on the next pull.
+      expect(ops.last.fieldsDiff!['parent_id'], parent.id);
+      expect(ops.last.fieldsDiff!['icon'], 'bolt');
+      expect(ops.last.fieldsDiff!['color'], '#F97316');
+    });
+
+    test('update emits per-field diffs for parentId / icon / color', () async {
+      final acc = await repo.create(
+        type: AccountType.other,
+        name: 'Misc',
+        currency: 'CNY',
+        category: AccountCategory.expense,
+      );
+      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+
+      // Re-parent + recolor in a single update.
+      final updated = await repo.update(
+        acc.id,
+        parentId: 'system-account:u-test:expense',
+        icon: 'shopping_cart',
+        color: '#10B981',
+      );
+      expect(updated.parentId, 'system-account:u-test:expense');
+      expect(updated.icon, 'shopping_cart');
+      expect(updated.color, '#10B981');
+
+      final batch = await outbox.peekBatch();
+      final diff = batch.single.fieldsDiff!;
+      expect(diff['parent_id'], 'system-account:u-test:expense');
+      expect(diff['icon'], 'shopping_cart');
+      expect(diff['color'], '#10B981');
+      // Untouched columns stay out of the diff (LWW field-level).
+      expect(diff.containsKey('name'), isFalse);
+      expect(diff.containsKey('category'), isFalse);
+    });
+
+    test('clearParentId nulls the link in the diff', () async {
+      final root = await repo.create(
+        type: AccountType.other,
+        name: 'Top',
+        currency: 'CNY',
+        category: AccountCategory.expense,
+      );
+      final child = await repo.create(
+        type: AccountType.other,
+        name: 'Leaf',
+        currency: 'CNY',
+        category: AccountCategory.expense,
+        parentId: root.id,
+      );
+      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+
+      await repo.update(child.id, clearParentId: true);
+      final reloaded = await repo.findById(child.id);
+      expect(reloaded!.parentId, isNull);
+
+      final diff = (await outbox.peekBatch()).single.fieldsDiff!;
+      expect(diff.containsKey('parent_id'), isTrue);
+      expect(diff['parent_id'], isNull);
+    });
+
+    test('seedSystemAccounts wires parent_id and icon/color', () async {
+      await repo.seedSystemAccounts();
+
+      final salary = await repo.findById(
+        AccountRepository.systemAccountIdForPath(
+          'income:salary',
+          ownerUserId: 'u-test',
+        ),
+      );
+      expect(salary, isNotNull);
+      expect(salary!.parentId, 'system-account:u-test:income');
+      expect(salary.category, AccountCategory.income);
+      expect(salary.icon, 'work');
+      expect(salary.color, '#10B981');
+
+      // Trading branch sits one level deeper than the rest.
+      final tradingFee = await repo.findById(
+        AccountRepository.systemAccountIdForPath(
+          'expense:trading:fee',
+          ownerUserId: 'u-test',
+        ),
+      );
+      expect(tradingFee, isNotNull);
+      expect(tradingFee!.parentId, 'system-account:u-test:expense:trading');
+    });
+
+    test('accountsByParent returns top-level when parent is null', () async {
+      await repo.seedSystemAccounts();
+      final roots = await repo.accountsByParent(null);
+      // Three roots — Income / Expenses / Equity.
+      expect(
+        roots.map((a) => a.id).toSet(),
+        {
+          'system-account:u-test:income',
+          'system-account:u-test:expense',
+          'system-account:u-test:equity',
+        },
+      );
+    });
+
+    test('accountsByParent lists direct children only', () async {
+      await repo.seedSystemAccounts();
+      final incomeChildren = await repo.accountsByParent(
+        'system-account:u-test:income',
+      );
+      expect(
+        incomeChildren.map((a) => a.id),
+        containsAll([
+          'system-account:u-test:income:salary',
+          'system-account:u-test:income:dividend',
+          'system-account:u-test:income:interest',
+          'system-account:u-test:income:capitalGains',
+          'system-account:u-test:income:other',
+        ]),
+      );
+      // Trading:Fee is a grand-child of Expenses, not Income.
+      expect(
+        incomeChildren.map((a) => a.id),
+        isNot(contains('system-account:u-test:expense:trading:fee')),
+      );
+    });
+
+    test('walkSubtree returns root then all descendants', () async {
+      await repo.seedSystemAccounts();
+      final subtree = await repo.walkSubtree(
+        'system-account:u-test:expense',
+      );
+      // Expenses subtree: 1 root + 5 direct children (food / transit /
+      // housing / trading / other) + 3 grand-children under trading
+      // = 9 nodes.
+      expect(subtree, hasLength(9));
+      expect(subtree.first.id, 'system-account:u-test:expense');
+      expect(
+        subtree.map((a) => a.id),
+        containsAll([
+          'system-account:u-test:expense:trading',
+          'system-account:u-test:expense:trading:fee',
+          'system-account:u-test:expense:trading:tax',
+          'system-account:u-test:expense:trading:interest',
+        ]),
+      );
+    });
+
+    test('walkSubtree returns empty list for a deleted root', () async {
+      await repo.seedSystemAccounts();
+      await repo.softDelete('system-account:u-test:expense');
+      final subtree = await repo.walkSubtree(
+        'system-account:u-test:expense',
+      );
+      expect(subtree, isEmpty);
+    });
+
+    test('pathOf returns the chain from root to leaf', () async {
+      await repo.seedSystemAccounts();
+      final path = await repo.pathOf(
+        'system-account:u-test:expense:trading:fee',
+      );
+      expect(
+        path.map((a) => a.id),
+        [
+          'system-account:u-test:expense',
+          'system-account:u-test:expense:trading',
+          'system-account:u-test:expense:trading:fee',
+        ],
+      );
+    });
+
+    test('pathOf returns empty list for an unknown account', () async {
+      final path = await repo.pathOf('no-such-account');
+      expect(path, isEmpty);
+    });
   });
 }
