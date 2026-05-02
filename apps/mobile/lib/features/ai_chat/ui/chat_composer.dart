@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Text composer at the bottom of the chat. Multiline TextField with a
 /// send / cancel button on the right. ⌘/Ctrl + Enter sends; plain Enter
@@ -68,6 +69,7 @@ class _ChatComposerState extends State<ChatComposer> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final canSend = !widget._busy && _controller.text.trim().isNotEmpty;
 
     return Container(
@@ -100,10 +102,10 @@ class _ChatComposerState extends State<ChatComposer> {
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: widget.isFlushing
-                        ? '正在同步本地数据…'
+                        ? l10n.aiChatComposerHintFlushing
                         : widget.isStreaming
-                            ? '正在生成回答…'
-                            : '问问 NaviWealth：例如"我最近一个月赚了多少？"',
+                            ? l10n.aiChatComposerHintStreaming
+                            : l10n.aiChatComposerHintIdle,
                     filled: true,
                     fillColor: cs.surfaceContainerHighest,
                     contentPadding: const EdgeInsets.symmetric(
@@ -122,7 +124,7 @@ class _ChatComposerState extends State<ChatComposer> {
             if (widget.isStreaming)
               IconButton.filledTonal(
                 onPressed: widget.onCancel,
-                tooltip: '停止生成',
+                tooltip: l10n.aiChatComposerStopTooltip,
                 icon: const Icon(Icons.stop),
               )
             else if (widget.isFlushing)
@@ -137,7 +139,7 @@ class _ChatComposerState extends State<ChatComposer> {
             else
               IconButton.filled(
                 onPressed: canSend ? _send : null,
-                tooltip: '发送 (⌘/Ctrl + Enter)',
+                tooltip: l10n.aiChatComposerSendTooltip,
                 icon: const Icon(Icons.arrow_upward),
               ),
           ],

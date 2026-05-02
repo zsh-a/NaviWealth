@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 
@@ -28,6 +29,7 @@ class SessionsPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final session = ref.watch(authSessionReaderProvider)();
 
     if (session == null) {
@@ -38,7 +40,7 @@ class SessionsPanel extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(Spacing.s24),
             child: Text(
-              '请先登录后再使用 AI 助手。',
+              l10n.aiChatLoginRequired,
               textAlign: TextAlign.center,
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
@@ -56,7 +58,7 @@ class SessionsPanel extends ConsumerWidget {
         error: (e, _) => Padding(
           padding: const EdgeInsets.all(Spacing.s16),
           child: Text(
-            '加载失败：$e',
+            l10n.commonLoadError(e.toString()),
             style: tt.bodySmall?.copyWith(color: cs.error),
           ),
         ),
@@ -66,7 +68,7 @@ class SessionsPanel extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(Spacing.s24),
                 child: Text(
-                  '点击右上角的 + 开始第一个对话。',
+                  l10n.aiChatSessionsEmpty,
                   textAlign: TextAlign.center,
                   style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
@@ -100,19 +102,20 @@ class SessionsPanel extends ConsumerWidget {
     WidgetRef ref,
     ChatSession session,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('删除对话？'),
-        content: Text('"${session.title}" 中的所有消息都会被删除。'),
+        title: Text(l10n.aiChatSessionDeleteTitle),
+        content: Text(l10n.aiChatSessionDeleteBody(session.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
+            child: Text(l10n.commonDelete),
           ),
         ],
       ),
@@ -127,25 +130,26 @@ class SessionsPanel extends ConsumerWidget {
     WidgetRef ref,
     ChatSession session,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: session.title);
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('重命名'),
+        title: Text(l10n.aiChatSessionRenameTitle),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLength: 60,
-          decoration: const InputDecoration(labelText: '标题'),
+          decoration: InputDecoration(labelText: l10n.aiChatSessionTitleLabel),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('取消'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('保存'),
+            child: Text(l10n.commonSave),
           ),
         ],
       ),
@@ -166,6 +170,7 @@ class _PanelShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Container(
       color: cs.surface,
       child: Column(
@@ -180,13 +185,13 @@ class _PanelShell extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  '对话',
+                  l10n.aiChatSessionsHeader,
                   style: tt.titleMedium?.copyWith(color: cs.onSurface),
                 ),
                 const Spacer(),
                 if (onNew != null)
                   IconButton(
-                    tooltip: '新建对话',
+                    tooltip: l10n.aiChatNewSessionTooltip,
                     onPressed: onNew,
                     icon: const Icon(Icons.add),
                   ),
@@ -220,6 +225,7 @@ class _SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final lastAt = session.lastMessageAt ?? session.createdAt;
     return Material(
       color: selected ? cs.secondaryContainer : Colors.transparent,
@@ -254,7 +260,7 @@ class _SessionTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _formatRelative(lastAt),
+                      _formatRelative(l10n, lastAt),
                       style: tt.labelSmall?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
@@ -263,7 +269,7 @@ class _SessionTile extends StatelessWidget {
                 ),
               ),
               PopupMenuButton<String>(
-                tooltip: '更多',
+                tooltip: l10n.aiChatSessionMoreTooltip,
                 icon: Icon(
                   Icons.more_vert,
                   size: 18,
@@ -277,9 +283,15 @@ class _SessionTile extends StatelessWidget {
                       onDelete();
                   }
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'rename', child: Text('重命名')),
-                  PopupMenuItem(value: 'delete', child: Text('删除')),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'rename',
+                    child: Text(l10n.aiChatSessionRenameAction),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text(l10n.commonDelete),
+                  ),
                 ],
               ),
             ],
@@ -290,13 +302,13 @@ class _SessionTile extends StatelessWidget {
   }
 }
 
-String _formatRelative(DateTime when) {
+String _formatRelative(AppLocalizations l10n, DateTime when) {
   final now = DateTime.now().toUtc();
   final diff = now.difference(when.toUtc());
-  if (diff.inMinutes < 1) return '刚刚';
-  if (diff.inHours < 1) return '${diff.inMinutes} 分钟前';
-  if (diff.inDays < 1) return '${diff.inHours} 小时前';
-  if (diff.inDays < 7) return '${diff.inDays} 天前';
+  if (diff.inMinutes < 1) return l10n.aiChatRelativeJustNow;
+  if (diff.inHours < 1) return l10n.aiChatRelativeMinutesAgo(diff.inMinutes);
+  if (diff.inDays < 1) return l10n.aiChatRelativeHoursAgo(diff.inHours);
+  if (diff.inDays < 7) return l10n.aiChatRelativeDaysAgo(diff.inDays);
   final local = when.toLocal();
   final m = local.month.toString().padLeft(2, '0');
   final d = local.day.toString().padLeft(2, '0');

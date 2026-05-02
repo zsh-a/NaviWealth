@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/gen/app_localizations.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/spacing_tokens.dart';
 import '../tokens/typography_tokens.dart';
@@ -20,6 +21,7 @@ class EmptyChartPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final semantic = SemanticColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: semantic.divider),
@@ -34,7 +36,7 @@ class EmptyChartPlaceholder extends StatelessWidget {
               Icon(icon, color: scheme.onSurfaceVariant, size: 32),
               const SizedBox(height: Spacing.s8),
               Text(
-                message ?? '暂无数据',
+                message ?? l10n.chartEmptyDefault,
                 style: TypographyTokens.bodyMedium.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

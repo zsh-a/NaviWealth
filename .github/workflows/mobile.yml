@@ -38,6 +38,8 @@ jobs:
           mkdir -p assets/fonts
           touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
       - run: flutter analyze --fatal-infos
+      - name: Lint — no Chinese literals in source (FIR-99)
+        run: dart tool/check_cn_literals.dart
       - name: Verify generated code is up to date
         run: |
           dart run build_runner build --delete-conflicting-outputs
