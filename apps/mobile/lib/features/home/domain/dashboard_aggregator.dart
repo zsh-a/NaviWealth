@@ -8,8 +8,13 @@ import '../../../data/repositories/manual_asset_repository.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
+import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/domain/liability_summary.dart';
 import 'dashboard_models.dart';
+
+/// One row of the holdings pipeline as the dashboard sees it: the asset
+/// metadata for category / labelling, paired with the priced snapshot.
+typedef SecurityHolding = ({Asset asset, HoldingSnapshot snapshot});
 
 /// Pure aggregator that turns the live asset / liability streams into a
 /// [DashboardSnapshot]. Intentionally framework-agnostic so it can be unit
@@ -43,6 +48,7 @@ class DashboardAggregator {
     required Iterable<PhysicalAsset> physicalAssets,
     required Iterable<Liability> liabilities,
     required Iterable<LiabilitySummary> liabilitySummaries,
+    Iterable<SecurityHolding> securitiesHoldings = const [],
   }) {
     final byCategory = <AssetCategory, List<CategoryItem>>{};
     _mismatches.clear();
@@ -58,6 +64,13 @@ class DashboardAggregator {
       final item = _itemForPhysicalAsset(asset);
       if (item == null) continue;
       final cat = categoryForAssetType(asset.type);
+      byCategory.putIfAbsent(cat, () => []).add(item);
+    }
+
+    for (final holding in securitiesHoldings) {
+      final item = _itemForSecurityHolding(holding);
+      if (item == null) continue;
+      final cat = categoryForAssetType(holding.asset.type);
       byCategory.putIfAbsent(cat, () => []).add(item);
     }
 
@@ -144,6 +157,26 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: price,
       nativeCurrency: asset.currency,
+      routeHint: '/assets/${asset.id}',
+    );
+  }
+
+  /// Build a [CategoryItem] for a securities position. The market value is
+  /// already in [baseCurrency] (the holding service ran the FX conversion),
+  /// so we wrap it directly without re-converting. Positions with zero
+  /// quantity or a missing price flow through with a zero `marketValueInBase`
+  /// — those are dropped here so a sold-out lot doesn't pollute the totals.
+  CategoryItem? _itemForSecurityHolding(SecurityHolding holding) {
+    final snap = holding.snapshot;
+    if (snap.marketValueInBase.sign <= 0) return null;
+    final asset = holding.asset;
+    return CategoryItem(
+      id: asset.id,
+      name: asset.name ?? asset.symbol,
+      subtitle: '${snap.quantity} · ${asset.currency}',
+      valueInBase: Money(snap.marketValueInBase, baseCurrency),
+      nativeAmount: snap.marketValueInAssetCurrency,
+      nativeCurrency: snap.assetCurrency,
       routeHint: '/assets/${asset.id}',
     );
   }

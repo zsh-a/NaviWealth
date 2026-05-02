@@ -18,6 +18,7 @@ import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_price_source.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/investment/domain/returns/returns_service.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
@@ -104,6 +105,12 @@ ProviderScope _wrap({
       ),
       fxRatesStreamProvider.overrideWith(
         (ref) => Stream<List<FxRate>>.value(const []),
+      ),
+      // Securities pipeline: stub to empty so the dashboard never reaches
+      // for the real Drift database during widget tests.
+      allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      holdingsSnapshotProvider.overrideWith(
+        (ref) async => const <String, HoldingSnapshot>{},
       ),
       returnsServiceProvider.overrideWith((ref) async => _stubReturnsService()),
     ],

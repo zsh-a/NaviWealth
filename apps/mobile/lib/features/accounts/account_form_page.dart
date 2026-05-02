@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
@@ -105,6 +106,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
         );
       }
       if (!mounted) return;
+      Haptics.success();
       context.go('/accounts');
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/formatters.dart';
+import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/domain/expense_category.dart';
@@ -121,7 +122,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败：$e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab.extended(
         onPressed: () => context.go('/expenses/new'),
         icon: const Icon(Icons.add),
         label: const Text('记一笔'),
@@ -319,7 +320,10 @@ class _GroupingChips extends StatelessWidget {
         ButtonSegment(value: ExpenseGrouping.week, label: Text('周')),
       ],
       selected: {selected},
-      onSelectionChanged: (s) => onChanged(s.first),
+      onSelectionChanged: (s) {
+        Haptics.selection();
+        onChanged(s.first);
+      },
     );
   }
 }

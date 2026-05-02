@@ -45,7 +45,7 @@ class HomePage extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab(
         onPressed: () => context.push('/assets/trade'),
         tooltip: l10n.homeRecordTradeTooltip,
         child: const Icon(Icons.add_chart),

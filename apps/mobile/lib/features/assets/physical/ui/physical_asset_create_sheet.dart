@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/haptics/haptics.dart';
 import '../../../../data/domain/enums.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -344,6 +345,7 @@ class _PhysicalAssetCreateSheetState
             currency: _currencyCtrl.text.trim().toUpperCase(),
           ));
       if (!mounted) return;
+      Haptics.success();
       Navigator.of(context).pop(created);
     } finally {
       if (mounted) setState(() => _saving = false);

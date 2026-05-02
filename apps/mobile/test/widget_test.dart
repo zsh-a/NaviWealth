@@ -9,6 +9,8 @@ import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,6 +52,14 @@ void main() {
           // which fails in widget tests and leaks a pending timer.
           fxRatesStreamProvider.overrideWith(
             (ref) => Stream<List<FxRate>>.value(const []),
+          ),
+          // Securities holdings now feed the dashboard total — stub so the
+          // test never hits the real Drift database / mutation stamper.
+          allAssetsStreamProvider.overrideWith(
+            (ref) => Stream<List<Asset>>.value(const []),
+          ),
+          holdingsSnapshotProvider.overrideWith(
+            (ref) async => const <String, HoldingSnapshot>{},
           ),
         ],
         child: const NaviWealthApp(),

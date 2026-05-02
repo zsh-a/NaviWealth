@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
@@ -92,6 +93,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
+      Haptics.error();
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('定期存款必须填写到期日')));
@@ -146,6 +148,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             currency: _currency,
           ));
       if (!mounted) return;
+      Haptics.success();
       context.go('/assets');
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -255,7 +258,10 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               ),
             ],
             selected: {_kind},
-            onSelectionChanged: (s) => setState(() => _kind = s.first),
+            onSelectionChanged: (s) {
+              Haptics.selection();
+              setState(() => _kind = s.first);
+            },
           ),
           const SizedBox(height: Spacing.s12),
           AccountPicker(

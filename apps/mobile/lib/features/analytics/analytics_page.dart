@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
+import '../../core/haptics/haptics.dart';
 import '../../design_system/charts/charts.dart';
 import '../../design_system/tokens/breakpoints.dart';
 import '../../design_system/tokens/radius_tokens.dart';
@@ -145,7 +146,10 @@ class DimensionSegment extends StatelessWidget {
         ),
       ],
       selected: {value},
-      onSelectionChanged: (s) => onChanged(s.first),
+      onSelectionChanged: (s) {
+        Haptics.selection();
+        onChanged(s.first);
+      },
       showSelectedIcon: false,
     );
   }

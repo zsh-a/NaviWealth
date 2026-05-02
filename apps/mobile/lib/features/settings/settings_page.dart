@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../analytics/data/risk_threshold_preferences.dart';
@@ -84,8 +85,10 @@ class SettingsPage extends ConsumerWidget {
               ],
               selected: {themeMode},
               showSelectedIcon: false,
-              onSelectionChanged: (s) =>
-                  ref.read(themeModeProvider.notifier).set(s.first),
+              onSelectionChanged: (s) {
+                Haptics.selection();
+                ref.read(themeModeProvider.notifier).set(s.first);
+              },
             ),
           ),
           ListTile(

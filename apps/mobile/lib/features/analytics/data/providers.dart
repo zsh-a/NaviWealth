@@ -2,8 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/db/providers.dart';
 import '../../../data/domain/asset.dart';
-import '../../investment/data/providers.dart' show holdingServiceProvider;
-import '../../investment/domain/models/holding_snapshot.dart';
+import '../../investment/data/providers.dart' show holdingsSnapshotProvider;
 import '../domain/concentration_risk.dart';
 import '../domain/equity_allocation.dart';
 import '../domain/equity_classification.dart';
@@ -52,25 +51,13 @@ final marketCapThresholdsProvider = Provider<MarketCapThresholds>(
 /// totals row has *something* to label itself with.
 final analyticsBaseCurrencyProvider = Provider<String>((ref) => 'CNY');
 
-/// Snapshot of holdings as of "now". Re-evaluates whenever the holding
-/// service or its inputs change. Returned as a `Map<assetId, snapshot>`
-/// matching [HoldingService.computeAt].
-final equityHoldingsSnapshotProvider =
-    FutureProvider.autoDispose<Map<String, HoldingSnapshot>>(
-  (ref) async {
-    final service = await ref.watch(holdingServiceProvider.future);
-    final asOf = DateTime.now().toUtc();
-    return service.computeAt(asOf);
-  },
-);
-
 /// Composite analytics view for a single allocation [dimension]. Watches
 /// the holdings snapshot, the asset list, and the classifier; recomputes
 /// the aggregation whenever any input changes.
 final equityAllocationViewProvider = FutureProvider.autoDispose
     .family<EquityAllocationView, EquityAllocationDimension>(
   (ref, dimension) async {
-    final snapshots = await ref.watch(equityHoldingsSnapshotProvider.future);
+    final snapshots = await ref.watch(holdingsSnapshotProvider.future);
     final assets = await ref.watch(equityAssetsStreamProvider.future);
     final classifier = ref.watch(equityClassifierProvider);
     final baseCurrency = ref.watch(analyticsBaseCurrencyProvider);
@@ -96,7 +83,7 @@ final equityAllocationViewProvider = FutureProvider.autoDispose
 /// holdings, asset metadata, classifier, or threshold settings change.
 final concentrationAlertsProvider =
     FutureProvider.autoDispose<List<ConcentrationAlert>>((ref) async {
-  final snapshots = await ref.watch(equityHoldingsSnapshotProvider.future);
+  final snapshots = await ref.watch(holdingsSnapshotProvider.future);
   final assets = await ref.watch(equityAssetsStreamProvider.future);
   final classifier = ref.watch(equityClassifierProvider);
   final thresholds = ref.watch(concentrationThresholdsProvider);

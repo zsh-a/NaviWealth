@@ -19,6 +19,8 @@ import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/home/ui/allocation_card.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -79,6 +81,12 @@ ProviderScope _wrap({
       ),
       fxRatesStreamProvider.overrideWith(
         (ref) => Stream<List<FxRate>>.value(const []),
+      ),
+      // Securities pipeline: stub to empty so the dashboard never reaches
+      // for the real Drift database during widget tests.
+      allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      holdingsSnapshotProvider.overrideWith(
+        (ref) async => const <String, HoldingSnapshot>{},
       ),
     ],
     child: MaterialApp(

@@ -15,6 +15,8 @@ import 'package:naviwealth/features/fire/data/fire_goal_preferences.dart';
 import 'package:naviwealth/features/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/fire/presentation/fire_page.dart';
 import 'package:naviwealth/features/fire/presentation/fire_progress_gauge.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +55,10 @@ Future<Widget> _wrap({
       ),
       fxRatesStreamProvider.overrideWith(
         (ref) => Stream<List<FxRate>>.value(const []),
+      ),
+      allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      holdingsSnapshotProvider.overrideWith(
+        (ref) async => const <String, HoldingSnapshot>{},
       ),
     ],
     child: MaterialApp(
@@ -150,6 +156,12 @@ void main() {
           ),
           fxRatesStreamProvider.overrideWith(
             (ref) => Stream<List<FxRate>>.value(const []),
+          ),
+          allAssetsStreamProvider.overrideWith(
+            (ref) => Stream.value(const []),
+          ),
+          holdingsSnapshotProvider.overrideWith(
+            (ref) async => const <String, HoldingSnapshot>{},
           ),
         ],
         child: MaterialApp(

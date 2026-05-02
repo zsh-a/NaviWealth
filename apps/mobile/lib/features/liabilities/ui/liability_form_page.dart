@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -334,7 +335,10 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage> {
       unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
             currency: _currency.text.trim().toUpperCase(),
           ));
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Haptics.success();
+        Navigator.of(context).pop();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

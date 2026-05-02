@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/repositories/providers.dart';
@@ -176,6 +177,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
           ));
 
       if (!mounted) return;
+      Haptics.success();
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.tradeEntrySuccess)),
@@ -183,12 +185,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
       context.pop();
     } on TradeEntryException catch (e) {
       if (!mounted) return;
+      Haptics.error();
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.tradeEntryFailure(e.message))),
       );
     } catch (e) {
       if (!mounted) return;
+      Haptics.error();
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.tradeEntryFailure('$e'))),
@@ -366,7 +370,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
       runSpacing: 8,
       children: [
         for (final t in _tradeTypes)
-          ChoiceChip(
+          AppChoiceChip(
             label: Text(_typeLabel(l10n, t)),
             selected: _type == t,
             onSelected: (s) {

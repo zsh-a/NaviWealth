@@ -22,7 +22,7 @@ class ExpenseCategoriesPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败：$e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab.extended(
         onPressed: () => _showEditor(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('新建类目'),
@@ -144,8 +144,8 @@ class _CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent =
         category.accentColor ?? Theme.of(context).colorScheme.primary;
-    return Dismissible(
-      key: ValueKey('dis-${category.id}'),
+    return AppDismissibleListTile(
+      dismissibleKey: ValueKey('dis-${category.id}'),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) async {
         onArchive();
@@ -340,7 +340,7 @@ class _CategoryEditorState extends ConsumerState<_CategoryEditor> {
               runSpacing: 8,
               children: [
                 for (final entry in kExpenseCategoryIcons.entries)
-                  ChoiceChip(
+                  AppChoiceChip(
                     selected: entry.key == _icon,
                     label: Icon(entry.value, size: 20),
                     onSelected: (_) => setState(() => _icon = entry.key),

@@ -28,7 +28,7 @@ class AccountsPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败：$e')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab.extended(
         onPressed: () => context.go('/accounts/new'),
         icon: const Icon(Icons.add),
         label: const Text('新建账户'),
