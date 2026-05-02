@@ -675,10 +675,9 @@ class _DeltaBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final market = Theme.of(context).extension<MarketColors>();
+    final market = MarketColors.of(context);
     final positive = value >= 0;
-    final color = market?.forDelta(value) ??
-        (positive ? const Color(0xFF059669) : const Color(0xFFBE123C));
+    final color = market.forDelta(value);
     final bg = color.withValues(alpha: 0.15);
     final sign = positive ? '+' : '';
     final label = '$sign${yAxis.formatValue(value)}';
