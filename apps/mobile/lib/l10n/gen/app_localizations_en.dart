@@ -1718,6 +1718,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseFormNoAccountsCta => 'Create account';
 
   @override
+  String get expenseHistorySectionTitle => 'Change history';
+
+  @override
+  String get expenseHistoryEmpty => 'No changes recorded yet.';
+
+  @override
+  String expenseHistoryLoadError(String error) {
+    return 'Couldn\'t load history: $error';
+  }
+
+  @override
+  String get expenseHistoryEventCreated => 'Created';
+
+  @override
+  String get expenseHistoryEventChanged => 'Updated';
+
+  @override
+  String get expenseHistoryEventDeleted => 'Deleted';
+
+  @override
+  String get expenseHistoryEventRestored => 'Restored';
+
+  @override
+  String get expenseHistoryCreatedBody => 'Expense recorded.';
+
+  @override
+  String get expenseHistoryDeletedBody => 'Expense deleted.';
+
+  @override
+  String get expenseHistoryRestoredBody => 'Expense restored.';
+
+  @override
+  String get expenseHistoryFieldAmount => 'Amount';
+
+  @override
+  String get expenseHistoryFieldCurrency => 'Currency';
+
+  @override
+  String get expenseHistoryFieldAccount => 'Account';
+
+  @override
+  String get expenseHistoryFieldCategory => 'Category';
+
+  @override
+  String get expenseHistoryFieldDate => 'Date';
+
+  @override
+  String get expenseHistoryFieldNote => 'Note';
+
+  @override
+  String get expenseHistoryFieldTags => 'Tags';
+
+  @override
+  String get expenseHistoryEmptyValue => '—';
+
+  @override
+  String get expenseHistoryUnknownReference => '(unknown)';
+
+  @override
+  String expenseHistoryReasonLabel(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
   String get aiChatAppBarTitle => 'AI assistant';
 
   @override
