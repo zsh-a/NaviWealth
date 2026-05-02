@@ -608,6 +608,11 @@
   "aiChatToolShowRawJson": "查看 raw JSON",
   "aiChatToolShowCompactView": "返回精简视图",
 
+  "aiFloatingPillLabel": "问问 AI",
+  "aiChatSheetTitle": "AI 助手",
+  "aiChatSheetEmpty": "随便问问你的财务情况。",
+  "aiChatSheetExpandTooltip": "展开全屏",
+
   "chartEmptyDefault": "暂无数据",
 
   "formAmountFieldLabelDefault": "金额",
