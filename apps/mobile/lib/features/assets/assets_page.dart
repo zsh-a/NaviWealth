@@ -384,44 +384,49 @@ class _AssetTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final price = asset.lastPrice ?? Decimal.zero;
     final chips = _chipsFor(asset, l10n);
-    return InkWell(
-      onTap: () => context.go('/assets/${asset.id}'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s16,
-          vertical: Spacing.s12,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    asset.name ?? asset.symbol,
-                    style: theme.textTheme.bodyLarge,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+    return MergeSemantics(
+      child: InkWell(
+        onTap: () => context.go('/assets/${asset.id}'),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.s16,
+              vertical: Spacing.s12,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        asset.name ?? asset.symbol,
+                        style: theme.textTheme.bodyLarge,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (chips.isNotEmpty) ...[
+                        const SizedBox(height: Spacing.s6),
+                        Wrap(
+                          spacing: Spacing.s6,
+                          runSpacing: Spacing.s4,
+                          children: chips,
+                        ),
+                      ],
+                    ],
                   ),
-                  if (chips.isNotEmpty) ...[
-                    const SizedBox(height: Spacing.s6),
-                    Wrap(
-                      spacing: Spacing.s6,
-                      runSpacing: Spacing.s4,
-                      children: chips,
-                    ),
-                  ],
-                ],
-              ),
+                ),
+                const SizedBox(width: Spacing.s12),
+                MoneyText(
+                  amount: price.toDouble(),
+                  currencyCode: asset.currency,
+                  style: TypographyTokens.numericBody,
+                ),
+              ],
             ),
-            const SizedBox(width: Spacing.s12),
-            MoneyText(
-              amount: price.toDouble(),
-              currencyCode: asset.currency,
-              style: TypographyTokens.numericBody,
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -34,6 +34,7 @@ class MoneyText extends StatelessWidget {
     this.textAlign,
     this.compact = false,
     this.showSign = false,
+    this.semanticsLabel,
   });
 
   /// Amount in the major unit (e.g. `1234.5` = ¥1,234.50). Accepts `num` so
@@ -72,19 +73,34 @@ class MoneyText extends StatelessWidget {
   /// delta. Negative numbers always show `-`.
   final bool showSign;
 
+  /// Override the screen-reader label. Defaults to a spoken
+  /// "$amount $currencyCode" string so VoiceOver / TalkBack reads
+  /// "twelve thousand three hundred forty five point six US dollars"
+  /// instead of just the digits.
+  final String? semanticsLabel;
+
   @override
   Widget build(BuildContext context) {
     final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
       color: color,
       fontFeatures: TypographyTokens.tabularFigures,
     );
+    final formatted = _format(context);
     return Text(
-      _format(context),
+      formatted,
       style: effectiveStyle,
       textAlign: textAlign,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
+      semanticsLabel: semanticsLabel ?? _spokenLabel(formatted),
     );
+  }
+
+  String _spokenLabel(String formatted) {
+    if (amount == null) return formatted;
+    // Pair the formatted number with the ISO currency code so screen
+    // readers say e.g. "1,234.56 CNY" instead of bare digits.
+    return '$formatted $currencyCode';
   }
 
   String _format(BuildContext context) {
