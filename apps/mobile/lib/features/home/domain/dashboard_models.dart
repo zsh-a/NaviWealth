@@ -31,6 +31,7 @@ class CategoryItem {
     required this.valueInBase,
     required this.nativeAmount,
     required this.nativeCurrency,
+    this.liabilityType,
     this.routeHint,
   });
 
@@ -38,7 +39,17 @@ class CategoryItem {
   /// target when the user taps the row in the drill-down list.
   final String id;
   final String name;
+
+  /// Pre-rendered subtitle string. Use [liabilityType] instead when the
+  /// row is a liability — the enum survives across locale switches and the
+  /// UI resolves the localised label at render time.
   final String? subtitle;
+
+  /// When non-null, the row represents a liability with this [LiabilityType].
+  /// The UI looks up the localised label via `liabilityTypeLabel(...)` rather
+  /// than relying on [subtitle], which keeps the aggregator framework- and
+  /// locale-agnostic.
+  final LiabilityType? liabilityType;
 
   /// Value of this row in the dashboard's base currency. Always positive for
   /// asset rows; positive (i.e. unsigned outstanding balance) for liability
@@ -63,6 +74,7 @@ class CategoryItem {
       other.id == id &&
       other.name == name &&
       other.subtitle == subtitle &&
+      other.liabilityType == liabilityType &&
       other.valueInBase == valueInBase &&
       other.nativeAmount == nativeAmount &&
       other.nativeCurrency == nativeCurrency &&
@@ -73,6 +85,7 @@ class CategoryItem {
         id,
         name,
         subtitle,
+        liabilityType,
         valueInBase,
         nativeAmount,
         nativeCurrency,

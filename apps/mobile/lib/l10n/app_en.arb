@@ -28,13 +28,6 @@
       "currency": { "type": "String", "example": "CNY" }
     }
   },
-  "homeTodayReturnTitle": "Today's Return",
-  "homeTodayReturnSubtitle": "Live quotes pending. FIR-4 will populate this card.",
-  "homeAllocationTitle": "Asset Allocation",
-  "homeAllocationSubtitle": "FIR-7 will surface category, sector, and region breakdowns here.",
-  "homeFireTitle": "FIRE Progress",
-  "homeFireSubtitle": "FIR-9 will show days to financial independence and milestones.",
-
   "assetsAppBarTitle": "Assets",
   "assetsEmptyHint": "No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.",
   "assetsAddAction": "Add asset",
@@ -942,5 +935,120 @@
   "aiChatToolShowRawJson": "View raw JSON",
   "aiChatToolShowCompactView": "Back to compact view",
 
-  "chartEmptyDefault": "No data yet"
+  "chartEmptyDefault": "No data yet",
+
+  "formAmountFieldLabelDefault": "Amount",
+  "@formAmountFieldLabelDefault": { "description": "Default label for the shared AmountField when no caller-provided label is supplied." },
+  "formAmountFieldRequired": "Enter an amount",
+  "@formAmountFieldRequired": { "description": "AmountField validator: empty input." },
+  "formAmountFieldInvalid": "Invalid amount format",
+  "@formAmountFieldInvalid": { "description": "AmountField validator: not a parseable Decimal." },
+  "formAmountFieldNegativeNotAllowed": "Amount cannot be negative",
+  "@formAmountFieldNegativeNotAllowed": { "description": "AmountField validator: negative value where the caller forbids them." },
+
+  "formNoteFieldLabelDefault": "Notes",
+  "@formNoteFieldLabelDefault": { "description": "Default label for the shared NoteField." },
+
+  "formDateFieldClearTooltip": "Clear",
+  "@formDateFieldClearTooltip": { "description": "Tooltip on the icon that clears a tap-to-pick DateField." },
+  "formDateFieldRequired": "Pick a date",
+  "@formDateFieldRequired": { "description": "DateField validator when the field is required and empty." },
+
+  "formAccountPickerLabelDefault": "Account",
+  "@formAccountPickerLabelDefault": { "description": "Default label for the shared AccountPicker." },
+  "formAccountPickerRequired": "Pick an account",
+  "@formAccountPickerRequired": { "description": "AccountPicker validator when no account is selected." },
+
+  "formCurrencyPickerLabelDefault": "Currency",
+  "@formCurrencyPickerLabelDefault": { "description": "Default label for the shared CurrencyPicker." },
+  "formCurrencyPickerRequired": "Pick a currency",
+  "@formCurrencyPickerRequired": { "description": "CurrencyPicker validator when no currency is selected." },
+  "currencyOptionLabel": "{code} · {name}",
+  "@currencyOptionLabel": {
+    "description": "Picker entry for a currency, e.g. \"USD · US Dollar\".",
+    "placeholders": {
+      "code": { "type": "String", "example": "USD" },
+      "name": { "type": "String", "example": "US Dollar" }
+    }
+  },
+  "currencyNameCNY": "Chinese Yuan",
+  "currencyNameUSD": "US Dollar",
+  "currencyNameHKD": "Hong Kong Dollar",
+  "currencyNameEUR": "Euro",
+  "currencyNameJPY": "Japanese Yen",
+  "currencyNameGBP": "British Pound",
+  "currencyNameSGD": "Singapore Dollar",
+  "currencyNameAUD": "Australian Dollar",
+  "currencyNameCAD": "Canadian Dollar",
+  "currencyNameTWD": "New Taiwan Dollar",
+
+  "expenseCategoryPickerLabelDefault": "Category",
+  "@expenseCategoryPickerLabelDefault": { "description": "Default label above the expense-form category grid picker." },
+  "expenseCategoryPickerRequired": "Pick a category",
+  "@expenseCategoryPickerRequired": { "description": "Validator message when no expense category is selected." },
+
+  "physicalAssetValuationProjected": "Projected valuation",
+  "@physicalAssetValuationProjected": { "description": "Legend label for the projected-valuation curve on a physical asset's trend chart." },
+  "physicalAssetValuationHistorical": "Historical valuation",
+  "@physicalAssetValuationHistorical": { "description": "Legend label for the historical-valuation curve on a physical asset's trend chart." },
+  "physicalAssetValuationTrendSemanticLabel": "Valuation trend",
+  "@physicalAssetValuationTrendSemanticLabel": { "description": "Accessibility label for the physical asset valuation-trend chart." },
+
+  "accountsAppBarTitle": "Accounts",
+  "accountsCreateAction": "New account",
+  "accountsLoadError": "Failed to load: {error}",
+  "@accountsLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "accountsEmptyHint": "No accounts yet. Tap the bottom-right button to add one, then come back to record assets.",
+
+  "accountTypeBrokerage": "Brokerage account",
+  "accountTypeBank": "Bank account",
+  "accountTypeCryptoWallet": "Crypto wallet",
+  "accountTypeRealEstate": "Real estate account",
+  "accountTypeVehicle": "Vehicle account",
+  "accountTypeLiability": "Liability account",
+  "accountTypeCash": "Cash account",
+  "accountTypeOther": "Other account",
+
+  "accountFormCreateTitle": "New account",
+  "accountFormEditTitle": "Edit account",
+  "accountFormDeleteTooltip": "Delete",
+  "accountFormDeleteTitle": "Delete account",
+  "accountFormDeleteContent": "Delete “{name}”? This sync to other devices.",
+  "@accountFormDeleteContent": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "accountFormCancelAction": "Cancel",
+  "accountFormDeleteAction": "Delete",
+  "accountFormTypeLabel": "Account type",
+  "accountFormNameLabel": "Account name",
+  "accountFormNameRequired": "Enter the account name",
+  "accountFormInstitutionLabel": "Institution",
+  "accountFormInstitutionHelper": "Bank / brokerage / platform (optional)",
+  "accountFormAccountNumberLabel": "Account number / last digits (optional)",
+  "accountFormArchivedTitle": "Archived",
+  "accountFormArchivedSubtitle": "Archived accounts are hidden from the main list.",
+  "accountFormSaving": "Saving…",
+  "accountFormSave": "Save",
+
+  "cashFormCreateTitle": "Record cash balance",
+  "cashFormEditTitle": "Edit cash balance",
+  "cashFormDeleteTooltip": "Delete",
+  "cashFormLoadError": "Failed to load: {error}",
+  "@cashFormLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "cashFormNeedAccountHint": "Please create a bank / cash account first.",
+  "cashFormCreateAccountAction": "New account",
+  "cashFormBalanceLabel": "Balance",
+  "cashFormNicknameLabel": "Nickname (optional)",
+  "cashFormNicknameHelper": "e.g. CMB HKD demand, Yu’e Bao",
+  "cashFormSaving": "Saving…",
+  "cashFormSave": "Save",
+
+  "manualAssetDeleteTitle": "Delete asset",
+  "manualAssetDeleteContent": "Delete this asset record?",
+  "manualAssetDeleteCancel": "Cancel",
+  "manualAssetDeleteConfirm": "Delete"
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/domain/expense_category.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'expense_category_visuals.dart';
 
 /// Tap-grid category picker — mobile-first per FIR-69. Each tile shows the
@@ -23,16 +24,21 @@ class CategoryGridPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
-          child: Text(label ?? '类目', style: theme.textTheme.labelLarge),
+          child: Text(
+            label ?? l10n.expenseCategoryPickerLabelDefault,
+            style: theme.textTheme.labelLarge,
+          ),
         ),
         FormField<String>(
           initialValue: selectedId,
-          validator: (v) => (v == null || v.isEmpty) ? '请选择类目' : null,
+          validator: (v) =>
+              (v == null || v.isEmpty) ? l10n.expenseCategoryPickerRequired : null,
           builder: (state) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,

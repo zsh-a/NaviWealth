@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/charts/charts.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../data/physical_asset.dart';
 
 /// Line chart of valuation history.
@@ -23,25 +24,26 @@ class ValuationTrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return NwLineChart(
       series: [
         if (projection.length >= 2)
           ChartSeries(
-            name: '预计估值',
+            name: l10n.physicalAssetValuationProjected,
             intent: SeriesIntent.projection,
             emphasis: SeriesEmphasis.dashed,
             points: _toPoints(projection),
           ),
         if (points.isNotEmpty)
           ChartSeries(
-            name: '历史估值',
+            name: l10n.physicalAssetValuationHistorical,
             intent: SeriesIntent.primary,
             points: _toPoints(points),
           ),
       ],
       yAxis: ValueAxis.currency(currencyCode: currency),
       filled: true,
-      semanticLabel: '估值走势',
+      semanticLabel: l10n.physicalAssetValuationTrendSemanticLabel,
     );
   }
 

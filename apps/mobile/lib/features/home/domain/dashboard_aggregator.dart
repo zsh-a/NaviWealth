@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../data/domain/manual_asset_metadata.dart';
 import '../../../data/repositories/manual_asset_repository.dart';
@@ -92,7 +91,8 @@ class DashboardAggregator {
         CategoryItem(
           id: liability.id,
           name: liability.name,
-          subtitle: _liabilityTypeLabel(liability.type),
+          subtitle: null,
+          liabilityType: liability.type,
           valueInBase: converted,
           nativeAmount: outstanding,
           nativeCurrency: liability.currency,
@@ -225,23 +225,5 @@ class DashboardAggregator {
     return asset.currency;
   }
 
-  String _liabilityTypeLabel(LiabilityType type) {
-    switch (type) {
-      case LiabilityType.mortgage:
-        return '房贷';
-      case LiabilityType.carLoan:
-        return '车贷';
-      case LiabilityType.creditCard:
-        return '信用卡';
-      case LiabilityType.consumerLoan:
-        return '消费贷';
-      case LiabilityType.studentLoan:
-        return '学生贷款';
-      case LiabilityType.marginLoan:
-        return '保证金贷款';
-      case LiabilityType.other:
-        return '其他';
-    }
-  }
 }
 
