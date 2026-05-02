@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
+import '../audit/event_log_writer.dart';
 import '../db/app_database.dart';
 import '../domain/enums.dart';
 import '../domain/expense.dart';
@@ -35,15 +36,18 @@ class ExpenseRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    EventLogWriter? eventLog,
     Uuid uuid = const Uuid(),
   }) : _db = db,
        _outbox = outbox,
        _stamper = stamper,
+       _eventLog = eventLog ?? EventLogWriter(db: db, uuid: uuid),
        _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final EventLogWriter _eventLog;
   final Uuid _uuid;
 
   static const String _tableName = 'transactions';
@@ -172,6 +176,20 @@ class ExpenseRepository {
         fields: fields,
         stamp: stamp,
       );
+      await _eventLog.recordCreated(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        after: <String, Object?>{
+          'account_id': accountId,
+          'type': TransactionType.expense.name,
+          'quantity': signedQuantity.toString(),
+          'currency': currency,
+          'trade_date': tradeDate.toUtc().toIso8601String(),
+          'note': note,
+          'expense_metadata_json': encoded,
+        },
+      );
     });
     return (await findById(id))!;
   }
@@ -189,6 +207,7 @@ class ExpenseRepository {
     List<String>? tags,
     String? note,
     bool clearNote = false,
+    String? reason,
   }) async {
     if (amount != null && amount.sign <= 0) {
       throw ArgumentError.value(
@@ -245,6 +264,40 @@ class ExpenseRepository {
     }
 
     if (diff.isEmpty) return existing;
+    // Snapshot the *user-visible* prior values for the same set of
+    // fields the diff contains, so the audit row can answer "what was
+    // it before?" without re-reading the row at view time.
+    final auditBefore = <String, Object?>{};
+    final auditAfter = <String, Object?>{};
+    if (diff.containsKey('account_id')) {
+      auditBefore['account_id'] = existing.accountId;
+      auditAfter['account_id'] = diff['account_id'];
+    }
+    if (diff.containsKey('quantity')) {
+      // Domain entity exposes the positive magnitude; the audit ledger
+      // mirrors that so users see "100 → 300", not "-100 → -300".
+      auditBefore['amount'] = existing.amount.toString();
+      auditAfter['amount'] = amount!.toString();
+    }
+    if (diff.containsKey('currency')) {
+      auditBefore['currency'] = existing.currency;
+      auditAfter['currency'] = diff['currency'];
+    }
+    if (diff.containsKey('trade_date')) {
+      auditBefore['trade_date'] = existing.tradeDate.toUtc().toIso8601String();
+      auditAfter['trade_date'] = diff['trade_date'];
+    }
+    if (diff.containsKey('note')) {
+      auditBefore['note'] = existing.note;
+      auditAfter['note'] = diff['note'];
+    }
+    if (diff.containsKey('expense_metadata_json')) {
+      auditBefore['category_id'] = existing.categoryId;
+      auditBefore['tags'] = existing.tags;
+      auditAfter['category_id'] = categoryId ?? existing.categoryId;
+      auditAfter['tags'] = tags ?? existing.tags;
+    }
+
     diff['updated_at'] = stamp.now.toUtc().toIso8601String();
     diff['updated_by_device'] = stamp.deviceId;
     diff['hlc'] = stamp.hlc.toString();
@@ -258,6 +311,16 @@ class ExpenseRepository {
         fields: diff,
         stamp: stamp,
       );
+      if (auditAfter.isNotEmpty) {
+        await _eventLog.recordFieldChanged(
+          entityTable: _tableName,
+          entityId: id,
+          stamp: stamp,
+          before: auditBefore,
+          after: auditAfter,
+          reason: reason,
+        );
+      }
     });
     return (await findById(id))!;
   }
@@ -265,7 +328,7 @@ class ExpenseRepository {
   /// Soft-delete (tombstone). Aggregators that respect `deletedAt IS NULL`
   /// will exclude the expense; the queued `delete` op tells peers to do
   /// the same.
-  Future<void> softDelete(String id) async {
+  Future<void> softDelete(String id, {String? reason}) async {
     final stamp = await _stamper.stamp();
     final companion = TransactionsCompanion(
       updatedAt: Value(stamp.now),
@@ -282,6 +345,12 @@ class ExpenseRepository {
         rowId: id,
         fields: null,
         stamp: stamp,
+      );
+      await _eventLog.recordSoftDeleted(
+        entityTable: _tableName,
+        entityId: id,
+        stamp: stamp,
+        reason: reason,
       );
     });
   }
