@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../core/sync/sync_tables.dart';
 import '../../domain/values/asset_market.dart';
@@ -105,8 +108,17 @@ class AppDatabase extends _$AppDatabase {
   ///    destination) carry the same id so the pair can be joined,
   ///    rendered and tombstoned as a single unit. Legacy single-leg
   ///    rows leave it NULL and surface in the unbalanced-group audit.
+  ///  - v11 (FIR-123) — Backfill genesis `valuationAdjust` rows for every
+  ///    manual-valuation asset (cash / bankDepositTerm /
+  ///    bankDepositDemand / wealthProduct) that has a `last_price` set
+  ///    but no existing `valuationAdjust` transaction. Replaces the prior
+  ///    "directly UPDATE assets.last_price" write path with an
+  ///    append-only event stream — see [seedManualAssetValuationAdjusts]
+  ///    for the SQL and tradeoffs. Existing manual assets keep their
+  ///    cached `last_price`; the seeded transactions become the single
+  ///    starting point future valuations append to.
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -151,6 +163,8 @@ class AppDatabase extends _$AppDatabase {
           case 10:
             await m.addColumn(transactions, transactions.transferGroupId);
             await _createTransferGroupIndex(this);
+          case 11:
+            await seedManualAssetValuationAdjusts(this);
           default:
             throw StateError(
               'No migration registered for schema upgrade to v$v.',
@@ -490,6 +504,114 @@ bool _looksLikeCanonicalAssetId(String id) {
   if (colon <= 0) return false;
   final prefix = id.substring(0, colon);
   return assetMarketFromWire(prefix) != null;
+}
+
+/// FIR-123 v11 backfill: for every manual-valuation asset (cash, term /
+/// demand bank deposits, wealth products) that already has a
+/// `last_price` but no existing `valuationAdjust` transaction, seed a
+/// genesis row so the asset's valuation timeline starts from an explicit
+/// event rather than a hand-edited cell on the assets table.
+///
+/// Public so the migration test can rehearse the helper against a
+/// hand-rolled fixture. The function is idempotent — rerunning leaves
+/// already-seeded assets untouched, which makes it safe to invoke from
+/// both the v10 → v11 onUpgrade step and from any rescue path that
+/// suspects the seed never ran (e.g. a botched downgrade-then-rerun).
+///
+/// Account id is parsed out of the JSON metadata blob (`account_id`);
+/// rows whose metadata cannot be decoded fall back to the asset id so
+/// the row is still insertable, mirroring [ManualAssetRepository]'s
+/// `_accountIdForAsset` rule. The seeded transaction copies the asset's
+/// existing `owner_user_id`, `updated_by_device`, `hlc` and `updated_at`
+/// so the row sits in the same sync partition as its parent asset.
+Future<void> seedManualAssetValuationAdjusts(AppDatabase db) async {
+  // Manual-valuation asset types match `kManualValuationAssetTypes` —
+  // duplicating the literal here avoids dragging the converters layer
+  // into the migration helper.
+  const manualTypes = <String>[
+    'cash',
+    'bankDepositTerm',
+    'bankDepositDemand',
+    'wealthProduct',
+  ];
+  final placeholders = List.filled(manualTypes.length, '?').join(', ');
+  final rows = await db.customSelect(
+    'SELECT a.id AS id, a.currency AS currency, a.last_price AS last_price, '
+    '       a.last_price_at AS last_price_at, a.metadata_json AS metadata_json, '
+    '       a.owner_user_id AS owner_user_id, '
+    '       a.updated_at AS updated_at, '
+    '       a.updated_by_device AS updated_by_device, '
+    '       a.hlc AS hlc '
+    'FROM assets AS a '
+    'WHERE a.type IN ($placeholders) '
+    '  AND a.last_price IS NOT NULL '
+    '  AND a.deleted_at IS NULL '
+    '  AND NOT EXISTS ('
+    '    SELECT 1 FROM transactions AS t '
+    '    WHERE t.asset_id = a.id '
+    '      AND t.type = ? '
+    '      AND t.deleted_at IS NULL'
+    '  )',
+    variables: [
+      ...manualTypes.map(Variable<String>.new),
+      const Variable<String>('valuationAdjust'),
+    ],
+  ).get();
+  if (rows.isEmpty) return;
+  const uuid = Uuid();
+  await db.transaction(() async {
+    for (final row in rows) {
+      final assetId = row.read<String>('id');
+      final currency = row.read<String>('currency');
+      final lastPrice = row.read<String>('last_price');
+      final lastPriceAtRaw = row.readNullable<DateTime>('last_price_at');
+      final metadataJson = row.readNullable<String>('metadata_json');
+      final ownerUserId = row.read<String>('owner_user_id');
+      final updatedAt = row.read<DateTime>('updated_at');
+      final updatedByDevice = row.read<String>('updated_by_device');
+      final hlc = row.read<String>('hlc');
+
+      final accountId = _decodeAccountId(metadataJson) ?? assetId;
+      final tradeDate = lastPriceAtRaw ?? updatedAt;
+      // Drift's default DateTime mapping persists as
+      // seconds-since-epoch (INTEGER); using the same wire shape lets
+      // Drift's reader round-trip the column out without manual coercion.
+      final tradeDateEpoch = tradeDate.toUtc().millisecondsSinceEpoch ~/ 1000;
+      final updatedAtEpoch = updatedAt.toUtc().millisecondsSinceEpoch ~/ 1000;
+      await db.customStatement(
+        'INSERT INTO transactions ('
+        '  id, account_id, asset_id, type, quantity, price, currency, '
+        '  trade_date, owner_user_id, updated_at, updated_by_device, hlc'
+        ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          uuid.v4(),
+          accountId,
+          assetId,
+          'valuationAdjust',
+          '0',
+          lastPrice,
+          currency,
+          tradeDateEpoch,
+          ownerUserId,
+          updatedAtEpoch,
+          updatedByDevice,
+          hlc,
+        ],
+      );
+    }
+  });
+}
+
+String? _decodeAccountId(String? metadataJson) {
+  if (metadataJson == null || metadataJson.isEmpty) return null;
+  try {
+    final decoded = jsonDecode(metadataJson);
+    if (decoded is! Map) return null;
+    final value = decoded['account_id'];
+    return value is String && value.isNotEmpty ? value : null;
+  } on FormatException {
+    return null;
+  }
 }
 
 /// FIR-126 v8 backfill: rewrites every existing `accounts.category` value
