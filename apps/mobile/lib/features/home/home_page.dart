@@ -126,11 +126,22 @@ class _NetWorthHeader extends ConsumerWidget {
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: Spacing.s8),
-            MoneyText(
-              amount: value,
-              currencyCode: snapshot.baseCurrency,
-              style: TypographyTokens.numericDisplay,
-              showSign: value != null && value < 0,
+            // Cap dynamic-text scaling on the 32dp hero number so users on
+            // 200% system font size don't blow the card out of its row.
+            // FittedBox handles the long-currency / many-digits case
+            // (e.g. ¥123,456,789.00) by scaling the glyphs down to fit.
+            MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.3,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: MoneyText(
+                  amount: value,
+                  currencyCode: snapshot.baseCurrency,
+                  style: TypographyTokens.numericDisplay,
+                  showSign: value != null && value < 0,
+                ),
+              ),
             ),
             if (hasData) ...[
               const SizedBox(height: Spacing.s8),

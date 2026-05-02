@@ -59,4 +59,18 @@ void main() {
     final text = tester.widget<Text>(find.byType(Text));
     expect(text.data, startsWith('-'));
   });
+
+  testWidgets(
+    'MoneyText emits a screen-reader label that pairs amount + currency',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const MoneyText(amount: 12345.6, currencyCode: 'USD', symbol: '\$'),
+        ),
+      );
+      final text = tester.widget<Text>(find.byType(Text));
+      expect(text.semanticsLabel, contains('USD'));
+      expect(text.semanticsLabel, contains('12,345.60'));
+    },
+  );
 }

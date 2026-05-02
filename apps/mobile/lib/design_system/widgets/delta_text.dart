@@ -88,34 +88,58 @@ class DeltaText extends StatelessWidget {
       fontFeatures: TypographyTokens.tabularFigures,
     );
 
-    return DefaultTextStyle.merge(
-      style: effectiveStyle,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showIcon)
-            Padding(
-              padding: const EdgeInsets.only(right: Spacing.s2),
-              child: Icon(
-                _iconFor(value, market.mode),
-                size: (effectiveStyle.fontSize ?? 14) + 2,
-                color: tone,
+    return Semantics(
+      container: true,
+      label: _spokenLabel(context),
+      excludeSemantics: true,
+      child: DefaultTextStyle.merge(
+        style: effectiveStyle,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showIcon)
+              Padding(
+                padding: const EdgeInsets.only(right: Spacing.s2),
+                child: Icon(
+                  _iconFor(value, market.mode),
+                  size: (effectiveStyle.fontSize ?? 14) + 2,
+                  color: tone,
+                ),
               ),
-            ),
-          if (format == DeltaFormat.currency)
-            MoneyText(
-              amount: value,
-              currencyCode: currencyCode,
-              fractionDigits: fractionDigits,
-              style: effectiveStyle,
-              showSign: showSign,
-              locale: locale,
-            )
-          else
-            Text(_formatNonCurrency(context), style: effectiveStyle),
-        ],
+            if (format == DeltaFormat.currency)
+              MoneyText(
+                amount: value,
+                currencyCode: currencyCode,
+                fractionDigits: fractionDigits,
+                style: effectiveStyle,
+                showSign: showSign,
+                locale: locale,
+              )
+            else
+              Text(_formatNonCurrency(context), style: effectiveStyle),
+          ],
+        ),
       ),
     );
+  }
+
+  String _spokenLabel(BuildContext context) {
+    if (value == null) return '—';
+    final direction = value! > 0
+        ? '+'
+        : value! < 0
+            ? '-'
+            : '';
+    if (format == DeltaFormat.currency) {
+      final loc = locale ?? Localizations.maybeLocaleOf(context)?.toString();
+      final digits = fractionDigits ?? 2;
+      final formatter = NumberFormat.decimalPatternDigits(
+        locale: loc,
+        decimalDigits: digits,
+      );
+      return '$direction${formatter.format(value!.abs())} $currencyCode';
+    }
+    return '$direction${_formatNonCurrency(context).replaceAll(RegExp(r'^[+-]'), '')}';
   }
 
   String _formatNonCurrency(BuildContext context) {

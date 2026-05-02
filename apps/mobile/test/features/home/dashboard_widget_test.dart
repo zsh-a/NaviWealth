@@ -213,5 +213,56 @@ void main() {
     expect(find.text('工资卡'), findsOneWidget);
     expect(find.text('招商银行'), findsOneWidget);
   });
+
+  testWidgets('allocation legend rows meet the 48dp touch-target floor', (
+    tester,
+  ) async {
+    final snapshot = DashboardSnapshot(
+      asOf: day(2026, 4, 29),
+      baseCurrency: 'CNY',
+      allocations: [
+        CategoryAllocation(
+          category: AssetCategory.cash,
+          totalInBase: Money(d('10000'), 'CNY'),
+          items: [
+            CategoryItem(
+              id: 'cash-1',
+              name: '工资卡',
+              subtitle: '招商银行',
+              valueInBase: Money(d('10000'), 'CNY'),
+              nativeAmount: d('10000'),
+              nativeCurrency: 'CNY',
+            ),
+          ],
+        ),
+      ],
+      totalAssets: Money(d('10000'), 'CNY'),
+      totalLiabilities: Money(Decimal.zero, 'CNY'),
+      netWorth: Money(d('10000'), 'CNY'),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: AllocationCard(snapshot: snapshot)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The tappable legend row (the InkWell that contains the "Cash"
+    // label) must render at least 48dp tall — Material accessibility
+    // floor.
+    final legendInk = find.ancestor(
+      of: find.text('Cash'),
+      matching: find.byType(InkWell),
+    );
+    expect(legendInk, findsOneWidget);
+    final size = tester.getSize(legendInk);
+    expect(size.height, greaterThanOrEqualTo(48));
+  });
 }
 

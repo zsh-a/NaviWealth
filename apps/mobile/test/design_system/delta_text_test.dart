@@ -82,4 +82,19 @@ void main() {
     // Expect "+2.34%" somewhere in the rendered text.
     expect(find.textContaining('2.34%'), findsOneWidget);
   });
+
+  testWidgets(
+    'DeltaText emits a single semantics node carrying sign + value + currency',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _wrap(const DeltaText(value: -1234.56, currencyCode: 'USD')),
+      );
+      // The Semantics(excludeSemantics: true) wrapper means the inner
+      // Icon + Text don't leak as separate nodes; only our spoken label
+      // is exposed to assistive tech.
+      expect(find.bySemanticsLabel(RegExp(r'^-1,234\.56 USD$')), findsOneWidget);
+      handle.dispose();
+    },
+  );
 }
