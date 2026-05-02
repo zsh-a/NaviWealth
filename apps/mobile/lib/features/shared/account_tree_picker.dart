@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
 import '../../design_system/tokens/spacing_tokens.dart';
+import '../accounts/account_icon_catalog.dart';
 
 /// FIR-128 §1.2 — drop-in replacement for the legacy flat
 /// [AccountPicker] / [CategoryGridPicker] that surfaces the
@@ -83,19 +84,39 @@ class AccountTreePicker extends StatelessWidget {
         border: const OutlineInputBorder(),
       ),
       items: entries.map((e) {
-        // The leading bullet glyph distinguishes top-level rows from
-        // children at a glance even when the dropdown is collapsed.
-        // We render the prefix as part of the same Text so the row is
-        // a single laid-out line — wrapping in Flexible / Expanded
-        // here breaks DropdownMenuItem's intrinsic-width sizing.
+        // FIR-131 wave 3b — when [Account.icon] resolves to a known
+        // entry in the icon catalogue, render it as the leading
+        // affordance and tint by [Account.color] (when valid). When
+        // either field is absent / unknown, fall back to the original
+        // bullet glyph so the row stays compact and lined up.
+        final iconData = resolveAccountIcon(e.account.icon);
+        final iconColor = _parseHexColor(e.account.color);
         final prefix = e.account.parentId == null ? '• ' : '› ';
         return DropdownMenuItem<String>(
           value: e.account.id,
           child: Padding(
             padding: EdgeInsets.only(left: e.depth * Spacing.s8),
-            child: Text(
-              '$prefix${e.path}',
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (iconData != null) ...[
+                  Icon(
+                    iconData,
+                    size: 16,
+                    color: iconColor ??
+                        Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: Spacing.s4),
+                  Text(
+                    e.path,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ] else
+                  Text(
+                    '$prefix${e.path}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
             ),
           ),
         );
@@ -159,4 +180,17 @@ class _PickerEntry {
   final Account account;
   final int depth;
   final String path;
+}
+
+/// `#RRGGBB` (with or without leading `#`) → [Color]; returns `null`
+/// for any malformed input so callers can fall back to the theme's
+/// default tint without a try / catch.
+Color? _parseHexColor(String? value) {
+  if (value == null || value.isEmpty) return null;
+  var hex = value.replaceFirst('#', '');
+  if (hex.length == 6) hex = 'FF$hex';
+  if (hex.length != 8) return null;
+  final parsed = int.tryParse(hex, radix: 16);
+  if (parsed == null) return null;
+  return Color(parsed);
 }
