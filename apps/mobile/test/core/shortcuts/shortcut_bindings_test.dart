@@ -28,12 +28,12 @@ void main() {
       );
     });
 
-    test('declares Cmd+/ and Ctrl+/ for the help dialog', () {
-      final helpBindings = bindings
-          .where((b) => b.intent is ShowShortcutHelpIntent)
+    test('declares Cmd+/ and Ctrl+/ for the AI chat', () {
+      final aiChatBindings = bindings
+          .where((b) => b.intent is OpenAiChatIntent)
           .toList();
-      expect(helpBindings, hasLength(2));
-      final activators = helpBindings
+      expect(aiChatBindings, hasLength(2));
+      final activators = aiChatBindings
           .map((b) => b.activator)
           .cast<SingleActivator>();
       expect(
@@ -46,6 +46,16 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('declares ? (Shift+/) for the shortcut help dialog', () {
+      final helpBindings = bindings
+          .where((b) => b.intent is ShowShortcutHelpIntent)
+          .toList();
+      expect(helpBindings, hasLength(1));
+      final activator = helpBindings.single.activator as SingleActivator;
+      expect(activator.trigger, LogicalKeyboardKey.slash);
+      expect(activator.shift, isTrue);
     });
 
     test('declares Esc for dismissing overlays', () {

@@ -7,9 +7,14 @@ import 'command_palette_entry.dart';
 /// Show the global command palette. Idempotent — a second call while the
 /// palette is already on screen is a no-op so the Cmd+K binding stays safe to
 /// hammer.
+///
+/// [onAskAi] is called with the user's query when they select the dynamic
+/// "Ask AI: …" entry that appears when the search text doesn't fully match
+/// any command.
 Future<void> showCommandPalette(
   BuildContext context, {
   required List<CommandPaletteEntry> commands,
+  void Function(String query)? onAskAi,
 }) {
   if (_isOpen) return Future<void>.value();
   _isOpen = true;
@@ -19,7 +24,8 @@ Future<void> showCommandPalette(
     barrierLabel: MaterialLocalizations.of(
       context,
     ).modalBarrierDismissLabel,
-    builder: (BuildContext ctx) => _CommandPaletteDialog(commands: commands),
+    builder: (BuildContext ctx) =>
+        _CommandPaletteDialog(commands: commands, onAskAi: onAskAi),
   ).whenComplete(() => _isOpen = false);
 }
 
@@ -36,9 +42,10 @@ void resetCommandPaletteForTest() {
 bool _isOpen = false;
 
 class _CommandPaletteDialog extends StatefulWidget {
-  const _CommandPaletteDialog({required this.commands});
+  const _CommandPaletteDialog({required this.commands, this.onAskAi});
 
   final List<CommandPaletteEntry> commands;
+  final void Function(String query)? onAskAi;
 
   @override
   State<_CommandPaletteDialog> createState() => _CommandPaletteDialogState();
@@ -68,13 +75,30 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
   }
 
   void _onQueryChanged() {
-    final String q = _searchController.text.trim().toLowerCase();
+    final String raw = _searchController.text.trim();
+    final String q = raw.toLowerCase();
     final List<CommandPaletteEntry> next = q.isEmpty
         ? widget.commands
         : widget.commands.where((c) => c.matches(q)).toList(growable: false);
+
+    // Prepend a dynamic "Ask AI" entry when the user has typed a query.
+    if (raw.isNotEmpty && widget.onAskAi != null) {
+      final l10n = AppLocalizations.of(context);
+      final aiEntry = CommandPaletteEntry(
+        id: 'action.askAi',
+        label: l10n.commandPaletteAskAi(raw),
+        icon: Icons.auto_awesome,
+        keywords: <String>[raw, 'ai', 'ask'],
+        run: (_) => widget.onAskAi!(raw),
+      );
+      next.insert(0, aiEntry);
+    }
+
     setState(() {
       _filtered = next;
-      _selectedIndex = next.isEmpty ? 0 : _selectedIndex.clamp(0, next.length - 1);
+      _selectedIndex = next.isEmpty
+          ? 0
+          : _selectedIndex.clamp(0, next.length - 1);
     });
   }
 

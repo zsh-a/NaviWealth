@@ -16,6 +16,7 @@ class ChatComposer extends StatefulWidget {
     required this.onSend,
     required this.onCancel,
     this.isFlushing = false,
+    this.initialText,
   });
 
   final bool isStreaming;
@@ -24,6 +25,10 @@ class ChatComposer extends StatefulWidget {
   /// disables input and shows "正在同步..." for the typically sub-second
   /// window while we wait for `/sync/push` to land.
   final bool isFlushing;
+
+  /// Optional text to pre-fill the composer with (e.g. from "Ask AI" in
+  /// the command palette).
+  final String? initialText;
   final ValueChanged<String> onSend;
   final VoidCallback onCancel;
 
@@ -36,6 +41,14 @@ class ChatComposer extends StatefulWidget {
 class _ChatComposerState extends State<ChatComposer> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialText != null && widget.initialText!.isNotEmpty) {
+      _controller.text = widget.initialText!;
+    }
+  }
 
   @override
   void dispose() {

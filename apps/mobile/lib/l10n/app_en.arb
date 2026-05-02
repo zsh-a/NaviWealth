@@ -331,15 +331,35 @@
       "label": { "type": "String", "example": "Overview" }
     }
   },
+  "shortcutOpenAiChat": "Open AI chat",
+  "@shortcutOpenAiChat": { "description": "Help-dialog label for the Cmd/Ctrl+/ AI chat shortcut (FIR-112)" },
+  "shortcutVimGoto": "Vim-style go to {target}",
+  "@shortcutVimGoto": {
+    "description": "Help-dialog label for vim-style g+key navigation (FIR-112)",
+    "placeholders": { "target": { "type": "String", "example": "home" } }
+  },
+  "shortcutListSearch": "Focus list search",
+  "@shortcutListSearch": { "description": "Help-dialog label for / key to focus search in master-detail lists (FIR-112)" },
+  "shortcutListNext": "Select next item",
+  "@shortcutListNext": { "description": "Help-dialog label for j key to select next list item in master-detail (FIR-112)" },
+  "shortcutListPrevious": "Select previous item",
+  "@shortcutListPrevious": { "description": "Help-dialog label for k key to select previous list item in master-detail (FIR-112)" },
 
   "commandPaletteSearchHint": "Search commands…",
   "@commandPaletteSearchHint": { "description": "Placeholder for the command palette search box (FIR-87)" },
   "commandPaletteEmpty": "No commands match your search",
   "@commandPaletteEmpty": { "description": "Shown in the command palette when the query matches no commands" },
+  "commandPaletteAskAi": "Ask AI: {query}",
+  "@commandPaletteAskAi": {
+    "description": "Dynamic command palette entry that opens AI chat with the user's query prefilled (FIR-112)",
+    "placeholders": { "query": { "type": "String", "example": "portfolio summary" } }
+  },
   "commandPaletteGoOverview": "Go to Overview",
   "@commandPaletteGoOverview": { "description": "Command palette: navigate to the home/overview tab" },
   "commandPaletteGoAssets": "Go to Assets",
   "@commandPaletteGoAssets": { "description": "Command palette: navigate to the assets tab" },
+  "commandPaletteGoAccounts": "Go to Accounts",
+  "@commandPaletteGoAccounts": { "description": "Command palette: navigate to the accounts page (FIR-112)" },
   "commandPaletteGoExpenses": "Go to Expenses",
   "@commandPaletteGoExpenses": { "description": "Command palette: navigate to the expenses tab" },
   "commandPaletteGoAnalytics": "Go to Analytics",
@@ -354,6 +374,12 @@
   "@commandPaletteNewExpense": { "description": "Command palette: open the new expense form" },
   "commandPaletteOpenAi": "Open AI assistant",
   "@commandPaletteOpenAi": { "description": "Command palette: open the AI chat page" },
+  "commandPaletteToggleTheme": "Toggle theme (light / dark)",
+  "@commandPaletteToggleTheme": { "description": "Command palette: cycle between light and dark theme (FIR-112)" },
+  "commandPaletteToggleColorMode": "Toggle market color mode",
+  "@commandPaletteToggleColorMode": { "description": "Command palette: cycle market direction colors (FIR-112)" },
+  "commandPaletteToggleLanguage": "Toggle language",
+  "@commandPaletteToggleLanguage": { "description": "Command palette: cycle between supported languages (FIR-112)" },
   "commandPaletteShortcutHelp": "Show keyboard shortcuts",
   "@commandPaletteShortcutHelp": { "description": "Command palette: open the shortcut help dialog" },
 
