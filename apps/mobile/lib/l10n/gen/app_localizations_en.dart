@@ -702,6 +702,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commonSaveFailed => 'Couldn\'t save your changes. Tap retry.';
+
+  @override
   String get deferredLoadFailedTitle => 'Couldn\'t load this section';
 
   @override

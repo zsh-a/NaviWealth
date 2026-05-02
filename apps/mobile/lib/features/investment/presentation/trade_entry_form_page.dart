@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
@@ -38,7 +37,8 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
   ConsumerState<TradeEntryFormPage> createState() => _TradeEntryFormPageState();
 }
 
-class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
+class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
+    with OptimisticFormSubmit<TradeEntryFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
@@ -129,77 +129,83 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage> {
     if (selected == null) return;
 
     setState(() => _busy = true);
-    try {
-      final securitiesRepo =
-          await ref.read(securitiesAssetRepositoryProvider.future);
-      // Persist the catalog row into `assets` (or hand-entered row, if it
-      // came from the manual sheet). `upsertSecurity` is idempotent on
-      // (market, symbol), so re-recording trades on the same instrument
-      // does not bloat the outbox.
-      final asset = await securitiesRepo.upsertSecurity(
-        symbol: selected.symbol,
-        market: selected.market,
-        type: selected.type,
-        currency: selected.currency,
-        name: selected.name,
-        isin: selected.isin,
-      );
+    final l10n = AppLocalizations.of(context);
+    final securitiesRepo =
+        await ref.read(securitiesAssetRepositoryProvider.future);
+    final tradeService = await ref.read(tradeEntryServiceProvider.future);
+    final repo = await ref.read(transactionRepositoryProvider.future);
+    if (!mounted) return;
 
-      final draft = TradeDraft(
-        type: _type,
-        asset: asset,
-        accountId: _accountId!,
-        quantity: Decimal.parse(_quantityController.text.trim()),
-        price: _priceController.text.trim().isEmpty
-            ? null
-            : Decimal.parse(_priceController.text.trim()),
-        currency: _currency!,
-        tradeDate: _tradeDate,
-        fee: Decimal.tryParse(_feeController.text.trim()),
-        tax: Decimal.tryParse(_taxController.text.trim()),
-        note: _noteController.text.trim().isEmpty
-            ? null
-            : _noteController.text.trim(),
-      );
+    final type = _type;
+    final accountId = _accountId!;
+    final currency = _currency!;
+    final tradeDate = _tradeDate;
+    final quantity = Decimal.parse(_quantityController.text.trim());
+    final price = _priceController.text.trim().isEmpty
+        ? null
+        : Decimal.parse(_priceController.text.trim());
+    final fee = Decimal.tryParse(_feeController.text.trim());
+    final tax = Decimal.tryParse(_taxController.text.trim());
+    final note = _noteController.text.trim().isEmpty
+        ? null
+        : _noteController.text.trim();
 
-      final tradeService = await ref.read(tradeEntryServiceProvider.future);
-      final plan = await tradeService.buildPlan(draft, openLots: <Lot>[]);
+    // Record this entry's account / currency as the next default.
+    // Failure is silent — saving defaults is a UX nicety, not part of
+    // the trade-recording success contract.
+    unawaited(
+      ref.read(formDefaultsProvider.notifier).rememberTrade(
+            accountId: accountId,
+            currency: currency,
+          ),
+    );
 
-      final repo = await ref.read(transactionRepositoryProvider.future);
-      await repo.recordTrade(plan);
-
-      // Record this entry's account / currency as the next default.
-      // Failure is silent — saving defaults is a UX nicety, not part of
-      // the trade-recording success contract.
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberTrade(
-            accountId: _accountId,
-            currency: _currency,
-          ));
-
-      if (!mounted) return;
-      Haptics.success();
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tradeEntrySuccess)),
-      );
-      context.pop();
-    } on TradeEntryException catch (e) {
-      if (!mounted) return;
-      Haptics.error();
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tradeEntryFailure(e.message))),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Haptics.error();
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tradeEntryFailure('$e'))),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    await submitOptimistic(
+      // Use the underlying Navigator (rather than `context.pop()`) so the
+      // form is portable to test surfaces that mount it without a router.
+      // GoRouter sub-routes sit on the same Navigator stack, so this is
+      // a no-op difference in production.
+      pop: () {
+        Haptics.success();
+        Navigator.of(context).pop();
+      },
+      tag: 'trade-entry',
+      // `TradeEntryException` carries a user-facing message; pass it
+      // through so the snackbar reads "Couldn't record trade: <reason>"
+      // instead of a generic "save failed".
+      failureMessage: (error) => l10n.tradeEntryFailure(
+        error is TradeEntryException ? error.message : '$error',
+      ),
+      retryLabel: l10n.commonRetry,
+      write: () async {
+        // Persist the catalog row into `assets` (or hand-entered row,
+        // if it came from the manual sheet). `upsertSecurity` is
+        // idempotent on (market, symbol), so re-recording trades on
+        // the same instrument does not bloat the outbox.
+        final asset = await securitiesRepo.upsertSecurity(
+          symbol: selected.symbol,
+          market: selected.market,
+          type: selected.type,
+          currency: selected.currency,
+          name: selected.name,
+          isin: selected.isin,
+        );
+        final draft = TradeDraft(
+          type: type,
+          asset: asset,
+          accountId: accountId,
+          quantity: quantity,
+          price: price,
+          currency: currency,
+          tradeDate: tradeDate,
+          fee: fee,
+          tax: tax,
+          note: note,
+        );
+        final plan = await tradeService.buildPlan(draft, openLots: <Lot>[]);
+        await repo.recordTrade(plan);
+      },
+    );
   }
 
   @override

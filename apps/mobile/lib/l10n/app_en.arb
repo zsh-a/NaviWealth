@@ -297,6 +297,10 @@
   "@commonLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "commonSaveFailed": "Couldn't save your changes. Tap retry.",
+  "@commonSaveFailed": {
+    "description": "Generic failure snackbar shown when an optimistic form submit (FIR-98) fails after the form has already popped."
+  },
 
   "deferredLoadFailedTitle": "Couldn't load this section",
   "@deferredLoadFailedTitle": {

@@ -5,6 +5,7 @@ import '../core/command_palette/command_palette.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
+import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'router.dart';
 
@@ -16,12 +17,16 @@ class NaviWealthApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(marketColorMode: marketMode),
       darkTheme: AppTheme.dark(marketColorMode: marketMode),
       themeMode: themeMode,
+      // Global ScaffoldMessenger so optimistic-submit failures surface
+      // a snackbar even after the originating form has popped (FIR-98).
+      scaffoldMessengerKey: scaffoldMessengerKey,
       routerConfig: router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
