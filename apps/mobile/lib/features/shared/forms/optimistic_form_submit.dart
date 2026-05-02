@@ -120,7 +120,7 @@ Future<void> runOptimisticWrite({
     Haptics.error();
     if (context == null) return;
     AppMessenger.show(
-      context,
+      context, // ignore: use_build_context_synchronously — overlay cached before pop
       ToastKind.error,
       failureMessage(error),
       duration: const Duration(seconds: 6),
