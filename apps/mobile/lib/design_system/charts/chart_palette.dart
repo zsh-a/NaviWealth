@@ -51,27 +51,31 @@ class ChartPalette {
       accentSequence[i.abs() % accentSequence.length];
 
   static List<Color> _accentSequence({required bool isDark}) {
+    // The 4th and 8th slots stay aligned with `MarketColors.up/down` so a
+    // benchmark series labelled "profit" / "loss" reads the same hue as the
+    // dashboard's hero number. FIR-104 swapped these to emerald / soft
+    // crimson; the rest of the sequence is unchanged.
     if (isDark) {
       return const [
         Color(0xFF67D6F0), // cyan
         Color(0xFFB497F1), // purple
         Color(0xFFF6C863), // orange
-        Color(0xFF5CC788), // green
+        Color(0xFF34D399), // emerald (matches MarketColors.profit dark)
         Color(0xFFEB7BB1), // pink
         Color(0xFFE8D45A), // yellow
         Color(0xFF7AB7FB), // blue
-        Color(0xFFEB7373), // red
+        Color(0xFFFB7185), // rose (matches MarketColors.loss dark)
       ];
     }
     return const [
       Color(0xFF0891B2), // cyan
       Color(0xFF7C3AED), // purple
       Color(0xFFD97706), // orange
-      Color(0xFF118A3D), // green
+      Color(0xFF059669), // emerald (matches MarketColors.profit light)
       Color(0xFFDB2777), // pink
       Color(0xFFCA8A04), // yellow
       Color(0xFF1F6FEB), // blue
-      Color(0xFFB81D1D), // red
+      Color(0xFFBE123C), // rose (matches MarketColors.loss light)
     ];
   }
 }

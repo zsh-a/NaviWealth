@@ -2,29 +2,49 @@ import 'package:flutter/material.dart';
 
 /// Type scale.
 ///
-/// On Web, [fontFamilySans] resolves to `AppCnSans`, our pyftsubset-built
-/// subset of Noto Sans SC variable. The base subset is ~120 KB and loads
-/// with the first paint; the extension subset (~1.7 MB) is lazy-loaded only
-/// when a glyph outside the base set is rendered (free-text input, server
-/// payload). On iOS / Android / Web-while-loading, [fontFamilyFallback]
-/// hands rendering off to the platform CJK font so the user never sees
-/// tofu while the woff2 is in flight or unavailable. See
-/// `docs/design/13-web-fonts.md` for the pipeline.
+/// FIR-104 swapped the primary fontFamily from `AppCnSans` (the Noto Sans
+/// SC subset) to **Inter** for Latin / numeric / English copy. Inter
+/// brings the things a fintech UI needs out of the box:
 ///
-/// `tabular` indicates lining tabular figures should be used (essential for
-/// money columns).
+///   * tabular figures + lining figures (no horizontal jitter when a money
+///     ticker animates),
+///   * a tight x-height, and
+///   * a wide weight range (400 / 500 / 600 / 700) so we can hit the
+///     "extreme contrast" the design vision asks for.
+///
+/// **Outfit** is reserved for the largest hero number ([displayLarge], aka
+/// "Display 2XL"). Its taller proportions give the dashboard's net-worth
+/// figure the marquee feel of Copilot Money / Stripe Dashboard without
+/// requiring a custom variable axis.
+///
+/// CJK still goes through `AppCnSans` and the platform CJK fonts via
+/// [fontFamilyFallback] — when a glyph isn't present in the Latin subset,
+/// the renderer walks the fallback chain. That keeps Chinese text from
+/// dropping to tofu while the Inter / Outfit subsets stay tiny (~200 KB
+/// total).
+///
+/// Tabular figures are now applied **globally** via [tabularFigures] on
+/// every text style so a money column never has to opt in by hand. Inter
+/// supports tnum + lnum as native OpenType features; non-money copy is
+/// unaffected because the substitution only fires for digit glyphs.
 class TypographyTokens {
   const TypographyTokens._();
 
-  /// Font family used by every text style. Backed by the subset webfont on
-  /// Web and falls through to [fontFamilyFallback] on iOS / Android.
-  static const String fontFamilySans = 'AppCnSans';
+  /// Primary fontFamily. Maps to the self-hosted Inter Latin subset
+  /// registered in pubspec.yaml.
+  static const String fontFamilySans = 'Inter';
+
+  /// Display family — only used by [displayLarge] (Display 2XL). Outfit's
+  /// tall x-height and condensed digits give the hero net-worth figure
+  /// the marquee read the design vision asks for.
+  static const String fontFamilyDisplay = 'Outfit';
 
   /// Resolved in order when [fontFamilySans] cannot render a glyph yet —
-  /// covers offline / first-paint on Web and platforms where the bundled
-  /// font isn't available. Mirrors the `<style>` font stack in
-  /// `web/index.html`.
+  /// covers CJK and the long tail of system code points. The fallback
+  /// stack mirrors the `<style>` font stack in `web/index.html` so native
+  /// and web behave identically.
   static const List<String> fontFamilyFallback = <String>[
+    'AppCnSans', // bundled CJK subset on web; absent on native (no-op)
     'PingFang SC', // iOS / macOS
     'Hiragino Sans GB', // older macOS
     'Microsoft YaHei', // Windows
@@ -35,7 +55,10 @@ class TypographyTokens {
 
   static const String fontFamilyMono = 'monospace';
 
-  // Lining tabular figures — keeps digits the same width across rows.
+  /// Lining tabular figures — applied to every text style as of FIR-104
+  /// so digits stay aligned across rows even in non-numeric contexts (a
+  /// chart legend, a settings row with a count badge, …) without each
+  /// site having to opt in.
   static const List<FontFeature> tabularFigures = [
     FontFeature.tabularFigures(),
     FontFeature.liningFigures(),
@@ -46,39 +69,39 @@ class TypographyTokens {
     double? height,
     FontWeight weight = FontWeight.w400,
     double letterSpacing = 0,
-    bool tabular = false,
+    String fontFamily = fontFamilySans,
   }) {
     return TextStyle(
       fontSize: size,
       height: height,
       fontWeight: weight,
       letterSpacing: letterSpacing,
-      fontFamily: fontFamilySans,
+      fontFamily: fontFamily,
       fontFamilyFallback: fontFamilyFallback,
-      fontFeatures: tabular ? tabularFigures : null,
+      fontFeatures: tabularFigures,
     );
   }
 
   // Display — large numeric headlines (net worth, FIRE %).
+  // displayLarge ("Display 2XL") is the only style that uses Outfit; it's
+  // reserved for the dashboard hero number. Anything below stays on Inter.
   static final TextStyle displayLarge = _t(
     40,
     height: 1.1,
     weight: FontWeight.w700,
     letterSpacing: -0.5,
-    tabular: true,
+    fontFamily: fontFamilyDisplay,
   );
   static final TextStyle displayMedium = _t(
     32,
     height: 1.15,
     weight: FontWeight.w700,
     letterSpacing: -0.25,
-    tabular: true,
   );
   static final TextStyle displaySmall = _t(
     26,
     height: 1.2,
     weight: FontWeight.w600,
-    tabular: true,
   );
 
   // Headline — section titles.
@@ -140,31 +163,30 @@ class TypographyTokens {
     letterSpacing: 0.5,
   );
 
-  // Numeric — money, percentages, charts axis labels.
+  // Numeric — money, percentages, charts axis labels. With FIR-104 these
+  // are no longer the only carriers of `tabularFigures`; they remain a
+  // semantic alias so call sites that explicitly want "this is a number"
+  // can keep reading.
   static final TextStyle numericDisplay = _t(
     32,
     height: 1.15,
     weight: FontWeight.w700,
     letterSpacing: -0.25,
-    tabular: true,
   );
   static final TextStyle numericTitle = _t(
     20,
     height: 1.3,
     weight: FontWeight.w600,
-    tabular: true,
   );
   static final TextStyle numericBody = _t(
     14,
     height: 1.4,
     weight: FontWeight.w500,
-    tabular: true,
   );
   static final TextStyle numericCaption = _t(
     12,
     height: 1.3,
     weight: FontWeight.w500,
-    tabular: true,
   );
 
   /// Material 3 [TextTheme] composed from the tokens above. Used by
