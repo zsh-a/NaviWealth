@@ -35,17 +35,14 @@ class AssetDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repoAsync = ref.watch(manualAssetRepositoryProvider);
     return repoAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(body: AssetDetailSkeleton()),
       error: (e, _) => Scaffold(body: Center(child: Text('加载失败：$e'))),
       data: (repo) {
         return FutureBuilder<Asset?>(
           future: repo.findById(assetId),
           builder: (context, snap) {
             if (!snap.hasData) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return const Scaffold(body: AssetDetailSkeleton());
             }
             final asset = snap.data;
             if (asset == null) {
@@ -315,7 +312,7 @@ class _HoldingCard extends ConsumerWidget {
                 const SizedBox(height: Spacing.s8),
                 _MetricRow(
                   label: '平均成本',
-                  trailing: MoneyText(
+                  trailing: AnimatedMoneyText(
                     amount: avgCost?.toDouble(),
                     currencyCode: asset.currency,
                     fractionDigits: _priceFractionDigits(asset.type),
@@ -324,7 +321,7 @@ class _HoldingCard extends ConsumerWidget {
                 const SizedBox(height: Spacing.s8),
                 _MetricRow(
                   label: '当前市值',
-                  trailing: MoneyText(
+                  trailing: AnimatedMoneyText(
                     amount: marketValueAsset?.toDouble(),
                     currencyCode: asset.currency,
                     style: theme.textTheme.titleMedium,

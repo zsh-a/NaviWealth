@@ -1113,6 +1113,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireProgressTarget => '目标';
 
   @override
+  String get fireProgressGap => '距 FIRE 差额';
+
+  @override
   String fireCountdownTitle(String scenario) {
     return '倒计时 · $scenario';
   }

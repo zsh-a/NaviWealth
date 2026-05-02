@@ -6,14 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
 import '../../core/haptics/haptics.dart';
-import '../../design_system/charts/charts.dart';
-import '../../design_system/tokens/breakpoints.dart';
-import '../../design_system/tokens/radius_tokens.dart';
-import '../../design_system/tokens/spacing_tokens.dart';
-import '../../design_system/widgets/glass_app_bar.dart';
-import '../../design_system/widgets/glass_modal_bottom_sheet.dart';
-import '../../design_system/widgets/responsive_two_column.dart';
-import '../../design_system/widgets/skeleton.dart';
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/providers.dart';
 import 'domain/equity_allocation.dart';
@@ -51,13 +44,17 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           onChanged: (d) => setState(() => _dimension = d),
         ),
         const SizedBox(height: Spacing.s16),
-        view.when(
-          data: (data) => EquityAllocationContent(view: data),
-          loading: () => const _LoadingState(),
-          error: (e, _) => _ErrorState(
-            message: l10n.analyticsLoadError,
-            onRetry: () => ref.invalidate(
-              equityAllocationViewProvider(_dimension),
+        PageSkeletonShell<EquityAllocationView>(
+          skeleton: const _LoadingState(),
+          isLoading: view.isLoading,
+          child: view.when(
+            data: (data) => EquityAllocationContent(view: data),
+            loading: () => const _LoadingState(),
+            error: (e, _) => _ErrorState(
+              message: l10n.analyticsLoadError,
+              onRetry: () => ref.invalidate(
+                equityAllocationViewProvider(_dimension),
+              ),
             ),
           ),
         ),
@@ -254,7 +251,7 @@ class EquityAllocationContent extends ConsumerWidget {
   }
 }
 
-class _TotalsRow extends ConsumerWidget {
+class _TotalsRow extends StatelessWidget {
   const _TotalsRow({
     required this.baseCurrency,
     required this.totalValueInBase,
@@ -264,11 +261,8 @@ class _TotalsRow extends ConsumerWidget {
   final Decimal totalValueInBase;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final formatters = ref.watch(
-      appFormattersProvider(Localizations.localeOf(context)),
-    );
     final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -279,8 +273,9 @@ class _TotalsRow extends ConsumerWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        Text(
-          formatters.currency(totalValueInBase, code: baseCurrency),
+        AnimatedMoneyText(
+          amount: totalValueInBase.toDouble(),
+          currencyCode: baseCurrency,
           style: theme.textTheme.titleLarge,
         ),
       ],
@@ -334,11 +329,11 @@ class _BucketRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              formatters.currency(bucket.totalValueInBase, code: baseCurrency),
+            AnimatedMoneyText(
+              amount: bucket.totalValueInBase.toDouble(),
+              currencyCode: baseCurrency,
               style: theme.textTheme.titleSmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              minDeltaThreshold: 0.01,
             ),
             Text(
               formatters.percent(pct, decimalDigits: 1),
@@ -548,12 +543,14 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          formatters.currency(
-                            h.marketValueInBase,
-                            code: baseCurrency,
-                          ),
+                        AnimatedMoneyText(
+                          amount: h.marketValueInBase.toDouble(),
+                          currencyCode: baseCurrency,
                           style: theme.textTheme.titleSmall,
+                          // Don't shimmy the whole list on sub-1% ticks —
+                          // snap to the new value instead and keep the
+                          // marquee animation for hero-level changes.
+                          minDeltaThreshold: 0.01,
                         ),
                         Text(
                           formatters.percent(
