@@ -10,6 +10,7 @@ import '../design_system/design_system.dart';
 // docs/web-bundle.md for the resulting bundle layout.
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
+import '../features/accounts/transfer_form_page.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/ai_chat/ui/ai_chat_sheet.dart';
@@ -213,6 +214,15 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'new',
                 name: 'account-new',
                 builder: (context, state) => const AccountFormPage(),
+              ),
+              // FIR-131 wave 3a — same-currency cash transfers between
+              // two of the user's asset / liability accounts. Routed
+              // under `/accounts` so the bottom-nav highlight stays on
+              // the Accounts tab while the form is open.
+              GoRoute(
+                path: 'transfer',
+                name: 'account-transfer',
+                builder: (context, state) => const TransferFormPage(),
               ),
               GoRoute(
                 path: ':accountId',

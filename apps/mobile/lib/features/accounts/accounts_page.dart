@@ -77,7 +77,20 @@ class _AccountsMaster extends ConsumerWidget {
           ? null
           : () => _selectAdjacent(context, allIds, delta: -1),
       child: Scaffold(
-        appBar: GlassAppBar(title: Text(l10n.accountsAppBarTitle)),
+        appBar: GlassAppBar(
+          title: Text(l10n.accountsAppBarTitle),
+          // FIR-131 wave 3a — quick action to create a transfer
+          // between two of the user's accounts. The form runs through
+          // [JournalEntryRepository] / [JournalEntryBuilders.transfer]
+          // rather than the legacy `recordTransfer` path.
+          actions: [
+            IconButton(
+              tooltip: 'New transfer',
+              icon: const Icon(Icons.swap_horiz),
+              onPressed: () => context.go('/accounts/transfer'),
+            ),
+          ],
+        ),
         body: accountsAsync.when(
           data: (accounts) => accounts.isEmpty
               ? const _EmptyAccounts()
