@@ -86,6 +86,9 @@ class AccountRepository {
     String? institution,
     String? accountNumber,
     String? note,
+    String? parentId,
+    String? icon,
+    String? color,
   }) async {
     final stamp = await _stamper.stamp();
     final id = _uuid.v4();
@@ -99,6 +102,9 @@ class AccountRepository {
       institution: Value(institution),
       accountNumber: Value(accountNumber),
       note: Value(note),
+      parentId: Value(parentId),
+      icon: Value(icon),
+      color: Value(color),
       ownerUserId: stamp.ownerUserId,
       updatedAt: stamp.now,
       updatedByDevice: stamp.deviceId,
@@ -114,6 +120,9 @@ class AccountRepository {
       accountNumber: accountNumber,
       note: note,
       archived: false,
+      parentId: parentId,
+      icon: icon,
+      color: color,
       ownerUserId: stamp.ownerUserId,
       updatedAt: stamp.now,
       updatedByDevice: stamp.deviceId,
@@ -141,6 +150,9 @@ class AccountRepository {
           'account_number': accountNumber,
           'note': note,
           'archived': false,
+          'parent_id': parentId,
+          'icon': icon,
+          'color': color,
         },
       );
     });
@@ -164,6 +176,12 @@ class AccountRepository {
     String? note,
     bool? clearNote,
     bool? archived,
+    String? parentId,
+    bool? clearParentId,
+    String? icon,
+    bool? clearIcon,
+    String? color,
+    bool? clearColor,
     String? reason,
   }) async {
     final stamp = await _stamper.stamp();
@@ -210,6 +228,27 @@ class AccountRepository {
     if (archived != null) {
       pending = pending.copyWith(archived: Value(archived));
       diff['archived'] = archived;
+    }
+    if (clearParentId == true) {
+      pending = pending.copyWith(parentId: const Value(null));
+      diff['parent_id'] = null;
+    } else if (parentId != null) {
+      pending = pending.copyWith(parentId: Value(parentId));
+      diff['parent_id'] = parentId;
+    }
+    if (clearIcon == true) {
+      pending = pending.copyWith(icon: const Value(null));
+      diff['icon'] = null;
+    } else if (icon != null) {
+      pending = pending.copyWith(icon: Value(icon));
+      diff['icon'] = icon;
+    }
+    if (clearColor == true) {
+      pending = pending.copyWith(color: const Value(null));
+      diff['color'] = null;
+    } else if (color != null) {
+      pending = pending.copyWith(color: Value(color));
+      diff['color'] = color;
     }
     if (diff.isEmpty) {
       // Nothing to do — the protocol rejects empty updates and we'd rather
@@ -267,6 +306,18 @@ class AccountRepository {
         if (diff.containsKey('archived')) {
           auditBefore['archived'] = priorRow.archived;
           auditAfter['archived'] = diff['archived'];
+        }
+        if (diff.containsKey('parent_id')) {
+          auditBefore['parent_id'] = priorRow.parentId;
+          auditAfter['parent_id'] = diff['parent_id'];
+        }
+        if (diff.containsKey('icon')) {
+          auditBefore['icon'] = priorRow.icon;
+          auditAfter['icon'] = diff['icon'];
+        }
+        if (diff.containsKey('color')) {
+          auditBefore['color'] = priorRow.color;
+          auditAfter['color'] = diff['color'];
         }
         if (auditAfter.isNotEmpty) {
           await _eventLog.recordFieldChanged(
@@ -342,6 +393,9 @@ class AccountRepository {
     required String? accountNumber,
     required String? note,
     required bool archived,
+    required String? parentId,
+    required String? icon,
+    required String? color,
     required String ownerUserId,
     required DateTime updatedAt,
     required String updatedByDevice,
@@ -357,6 +411,9 @@ class AccountRepository {
       'account_number': accountNumber,
       'note': note,
       'archived': archived,
+      'parent_id': parentId,
+      'icon': icon,
+      'color': color,
       'owner_user_id': ownerUserId,
       'updated_at': updatedAt.toUtc().toIso8601String(),
       'updated_by_device': updatedByDevice,
@@ -375,6 +432,9 @@ class AccountRepository {
       accountNumber: row.accountNumber,
       note: row.note,
       archived: row.archived,
+      parentId: row.parentId,
+      icon: row.icon,
+      color: row.color,
       sync: SyncMeta(
         ownerUserId: row.ownerUserId,
         updatedAt: row.updatedAt,
@@ -385,39 +445,127 @@ class AccountRepository {
     );
   }
 
-  // ---------- System / virtual accounts (FIR-126) ----------
+  // ---------- Tree queries (FIR-133) ----------
+
+  /// Live children of [parentId]. Pass `null` to fetch the top-level set
+  /// (Beancount-style root nodes whose `parent_id` is NULL).
+  ///
+  /// Excludes archived / soft-deleted; *includes* system accounts because
+  /// the picker needs them. Sorted by name for stable display order.
+  Stream<List<Account>> watchChildrenOf(String? parentId) {
+    final query = _db.select(_db.accounts)
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.archived.equals(false))
+      ..orderBy([(t) => OrderingTerm(expression: t.name)]);
+    if (parentId == null) {
+      query.where((t) => t.parentId.isNull());
+    } else {
+      query.where((t) => t.parentId.equals(parentId));
+    }
+    return query.watch().map((rows) => rows.map(_toAccount).toList());
+  }
+
+  /// One-shot variant of [watchChildrenOf]. Same filters and ordering.
+  Future<List<Account>> accountsByParent(String? parentId) async {
+    final query = _db.select(_db.accounts)
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.archived.equals(false))
+      ..orderBy([(t) => OrderingTerm(expression: t.name)]);
+    if (parentId == null) {
+      query.where((t) => t.parentId.isNull());
+    } else {
+      query.where((t) => t.parentId.equals(parentId));
+    }
+    final rows = await query.get();
+    return rows.map(_toAccount).toList();
+  }
+
+  /// Depth-first walk through the subtree rooted at [rootId]. The root
+  /// itself comes first, followed by descendants in name-sorted DFS
+  /// order. Returns an empty list when the root doesn't exist or has
+  /// been soft-deleted.
+  ///
+  /// Implementation: BFS by levels via repeated [accountsByParent]
+  /// queries — fine for the seeded tree (≤ 4 levels, ≤ 20 nodes) and
+  /// keeps us out of recursive-CTE territory. Larger user-built trees
+  /// will still be linear in the row count.
+  Future<List<Account>> walkSubtree(String rootId) async {
+    final root = await findById(rootId);
+    if (root == null || root.archived || root.sync.deletedAt != null) {
+      return const [];
+    }
+    final out = <Account>[root];
+    final stack = <Account>[root];
+    while (stack.isNotEmpty) {
+      final parent = stack.removeLast();
+      final children = await accountsByParent(parent.id);
+      for (final c in children.reversed) {
+        out.add(c);
+        stack.add(c);
+      }
+    }
+    return out;
+  }
+
+  /// Returns the chain from the tree root down to [accountId], inclusive
+  /// of both. Returns an empty list if [accountId] doesn't exist.
+  ///
+  /// Defensive against malformed parent links: stops walking after
+  /// 64 hops to prevent an accidental cycle from spinning forever.
+  Future<List<Account>> pathOf(String accountId) async {
+    final out = <Account>[];
+    var cursor = await findById(accountId);
+    var hops = 0;
+    while (cursor != null && hops < 64) {
+      out.add(cursor);
+      final parentId = cursor.parentId;
+      if (parentId == null) break;
+      cursor = await findById(parentId);
+      hops++;
+    }
+    return out.reversed.toList();
+  }
+
+  // ---------- System / virtual accounts (FIR-126 + FIR-133) ----------
 
   /// Stable id prefix for the seeded system accounts. Keeps the seed
-  /// idempotent across devices: every install resolves "income / expense
-  /// / equity" to the same id, so the LWW merge never duplicates them.
+  /// idempotent across devices: every install resolves the same path to
+  /// the same id, so the LWW merge never duplicates them.
   static const String _systemAccountIdPrefix = 'system-account:';
 
-  /// Set of [AccountCategory] values that have a seeded virtual system
-  /// account. Asset / liability accounts represent real balances the user
-  /// owns, so we never auto-seed those; the income / expense / equity
-  /// buckets are abstract counter-accounts that exist purely so future
-  /// double-entry posting (P2-A) has somewhere to credit / debit cash
-  /// flows that don't terminate on a real account.
+  /// Path segments for the seeded root system accounts. Asset / liability
+  /// accounts represent real balances the user owns, so we never
+  /// auto-seed those; the income / expense / equity buckets are abstract
+  /// counter-accounts the double-entry posting model needs as default
+  /// targets for cash flows that don't terminate on a real account.
   static const List<AccountCategory> systemAccountCategories = [
     AccountCategory.income,
     AccountCategory.expense,
     AccountCategory.equity,
   ];
 
-  /// Returns the stable id assigned to the system account for [category].
-  /// Tests and migration helpers use this directly when they need to
-  /// reference the seeded row.
+  /// Resolves any system-account `id` from a `:`-separated [path] under
+  /// the user's stable prefix. Roots use `category.name` as the path
+  /// (e.g. `income`); leaves under a root use `parent:leaf` (e.g.
+  /// `income:salary`, `expense:trading:fee`).
+  static String systemAccountIdForPath(
+    String path, {
+    required String ownerUserId,
+  }) => '$_systemAccountIdPrefix$ownerUserId:$path';
+
+  /// Convenience for the three root system accounts. Kept for back-compat
+  /// with FIR-126 callers; prefer [systemAccountIdForPath] for the deeper
+  /// nodes the FIR-133 tree introduces.
   static String systemAccountIdFor(
     AccountCategory category, {
     required String ownerUserId,
-  }) => '$_systemAccountIdPrefix$ownerUserId:${category.name}';
+  }) => systemAccountIdForPath(category.name, ownerUserId: ownerUserId);
 
-  /// Display name for the seeded system account in [category]. Kept in
+  /// Display name for one of the three root system accounts. Kept in
   /// Chinese (the app's primary locale today) so the picker labels look
-  /// natural; the proper localised label is resolved at render time and
-  /// the row's `name` is only used as a fallback when l10n hasn't been
-  /// hooked up yet (e.g. the AI assistant referencing the account by
-  /// name in chat).
+  /// natural without an l10n round-trip; child accounts seeded by FIR-133
+  /// use the canonical Beancount-style English names from
+  /// [_kSystemAccountTreeSeeds] — the UI localises at render time.
   static String systemAccountDisplayName(AccountCategory category) {
     switch (category) {
       case AccountCategory.income:
@@ -439,16 +587,25 @@ class AccountRepository {
     }
   }
 
-  /// Idempotently inserts the income / expense / equity virtual system
-  /// accounts the active user needs as cash-flow counter-accounts before
-  /// the P2-A double-entry posting model lands. Mirrors
-  /// [ExpenseCategoryRepository.seedDefaults]: deterministic id, queues
-  /// an outbox `insert` so peers learn about the seed when they next
-  /// pull, and re-running is a free no-op.
+  /// Idempotently seeds the default Beancount-style account tree the
+  /// double-entry posting model leans on:
   ///
-  /// Returns the number of rows actually inserted (0 on a no-op call) so
-  /// callers can decide whether to surface a "system accounts ready"
-  /// hint, or just ignore the result.
+  /// ```
+  /// Income/{Salary,Dividend,Interest,CapitalGains,Other}
+  /// Expenses/{Food,Transit,Housing,Trading/{Fee,Tax,Interest},Other}
+  /// Equity/{OpeningBalance,Splits,Adjustments}
+  /// ```
+  ///
+  /// Three roots (carrying the existing FIR-126 ids) plus 16 children
+  /// for a total of 19 seeded accounts on a fresh install.
+  ///
+  /// Each row uses a deterministic id derived from
+  /// [systemAccountIdForPath], so re-running the seed is a free no-op
+  /// and a sync-borne replay never duplicates a row. Returns the number
+  /// of rows actually inserted on this call (0 on a re-seed). The seed
+  /// list is iterated in parent-before-child order; the seeder still
+  /// resolves a missing parent gracefully because the parent / child
+  /// relationship has no SQL FK.
   ///
   /// [currency] picks the carrier currency for the seeded rows. The
   /// dashboard converts everything through FX, so the currency choice is
@@ -457,22 +614,36 @@ class AccountRepository {
   /// fresh installs that haven't yet pulled an FX rate table.
   Future<int> seedSystemAccounts({String currency = 'CNY'}) async {
     var inserted = 0;
-    for (final category in systemAccountCategories) {
+    for (final seed in _kSystemAccountTreeSeeds) {
       final stamp = await _stamper.stamp();
-      final id = systemAccountIdFor(category, ownerUserId: stamp.ownerUserId);
+      final id = systemAccountIdForPath(
+        seed.path,
+        ownerUserId: stamp.ownerUserId,
+      );
       final existing = await (_db.select(
         _db.accounts,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
       if (existing != null) continue;
 
-      final type = _systemAccountType(category);
-      final name = systemAccountDisplayName(category);
+      const type = AccountType.other;
+      final name = seed.isRoot
+          ? systemAccountDisplayName(seed.category)
+          : seed.name;
+      final parentId = seed.parentPath == null
+          ? null
+          : systemAccountIdForPath(
+              seed.parentPath!,
+              ownerUserId: stamp.ownerUserId,
+            );
       final companion = AccountsCompanion.insert(
         id: id,
         type: type,
         name: name,
         currency: currency,
-        category: Value(category),
+        category: Value(seed.category),
+        parentId: Value(parentId),
+        icon: Value(seed.icon),
+        color: Value(seed.color),
         ownerUserId: stamp.ownerUserId,
         updatedAt: stamp.now,
         updatedByDevice: stamp.deviceId,
@@ -483,11 +654,14 @@ class AccountRepository {
         type: type,
         name: name,
         currency: currency,
-        category: category,
+        category: seed.category,
         institution: null,
         accountNumber: null,
         note: null,
         archived: false,
+        parentId: parentId,
+        icon: seed.icon,
+        color: seed.color,
         ownerUserId: stamp.ownerUserId,
         updatedAt: stamp.now,
         updatedByDevice: stamp.deviceId,
@@ -512,11 +686,14 @@ class AccountRepository {
             'type': type.name,
             'name': name,
             'currency': currency,
-            'category': category.name,
+            'category': seed.category.name,
             'institution': null,
             'account_number': null,
             'note': null,
             'archived': false,
+            'parent_id': parentId,
+            'icon': seed.icon,
+            'color': seed.color,
           },
         );
       });
@@ -524,10 +701,209 @@ class AccountRepository {
     }
     return inserted;
   }
-
-  /// Resolves the [AccountType] carrier we materialise the seeded system
-  /// row with. The carrier is a UI hint — system accounts never represent
-  /// a real card or wallet — so we always pick `other`, which the form
-  /// already treats as the catch-all bucket.
-  AccountType _systemAccountType(AccountCategory category) => AccountType.other;
 }
+
+/// Specification for one seeded system account. Static const so the seed
+/// is the single source of truth for the default tree shape, picker
+/// defaults (FIR-131) and the Beancount export naming convention
+/// (FIR-134).
+class _SystemAccountSeed {
+  const _SystemAccountSeed({
+    required this.path,
+    required this.parentPath,
+    required this.name,
+    required this.category,
+    required this.icon,
+    required this.color,
+  });
+
+  /// Stable path under the user's prefix, e.g. `income`,
+  /// `expense:trading`, `expense:trading:fee`. The full id is
+  /// `system-account:<userId>:<path>`.
+  final String path;
+
+  /// Parent path, or `null` on the three roots. Always one segment
+  /// shorter than [path] when set.
+  final String? parentPath;
+
+  /// English Beancount-canonical name (e.g. `Salary`, `Trading Fee`).
+  /// Roots ignore this and use the localised display name instead.
+  final String name;
+
+  final AccountCategory category;
+
+  /// Material icon name (e.g. `work`, `restaurant`).
+  final String icon;
+
+  /// Hex color used for the avatar tint. Picked per-category so all
+  /// income leaves share a green family, expenses red, equity blue.
+  final String color;
+
+  bool get isRoot => parentPath == null;
+}
+
+/// Default account tree seeded on a fresh install. Iterated in parent-
+/// before-child order so [AccountRepository.seedSystemAccounts] can rely
+/// on the parent already existing for the audit-log capture (the SQL
+/// layer doesn't enforce a foreign key, so this is a soft contract).
+const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
+  // ---- Roots ----
+  _SystemAccountSeed(
+    path: 'income',
+    parentPath: null,
+    name: 'Income',
+    category: AccountCategory.income,
+    icon: 'south_west',
+    color: '#10B981',
+  ),
+  _SystemAccountSeed(
+    path: 'expense',
+    parentPath: null,
+    name: 'Expenses',
+    category: AccountCategory.expense,
+    icon: 'north_east',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'equity',
+    parentPath: null,
+    name: 'Equity',
+    category: AccountCategory.equity,
+    icon: 'account_balance',
+    color: '#3B82F6',
+  ),
+
+  // ---- Income leaves ----
+  _SystemAccountSeed(
+    path: 'income:salary',
+    parentPath: 'income',
+    name: 'Salary',
+    category: AccountCategory.income,
+    icon: 'work',
+    color: '#10B981',
+  ),
+  _SystemAccountSeed(
+    path: 'income:dividend',
+    parentPath: 'income',
+    name: 'Dividend',
+    category: AccountCategory.income,
+    icon: 'paid',
+    color: '#10B981',
+  ),
+  _SystemAccountSeed(
+    path: 'income:interest',
+    parentPath: 'income',
+    name: 'Interest',
+    category: AccountCategory.income,
+    icon: 'savings',
+    color: '#10B981',
+  ),
+  _SystemAccountSeed(
+    path: 'income:capitalGains',
+    parentPath: 'income',
+    name: 'Capital Gains',
+    category: AccountCategory.income,
+    icon: 'trending_up',
+    color: '#10B981',
+  ),
+  _SystemAccountSeed(
+    path: 'income:other',
+    parentPath: 'income',
+    name: 'Other Income',
+    category: AccountCategory.income,
+    icon: 'more_horiz',
+    color: '#10B981',
+  ),
+
+  // ---- Expense leaves + Trading branch ----
+  _SystemAccountSeed(
+    path: 'expense:food',
+    parentPath: 'expense',
+    name: 'Food',
+    category: AccountCategory.expense,
+    icon: 'restaurant',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:transit',
+    parentPath: 'expense',
+    name: 'Transit',
+    category: AccountCategory.expense,
+    icon: 'directions_bus',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:housing',
+    parentPath: 'expense',
+    name: 'Housing',
+    category: AccountCategory.expense,
+    icon: 'home',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:trading',
+    parentPath: 'expense',
+    name: 'Trading',
+    category: AccountCategory.expense,
+    icon: 'show_chart',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:trading:fee',
+    parentPath: 'expense:trading',
+    name: 'Trading Fee',
+    category: AccountCategory.expense,
+    icon: 'receipt_long',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:trading:tax',
+    parentPath: 'expense:trading',
+    name: 'Trading Tax',
+    category: AccountCategory.expense,
+    icon: 'request_quote',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:trading:interest',
+    parentPath: 'expense:trading',
+    name: 'Trading Interest',
+    category: AccountCategory.expense,
+    icon: 'credit_card',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:other',
+    parentPath: 'expense',
+    name: 'Other Expense',
+    category: AccountCategory.expense,
+    icon: 'more_horiz',
+    color: '#EF4444',
+  ),
+
+  // ---- Equity leaves ----
+  _SystemAccountSeed(
+    path: 'equity:openingBalance',
+    parentPath: 'equity',
+    name: 'Opening Balance',
+    category: AccountCategory.equity,
+    icon: 'flag',
+    color: '#3B82F6',
+  ),
+  _SystemAccountSeed(
+    path: 'equity:splits',
+    parentPath: 'equity',
+    name: 'Stock Splits',
+    category: AccountCategory.equity,
+    icon: 'call_split',
+    color: '#3B82F6',
+  ),
+  _SystemAccountSeed(
+    path: 'equity:adjustments',
+    parentPath: 'equity',
+    name: 'Adjustments',
+    category: AccountCategory.equity,
+    icon: 'tune',
+    color: '#3B82F6',
+  ),
+];
