@@ -10,9 +10,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(),
-          home: Scaffold(
-            appBar: const GlassAppBar(title: Text('Hello')),
-            body: const SizedBox.expand(),
+          home: const Scaffold(
+            appBar: GlassAppBar(title: Text('Hello')),
+            body: SizedBox.expand(),
           ),
         ),
       );
