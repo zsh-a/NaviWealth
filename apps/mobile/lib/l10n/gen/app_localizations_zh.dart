@@ -1644,6 +1644,70 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseFormNoAccountsCta => '去创建';
 
   @override
+  String get expenseHistorySectionTitle => '变更历史';
+
+  @override
+  String get expenseHistoryEmpty => '暂无变更记录。';
+
+  @override
+  String expenseHistoryLoadError(String error) {
+    return '变更历史加载失败：$error';
+  }
+
+  @override
+  String get expenseHistoryEventCreated => '新建';
+
+  @override
+  String get expenseHistoryEventChanged => '修改';
+
+  @override
+  String get expenseHistoryEventDeleted => '删除';
+
+  @override
+  String get expenseHistoryEventRestored => '恢复';
+
+  @override
+  String get expenseHistoryCreatedBody => '已记录该支出。';
+
+  @override
+  String get expenseHistoryDeletedBody => '已删除该支出。';
+
+  @override
+  String get expenseHistoryRestoredBody => '已恢复该支出。';
+
+  @override
+  String get expenseHistoryFieldAmount => '金额';
+
+  @override
+  String get expenseHistoryFieldCurrency => '币种';
+
+  @override
+  String get expenseHistoryFieldAccount => '账户';
+
+  @override
+  String get expenseHistoryFieldCategory => '类目';
+
+  @override
+  String get expenseHistoryFieldDate => '日期';
+
+  @override
+  String get expenseHistoryFieldNote => '备注';
+
+  @override
+  String get expenseHistoryFieldTags => '标签';
+
+  @override
+  String get expenseHistoryEmptyValue => '—';
+
+  @override
+  String get expenseHistoryUnknownReference => '（未知）';
+
+  @override
+  String expenseHistoryReasonLabel(String reason) {
+    return '原因：$reason';
+  }
+
+  @override
   String get aiChatAppBarTitle => 'AI 助手';
 
   @override

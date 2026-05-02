@@ -3066,6 +3066,126 @@ abstract class AppLocalizations {
   /// **'Create account'**
   String get expenseFormNoAccountsCta;
 
+  /// No description provided for @expenseHistorySectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change history'**
+  String get expenseHistorySectionTitle;
+
+  /// No description provided for @expenseHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes recorded yet.'**
+  String get expenseHistoryEmpty;
+
+  /// No description provided for @expenseHistoryLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load history: {error}'**
+  String expenseHistoryLoadError(String error);
+
+  /// No description provided for @expenseHistoryEventCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get expenseHistoryEventCreated;
+
+  /// No description provided for @expenseHistoryEventChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get expenseHistoryEventChanged;
+
+  /// No description provided for @expenseHistoryEventDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get expenseHistoryEventDeleted;
+
+  /// No description provided for @expenseHistoryEventRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored'**
+  String get expenseHistoryEventRestored;
+
+  /// No description provided for @expenseHistoryCreatedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense recorded.'**
+  String get expenseHistoryCreatedBody;
+
+  /// No description provided for @expenseHistoryDeletedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense deleted.'**
+  String get expenseHistoryDeletedBody;
+
+  /// No description provided for @expenseHistoryRestoredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense restored.'**
+  String get expenseHistoryRestoredBody;
+
+  /// No description provided for @expenseHistoryFieldAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get expenseHistoryFieldAmount;
+
+  /// No description provided for @expenseHistoryFieldCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get expenseHistoryFieldCurrency;
+
+  /// No description provided for @expenseHistoryFieldAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get expenseHistoryFieldAccount;
+
+  /// No description provided for @expenseHistoryFieldCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get expenseHistoryFieldCategory;
+
+  /// No description provided for @expenseHistoryFieldDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get expenseHistoryFieldDate;
+
+  /// No description provided for @expenseHistoryFieldNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get expenseHistoryFieldNote;
+
+  /// No description provided for @expenseHistoryFieldTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get expenseHistoryFieldTags;
+
+  /// No description provided for @expenseHistoryEmptyValue.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get expenseHistoryEmptyValue;
+
+  /// No description provided for @expenseHistoryUnknownReference.
+  ///
+  /// In en, this message translates to:
+  /// **'(unknown)'**
+  String get expenseHistoryUnknownReference;
+
+  /// No description provided for @expenseHistoryReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String expenseHistoryReasonLabel(String reason);
+
   /// No description provided for @aiChatAppBarTitle.
   ///
   /// In en, this message translates to:

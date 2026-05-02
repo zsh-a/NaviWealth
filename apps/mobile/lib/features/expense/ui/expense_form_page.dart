@@ -14,6 +14,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/recent_expense_categories.dart';
 import 'category_grid_picker.dart';
+import 'expense_history_timeline.dart';
 
 /// Quick-entry page for a single expense. Shared between create and edit
 /// flows — when [expenseId] is non-null we hydrate the form from the
@@ -336,6 +337,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     onPressed: _busy ? null : _save,
                     label: _busy ? l10n.commonSaving : l10n.commonSave,
                   ),
+                  if (widget.isEdit && _initial != null) ...[
+                    const SizedBox(height: Spacing.s24),
+                    ExpenseHistoryTimeline(expenseId: _initial!.id),
+                  ],
                 ],
               ),
             ),
