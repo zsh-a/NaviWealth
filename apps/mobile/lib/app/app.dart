@@ -8,6 +8,7 @@ import '../design_system/design_system.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'router.dart';
+import 'shell_preferences.dart';
 
 class NaviWealthApp extends ConsumerWidget {
   const NaviWealthApp({super.key});
@@ -49,6 +50,8 @@ class NaviWealthApp extends ConsumerWidget {
               ),
             );
           },
+          onToggleSidebar: () =>
+              ref.read(sidebarCollapsedProvider.notifier).toggle(),
           child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
         );
       },

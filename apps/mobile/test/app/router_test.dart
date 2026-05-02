@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
+import 'package:naviwealth/app/desktop_sidebar.dart';
 import 'package:naviwealth/app/router.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -243,7 +244,7 @@ void main() {
       await _pumpAt(tester, viewportSize: _mobileSize);
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.byType(NavigationRail), findsNothing);
-      expect(find.byType(NavigationDrawer), findsNothing);
+      expect(find.byType(DesktopSidebar), findsNothing);
     });
 
     testWidgets('tablet width uses a collapsed NavigationRail', (tester) async {
@@ -251,7 +252,7 @@ void main() {
       await _pumpAt(tester, viewportSize: _tabletSize);
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
-      expect(find.byType(NavigationDrawer), findsNothing);
+      expect(find.byType(DesktopSidebar), findsNothing);
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
       expect(rail.extended, isFalse);
     });
@@ -262,9 +263,9 @@ void main() {
       expect(rail.extended, isTrue);
     });
 
-    testWidgets('desktop width uses a NavigationDrawer sidebar', (tester) async {
+    testWidgets('desktop width uses the FIR-106 collapsible sidebar', (tester) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
-      expect(find.byType(NavigationDrawer), findsOneWidget);
+      expect(find.byType(DesktopSidebar), findsOneWidget);
       expect(find.byType(NavigationRail), findsNothing);
       expect(find.byType(NavigationBar), findsNothing);
     });
@@ -286,7 +287,7 @@ void main() {
       expect(updated.selectedIndex, 5);
     });
 
-    testWidgets('NavigationDrawer selectedIndex follows the current URL', (
+    testWidgets('DesktopSidebar selectedIndex follows the current URL', (
       tester,
     ) async {
       final container = await _pumpAt(
@@ -294,15 +295,15 @@ void main() {
         initialLocation: '/fire',
         viewportSize: _desktopSize,
       );
-      final drawer = tester.widget<NavigationDrawer>(
-        find.byType(NavigationDrawer),
+      final sidebar = tester.widget<DesktopSidebar>(
+        find.byType(DesktopSidebar),
       );
-      expect(drawer.selectedIndex, 4);
+      expect(sidebar.selectedIndex, 4);
 
       container.read(appRouterProvider).go('/');
       await tester.pumpAndSettle();
-      final updated = tester.widget<NavigationDrawer>(
-        find.byType(NavigationDrawer),
+      final updated = tester.widget<DesktopSidebar>(
+        find.byType(DesktopSidebar),
       );
       expect(updated.selectedIndex, 0);
     });

@@ -15,6 +15,7 @@ class GlobalShortcutsScope extends StatelessWidget {
   const GlobalShortcutsScope({
     required this.onSwitchPrimaryTab,
     required this.onOpenCommandPalette,
+    required this.onToggleSidebar,
     required this.child,
     super.key,
   });
@@ -27,6 +28,9 @@ class GlobalShortcutsScope extends StatelessWidget {
   /// The supplied [BuildContext] is a descendant of the navigator and is
   /// suitable for `showDialog` / `GoRouter` calls.
   final void Function(BuildContext context) onOpenCommandPalette;
+
+  /// Called when the user invokes the sidebar toggle (`Cmd/Ctrl+B`).
+  final VoidCallback onToggleSidebar;
 
   final Widget child;
 
@@ -61,6 +65,9 @@ class GlobalShortcutsScope extends StatelessWidget {
               if (i.index < 0 || i.index >= kPrimaryTabCount) return;
               onSwitchPrimaryTab(i.index);
             },
+          ),
+          ToggleSidebarIntent: _GuardedAction<ToggleSidebarIntent>(
+            onInvoke: (_) => onToggleSidebar(),
           ),
         },
         child: child,

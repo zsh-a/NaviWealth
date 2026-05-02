@@ -45,6 +45,24 @@ class AppTheme {
       displayColor: scheme.onSurface,
     );
 
+    // Pointer hover and keyboard focus surfaces (FIR-106).
+    //
+    //  * Hover: a subtle primary tint at 4% alpha sits on top of any
+    //    interactive surface a pointer enters. Material's default hover
+    //    overlay is brand-neutral; tinting it primary makes mouse-driven
+    //    surfaces feel actively clickable without adding visual noise.
+    //  * Focus: a 1.5px brand-blue stroke wraps the focused element.
+    //    Keyboard users get a deliberate ring instead of Material's
+    //    default ghost-state highlight.
+    final hoverOverlay = scheme.primary.withValues(alpha: 0.04);
+    final focusOverlay = scheme.primary.withValues(alpha: 0.06);
+    BorderSide? focusBorder(Set<WidgetState> states) {
+      if (states.contains(WidgetState.focused)) {
+        return BorderSide(color: scheme.primary, width: 1.5);
+      }
+      return null;
+    }
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -52,6 +70,8 @@ class AppTheme {
       visualDensity: VisualDensity.adaptivePlatformDensity,
       textTheme: textTheme,
       scaffoldBackgroundColor: scheme.surface,
+      hoverColor: hoverOverlay,
+      focusColor: focusOverlay,
       dividerTheme: DividerThemeData(
         color: semantic.divider,
         thickness: 1,
@@ -98,6 +118,8 @@ class AppTheme {
             vertical: Spacing.s12,
           ),
           textStyle: textTheme.labelLarge,
+        ).copyWith(
+          side: WidgetStateProperty.resolveWith(focusBorder),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -108,6 +130,14 @@ class AppTheme {
             vertical: Spacing.s12,
           ),
           textStyle: textTheme.labelLarge,
+        ).copyWith(
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return BorderSide(color: scheme.primary, width: 1.5);
+            }
+            // Outlined buttons keep their standard 1px outline at rest.
+            return BorderSide(color: scheme.outline);
+          }),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -118,6 +148,8 @@ class AppTheme {
             vertical: Spacing.s8,
           ),
           textStyle: textTheme.labelLarge,
+        ).copyWith(
+          side: WidgetStateProperty.resolveWith(focusBorder),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -144,6 +176,15 @@ class AppTheme {
         backgroundColor: scheme.surface,
         indicatorColor: scheme.primaryContainer,
         labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium),
+      ),
+      listTileTheme: ListTileThemeData(
+        // Pointer hover on rows reads as a 4% primary tint; pressed reads
+        // as 8%. Matches the FIR-106 "interactive surface" overlay rules
+        // so list rows feel responsive on web/desktop without Material's
+        // brand-neutral grey wash.
+        tileColor: Colors.transparent,
+        selectedTileColor: scheme.primary.withValues(alpha: 0.10),
+        selectedColor: scheme.primary,
       ),
       extensions: <ThemeExtension<dynamic>>[
         semantic,

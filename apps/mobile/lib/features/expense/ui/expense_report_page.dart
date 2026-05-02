@@ -273,9 +273,11 @@ class _CategoryPieCard extends StatelessWidget {
             Text('类目占比', style: theme.textTheme.titleMedium),
             const SizedBox(height: Spacing.s12),
             if (report.byCategory.isEmpty)
-              const AspectRatio(
-                aspectRatio: 16 / 9,
-                child: EmptyChartPlaceholder(icon: Icons.donut_large),
+              LayoutBuilder(
+                builder: (context, c) => AspectRatio(
+                  aspectRatio: chartAspectFor(c.maxWidth),
+                  child: const EmptyChartPlaceholder(icon: Icons.donut_large),
+                ),
               )
             else
               LayoutBuilder(
@@ -497,25 +499,29 @@ class _TrendCard extends StatelessWidget {
           children: [
             Text('月度趋势', style: theme.textTheme.titleMedium),
             const SizedBox(height: Spacing.s12),
-            if (data.isEmpty)
-              const AspectRatio(
-                aspectRatio: 16 / 9,
-                child: EmptyChartPlaceholder(),
-              )
-            else
-              SizedBox(
-                height: 220,
-                child: NwBarChart(
-                  series: [
-                    CategorySeries(name: '支出', data: data),
-                  ],
-                  yAxis: ValueAxis.currency(
-                    currencyCode: report.baseCurrency,
-                    maxLabels: 4,
+            LayoutBuilder(
+              builder: (context, c) {
+                final aspect = chartAspectFor(c.maxWidth);
+                if (data.isEmpty) {
+                  return AspectRatio(
+                    aspectRatio: aspect,
+                    child: const EmptyChartPlaceholder(),
+                  );
+                }
+                return SizedBox(
+                  height: 220,
+                  child: NwBarChart(
+                    series: [CategorySeries(name: '支出', data: data)],
+                    yAxis: ValueAxis.currency(
+                      currencyCode: report.baseCurrency,
+                      maxLabels: 4,
+                    ),
+                    aspectRatio: aspect,
+                    semanticLabel: '月度支出趋势',
                   ),
-                  semanticLabel: '月度支出趋势',
-                ),
-              ),
+                );
+              },
+            ),
           ],
         ),
       ),
