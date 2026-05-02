@@ -8,6 +8,7 @@ import '../domain/enums.dart';
 import '../domain/hlc.dart';
 import 'connection.dart';
 import 'converters.dart';
+import 'event_log_tables.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -55,9 +56,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Production constructor: opens an on-disk SQLite database.
   AppDatabase.open({String? dbFileName})
-    : super(
-        openAppConnection(dbFileName: dbFileName ?? defaultDbFileName),
-      );
+    : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   /// Schema history:
   ///  - v2 (FIR-34) — SyncEngine outbox + cursor key/value store.
@@ -85,13 +84,29 @@ class AppDatabase extends _$AppDatabase {
   ///    on first launch from a versioned asset bundle (see
   ///    `SecuritiesCatalogLoader`); it is local-only and does not
   ///    participate in OpLog sync.
-  ///  - v8 (FIR-124) — `transactions.transfer_group_id`. Two legs of a
+  ///  - v8 (FIR-125) — Local-only `domain_event_log` audit ledger.
+  ///    Append-only; never deleted by sync. Repositories pair every row
+  ///    write with an event-log entry inside the same Drift transaction
+  ///    so before/after snapshots survive after the OpLog row is acked
+  ///    and removed. Strategy (a) per the issue: not synced; each
+  ///    device retains its own "what I did" view.
+  ///  - v9 (FIR-126) — Adds `accounts.category` (asset / liability /
+  ///    income / expense / equity), the accounting classification that
+  ///    P2-A's double-entry posting model leans on. Existing rows are
+  ///    back-filled from `accounts.type`: `liability` carriers map to
+  ///    [AccountCategory.liability] and everything else to
+  ///    [AccountCategory.asset] — see [backfillAccountCategory]. The
+  ///    income / expense / equity virtual *system accounts* are seeded at
+  ///    repository level (see `AccountRepository.seedSystemAccounts`)
+  ///    rather than in the migration so the seed shares the outbox /
+  ///    HLC plumbing every other repo write goes through.
+  ///  - v10 (FIR-124) — `transactions.transfer_group_id`. Two legs of a
   ///    transfer (transferOut on the source account + transferIn on the
   ///    destination) carry the same id so the pair can be joined,
   ///    rendered and tombstoned as a single unit. Legacy single-leg
   ///    rows leave it NULL and surface in the unbalanced-group audit.
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +117,7 @@ class AppDatabase extends _$AppDatabase {
       await _createChatTables(this);
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
+      await _createDomainEventLog(this);
     },
     onUpgrade: (m, from, to) async {
       for (var v = from + 1; v <= to; v++) {
@@ -128,6 +144,11 @@ class AppDatabase extends _$AppDatabase {
             await _createSecuritiesCatalogFts(this);
             await _createSecuritiesCatalogIndexes(this);
           case 8:
+            await _createDomainEventLog(this);
+          case 9:
+            await m.addColumn(accounts, accounts.category);
+            await backfillAccountCategory(this);
+          case 10:
             await m.addColumn(transactions, transactions.transferGroupId);
             await _createTransferGroupIndex(this);
           default:
@@ -193,6 +214,15 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 
 Future<void> _createSyncTables(AppDatabase db) async {
   for (final stmt in syncTableDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+/// FIR-125 — append-only audit ledger. See `event_log_tables.dart` for
+/// the rationale; the helper mirrors `_createSyncTables` so the same
+/// statements run on a fresh install and on a v7→v8 upgrade.
+Future<void> _createDomainEventLog(AppDatabase db) async {
+  for (final stmt in domainEventLogDdl) {
     await db.customStatement(stmt);
   }
 }
@@ -341,9 +371,7 @@ Future<SecuritiesBackfillReport> backfillSecuritiesAssetsFromTransactions(
     // the new asset row from. Picking the *latest* transaction per asset
     // matches the LWW intuition — if a user has been trading AAPL since
     // 2019, we anchor the asset row to their most recent trade.
-    final rows = await db
-        .customSelect(
-          '''
+    final rows = await db.customSelect('''
           SELECT
             t.asset_id      AS asset_id,
             t.currency      AS currency,
@@ -368,9 +396,7 @@ Future<SecuritiesBackfillReport> backfillSecuritiesAssetsFromTransactions(
           WHERE t.asset_id IS NOT NULL
             AND t.deleted_at IS NULL
           GROUP BY t.asset_id, t.currency
-          ''',
-        )
-        .get();
+          ''').get();
 
     final report = SecuritiesBackfillReport();
     for (final row in rows) {
@@ -464,6 +490,24 @@ bool _looksLikeCanonicalAssetId(String id) {
   if (colon <= 0) return false;
   final prefix = id.substring(0, colon);
   return assetMarketFromWire(prefix) != null;
+}
+
+/// FIR-126 v8 backfill: rewrites every existing `accounts.category` value
+/// from the prior `accounts.type` carrier shape, mirroring the rules
+/// documented on the issue. Public so the migration test can invoke it
+/// directly against a hand-rolled fixture without rehearsing the full
+/// schema-version-bump dance.
+///
+/// The column was added with a column-level default of `'asset'`, so this
+/// step is mostly explicit-about-its-intent: we only have to overwrite
+/// rows whose carrier is [AccountType.liability]. Doing so as a single
+/// `UPDATE` keeps the migration cheap on installs with many accounts and
+/// avoids opening a transaction we don't otherwise need.
+Future<void> backfillAccountCategory(AppDatabase db) async {
+  await db.customStatement('UPDATE accounts SET category = ? WHERE type = ?', [
+    AccountCategory.liability.name,
+    AccountType.liability.name,
+  ]);
 }
 
 /// FIR-76 — contentless FTS5 index over the seed catalog. We use

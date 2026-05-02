@@ -46,10 +46,7 @@ class AccountsPage extends ConsumerWidget {
             ),
           );
         }
-        return const _AccountsMaster(
-          selectedId: null,
-          inMasterDetail: false,
-        );
+        return const _AccountsMaster(selectedId: null, inMasterDetail: false);
       },
     );
   }
@@ -263,11 +260,7 @@ class _AccountTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(
-        context,
-        path: '/accounts',
-        selected: account.id,
-      );
+      replaceSelectedQuery(context, path: '/accounts', selected: account.id);
     } else {
       context.go('/accounts/${account.id}');
     }
@@ -295,5 +288,18 @@ String accountTypeLabel(AppLocalizations l10n, AccountType t) {
     AccountType.liability => l10n.accountTypeLiability,
     AccountType.cash => l10n.accountTypeCash,
     AccountType.other => l10n.accountTypeOther,
+  };
+}
+
+/// FIR-126 — localised display label for an [AccountCategory]. Used by
+/// the account form's category dropdown and by anywhere else that needs
+/// to print the accounting classification.
+String accountCategoryLabel(AppLocalizations l10n, AccountCategory c) {
+  return switch (c) {
+    AccountCategory.asset => l10n.accountCategoryAsset,
+    AccountCategory.liability => l10n.accountCategoryLiability,
+    AccountCategory.income => l10n.accountCategoryIncome,
+    AccountCategory.expense => l10n.accountCategoryExpense,
+    AccountCategory.equity => l10n.accountCategoryEquity,
   };
 }

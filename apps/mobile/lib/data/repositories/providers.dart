@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/sync/drift_sync_storage.dart';
 import '../../core/sync/op_outbox.dart';
 import '../../domain/entities/fx_rate.dart' as dom;
+import '../audit/domain_event.dart';
+import '../audit/event_log_reader.dart';
 import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
@@ -48,18 +50,29 @@ final manualAssetRepositoryProvider = FutureProvider<ManualAssetRepository>((
 /// the same `assets` table but own different identity schemes.
 final securitiesAssetRepositoryProvider =
     FutureProvider<SecuritiesAssetRepository>((ref) async {
-  final db = await ref.watch(appDatabaseProvider.future);
-  final outbox = await ref.watch(outboxStoreProvider.future);
-  final stamper = await ref.watch(mutationStamperProvider.future);
-  return SecuritiesAssetRepository(db: db, outbox: outbox, stamper: stamper);
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      final outbox = await ref.watch(outboxStoreProvider.future);
+      final stamper = await ref.watch(mutationStamperProvider.future);
+      return SecuritiesAssetRepository(
+        db: db,
+        outbox: outbox,
+        stamper: stamper,
+      );
+    });
 
 /// Live stream of all non-archived, non-deleted accounts. UIs watch this
 /// for the account list / picker.
+///
+/// FIR-126: also seeds the income / expense / equity virtual system
+/// accounts the first time the user opens any account-aware surface, so
+/// the P2-A double-entry posting model has counter-accounts ready before
+/// the first cash flow is recorded. The seed is idempotent (deterministic
+/// ids) so doing it on every cold start is cheap.
 final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
   final repo = await ref.watch(accountRepositoryProvider.future);
+  await repo.seedSystemAccounts();
   yield* repo.watchActive();
 });
 
@@ -77,8 +90,9 @@ final manualAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
 /// portfolio's tradable instruments surface alongside cash and physical
 /// assets — without it, freshly recorded trades have no listing surface
 /// outside the holdings/dashboard pipeline.
-final securitiesAssetsStreamProvider =
-    StreamProvider.autoDispose<List<Asset>>((ref) async* {
+final securitiesAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
+  ref,
+) async* {
   final repo = await ref.watch(securitiesAssetRepositoryProvider.future);
   yield* repo.watchSecurities(types: kSecuritiesAssetTypes);
 });
@@ -140,8 +154,7 @@ final expensesStreamProvider = StreamProvider.autoDispose<List<Expense>>((
 
 /// Repository for the local `fx_rates` table. Not synced (FX rates are
 /// global market data, not user data) so this repo bypasses the outbox.
-final fxRateRepositoryProvider =
-    FutureProvider<FxRateRepository>((ref) async {
+final fxRateRepositoryProvider = FutureProvider<FxRateRepository>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return FxRateRepository(db: db);
 });
@@ -149,8 +162,32 @@ final fxRateRepositoryProvider =
 /// Live stream of every recorded FX rate. The dashboard converter and the
 /// FX-rate management page both watch this so a manual rate insert
 /// reactively flows into every consumer.
-final fxRatesStreamProvider =
-    StreamProvider.autoDispose<List<dom.FxRate>>((ref) async* {
+final fxRatesStreamProvider = StreamProvider.autoDispose<List<dom.FxRate>>((
+  ref,
+) async* {
   final repo = await ref.watch(fxRateRepositoryProvider.future);
   yield* repo.watchAll();
 });
+
+/// FIR-125 — read access over the local audit ledger (`domain_event_log`).
+/// UIs that render an entity's "change history" subscribe to one of the
+/// per-entity providers below; this provider exposes the raw reader for
+/// dev / maintenance tooling.
+final eventLogReaderProvider = FutureProvider<EventLogReader>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return EventLogReader(db);
+});
+
+/// Per-entity event timeline. Family is keyed by `(table, id)` pair,
+/// matching the storage shape, so e.g. asset detail pages call
+/// `eventTimelineProvider((entityTable: 'assets', entityId: assetId))`.
+final eventTimelineProvider = StreamProvider.autoDispose
+    .family<List<DomainEvent>, ({String entityTable, String entityId})>(
+  (ref, key) async* {
+    final reader = await ref.watch(eventLogReaderProvider.future);
+    yield* reader.watchByEntity(
+      entityTable: key.entityTable,
+      entityId: key.entityId,
+    );
+  },
+);
