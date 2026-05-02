@@ -45,6 +45,7 @@ import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
 import 'desktop_sidebar.dart';
+import 'page_transitions.dart';
 import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
@@ -143,12 +144,16 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               GoRoute(
                 path: 'trade',
                 name: 'trade-entry',
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final assetId = state.uri.queryParameters['assetId'];
                   final accountId = state.uri.queryParameters['accountId'];
-                  return TradeEntryFormPage(
-                    assetId: assetId,
-                    accountId: accountId,
+                  return buildHeroAwareTransitionPage<void>(
+                    context: context,
+                    state: state,
+                    child: TradeEntryFormPage(
+                      assetId: assetId,
+                      accountId: accountId,
+                    ),
                   );
                 },
               ),
@@ -189,8 +194,13 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               GoRoute(
                 path: ':assetId',
                 name: 'asset-detail',
-                builder: (context, state) =>
-                    AssetDetailPage(assetId: state.pathParameters['assetId']!),
+                pageBuilder: (context, state) => buildHeroAwareTransitionPage<void>(
+                  context: context,
+                  state: state,
+                  child: AssetDetailPage(
+                    assetId: state.pathParameters['assetId']!,
+                  ),
+                ),
               ),
             ],
           ),
@@ -207,8 +217,12 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               GoRoute(
                 path: ':accountId',
                 name: 'account-detail',
-                builder: (context, state) => AccountFormPage(
-                  accountId: state.pathParameters['accountId'],
+                pageBuilder: (context, state) => buildHeroAwareTransitionPage<void>(
+                  context: context,
+                  state: state,
+                  child: AccountFormPage(
+                    accountId: state.pathParameters['accountId'],
+                  ),
                 ),
               ),
             ],

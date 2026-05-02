@@ -42,14 +42,20 @@ class AssetsPage extends ConsumerWidget {
         if (masterDetail) {
           return Scaffold(
             body: MasterDetailLayout(
-              master: _AssetsMaster(selectedAssetId: selected),
+              master: _AssetsMaster(
+                selectedAssetId: selected,
+                inMasterDetail: true,
+              ),
               detail: selected == null
                   ? const _AssetsDetailEmpty()
                   : AssetDetailPage(assetId: selected),
             ),
           );
         }
-        return const _AssetsMaster(selectedAssetId: null);
+        return const _AssetsMaster(
+          selectedAssetId: null,
+          inMasterDetail: false,
+        );
       },
     );
   }
@@ -58,9 +64,13 @@ class AssetsPage extends ConsumerWidget {
 /// The standalone "master" (list) surface — used both as the only column
 /// at < 1240dp and as the left pane at ≥ 1240dp.
 class _AssetsMaster extends ConsumerWidget {
-  const _AssetsMaster({required this.selectedAssetId});
+  const _AssetsMaster({
+    required this.selectedAssetId,
+    required this.inMasterDetail,
+  });
 
   final String? selectedAssetId;
+  final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -87,6 +97,7 @@ class _AssetsMaster extends ConsumerWidget {
         manualAsync: manualAsync,
         physicalAsync: physicalAsync,
         selectedAssetId: selectedAssetId,
+        inMasterDetail: inMasterDetail,
       ),
       floatingActionButton: AppFab.extended(
         onPressed: () => _showAddSheet(context),
@@ -218,11 +229,13 @@ class _AssetsBody extends StatelessWidget {
     required this.manualAsync,
     required this.physicalAsync,
     required this.selectedAssetId,
+    required this.inMasterDetail,
   });
 
   final AsyncValue<List<Asset>> manualAsync;
   final AsyncValue<List<PhysicalAsset>> physicalAsync;
   final String? selectedAssetId;
+  final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +272,7 @@ class _AssetsBody extends StatelessWidget {
           _ManualAssetsSection(
             assets: manual,
             selectedAssetId: selectedAssetId,
+            inMasterDetail: inMasterDetail,
           ),
         if (physical.isNotEmpty)
           _PhysicalAssetsSection(
@@ -299,10 +313,12 @@ class _ManualAssetsSection extends StatelessWidget {
   const _ManualAssetsSection({
     required this.assets,
     required this.selectedAssetId,
+    required this.inMasterDetail,
   });
 
   final List<Asset> assets;
   final String? selectedAssetId;
+  final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -340,6 +356,7 @@ class _ManualAssetsSection extends StatelessWidget {
                   _AssetTile(
                     asset: asset,
                     selected: asset.id == selectedAssetId,
+                    heroEnabled: !inMasterDetail,
                   ),
               ],
             ),
@@ -387,10 +404,15 @@ class _PhysicalAssetsSection extends StatelessWidget {
 }
 
 class _AssetTile extends StatelessWidget {
-  const _AssetTile({required this.asset, required this.selected});
+  const _AssetTile({
+    required this.asset,
+    required this.selected,
+    required this.heroEnabled,
+  });
 
   final Asset asset;
   final bool selected;
+  final bool heroEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -418,11 +440,15 @@ class _AssetTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        asset.name ?? asset.symbol,
-                        style: theme.textTheme.bodyLarge,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      OptionalHero(
+                        tag: 'asset-${asset.id}-name',
+                        enabled: heroEnabled,
+                        child: Text(
+                          asset.name ?? asset.symbol,
+                          style: theme.textTheme.bodyLarge,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       if (chips.isNotEmpty) ...[
                         const SizedBox(height: Spacing.s6),
@@ -436,10 +462,14 @@ class _AssetTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: Spacing.s12),
-                MoneyText(
-                  amount: price.toDouble(),
-                  currencyCode: asset.currency,
-                  style: TypographyTokens.numericBody,
+                OptionalHero(
+                  tag: 'asset-${asset.id}-value',
+                  enabled: heroEnabled,
+                  child: MoneyText(
+                    amount: price.toDouble(),
+                    currencyCode: asset.currency,
+                    style: TypographyTokens.numericBody,
+                  ),
                 ),
               ],
             ),

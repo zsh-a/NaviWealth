@@ -29,6 +29,7 @@ export 'widgets/glass_modal_bottom_sheet.dart';
 export 'widgets/glass_navigation_bar.dart';
 export 'widgets/glass_surface.dart';
 export 'widgets/money_text.dart';
+export 'widgets/optional_hero.dart';
 export 'widgets/responsive_two_column.dart';
 export 'widgets/skeleton.dart';
 export 'widgets/skeletons/page_skeletons.dart';
