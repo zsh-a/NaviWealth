@@ -35,23 +35,33 @@ class AccountsPage extends ConsumerWidget {
         if (masterDetail) {
           return Scaffold(
             body: MasterDetailLayout(
-              master: _AccountsMaster(selectedId: selected),
+              master: _AccountsMaster(
+                selectedId: selected,
+                inMasterDetail: true,
+              ),
               detail: selected == null
                   ? const _AccountsDetailEmpty()
                   : AccountFormPage(accountId: selected),
             ),
           );
         }
-        return const _AccountsMaster(selectedId: null);
+        return const _AccountsMaster(
+          selectedId: null,
+          inMasterDetail: false,
+        );
       },
     );
   }
 }
 
 class _AccountsMaster extends ConsumerWidget {
-  const _AccountsMaster({required this.selectedId});
+  const _AccountsMaster({
+    required this.selectedId,
+    required this.inMasterDetail,
+  });
 
   final String? selectedId;
+  final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,7 +72,11 @@ class _AccountsMaster extends ConsumerWidget {
       body: accountsAsync.when(
         data: (accounts) => accounts.isEmpty
             ? const _EmptyAccounts()
-            : _AccountsByType(accounts: accounts, selectedId: selectedId),
+            : _AccountsByType(
+                accounts: accounts,
+                selectedId: selectedId,
+                inMasterDetail: inMasterDetail,
+              ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
       ),
@@ -114,10 +128,15 @@ class _EmptyAccounts extends StatelessWidget {
 }
 
 class _AccountsByType extends StatelessWidget {
-  const _AccountsByType({required this.accounts, required this.selectedId});
+  const _AccountsByType({
+    required this.accounts,
+    required this.selectedId,
+    required this.inMasterDetail,
+  });
 
   final List<Account> accounts;
   final String? selectedId;
+  final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -158,6 +177,7 @@ class _AccountsByType extends StatelessWidget {
                     _AccountTile(
                       account: a,
                       selected: a.id == selectedId,
+                      heroEnabled: !inMasterDetail,
                     ),
                 ],
               ),
@@ -171,10 +191,15 @@ class _AccountsByType extends StatelessWidget {
 }
 
 class _AccountTile extends StatelessWidget {
-  const _AccountTile({required this.account, required this.selected});
+  const _AccountTile({
+    required this.account,
+    required this.selected,
+    required this.heroEnabled,
+  });
 
   final Account account;
   final bool selected;
+  final bool heroEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +209,11 @@ class _AccountTile extends StatelessWidget {
           ? theme.colorScheme.primary.withValues(alpha: 0.10)
           : null,
       child: ListTile(
-        title: Text(account.name),
+        title: OptionalHero(
+          tag: 'account-${account.id}-name',
+          enabled: heroEnabled,
+          child: Text(account.name),
+        ),
         subtitle: Text(_subtitleFor(account)),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => _onTap(context),
