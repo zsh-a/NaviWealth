@@ -185,13 +185,18 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
+    final initial = _initial;
+    final title = widget.isEdit
+        ? (initial != null
+            ? OptionalHero(
+                tag: 'account-${initial.id}-name',
+                child: Text(initial.name),
+              )
+            : Text(l10n.accountFormEditTitle))
+        : Text(l10n.accountFormCreateTitle);
     return Scaffold(
       appBar: GlassAppBar(
-        title: Text(
-          widget.isEdit
-              ? l10n.accountFormEditTitle
-              : l10n.accountFormCreateTitle,
-        ),
+        title: title,
         actions: [
           if (widget.isEdit)
             IconButton(

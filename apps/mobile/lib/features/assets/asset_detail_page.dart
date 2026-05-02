@@ -186,7 +186,10 @@ class _EquityAssetDetailPageState
         }
         return Scaffold(
           appBar: GlassAppBar(
-            title: Text(asset.name ?? asset.symbol),
+            title: OptionalHero(
+              tag: 'asset-${asset.id}-name',
+              child: Text(asset.name ?? asset.symbol),
+            ),
             actions: [
               IconButton(
                 key: const Key('asset-detail-sync-metadata'),
@@ -321,10 +324,13 @@ class _HoldingCard extends ConsumerWidget {
                 const SizedBox(height: Spacing.s8),
                 _MetricRow(
                   label: '当前市值',
-                  trailing: AnimatedMoneyText(
-                    amount: marketValueAsset?.toDouble(),
-                    currencyCode: asset.currency,
-                    style: theme.textTheme.titleMedium,
+                  trailing: OptionalHero(
+                    tag: 'asset-${asset.id}-value',
+                    child: AnimatedMoneyText(
+                      amount: marketValueAsset?.toDouble(),
+                      currencyCode: asset.currency,
+                      style: theme.textTheme.titleMedium,
+                    ),
                   ),
                 ),
                 if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
