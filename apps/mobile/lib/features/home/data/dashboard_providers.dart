@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../domain/services/currency_converter.dart';
@@ -13,6 +14,7 @@ import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
 import '../../assets/physical/data/providers.dart';
 import '../../investment/data/providers.dart';
+import '../../investment/domain/models/holding_snapshot.dart';
 import '../../investment/domain/returns/returns_service.dart';
 import '../../investment/domain/returns/xirr_engine.dart';
 import '../../liabilities/data/providers.dart';
@@ -94,12 +96,17 @@ final dashboardTimeRangeProvider = Provider<DashboardTimeRange>((ref) {
 });
 
 /// Live snapshot of asset / liability allocations grouped by big-bucket
-/// category. Re-computes whenever any upstream stream emits.
+/// category. Re-computes whenever any upstream stream emits — including
+/// the transactions stream that drives [holdingsSnapshotProvider], so a
+/// newly recorded trade flows straight into the totals without manual
+/// invalidation.
 final dashboardSnapshotProvider =
     Provider<AsyncValue<DashboardSnapshot>>((ref) {
   final manual = ref.watch(manualAssetsStreamProvider);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
+  final assets = ref.watch(allAssetsStreamProvider);
+  final holdings = ref.watch(holdingsSnapshotProvider);
   final converter = ref.watch(dashboardCurrencyConverterProvider);
   final base = ref.watch(dashboardBaseCurrencyProvider);
 
@@ -116,6 +123,14 @@ final dashboardSnapshotProvider =
   final manualList = manual.value ?? const <Asset>[];
   final physicalList = physical.value ?? const <PhysicalAsset>[];
   final liabList = liab.value ?? const <Liability>[];
+  // Holdings degrade to empty (rather than blocking the dashboard) while
+  // the holding pipeline is still hydrating or has errored — the totals
+  // then reflect manual + physical + liabilities, exactly as they did
+  // before the securities path was wired in.
+  final securities = _buildSecurityHoldings(
+    holdingsByAsset: holdings.value ?? const {},
+    assets: assets.value ?? const [],
+  );
 
   final summaries = <LiabilitySummary>[];
   for (final liability in liabList) {
@@ -133,9 +148,30 @@ final dashboardSnapshotProvider =
     physicalAssets: physicalList,
     liabilities: liabList,
     liabilitySummaries: summaries,
+    securitiesHoldings: securities,
   );
   return AsyncValue.data(snapshot);
 });
+
+/// Pair each priced holding with its asset row, dropping anything that
+/// isn't a security (manual cash / deposits are already counted via
+/// [manualAssetsStreamProvider] — folding them in twice would double the
+/// total).
+List<SecurityHolding> _buildSecurityHoldings({
+  required Map<String, HoldingSnapshot> holdingsByAsset,
+  required List<Asset> assets,
+}) {
+  if (holdingsByAsset.isEmpty) return const [];
+  final byId = {for (final a in assets) a.id: a};
+  final out = <SecurityHolding>[];
+  for (final entry in holdingsByAsset.entries) {
+    final asset = byId[entry.key];
+    if (asset == null) continue;
+    if (!kSecuritiesAssetTypes.contains(asset.type)) continue;
+    out.add((asset: asset, snapshot: entry.value));
+  }
+  return out;
+}
 
 /// Schedule rows for every liability, keyed by liability id. The trend
 /// builder needs the schedule so it can walk outstanding balance back

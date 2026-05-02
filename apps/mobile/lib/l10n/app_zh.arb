@@ -608,6 +608,8 @@
   "aiChatToolJumpAsset": "资产 {id}",
   "aiChatToolJumpAccount": "账户 {id}",
   "aiChatToolJumpLiability": "负债 {id}",
+  "aiChatToolShowRawJson": "查看 raw JSON",
+  "aiChatToolShowCompactView": "返回精简视图",
 
   "chartEmptyDefault": "暂无数据"
 }

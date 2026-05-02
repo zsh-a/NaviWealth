@@ -75,6 +75,16 @@ class TransactionRepository {
     return rows.map(_toTransaction).toList();
   }
 
+  /// Live stream of every non-deleted transaction. Drives the reactive
+  /// holding / returns pipeline: any insert or soft-delete fires a fresh
+  /// list, which re-runs the holding service without explicit invalidation.
+  Stream<List<Transaction>> watchAll() {
+    final query = _db.select(_db.transactions)
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.tradeDate)]);
+    return query.watch().map((rows) => rows.map(_toTransaction).toList());
+  }
+
   // ---------- Writes ----------
 
   /// Persist a [TradeEntryPlan]: writes the transaction row and enqueues

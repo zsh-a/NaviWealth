@@ -24,6 +24,9 @@ class AmountField extends StatefulWidget {
     this.required = true,
     this.helperText,
     this.onChanged,
+    this.focusNode,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   final String label;
@@ -34,6 +37,21 @@ class AmountField extends StatefulWidget {
   final bool required;
   final String? helperText;
   final void Function(Decimal? value)? onChanged;
+
+  /// Optional focus node so callers can chain fields with
+  /// `TextInputAction.next` and the soft-keyboard "next" arrow jumps to
+  /// the right input. When omitted Flutter creates one internally and
+  /// focus traversal falls back to widget order.
+  final FocusNode? focusNode;
+
+  /// Defaults to [TextInputAction.next] when null so callers wiring a
+  /// focus chain just get the right keyboard affordance for free.
+  final TextInputAction? textInputAction;
+
+  /// Invoked when the user hits the keyboard action button. Pair with
+  /// [textInputAction] = `done` on the last field so a single keypress
+  /// submits the form.
+  final ValueChanged<String>? onFieldSubmitted;
 
   @override
   State<AmountField> createState() => _AmountFieldState();
@@ -83,6 +101,9 @@ class _AmountFieldState extends State<AmountField> {
         : RegExp(r'^\d*\.?\d*$');
     return TextFormField(
       controller: _effectiveController,
+      focusNode: widget.focusNode,
+      textInputAction: widget.textInputAction ?? TextInputAction.next,
+      onFieldSubmitted: widget.onFieldSubmitted,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(pattern)],
       style: TypographyTokens.numericBody.copyWith(

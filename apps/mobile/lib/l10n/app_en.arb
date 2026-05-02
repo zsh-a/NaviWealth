@@ -935,6 +935,8 @@
   "@aiChatToolJumpLiability": {
     "placeholders": { "id": { "type": "String" } }
   },
+  "aiChatToolShowRawJson": "View raw JSON",
+  "aiChatToolShowCompactView": "Back to compact view",
 
   "chartEmptyDefault": "No data yet"
 }

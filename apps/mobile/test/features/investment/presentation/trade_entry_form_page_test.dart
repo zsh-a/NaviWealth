@@ -20,6 +20,7 @@ import 'package:naviwealth/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/data/securities_catalog/providers.dart';
 import 'package:naviwealth/data/securities_catalog/securities_catalog_loader.dart';
 import 'package:naviwealth/data/securities_catalog/securities_search_service.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
@@ -27,6 +28,7 @@ import 'package:naviwealth/features/investment/data/transaction_repository.dart'
 import 'package:naviwealth/features/investment/domain/trade_entry/default_trade_entry_service.dart';
 import 'package:naviwealth/features/investment/presentation/trade_entry_form_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
@@ -44,6 +46,7 @@ class _Harness {
     required this.secRepo,
     required this.search,
     required this.market,
+    required this.prefs,
   });
 
   final AppDatabase db;
@@ -52,6 +55,7 @@ class _Harness {
   final SecuritiesAssetRepository secRepo;
   final SecuritiesSearchService search;
   final MarketDataService market;
+  final SharedPreferences prefs;
 
   static Future<_Harness> create() async {
     final db = makeTestDatabase();
@@ -71,6 +75,8 @@ class _Harness {
       outbox: outbox,
       stamper: stamper,
     );
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
     return _Harness(
       db: db,
       outbox: outbox,
@@ -78,6 +84,7 @@ class _Harness {
       secRepo: secRepo,
       search: SecuritiesSearchService(db: db),
       market: FakeMarketDataService(),
+      prefs: prefs,
     );
   }
 
@@ -106,6 +113,7 @@ Account _account({
 ProviderScope _wrap(_Harness h, {List<Account>? accounts}) {
   return ProviderScope(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(h.prefs),
       appDatabaseProvider.overrideWith((_) async => h.db),
       outboxStoreProvider.overrideWith((_) async => h.outbox),
       securitiesAssetRepositoryProvider.overrideWith((_) async => h.secRepo),

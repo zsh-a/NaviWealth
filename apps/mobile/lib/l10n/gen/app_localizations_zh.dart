@@ -1846,5 +1846,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get aiChatToolShowRawJson => '查看 raw JSON';
+
+  @override
+  String get aiChatToolShowCompactView => '返回精简视图';
+
+  @override
   String get chartEmptyDefault => '暂无数据';
 }

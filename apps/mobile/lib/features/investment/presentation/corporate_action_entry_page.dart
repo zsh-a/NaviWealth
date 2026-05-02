@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/haptics/haptics.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/corporate_action_preview.dart';
 import '../domain/cost_basis/fifo_strategy.dart';
@@ -246,6 +248,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final preview = _preview;
     if (preview == null) return;
     widget.onSubmit(preview);
+    Haptics.success();
     final l10n = AppLocalizations.of(context);
     if (mounted) {
       ScaffoldMessenger.of(
@@ -535,7 +538,7 @@ class _TypeSelector extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final (type, label) in entries)
-          ChoiceChip(
+          AppChoiceChip(
             key: Key('corp-action-type-${type.name}'),
             label: Text(label),
             selected: selected == type,

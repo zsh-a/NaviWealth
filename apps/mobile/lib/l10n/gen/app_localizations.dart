@@ -3426,6 +3426,18 @@ abstract class AppLocalizations {
   /// **'Liability {id}'**
   String aiChatToolJumpLiability(String id);
 
+  /// No description provided for @aiChatToolShowRawJson.
+  ///
+  /// In en, this message translates to:
+  /// **'View raw JSON'**
+  String get aiChatToolShowRawJson;
+
+  /// No description provided for @aiChatToolShowCompactView.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to compact view'**
+  String get aiChatToolShowCompactView;
+
   /// No description provided for @chartEmptyDefault.
   ///
   /// In en, this message translates to:

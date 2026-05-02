@@ -10,6 +10,7 @@ class NoteField extends StatelessWidget {
     this.maxLines = 3,
     this.maxLength = 500,
     this.helperText,
+    this.focusNode,
   });
 
   final TextEditingController? controller;
@@ -18,10 +19,17 @@ class NoteField extends StatelessWidget {
   final int maxLength;
   final String? helperText;
 
+  /// Optional focus node so callers can wire the note field into a
+  /// keyboard focus chain (`textInputAction.next` jumps here from the
+  /// preceding amount field). The note itself accepts newlines, so we
+  /// keep [TextInputAction.newline] regardless.
+  final FocusNode? focusNode;
+
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       minLines: 2,
       maxLines: maxLines,
       maxLength: maxLength,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/proposal_applier.dart';
@@ -138,6 +139,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   Future<void> _onConfirm() async {
     final plan = widget.plan;
     if (plan is! ReadyProposalPlan) return;
+    Haptics.primaryPress();
     final effective = _overrides == null
         ? plan
         : ReadyProposalPlan(
@@ -157,6 +159,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       await _persist(result);
       _maybeStartUndoTicker();
     } on ProposalApplyException catch (e) {
+      Haptics.error();
       await _persist(
         _applyState.copyWith(
           status: ProposalApplyStatus.errored,
@@ -164,6 +167,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         ),
       );
     } catch (e) {
+      Haptics.error();
       await _persist(
         _applyState.copyWith(
           status: ProposalApplyStatus.errored,
@@ -971,6 +975,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
   }
 
   Future<void> _confirmAll() async {
+    Haptics.primaryPress();
     setState(() => _busy = true);
     try {
       final applier = await ref.read(proposalApplierProvider.future);

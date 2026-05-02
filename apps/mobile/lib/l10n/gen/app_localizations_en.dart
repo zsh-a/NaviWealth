@@ -1927,5 +1927,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get aiChatToolShowRawJson => 'View raw JSON';
+
+  @override
+  String get aiChatToolShowCompactView => 'Back to compact view';
+
+  @override
   String get chartEmptyDefault => 'No data yet';
 }

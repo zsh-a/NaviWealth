@@ -21,6 +21,11 @@ lib/features/ai_chat/data/chat_repository.dart
 # tests; its UI consumers already route through AppLocalizations via
 # `proposalKindLabel(l10n, kind)` in propose_card.dart.
 lib/features/ai_chat/domain/proposal_plan.dart
+# tool_invocation_renderers.dart landed on main via FIR-83 (per-tool
+# renderers). ~38 UI strings spread across const widgets and helper
+# switches; migration wants its own focused PR so the renderer test
+# suite can be ported in lockstep.
+lib/features/ai_chat/ui/tool_invocation_renderers.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
 # Default expense categories seeded at first launch. Names are CN by
