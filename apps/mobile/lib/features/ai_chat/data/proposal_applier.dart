@@ -177,6 +177,112 @@ class ProposalApplier {
       draft,
       openLots: const <Lot>[],
     );
+    final tx = tradePlan.transaction;
+
+    if (type == TransactionType.buy || type == TransactionType.sell) {
+      final uid = await currentUserId();
+      final cashAccountId =
+          plan.get('counter_account_id') ?? accountId;
+      final feeAccountId = AccountRepository.systemAccountIdForPath(
+        'expense:trading:fee',
+        ownerUserId: uid,
+      );
+      final taxAccountId = AccountRepository.systemAccountIdForPath(
+        'expense:trading:tax',
+        ownerUserId: uid,
+      );
+
+      if (type == TransactionType.buy) {
+        final build = JournalEntryBuilders.buy(
+          date: tx.tradeDate,
+          accountId: accountId,
+          cashAccountId: cashAccountId,
+          assetUnit: tx.assetId!,
+          qty: tx.quantity,
+          price: tx.price,
+          quoteCurrency: currency,
+          lotId: tradePlan.createdLot?.id,
+          acquiredOn: tradePlan.createdLot?.openedAt,
+          feeAmount: tx.fee,
+          feeAccountId: tx.fee != null ? feeAccountId : null,
+          feeCurrency: tx.fee != null ? currency : null,
+          taxAmount: tx.tax,
+          taxAccountId: tx.tax != null ? taxAccountId : null,
+          taxCurrency: tx.tax != null ? currency : null,
+          narration: note,
+        );
+        final stored = await journalEntryRepo.create(
+          entry: build.entry,
+          postings: build.postings,
+        );
+        return ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: stored.entry.id,
+          appliedTable: 'journal_entries',
+          appliedAt: at,
+          shortLabel: '已记录${plan.summaryZh}',
+        );
+      } else {
+        // Sell — cost basis from resolved lots.
+        final capGainsAccountId =
+            AccountRepository.systemAccountIdForPath(
+          'income:capitalGains',
+          ownerUserId: uid,
+        );
+        final pnl = tradePlan.realizedPnL;
+        Decimal costPerUnit;
+        String costCurrency;
+        String? sellLotId;
+        DateTime? sellAcquiredOn;
+        if (pnl.isNotEmpty) {
+          final first = pnl.first;
+          costPerUnit = first.quantity.sign != 0
+              ? (first.costBasis / first.quantity)
+                  .toDecimal(scaleOnInfinitePrecision: 16)
+              : tx.price;
+          costCurrency = first.currency;
+          sellLotId = first.lotId;
+          sellAcquiredOn = first.lotOpenedAt;
+        } else {
+          costPerUnit = tx.price;
+          costCurrency = currency;
+        }
+        final build = JournalEntryBuilders.sell(
+          date: tx.tradeDate,
+          accountId: accountId,
+          cashAccountId: cashAccountId,
+          capitalGainsAccountId: capGainsAccountId,
+          assetUnit: tx.assetId!,
+          qty: tx.quantity,
+          price: tx.price,
+          quoteCurrency: currency,
+          costPerUnit: costPerUnit,
+          costCurrency: costCurrency,
+          lotId: sellLotId,
+          acquiredOn: sellAcquiredOn,
+          feeAmount: tx.fee,
+          feeAccountId: tx.fee != null ? feeAccountId : null,
+          feeCurrency: tx.fee != null ? currency : null,
+          taxAmount: tx.tax,
+          taxAccountId: tx.tax != null ? taxAccountId : null,
+          taxCurrency: tx.tax != null ? currency : null,
+          narration: note,
+        );
+        final stored = await journalEntryRepo.create(
+          entry: build.entry,
+          postings: build.postings,
+        );
+        return ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: stored.entry.id,
+          appliedTable: 'journal_entries',
+          appliedAt: at,
+          shortLabel: '已记录${plan.summaryZh}',
+        );
+      }
+    }
+
+    // valuationAdjust — no JE builder yet; use legacy path.
     final stored = await transactionRepo.recordTrade(tradePlan);
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
@@ -340,7 +446,11 @@ class ProposalApplier {
     if (raw == null) return null;
     final s = raw is String ? raw : raw.toString();
     if (s.isEmpty) return null;
-    return Decimal.tryParse(s);
+    final d = Decimal.tryParse(s);
+    // Normalise zero to null so JE builders' _normalizeOptionalAmount
+    // doesn't reject a backend-supplied "0" as an invalid positive amount.
+    if (d == null || d == Decimal.zero) return null;
+    return d;
   }
 
   DateTime? _parseDate(String? s) {

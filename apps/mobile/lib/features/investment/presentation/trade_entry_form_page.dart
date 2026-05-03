@@ -7,6 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
+import '../../../data/repositories/account_repository.dart';
+import '../../../data/repositories/journal_entry_builders.dart';
+import '../../../data/repositories/journal_entry_providers.dart';
+import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../data/securities_catalog/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -58,6 +62,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   TransactionType _type = TransactionType.buy;
   String? _accountId;
+  String? _cashAccountId;
   String? _currency = 'CNY';
   DateTime _tradeDate = DateTime.now();
   LocalSecurityChoice? _selected;
@@ -91,6 +96,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     _accountId = widget.accountId;
     final defaults = ref.read(formDefaultsProvider);
     _accountId ??= defaults.tradeAccountId;
+    _cashAccountId = defaults.tradeCashAccountId;
     if (defaults.tradeCurrency != null && defaults.tradeCurrency!.isNotEmpty) {
       _currency = defaults.tradeCurrency;
     }
@@ -135,6 +141,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         await ref.read(securitiesAssetRepositoryProvider.future);
     final tradeService = await ref.read(tradeEntryServiceProvider.future);
     final repo = await ref.read(transactionRepositoryProvider.future);
+    final jeRepo = await ref.read(journalEntryRepositoryProvider.future);
+    final currentUserId = ref.read(currentUserIdProvider);
     if (!mounted) return;
 
     final type = _type;
@@ -145,8 +153,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final price = _priceController.text.trim().isEmpty
         ? null
         : Decimal.parse(_priceController.text.trim());
-    final fee = Decimal.tryParse(_feeController.text.trim());
-    final tax = Decimal.tryParse(_taxController.text.trim());
+    // Normalise zero to null so the JE builder's _normalizeOptionalAmount
+    // doesn't reject a user-entered "0" as an invalid positive amount.
+    final fee = _nonZeroOr(Decimal.tryParse(_feeController.text.trim()));
+    final tax = _nonZeroOr(Decimal.tryParse(_taxController.text.trim()));
     final note = _noteController.text.trim().isEmpty
         ? null
         : _noteController.text.trim();
@@ -157,6 +167,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     unawaited(
       ref.read(formDefaultsProvider.notifier).rememberTrade(
             accountId: accountId,
+            cashAccountId: _cashAccountId,
             currency: currency,
           ),
     );
@@ -203,8 +214,100 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           tax: tax,
           note: note,
         );
-        final plan = await tradeService.buildPlan(draft, openLots: <Lot>[]);
-        await repo.recordTrade(plan);
+        final plan =
+            await tradeService.buildPlan(draft, openLots: <Lot>[]);
+        final tx = plan.transaction;
+        final uid = await currentUserId();
+
+        if (type == TransactionType.buy || type == TransactionType.sell) {
+          final cashAcct = _cashAccountId ?? accountId;
+          final feeAccountId = AccountRepository.systemAccountIdForPath(
+            'expense:trading:fee',
+            ownerUserId: uid,
+          );
+          final taxAccountId = AccountRepository.systemAccountIdForPath(
+            'expense:trading:tax',
+            ownerUserId: uid,
+          );
+
+          if (type == TransactionType.buy) {
+            final build = JournalEntryBuilders.buy(
+              date: tx.tradeDate,
+              accountId: accountId,
+              cashAccountId: cashAcct,
+              assetUnit: tx.assetId!,
+              qty: tx.quantity,
+              price: tx.price,
+              quoteCurrency: currency,
+              lotId: plan.createdLot?.id,
+              acquiredOn: plan.createdLot?.openedAt,
+              feeAmount: tx.fee,
+              feeAccountId: tx.fee != null ? feeAccountId : null,
+              feeCurrency: tx.fee != null ? currency : null,
+              taxAmount: tx.tax,
+              taxAccountId: tx.tax != null ? taxAccountId : null,
+              taxCurrency: tx.tax != null ? currency : null,
+              narration: note,
+            );
+            await jeRepo.create(
+              entry: build.entry,
+              postings: build.postings,
+            );
+          } else {
+            // Sell — cost basis comes from the resolved lots.
+            final capGainsAccountId =
+                AccountRepository.systemAccountIdForPath(
+              'income:capitalGains',
+              ownerUserId: uid,
+            );
+            final pnl = plan.realizedPnL;
+            Decimal costPerUnit;
+            String costCurrency;
+            String? sellLotId;
+            DateTime? sellAcquiredOn;
+            if (pnl.isNotEmpty) {
+              final first = pnl.first;
+              costPerUnit = first.quantity.sign != 0
+                  ? (first.costBasis / first.quantity)
+                      .toDecimal(scaleOnInfinitePrecision: 16)
+                  : tx.price;
+              costCurrency = first.currency;
+              sellLotId = first.lotId;
+              sellAcquiredOn = first.lotOpenedAt;
+            } else {
+              costPerUnit = tx.price;
+              costCurrency = currency;
+            }
+            final build = JournalEntryBuilders.sell(
+              date: tx.tradeDate,
+              accountId: accountId,
+              cashAccountId: cashAcct,
+              capitalGainsAccountId: capGainsAccountId,
+              assetUnit: tx.assetId!,
+              qty: tx.quantity,
+              price: tx.price,
+              quoteCurrency: currency,
+              costPerUnit: costPerUnit,
+              costCurrency: costCurrency,
+              lotId: sellLotId,
+              acquiredOn: sellAcquiredOn,
+              feeAmount: tx.fee,
+              feeAccountId: tx.fee != null ? feeAccountId : null,
+              feeCurrency: tx.fee != null ? currency : null,
+              taxAmount: tx.tax,
+              taxAccountId: tx.tax != null ? taxAccountId : null,
+              taxCurrency: tx.tax != null ? currency : null,
+              narration: note,
+            );
+            await jeRepo.create(
+              entry: build.entry,
+              postings: build.postings,
+            );
+          }
+        } else {
+          // valuationAdjust — no JE builder yet; use legacy path.
+          await repo.recordTrade(plan);
+        }
       },
     );
   }
@@ -266,6 +369,21 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             value: _accountId,
             onChanged: (v) => setState(() => _accountId = v),
           ),
+          if (_type == TransactionType.buy ||
+              _type == TransactionType.sell) ...[
+            const SizedBox(height: Spacing.s12),
+            AccountPicker(
+              key: const Key('trade-entry-cash-account'),
+              label: l10n.tradeEntryCashAccountLabel,
+              accounts: accounts
+                  .where((a) =>
+                      a.type == AccountType.bank ||
+                      a.type == AccountType.cash)
+                  .toList(growable: false),
+              value: _cashAccountId,
+              onChanged: (v) => setState(() => _cashAccountId = v),
+            ),
+          ],
           const SizedBox(height: Spacing.s12),
 
           AmountField(
@@ -393,3 +511,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     return l10n.tradeEntryDecimalScaleHint(_decimalScale(_selected!.type));
   }
 }
+
+Decimal? _nonZeroOr(Decimal? v) =>
+    v == null || v == Decimal.zero ? null : v;

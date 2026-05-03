@@ -785,6 +785,7 @@
   "tradeEntryDateLabel": "Trade date",
   "tradeEntryFeeLabel": "Fee",
   "tradeEntryTaxLabel": "Tax",
+  "tradeEntryCashAccountLabel": "Cash account",
   "tradeEntryCatalogLoadError": "Couldn't load catalog: {error}",
   "@tradeEntryCatalogLoadError": {
     "placeholders": { "error": { "type": "String" } }
