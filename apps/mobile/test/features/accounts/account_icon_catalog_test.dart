@@ -55,7 +55,7 @@ void main() {
       'flag',
       'call_split',
       'tune',
-      // FIR-131 wave 3g — round-out seeds for legacy expense slugs.
+      // Round-out seeds for expense account icons.
       'chair',
       'sports_esports',
       'medical_services',

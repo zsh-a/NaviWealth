@@ -92,12 +92,10 @@ class Accounts extends Table with SyncableTable {
   /// land before the parent has caught up.
   TextColumn get parentId => text().nullable()();
 
-  /// FIR-130 — Material icon name for the account avatar (replaces
-  /// `expense_categories.icon`).
+  /// Material icon name for the account avatar.
   TextColumn get icon => text().nullable()();
 
-  /// FIR-130 — color token (hex string or design-token id) for the
-  /// account avatar (replaces `expense_categories.color`).
+  /// Color token (hex string or design-token id) for the account avatar.
   TextColumn get color => text().nullable()();
 
   @override

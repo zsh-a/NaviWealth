@@ -51,24 +51,21 @@ class DashboardTrend {
 
 /// Builds the net-worth trend the dashboard renders.
 ///
-/// FIR-51's [NetWorthService] is the canonical engine for analysis / FIRE /
-/// XIRR — those features need full transaction-driven replay. The dashboard
-/// uses a thinner shim here because the canonical Transaction stream is
-/// not yet wired through Riverpod (FIR-7 scope), and the trend chart only
-/// needs three signals:
+/// Builds the net-worth trend from journal-entry postings rather than
+/// replaying a full transaction stream. The trend chart needs three
+/// signals:
 ///
 ///   1. asset value over time (held flat for cash / deposits / wealth
-///      products until valuationAdjust history lands; interpolated from
+///      products until valuation history lands; interpolated from
 ///      purchase-price → current-valuation for real estate / vehicles);
 ///   2. outstanding liability principal over time (walked through the
 ///      persisted amortization schedule via the same logic
 ///      [AmortizationLiabilitySource] uses inside [NetWorthService]);
 ///   3. the difference of the two, expressed in [baseCurrency].
 ///
-/// When the real Transaction stream lands, callers can swap this shim for
-/// a thin wrapper around `NetWorthService.timeSeries(...)` without touching
-/// the chart UI — the result type [DashboardTrend] is intentionally a
-/// strict subset of [NetWorthSeries].
+/// The result type [DashboardTrend] is intentionally a strict subset
+/// of [NetWorthSeries] so callers can swap to `NetWorthService` if
+/// full replay is needed later.
 class DashboardTrendBuilder {
   DashboardTrendBuilder({
     required this.converter,

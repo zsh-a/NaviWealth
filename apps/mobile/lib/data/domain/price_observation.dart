@@ -5,10 +5,10 @@ import 'sync_meta.dart';
 
 part 'price_observation.freezed.dart';
 
-/// One row in the `prices` time-series. Replaces the legacy "valuation
-/// adjust" event by recording an *observation* of an asset's price at a
-/// point in time — the holding's current value is then derived by
-/// looking up the latest observation, never by mutating the asset row.
+/// One row in the `prices` time-series. Records an *observation* of an
+/// asset's price at a point in time — the holding's current value is
+/// derived by looking up the latest observation, never by mutating the
+/// asset row.
 ///
 /// Identity is `(unit, quoteCurrency, observedOn)` plus a row id; the
 /// composite uniqueness lives at the index level rather than the schema

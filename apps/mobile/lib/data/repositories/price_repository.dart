@@ -9,10 +9,9 @@ import '../domain/price_observation.dart';
 import '../domain/sync_meta.dart';
 import 'mutation_context.dart';
 
-/// FIR-130 — DAO for the append-only `prices` time-series. Replaces the
-/// legacy `valuationAdjust` `Transaction` row plus `assets.last_price`
-/// mirror — every price update is a new row in this table; current
-/// price = MAX(observed_on) over the matching `(unit, quoteCurrency)`.
+/// DAO for the append-only `prices` time-series. Every price update
+/// is a new row; current price = MAX(observed_on) over the matching
+/// `(unit, quoteCurrency)`.
 ///
 /// `unit` shares the [Posting.unit] namespace: usually an `assets.id`
 /// (`'us_stock:AAPL'`), occasionally a fiat code when the user is

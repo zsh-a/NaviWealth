@@ -162,7 +162,7 @@ void main() {
     },
   );
 
-  group('FIR-131 wave 3d — watchAllWithPostings', () {
+  group('watchAllWithPostings', () {
     test('emits an empty list when the ledger has no entries', () async {
       final first = await repo.watchAllWithPostings().first;
       expect(first, isEmpty);

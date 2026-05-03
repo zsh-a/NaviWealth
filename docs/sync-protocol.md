@@ -163,12 +163,11 @@ HLC state is persisted in D1 (`sync_state` table, single row).
 ```json
 {
   "op_id": "f4b5d2a0-7e21-4f60-bd3c-3a1b2c5e9f01",
-  "table": "transactions",
+  "table": "journal_entries",
   "row_id": "e2c4...",
   "op_type": "update",
   "fields_diff": {
-    "amount": 123.45,
-    "note": "rebate"
+    "narration": "rebate"
   },
   "hlc": "1714291200000.0001-1f5b0c3a-4e2d-4d31-9b77-3f7c1f0d2c01",
   "device_id": "1f5b0c3a-4e2d-4d31-9b77-3f7c1f0d2c01"
@@ -180,7 +179,7 @@ HLC state is persisted in D1 (`sync_state` table, single row).
 | Field | Type | Notes |
 |-------|------|-------|
 | `op_id` | UUIDv4 string | Globally unique. Idempotency key. |
-| `table` | enum string | One of: `accounts`, `assets`, `transactions`, `liabilities`, `fx_rates`, `tags`, `tag_links`, `categories`, `expense_categories`, `amortization_entries`, `goals`, `devices`, `users`, `settings`, `journal_entries`, `postings`, `prices`. Other tables (e.g. `app_meta`, the local market-data caches and `domain_event_log`) are **not** synced. The `journal_entries` / `postings` / `prices` triple was added in FIR-130 as the foundation of the Beancount-style ledger; they sync independently so a posting-level edit ships as a single op rather than a JE-wide rewrite. `transactions` and `expense_categories` remain in the wire enum during the FIR-131 / FIR-132 write/read cutover and will be retired after both ship. |
+| `table` | enum string | One of: `accounts`, `assets`, `liabilities`, `tags`, `tag_links`, `categories`, `amortization_entries`, `goals`, `devices`, `users`, `settings`, `journal_entries`, `postings`, `prices`. Other tables (e.g. `fx_rates`, `app_meta`, the local market-data caches and `domain_event_log`) are **not** synced — `fx_rates` is global market data each device pulls independently. The `journal_entries` / `postings` / `prices` triple is the Beancount-style ledger foundation; they sync independently so a posting-level edit ships as a single op rather than a JE-wide rewrite. |
 | `row_id` | string | Primary key of the row. For composite keys (e.g. `fx_rates`) the canonical form is `<base>:<quote>:<as_of_iso>`. |
 | `op_type` | enum | `insert` \| `update` \| `delete`. |
 | `fields_diff` | object \| null | See §4.2. |
@@ -601,9 +600,9 @@ CREATE TABLE sync_state (
 );
 ```
 
-Materialised business tables (`accounts`, `assets`, `transactions`, …) carry
-`hlc_text TEXT NOT NULL`, `device_id TEXT`, `deleted_at TEXT NULL` columns
-(see FIR-36 schema).
+Materialised business tables (`accounts`, `assets`, `journal_entries`,
+`postings`, `prices`, …) carry `hlc_text TEXT NOT NULL`, `device_id TEXT`,
+`deleted_at TEXT NULL` columns (see FIR-36 schema).
 
 ---
 
@@ -725,7 +724,7 @@ These are explicitly **not** v1; tracked here so the spec stays complete.
 
 ## 12. References
 
-- `apps/mobile/lib/core/db/tables.dart` — local schema baseline
+- `apps/mobile/lib/data/db/tables.dart` — local schema baseline
 - `apps/backend/src/error.rs` — error envelope shape
 - FIR-19 — core entity definitions
 - FIR-29 — JWT auth (request preconditions for every endpoint here)

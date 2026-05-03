@@ -30,9 +30,9 @@ abstract class Account with _$Account {
     /// foreign-key checks during eventual-consistency replay.
     String? parentId,
 
-    /// FIR-130 — Material icon name driving the account's avatar in the
-    /// picker / list. Lifted off the legacy `expense_categories.icon`
-    /// surface so a single account-tree picker can render every category.
+    /// Material icon name driving the account's avatar in the
+    /// picker / list. See [account_icon_catalog.dart] for the
+    /// canonical set.
     String? icon,
 
     /// FIR-130 — colour token for the account's avatar (hex or design

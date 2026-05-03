@@ -254,7 +254,6 @@ void main() {
     });
   });
 
-  // FIR-131 wave 3h — `ExpenseRepository` is now read-only; all expense
-  // writes flow through `JournalEntryRepository`. JE-side audit
-  // coverage will land alongside the JE-aware repos in a follow-up.
+  // `ExpenseRepository` is read-only; all expense writes flow through
+  // `JournalEntryRepository`.
 }

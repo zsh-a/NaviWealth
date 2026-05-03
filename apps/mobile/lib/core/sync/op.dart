@@ -19,11 +19,10 @@ const Set<String> kSyncableTables = {
   'categories',
   'settings',
   'users',
-  // FIR-130 — Beancount-style ledger foundation. JE and posting rows
-  // sync independently so a posting-level edit (re-order, fix a typo in
-  // a single leg) ships as a single op rather than a JE-wide rewrite.
-  // `prices` is the append-only valuation time-series that replaces the
-  // legacy `valuationAdjust` event row.
+  // Beancount-style ledger. JE and posting rows sync independently
+  // so a posting-level edit (re-order, fix a typo in a single leg)
+  // ships as a single op rather than a JE-wide rewrite. `prices` is
+  // the append-only valuation time-series.
   'journal_entries',
   'postings',
   'prices',
