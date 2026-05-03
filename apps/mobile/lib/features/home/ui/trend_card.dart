@@ -185,7 +185,6 @@ class _TrendChart extends StatelessWidget {
                   maxLabels: 4,
                 ),
                 filled: true,
-                aspectRatio: aspect,
                 semanticLabel:
                     AppLocalizations.of(context).dashboardTrendTitle,
               ),

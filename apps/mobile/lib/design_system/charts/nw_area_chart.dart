@@ -18,7 +18,7 @@ class NwAreaChart extends StatelessWidget {
     required this.series,
     this.xAxis = const TimeAxis(),
     this.yAxis = const ValueAxis(),
-    this.aspectRatio = 16 / 9,
+    this.aspectRatio,
     this.drillDown,
     this.downsample = true,
     this.downsampleTarget = kDefaultDownsampleTarget,
@@ -29,7 +29,7 @@ class NwAreaChart extends StatelessWidget {
   final List<ChartSeries> series;
   final TimeAxis xAxis;
   final ValueAxis yAxis;
-  final double aspectRatio;
+  final double? aspectRatio;
   final ChartDrillDown? drillDown;
   final bool downsample;
   final int downsampleTarget;

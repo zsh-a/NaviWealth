@@ -301,6 +301,8 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   final base = ref.watch(dashboardBaseCurrencyProvider);
   final range = ref.watch(dashboardTimeRangeProvider);
   final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
+  final holdings = ref.watch(holdingsSnapshotProvider);
+  final assets = ref.watch(allAssetsStreamProvider);
 
   if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
     return const AsyncValue.loading();
@@ -315,6 +317,10 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
           StackTrace.current,
     );
   }
+  final securities = _buildSecurityHoldings(
+    holdingsByAsset: holdings.value ?? const {},
+    assets: assets.value ?? const [],
+  );
   final builder = DashboardTrendBuilder(
     converter: converter,
     baseCurrency: base,
@@ -325,6 +331,7 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
     physicalAssets: physical.value ?? const <PhysicalAsset>[],
     liabilities: liab.value ?? const <Liability>[],
     liabilitySchedules: schedules,
+    securitiesHoldings: securities,
   );
   return AsyncValue.data(trend);
 });

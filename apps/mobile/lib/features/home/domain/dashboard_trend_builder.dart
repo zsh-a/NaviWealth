@@ -1,12 +1,14 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/amortization_entry.dart';
+import '../../../data/domain/asset.dart';
 import '../../../data/domain/liability.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/services/liability_balance_source.dart';
 import '../../../domain/services/net_worth_service.dart';
 import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
+import '../../investment/domain/models/holding_snapshot.dart';
 import 'dashboard_models.dart';
 import 'dashboard_time_range.dart';
 
@@ -90,6 +92,8 @@ class DashboardTrendBuilder {
     required Iterable<PhysicalAsset> physicalAssets,
     required Iterable<Liability> liabilities,
     required Map<String, List<AmortizationEntry>> liabilitySchedules,
+    Iterable<({Asset asset, HoldingSnapshot snapshot})> securitiesHoldings =
+        const [],
   }) {
     final manualList = manualAssets.toList(growable: false);
     final physicalList = physicalAssets.toList(growable: false);
@@ -113,6 +117,7 @@ class DashboardTrendBuilder {
       );
     }
     final liabSource = AmortizationLiabilitySource(liabSnapshots);
+    final secList = securitiesHoldings.toList(growable: false);
     final sampleDates = _sampleDates(range);
 
     final points = <TrendPoint>[];
@@ -129,7 +134,7 @@ class DashboardTrendBuilder {
     }
 
     for (final date in sampleDates) {
-      final assets = _valueAssets(date, manualList, physicalList, report);
+      final assets = _valueAssets(date, manualList, physicalList, secList, report);
       final liabilitiesValue = _valueLiabilities(date, liabSource, report);
       points.add(
         TrendPoint(
@@ -152,6 +157,7 @@ class DashboardTrendBuilder {
     DateTime date,
     List<ManualAssetValuation> manualAssets,
     List<PhysicalAsset> physicalAssets,
+    List<({Asset asset, HoldingSnapshot snapshot})> securities,
     void Function(String id, String currency) report,
   ) {
     var total = Money.zero(baseCurrency);
@@ -167,6 +173,12 @@ class DashboardTrendBuilder {
       if (value.sign <= 0) continue;
       final amount = Money(value, pa.currency);
       total = _addInBase(total, amount, date, pa.id, report);
+    }
+    for (final sh in securities) {
+      final mv = sh.snapshot.marketValueInAssetCurrency;
+      if (mv.sign <= 0) continue;
+      final amount = Money(mv, sh.asset.currency);
+      total = _addInBase(total, amount, date, sh.asset.id, report);
     }
     return total;
   }

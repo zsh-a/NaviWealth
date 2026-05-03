@@ -30,7 +30,7 @@ class NwLineChart extends StatefulWidget {
     required this.series,
     this.xAxis = const TimeAxis(),
     this.yAxis = const ValueAxis(),
-    this.aspectRatio = 16 / 9,
+    this.aspectRatio,
     this.drillDown,
     this.downsample = true,
     this.downsampleTarget = kDefaultDownsampleTarget,
@@ -43,7 +43,7 @@ class NwLineChart extends StatefulWidget {
   final List<ChartSeries> series;
   final TimeAxis xAxis;
   final ValueAxis yAxis;
-  final double aspectRatio;
+  final double? aspectRatio;
   final ChartDrillDown? drillDown;
 
   /// Auto-apply [downsampleLttb] when a series exceeds [downsampleTarget].
@@ -80,10 +80,11 @@ class _NwLineChartState extends State<NwLineChart> {
     final nonEmpty =
         widget.series.where((s) => s.points.isNotEmpty).toList();
     if (nonEmpty.isEmpty) {
-      return AspectRatio(
-        aspectRatio: widget.aspectRatio,
-        child: const EmptyChartPlaceholder(),
-      );
+      final ratio = widget.aspectRatio;
+      const placeholder = EmptyChartPlaceholder();
+      return ratio != null
+          ? AspectRatio(aspectRatio: ratio, child: placeholder)
+          : placeholder;
     }
 
     final palette = ChartPalette.of(context);
@@ -125,62 +126,64 @@ class _NwLineChartState extends State<NwLineChart> {
       );
     }
 
+    final stack = Stack(
+      children: [
+        LineChart(
+          LineChartData(
+            minX: minX,
+            maxX: maxX,
+            minY: minY - yPad,
+            maxY: maxY + yPad,
+            gridData: FlGridData(
+              show: widget.yAxis.showGrid || widget.xAxis.showGrid,
+              drawHorizontalLine: widget.yAxis.showGrid,
+              drawVerticalLine: widget.xAxis.showGrid,
+              getDrawingHorizontalLine: (_) =>
+                  FlLine(color: palette.gridLine, strokeWidth: 1),
+              getDrawingVerticalLine: (_) =>
+                  FlLine(color: palette.gridLine, strokeWidth: 1),
+            ),
+            borderData: FlBorderData(show: false),
+            titlesData: _buildTitles(palette),
+            lineBarsData: lineBars,
+            lineTouchData: _buildTouchData(context, palette, processed),
+          ),
+        ),
+        if (_touchLocalX != null) ...[
+          IgnorePointer(
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: _CrosshairPainter(
+                touchX: _touchLocalX!,
+                lineBars: lineBars,
+                minX: minX,
+                maxX: maxX,
+                color: palette.axisLabel,
+              ),
+            ),
+          ),
+          if (_touchedSpotIndex >= 0 &&
+              _touchedSpotIndex < processed.first.points.length)
+            IgnorePointer(
+              child: _GlassTooltip(
+                spotIndex: _touchedSpotIndex,
+                processed: processed,
+                xAxis: widget.xAxis,
+                yAxis: widget.yAxis,
+                touchStartPoint: _touchStartPoint,
+              ),
+            ),
+        ],
+      ],
+    );
+    final ratio = widget.aspectRatio;
+    final chart = ratio != null
+        ? AspectRatio(aspectRatio: ratio, child: stack)
+        : stack;
     return Semantics(
       label: widget.semanticLabel,
       container: true,
-      child: AspectRatio(
-        aspectRatio: widget.aspectRatio,
-        child: Stack(
-          children: [
-            LineChart(
-              LineChartData(
-                minX: minX,
-                maxX: maxX,
-                minY: minY - yPad,
-                maxY: maxY + yPad,
-                gridData: FlGridData(
-                  show: widget.yAxis.showGrid || widget.xAxis.showGrid,
-                  drawHorizontalLine: widget.yAxis.showGrid,
-                  drawVerticalLine: widget.xAxis.showGrid,
-                  getDrawingHorizontalLine: (_) =>
-                      FlLine(color: palette.gridLine, strokeWidth: 1),
-                  getDrawingVerticalLine: (_) =>
-                      FlLine(color: palette.gridLine, strokeWidth: 1),
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: _buildTitles(palette),
-                lineBarsData: lineBars,
-                lineTouchData: _buildTouchData(context, palette, processed),
-              ),
-            ),
-            if (_touchLocalX != null) ...[
-              IgnorePointer(
-                child: CustomPaint(
-                  size: Size.infinite,
-                  painter: _CrosshairPainter(
-                    touchX: _touchLocalX!,
-                    lineBars: lineBars,
-                    minX: minX,
-                    maxX: maxX,
-                    color: palette.axisLabel,
-                  ),
-                ),
-              ),
-              if (_touchedSpotIndex >= 0 &&
-                  _touchedSpotIndex < processed.first.points.length)
-                IgnorePointer(
-                  child: _GlassTooltip(
-                    spotIndex: _touchedSpotIndex,
-                    processed: processed,
-                    xAxis: widget.xAxis,
-                    yAxis: widget.yAxis,
-                    touchStartPoint: _touchStartPoint,
-                  ),
-                ),
-            ],
-          ],
-        ),
-      ),
+      child: chart,
     );
   }
 

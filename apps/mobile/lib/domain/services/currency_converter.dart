@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/foundation.dart';
 
 import '../entities/fx_rate.dart';
 import '../values/money.dart';
@@ -74,17 +75,35 @@ class InMemoryFxRateLookup implements FxRateLookup {
     if (direct != null && inverse != null) {
       return direct.date.isAfter(inverse.date) ? direct : inverse.inverse();
     }
-    return direct ?? inverse?.inverse();
+    final result = direct ?? inverse?.inverse();
+    if (result == null && _byPair.isNotEmpty) {
+      debugPrint(
+        'FX lookup: no rate for $b→$q (on=$on). '
+        'Available pairs: ${_byPair.keys.map((k) => '${k.base}→${k.quote}').join(', ')}',
+      );
+    }
+    return result;
   }
 
   static FxRate? _pickForDate(List<FxRate>? rates, DateTime? on) {
     if (rates == null || rates.isEmpty) return null;
     if (on == null) return rates.last;
-    final cutoff = DateTime.utc(on.year, on.month, on.day);
+    // Normalize to UTC calendar day — rate dates are stored as UTC, but
+    // callers may pass local-time DateTime (e.g. DateTime.now()). Treating
+    // the local year/month/day as the lookup day keeps the comparison
+    // consistent regardless of the caller's timezone.
+    final local = on.toLocal();
+    final cutoff = DateTime.utc(local.year, local.month, local.day);
     // rates is sorted ascending by date; walk backwards for nearest <= cutoff.
     for (var i = rates.length - 1; i >= 0; i--) {
       if (!rates[i].date.isAfter(cutoff)) return rates[i];
     }
+    // No rate on or before the cutoff. Use the earliest available rate if
+    // it's within 2 days — this absorbs timezone-induced off-by-one (a rate
+    // synced at 4pm UTC+8 is stored as the previous UTC day). Rates far in
+    // the past are left as null so historical trend points show 0.
+    final earliest = rates.first;
+    if (cutoff.difference(earliest.date).inDays.abs() <= 2) return earliest;
     return null;
   }
 
