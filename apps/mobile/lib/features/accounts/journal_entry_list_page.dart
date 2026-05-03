@@ -16,20 +16,13 @@ import '../shared/postings_preview.dart';
 
 /// FIR-131 wave 3d — read surface for the new `journal_entries` /
 /// `postings` stack. Lists every JE the user has written through any
-/// of the FIR-131 forms (today: transfers; soon: trades / expenses /
-/// payments) with its full posting layout one tap away.
-///
-/// Coexists with the legacy `transactions_list_page` while FIR-132
-/// migrates the read paths. Once the trade / expense forms also
-/// migrate to the JE stack, this page will subsume the legacy list
-/// and be promoted out of the `/accounts` subtree.
+/// ledger form with its full posting layout one tap away.
 class JournalEntryListPage extends ConsumerWidget {
   const JournalEntryListPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final journalAsync =
-        ref.watch(journalEntriesWithPostingsStreamProvider);
+    final journalAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
@@ -38,13 +31,9 @@ class JournalEntryListPage extends ConsumerWidget {
         data: (entries) {
           if (entries.isEmpty) return const _EmptyJournal();
           final accountsById = <String, Account>{
-            for (final a in accountsAsync.value ?? const <Account>[])
-              a.id: a,
+            for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
           };
-          return _JournalList(
-            entries: entries,
-            accountsById: accountsById,
-          );
+          return _JournalList(entries: entries, accountsById: accountsById);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Failed to load journal: $e')),
@@ -179,10 +168,7 @@ class _JournalEntryRow extends StatelessWidget {
             padding: const EdgeInsets.only(top: Spacing.s4),
             child: Row(
               children: [
-                EntryKindBadge(
-                  classification: classification,
-                  compact: true,
-                ),
+                EntryKindBadge(classification: classification, compact: true),
                 const SizedBox(width: Spacing.s8),
                 Text(
                   dateLabel,
@@ -206,10 +192,7 @@ class _JournalEntryRow extends StatelessWidget {
             ),
           ),
           children: [
-            PostingsPreview(
-              postings: entry.postings,
-              accounts: accountsById,
-            ),
+            PostingsPreview(postings: entry.postings, accounts: accountsById),
           ],
         ),
       ),

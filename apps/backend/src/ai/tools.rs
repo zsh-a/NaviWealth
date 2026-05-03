@@ -11,7 +11,7 @@
 //!   references (account name, asset symbol, expense category) and return a
 //!   structured *plan* the mobile client renders into a confirmation UI;
 //!   only after the human taps "确认" does the client invoke the existing
-//!   repository (`TransactionRepository`, `AccountRepository`, etc.) to
+//!   repositories (`JournalEntryRepository`, `AccountRepository`, etc.) to
 //!   persist the row. The plan envelope is built in `proposals.rs`.
 //!
 //! The model is forbidden from inventing financial values (see
@@ -21,8 +21,8 @@
 //!
 //! - All tools take a `ToolCtx` (user id + D1 handle) and a JSON `input`
 //!   (already validated by Anthropic against `ToolSchema::input_schema`).
-//! - Computations run off the materialised sync tables (`assets`,
-//!   `transactions`, etc.), parsing the JSON `payload` column into a
+//! - Computations run off the materialised sync tables (`journal_entries`,
+//!   `postings`, `assets`, etc.), parsing the JSON `payload` column into a
 //!   serde_json::Value. The mobile client owns the canonical types; we keep
 //!   the server side schema-light so a payload field added on mobile shows
 //!   up here without a backend deploy.
@@ -57,8 +57,8 @@ pub fn schemas() -> Vec<ToolSchema> {
     vec![
         ToolSchema {
             name: "get_holdings".into(),
-            description: "返回当前持仓快照：每个资产的累计买入数量、累计卖出数量、净持仓、记账成本与币种。\
-                          数量与成本仅基于 transactions 求和，未做拆股 / 公司行为调整，结果带 approximation=true。".into(),
+            description: "返回当前持仓快照：从 journal_entries / postings 推导每个资产的净持仓、记账成本与币种。\
+                          当前为 postings 近似读模型，结果带 approximation=true。".into(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -70,14 +70,13 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
-            name: "get_transactions".into(),
-            description: "查询交易历史，支持按资产、账户、类型、日期范围过滤，并按 trade_date 降序返回。".into(),
+            name: "get_journal_entries".into(),
+            description: "查询复式账本分录，支持按资产/币种 unit、账户、日期范围过滤，并按 date 降序返回。".into(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "asset_id":   { "type": "string" },
+                    "unit":       { "type": "string", "description": "资产 id 或币种代码，如 us_stock:AAPL / CNY" },
                     "account_id": { "type": "string" },
-                    "type":       { "type": "string", "description": "transaction type, e.g. buy/sell/dividend" },
                     "from":       { "type": "string", "description": "ISO-8601 lower bound (inclusive)" },
                     "to":         { "type": "string", "description": "ISO-8601 upper bound (inclusive)" },
                     "limit":      { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
@@ -87,8 +86,8 @@ pub fn schemas() -> Vec<ToolSchema> {
         ToolSchema {
             name: "compute_xirr".into(),
             description: "对指定范围内的现金流计算 XIRR（年化内部收益率）。\
-                          backend 实现为单币种简化版：把买入/卖出/分红看作有符号现金流，\
-                          以 Newton 法求解贴现率。跨币种或带费用的精确版本由 FIR-55 提供。".into(),
+                          backend 实现为单币种简化版：从 postings 中抽取现金流，\
+                          以 Newton 法求解贴现率。跨币种精确版本由 postings-derived returns read model 提供。".into(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -148,7 +147,7 @@ pub fn schemas() -> Vec<ToolSchema> {
             name: "propose_trade".into(),
             description: "提议一笔证券 / 加密交易（买入 / 卖出 / 转入 / 转出 / 估值调整）。\
                           ⚠ 这是只提议、不落库的工具：返回一个 plan，前端会让用户在确认 UI 上点确认后才走 \
-                          TradeEntryService.buildPlan + TransactionRepository。\
+                          TradeEntryService.buildPlan + JournalEntryRepository。\
                           - asset 通过 asset_id 或 asset_symbol / asset_name 任一指认；多个匹配会返回 candidates。\
                           - account 同理。\
                           - 缺少字段时优先反问用户，不要硬编值。\
@@ -178,7 +177,7 @@ pub fn schemas() -> Vec<ToolSchema> {
         },
         ToolSchema {
             name: "propose_expense".into(),
-            description: "提议一笔日常消费 / 支出。返回 plan，前端确认后才走 ExpenseRepository（FIR-64）。\
+            description: "提议一笔日常消费 / 支出。返回 plan，前端确认后才写入 journal_entries / postings。\
                           类目从内置 9 类里选：餐饮 / 交通 / 房租 / 娱乐 / 医疗 / 教育 / 购物 / 旅行 / 其它。\
                           类目不在闭集时工具会返回 candidates，请你让用户选一个再重新调用。".into(),
             input_schema: json!({
@@ -262,7 +261,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
     use super::proposals;
     let result = match name {
         "get_holdings" => get_holdings(ctx, input).await,
-        "get_transactions" => get_transactions(ctx, input).await,
+        "get_journal_entries" => get_journal_entries(ctx, input).await,
         "compute_xirr" => compute_xirr(ctx, input).await,
         "compute_net_worth" => compute_net_worth(ctx, input).await,
         "get_industry_breakdown" => get_breakdown(ctx, BreakdownDim::Industry).await,
@@ -346,26 +345,15 @@ fn payload_num(p: &Value, key: &str) -> Option<f64> {
 }
 
 // ---------------------------------------------------------------------------
-// get_holdings — sum signed transaction quantities per asset.
+// get_holdings — derive open positions from postings.
 // ---------------------------------------------------------------------------
 
 #[derive(Default)]
 struct HoldingAcc {
     asset_id: String,
-    bought_qty: f64,
-    sold_qty: f64,
+    net_qty: f64,
     cost_basis: f64,
-    proceeds: f64,
     currency: Option<String>,
-}
-
-fn signed_qty_factor(tx_type: &str) -> Option<(f64, bool)> {
-    // (qty sign, is_proceeds_side)
-    match tx_type {
-        "buy" | "transferIn" | "reinvest" => Some((1.0, false)),
-        "sell" | "transferOut" => Some((-1.0, true)),
-        _ => None,
-    }
 }
 
 async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
@@ -374,65 +362,67 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         .and_then(|v| v.as_str())
         .and_then(parse_iso);
     let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
-    let txns = load_payloads(ctx.db, ctx.user_id, "transactions").await?;
+    let entries = load_payloads(ctx.db, ctx.user_id, "journal_entries").await?;
+    let postings = load_payloads(ctx.db, ctx.user_id, "postings").await?;
 
     let mut accs: Map<String, Value> = Map::new();
     let mut tracker: std::collections::HashMap<String, HoldingAcc> =
         std::collections::HashMap::new();
+    let asset_lookup: std::collections::HashMap<String, &Value> =
+        assets.iter().map(|(k, v)| (k.clone(), v)).collect();
+    let entry_dates: std::collections::HashMap<String, DateTime<Utc>> = entries
+        .iter()
+        .filter_map(|(id, p)| {
+            payload_str(p, "date")
+                .and_then(parse_iso)
+                .map(|d| (id.clone(), d))
+        })
+        .collect();
 
-    for (_, p) in &txns {
-        let Some(asset_id) = payload_str(p, "assetId") else {
+    for (_, p) in &postings {
+        let Some(asset_id) = payload_str(p, "unit") else {
             continue;
         };
-        let Some(tx_type) = payload_str(p, "type") else {
+        if !asset_lookup.contains_key(asset_id) {
+            continue;
+        }
+        let Some(journal_entry_id) = payload_str(p, "journal_entry_id") else {
             continue;
         };
-        let Some(qty) = payload_num(p, "quantity") else {
-            continue;
-        };
-        let price = payload_num(p, "price").unwrap_or(0.0);
-        let currency = payload_str(p, "currency").map(|s| s.to_string());
-        if let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) {
-            if let Some(cutoff) = as_of {
-                if date > cutoff {
-                    continue;
-                }
+        if let (Some(cutoff), Some(date)) = (as_of, entry_dates.get(journal_entry_id)) {
+            if *date > cutoff {
+                continue;
             }
         }
-        let Some((sign, is_proceeds)) = signed_qty_factor(tx_type) else {
+        let Some(units) = payload_num(p, "units") else {
             continue;
         };
+        let unit_cost =
+            payload_num(p, "cost_per_unit").or_else(|| payload_num(p, "price_per_unit"));
+        let currency = payload_str(p, "cost_currency")
+            .or_else(|| payload_str(p, "price_currency"))
+            .map(|s| s.to_string());
         let entry = tracker
             .entry(asset_id.to_string())
             .or_insert_with(|| HoldingAcc {
                 asset_id: asset_id.to_string(),
                 ..Default::default()
             });
-        let signed = qty * sign;
-        if signed > 0.0 {
-            entry.bought_qty += signed;
-            entry.cost_basis += signed * price;
-        } else {
-            entry.sold_qty += -signed;
-            if is_proceeds {
-                entry.proceeds += -signed * price;
-            }
+        entry.net_qty += units;
+        if let Some(cost) = unit_cost {
+            entry.cost_basis += units * cost;
         }
         if entry.currency.is_none() {
             entry.currency = currency;
         }
     }
 
-    let asset_lookup: std::collections::HashMap<String, &Value> =
-        assets.iter().map(|(k, v)| (k.clone(), v)).collect();
-
     for (id, h) in tracker {
-        if h.bought_qty - h.sold_qty <= 0.0 {
+        if h.net_qty <= 0.0 {
             continue;
         }
-        let net = h.bought_qty - h.sold_qty;
-        let avg_cost = if h.bought_qty > 0.0 {
-            h.cost_basis / h.bought_qty
+        let avg_cost = if h.net_qty > 0.0 {
+            h.cost_basis / h.net_qty
         } else {
             0.0
         };
@@ -444,9 +434,9 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
                 "symbol":       asset.and_then(|a| payload_str(a, "symbol")),
                 "name":         asset.and_then(|a| payload_str(a, "name")),
                 "type":         asset.and_then(|a| payload_str(a, "type")),
-                "net_quantity": net,
+                "net_quantity": h.net_qty,
                 "avg_unit_cost": avg_cost,
-                "cost_basis":   net * avg_cost,
+                "cost_basis":   h.cost_basis,
                 "currency":     h.currency,
             }),
         );
@@ -456,18 +446,17 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         "as_of":         as_of.map(|d| d.to_rfc3339()).unwrap_or_else(|| Utc::now().to_rfc3339()),
         "holdings":      Value::Object(accs),
         "approximation": true,
-        "note":          "数量为买入累计 - 卖出累计；成本为加权平均买入价。未应用拆股、公司行为或 FIFO/LIFO 调整。"
+        "note":          "数量与成本来自 postings 的资产腿和 cost/price 注解；精确 lot/FIFO 收益需客户端 read model。"
     }))
 }
 
 // ---------------------------------------------------------------------------
-// get_transactions — filtered list, newest first.
+// get_journal_entries — filtered list, newest first.
 // ---------------------------------------------------------------------------
 
-async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
-    let asset_id = input.get("asset_id").and_then(|v| v.as_str());
+async fn get_journal_entries(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    let unit = input.get("unit").and_then(|v| v.as_str());
     let account_id = input.get("account_id").and_then(|v| v.as_str());
-    let tx_type = input.get("type").and_then(|v| v.as_str());
     let from = input
         .get("from")
         .and_then(|v| v.as_str())
@@ -479,25 +468,29 @@ async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, App
         .unwrap_or(50)
         .min(200) as usize;
 
-    let txns = load_payloads(ctx.db, ctx.user_id, "transactions").await?;
+    let entries = load_payloads(ctx.db, ctx.user_id, "journal_entries").await?;
+    let postings = load_payloads(ctx.db, ctx.user_id, "postings").await?;
+    let mut postings_by_entry: std::collections::HashMap<String, Vec<Value>> =
+        std::collections::HashMap::new();
+    for (id, p) in postings {
+        let mut row = p.clone();
+        if let Some(obj) = row.as_object_mut() {
+            obj.insert("id".into(), Value::String(id));
+        }
+        if let Some(entry_id) = payload_str(&p, "journal_entry_id") {
+            postings_by_entry
+                .entry(entry_id.to_string())
+                .or_default()
+                .push(row);
+        }
+    }
+    for rows in postings_by_entry.values_mut() {
+        rows.sort_by_key(|p| p.get("position").and_then(|v| v.as_i64()).unwrap_or(0));
+    }
+
     let mut filtered: Vec<(DateTime<Utc>, Value)> = Vec::new();
-    for (id, p) in txns {
-        if let Some(needle) = asset_id {
-            if payload_str(&p, "assetId") != Some(needle) {
-                continue;
-            }
-        }
-        if let Some(needle) = account_id {
-            if payload_str(&p, "accountId") != Some(needle) {
-                continue;
-            }
-        }
-        if let Some(needle) = tx_type {
-            if payload_str(&p, "type") != Some(needle) {
-                continue;
-            }
-        }
-        let Some(date) = payload_str(&p, "tradeDate").and_then(parse_iso) else {
+    for (id, p) in entries {
+        let Some(date) = payload_str(&p, "date").and_then(parse_iso) else {
             continue;
         };
         if let Some(b) = from {
@@ -510,9 +503,27 @@ async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, App
                 continue;
             }
         }
+        let legs = postings_by_entry.get(&id).cloned().unwrap_or_default();
+        if let Some(needle) = unit {
+            if !legs
+                .iter()
+                .any(|leg| payload_str(leg, "unit") == Some(needle))
+            {
+                continue;
+            }
+        }
+        if let Some(needle) = account_id {
+            if !legs
+                .iter()
+                .any(|leg| payload_str(leg, "account_id") == Some(needle))
+            {
+                continue;
+            }
+        }
         let mut row = p.clone();
         if let Some(obj) = row.as_object_mut() {
             obj.insert("id".into(), Value::String(id));
+            obj.insert("postings".into(), Value::Array(legs));
         }
         filtered.push((date, row));
     }
@@ -521,7 +532,7 @@ async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, App
     filtered.truncate(limit);
     let items: Vec<Value> = filtered.into_iter().map(|(_, v)| v).collect();
     Ok(json!({
-        "transactions": items,
+        "journal_entries": items,
         "truncated":    truncated,
     }))
 }
@@ -534,17 +545,6 @@ async fn get_transactions(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, App
 struct CashFlow {
     when: DateTime<Utc>,
     amount: f64,
-}
-
-fn cash_flow_amount(tx_type: &str, qty: f64, price: f64, fee: f64) -> Option<f64> {
-    match tx_type {
-        // Outflows from the user's perspective: negative.
-        "buy" | "reinvest" => Some(-(qty * price + fee)),
-        // Inflows.
-        "sell" => Some(qty * price - fee),
-        "dividend" | "interest" => Some(qty * price - fee),
-        _ => None,
-    }
 }
 
 fn xirr(flows: &[CashFlow]) -> Option<f64> {
@@ -616,19 +616,27 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         .and_then(parse_iso);
     let to = input.get("to").and_then(|v| v.as_str()).and_then(parse_iso);
 
-    let txns = load_payloads(ctx.db, ctx.user_id, "transactions").await?;
+    let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
+    let asset_ids: std::collections::HashSet<String> =
+        assets.iter().map(|(id, _)| id.clone()).collect();
+    let entries = load_payloads(ctx.db, ctx.user_id, "journal_entries").await?;
+    let postings = load_payloads(ctx.db, ctx.user_id, "postings").await?;
+    let mut postings_by_entry: std::collections::HashMap<String, Vec<&Value>> =
+        std::collections::HashMap::new();
+    for (_, p) in &postings {
+        if let Some(entry_id) = payload_str(p, "journal_entry_id") {
+            postings_by_entry
+                .entry(entry_id.to_string())
+                .or_default()
+                .push(p);
+        }
+    }
     let mut flows: Vec<CashFlow> = Vec::new();
     let mut currency: Option<String> = None;
     let mut residual_qty: f64 = 0.0;
     let mut last_price: f64 = 0.0;
-    for (_, p) in &txns {
-        let Some(tx_type) = payload_str(p, "type") else {
-            continue;
-        };
-        if scope == "asset" && payload_str(p, "assetId") != asset_filter {
-            continue;
-        }
-        let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) else {
+    for (entry_id, entry) in &entries {
+        let Some(date) = payload_str(entry, "date").and_then(parse_iso) else {
             continue;
         };
         if let Some(b) = from {
@@ -641,28 +649,55 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
                 continue;
             }
         }
-        let qty = payload_num(p, "quantity").unwrap_or(0.0);
-        let price = payload_num(p, "price").unwrap_or(0.0);
-        let fee = payload_num(p, "fee").unwrap_or(0.0);
-        if let Some(amt) = cash_flow_amount(tx_type, qty, price, fee) {
+        let legs = postings_by_entry.get(entry_id).cloned().unwrap_or_default();
+        if scope == "asset" {
+            let Some(asset_id) = asset_filter else {
+                continue;
+            };
+            if !legs
+                .iter()
+                .any(|p| payload_str(p, "unit") == Some(asset_id))
+            {
+                continue;
+            }
+        }
+        let cash_flow: f64 = legs
+            .iter()
+            .filter_map(|p| {
+                let unit = payload_str(p, "unit")?;
+                if asset_ids.contains(unit) {
+                    None
+                } else {
+                    payload_num(p, "units")
+                }
+            })
+            .sum();
+        if cash_flow.abs() > 1e-12 {
             flows.push(CashFlow {
                 when: date,
-                amount: amt,
+                amount: cash_flow,
             });
         }
         if currency.is_none() {
-            currency = payload_str(p, "currency").map(|s| s.to_string());
+            currency = legs.iter().find_map(|p| {
+                let unit = payload_str(p, "unit")?;
+                (!asset_ids.contains(unit)).then(|| unit.to_string())
+            });
         }
-        // Track residual units to add a synthetic terminal valuation flow at
-        // the asset's last known price — without it XIRR for an asset that's
-        // still held is undefined.
         if scope == "asset" {
-            match tx_type {
-                "buy" | "transferIn" | "reinvest" => residual_qty += qty,
-                "sell" | "transferOut" => residual_qty -= qty,
-                _ => {}
+            let asset_id = asset_filter.unwrap();
+            for p in &legs {
+                if payload_str(p, "unit") != Some(asset_id) {
+                    continue;
+                }
+                let qty = payload_num(p, "units").unwrap_or(0.0);
+                residual_qty += qty;
+                if let Some(price) =
+                    payload_num(p, "price_per_unit").or_else(|| payload_num(p, "cost_per_unit"))
+                {
+                    last_price = price.max(last_price);
+                }
             }
-            last_price = price.max(last_price);
         }
     }
 
@@ -684,7 +719,7 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         "flows":         flows.iter().map(|f| json!({"date": f.when.to_rfc3339(), "amount": f.amount})).collect::<Vec<_>>(),
         "currency":      currency,
         "approximation": true,
-        "note":          "单币种 Newton 法近似；持仓未平仓时使用 transactions 中的最高价作为期末估值。",
+        "note":          "单币种 Newton 法近似；现金流来自 postings 的非资产腿，未平仓持仓使用 postings 注解中的最高价作为期末估值。",
     }))
 }
 
@@ -728,34 +763,39 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         .and_then(|v| v.as_str())
         .unwrap_or("month");
 
-    let txns = load_payloads(ctx.db, ctx.user_id, "transactions").await?;
+    let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
+    let asset_ids: std::collections::HashSet<String> =
+        assets.iter().map(|(id, _)| id.clone()).collect();
+    let entries = load_payloads(ctx.db, ctx.user_id, "journal_entries").await?;
+    let postings = load_payloads(ctx.db, ctx.user_id, "postings").await?;
     let liabilities = load_payloads(ctx.db, ctx.user_id, "liabilities").await?;
 
-    // Cash position ≈ sum of signed cash transaction amounts up to t.
-    // We treat deposits + dividends + interest + sells as +; buys + fees
-    // + taxes + withdraws as -.
+    let entry_dates: std::collections::HashMap<String, DateTime<Utc>> = entries
+        .iter()
+        .filter_map(|(id, p)| {
+            payload_str(p, "date")
+                .and_then(parse_iso)
+                .map(|d| (id.clone(), d))
+        })
+        .collect();
+
+    // Cash position ≈ cumulative fiat postings up to t.
     let mut events: Vec<(DateTime<Utc>, f64, Option<String>)> = Vec::new();
-    for (_, p) in &txns {
-        let Some(tx_type) = payload_str(p, "type") else {
+    for (_, p) in &postings {
+        let Some(unit) = payload_str(p, "unit") else {
             continue;
         };
-        let Some(date) = payload_str(p, "tradeDate").and_then(parse_iso) else {
+        if asset_ids.contains(unit) {
+            continue;
+        }
+        let Some(entry_id) = payload_str(p, "journal_entry_id") else {
             continue;
         };
-        let qty = payload_num(p, "quantity").unwrap_or(0.0);
-        let price = payload_num(p, "price").unwrap_or(0.0);
-        let fee = payload_num(p, "fee").unwrap_or(0.0);
-        let tax = payload_num(p, "tax").unwrap_or(0.0);
-        let currency = payload_str(p, "currency").map(|s| s.to_string());
-        let amount = match tx_type {
-            "deposit" | "dividend" | "interest" | "sell" | "transferIn" => qty * price - fee - tax,
-            "buy" | "reinvest" => -(qty * price + fee + tax),
-            "withdraw" | "fee" | "tax" | "liabilityPayment" | "transferOut" => {
-                -(qty * price + fee + tax)
-            }
-            _ => continue,
+        let Some(date) = entry_dates.get(entry_id).copied() else {
+            continue;
         };
-        events.push((date, amount, currency));
+        let amount = payload_num(p, "units").unwrap_or(0.0);
+        events.push((date, amount, Some(unit.to_string())));
     }
     events.sort_by(|a, b| a.0.cmp(&b.0));
 
@@ -995,7 +1035,7 @@ mod tests {
         let names: Vec<String> = schemas().into_iter().map(|s| s.name).collect();
         for expected in [
             "get_holdings",
-            "get_transactions",
+            "get_journal_entries",
             "compute_xirr",
             "compute_net_worth",
             "get_industry_breakdown",

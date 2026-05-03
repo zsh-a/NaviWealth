@@ -79,11 +79,9 @@ class Accounts extends Table with SyncableTable {
   /// expense / equity). See [AccountCategory] for the why and the
   /// migration in `app_database.dart` (v8) for the back-fill rules.
   ///
-  /// Defaulting to `asset` at the column level lets us add the column
-  /// non-null in the v8 ALTER TABLE without a separate UPDATE step on
-  /// users who only ever held positive balances; the migration still
-  /// rewrites the seven non-`liability` AccountTypes explicitly so the
-  /// fact stays expressed in code rather than relying on the SQL default.
+  /// Defaulting to `asset` at the column level gives new accounts the
+  /// conservative accounting class; creation code still sets the intended
+  /// category explicitly.
   TextColumn get category => text()
       .map(const EnumStringConverter(AccountCategory.values))
       .withDefault(Constant(AccountCategory.asset.name))();
@@ -445,7 +443,7 @@ class MarketSymbolSearches extends Table {
 
 /// FIR-76 — read-only seed catalog of major securities (A-shares full set,
 /// HK / US majors, popular ETFs). The trade-entry search hits this table
-/// first so a fresh install with zero recorded transactions still finds
+/// first so a fresh install with zero recorded trades still finds
 /// the user's instrument by symbol, English name, Chinese name, full
 /// pinyin or pinyin initials.
 ///

@@ -1,15 +1,15 @@
 import 'package:decimal/decimal.dart';
 
-/// Per-asset valuation lookup used by [NetWorthService] to price holdings on
-/// historical sample dates.
+/// Per-asset valuation lookup used by dashboard read models to price
+/// holdings on historical sample dates.
 ///
 /// Implementations may be backed by:
 /// - A market-data feed cache (stocks / ETFs / crypto), keyed by symbol with
 ///   one bar per trading day.
 /// - User-entered valuation snapshots for non-market assets such as real
-///   estate or vehicles. These are typically fed from a sequence of
-///   `valuationAdjust` transactions where each adjustment becomes a new
-///   `(date, price)` pair with quantity treated as 1.
+///   estate or vehicles. These are typically fed from valuation journal
+///   entries where each adjustment becomes a new `(date, price)` pair with
+///   quantity treated as 1.
 ///
 /// All methods are pure: they observe the price book without mutating it.
 abstract class AssetPriceSource {

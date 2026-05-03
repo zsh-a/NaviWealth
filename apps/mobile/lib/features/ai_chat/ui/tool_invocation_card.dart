@@ -14,7 +14,7 @@ import 'tool_invocation_renderers.dart';
 /// payloads so the user can see exactly what the model queried.
 ///
 /// When the tool's output references known entities (asset_id,
-/// transaction_id, account_id), we surface a "跳到资产" / "跳到交易"
+/// journal_entry_id, account_id), we surface a "跳到资产" / ledger
 /// chip so the user can jump straight to the relevant detail page.
 class ToolInvocationCard extends StatefulWidget {
   const ToolInvocationCard({super.key, required this.invocation});
@@ -74,9 +74,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                         children: [
                           TextSpan(
                             text: friendlyName,
-                            style: tt.labelLarge?.copyWith(
-                              color: cs.onSurface,
-                            ),
+                            style: tt.labelLarge?.copyWith(color: cs.onSurface),
                           ),
                           if (summary != null) ...[
                             TextSpan(
@@ -140,7 +138,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _kvBlock(context, l10n.aiChatToolInputLabel, invocation.input),
+                  _kvBlock(
+                    context,
+                    l10n.aiChatToolInputLabel,
+                    invocation.input,
+                  ),
                   if (invocation.output != null) ...[
                     const SizedBox(height: Spacing.s8),
                     _resultBlock(context, l10n, invocation),
@@ -176,7 +178,10 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   ) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final oversized = isOversizedToolPayload(invocation.name, invocation.output);
+    final oversized = isOversizedToolPayload(
+      invocation.name,
+      invocation.output,
+    );
     final body = (oversized || _showRawJson)
         ? null
         : renderToolOutput(context, invocation.name, invocation.output);
@@ -273,10 +278,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-        ),
+        Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
         const SizedBox(height: Spacing.s4),
         Container(
           width: double.infinity,
@@ -303,7 +305,6 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
 String _friendlyToolName(AppLocalizations l10n, String wireName) {
   return switch (wireName) {
     'get_holdings' => l10n.aiChatToolGetHoldings,
-    'get_transactions' => l10n.aiChatToolGetTransactions,
     'compute_xirr' => l10n.aiChatToolComputeXirr,
     'compute_net_worth' => l10n.aiChatToolComputeNetWorth,
     'get_industry_breakdown' => l10n.aiChatToolGetIndustryBreakdown,

@@ -10,10 +10,8 @@ import 'journal_entry_repository.dart';
 import 'mutation_context.dart';
 import 'providers.dart';
 
-/// FIR-131 — provider tree for the new ledger write path. Lives in its
-/// own file to keep `providers.dart` (still serving the legacy
-/// transactions / expense surfaces) from spilling further while
-/// FIR-131 wave 3 forms migrate over.
+/// Provider tree for the ledger write and read paths. Lives in its own
+/// file so `providers.dart` stays focused on shared repository wiring.
 ///
 /// Composition:
 ///   * [_FxRateLookupAdapter] satisfies the `FxRateSource` contract
@@ -57,8 +55,9 @@ final currentFxLookupProvider = Provider<FxRateLookup>((ref) {
   return InMemoryFxRateLookup(rates);
 });
 
-final journalEntryRepositoryProvider =
-    FutureProvider<JournalEntryRepository>((ref) async {
+final journalEntryRepositoryProvider = FutureProvider<JournalEntryRepository>((
+  ref,
+) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
@@ -79,15 +78,14 @@ final journalEntryRepositoryProvider =
 /// snapshot whenever a JE write lands.
 final journalEntriesWithPostingsStreamProvider =
     StreamProvider.autoDispose<List<JournalEntryWithPostings>>((ref) async* {
-  final repo = await ref.watch(journalEntryRepositoryProvider.future);
-  yield* repo.watchAllWithPostings();
-});
+      final repo = await ref.watch(journalEntryRepositoryProvider.future);
+      yield* repo.watchAllWithPostings();
+    });
 
-/// FIR-132 — live stream of expense entries materialised from the
-/// journal. Replaces the legacy `expensesStreamProvider` that read
-/// from the `transactions` table.
-final journalExpensesStreamProvider =
-    StreamProvider.autoDispose<List<Expense>>((ref) async* {
-  final repo = await ref.watch(journalEntryRepositoryProvider.future);
-  yield* repo.watchExpenses();
-});
+/// Live stream of expense entries materialised from the journal.
+final journalExpensesStreamProvider = StreamProvider.autoDispose<List<Expense>>(
+  (ref) async* {
+    final repo = await ref.watch(journalEntryRepositoryProvider.future);
+    yield* repo.watchExpenses();
+  },
+);

@@ -559,7 +559,7 @@
   "aiChatNewSessionTooltip": "新建对话",
   "aiChatLoginRequired": "请先登录后再使用 AI 助手。",
   "aiChatEmptyTitle": "你的财务助手",
-  "aiChatEmptyBody": "基于你的持仓与交易回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。",
+  "aiChatEmptyBody": "基于你的持仓与账本分录回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。",
   "aiChatEmptySuggestion1": "我最近三个月赚了多少？",
   "aiChatEmptySuggestion2": "帮我看看持仓里风险最高的资产。",
   "aiChatEmptySuggestion3": "我的行业分布是怎样的？",
@@ -642,7 +642,6 @@
   "aiChatRowNewValue": "新估值",
 
   "aiChatToolGetHoldings": "查询持仓",
-  "aiChatToolGetTransactions": "查询交易",
   "aiChatToolComputeXirr": "计算 XIRR",
   "aiChatToolComputeNetWorth": "计算净资产",
   "aiChatToolGetIndustryBreakdown": "行业分布",

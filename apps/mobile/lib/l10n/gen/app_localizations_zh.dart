@@ -1691,7 +1691,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatEmptyTitle => '你的财务助手';
 
   @override
-  String get aiChatEmptyBody => '基于你的持仓与交易回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。';
+  String get aiChatEmptyBody => '基于你的持仓与账本分录回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。';
 
   @override
   String get aiChatEmptySuggestion1 => '我最近三个月赚了多少？';
@@ -1947,9 +1947,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatToolGetHoldings => '查询持仓';
-
-  @override
-  String get aiChatToolGetTransactions => '查询交易';
 
   @override
   String get aiChatToolComputeXirr => '计算 XIRR';

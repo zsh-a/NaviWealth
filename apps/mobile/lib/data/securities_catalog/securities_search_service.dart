@@ -7,7 +7,7 @@ import 'asset_search_hit.dart';
 
 /// Strict, four-tier offline search over the local securities universe.
 ///
-/// FIR-76: a fresh install with **zero** transactions must still find
+/// FIR-76: a fresh install with **zero** recorded trades must still find
 /// the user's instrument by symbol, English name, Chinese name, full
 /// pinyin or pinyin initials — and must do so without making a single
 /// HTTP request. The trade-entry form calls into this service first;
@@ -69,10 +69,7 @@ class SecuritiesSearchService {
       remaining,
     );
 
-    return [
-      ..._sortOwned(ownedHits),
-      ...catalogHits,
-    ];
+    return [..._sortOwned(ownedHits), ...catalogHits];
   }
 
   // ---------- Tier 1: owned ----------
@@ -105,14 +102,10 @@ class SecuritiesSearchService {
       limit * 4,
     ];
 
-    final marketClause =
-        marketWire == null ? '' : 'AND market = ? ';
-    final cjkClause = cjk
-        ? 'OR name LIKE ? ESCAPE \'\\\' '
-        : '';
+    final marketClause = marketWire == null ? '' : 'AND market = ? ';
+    final cjkClause = cjk ? 'OR name LIKE ? ESCAPE \'\\\' ' : '';
 
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db.customSelect('''
       SELECT id, symbol, market, type, currency, name
       FROM assets
       WHERE deleted_at IS NULL
@@ -128,9 +121,7 @@ class SecuritiesSearchService {
         )
         $marketClause
       LIMIT ?
-      ''',
-      variables: _vars(args),
-    ).get();
+      ''', variables: _vars(args)).get();
 
     final hits = <AssetSearchHit>[];
     for (final row in rows) {
@@ -151,8 +142,7 @@ class SecuritiesSearchService {
       if (symLower == lower || nameLower == lower) {
         rank = 0;
         match = AssetSearchHitMatch.exact;
-      } else if (symLower.startsWith(lower) ||
-          nameLower.startsWith(lower)) {
+      } else if (symLower.startsWith(lower) || nameLower.startsWith(lower)) {
         rank = 1;
         match = AssetSearchHitMatch.prefix;
       } else if (cjk && (name ?? '').contains(query)) {
@@ -214,12 +204,15 @@ class SecuritiesSearchService {
 
     // ---- Tier 2: exact ----
     final exactArgs = <Object?>[
-      lower, lower, lower, lower, lower,
+      lower,
+      lower,
+      lower,
+      lower,
+      lower,
       ?marketWire,
       budget,
     ];
-    final exactRows = await _db.customSelect(
-      '''
+    final exactRows = await _db.customSelect('''
       SELECT id, symbol, market, type, currency, name_en, name_cn,
              pinyin, pinyin_initials
       FROM securities_catalog
@@ -233,9 +226,7 @@ class SecuritiesSearchService {
       ${marketWire == null ? '' : 'AND market = ?'}
       ORDER BY symbol
       LIMIT ?
-      ''',
-      variables: _vars(exactArgs),
-    ).get();
+      ''', variables: _vars(exactArgs)).get();
     for (final row in exactRows) {
       _accumulate(
         row,
@@ -256,8 +247,7 @@ class SecuritiesSearchService {
       ?marketWire,
       budget * 4,
     ];
-    final prefixRows = await _db.customSelect(
-      '''
+    final prefixRows = await _db.customSelect('''
       SELECT id, symbol, market, type, currency, name_en, name_cn,
              pinyin, pinyin_initials
       FROM securities_catalog
@@ -278,9 +268,7 @@ class SecuritiesSearchService {
       ${marketWire == null ? '' : 'AND market = ?'}
       ORDER BY symbol
       LIMIT ?
-      ''',
-      variables: _vars(prefixArgs),
-    ).get();
+      ''', variables: _vars(prefixArgs)).get();
     for (final row in prefixRows) {
       _accumulate(
         row,
@@ -295,13 +283,8 @@ class SecuritiesSearchService {
 
     // ---- Tier 4: FTS5 ----
     if (ftsToken.isNotEmpty) {
-      final ftsArgs = <Object?>[
-        ftsToken,
-        ?marketWire,
-        budget * 4,
-      ];
-      final ftsRows = await _db.customSelect(
-        '''
+      final ftsArgs = <Object?>[ftsToken, ?marketWire, budget * 4];
+      final ftsRows = await _db.customSelect('''
         SELECT c.id, c.symbol, c.market, c.type, c.currency,
                c.name_en, c.name_cn, c.pinyin, c.pinyin_initials,
                bm25(securities_catalog_fts) AS fts_rank
@@ -311,9 +294,7 @@ class SecuritiesSearchService {
         ${marketWire == null ? '' : 'AND c.market = ?'}
         ORDER BY fts_rank
         LIMIT ?
-        ''',
-        variables: _vars(ftsArgs),
-      ).get();
+        ''', variables: _vars(ftsArgs)).get();
       for (final row in ftsRows) {
         final ftsRank = row.read<double?>('fts_rank') ?? 999;
         _accumulate(
@@ -338,13 +319,8 @@ class SecuritiesSearchService {
     // alias.
     if (cjk && hits.length < budget) {
       final cjkEscaped = _escapeLike(query);
-      final cjkArgs = <Object?>[
-        '%$cjkEscaped%',
-        ?marketWire,
-        budget * 4,
-      ];
-      final cjkRows = await _db.customSelect(
-        '''
+      final cjkArgs = <Object?>['%$cjkEscaped%', ?marketWire, budget * 4];
+      final cjkRows = await _db.customSelect('''
         SELECT id, symbol, market, type, currency,
                name_en, name_cn, pinyin, pinyin_initials
         FROM securities_catalog
@@ -352,9 +328,7 @@ class SecuritiesSearchService {
         ${marketWire == null ? '' : 'AND market = ?'}
         ORDER BY symbol
         LIMIT ?
-        ''',
-        variables: _vars(cjkArgs),
-      ).get();
+        ''', variables: _vars(cjkArgs)).get();
       for (final row in cjkRows) {
         _accumulate(
           row,

@@ -6,7 +6,7 @@ import 'package:naviwealth/features/investment/domain/cost_basis/fifo_strategy.d
 import 'package:naviwealth/features/investment/domain/cost_basis_engine.dart';
 import 'package:naviwealth/features/investment/domain/fx_pnl/fx_pnl_calculator.dart';
 import 'package:naviwealth/features/investment/domain/models/trade_events.dart';
-import 'package:naviwealth/features/investment/domain/models/transaction_fees.dart';
+import 'package:naviwealth/features/investment/domain/models/trade_fees.dart';
 
 import '_helpers.dart';
 
@@ -14,7 +14,7 @@ import '_helpers.dart';
 /// cost basis correctly, FIFO order is respected, and the resulting realized
 /// records decompose into market + FX legs in the user's base currency.
 void main() {
-  group('Fees-into-cost FIFO with itemized TransactionFees', () {
+  group('Fees-into-cost FIFO with itemized TradeFees', () {
     test('A-share buy fees baked into costPerUnit; sell fees prorated', () {
       final ids = SequenceIds('lot');
       final engine = CostBasisEngine(
@@ -25,7 +25,7 @@ void main() {
       // Buy 1000 shares @ 10 CNY = 10000 CNY notional.
       // Buy fees: commission 5, regulatory 0.20, transfer 0.10 — total 5.30.
       // No stamp duty on A-share buys.
-      final buyFees = TransactionFees(
+      final buyFees = TradeFees(
         commission: d('5'),
         regulatory: d('0.20'),
         transferFee: d('0.10'),
@@ -51,7 +51,7 @@ void main() {
       // Sell 400 shares @ 12 CNY = 4800 CNY notional.
       // Sell fees: commission 5, stamp duty 2.40 (0.05% * 4800), reg 0.10,
       // transfer 0.04 — total 7.54.
-      final sellFees = TransactionFees(
+      final sellFees = TradeFees(
         commission: d('5'),
         stampDuty: d('2.40'),
         regulatory: d('0.10'),
@@ -201,8 +201,8 @@ void main() {
         idGenerator: ids.next,
       );
 
-      final buyFees = TransactionFees(commission: d('1'), regulatory: d('0.05'));
-      final sellFees = TransactionFees(
+      final buyFees = TradeFees(commission: d('1'), regulatory: d('0.05'));
+      final sellFees = TradeFees(
         commission: d('1'),
         regulatory: d('0.05'),
         transferFee: d('0.02'),

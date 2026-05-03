@@ -15,8 +15,6 @@ import '../../assets/physical/data/physical_asset.dart';
 import '../../assets/physical/data/providers.dart';
 import '../../investment/data/providers.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
-import '../../investment/domain/returns/returns_service.dart';
-import '../../investment/domain/returns/xirr_engine.dart';
 import '../../liabilities/data/providers.dart';
 import '../../liabilities/domain/liability_summary.dart';
 import '../../settings/data/base_currency_preference.dart';
@@ -65,8 +63,7 @@ final dashboardCurrencyMismatchesProvider = Provider<List<CurrencyMismatch>>((
 /// — so the dashboard renders correctly for single-currency portfolios and
 /// degrades visibly (banner, not silent) when a foreign-currency holding
 /// is missing its rate.
-final dashboardCurrencyConverterProvider =
-    Provider<CurrencyConverter>((ref) {
+final dashboardCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
   final rates = ref.watch(fxRatesStreamProvider).value ?? const [];
   return FxRateCurrencyConverter(InMemoryFxRateLookup(rates));
 });
@@ -74,8 +71,9 @@ final dashboardCurrencyConverterProvider =
 /// Currently selected time range for the trend chart. Defaults to 1 year —
 /// long enough to surface savings momentum, short enough to keep daily
 /// granularity readable without downsampling.
-final dashboardSelectedRangeProvider =
-    StateProvider<DashboardRangePreset>((ref) => DashboardRangePreset.y1);
+final dashboardSelectedRangeProvider = StateProvider<DashboardRangePreset>(
+  (ref) => DashboardRangePreset.y1,
+);
 
 /// Currently selected custom range — only applies when
 /// [dashboardSelectedRangeProvider] is [DashboardRangePreset.custom].
@@ -97,11 +95,11 @@ final dashboardTimeRangeProvider = Provider<DashboardTimeRange>((ref) {
 
 /// Live snapshot of asset / liability allocations grouped by big-bucket
 /// category. Re-computes whenever any upstream stream emits — including
-/// the transactions stream that drives [holdingsSnapshotProvider], so a
-/// newly recorded trade flows straight into the totals without manual
-/// invalidation.
-final dashboardSnapshotProvider =
-    Provider<AsyncValue<DashboardSnapshot>>((ref) {
+/// the postings-derived [holdingsSnapshotProvider], so a newly recorded
+/// trade flows straight into the totals without manual invalidation.
+final dashboardSnapshotProvider = Provider<AsyncValue<DashboardSnapshot>>((
+  ref,
+) {
   final manual = ref.watch(manualAssetsStreamProvider);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
@@ -117,7 +115,10 @@ final dashboardSnapshotProvider =
   if (err != null) {
     return AsyncValue.error(
       err,
-      manual.stackTrace ?? physical.stackTrace ?? liab.stackTrace ?? StackTrace.current,
+      manual.stackTrace ??
+          physical.stackTrace ??
+          liab.stackTrace ??
+          StackTrace.current,
     );
   }
   final manualList = manual.value ?? const <Asset>[];
@@ -179,17 +180,17 @@ List<SecurityHolding> _buildSecurityHoldings({
 /// installment in one loan reactively re-fires the whole map.
 final dashboardLiabilitySchedulesProvider =
     Provider<Map<String, List<AmortizationEntry>>>((ref) {
-  final liab = ref.watch(liabilitiesStreamProvider).value ?? const <Liability>[];
-  final out = <String, List<AmortizationEntry>>{};
-  for (final liability in liab) {
-    final schedule = ref
-            .watch(amortizationScheduleStreamProvider(liability.id))
-            .value ??
-        const <AmortizationEntry>[];
-    out[liability.id] = schedule;
-  }
-  return out;
-});
+      final liab =
+          ref.watch(liabilitiesStreamProvider).value ?? const <Liability>[];
+      final out = <String, List<AmortizationEntry>>{};
+      for (final liability in liab) {
+        final schedule =
+            ref.watch(amortizationScheduleStreamProvider(liability.id)).value ??
+            const <AmortizationEntry>[];
+        out[liability.id] = schedule;
+      }
+      return out;
+    });
 
 /// Net-worth trend timeseries for the dashboard line chart, scoped to the
 /// selected [DashboardTimeRange]. Re-evaluates when the range changes or
@@ -210,7 +211,10 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   if (err != null) {
     return AsyncValue.error(
       err,
-      manual.stackTrace ?? physical.stackTrace ?? liab.stackTrace ?? StackTrace.current,
+      manual.stackTrace ??
+          physical.stackTrace ??
+          liab.stackTrace ??
+          StackTrace.current,
     );
   }
   final builder = DashboardTrendBuilder(
@@ -237,10 +241,8 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
 /// — a simple percent change suitable for short windows where path-
 /// dependent flows are noise. `null` when `nw(monthStart)` is zero.
 ///
-/// `ytdChangePct` is the **annualized XIRR** from year-start to today,
-/// computed by [ReturnsService.portfolioXirr]. `null` when the solver
-/// returns [XirrFallbackAbsolute] (no flows, all-same-sign, or failed
-/// convergence) — UI renders `—` for that case.
+/// `ytdChangePct` is reserved for the postings-derived return read model.
+/// It is `null` until that model lands, and the UI renders `—`.
 @immutable
 class DashboardHeaderMetrics {
   const DashboardHeaderMetrics({
@@ -256,8 +258,9 @@ class DashboardHeaderMetrics {
   final double? ytdChangePct;
 }
 
-final dashboardHeaderMetricsProvider =
-    FutureProvider<DashboardHeaderMetrics>((ref) async {
+final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
+  ref,
+) async {
   final manualList = await ref.watch(manualAssetsStreamProvider.future);
   final physicalList = await ref.watch(physicalAssetsListProvider.future);
   final liabList = await ref.watch(liabilitiesStreamProvider.future);
@@ -305,13 +308,7 @@ final dashboardHeaderMetricsProvider =
     return ratio.toDecimal(scaleOnInfinitePrecision: 8).toDouble();
   }
 
-  // Cap the XIRR window at `today + 1µs` so a year-to-date that starts on
-  // Jan 1 still satisfies the service's `to > from` precondition before
-  // any trades have been booked.
-  final xirrTo = today.isAfter(yearStart)
-      ? today
-      : yearStart.add(const Duration(microseconds: 1));
-  final ytdRatio = await _ytdRatio(ref, from: yearStart, to: xirrTo);
+  final ytdRatio = await _ytdRatio(ref, from: yearStart, to: today);
 
   return DashboardHeaderMetrics(
     baseCurrency: base,
@@ -321,33 +318,11 @@ final dashboardHeaderMetricsProvider =
   );
 });
 
-/// YTD annualized return from [ReturnsService.portfolioXirr], degraded to
-/// `null` (UI renders `—`) when:
-///
-/// - the solver returns [XirrFallbackAbsolute] (no flows / all-same-sign /
-///   failed convergence),
-/// - the [returnsServiceProvider] is still loading or has errored — common
-///   on first launch while the database key store is hydrating, or in
-///   widget tests that don't override the provider. The dashboard should
-///   still render daily / MTD numbers, so we degrade YTD to `—` rather
-///   than blocking the whole header on the holdings pipeline, or
-/// - the XIRR computation itself throws (e.g. FX data missing for a
-///   cross-currency leg).
+/// Placeholder until returns are derived from postings.
 Future<double?> _ytdRatio(
   Ref ref, {
   required DateTime from,
   required DateTime to,
 }) async {
-  final serviceAsync = ref.watch(returnsServiceProvider);
-  final service = serviceAsync.value;
-  if (service == null) return null;
-  try {
-    final report = await service.portfolioXirr(from: from, to: to);
-    return switch (report.solution) {
-      XirrConverged(:final rate) => rate,
-      XirrFallbackAbsolute() => null,
-    };
-  } catch (_) {
-    return null;
-  }
+  return null;
 }

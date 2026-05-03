@@ -5,16 +5,16 @@ import 'sync_meta.dart';
 
 part 'expense.freezed.dart';
 
-/// FIR-68 — typed view over a [Transaction] of `type = expense`.
+/// FIR-68 — typed view over an expense journal entry.
 ///
-/// The on-disk representation is still a single `transactions` row — this
-/// class is just the read-side projection that pulls the expense-specific
-/// bits out of `expenseMetadataJson` so feature code doesn't have to.
+/// The on-disk representation is a balanced `journal_entries` row with
+/// `postings`; this class is the read-side projection that pulls the
+/// expense-specific fields into the shape the feature UI needs.
 ///
 /// [amount] is the *positive* magnitude of the spend (e.g. `120.00` for a
-/// 120 RMB lunch). The underlying transaction stores it as a negative
-/// `quantity` so a naive `SUM(quantity * price)` rolls cash flows up
-/// correctly without per-type sign-flipping.
+/// 120 RMB lunch). In the ledger the expense posting is positive and the
+/// asset / cash posting is negative; this model exposes the user-facing
+/// spend magnitude.
 @freezed
 abstract class Expense with _$Expense {
   const factory Expense({

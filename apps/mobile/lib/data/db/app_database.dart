@@ -16,9 +16,8 @@ const String defaultDbFileName = 'naviwealth.db';
 /// Local NaviWealth database.
 ///
 /// The app is now forward-only on the Beancount-style ledger. Historical
-/// compatibility migrations for the removed `transactions` and
-/// `expense_categories` tables are intentionally gone; a fresh schema is the
-/// source of truth.
+/// compatibility migrations for retired pre-ledger tables are intentionally
+/// gone; a fresh schema is the source of truth.
 @DriftDatabase(
   tables: [
     Users,

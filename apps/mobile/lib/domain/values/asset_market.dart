@@ -53,9 +53,7 @@ AssetMarket? assetMarketFromWire(String? wire) {
 }
 
 /// Heuristic that infers the [AssetMarket] for a bare symbol string. Used
-/// by the FIR-75 backfill migration when an existing
-/// `transactions.asset_id` was recorded without a market hint, and by the
-/// trade-entry path when a search result lacks an explicit market.
+/// by the trade-entry path when a search result lacks an explicit market.
 ///
 /// Rules (tried in order):
 ///   - 6-digit numeric → [AssetMarket.cnA]

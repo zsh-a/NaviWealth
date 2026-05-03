@@ -2,10 +2,10 @@ import 'package:decimal/decimal.dart';
 
 /// Itemized fee breakdown for a single trade.
 ///
-/// `Transaction.fee` persists as a single [Decimal] total (one storage column,
-/// one sync field), but at the input/computation layer we want a typed
-/// breakdown so reports can roll up commission vs stamp duty vs regulatory
-/// fees separately and the cost-basis engine still sees a single total.
+/// Journal-entry builders persist fee totals as posting legs, but at the
+/// input/computation layer we want a typed breakdown so reports can roll
+/// up commission vs stamp duty vs regulatory fees separately and the
+/// cost-basis engine still sees a single total.
 ///
 /// Convention: every component is non-negative. [total] is the sum that
 /// flows into [BuyEvent.fee] / [SellEvent.fee].
@@ -13,8 +13,8 @@ import 'package:decimal/decimal.dart';
 /// The four named buckets cover the fee categories the task scope calls
 /// out (买卖佣金 / 印花税 (A 股) / 监管费 / 过户费); [other] catches
 /// anything broker-specific that does not fit.
-class TransactionFees {
-  TransactionFees({
+class TradeFees {
+  TradeFees({
     Decimal? commission,
     Decimal? stampDuty,
     Decimal? regulatory,
@@ -33,7 +33,7 @@ class TransactionFees {
   }
 
   /// Zero across every bucket.
-  factory TransactionFees.zero() => TransactionFees();
+  factory TradeFees.zero() => TradeFees();
 
   /// Brokerage commission (买卖佣金).
   final Decimal commission;
@@ -52,20 +52,20 @@ class TransactionFees {
   /// Anything else the broker itemizes (platform fee, FX spread, etc.).
   final Decimal other;
 
-  /// Sum of all components — matches what flows to the Transaction fee column.
+  /// Sum of all components — matches what flows to the fee posting.
   Decimal get total =>
       commission + stampDuty + regulatory + transferFee + other;
 
   bool get isZero => total.sign == 0;
 
-  TransactionFees copyWith({
+  TradeFees copyWith({
     Decimal? commission,
     Decimal? stampDuty,
     Decimal? regulatory,
     Decimal? transferFee,
     Decimal? other,
   }) {
-    return TransactionFees(
+    return TradeFees(
       commission: commission ?? this.commission,
       stampDuty: stampDuty ?? this.stampDuty,
       regulatory: regulatory ?? this.regulatory,
@@ -77,7 +77,7 @@ class TransactionFees {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is TransactionFees &&
+    return other is TradeFees &&
         other.commission == commission &&
         other.stampDuty == stampDuty &&
         other.regulatory == regulatory &&
@@ -91,7 +91,7 @@ class TransactionFees {
 
   @override
   String toString() =>
-      'TransactionFees(total: $total, commission: $commission, '
+      'TradeFees(total: $total, commission: $commission, '
       'stampDuty: $stampDuty, regulatory: $regulatory, '
       'transferFee: $transferFee, other: $other)';
 
