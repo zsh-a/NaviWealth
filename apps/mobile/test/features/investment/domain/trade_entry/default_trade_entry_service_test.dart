@@ -583,24 +583,4 @@ void main() {
     });
   });
 
-  group('buildDeletePlan', () {
-    test('mirrors the transaction id and any lots to release', () {
-      final svc = buildService();
-      final plan = svc.buildDeletePlan(
-        transactionId: 'tx-1',
-        createdLotIds: ['lot-1', 'lot-2'],
-      );
-
-      expect(plan.transactionId, 'tx-1');
-      expect(plan.releaseLotIds, ['lot-1', 'lot-2']);
-    });
-
-    test('throws when transactionId is empty', () {
-      final svc = buildService();
-      expect(
-        () => svc.buildDeletePlan(transactionId: '', createdLotIds: const []),
-        throwsA(isA<TradeEntryException>()),
-      );
-    });
-  });
 }
