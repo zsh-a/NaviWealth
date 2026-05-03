@@ -1,45 +1,29 @@
 import 'dart:convert';
 
-/// FIR-68 — typed view over the `expense_metadata_json` blob stored on
+/// Typed view over the `expense_metadata_json` blob stored on
 /// expense journal entries.
 ///
-/// We keep expense-only classification data out of the core journal entry
-/// columns for the same reason FIR-44 stores deposit / wealth specifics in
-/// `assets.metadata_json`: the shared event row stays compact while feature
-/// code still gets a typed view.
-///
-/// Sync semantics: a partial edit (e.g. recategorising) ships
+/// Sync semantics: a partial edit (e.g. adding tags) ships
 /// `expense_metadata_json` as a single field in the Op `fields_diff`.
-/// That's row-level LWW *within* the blob, which is fine for v1 — the
-/// inner fields only race when the user is actively editing the same
-/// expense from two devices simultaneously.
+/// That's row-level LWW *within* the blob, which is fine for v1.
 class ExpenseMetadata {
-  const ExpenseMetadata({required this.categoryId, this.tags = const []});
+  const ExpenseMetadata({this.tags = const []});
 
-  /// FK into `expense_categories.id`. Required — every expense must be
-  /// classified, even if it lands in the catch-all "其它" bucket.
-  final String categoryId;
-
-  /// Free-form labels. Distinct from the category tree because tags are
+  /// Free-form labels. Distinct from expense accounts because tags are
   /// flat / multi-select and meant for ad-hoc analysis ("travel-japan-2026"),
-  /// while categories are the canonical reporting buckets.
+  /// while accounts are the canonical reporting buckets.
   final List<String> tags;
 
-  ExpenseMetadata copyWith({String? categoryId, List<String>? tags}) =>
-      ExpenseMetadata(
-        categoryId: categoryId ?? this.categoryId,
-        tags: tags ?? this.tags,
-      );
+  ExpenseMetadata copyWith({List<String>? tags}) =>
+      ExpenseMetadata(tags: tags ?? this.tags);
 
   Map<String, Object?> toJson() => {
-    'category_id': categoryId,
     if (tags.isNotEmpty) 'tags': tags,
   };
 
   String encode() => jsonEncode(toJson());
 
-  /// Returns `null` for null / empty / structurally invalid blobs (e.g. a
-  /// JSON string instead of an object, or an object missing `category_id`).
+  /// Returns `null` for null / empty / structurally invalid blobs.
   /// Throws [FormatException] when the input isn't valid JSON at all —
   /// that's a corruption signal worth surfacing rather than silently
   /// dropping.
@@ -48,23 +32,19 @@ class ExpenseMetadata {
     final raw = jsonDecode(json);
     if (raw is! Map) return null;
     final map = raw.map((k, v) => MapEntry(k as String, v));
-    final categoryId = map['category_id'];
-    if (categoryId is! String) return null;
     final rawTags = map['tags'];
     final tags = rawTags is List
         ? rawTags.whereType<String>().toList(growable: false)
         : const <String>[];
-    return ExpenseMetadata(categoryId: categoryId, tags: tags);
+    return ExpenseMetadata(tags: tags);
   }
 
   @override
   bool operator ==(Object other) =>
-      other is ExpenseMetadata &&
-      other.categoryId == categoryId &&
-      _listEquals(other.tags, tags);
+      other is ExpenseMetadata && _listEquals(other.tags, tags);
 
   @override
-  int get hashCode => Object.hash(categoryId, Object.hashAll(tags));
+  int get hashCode => Object.hashAll(tags);
 }
 
 bool _listEquals<T>(List<T> a, List<T> b) {

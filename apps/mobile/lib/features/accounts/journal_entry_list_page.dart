@@ -14,9 +14,9 @@ import '../../design_system/design_system.dart';
 import '../shared/entry_kind_badge.dart';
 import '../shared/postings_preview.dart';
 
-/// FIR-131 wave 3d — read surface for the new `journal_entries` /
-/// `postings` stack. Lists every JE the user has written through any
-/// ledger form with its full posting layout one tap away.
+/// Read surface for the `journal_entries` / `postings` stack.
+/// Lists every JE the user has written through any ledger form
+/// with its full posting layout one tap away.
 class JournalEntryListPage extends ConsumerWidget {
   const JournalEntryListPage({super.key});
 

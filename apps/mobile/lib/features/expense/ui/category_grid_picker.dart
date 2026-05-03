@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../../../data/domain/expense_category.dart';
+import '../../../data/domain/account.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'expense_category_visuals.dart';
 
-/// Tap-grid category picker — mobile-first per FIR-69. Each tile shows the
-/// icon, name, and a faint accent badge so the user can scan visually.
+/// Tap-grid expense account picker. Each tile shows the icon, name,
+/// and a faint accent badge so the user can scan visually.
 class CategoryGridPicker extends StatelessWidget {
   const CategoryGridPicker({
     super.key,
-    required this.categories,
+    required this.accounts,
     required this.selectedId,
     required this.onSelect,
     this.label,
   });
 
-  final List<ExpenseCategory> categories;
+  final List<Account> accounts;
   final String? selectedId;
   final ValueChanged<String> onSelect;
   final String? label;
@@ -57,13 +57,13 @@ class CategoryGridPicker extends StatelessWidget {
                       crossAxisSpacing: Spacing.s8,
                       childAspectRatio: 0.85,
                       children: [
-                        for (final cat in categories)
-                          _CategoryTile(
-                            category: cat,
-                            selected: cat.id == state.value,
+                        for (final account in accounts)
+                          _AccountTile(
+                            account: account,
+                            selected: account.id == state.value,
                             onTap: () {
-                              state.didChange(cat.id);
-                              onSelect(cat.id);
+                              state.didChange(account.id);
+                              onSelect(account.id);
                             },
                           ),
                       ],
@@ -89,21 +89,21 @@ class CategoryGridPicker extends StatelessWidget {
   }
 }
 
-class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({
-    required this.category,
+class _AccountTile extends StatelessWidget {
+  const _AccountTile({
+    required this.account,
     required this.selected,
     required this.onTap,
   });
 
-  final ExpenseCategory category;
+  final Account account;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = category.accentColor ?? theme.colorScheme.primary;
+    final accent = account.accentColor ?? theme.colorScheme.primary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -126,11 +126,11 @@ class _CategoryTile extends StatelessWidget {
             CircleAvatar(
               radius: 18,
               backgroundColor: accent.withValues(alpha: 0.15),
-              child: Icon(category.iconData, color: accent, size: 20),
+              child: Icon(account.iconData, color: accent, size: 20),
             ),
             const SizedBox(height: 6),
             Text(
-              category.name,
+              account.name,
               style: theme.textTheme.labelMedium,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

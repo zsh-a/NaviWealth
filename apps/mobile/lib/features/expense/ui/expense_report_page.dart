@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
-import '../../../data/domain/expense_category.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../data/expense_report_providers.dart';
@@ -44,10 +44,13 @@ class _ReportBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsStreamProvider);
-    final categoriesAsync = ref.watch(allExpenseCategoriesStreamProvider);
-    final accounts = accountsAsync.value ?? const <Account>[];
-    final categories = categoriesAsync.value ?? const <ExpenseCategory>[];
-    final categoryById = {for (final c in categories) c.id: c};
+    final allAccounts = accountsAsync.value ?? const <Account>[];
+    final expenseAccountById = {
+      for (final a in allAccounts.where(
+        (a) => a.category == AccountCategory.expense,
+      ))
+        a.id: a,
+    };
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -61,14 +64,14 @@ class _ReportBody extends ConsumerWidget {
         const SizedBox(height: Spacing.s12),
         _SummaryCard(report: report),
         const SizedBox(height: Spacing.s12),
-        _CategoryPieCard(report: report, categoryById: categoryById),
+        _CategoryPieCard(report: report, categoryById: expenseAccountById),
         const SizedBox(height: Spacing.s12),
         _TrendCard(report: report),
         const SizedBox(height: Spacing.s12),
         _CategoryListCard(
           report: report,
-          categoryById: categoryById,
-          accounts: accounts,
+          categoryById: expenseAccountById,
+          accounts: allAccounts,
         ),
       ],
     );
@@ -259,7 +262,7 @@ class _CategoryPieCard extends StatelessWidget {
   });
 
   final ExpenseReport report;
-  final Map<String, ExpenseCategory> categoryById;
+  final Map<String, Account> categoryById;
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +325,7 @@ class _Pie extends StatelessWidget {
   const _Pie({required this.report, required this.categoryById});
 
   final ExpenseReport report;
-  final Map<String, ExpenseCategory> categoryById;
+  final Map<String, Account> categoryById;
 
   @override
   Widget build(BuildContext context) {
@@ -330,7 +333,7 @@ class _Pie extends StatelessWidget {
     final slices = <Slice>[
       for (var i = 0; i < report.byCategory.length; i++)
         Slice(
-          label: categoryById[report.byCategory[i].categoryId]?.name ?? '未分类',
+          label: categoryById[report.byCategory[i].expenseAccountId]?.name ?? '未分类',
           value: report.byCategory[i].total.amount.toDouble(),
           colorOverride: palette.accentAt(i),
           meta: report.byCategory[i],
@@ -364,7 +367,7 @@ class _PieLegend extends StatelessWidget {
   const _PieLegend({required this.report, required this.categoryById});
 
   final ExpenseReport report;
-  final Map<String, ExpenseCategory> categoryById;
+  final Map<String, Account> categoryById;
 
   @override
   Widget build(BuildContext context) {
@@ -377,7 +380,7 @@ class _PieLegend extends StatelessWidget {
         for (var i = 0; i < report.byCategory.length; i++)
           _LegendRow(
             color: palette.accentAt(i),
-            label: categoryById[report.byCategory[i].categoryId]?.name ?? '未分类',
+            label: categoryById[report.byCategory[i].expenseAccountId]?.name ?? '未分类',
             valueInBase: report.byCategory[i].total.amount.toDouble(),
             currencyCode: report.baseCurrency,
             percent: total == 0
@@ -537,7 +540,7 @@ class _CategoryListCard extends StatelessWidget {
   });
 
   final ExpenseReport report;
-  final Map<String, ExpenseCategory> categoryById;
+  final Map<String, Account> categoryById;
   final List<Account> accounts;
 
   @override
@@ -590,14 +593,14 @@ class _CategoryTile extends StatelessWidget {
   });
 
   final CategoryBreakdown breakdown;
-  final Map<String, ExpenseCategory> categoryById;
+  final Map<String, Account> categoryById;
   final List<Account> accounts;
   final String baseCurrency;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final category = categoryById[breakdown.categoryId];
+    final category = categoryById[breakdown.expenseAccountId];
     final accent =
         category?.accentColor ?? theme.colorScheme.primary;
     return ListTile(
@@ -616,10 +619,7 @@ class _CategoryTile extends StatelessWidget {
         child: Icon(category?.iconData ?? Icons.payment, color: accent),
       ),
       title: Text(category?.name ?? '未分类'),
-      subtitle: Text(
-        '${breakdown.items.length} 笔'
-        '${breakdown.subCategories.isEmpty ? '' : ' · ${breakdown.subCategories.length} 子类'}',
-      ),
+      subtitle: Text('${breakdown.items.length} 笔'),
       trailing: MoneyText(
         amount: breakdown.total.amount.toDouble(),
         currencyCode: baseCurrency,
@@ -637,14 +637,14 @@ class _CategoryDrillDown extends StatelessWidget {
   });
 
   final CategoryBreakdown breakdown;
-  final Map<String, ExpenseCategory> categoryById;
+  final Map<String, Account> categoryById;
   final String baseCurrency;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    final category = categoryById[breakdown.categoryId];
+    final category = categoryById[breakdown.expenseAccountId];
     final entries = [...breakdown.items]
       ..sort((a, b) => b.tradeDate.compareTo(a.tradeDate));
 
@@ -690,17 +690,6 @@ class _CategoryDrillDown extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (breakdown.subCategories.isNotEmpty) ...[
-                const SizedBox(height: Spacing.s12),
-                Text('子类目', style: theme.textTheme.titleSmall),
-                const SizedBox(height: Spacing.s8),
-                for (final sub in breakdown.subCategories)
-                  _SubCategoryRow(
-                    breakdown: sub,
-                    categoryById: categoryById,
-                    baseCurrency: baseCurrency,
-                  ),
-              ],
               const SizedBox(height: Spacing.s12),
               const Divider(height: 1),
               Expanded(
@@ -720,43 +709,6 @@ class _CategoryDrillDown extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _SubCategoryRow extends StatelessWidget {
-  const _SubCategoryRow({
-    required this.breakdown,
-    required this.categoryById,
-    required this.baseCurrency,
-  });
-
-  final CategoryBreakdown breakdown;
-  final Map<String, ExpenseCategory> categoryById;
-  final String baseCurrency;
-
-  @override
-  Widget build(BuildContext context) {
-    final category = categoryById[breakdown.categoryId];
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
-      child: Row(
-        children: [
-          Icon(
-            category?.iconData ?? Icons.subdirectory_arrow_right,
-            size: 16,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: Spacing.s8),
-          Expanded(child: Text(category?.name ?? '未分类')),
-          MoneyText(
-            amount: breakdown.total.amount.toDouble(),
-            currencyCode: baseCurrency,
-            compact: true,
-          ),
-        ],
-      ),
     );
   }
 }

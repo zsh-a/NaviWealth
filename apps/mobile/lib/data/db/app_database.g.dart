@@ -1696,11 +1696,9 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   /// expense / equity). See [AccountCategory] for the why and the
   /// migration in `app_database.dart` (v8) for the back-fill rules.
   ///
-  /// Defaulting to `asset` at the column level lets us add the column
-  /// non-null in the v8 ALTER TABLE without a separate UPDATE step on
-  /// users who only ever held positive balances; the migration still
-  /// rewrites the seven non-`liability` AccountTypes explicitly so the
-  /// fact stays expressed in code rather than relying on the SQL default.
+  /// Defaulting to `asset` at the column level gives new accounts the
+  /// conservative accounting class; creation code still sets the intended
+  /// category explicitly.
   final AccountCategory category;
 
   /// FIR-130 — id of this account's parent in the Beancount-style tree.

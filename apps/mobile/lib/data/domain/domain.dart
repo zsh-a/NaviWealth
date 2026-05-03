@@ -9,7 +9,6 @@ export 'currency.dart';
 export 'device.dart';
 export 'enums.dart';
 export 'expense.dart';
-export 'expense_category.dart';
 export 'expense_metadata.dart';
 export 'fx_rate.dart';
 export 'goal.dart';

@@ -49,8 +49,8 @@ final currentFxLookupProvider = Provider<FxRateLookup>((ref) {
   // The stream provider hydrates from Drift; while the first frame is
   // resolving we serve an empty lookup, which the
   // [_FxRateLookupAdapter] turns into `null` for any non-identity
-  // pair. Single-currency transfers (the wave 3a use case) never
-  // touch this branch, so they keep working through the cold start.
+  // pair. Single-currency transfers never touch this branch, so
+  // they keep working through the cold start.
   final rates = ref.watch(fxRatesStreamProvider).asData?.value ?? const [];
   return InMemoryFxRateLookup(rates);
 });
@@ -72,10 +72,10 @@ final journalEntryRepositoryProvider = FutureProvider<JournalEntryRepository>((
   );
 });
 
-/// FIR-131 wave 3d — live stream of every non-deleted journal entry
-/// with its postings, ordered by `(date DESC, id ASC)`. Subscribers
-/// (journal list page, future net-worth derivations) get a fresh
-/// snapshot whenever a JE write lands.
+/// Live stream of every non-deleted journal entry with its postings,
+/// ordered by `(date DESC, id ASC)`. Subscribers (journal list page,
+/// net-worth derivations) get a fresh snapshot whenever a JE write
+/// lands.
 final journalEntriesWithPostingsStreamProvider =
     StreamProvider.autoDispose<List<JournalEntryWithPostings>>((ref) async* {
       final repo = await ref.watch(journalEntryRepositoryProvider.future);

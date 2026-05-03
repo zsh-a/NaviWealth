@@ -189,10 +189,8 @@ void main() {
 
     test('seedSystemAccounts inserts the full tree once', () async {
       final inserted = await repo.seedSystemAccounts();
-      // 3 roots (income / expense / equity) + the FIR-133 leaves +
-      // FIR-131 wave 3g's expanded expense subtree (one account per
-      // default `ExpenseCategoryRepository.defaultSeeds` slug). 27
-      // total today — the count is asserted concretely so a future
+      // 3 roots (income / expense / equity) + expense subtree leaves.
+      // 27 total today — the count is asserted concretely so a future
       // seed change has to update the contract.
       expect(inserted, 27);
 
@@ -395,11 +393,8 @@ void main() {
       final subtree = await repo.walkSubtree(
         'system-account:u-test:expense',
       );
-      // FIR-131 wave 3g — Expenses subtree: 1 root + 12 direct
-      // children (one per default `ExpenseCategoryRepository` slug:
-      // food / transport / housing / household / entertainment /
-      // medical / education / shopping / travel / communication /
-      // gift / other) + 1 trading branch + 3 trading grand-children
+      // Expenses subtree: 1 root + 12 direct children (one per
+      // expense slug) + 1 trading branch + 3 trading grand-children
       // = 17 nodes.
       expect(subtree, hasLength(17));
       expect(subtree.first.id, 'system-account:u-test:expense');

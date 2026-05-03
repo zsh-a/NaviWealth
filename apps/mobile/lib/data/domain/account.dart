@@ -17,11 +17,10 @@ abstract class Account with _$Account {
     String? note,
     @Default(false) bool archived,
 
-    /// FIR-126 — accounting classification of the account
+    /// Accounting classification of the account
     /// (asset / liability / income / expense / equity). Defaults to
-    /// [AccountCategory.asset] for back-compat with code paths that still
-    /// construct an [Account] without a category; UI / repo callers
-    /// always supply an explicit value.
+    /// [AccountCategory.asset] for back-compat with code paths that
+    /// construct an [Account] without an explicit category.
     @Default(AccountCategory.asset) AccountCategory category,
 
     /// FIR-130 — Beancount-style account tree. NULL on top-level

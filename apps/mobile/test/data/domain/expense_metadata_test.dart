@@ -5,7 +5,6 @@ void main() {
   group('ExpenseMetadata', () {
     test('round-trips through encode/decode', () {
       const original = ExpenseMetadata(
-        categoryId: 'expense-cat-default:food',
         tags: ['lunch', 'team'],
       );
 
@@ -15,8 +14,8 @@ void main() {
     });
 
     test('omits empty tags list from JSON to keep diffs small', () {
-      const meta = ExpenseMetadata(categoryId: 'cat-1');
-      expect(meta.encode(), equals('{"category_id":"cat-1"}'));
+      const meta = ExpenseMetadata();
+      expect(meta.encode(), equals('{}'));
     });
 
     test('decode returns null for missing / structurally invalid input',
@@ -24,7 +23,6 @@ void main() {
       expect(ExpenseMetadata.decode(null), isNull);
       expect(ExpenseMetadata.decode(''), isNull);
       expect(ExpenseMetadata.decode('"just a string"'), isNull);
-      expect(ExpenseMetadata.decode('{"tags":[]}'), isNull);
     });
 
     test('decode throws on invalid JSON — corruption is loud, not silent',
@@ -34,17 +32,16 @@ void main() {
 
     test('decode tolerates non-string entries in tags', () {
       final m = ExpenseMetadata.decode(
-        '{"category_id":"cat-1","tags":["ok",42,null,"also-ok"]}',
+        '{"tags":["ok",42,null,"also-ok"]}',
       );
       expect(m, isNotNull);
       expect(m!.tags, equals(['ok', 'also-ok']));
     });
 
     test('copyWith preserves untouched fields', () {
-      const meta = ExpenseMetadata(categoryId: 'cat-1', tags: ['t1']);
-      final copy = meta.copyWith(categoryId: 'cat-2');
-      expect(copy.categoryId, 'cat-2');
-      expect(copy.tags, ['t1']);
+      const meta = ExpenseMetadata(tags: ['t1']);
+      final copy = meta.copyWith(tags: ['t2']);
+      expect(copy.tags, ['t2']);
     });
   });
 }

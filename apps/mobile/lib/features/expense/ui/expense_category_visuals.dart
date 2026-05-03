@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../data/domain/expense_category.dart';
+import '../../../data/domain/account.dart';
 
-/// FIR-69 — UI-side visual lookup for [ExpenseCategory].
+/// UI-side visual lookup for expense [Account]s.
 ///
-/// The category row stores `icon` (a string token) and `color` (a hex
+/// The account row stores `icon` (a string token) and `color` (a hex
 /// string) so they ride through sync as plain text. This helper resolves
 /// those tokens to Material icons / `Color`s for the picker, list, and
-/// management screens. Lives in `features/expense/ui` (not on the domain
-/// entity) so the data layer doesn't pull in `flutter/material.dart`.
+/// report screens.
 const Map<String, IconData> kExpenseCategoryIcons = <String, IconData>{
   'restaurant': Icons.restaurant,
   'directions_car': Icons.directions_car,
@@ -32,12 +31,10 @@ const Map<String, IconData> kExpenseCategoryIcons = <String, IconData>{
   'more_horiz': Icons.more_horiz,
 };
 
-/// Fallback glyph for unknown / missing icon tokens. Keeps the picker from
-/// rendering an invisible tile when a sync peer ships an icon name we
-/// don't know about yet.
+/// Fallback glyph for unknown / missing icon tokens.
 const IconData kExpenseCategoryFallbackIcon = Icons.local_offer_outlined;
 
-extension ExpenseCategoryVisuals on ExpenseCategory {
+extension ExpenseAccountVisuals on Account {
   /// Material icon resolved from [icon]. Falls back to a generic glyph so
   /// the picker never shows a missing-icon hole.
   IconData get iconData =>

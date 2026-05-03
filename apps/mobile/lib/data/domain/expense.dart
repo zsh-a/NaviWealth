@@ -5,7 +5,7 @@ import 'sync_meta.dart';
 
 part 'expense.freezed.dart';
 
-/// FIR-68 — typed view over an expense journal entry.
+/// Typed view over an expense journal entry.
 ///
 /// The on-disk representation is a balanced `journal_entries` row with
 /// `postings`; this class is the read-side projection that pulls the
@@ -19,8 +19,7 @@ part 'expense.freezed.dart';
 abstract class Expense with _$Expense {
   const factory Expense({
     required String id,
-    required String accountId,
-    required String categoryId,
+    required String expenseAccountId,
     required Decimal amount,
     required String currency,
     required DateTime tradeDate,

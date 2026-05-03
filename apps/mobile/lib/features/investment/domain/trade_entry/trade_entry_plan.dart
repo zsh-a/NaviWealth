@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../../data/domain/enums.dart';
 import '../models/lot.dart';
 import '../models/realized_pnl.dart';
+import 'trade_draft.dart';
 
 /// Resolved, persistable result of a [TradeDraft].
 ///
@@ -58,7 +58,7 @@ class PlannedTrade {
   final String id;
   final String accountId;
   final String assetId;
-  final TransactionType type;
+  final TradeType type;
   final Decimal quantity;
   final Decimal price;
   final String currency;

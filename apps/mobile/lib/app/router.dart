@@ -214,10 +214,9 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 name: 'account-new',
                 builder: (context, state) => const AccountFormPage(),
               ),
-              // FIR-131 wave 3a — same-currency cash transfers between
-              // two of the user's asset / liability accounts. Routed
-              // under `/accounts` so the bottom-nav highlight stays on
-              // the Accounts tab while the form is open.
+              // Same-currency cash transfers between two of the user's
+              // asset / liability accounts. Routed under `/accounts` so
+              // the bottom-nav highlight stays on the Accounts tab.
               GoRoute(
                 path: 'transfer',
                 name: 'account-transfer',

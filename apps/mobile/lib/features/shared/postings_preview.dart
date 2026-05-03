@@ -12,11 +12,9 @@ import '../../design_system/tokens/spacing_tokens.dart';
 /// bottom that surfaces the per-currency unit-balance check.
 ///
 /// Used in:
-///   * Journal-entry list expanded row (FIR-132 wave 1).
-///   * AI proposal cards (FIR-131 wave 3).
-///   * Trade / expense form preview before submit (editable mode lives
-///     alongside the forms in FIR-131 wave 3 — this widget is the
-///     read-only sibling).
+///   * Journal-entry list expanded row.
+///   * AI proposal cards.
+///   * Trade / expense form preview before submit.
 ///
 /// The widget intentionally takes a flat `accounts` lookup and
 /// resolves names + parent paths internally so callers don't have to

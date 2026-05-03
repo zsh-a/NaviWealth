@@ -14,11 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Account {
 
- String get id; AccountType get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived;/// FIR-126 — accounting classification of the account
+ String get id; AccountType get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived;/// Accounting classification of the account
 /// (asset / liability / income / expense / equity). Defaults to
-/// [AccountCategory.asset] for back-compat with code paths that still
-/// construct an [Account] without a category; UI / repo callers
-/// always supply an explicit value.
+/// [AccountCategory.asset] for back-compat with code paths that
+/// construct an [Account] without an explicit category.
  AccountCategory get category;/// FIR-130 — Beancount-style account tree. NULL on top-level
 /// accounts; on a child the parent's [id] forms the chain. The tree
 /// is enforced as a parent / child relationship at the application
@@ -253,11 +252,10 @@ class _Account implements Account {
 @override final  String? accountNumber;
 @override final  String? note;
 @override@JsonKey() final  bool archived;
-/// FIR-126 — accounting classification of the account
+/// Accounting classification of the account
 /// (asset / liability / income / expense / equity). Defaults to
-/// [AccountCategory.asset] for back-compat with code paths that still
-/// construct an [Account] without a category; UI / repo callers
-/// always supply an explicit value.
+/// [AccountCategory.asset] for back-compat with code paths that
+/// construct an [Account] without an explicit category.
 @override@JsonKey() final  AccountCategory category;
 /// FIR-130 — Beancount-style account tree. NULL on top-level
 /// accounts; on a child the parent's [id] forms the chain. The tree

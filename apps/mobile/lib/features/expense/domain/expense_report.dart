@@ -26,31 +26,23 @@ class MonthlyExpenseBucket {
       '${month.toString().padLeft(2, '0')}';
 }
 
-/// Total spend rolled up into a top-level category for the pie chart.
+/// Total spend rolled up into an expense account for the pie chart.
 ///
-/// [items] is every individual expense that fell into this category /
-/// sub-category tree, kept around so the drill-down sheet can list them
-/// without re-querying. Sorted descending by [total] inside the report.
+/// [items] is every individual expense that fell into this account,
+/// kept around so the drill-down sheet can list them without re-querying.
+/// Sorted descending by [total] inside the report.
 @immutable
 class CategoryBreakdown {
   const CategoryBreakdown({
-    required this.categoryId,
+    required this.expenseAccountId,
     required this.total,
     required this.items,
-    this.subCategories = const <CategoryBreakdown>[],
   });
 
-  /// Top-level category id. Sub-categories are flattened up to their
-  /// nearest top-level ancestor; the original sub-category appears under
-  /// [subCategories] for the drill-down level-2 pie.
-  final String categoryId;
+  /// The expense account id from the `accounts` table.
+  final String expenseAccountId;
   final Money total;
   final List<Expense> items;
-
-  /// Per-sub-category roll-up *within* this top-level. Empty for top-level
-  /// categories that have no children. Sorted descending by total; each
-  /// entry's [items] is the sub-category's individual rows only.
-  final List<CategoryBreakdown> subCategories;
 }
 
 /// Aggregated view backing the report page.

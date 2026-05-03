@@ -9,14 +9,12 @@ import 'package:naviwealth/features/expense/data/recent_expense_categories.dart'
 
 Expense _expense({
   required String id,
-  required String categoryId,
+  required String expenseAccountId,
   required DateTime tradeDate,
-  String accountId = 'acct',
 }) {
   return Expense(
     id: id,
-    accountId: accountId,
-    categoryId: categoryId,
+    expenseAccountId: expenseAccountId,
     amount: Decimal.fromInt(10),
     currency: 'CNY',
     tradeDate: tradeDate,
@@ -48,17 +46,17 @@ void main() {
           (_) => Stream.value([
             _expense(
               id: '1',
-              categoryId: 'food',
+              expenseAccountId: 'food',
               tradeDate: now.subtract(const Duration(days: 1)),
             ),
             _expense(
               id: '2',
-              categoryId: 'food',
+              expenseAccountId: 'food',
               tradeDate: now.subtract(const Duration(days: 2)),
             ),
             _expense(
               id: '3',
-              categoryId: 'transport',
+              expenseAccountId: 'transport',
               tradeDate: now.subtract(const Duration(days: 3)),
             ),
           ]),
@@ -86,12 +84,12 @@ void main() {
             for (var i = 0; i < 6; i++)
               _expense(
                 id: 'old-$i',
-                categoryId: 'transport',
+                expenseAccountId: 'transport',
                 tradeDate: now.subtract(Duration(days: 90 + i)),
               ),
             _expense(
               id: 'new-1',
-              categoryId: 'food',
+              expenseAccountId: 'food',
               tradeDate: now.subtract(const Duration(days: 2)),
             ),
           ]),

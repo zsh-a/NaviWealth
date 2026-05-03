@@ -84,11 +84,10 @@ class AccountTreePicker extends StatelessWidget {
         border: const OutlineInputBorder(),
       ),
       items: entries.map((e) {
-        // FIR-131 wave 3b — when [Account.icon] resolves to a known
-        // entry in the icon catalogue, render it as the leading
-        // affordance and tint by [Account.color] (when valid). When
-        // either field is absent / unknown, fall back to the original
-        // bullet glyph so the row stays compact and lined up.
+        // When [Account.icon] resolves to a known entry in the icon
+        // catalogue, render it as the leading affordance and tint by
+        // [Account.color] (when valid). Fall back to the original
+        // bullet glyph when either field is absent / unknown.
         final iconData = resolveAccountIcon(e.account.icon);
         final iconColor = _parseHexColor(e.account.color);
         final prefix = e.account.parentId == null ? '• ' : '› ';

@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
-import '../../../data/domain/expense_category.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -17,34 +17,37 @@ import 'expense_category_visuals.dart';
 enum ExpenseGrouping { month, week }
 
 /// In-memory filter applied client-side to the materialised expense list.
-/// Not persisted — each visit to the page starts unfiltered.
 class _ExpenseFilters {
   const _ExpenseFilters({
-    this.accountId,
-    this.categoryId,
+    this.fromAccountId,
+    this.expenseAccountId,
     this.keyword = '',
     this.grouping = ExpenseGrouping.month,
   });
 
-  final String? accountId;
-  final String? categoryId;
+  final String? fromAccountId;
+  final String? expenseAccountId;
   final String keyword;
   final ExpenseGrouping grouping;
 
   bool get isEmpty =>
-      accountId == null && categoryId == null && keyword.trim().isEmpty;
+      fromAccountId == null &&
+      expenseAccountId == null &&
+      keyword.trim().isEmpty;
 
   _ExpenseFilters copyWith({
-    Object? accountId = _sentinel,
-    Object? categoryId = _sentinel,
+    Object? fromAccountId = _sentinel,
+    Object? expenseAccountId = _sentinel,
     String? keyword,
     ExpenseGrouping? grouping,
   }) {
     return _ExpenseFilters(
-      accountId: accountId == _sentinel ? this.accountId : accountId as String?,
-      categoryId: categoryId == _sentinel
-          ? this.categoryId
-          : categoryId as String?,
+      fromAccountId: fromAccountId == _sentinel
+          ? this.fromAccountId
+          : fromAccountId as String?,
+      expenseAccountId: expenseAccountId == _sentinel
+          ? this.expenseAccountId
+          : expenseAccountId as String?,
       keyword: keyword ?? this.keyword,
       grouping: grouping ?? this.grouping,
     );
@@ -74,7 +77,6 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
   Widget build(BuildContext context) {
     final expensesAsync = ref.watch(journalExpensesStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    final categoriesAsync = ref.watch(allExpenseCategoriesStreamProvider);
 
     return Scaffold(
       appBar: GlassAppBar(
@@ -85,23 +87,23 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
             icon: const Icon(Icons.insights_outlined),
             onPressed: () => context.go('/expenses/report'),
           ),
-          IconButton(
-            tooltip: '类目管理',
-            icon: const Icon(Icons.category_outlined),
-            onPressed: () => context.go('/expenses/categories'),
-          ),
         ],
       ),
       body: expensesAsync.when(
         data: (all) {
           final accounts = accountsAsync.value ?? const <Account>[];
-          final categories = categoriesAsync.value ?? const <ExpenseCategory>[];
-          final filtered = _applyFilters(all, categories);
+          final expenseAccountById = {
+            for (final a in accounts.where(
+              (a) => a.category == AccountCategory.expense,
+            ))
+              a.id: a,
+          };
+          final filtered = _applyFilters(all);
           return Column(
             children: [
               _FiltersBar(
                 accounts: accounts,
-                categories: categories,
+                expenseAccountById: expenseAccountById,
                 filters: _filters,
                 keywordController: _keywordController,
                 onChanged: (f) => setState(() => _filters = f),
@@ -111,8 +113,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
                     ? _Empty(filtered: !_filters.isEmpty)
                     : _GroupedList(
                         expenses: filtered,
-                        accounts: accounts,
-                        categories: categories,
+                        expenseAccountById: expenseAccountById,
                         grouping: _filters.grouping,
                         onTap: (e) => context.go('/expenses/${e.id}'),
                       ),
@@ -131,23 +132,20 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     );
   }
 
-  List<Expense> _applyFilters(
-    List<Expense> all,
-    List<ExpenseCategory> categories,
-  ) {
-    final categoryNames = {for (final c in categories) c.id: c.name};
+  List<Expense> _applyFilters(List<Expense> all) {
     final keyword = _filters.keyword.trim().toLowerCase();
     return all.where((e) {
-      if (_filters.accountId != null && e.accountId != _filters.accountId) {
-        return false;
+      if (_filters.fromAccountId != null &&
+          _filters.fromAccountId!.isNotEmpty) {
+        // fromAccountId is not on the Expense model; skip this filter
       }
-      if (_filters.categoryId != null && e.categoryId != _filters.categoryId) {
+      if (_filters.expenseAccountId != null &&
+          e.expenseAccountId != _filters.expenseAccountId) {
         return false;
       }
       if (keyword.isEmpty) return true;
       final note = (e.note ?? '').toLowerCase();
-      final catName = (categoryNames[e.categoryId] ?? '').toLowerCase();
-      return note.contains(keyword) || catName.contains(keyword);
+      return note.contains(keyword);
     }).toList();
   }
 }
@@ -155,14 +153,14 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
 class _FiltersBar extends StatelessWidget {
   const _FiltersBar({
     required this.accounts,
-    required this.categories,
+    required this.expenseAccountById,
     required this.filters,
     required this.keywordController,
     required this.onChanged,
   });
 
   final List<Account> accounts;
-  final List<ExpenseCategory> categories;
+  final Map<String, Account> expenseAccountById;
   final _ExpenseFilters filters;
   final TextEditingController keywordController;
   final ValueChanged<_ExpenseFilters> onChanged;
@@ -182,7 +180,7 @@ class _FiltersBar extends StatelessWidget {
             controller: keywordController,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
-              hintText: '按备注 / 类目搜索',
+              hintText: '按备注搜索',
               border: const OutlineInputBorder(),
               isDense: true,
               suffixIcon: keywordController.text.isEmpty
@@ -209,65 +207,15 @@ class _FiltersBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _FilterChip<String?>(
-                  label: filters.accountId == null
-                      ? '全部账户'
-                      : (accounts
-                            .firstWhere(
-                              (a) => a.id == filters.accountId,
-                              orElse: () => accounts.isEmpty
-                                  ? Account(
-                                      id: '',
-                                      name: '全部账户',
-                                      type: accounts.isEmpty
-                                          ? throw StateError('unreachable')
-                                          : accounts.first.type,
-                                      currency: 'CNY',
-                                      archived: false,
-                                      sync: accounts.first.sync,
-                                    )
-                                  : accounts.first,
-                            )
-                            .name),
-                  active: filters.accountId != null,
-                  onClear: () => onChanged(filters.copyWith(accountId: null)),
-                  onPick: () async {
-                    final picked = await showGlassModalBottomSheet<String?>(
-                      context: context,
-                      builder: (ctx) => SafeArea(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.clear),
-                              title: const Text('全部账户'),
-                              onTap: () => Navigator.of(ctx).pop<String?>(null),
-                            ),
-                            for (final a in accounts)
-                              ListTile(
-                                title: Text('${a.name} · ${a.currency}'),
-                                onTap: () => Navigator.of(ctx).pop(a.id),
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                    if (picked == null && filters.accountId == null) return;
-                    onChanged(filters.copyWith(accountId: picked));
-                  },
-                ),
-                const SizedBox(width: 8),
-                _FilterChip<String?>(
-                  label: filters.categoryId == null
+                  label: filters.expenseAccountId == null
                       ? '全部类目'
-                      : categories
-                            .firstWhere(
-                              (c) => c.id == filters.categoryId,
-                              orElse: () => categories.first,
-                            )
-                            .name,
-                  active: filters.categoryId != null,
-                  onClear: () => onChanged(filters.copyWith(categoryId: null)),
+                      : (expenseAccountById[filters.expenseAccountId]?.name ??
+                            '全部类目'),
+                  active: filters.expenseAccountId != null,
+                  onClear: () =>
+                      onChanged(filters.copyWith(expenseAccountId: null)),
                   onPick: () async {
+                    final expenseAccounts = expenseAccountById.values.toList();
                     final picked = await showGlassModalBottomSheet<String?>(
                       context: context,
                       builder: (ctx) => SafeArea(
@@ -277,22 +225,23 @@ class _FiltersBar extends StatelessWidget {
                             ListTile(
                               leading: const Icon(Icons.clear),
                               title: const Text('全部类目'),
-                              onTap: () => Navigator.of(ctx).pop<String?>(null),
+                              onTap: () =>
+                                  Navigator.of(ctx).pop<String?>(null),
                             ),
-                            for (final c in categories.where(
-                              (c) => c.archivedAt == null,
-                            ))
+                            for (final a in expenseAccounts)
                               ListTile(
-                                leading: Icon(c.iconData),
-                                title: Text(c.name),
-                                onTap: () => Navigator.of(ctx).pop(c.id),
+                                leading: Icon(a.iconData),
+                                title: Text(a.name),
+                                onTap: () => Navigator.of(ctx).pop(a.id),
                               ),
                           ],
                         ),
                       ),
                     );
-                    if (picked == null && filters.categoryId == null) return;
-                    onChanged(filters.copyWith(categoryId: picked));
+                    if (picked == null && filters.expenseAccountId == null) {
+                      return;
+                    }
+                    onChanged(filters.copyWith(expenseAccountId: picked));
                   },
                 ),
               ],
@@ -356,23 +305,19 @@ class _FilterChip<T> extends StatelessWidget {
 class _GroupedList extends StatelessWidget {
   const _GroupedList({
     required this.expenses,
-    required this.accounts,
-    required this.categories,
+    required this.expenseAccountById,
     required this.grouping,
     required this.onTap,
   });
 
   final List<Expense> expenses;
-  final List<Account> accounts;
-  final List<ExpenseCategory> categories;
+  final Map<String, Account> expenseAccountById;
   final ExpenseGrouping grouping;
   final ValueChanged<Expense> onTap;
 
   @override
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    final accountById = {for (final a in accounts) a.id: a};
-    final categoryById = {for (final c in categories) c.id: c};
     final groups = _groupExpenses(expenses, grouping);
 
     return ListView.builder(
@@ -409,8 +354,7 @@ class _GroupedList extends StatelessWidget {
             for (final e in g.expenses)
               _ExpenseRow(
                 expense: e,
-                account: accountById[e.accountId],
-                category: categoryById[e.categoryId],
+                account: expenseAccountById[e.expenseAccountId],
                 formatter: formatter,
                 onTap: () => onTap(e),
               ),
@@ -426,32 +370,29 @@ class _ExpenseRow extends StatelessWidget {
   const _ExpenseRow({
     required this.expense,
     required this.account,
-    required this.category,
     required this.formatter,
     required this.onTap,
   });
 
   final Expense expense;
   final Account? account;
-  final ExpenseCategory? category;
   final AppFormatters formatter;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final accent =
-        category?.accentColor ?? Theme.of(context).colorScheme.primary;
+        account?.accentColor ?? Theme.of(context).colorScheme.primary;
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: accent.withValues(alpha: 0.15),
-        child: Icon(category?.iconData ?? Icons.payment, color: accent),
+        child: Icon(account?.iconData ?? Icons.payment, color: accent),
       ),
-      title: Text(category?.name ?? '未分类'),
+      title: Text(account?.name ?? '未分类'),
       subtitle: Text(
         [
           formatter.date(expense.tradeDate),
-          if (account != null) account!.name,
           if (expense.note != null && expense.note!.isNotEmpty) expense.note!,
         ].join(' · '),
         maxLines: 1,
@@ -512,8 +453,6 @@ List<_Group> _groupExpenses(List<Expense> expenses, ExpenseGrouping grouping) {
         : _isoWeekLabel(local);
     byKey.putIfAbsent(key, () => _Group(label)).expenses.add(e);
   }
-  // Map already ordered by insertion (newest-first because expenses are
-  // newest-first); we still sort defensively to be deterministic.
   final keys = byKey.keys.toList()..sort((a, b) => b.compareTo(a));
   return [for (final k in keys) byKey[k]!];
 }
