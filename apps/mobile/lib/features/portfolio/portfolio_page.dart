@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../ai_chat/ui/ai_chat_sheet.dart';
 import '../assets/assets_page.dart';
 import '../liabilities/ui/liabilities_page.dart';
 
@@ -23,25 +22,48 @@ class PortfolioPage extends ConsumerWidget {
       appBar: GlassAppBar(
         title: Text(l10n.navPortfolio),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.account_balance_outlined),
-            tooltip: l10n.navAccounts,
-            onPressed: () => context.push('/portfolio/accounts'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.receipt_long_outlined),
-            tooltip: l10n.navExpenses,
-            onPressed: () => context.push('/portfolio/expenses'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.navSettings,
-            onPressed: () => context.push('/settings'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_outlined),
-            tooltip: l10n.homeAiAssistantTooltip,
-            onPressed: () => showAiChatSheet(context),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: l10n.navMore,
+            onSelected: (value) {
+              switch (value) {
+                case 'accounts':
+                  context.push('/portfolio/accounts');
+                case 'expenses':
+                  context.push('/portfolio/expenses');
+                case 'settings':
+                  context.push('/settings');
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'accounts',
+                child: ListTile(
+                  leading: const Icon(Icons.account_balance_outlined),
+                  title: Text(l10n.navAccounts),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'expenses',
+                child: ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: Text(l10n.navExpenses),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'settings',
+                child: ListTile(
+                  leading: const Icon(Icons.settings_outlined),
+                  title: Text(l10n.navSettings),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
         bottom: PreferredSize(

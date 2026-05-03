@@ -7,7 +7,6 @@ import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/ui/ai_chat_sheet.dart';
 import '../data/providers.dart';
 import 'liability_form_page.dart';
 import 'liability_l10n.dart';
@@ -48,13 +47,7 @@ class LiabilitiesPage extends ConsumerWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.liabilitiesAppBarTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_outlined),
-            tooltip: l10n.homeAiAssistantTooltip,
-            onPressed: () => showAiChatSheet(context),
-          ),
-        ],
+        actions: const [],
       ),
       body: body,
       floatingActionButton: ScrollAwareFab(

@@ -36,6 +36,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navAI => 'AI';
 
   @override
+  String get navMe => '我的';
+
+  @override
   String get navAccounts => '账户';
 
   @override
@@ -46,6 +49,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moreAccountsSubtitle => '银行、券商与钱包';
+
+  @override
+  String get moreExpenseSubtitle => '日常支出追踪与报表';
 
   @override
   String get moreAnalyticsSubtitle => '配置、风险与基准';

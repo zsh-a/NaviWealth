@@ -33,12 +33,12 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_compari
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
-import 'package:naviwealth/features/portfolio/portfolio_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
+import 'package:naviwealth/features/portfolio/portfolio_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -327,8 +327,8 @@ void main() {
       final updated = tester.widget<FloatingPillNavigationBar>(
         find.byType(FloatingPillNavigationBar),
       );
-      // Settings highlights Portfolio (index 1).
-      expect(updated.selectedIndex, 1);
+      // Settings highlights Me tab (index 3).
+      expect(updated.selectedIndex, 3);
       await _drainTimers(tester);
     });
   });

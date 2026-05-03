@@ -10,7 +10,6 @@ import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../ai_chat/ui/ai_chat_sheet.dart';
 import 'account_form_page.dart';
 
 /// Lists every active account, grouped by [AccountType].
@@ -84,11 +83,6 @@ class _AccountsMaster extends ConsumerWidget {
           // transfer form; `history` opens the read-only journal
           // list backed by `journal_entries` / `postings`.
           actions: [
-            IconButton(
-              icon: const Icon(Icons.auto_awesome_outlined),
-              tooltip: l10n.homeAiAssistantTooltip,
-              onPressed: () => showAiChatSheet(context),
-            ),
             IconButton(
               tooltip: 'Journal',
               icon: const Icon(Icons.history),

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../ai_chat/ui/ai_chat_sheet.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
 import 'ui/allocation_card.dart';
@@ -26,13 +25,6 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.homeAppBarTitle),
-        actions: [
-          IconButton(
-            tooltip: l10n.homeAiAssistantTooltip,
-            icon: const Icon(Icons.auto_awesome_outlined),
-            onPressed: () => showAiChatSheet(context),
-          ),
-        ],
       ),
       body: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),

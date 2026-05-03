@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'AI'**
   String get navAI;
 
+  /// Bottom nav: me/profile tab
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get navMe;
+
   /// Bottom nav / More hub: accounts tab
   ///
   /// In en, this message translates to:
@@ -175,6 +181,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bank, brokerage, and wallets'**
   String get moreAccountsSubtitle;
+
+  /// No description provided for @moreExpenseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track daily spending and reports'**
+  String get moreExpenseSubtitle;
 
   /// No description provided for @moreAnalyticsSubtitle.
   ///

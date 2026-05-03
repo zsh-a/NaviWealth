@@ -36,11 +36,11 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go('/portfolio'),
     ),
     CommandPaletteEntry(
-      id: 'nav.ai',
-      label: l10n.navAI,
-      icon: Icons.smart_toy_outlined,
-      keywords: const <String>['/ai', 'ai', 'assistant', 'AI', '助手'],
-      run: (BuildContext ctx) => ctx.go('/ai'),
+      id: 'nav.me',
+      label: l10n.navMe,
+      icon: Icons.person_outline,
+      keywords: const <String>['/me', 'me', 'profile', '我的'],
+      run: (BuildContext ctx) => ctx.go('/me'),
     ),
     CommandPaletteEntry(
       id: 'nav.accounts',
