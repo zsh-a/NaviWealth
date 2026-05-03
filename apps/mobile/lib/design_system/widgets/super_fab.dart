@@ -50,6 +50,7 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final AnimationController _popupController;
   bool _isOpen = false;
+  OverlayEntry? _scrimEntry;
 
   static const double _fabSize = SuperFab.fabSize;
   static const double _actionSize = 48;
@@ -73,9 +74,33 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _removeScrim();
     _pulseController.dispose();
     _popupController.dispose();
     super.dispose();
+  }
+
+  void _insertScrim() {
+    _scrimEntry = OverlayEntry(
+      builder: (_) => AnimatedBuilder(
+        animation: _popupController,
+        builder: (context, _) => GestureDetector(
+          onTap: _dismiss,
+          behavior: HitTestBehavior.translucent,
+          child: Container(
+            color: Colors.black.withValues(
+              alpha: 0.25 * _popupController.value,
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_scrimEntry!);
+  }
+
+  void _removeScrim() {
+    _scrimEntry?.remove();
+    _scrimEntry = null;
   }
 
   void _toggle() {
@@ -83,9 +108,11 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
     setState(() => _isOpen = !_isOpen);
     if (_isOpen) {
       _pulseController.stop();
+      _insertScrim();
       _popupController.forward();
     } else {
       _popupController.reverse().then((_) {
+        _removeScrim();
         if (mounted && widget.enablePulse && !SuperFab.disablePulseGlobally) {
           _pulseController.repeat(reverse: true);
         }
@@ -121,21 +148,6 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Scrim — only when popup is open.
-          if (_isOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _dismiss,
-                child: AnimatedBuilder(
-                  animation: _popupController,
-                  builder: (context, _) => ColoredBox(
-                    color: Colors.black.withValues(
-                      alpha: 0.25 * _popupController.value,
-                    ),
-                  ),
-                ),
-              ),
-            ),
           // Radial action items.
           for (int i = 0; i < total; i++)
             _buildActionItem(
