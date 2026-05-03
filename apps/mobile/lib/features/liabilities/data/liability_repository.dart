@@ -10,6 +10,9 @@ import '../../../data/domain/enums.dart';
 import '../../../data/domain/hlc.dart';
 import '../../../data/domain/liability.dart';
 import '../../../data/domain/sync_meta.dart';
+import '../../../data/repositories/account_repository.dart';
+import '../../../data/repositories/journal_entry_builders.dart';
+import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../domain/amortization_calculator.dart';
 
@@ -32,12 +35,14 @@ class LiabilityRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    JournalEntryRepository? journalEntryRepo,
     AmortizationCalculator? calculator,
     Uuid uuid = const Uuid(),
     DateTime Function()? clock,
   }) : _db = db,
        _outbox = outbox,
        _stamper = stamper,
+       _journalEntryRepo = journalEntryRepo,
        _calc = calculator ?? AmortizationCalculator(),
        _uuid = uuid,
        _clock = clock ?? DateTime.now;
@@ -45,6 +50,7 @@ class LiabilityRepository {
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final JournalEntryRepository? _journalEntryRepo;
   final AmortizationCalculator _calc;
   final Uuid _uuid;
   final DateTime Function() _clock;
@@ -314,6 +320,36 @@ class LiabilityRepository {
         },
         stamp: stamp,
       );
+
+      // FIR-131 dual-write: JE for the ledger stack alongside the legacy
+      // transactions row (read paths still consume it).
+      final jeRepo = _journalEntryRepo;
+      if (jeRepo != null) {
+        final liabilityAccountId =
+            AccountRepository.systemAccountIdForPath(
+          'liability:${liability.id}',
+          ownerUserId: stamp.ownerUserId,
+        );
+        final interestExpenseAccountId =
+            AccountRepository.systemAccountIdForPath(
+          'expense:trading:interest',
+          ownerUserId: stamp.ownerUserId,
+        );
+        final build = JournalEntryBuilders.liabilityPayment(
+          date: whenPaid,
+          liabilityAccountId: liabilityAccountId,
+          fromAccountId: accountId,
+          interestExpenseAccountId: interestExpenseAccountId,
+          principal: entry.principalPayment,
+          interest: entry.interestPayment,
+          currency: liability.currency,
+          narration: 'Liability ${liability.name} · period $periodIndex',
+        );
+        await jeRepo.create(
+          entry: build.entry,
+          postings: build.postings,
+        );
+      }
     });
 
     return txId;
