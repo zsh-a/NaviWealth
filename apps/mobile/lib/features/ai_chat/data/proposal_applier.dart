@@ -15,6 +15,7 @@ import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
+import '../../../data/domain/transaction.dart';
 import '../../../data/repositories/account_repository.dart';
 import '../../../data/repositories/expense_category_repository.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
@@ -282,8 +283,33 @@ class ProposalApplier {
       }
     }
 
-    // valuationAdjust — no JE builder yet; use legacy path.
-    final stored = await transactionRepo.recordTrade(tradePlan);
+    // valuationAdjust — dual-write: legacy transactions row (read
+    // paths still consume it) + JE for the ledger stack.
+    final uid = await currentUserId();
+    final equityAccountId = AccountRepository.systemAccountIdForPath(
+      'equity:adjustments',
+      ownerUserId: uid,
+    );
+    final build = JournalEntryBuilders.valuationAdjust(
+      date: tx.tradeDate,
+      accountId: accountId,
+      equityAccountId: equityAccountId,
+      assetUnit: tx.assetId!,
+      quantity: tx.quantity,
+      newValuation: tx.price,
+      currency: currency,
+      narration: note,
+    );
+    // Fire both writes concurrently; recordTrade returns the persisted
+    // transaction we need for the undo handle.
+    final results = await Future.wait([
+      transactionRepo.recordTrade(tradePlan),
+      journalEntryRepo.create(
+        entry: build.entry,
+        postings: build.postings,
+      ),
+    ]);
+    final stored = results[0] as Transaction;
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: stored.id,

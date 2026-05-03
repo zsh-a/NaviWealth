@@ -305,8 +305,30 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             );
           }
         } else {
-          // valuationAdjust — no JE builder yet; use legacy path.
-          await repo.recordTrade(plan);
+          // valuationAdjust — dual-write: legacy transactions row (read
+          // paths still consume it) + JE for the ledger stack.
+          final equityAccountId =
+              AccountRepository.systemAccountIdForPath(
+            'equity:adjustments',
+            ownerUserId: uid,
+          );
+          final build = JournalEntryBuilders.valuationAdjust(
+            date: tx.tradeDate,
+            accountId: accountId,
+            equityAccountId: equityAccountId,
+            assetUnit: tx.assetId!,
+            quantity: tx.quantity,
+            newValuation: tx.price,
+            currency: currency,
+            narration: note,
+          );
+          await Future.wait([
+            repo.recordTrade(plan),
+            jeRepo.create(
+              entry: build.entry,
+              postings: build.postings,
+            ),
+          ]);
         }
       },
     );
