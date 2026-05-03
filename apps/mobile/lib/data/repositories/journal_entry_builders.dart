@@ -718,6 +718,70 @@ class JournalEntryBuilders {
     );
   }
 
+  // ---------- Valuation adjust ----------
+
+  /// Mark-to-market event: records a new valuation for an asset without
+  /// any cash flow. Two flavours:
+  ///
+  ///   1. Cash-class (quantity == 0): bank deposits, 理财产品 — the
+  ///      asset has no underlying unit, so [newValuation] is the
+  ///      absolute balance. The leg carries `units: 1` with a price
+  ///      annotation so the balance check can fold it.
+  ///   2. Physical / security (quantity != 0): real estate, vehicles,
+  ///      or a manual price override on a traded instrument —
+  ///      [newValuation] is the per-unit price; [quantity] is the
+  ///      holding size.
+  ///
+  /// In both cases the equity counter-account (`equity:adjustments`
+  /// by convention) absorbs the offset so Σ = 0.
+  static JournalEntryBuild valuationAdjust({
+    required DateTime date,
+    required String accountId,
+    required String equityAccountId,
+    required String assetUnit,
+    required Decimal quantity,
+    required Decimal newValuation,
+    required String currency,
+    String? narration,
+    DateTime? settledOn,
+    List<String> tagIds = const <String>[],
+  }) {
+    if (newValuation <= Decimal.zero) {
+      throw ArgumentError.value(
+        newValuation,
+        'newValuation',
+        'must be > 0',
+      );
+    }
+    // Cash-class: units=1 with price=newValuation (absolute value).
+    // Physical/security: units=quantity with price=newValuation (per-unit).
+    final legUnits = quantity.sign == 0 ? Decimal.one : quantity;
+    final totalValue = legUnits * newValuation;
+    return JournalEntryBuild(
+      entry: JournalEntryDraft(
+        date: date,
+        settledOn: settledOn,
+        narration: narration ?? 'Valuation adjust',
+        tagIds: _withAssetTag(tagIds, assetUnit),
+      ),
+      postings: <PostingDraft>[
+        PostingDraft(
+          position: 0,
+          accountId: accountId,
+          units: legUnits,
+          unit: assetUnit,
+          price: Price(perUnit: newValuation, currency: currency),
+        ),
+        PostingDraft(
+          position: 1,
+          accountId: equityAccountId,
+          units: -totalValue,
+          unit: currency,
+        ),
+      ],
+    );
+  }
+
   // ---------- Helpers ----------
 
   static void _assertPositive(Decimal value, String name) {
