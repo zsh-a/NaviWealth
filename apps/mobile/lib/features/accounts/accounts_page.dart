@@ -10,6 +10,7 @@ import '../../data/domain/enums.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../ai_chat/ui/ai_chat_sheet.dart';
 import 'account_form_page.dart';
 
 /// Lists every active account, grouped by [AccountType].
@@ -84,6 +85,11 @@ class _AccountsMaster extends ConsumerWidget {
           // list backed by `journal_entries` / `postings`.
           actions: [
             IconButton(
+              icon: const Icon(Icons.auto_awesome_outlined),
+              tooltip: l10n.homeAiAssistantTooltip,
+              onPressed: () => showAiChatSheet(context),
+            ),
+            IconButton(
               tooltip: 'Journal',
               icon: const Icon(Icons.history),
               onPressed: () => context.go('/accounts/journal'),
@@ -106,10 +112,12 @@ class _AccountsMaster extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
         ),
-        floatingActionButton: AppFab.extended(
-          onPressed: () => context.go('/accounts/new'),
-          icon: const Icon(Icons.add),
-          label: Text(l10n.accountsCreateAction),
+        floatingActionButton: ScrollAwareFab(
+          child: AppFab.extended(
+            onPressed: () => context.go('/accounts/new'),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.accountsCreateAction),
+          ),
         ),
       ),
     );

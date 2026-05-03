@@ -6,6 +6,7 @@ import '../../core/config/app_version.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../ai_chat/ui/ai_chat_sheet.dart';
 import '../analytics/data/risk_threshold_preferences.dart';
 import '../shared/forms/currency_picker.dart';
 import 'data/base_currency_preference.dart';
@@ -21,7 +22,16 @@ class SettingsPage extends ConsumerWidget {
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.settingsAppBarTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.settingsAppBarTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            tooltip: l10n.homeAiAssistantTooltip,
+            onPressed: () => showAiChatSheet(context),
+          ),
+        ],
+      ),
       body: ListView(
         children: [
           ListTile(

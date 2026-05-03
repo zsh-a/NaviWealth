@@ -175,12 +175,11 @@ jobs:
       - name: Package worker bundle
         run: |
           tar -czf "naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz" build/worker
-      - name: Create GitHub Release
+      - name: Upload backend artifact to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: backend v${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
-          generate_release_notes: true
+          generate_release_notes: false
           files: |
             apps/backend/naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz
 

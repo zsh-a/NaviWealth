@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../ai_chat/ui/ai_chat_sheet.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
 import 'ui/allocation_card.dart';
@@ -30,7 +31,7 @@ class HomePage extends ConsumerWidget {
           IconButton(
             tooltip: l10n.homeAiAssistantTooltip,
             icon: const Icon(Icons.auto_awesome_outlined),
-            onPressed: () => context.push('/ai'),
+            onPressed: () => showAiChatSheet(context),
           ),
         ],
       ),
@@ -49,10 +50,12 @@ class HomePage extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: AppFab(
-        onPressed: () => context.push('/assets/trade'),
-        tooltip: l10n.homeRecordTradeTooltip,
-        child: const Icon(Icons.add_chart),
+      floatingActionButton: ScrollAwareFab(
+        child: AppFab.extended(
+          onPressed: () => context.push('/assets/trade'),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.homeRecordTradeTooltip),
+        ),
       ),
     );
   }

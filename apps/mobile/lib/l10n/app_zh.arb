@@ -516,6 +516,8 @@
   "tradeTypeLiabilityPayment": "还款",
   "tradeTypeExpense": "支出",
 
+  "expensesReportTooltip": "月度报表",
+
   "expenseFormCreateTitle": "新建支出",
   "expenseFormEditTitle": "编辑支出",
   "expenseFormDeleteTooltip": "删除",

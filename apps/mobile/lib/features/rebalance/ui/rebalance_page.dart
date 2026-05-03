@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_chat_sheet.dart';
 import '../../home/ui/asset_category_visuals.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/allocation_schemes.dart';
@@ -24,6 +25,11 @@ class RebalancePage extends ConsumerWidget {
       appBar: GlassAppBar(
         title: Text(l10n.rebalanceTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            tooltip: l10n.homeAiAssistantTooltip,
+            onPressed: () => showAiChatSheet(context),
+          ),
           IconButton(
             icon: const Icon(Icons.tune),
             tooltip: l10n.rebalanceSettingsTooltip,

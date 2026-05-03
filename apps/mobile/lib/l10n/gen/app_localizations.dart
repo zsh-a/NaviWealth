@@ -2922,6 +2922,12 @@ abstract class AppLocalizations {
   /// **'Expense'**
   String get tradeTypeExpense;
 
+  /// Tooltip for the expenses list AppBar action that opens the monthly report.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly report'**
+  String get expensesReportTooltip;
+
   /// No description provided for @expenseFormCreateTitle.
   ///
   /// In en, this message translates to:

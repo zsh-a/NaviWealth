@@ -14,8 +14,6 @@ import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
-import '../features/ai_chat/ui/ai_chat_sheet.dart';
-import '../features/ai_chat/ui/ai_floating_pill.dart';
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
 import '../features/assets/assets_page.dart' deferred as assets_lib;
@@ -375,53 +373,33 @@ class _RootShell extends ConsumerWidget {
       context.go(kPrimaryTabPaths[i]);
     }
 
-    final showPill = !location.startsWith('/ai');
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isDesktop = width >= _desktopBreakpoint;
 
-        Widget shell;
         if (isDesktop) {
-          shell = _DesktopShell(
-            destinations: destinations,
-            selectedIndex: index,
-            onDestinationSelected: onSelected,
-            child: child,
-          );
-        } else if (width >= _tabletBreakpoint) {
-          shell = _TabletShell(
-            destinations: destinations,
-            selectedIndex: index,
-            onDestinationSelected: onSelected,
-            extended: width >= _railExtendedBreakpoint,
-            child: child,
-          );
-        } else {
-          shell = _MobileShell(
+          return _DesktopShell(
             destinations: destinations,
             selectedIndex: index,
             onDestinationSelected: onSelected,
             child: child,
           );
         }
-
-        if (!showPill) return shell;
-
-        return Stack(
-          children: [
-            shell,
-            Positioned(
-              right: Spacing.s16,
-              top: isDesktop ? Spacing.s16 : null,
-              bottom: isDesktop ? null : kBottomNavigationBarHeight + Spacing.s16,
-              child: AiFloatingPill(
-                onTap: () => showAiChatSheet(context),
-                onLongPress: () => context.go('/ai'),
-              ),
-            ),
-          ],
+        if (width >= _tabletBreakpoint) {
+          return _TabletShell(
+            destinations: destinations,
+            selectedIndex: index,
+            onDestinationSelected: onSelected,
+            extended: width >= _railExtendedBreakpoint,
+            child: child,
+          );
+        }
+        return _MobileShell(
+          destinations: destinations,
+          selectedIndex: index,
+          onDestinationSelected: onSelected,
+          child: child,
         );
       },
     );

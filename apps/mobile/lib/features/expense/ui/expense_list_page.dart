@@ -11,6 +11,8 @@ import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_chat_sheet.dart';
 import 'expense_category_visuals.dart';
 
 /// User-selectable bucket size for the expense list.
@@ -75,15 +77,21 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final expensesAsync = ref.watch(journalExpensesStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
       appBar: GlassAppBar(
-        title: const Text('支出'),
+        title: Text(l10n.navExpenses),
         actions: [
           IconButton(
-            tooltip: '月度报表',
+            icon: const Icon(Icons.auto_awesome_outlined),
+            tooltip: l10n.homeAiAssistantTooltip,
+            onPressed: () => showAiChatSheet(context),
+          ),
+          IconButton(
+            tooltip: l10n.expensesReportTooltip,
             icon: const Icon(Icons.insights_outlined),
             onPressed: () => context.go('/expenses/report'),
           ),
@@ -124,10 +132,12 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败：$e')),
       ),
-      floatingActionButton: AppFab.extended(
-        onPressed: () => context.go('/expenses/new'),
-        icon: const Icon(Icons.add),
-        label: const Text('记一笔'),
+      floatingActionButton: ScrollAwareFab(
+        child: AppFab.extended(
+          onPressed: () => context.go('/expenses/new'),
+          icon: const Icon(Icons.add),
+          label: const Text('记一笔'),
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_chat_sheet.dart';
 import '../data/providers.dart';
 import 'liability_form_page.dart';
 import 'liability_l10n.dart';
@@ -21,7 +22,16 @@ class LiabilitiesPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final asyncList = ref.watch(liabilitiesStreamProvider);
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.liabilitiesAppBarTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.liabilitiesAppBarTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            tooltip: l10n.homeAiAssistantTooltip,
+            onPressed: () => showAiChatSheet(context),
+          ),
+        ],
+      ),
       body: asyncList.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
@@ -38,17 +48,19 @@ class LiabilitiesPage extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: AppFab.extended(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const LiabilityFormPage(),
-              fullscreenDialog: true,
-            ),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: Text(l10n.liabilitiesAddAction),
+      floatingActionButton: ScrollAwareFab(
+        child: AppFab.extended(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const LiabilityFormPage(),
+                fullscreenDialog: true,
+              ),
+            );
+          },
+          icon: const Icon(Icons.add),
+          label: Text(l10n.liabilitiesAddAction),
+        ),
       ),
     );
   }
