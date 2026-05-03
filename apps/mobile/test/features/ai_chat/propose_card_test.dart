@@ -8,7 +8,6 @@ import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/db/providers.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
-import 'package:naviwealth/data/repositories/expense_repository.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/data/repositories/mutation_context.dart';
@@ -83,8 +82,6 @@ void main() {
     late ChatRepository chatRepo;
     late AccountRepository accountRepo;
     late MutationStamper stamper;
-    late ExpenseRepository expenseRepoForProvider;
-
     setUp(() async {
       db = makeTestDatabase();
       outbox = InMemoryOutboxStore();
@@ -100,7 +97,6 @@ void main() {
         outbox: outbox,
         stamper: stamper,
       );
-      final expenseRepo = ExpenseRepository(db: db);
       final manualAssetRepo = ManualAssetRepository(
         db: db,
         outbox: outbox,
@@ -139,9 +135,6 @@ void main() {
         liabilityRepo: liabilityRepo,
         currentUserId: () async => 'u',
       );
-      // Hold a reference for the provider override below — the
-      // applier no longer exposes the legacy ExpenseRepository.
-      expenseRepoForProvider = expenseRepo;
       chatRepo = ChatRepository(
         store: store,
         api: _NoopApi(),
@@ -166,9 +159,6 @@ void main() {
           proposalApplierProvider.overrideWith((ref) async => applier),
           tradeEntryServiceProvider.overrideWith(
             (ref) async => applier.tradeEntryService,
-          ),
-          expenseRepositoryProvider.overrideWith(
-            (ref) async => expenseRepoForProvider,
           ),
           manualAssetRepositoryProvider.overrideWith(
             (ref) async => applier.manualAssetRepo,

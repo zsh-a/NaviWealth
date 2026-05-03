@@ -8,6 +8,7 @@ import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/domain/expense_category.dart';
+import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import 'expense_category_visuals.dart';
@@ -71,7 +72,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final expensesAsync = ref.watch(expensesStreamProvider);
+    final expensesAsync = ref.watch(journalExpensesStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
     final categoriesAsync = ref.watch(allExpenseCategoriesStreamProvider);
 

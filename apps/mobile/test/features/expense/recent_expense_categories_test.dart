@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/expense.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
-import 'package:naviwealth/data/repositories/providers.dart';
+import 'package:naviwealth/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/expense/data/recent_expense_categories.dart';
 
 Expense _expense({
@@ -33,7 +33,7 @@ void main() {
   test('returns null when there are no recent expenses', () {
     final container = ProviderContainer(
       overrides: [
-        expensesStreamProvider.overrideWith((_) => Stream.value(const [])),
+        journalExpensesStreamProvider.overrideWith((_) => Stream.value(const [])),
       ],
     );
     addTearDown(container.dispose);
@@ -44,7 +44,7 @@ void main() {
     final now = DateTime.now();
     final container = ProviderContainer(
       overrides: [
-        expensesStreamProvider.overrideWith(
+        journalExpensesStreamProvider.overrideWith(
           (_) => Stream.value([
             _expense(
               id: '1',
@@ -71,7 +71,7 @@ void main() {
     // and the future never completes with a value.
     final sub = container.listen(mostUsedExpenseCategoryProvider, (_, _) {});
     addTearDown(sub.close);
-    await container.read(expensesStreamProvider.future);
+    await container.read(journalExpensesStreamProvider.future);
     expect(container.read(mostUsedExpenseCategoryProvider), 'food');
   });
 
@@ -79,7 +79,7 @@ void main() {
     final now = DateTime.now();
     final container = ProviderContainer(
       overrides: [
-        expensesStreamProvider.overrideWith(
+        journalExpensesStreamProvider.overrideWith(
           (_) => Stream.value([
             // Six "transport" rows from a few months ago — would dominate
             // a naïve all-time pick but should be ignored entirely.
@@ -101,7 +101,7 @@ void main() {
     addTearDown(container.dispose);
     final sub = container.listen(mostUsedExpenseCategoryProvider, (_, _) {});
     addTearDown(sub.close);
-    await container.read(expensesStreamProvider.future);
+    await container.read(journalExpensesStreamProvider.future);
     expect(container.read(mostUsedExpenseCategoryProvider), 'food');
   });
 
@@ -111,7 +111,7 @@ void main() {
         // Returning a never-completing stream keeps the AsyncValue in
         // loading state — exactly the case the provider has to handle
         // without crashing.
-        expensesStreamProvider.overrideWith(
+        journalExpensesStreamProvider.overrideWith(
           (_) => Stream<List<dynamic>>.fromFuture(
             Future.delayed(const Duration(seconds: 30), () => const []),
           ).cast(),

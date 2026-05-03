@@ -6,7 +6,6 @@ import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 import 'package:naviwealth/data/repositories/expense_category_repository.dart';
-import 'package:naviwealth/data/repositories/expense_repository.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/ai_chat/data/proposal_applier.dart';
@@ -31,7 +30,6 @@ class _Harness {
     required this.applier,
     required this.transactionRepo,
     required this.accountRepo,
-    required this.expenseRepo,
     required this.expenseCategoryRepo,
     required this.manualAssetRepo,
     required this.liabilityRepo,
@@ -43,7 +41,6 @@ class _Harness {
   final ProposalApplier applier;
   final TransactionRepository transactionRepo;
   final AccountRepository accountRepo;
-  final ExpenseRepository expenseRepo;
   final ExpenseCategoryRepository expenseCategoryRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
@@ -64,7 +61,6 @@ class _Harness {
       outbox: outbox,
       stamper: stamper,
     );
-    final expenseRepo = ExpenseRepository(db: db);
     final expenseCategoryRepo = ExpenseCategoryRepository(
       db: db,
       outbox: outbox,
@@ -119,7 +115,6 @@ class _Harness {
       applier: applier,
       transactionRepo: transactionRepo,
       accountRepo: accountRepo,
-      expenseRepo: expenseRepo,
       expenseCategoryRepo: expenseCategoryRepo,
       manualAssetRepo: manualAssetRepo,
       liabilityRepo: liabilityRepo,
