@@ -308,7 +308,8 @@ class _NwLineChartState extends State<NwLineChart> {
         getTooltipColor: (_) => Colors.transparent,
         tooltipBorderRadius: BorderRadius.zero,
         tooltipPadding: EdgeInsets.zero,
-        getTooltipItems: (_) => [],
+        getTooltipItems: (spots) =>
+            List<LineTooltipItem?>.filled(spots.length, null),
       ),
       getTouchedSpotIndicator: (barData, spotIndexes) {
         return spotIndexes.map((index) {
