@@ -1,4 +1,5 @@
 import '../../../data/domain/asset.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
@@ -39,7 +40,7 @@ class DashboardAggregator {
   final void Function(String id, String currency)? onCurrencyMismatch;
 
   DashboardSnapshot aggregate({
-    required Iterable<Asset> manualAssets,
+    required Iterable<ManualAssetValuation> manualAssets,
     required Iterable<PhysicalAsset> physicalAssets,
     required Iterable<Liability> liabilities,
     required Iterable<LiabilitySummary> liabilitySummaries,
@@ -51,7 +52,7 @@ class DashboardAggregator {
     for (final asset in manualAssets) {
       final item = _itemForManualAsset(asset);
       if (item == null) continue;
-      final cat = categoryForAssetType(asset.type);
+      final cat = categoryForAssetType(asset.asset.type);
       byCategory.putIfAbsent(cat, () => []).add(item);
     }
 
@@ -69,14 +70,11 @@ class DashboardAggregator {
       byCategory.putIfAbsent(cat, () => []).add(item);
     }
 
-    final summaryById = {
-      for (final s in liabilitySummaries) s.liability.id: s,
-    };
+    final summaryById = {for (final s in liabilitySummaries) s.liability.id: s};
     final liabilityItems = <CategoryItem>[];
     for (final liability in liabilities) {
       final summary = summaryById[liability.id];
-      final outstanding =
-          summary?.remainingPrincipal ?? liability.principal;
+      final outstanding = summary?.remainingPrincipal ?? liability.principal;
       if (outstanding.sign <= 0) continue;
       final converted = _tryConvert(
         liability.id,
@@ -104,7 +102,9 @@ class DashboardAggregator {
     for (final category in AssetCategory.values) {
       final items = byCategory[category];
       if (items == null || items.isEmpty) continue;
-      items.sort((a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount));
+      items.sort(
+        (a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount),
+      );
       final total = items.fold<Money>(
         Money.zero(baseCurrency),
         (acc, item) => acc + item.valueInBase,
@@ -141,8 +141,21 @@ class DashboardAggregator {
 
   final List<CurrencyMismatch> _mismatches = [];
 
-  CategoryItem? _itemForManualAsset(Asset asset) {
-    return null;
+  CategoryItem? _itemForManualAsset(ManualAssetValuation valued) {
+    final value = valued.valueAt(asOf);
+    if (value == null || value.sign <= 0) return null;
+    final asset = valued.asset;
+    final converted = _tryConvert(asset.id, Money(value, asset.currency));
+    if (converted == null) return null;
+    return CategoryItem(
+      id: asset.id,
+      name: asset.name ?? asset.symbol,
+      subtitle: asset.type == AssetType.cash ? null : asset.symbol,
+      valueInBase: converted,
+      nativeAmount: value,
+      nativeCurrency: asset.currency,
+      routeHint: '/assets/${asset.id}',
+    );
   }
 
   /// Build a [CategoryItem] for a securities position. The market value is
@@ -168,10 +181,7 @@ class DashboardAggregator {
   CategoryItem? _itemForPhysicalAsset(PhysicalAsset asset) {
     final value = asset.currentValuation;
     if (value.sign <= 0) return null;
-    final converted = _tryConvert(
-      asset.id,
-      Money(value, asset.currency),
-    );
+    final converted = _tryConvert(asset.id, Money(value, asset.currency));
     if (converted == null) return null;
     return CategoryItem(
       id: asset.id,
@@ -194,5 +204,4 @@ class DashboardAggregator {
       return null;
     }
   }
-
 }

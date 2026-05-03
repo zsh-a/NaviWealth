@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../domain/values/money.dart';
 
@@ -82,15 +83,15 @@ class CategoryItem {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        subtitle,
-        liabilityType,
-        valueInBase,
-        nativeAmount,
-        nativeCurrency,
-        routeHint,
-      );
+    id,
+    name,
+    subtitle,
+    liabilityType,
+    valueInBase,
+    nativeAmount,
+    nativeCurrency,
+    routeHint,
+  );
 }
 
 /// One slice of the allocation pie. Aggregates the per-asset items in a
@@ -137,12 +138,61 @@ class CurrencyMismatch {
 
   @override
   bool operator ==(Object other) =>
-      other is CurrencyMismatch &&
-      other.id == id &&
-      other.currency == currency;
+      other is CurrencyMismatch && other.id == id && other.currency == currency;
 
   @override
   int get hashCode => Object.hash(id, currency);
+}
+
+@immutable
+class ManualAssetValuePoint {
+  const ManualAssetValuePoint({required this.observedOn, required this.value});
+
+  final DateTime observedOn;
+  final Decimal value;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ManualAssetValuePoint &&
+      other.observedOn == observedOn &&
+      other.value == value;
+
+  @override
+  int get hashCode => Object.hash(observedOn, value);
+}
+
+/// Manual-valuation asset paired with its price/valuation observations.
+///
+/// Cash, deposits and wealth products no longer store current value on the
+/// `assets` row. The authoritative values live in `prices`, so dashboard
+/// consumers must carry both the asset metadata and its valuation history.
+@immutable
+class ManualAssetValuation {
+  const ManualAssetValuation({required this.asset, required this.observations});
+
+  final Asset asset;
+  final List<ManualAssetValuePoint> observations;
+
+  Decimal? valueAt(DateTime asOf) {
+    if (observations.isEmpty) return null;
+    for (var i = observations.length - 1; i >= 0; i--) {
+      final point = observations[i];
+      if (!point.observedOn.isAfter(asOf)) return point.value;
+    }
+    return null;
+  }
+
+  Decimal? currentValue() =>
+      observations.isEmpty ? null : observations.last.value;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ManualAssetValuation &&
+      other.asset == asset &&
+      listEquals(other.observations, observations);
+
+  @override
+  int get hashCode => Object.hash(asset, Object.hashAll(observations));
 }
 
 /// Snapshot of the user's current asset distribution, ready to be rendered

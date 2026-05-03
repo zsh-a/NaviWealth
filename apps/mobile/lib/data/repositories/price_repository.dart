@@ -91,8 +91,9 @@ class PriceRepository {
     required DateTime observedOn,
     required Decimal perUnit,
     required String source,
+    bool allowZero = false,
   }) async {
-    if (perUnit <= Decimal.zero) {
+    if (allowZero ? perUnit < Decimal.zero : perUnit <= Decimal.zero) {
       throw ArgumentError.value(perUnit, 'perUnit', 'must be positive');
     }
     final stamp = await _stamper.stamp();

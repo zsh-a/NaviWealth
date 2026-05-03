@@ -68,12 +68,28 @@ class ManualAssetRepository {
     return row == null ? null : _toAsset(row);
   }
 
+  Future<Decimal?> latestValuation(String assetId, {DateTime? asOf}) async {
+    final row = await (_db.select(
+      _db.assets,
+    )..where((t) => t.id.equals(assetId))).getSingleOrNull();
+    if (row == null) return null;
+    final observed = await _priceRepo.latestAt(
+      unit: assetId,
+      quoteCurrency: row.currency,
+      asOf: asOf ?? DateTime.now().toUtc(),
+    );
+    return observed?.perUnit;
+  }
+
   Future<Asset> createCash({
     required String accountId,
     required String currency,
     required Decimal balance,
     String? nickname,
   }) async {
+    if (balance < Decimal.zero) {
+      throw ArgumentError.value(balance, 'balance', 'must be >= 0');
+    }
     final metadata = CashMetadata(accountId: accountId);
     return _create(
       type: AssetType.cash,
@@ -179,6 +195,8 @@ class ManualAssetRepository {
       observedOn: observedOn,
       narration: reason,
       ownerUserId: row.ownerUserId,
+      type: row.type,
+      previousValue: previous?.perUnit,
     );
     await _eventLog.recordFieldChanged(
       entityTable: _tableName,
@@ -259,8 +277,9 @@ class ManualAssetRepository {
     diff['updated_by_device'] = stamp.deviceId;
     diff['hlc'] = stamp.hlc.toString();
     await _db.transaction(() async {
-      await (_db.update(_db.assets)..where((t) => t.id.equals(id)))
-          .write(companion);
+      await (_db.update(
+        _db.assets,
+      )..where((t) => t.id.equals(id))).write(companion);
       await _enqueue(OpType.update, id, diff, stamp);
       await _eventLog.recordFieldChanged(
         entityTable: _tableName,
@@ -341,7 +360,8 @@ class ManualAssetRepository {
         after: fields,
       );
     });
-    if (initialValuation > Decimal.zero) {
+    if (initialValuation > Decimal.zero ||
+        (type == AssetType.cash && initialValuation == Decimal.zero)) {
       await _recordValuation(
         assetId: id,
         accountId: accountId,
@@ -349,6 +369,8 @@ class ManualAssetRepository {
         value: initialValuation,
         observedOn: stamp.now,
         ownerUserId: stamp.ownerUserId,
+        type: type,
+        previousValue: Decimal.zero,
       );
     }
     return (await findById(id))!;
@@ -361,6 +383,8 @@ class ManualAssetRepository {
     required Decimal value,
     required DateTime observedOn,
     required String ownerUserId,
+    required AssetType type,
+    Decimal? previousValue,
     String? narration,
   }) async {
     await _priceRepo.record(
@@ -369,23 +393,42 @@ class ManualAssetRepository {
       observedOn: observedOn,
       perUnit: value,
       source: 'manual',
+      allowZero: type == AssetType.cash,
     );
     final jeRepo = _journalEntryRepo;
     if (jeRepo == null) return;
-    final equityAccountId = AccountRepository.systemAccountIdForPath(
-      'equity:adjustments',
-      ownerUserId: ownerUserId,
-    );
-    final build = JournalEntryBuilders.valuationAdjust(
-      date: observedOn,
-      accountId: accountId,
-      equityAccountId: equityAccountId,
-      assetUnit: assetId,
-      quantity: Decimal.zero,
-      newValuation: value,
-      currency: currency,
-      narration: narration,
-    );
+    final JournalEntryBuild build;
+    if (type == AssetType.cash) {
+      final delta = value - (previousValue ?? Decimal.zero);
+      if (delta == Decimal.zero) return;
+      build = JournalEntryBuilders.openingBalance(
+        date: observedOn,
+        accountId: accountId,
+        openingBalanceAccountId: AccountRepository.systemAccountIdForPath(
+          'equity:openingBalance',
+          ownerUserId: ownerUserId,
+        ),
+        amount: delta,
+        currency: currency,
+        narration: narration ?? 'Cash balance',
+        tagIds: ['asset:$assetId'],
+      );
+    } else {
+      final equityAccountId = AccountRepository.systemAccountIdForPath(
+        'equity:adjustments',
+        ownerUserId: ownerUserId,
+      );
+      build = JournalEntryBuilders.valuationAdjust(
+        date: observedOn,
+        accountId: accountId,
+        equityAccountId: equityAccountId,
+        assetUnit: assetId,
+        quantity: Decimal.zero,
+        newValuation: value,
+        currency: currency,
+        narration: narration,
+      );
+    }
     await jeRepo.create(entry: build.entry, postings: build.postings);
   }
 

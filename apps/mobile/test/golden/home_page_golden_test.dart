@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -8,6 +9,8 @@ import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
@@ -17,19 +20,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '_golden_setup.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 4, 1),
-      updatedByDevice: 't',
-      hlc: Hlc.zero('t'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 4, 1),
+  updatedByDevice: 't',
+  hlc: Hlc.zero('t'),
+);
 
 Asset _cash(String id) => Asset(
-      id: id,
-      type: AssetType.cash,
-      symbol: id,
-      currency: 'CNY',
-      sync: _meta(),
-    );
+  id: id,
+  type: AssetType.cash,
+  symbol: id,
+  currency: 'CNY',
+  sync: _meta(),
+);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -50,17 +53,15 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         manualAssetsStreamProvider.overrideWith(
-          (_) => Stream.value([
-            _cash('cash-1'),
-            _cash('cash-2'),
-          ]),
+          (_) => Stream.value([_cash('cash-1'), _cash('cash-2')]),
+        ),
+        dashboardManualAssetValuationsProvider.overrideWith(
+          (_) => const AsyncValue.data(<ManualAssetValuation>[]),
         ),
         physicalAssetsListProvider.overrideWith(
           (_) => Stream.value(const <PhysicalAsset>[]),
         ),
-        liabilitiesStreamProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
+        liabilitiesStreamProvider.overrideWith((_) => Stream.value(const [])),
         fxRatesStreamProvider.overrideWith(
           (_) => Stream<List<FxRate>>.value(const []),
         ),

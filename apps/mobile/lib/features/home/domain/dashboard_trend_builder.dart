@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/amortization_entry.dart';
-import '../../../data/domain/asset.dart';
 import '../../../data/domain/liability.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/services/liability_balance_source.dart';
@@ -90,7 +89,7 @@ class DashboardTrendBuilder {
 
   DashboardTrend build({
     required DashboardTimeRange range,
-    required Iterable<Asset> manualAssets,
+    required Iterable<ManualAssetValuation> manualAssets,
     required Iterable<PhysicalAsset> physicalAssets,
     required Iterable<Liability> liabilities,
     required Map<String, List<AmortizationEntry>> liabilitySchedules,
@@ -134,8 +133,7 @@ class DashboardTrendBuilder {
 
     for (final date in sampleDates) {
       final assets = _valueAssets(date, manualList, physicalList, report);
-      final liabilitiesValue =
-          _valueLiabilities(date, liabSource, report);
+      final liabilitiesValue = _valueLiabilities(date, liabSource, report);
       points.add(
         TrendPoint(
           asOf: date,
@@ -155,11 +153,17 @@ class DashboardTrendBuilder {
 
   Money _valueAssets(
     DateTime date,
-    List<Asset> manualAssets,
+    List<ManualAssetValuation> manualAssets,
     List<PhysicalAsset> physicalAssets,
     void Function(String id, String currency) report,
   ) {
     var total = Money.zero(baseCurrency);
+    for (final ma in manualAssets) {
+      final value = ma.valueAt(date);
+      if (value == null || value.sign <= 0) continue;
+      final amount = Money(value, ma.asset.currency);
+      total = _addInBase(total, amount, date, ma.asset.id, report);
+    }
     for (final pa in physicalAssets) {
       if (pa.purchaseDate.isAfter(date)) continue;
       final value = _valueOfPhysicalAt(pa, date);
@@ -222,8 +226,7 @@ class DashboardTrendBuilder {
     final span = t1.difference(t0).inDays;
     if (span == 0) return v1;
     final pos = date.difference(t0).inDays;
-    final fraction = Decimal.fromInt(pos) /
-        Decimal.fromInt(span);
+    final fraction = Decimal.fromInt(pos) / Decimal.fromInt(span);
     final fractionDecimal = fraction.toDecimal(scaleOnInfinitePrecision: 8);
     return v0 + ((v1 - v0) * fractionDecimal);
   }
