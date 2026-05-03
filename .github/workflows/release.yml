@@ -175,3 +175,30 @@ jobs:
           generate_release_notes: true
           files: |
             apps/backend/naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz
+      - name: Check deploy credentials
+        id: deploy-gate
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping deploy."
+          fi
+      - name: Apply D1 migrations
+        if: steps.deploy-gate.outputs.enabled == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/backend
+          command: d1 migrations apply naviwealth
+      - name: Deploy to Cloudflare Workers
+        if: steps.deploy-gate.outputs.enabled == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/backend
+          command: deploy
