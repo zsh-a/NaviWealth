@@ -18,8 +18,8 @@ enum TradeEntryErrorCode {
   /// service cannot resolve (e.g. no FX rate available).
   currencyMismatch,
 
-  /// Transfer transactions need [TradeDraft.counterAccountId] so the matching
-  /// leg on the receiving account can be located later.
+  /// Transfer trades need [TradeDraft.counterAccountId] so the matching leg on
+  /// the receiving account can be located later.
   transferMissingCounterAccount,
 
   /// User omitted the price *and* the market-data backfill returned nothing

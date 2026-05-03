@@ -1121,7 +1121,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analyticsEmptyHint =>
-      'Once you record stock or ETF transactions, the breakdown will show up here.';
+      'Once you record stock or ETF trades, the breakdown will show up here.';
 
   @override
   String get analyticsLoadError => 'Couldn\'t load the allocation view.';
@@ -1765,7 +1765,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatEmptyBody =>
-      'Answers grounded in your holdings and transactions. Numbers come from your locally-synced ledger; the model never invents key figures.';
+      'Answers grounded in your holdings and ledger entries. Numbers come from your locally-synced ledger; the model never invents key figures.';
 
   @override
   String get aiChatEmptySuggestion1 =>
@@ -2026,9 +2026,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatToolGetHoldings => 'Query holdings';
-
-  @override
-  String get aiChatToolGetTransactions => 'Query transactions';
 
   @override
   String get aiChatToolComputeXirr => 'Compute XIRR';

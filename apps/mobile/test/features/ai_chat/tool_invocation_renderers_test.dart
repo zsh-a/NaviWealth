@@ -17,11 +17,11 @@ Widget _wrap(Widget child) {
 }
 
 ToolInvocation _inv(String name, Object? output) => ToolInvocation(
-      id: 't',
-      name: name,
-      input: const <String, Object?>{},
-      output: output,
-    );
+  id: 't',
+  name: name,
+  input: const <String, Object?>{},
+  output: output,
+);
 
 Future<void> _expandCard(WidgetTester tester) async {
   await tester.tap(find.byType(InkWell).first);
@@ -67,73 +67,6 @@ void main() {
       expect(find.text('查看 raw JSON'), findsOneWidget);
     });
 
-    testWidgets('get_transactions → list with type-aware icons', (tester) async {
-      const output = <String, Object?>{
-        'transactions': <Object?>[
-          <String, Object?>{
-            'id': 'tx-1',
-            'type': 'buy',
-            'assetId': 'a-1',
-            'quantity': 10,
-            'price': 100,
-            'currency': 'USD',
-            'tradeDate': '2026-04-15T00:00:00Z',
-          },
-          <String, Object?>{
-            'id': 'tx-2',
-            'type': 'sell',
-            'assetId': 'a-2',
-            'quantity': 5,
-            'price': 200,
-            'currency': 'USD',
-            'tradeDate': '2026-04-20T00:00:00Z',
-          },
-        ],
-        'truncated': false,
-      };
-
-      await tester.pumpWidget(
-        _wrap(
-          ToolInvocationCard(invocation: _inv('get_transactions', output)),
-        ),
-      );
-      await _expandCard(tester);
-
-      expect(find.textContaining('买入'), findsOneWidget);
-      expect(find.textContaining('卖出'), findsOneWidget);
-      expect(find.text('2026-04-15'), findsOneWidget);
-    });
-
-    testWidgets('get_transactions truncation hint when >10 rows',
-        (tester) async {
-      final txns = <Object?>[
-        for (var i = 0; i < 12; i++)
-          <String, Object?>{
-            'id': 'tx-$i',
-            'type': 'buy',
-            'assetId': 'a-1',
-            'quantity': 1,
-            'price': 100,
-            'currency': 'USD',
-            'tradeDate': '2026-04-0${(i % 9) + 1}T00:00:00Z',
-          },
-      ];
-      final output = <String, Object?>{
-        'transactions': txns,
-        'truncated': true,
-      };
-
-      await tester.pumpWidget(
-        _wrap(
-          ToolInvocationCard(invocation: _inv('get_transactions', output)),
-        ),
-      );
-      await _expandCard(tester);
-
-      expect(find.textContaining('还有 2 项未展示'), findsOneWidget);
-      expect(find.textContaining('后端已截断结果'), findsOneWidget);
-    });
-
     testWidgets('compute_xirr → big rate + range label', (tester) async {
       const output = <String, Object?>{
         'scope': 'portfolio',
@@ -156,8 +89,9 @@ void main() {
       expect(find.textContaining('2 条现金流'), findsOneWidget);
     });
 
-    testWidgets('compute_xirr → null rate falls through to a friendly note',
-        (tester) async {
+    testWidgets('compute_xirr → null rate falls through to a friendly note', (
+      tester,
+    ) async {
       const output = <String, Object?>{
         'scope': 'portfolio',
         'rate': null,
@@ -172,8 +106,9 @@ void main() {
       expect(find.textContaining('无法计算'), findsOneWidget);
     });
 
-    testWidgets('compute_net_worth → end value + sparkline + range',
-        (tester) async {
+    testWidgets('compute_net_worth → end value + sparkline + range', (
+      tester,
+    ) async {
       const output = <String, Object?>{
         'from': '2026-01-01T00:00:00Z',
         'to': '2026-04-01T00:00:00Z',
@@ -213,8 +148,9 @@ void main() {
       expect(find.textContaining('4 个采样点'), findsOneWidget);
     });
 
-    testWidgets('get_industry_breakdown → top 3 + others summary',
-        (tester) async {
+    testWidgets('get_industry_breakdown → top 3 + others summary', (
+      tester,
+    ) async {
       const output = <String, Object?>{
         'total': 10000,
         'buckets': <Object?>[
@@ -261,7 +197,9 @@ void main() {
       expect(find.textContaining('其他 1 类'), findsOneWidget);
     });
 
-    testWidgets('get_risk_alerts → severity-tinted tile + share', (tester) async {
+    testWidgets('get_risk_alerts → severity-tinted tile + share', (
+      tester,
+    ) async {
       const output = <String, Object?>{
         'alerts': <Object?>[
           <String, Object?>{
@@ -286,8 +224,9 @@ void main() {
       expect(find.text('45%'), findsOneWidget);
     });
 
-    testWidgets('get_risk_alerts empty list → positive empty state',
-        (tester) async {
+    testWidgets('get_risk_alerts empty list → positive empty state', (
+      tester,
+    ) async {
       const output = <String, Object?>{'alerts': <Object?>[]};
       await tester.pumpWidget(
         _wrap(ToolInvocationCard(invocation: _inv('get_risk_alerts', output))),
@@ -307,8 +246,7 @@ void main() {
       expect(find.textContaining('"foo"'), findsOneWidget);
     });
 
-    testWidgets('"查看 raw JSON" toggle reveals the raw payload',
-        (tester) async {
+    testWidgets('"查看 raw JSON" toggle reveals the raw payload', (tester) async {
       const output = <String, Object?>{
         'holdings': <String, Object?>{
           'a-1': <String, Object?>{
@@ -330,48 +268,9 @@ void main() {
       expect(find.textContaining('"asset_id"'), findsOneWidget);
       expect(find.text('返回精简视图'), findsOneWidget);
     });
-
-    testWidgets('oversized payload (>50 rows) skips inline renderer',
-        (tester) async {
-      final txns = <Object?>[
-        for (var i = 0; i < 60; i++)
-          <String, Object?>{
-            'id': 'tx-$i',
-            'type': 'buy',
-            'assetId': 'a-1',
-            'quantity': 1,
-            'price': 100,
-            'currency': 'USD',
-            'tradeDate': '2026-04-01T00:00:00Z',
-          },
-      ];
-      final output = <String, Object?>{
-        'transactions': txns,
-        'truncated': true,
-      };
-      await tester.pumpWidget(
-        _wrap(
-          ToolInvocationCard(invocation: _inv('get_transactions', output)),
-        ),
-      );
-      await _expandCard(tester);
-
-      // No inline rendering triggered — just raw JSON.
-      expect(find.textContaining('买入'), findsNothing);
-      expect(find.textContaining('"transactions"'), findsOneWidget);
-    });
   });
 
   group('isOversizedToolPayload', () {
-    test('false when transactions list under 50', () {
-      expect(
-        isOversizedToolPayload('get_transactions', <String, Object?>{
-          'transactions': List.filled(20, <String, Object?>{}),
-        }),
-        isFalse,
-      );
-    });
-
     test('true when holdings map exceeds 50 entries', () {
       expect(
         isOversizedToolPayload('get_holdings', <String, Object?>{
@@ -386,7 +285,7 @@ void main() {
     test('false for unknown tool', () {
       expect(
         isOversizedToolPayload('mystery', <String, Object?>{
-          'transactions': List.filled(100, <String, Object?>{}),
+          'journal_entries': List.filled(100, <String, Object?>{}),
         }),
         isFalse,
       );

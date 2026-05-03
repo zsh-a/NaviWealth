@@ -21,23 +21,23 @@ enum ProposalApplyStatus {
 
 extension ProposalApplyStatusX on ProposalApplyStatus {
   String get wire => switch (this) {
-        ProposalApplyStatus.pending => 'pending',
-        ProposalApplyStatus.applying => 'applying',
-        ProposalApplyStatus.applied => 'applied',
-        ProposalApplyStatus.cancelled => 'cancelled',
-        ProposalApplyStatus.undone => 'undone',
-        ProposalApplyStatus.errored => 'errored',
-      };
+    ProposalApplyStatus.pending => 'pending',
+    ProposalApplyStatus.applying => 'applying',
+    ProposalApplyStatus.applied => 'applied',
+    ProposalApplyStatus.cancelled => 'cancelled',
+    ProposalApplyStatus.undone => 'undone',
+    ProposalApplyStatus.errored => 'errored',
+  };
 
   static ProposalApplyStatus parse(String s) => switch (s) {
-        'pending' => ProposalApplyStatus.pending,
-        'applying' => ProposalApplyStatus.applying,
-        'applied' => ProposalApplyStatus.applied,
-        'cancelled' => ProposalApplyStatus.cancelled,
-        'undone' => ProposalApplyStatus.undone,
-        'errored' => ProposalApplyStatus.errored,
-        _ => ProposalApplyStatus.pending,
-      };
+    'pending' => ProposalApplyStatus.pending,
+    'applying' => ProposalApplyStatus.applying,
+    'applied' => ProposalApplyStatus.applied,
+    'cancelled' => ProposalApplyStatus.cancelled,
+    'undone' => ProposalApplyStatus.undone,
+    'errored' => ProposalApplyStatus.errored,
+    _ => ProposalApplyStatus.pending,
+  };
 }
 
 class ProposalApplyState {
@@ -58,11 +58,11 @@ class ProposalApplyState {
 
   final ProposalApplyStatus status;
 
-  /// Primary key of the persisted entity (transactions.id, accounts.id,
+  /// Primary key of the persisted entity (journal_entries.id, accounts.id,
   /// assets.id). Lets the undo path soft-delete via the same repository.
   final String? appliedEntityId;
 
-  /// Drift table name backing [appliedEntityId]. `transactions`,
+  /// Drift table name backing [appliedEntityId]. `journal_entries`,
   /// `accounts`, `assets`. Captured so the undo dispatch doesn't have to
   /// re-derive it from the proposal kind.
   final String? appliedTable;
@@ -101,20 +101,22 @@ class ProposalApplyState {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'status': status.wire,
-        if (appliedEntityId != null) 'applied_entity_id': appliedEntityId,
-        if (appliedTable != null) 'applied_table': appliedTable,
-        if (appliedAt != null) 'applied_at': appliedAt!.toUtc().toIso8601String(),
-        if (errorMessage != null) 'error_message': errorMessage,
-        if (undoData != null) 'undo_data': undoData,
-        if (shortLabel != null) 'short_label': shortLabel,
-      };
+    'status': status.wire,
+    if (appliedEntityId != null) 'applied_entity_id': appliedEntityId,
+    if (appliedTable != null) 'applied_table': appliedTable,
+    if (appliedAt != null) 'applied_at': appliedAt!.toUtc().toIso8601String(),
+    if (errorMessage != null) 'error_message': errorMessage,
+    if (undoData != null) 'undo_data': undoData,
+    if (shortLabel != null) 'short_label': shortLabel,
+  };
 
   factory ProposalApplyState.fromJson(Map<String, Object?> json) {
     final at = json['applied_at'];
     final undo = json['undo_data'];
     return ProposalApplyState(
-      status: ProposalApplyStatusX.parse((json['status'] ?? 'pending') as String),
+      status: ProposalApplyStatusX.parse(
+        (json['status'] ?? 'pending') as String,
+      ),
       appliedEntityId: json['applied_entity_id'] as String?,
       appliedTable: json['applied_table'] as String?,
       appliedAt: at is String ? DateTime.tryParse(at) : null,

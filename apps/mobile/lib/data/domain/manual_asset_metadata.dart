@@ -19,9 +19,8 @@ sealed class ManualAssetMetadata {
   const ManualAssetMetadata({required this.accountId});
 
   /// Account that "owns" this holding. Embedded here rather than added as
-  /// a new column so the schema doesn't need to migrate just to ship FIR-44
-  /// — the eventual transactions/holdings model will replace this with a
-  /// proper FK once securities entry lands.
+  /// a new column so manual-asset metadata stays feature-local while the
+  /// ledger carries the accounting postings.
   final String accountId;
 
   Map<String, Object?> toJson();

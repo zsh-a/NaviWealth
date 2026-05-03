@@ -5,7 +5,7 @@
 //! every `propose_*` tool returns a structured *plan* describing the
 //! intended mutation. The mobile client renders the plan in a confirmation
 //! UI; only after the human taps "确认" does it call the existing
-//! repository (`TransactionRepository`, `AccountRepository`, etc.) to
+//! repositories (`JournalEntryRepository`, `AccountRepository`, etc.) to
 //! actually persist the row.
 //!
 //! Each builder follows the same shape:
@@ -37,7 +37,7 @@
 //! - `candidates` — populated when `status = needs_clarification`.
 //!
 //! The actual writes still go through the mobile-side repositories
-//! (`TradeEntryService.buildPlan` → `TransactionRepository.recordTrade`,
+//! (`TradeEntryService.buildPlan` → `JournalEntryRepository.create`,
 //! etc.) — see FIR-45 / FIR-63 / FIR-64 for the persistence layer this
 //! integrates with.
 

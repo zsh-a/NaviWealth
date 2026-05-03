@@ -10,9 +10,9 @@ import 'dart:math' as math;
 /// bookend (we "could realize" that much by selling).
 ///
 /// `amount` is a `double` because the numerical solver runs in floating
-/// point — Decimal cash flows must be down-converted at the boundary by the
-/// caller (see `cash_flow_extractor.dart`). The 15-significant-digit precision
-/// of `double` is well beyond the precision needed for an annualized rate
+/// point — Decimal cash flows must be down-converted at the read-model
+/// boundary. The 15-significant-digit precision of `double` is well
+/// beyond the precision needed for an annualized rate
 /// (which is, in the end, a percentage with maybe 4 significant figures).
 class XirrCashFlow {
   const XirrCashFlow({required this.date, required this.amount});

@@ -553,7 +553,7 @@
   "analyticsUnclassifiedRowCta": "Tap a holding to fill in its metadata.",
 
   "analyticsEmptyTitle": "No equity holdings yet",
-  "analyticsEmptyHint": "Once you record stock or ETF transactions, the breakdown will show up here.",
+  "analyticsEmptyHint": "Once you record stock or ETF trades, the breakdown will show up here.",
 
   "analyticsLoadError": "Couldn't load the allocation view.",
   "analyticsRetry": "Retry",
@@ -864,7 +864,7 @@
   "aiChatNewSessionTooltip": "New conversation",
   "aiChatLoginRequired": "Sign in to use the AI assistant.",
   "aiChatEmptyTitle": "Your financial assistant",
-  "aiChatEmptyBody": "Answers grounded in your holdings and transactions. Numbers come from your locally-synced ledger; the model never invents key figures.",
+  "aiChatEmptyBody": "Answers grounded in your holdings and ledger entries. Numbers come from your locally-synced ledger; the model never invents key figures.",
   "aiChatEmptySuggestion1": "How much have I made in the last three months?",
   "aiChatEmptySuggestion2": "Which holdings carry the highest risk?",
   "aiChatEmptySuggestion3": "What does my industry breakdown look like?",
@@ -992,7 +992,6 @@
   "aiChatRowNewValue": "New valuation",
 
   "aiChatToolGetHoldings": "Query holdings",
-  "aiChatToolGetTransactions": "Query transactions",
   "aiChatToolComputeXirr": "Compute XIRR",
   "aiChatToolComputeNetWorth": "Compute net worth",
   "aiChatToolGetIndustryBreakdown": "Industry breakdown",

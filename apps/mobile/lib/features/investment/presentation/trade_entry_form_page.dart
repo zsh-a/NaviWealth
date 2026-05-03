@@ -26,8 +26,8 @@ import '../domain/trade_entry/trade_entry_errors.dart';
 /// Asset lookup is fully local (FIR-77): the picker reads from the seed
 /// catalog + owned securities and never makes a network call. Selecting a
 /// catalog row that the user has never traded triggers an `upsertSecurity`
-/// at submit-time so the resulting `transactions.assetId` always points
-/// at a real `assets` row, satisfying the FIR-75 foreign-key contract.
+/// at submit-time so the resulting postings always point at a real
+/// `assets` row, satisfying the FIR-75 foreign-key contract.
 class TradeEntryFormPage extends ConsumerStatefulWidget {
   const TradeEntryFormPage({super.key, this.assetId, this.accountId});
 
@@ -137,8 +137,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
-    final securitiesRepo =
-        await ref.read(securitiesAssetRepositoryProvider.future);
+    final securitiesRepo = await ref.read(
+      securitiesAssetRepositoryProvider.future,
+    );
     final tradeService = await ref.read(tradeEntryServiceProvider.future);
     final jeRepo = await ref.read(journalEntryRepositoryProvider.future);
     final priceRepo = await ref.read(priceRepositoryProvider.future);
@@ -165,7 +166,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     // Failure is silent — saving defaults is a UX nicety, not part of
     // the trade-recording success contract.
     unawaited(
-      ref.read(formDefaultsProvider.notifier).rememberTrade(
+      ref
+          .read(formDefaultsProvider.notifier)
+          .rememberTrade(
             accountId: accountId,
             cashAccountId: _cashAccountId,
             currency: currency,
@@ -214,9 +217,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           tax: tax,
           note: note,
         );
-        final plan =
-            await tradeService.buildPlan(draft, openLots: <Lot>[]);
-        final tx = plan.transaction;
+        final plan = await tradeService.buildPlan(draft, openLots: <Lot>[]);
+        final tx = plan.trade;
         final uid = await currentUserId();
 
         if (type == TransactionType.buy || type == TransactionType.sell) {
@@ -235,7 +237,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               date: tx.tradeDate,
               accountId: accountId,
               cashAccountId: cashAcct,
-              assetUnit: tx.assetId!,
+              assetUnit: tx.assetId,
               qty: tx.quantity,
               price: tx.price,
               quoteCurrency: currency,
@@ -249,12 +251,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               taxCurrency: tx.tax != null ? currency : null,
               narration: note,
             );
-            await jeRepo.create(
-              entry: build.entry,
-              postings: build.postings,
-            );
+            await jeRepo.create(entry: build.entry, postings: build.postings);
             await priceRepo.record(
-              unit: tx.assetId!,
+              unit: tx.assetId,
               quoteCurrency: currency,
               observedOn: tx.tradeDate,
               perUnit: tx.price,
@@ -262,8 +261,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             );
           } else {
             // Sell — cost basis comes from the resolved lots.
-            final capGainsAccountId =
-                AccountRepository.systemAccountIdForPath(
+            final capGainsAccountId = AccountRepository.systemAccountIdForPath(
               'income:capitalGains',
               ownerUserId: uid,
             );
@@ -275,8 +273,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             if (pnl.isNotEmpty) {
               final first = pnl.first;
               costPerUnit = first.quantity.sign != 0
-                  ? (first.costBasis / first.quantity)
-                      .toDecimal(scaleOnInfinitePrecision: 16)
+                  ? (first.costBasis / first.quantity).toDecimal(
+                      scaleOnInfinitePrecision: 16,
+                    )
                   : tx.price;
               costCurrency = first.currency;
               sellLotId = first.lotId;
@@ -290,7 +289,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               accountId: accountId,
               cashAccountId: cashAcct,
               capitalGainsAccountId: capGainsAccountId,
-              assetUnit: tx.assetId!,
+              assetUnit: tx.assetId,
               qty: tx.quantity,
               price: tx.price,
               quoteCurrency: currency,
@@ -306,12 +305,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               taxCurrency: tx.tax != null ? currency : null,
               narration: note,
             );
-            await jeRepo.create(
-              entry: build.entry,
-              postings: build.postings,
-            );
+            await jeRepo.create(entry: build.entry, postings: build.postings);
             await priceRepo.record(
-              unit: tx.assetId!,
+              unit: tx.assetId,
               quoteCurrency: currency,
               observedOn: tx.tradeDate,
               perUnit: tx.price,
@@ -319,8 +315,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             );
           }
         } else {
-          final equityAccountId =
-              AccountRepository.systemAccountIdForPath(
+          final equityAccountId = AccountRepository.systemAccountIdForPath(
             'equity:adjustments',
             ownerUserId: uid,
           );
@@ -328,7 +323,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             date: tx.tradeDate,
             accountId: accountId,
             equityAccountId: equityAccountId,
-            assetUnit: tx.assetId!,
+            assetUnit: tx.assetId,
             quantity: tx.quantity,
             newValuation: tx.price,
             currency: currency,
@@ -336,7 +331,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           );
           await jeRepo.create(entry: build.entry, postings: build.postings);
           await priceRepo.record(
-            unit: tx.assetId!,
+            unit: tx.assetId,
             quoteCurrency: currency,
             observedOn: tx.tradeDate,
             perUnit: tx.price,
@@ -353,9 +348,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(
-        title: Text(l10n.tradeEntryAppBarTitle),
-      ),
+      appBar: GlassAppBar(title: Text(l10n.tradeEntryAppBarTitle)),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
@@ -367,9 +360,11 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   Widget _buildForm(List<Account> accounts) {
     final l10n = AppLocalizations.of(context);
     final eligible = accounts
-        .where((a) =>
-            a.type == AccountType.brokerage ||
-            a.type == AccountType.cryptoWallet)
+        .where(
+          (a) =>
+              a.type == AccountType.brokerage ||
+              a.type == AccountType.cryptoWallet,
+        )
         .toList(growable: false);
 
     // Fall back to the first eligible account once we know the workspace
@@ -379,8 +374,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       final pool = eligible.isEmpty ? accounts : eligible;
       if (_accountId == null && pool.isNotEmpty) {
         _accountId = pool.first.id;
-      } else if (_accountId != null &&
-          !pool.any((a) => a.id == _accountId)) {
+      } else if (_accountId != null && !pool.any((a) => a.id == _accountId)) {
         _accountId = pool.isEmpty ? null : pool.first.id;
       }
       _hydratedDefaults = true;
@@ -411,9 +405,11 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               key: const Key('trade-entry-cash-account'),
               label: l10n.tradeEntryCashAccountLabel,
               accounts: accounts
-                  .where((a) =>
-                      a.type == AccountType.bank ||
-                      a.type == AccountType.cash)
+                  .where(
+                    (a) =>
+                        a.type == AccountType.bank ||
+                        a.type == AccountType.cash,
+                  )
                   .toList(growable: false),
               value: _cashAccountId,
               onChanged: (v) => setState(() => _cashAccountId = v),
@@ -547,5 +543,4 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   }
 }
 
-Decimal? _nonZeroOr(Decimal? v) =>
-    v == null || v == Decimal.zero ? null : v;
+Decimal? _nonZeroOr(Decimal? v) => v == null || v == Decimal.zero ? null : v;

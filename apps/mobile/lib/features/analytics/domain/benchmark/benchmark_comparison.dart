@@ -99,12 +99,11 @@ class TimeSeriesPoint {
 ///
 /// computed on the price path only — i.e. ignoring portfolio cash flows.
 /// For the portfolio side this is the "absolute return" branch the XIRR
-/// engine falls back to when there are too few flows; once
-/// `ReturnsService.portfolioXirr` is wired through Riverpod (blocked on
-/// the FIR-7 transaction stream) the caller can pass that value in via
-/// [overridePortfolioAnnualizedReturn] and the chart will keep using the
-/// net-worth curve for visualisation while showing the XIRR as the
-/// headline number.
+/// engine falls back to when there are too few flows; once the
+/// postings-derived return read model is wired through Riverpod, the
+/// caller can pass that value in via [overridePortfolioAnnualizedReturn]
+/// and the chart will keep using the net-worth curve for visualisation
+/// while showing the XIRR as the headline number.
 class BenchmarkComparisonService {
   const BenchmarkComparisonService();
 
@@ -123,7 +122,8 @@ class BenchmarkComparisonService {
     final orderedBenchmarks = order ?? benchmarks.keys.toList();
 
     final portfolioPoints = _normalize(portfolio, from: from, to: to);
-    final portfolioCagr = overridePortfolioAnnualizedReturn ??
+    final portfolioCagr =
+        overridePortfolioAnnualizedReturn ??
         _annualizedFromSeries(portfolio, from: from, to: to);
 
     final results = <BenchmarkSeries>[];

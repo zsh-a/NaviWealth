@@ -22,13 +22,6 @@ import 'category_grid_picker.dart';
 /// edit flows — when [expenseId] is non-null we hydrate the form from
 /// the journal entry the id refers to and call `replacePostings` on
 /// save; otherwise we call `JournalEntryRepository.create`.
-///
-/// FIR-131 wave 3h — both branches now route through the JE stack.
-/// Legacy `transactions` rows from before wave 3f no longer hydrate
-/// the form; tapping such a row from the legacy expense list pops
-/// with an error. The legacy list itself stays alive (read-only) so
-/// the user can still see history; full retirement waits for the
-/// FIR-132 read-path port.
 class ExpenseFormPage extends ConsumerStatefulWidget {
   const ExpenseFormPage({super.key, this.expenseId});
 
@@ -82,17 +75,15 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
     final existing = await journalRepo.getById(widget.expenseId!);
     if (existing == null) {
-      // FIR-131 wave 3h — legacy `transactions` row or stale id.
       // Pop with a friendly error rather than rendering an empty
       // form the user can't usefully save. TODO(l10n): swap this
-      // English literal for a localized key once the broader
-      // FIR-131 wave 3 ARB pass lands.
+      // English literal for a localized key once the broader ARB
+      // pass lands.
       if (!mounted) return;
       AppMessenger.show(
         context,
         ToastKind.error,
-        "Couldn't load expense — it may be a legacy row no longer "
-            'editable on the new ledger. Create a new entry instead.',
+        "Couldn't load expense. Create a new entry instead.",
       );
       unawaited(Navigator.of(context).maybePop());
       return;
@@ -113,7 +104,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 
   /// Pulls the four UI-bound fields (amount / currency / from-account
-  /// id / legacy category id) out of a hydrated JE. Returns `null`
+  /// id / picker category id) out of a hydrated JE. Returns `null`
   /// values for any field whose posting can't be classified — the
   /// form's existing fall-back logic (most-used category, first
   /// account) covers those cases.
@@ -157,12 +148,20 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final amount = readAmount(_amountController);
     if (amount == null || amount <= Decimal.zero) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.expenseFormAmountInvalid);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.expenseFormAmountInvalid,
+      );
       return;
     }
     if (_categoryId == null || _accountId == null || _currency == null) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.expenseFormCategoryAccountRequired);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.expenseFormCategoryAccountRequired,
+      );
       return;
     }
     setState(() => _busy = true);
@@ -180,7 +179,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     // gate the user-visible flow, and the user has already committed by
     // tapping save.
     unawaited(
-      ref.read(formDefaultsProvider.notifier).rememberExpense(
+      ref
+          .read(formDefaultsProvider.notifier)
+          .rememberExpense(
             accountId: accountId,
             categoryId: categoryId,
             currency: currency,
@@ -200,21 +201,18 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       retryLabel: l10n.commonRetry,
       write: () async {
         if (initial == null) {
-          // FIR-131 wave 3f — new expenses go through the journal-
-          // entry stack. The legacy `expense_categories` taxonomy is
-          // still the picker the user sees, so we translate
-          // `categoryId` to a FIR-133 expense account on the way
-          // through. Edit / delete flows below stay on the legacy
-          // repo until FIR-132 retires the read path.
-          final ownerUserId =
-              await ref.read(currentUserIdProvider).call();
+          // The picker still uses the expense-category list, so we
+          // translate `categoryId` to a FIR-133 expense account on
+          // the way into the journal entry.
+          final ownerUserId = await ref.read(currentUserIdProvider).call();
           final expenseAccountId =
               LegacyExpenseCategoryToAccount.resolveAccountId(
-            categoryId: categoryId,
-            ownerUserId: ownerUserId,
+                categoryId: categoryId,
+                ownerUserId: ownerUserId,
+              );
+          final journalRepo = await ref.read(
+            journalEntryRepositoryProvider.future,
           );
-          final journalRepo =
-              await ref.read(journalEntryRepositoryProvider.future);
           final build = JournalEntryBuilders.expense(
             date: date,
             expenseAccountId: expenseAccountId,
@@ -236,15 +234,15 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           // create produces the new posting layout; the JE id stays
           // stable so audit / sync history threads through to peers
           // as a single update + posting-replace batch.
-          final ownerUserId =
-              await ref.read(currentUserIdProvider).call();
+          final ownerUserId = await ref.read(currentUserIdProvider).call();
           final expenseAccountId =
               LegacyExpenseCategoryToAccount.resolveAccountId(
-            categoryId: categoryId,
-            ownerUserId: ownerUserId,
+                categoryId: categoryId,
+                ownerUserId: ownerUserId,
+              );
+          final journalRepo = await ref.read(
+            journalEntryRepositoryProvider.future,
           );
-          final journalRepo =
-              await ref.read(journalEntryRepositoryProvider.future);
           final build = JournalEntryBuilders.expense(
             date: date,
             expenseAccountId: expenseAccountId,
@@ -289,9 +287,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       // FIR-131 wave 3h — soft-delete cascades to the JE's postings
       // in the same Drift transaction (see
       // `JournalEntryRepository.softDelete`).
-      final journalRepo = await ref.read(
-        journalEntryRepositoryProvider.future,
-      );
+      final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
       await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
       context.go('/expenses');
@@ -412,7 +408,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       // Drop a stale persisted account if it no longer
                       // exists; otherwise honour the user's pick over the
                       // first-row default.
-                      final hasCurrent = _accountId != null &&
+                      final hasCurrent =
+                          _accountId != null &&
                           accounts.any((a) => a.id == _accountId);
                       if (!hasCurrent) {
                         _accountId = accounts.first.id;
@@ -438,10 +435,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     },
                   ),
                   const SizedBox(height: Spacing.s12),
-                  NoteField(
-                    controller: _noteController,
-                    focusNode: _noteFocus,
-                  ),
+                  NoteField(controller: _noteController, focusNode: _noteFocus),
                   const SizedBox(height: Spacing.s24),
                   AppButton.primary(
                     onPressed: _busy ? null : _save,

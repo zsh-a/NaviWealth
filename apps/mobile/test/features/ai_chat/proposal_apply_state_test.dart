@@ -27,8 +27,8 @@ void main() {
     test('toJson / fromJson preserves all fields', () {
       final state = ProposalApplyState(
         status: ProposalApplyStatus.applied,
-        appliedEntityId: 'tx-1',
-        appliedTable: 'transactions',
+        appliedEntityId: 'je-1',
+        appliedTable: 'journal_entries',
         appliedAt: DateTime.utc(2026, 4, 30, 12),
         errorMessage: null,
         undoData: const <String, Object?>{'previous_value': '100'},
@@ -48,16 +48,10 @@ void main() {
         status: ProposalApplyStatus.applied,
         appliedAt: DateTime.utc(2026, 4, 30, 12),
         appliedEntityId: 'x',
-        appliedTable: 'transactions',
+        appliedTable: 'journal_entries',
       );
-      expect(
-        state.isUndoableAt(DateTime.utc(2026, 4, 30, 12, 0, 30)),
-        isTrue,
-      );
-      expect(
-        state.isUndoableAt(DateTime.utc(2026, 4, 30, 12, 1, 30)),
-        isFalse,
-      );
+      expect(state.isUndoableAt(DateTime.utc(2026, 4, 30, 12, 0, 30)), isTrue);
+      expect(state.isUndoableAt(DateTime.utc(2026, 4, 30, 12, 1, 30)), isFalse);
     });
 
     test('cancelled / pending states are never undoable', () {
@@ -65,10 +59,7 @@ void main() {
         status: ProposalApplyStatus.cancelled,
       );
       expect(cancelled.isUndoableAt(DateTime.now()), isFalse);
-      expect(
-        ProposalApplyState.pending.isUndoableAt(DateTime.now()),
-        isFalse,
-      );
+      expect(ProposalApplyState.pending.isUndoableAt(DateTime.now()), isFalse);
     });
   });
 
@@ -81,8 +72,8 @@ void main() {
         output: const <String, Object?>{'kind': 'trade'},
         applyState: ProposalApplyState(
           status: ProposalApplyStatus.applied,
-          appliedEntityId: 'tx-1',
-          appliedTable: 'transactions',
+          appliedEntityId: 'je-1',
+          appliedTable: 'journal_entries',
           appliedAt: DateTime.utc(2026, 4, 30),
           shortLabel: '已记录',
         ),
@@ -92,7 +83,7 @@ void main() {
       expect(decoded, hasLength(1));
       expect(decoded.single.applyState, isNotNull);
       expect(decoded.single.applyState!.status, ProposalApplyStatus.applied);
-      expect(decoded.single.applyState!.appliedEntityId, 'tx-1');
+      expect(decoded.single.applyState!.appliedEntityId, 'je-1');
     });
 
     test('decoder handles legacy payload without apply_state field', () {

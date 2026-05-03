@@ -2061,7 +2061,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyticsEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'Once you record stock or ETF transactions, the breakdown will show up here.'**
+  /// **'Once you record stock or ETF trades, the breakdown will show up here.'**
   String get analyticsEmptyHint;
 
   /// No description provided for @analyticsLoadError.
@@ -3171,7 +3171,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Answers grounded in your holdings and transactions. Numbers come from your locally-synced ledger; the model never invents key figures.'**
+  /// **'Answers grounded in your holdings and ledger entries. Numbers come from your locally-synced ledger; the model never invents key figures.'**
   String get aiChatEmptyBody;
 
   /// No description provided for @aiChatEmptySuggestion1.
@@ -3623,12 +3623,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Query holdings'**
   String get aiChatToolGetHoldings;
-
-  /// No description provided for @aiChatToolGetTransactions.
-  ///
-  /// In en, this message translates to:
-  /// **'Query transactions'**
-  String get aiChatToolGetTransactions;
 
   /// No description provided for @aiChatToolComputeXirr.
   ///

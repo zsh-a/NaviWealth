@@ -3,9 +3,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../data/domain/asset.dart';
 import '../../../../data/domain/enums.dart';
-import '../../../../data/domain/hlc.dart';
-import '../../../../data/domain/sync_meta.dart';
-import '../../../../data/domain/transaction.dart';
 import '../../../../domain/entities/historical_bar.dart';
 import '../../../../domain/services/currency_converter.dart';
 import '../../../../domain/services/market_data_service.dart';
@@ -21,51 +18,31 @@ import 'trade_entry_errors.dart';
 import 'trade_entry_plan.dart';
 import 'trade_entry_service.dart';
 
-/// Async supplier for the next HLC tick. Keeps the service decoupled from
-/// SyncEngine — tests pass a counter-based stub, prod wires
-/// `syncEngine.stampHlc`.
-typedef HlcStamper = Future<Hlc> Function();
-
-/// Wall-clock supplier (`now`) — same role as the one used by the market
-/// data layer. Indirected here so tests can fix the clock for deterministic
-/// `updatedAt` and tradeDate comparisons.
-typedef NowProvider = DateTime Function();
-
 /// Default [TradeEntryService] implementation. Pure orchestration on top of
 /// the domain primitives; no I/O beyond the injected market-data service
-/// and HLC stamper.
+/// and optional market price backfill.
 class DefaultTradeEntryService implements TradeEntryService {
   DefaultTradeEntryService({
     required MarketDataService market,
     required CurrencyConverter fx,
-    required HlcStamper stampHlc,
-    required this.ownerUserId,
-    required this.deviceId,
     CostBasisEngine? engine,
     String Function()? idGenerator,
-    NowProvider? now,
     this.permissiveSells = false,
     int decimalScale = 16,
-  })  : _market = market,
-        _fx = fx,
-        _stampHlc = stampHlc,
-        _engine = engine ?? CostBasisEngine(strategy: const FifoStrategy()),
-        _idGenerator = idGenerator ?? _defaultId,
-        _now = now ?? DateTime.now,
-        _decimalScale = decimalScale;
+  }) : _market = market,
+       _fx = fx,
+       _engine = engine ?? CostBasisEngine(strategy: const FifoStrategy()),
+       _idGenerator = idGenerator ?? _defaultId,
+       _decimalScale = decimalScale;
 
   static const Uuid _uuid = Uuid();
   static String _defaultId() => _uuid.v4();
 
   final MarketDataService _market;
   final CurrencyConverter _fx;
-  final HlcStamper _stampHlc;
   final CostBasisEngine _engine;
   final String Function() _idGenerator;
-  final NowProvider _now;
   final int _decimalScale;
-  final String ownerUserId;
-  final String deviceId;
 
   /// When `true`, sells that exceed available lots succeed and surface the
   /// shortfall in [TradeEntryPlan.unfulfilledQuantity]. The default
@@ -81,13 +58,14 @@ class DefaultTradeEntryService implements TradeEntryService {
     _validate(draft);
 
     final priceResult = draft.price != null
-        ? _ResolvedPrice(price: draft.price!, provenance: PriceProvenance.userSupplied)
+        ? _ResolvedPrice(
+            price: draft.price!,
+            provenance: PriceProvenance.userSupplied,
+          )
         : await _backfillPrice(draft);
 
-    final transactionId = draft.transactionId ?? _idGenerator();
-    final hlc = await _stampHlc();
-    final tx = Transaction(
-      id: transactionId,
+    final trade = PlannedTrade(
+      id: draft.transactionId ?? _idGenerator(),
       accountId: draft.accountId,
       assetId: draft.asset.id,
       type: draft.type,
@@ -100,36 +78,25 @@ class DefaultTradeEntryService implements TradeEntryService {
       tax: draft.tax,
       counterAccountId: draft.counterAccountId,
       note: draft.note,
-      lotId: null,
-      sync: SyncMeta(
-        ownerUserId: ownerUserId,
-        updatedAt: _now(),
-        updatedByDevice: deviceId,
-        hlc: hlc,
-      ),
     );
 
     switch (draft.type) {
       case TransactionType.buy:
       case TransactionType.transferIn:
-        return _planOpening(draft, tx, priceResult.provenance);
+        return _planOpening(draft, trade, priceResult.provenance);
       case TransactionType.sell:
       case TransactionType.transferOut:
         return _planClosing(
           draft,
-          tx,
+          trade,
           priceResult.provenance,
           openLots: openLots,
           realize: draft.type == TransactionType.sell,
         );
       case TransactionType.valuationAdjust:
-        // Valuation adjusts are fact-table notes only — they update the
-        // asset's last price (handled by the caller's repo), no Lot
-        // implication.
-        return TradeEntryPlan(
-          transaction: tx,
-          pricing: priceResult.provenance,
-        );
+        // Valuation adjusts write a price observation and a balancing
+        // journal entry; they do not open or close lots.
+        return TradeEntryPlan(trade: trade, pricing: priceResult.provenance);
       default:
         // Defensive: validation rejects everything else upstream.
         throw TradeEntryException(
@@ -209,7 +176,8 @@ class DefaultTradeEntryService implements TradeEntryService {
       );
     }
 
-    final isTransfer = draft.type == TransactionType.transferIn ||
+    final isTransfer =
+        draft.type == TransactionType.transferIn ||
         draft.type == TransactionType.transferOut;
     if (isTransfer &&
         (draft.counterAccountId == null || draft.counterAccountId!.isEmpty)) {
@@ -262,10 +230,7 @@ class DefaultTradeEntryService implements TradeEntryService {
     barAsOf = bar.asOf;
 
     Decimal priceInTradeCurrency = bar.close;
-    var provenance = PriceProvenance.backfilled(
-      source: source,
-      asOf: barAsOf,
-    );
+    var provenance = PriceProvenance.backfilled(source: source, asOf: barAsOf);
 
     final assetCurrency = draft.asset.currency;
     if (assetCurrency.toUpperCase() != draft.currency.toUpperCase()) {
@@ -361,43 +326,39 @@ class DefaultTradeEntryService implements TradeEntryService {
 
   TradeEntryPlan _planOpening(
     TradeDraft draft,
-    Transaction tx,
+    PlannedTrade trade,
     PriceProvenance pricing,
   ) {
     final lot = _engine.applyBuy(
       BuyEvent(
-        transactionId: tx.id,
+        transactionId: trade.id,
         accountId: draft.accountId,
         assetId: draft.asset.id,
         currency: draft.currency,
         quantity: draft.quantity,
-        pricePerUnit: tx.price,
+        pricePerUnit: trade.price,
         fee: draft.feeOrZero,
         tradeDate: draft.tradeDate,
       ),
     );
-    return TradeEntryPlan(
-      transaction: tx,
-      createdLot: lot,
-      pricing: pricing,
-    );
+    return TradeEntryPlan(trade: trade, createdLot: lot, pricing: pricing);
   }
 
   TradeEntryPlan _planClosing(
     TradeDraft draft,
-    Transaction tx,
+    PlannedTrade trade,
     PriceProvenance pricing, {
     required List<Lot> openLots,
     required bool realize,
   }) {
     final result = _engine.applySell(
       SellEvent(
-        transactionId: tx.id,
+        transactionId: trade.id,
         accountId: draft.accountId,
         assetId: draft.asset.id,
         currency: draft.currency,
         quantity: draft.quantity,
-        pricePerUnit: tx.price,
+        pricePerUnit: trade.price,
         fee: draft.feeOrZero,
         tradeDate: draft.tradeDate,
       ),
@@ -417,7 +378,7 @@ class DefaultTradeEntryService implements TradeEntryService {
     // two accounts owned by the same user isn't a tax event. Updated lot
     // state still flows through so quantities stay consistent.
     return TradeEntryPlan(
-      transaction: tx,
+      trade: trade,
       updatedLots: _onlyChanged(openLots, result.updatedLots),
       realizedPnL: realize ? result.realizedPnL : const [],
       unfulfilledQuantity: result.unfulfilledQuantity,

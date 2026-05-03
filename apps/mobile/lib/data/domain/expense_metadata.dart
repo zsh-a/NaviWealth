@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 /// FIR-68 — typed view over the `expense_metadata_json` blob stored on
-/// `transactions` rows whose `type = expense`.
+/// expense journal entries.
 ///
-/// We keep this off the wide-row Transactions table for the same reason
-/// FIR-44 stuffed deposit/wealth specifics into `assets.metadata_json`:
-/// adding expense-only columns would bloat every transaction row, even
-/// though the vast majority are buys/sells with no expense data.
+/// We keep expense-only classification data out of the core journal entry
+/// columns for the same reason FIR-44 stores deposit / wealth specifics in
+/// `assets.metadata_json`: the shared event row stays compact while feature
+/// code still gets a typed view.
 ///
 /// Sync semantics: a partial edit (e.g. recategorising) ships
 /// `expense_metadata_json` as a single field in the Op `fields_diff`.

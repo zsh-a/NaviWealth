@@ -157,12 +157,11 @@ class ProposalApplier {
       draft,
       openLots: const <Lot>[],
     );
-    final tx = tradePlan.transaction;
+    final tx = tradePlan.trade;
 
     if (type == TransactionType.buy || type == TransactionType.sell) {
       final uid = await currentUserId();
-      final cashAccountId =
-          plan.get('counter_account_id') ?? accountId;
+      final cashAccountId = plan.get('counter_account_id') ?? accountId;
       final feeAccountId = AccountRepository.systemAccountIdForPath(
         'expense:trading:fee',
         ownerUserId: uid,
@@ -177,7 +176,7 @@ class ProposalApplier {
           date: tx.tradeDate,
           accountId: accountId,
           cashAccountId: cashAccountId,
-          assetUnit: tx.assetId!,
+          assetUnit: tx.assetId,
           qty: tx.quantity,
           price: tx.price,
           quoteCurrency: currency,
@@ -196,7 +195,7 @@ class ProposalApplier {
           postings: build.postings,
         );
         await priceRepo.record(
-          unit: tx.assetId!,
+          unit: tx.assetId,
           quoteCurrency: currency,
           observedOn: tx.tradeDate,
           perUnit: tx.price,
@@ -211,8 +210,7 @@ class ProposalApplier {
         );
       } else {
         // Sell — cost basis from resolved lots.
-        final capGainsAccountId =
-            AccountRepository.systemAccountIdForPath(
+        final capGainsAccountId = AccountRepository.systemAccountIdForPath(
           'income:capitalGains',
           ownerUserId: uid,
         );
@@ -224,8 +222,9 @@ class ProposalApplier {
         if (pnl.isNotEmpty) {
           final first = pnl.first;
           costPerUnit = first.quantity.sign != 0
-              ? (first.costBasis / first.quantity)
-                  .toDecimal(scaleOnInfinitePrecision: 16)
+              ? (first.costBasis / first.quantity).toDecimal(
+                  scaleOnInfinitePrecision: 16,
+                )
               : tx.price;
           costCurrency = first.currency;
           sellLotId = first.lotId;
@@ -239,7 +238,7 @@ class ProposalApplier {
           accountId: accountId,
           cashAccountId: cashAccountId,
           capitalGainsAccountId: capGainsAccountId,
-          assetUnit: tx.assetId!,
+          assetUnit: tx.assetId,
           qty: tx.quantity,
           price: tx.price,
           quoteCurrency: currency,
@@ -260,7 +259,7 @@ class ProposalApplier {
           postings: build.postings,
         );
         await priceRepo.record(
-          unit: tx.assetId!,
+          unit: tx.assetId,
           quoteCurrency: currency,
           observedOn: tx.tradeDate,
           perUnit: tx.price,
@@ -285,7 +284,7 @@ class ProposalApplier {
       date: tx.tradeDate,
       accountId: accountId,
       equityAccountId: equityAccountId,
-      assetUnit: tx.assetId!,
+      assetUnit: tx.assetId,
       quantity: tx.quantity,
       newValuation: tx.price,
       currency: currency,
@@ -296,7 +295,7 @@ class ProposalApplier {
       postings: build.postings,
     );
     await priceRepo.record(
-      unit: tx.assetId!,
+      unit: tx.assetId,
       quoteCurrency: currency,
       observedOn: tx.tradeDate,
       perUnit: tx.price,
@@ -366,16 +365,13 @@ class ProposalApplier {
     }
     final liabilityAccountId = liability.accountId;
     if (liabilityAccountId == null) {
-      throw ProposalApplyException(
-        '负债 ${liability.name} 未关联账户，无法记录还款',
-      );
+      throw ProposalApplyException('负债 ${liability.name} 未关联账户，无法记录还款');
     }
 
     final uid = await currentUserId();
     // Interest leg is unused (interest = 0) but the builder requires a
     // valid account id.  expense:trading:interest is the closest match.
-    final interestExpenseAccountId =
-        AccountRepository.systemAccountIdForPath(
+    final interestExpenseAccountId = AccountRepository.systemAccountIdForPath(
       'expense:trading:interest',
       ownerUserId: uid,
     );
@@ -524,9 +520,9 @@ class ProposalApplier {
   /// `type`. The placeholder here is never written to disk; the assets
   /// table row was already created by an earlier sync pull.
   SyncMeta _placeholderSync() => SyncMeta(
-        ownerUserId: 'local-user',
-        updatedAt: DateTime.now().toUtc(),
-        updatedByDevice: '',
-        hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),
-      );
+    ownerUserId: 'local-user',
+    updatedAt: DateTime.now().toUtc(),
+    updatedByDevice: '',
+    hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),
+  );
 }

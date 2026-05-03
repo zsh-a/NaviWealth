@@ -5,7 +5,7 @@ import '../../../design_system/design_system.dart';
 
 /// Maximum number of rows a list-style renderer will draw before
 /// collapsing the rest behind a "+ N 项" hint. Keeps the assistant
-/// reply readable when the model pulls back hundreds of transactions.
+/// reply readable when the model pulls back hundreds of ledger rows.
 const int _kMaxVisibleRows = 10;
 
 /// Above this raw row count we never fully expand inline — the user can
@@ -30,13 +30,11 @@ Widget? renderToolOutput(
   try {
     return switch (toolName) {
       'get_holdings' => _HoldingsTable(output: output),
-      'get_transactions' => _TransactionList(output: output),
       'compute_xirr' => _XirrSummary(output: output),
       'compute_net_worth' => _NetWorthSparkline(output: output),
       'get_industry_breakdown' ||
       'get_geo_breakdown' ||
-      'get_market_cap_breakdown' =>
-        _BreakdownView(output: output),
+      'get_market_cap_breakdown' => _BreakdownView(output: output),
       'get_risk_alerts' => _RiskAlertList(output: output),
       _ => null,
     };
@@ -80,8 +78,7 @@ List<Object?>? _asList(Object? v) {
   return null;
 }
 
-String _displayDate(DateTime d) =>
-    DateFormat('yyyy-MM-dd').format(d.toLocal());
+String _displayDate(DateTime d) => DateFormat('yyyy-MM-dd').format(d.toLocal());
 
 // ---------------------------------------------------------------------------
 // get_holdings → mini holdings table.
@@ -207,9 +204,7 @@ class _HoldingsTable extends StatelessWidget {
                 if (secondary != null)
                   Text(
                     secondary,
-                    style: tt.labelSmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -262,164 +257,6 @@ class _HoldingRow {
   final double costBasis;
   final double? avgCost;
   final String currency;
-}
-
-// ---------------------------------------------------------------------------
-// get_transactions → ListTile-style flow.
-// Payload: { transactions: [ { id, type, assetId, accountId, quantity,
-//           price, fee, currency, tradeDate, ... } ], truncated }
-// ---------------------------------------------------------------------------
-
-class _TransactionList extends StatelessWidget {
-  const _TransactionList({required this.output});
-  final Object? output;
-
-  @override
-  Widget build(BuildContext context) {
-    final outMap = _asMap(output);
-    if (outMap == null) return const SizedBox.shrink();
-    final list = _asList(outMap['transactions']);
-    if (list == null || list.isEmpty) {
-      return const _EmptyResult(message: '该筛选下没有交易');
-    }
-    final truncated = outMap['truncated'] == true;
-    final visible = list.take(_kMaxVisibleRows).toList();
-    final hidden = list.length - visible.length;
-
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final raw in visible)
-          _transactionTile(context, _asMap(raw) ?? const <String, Object?>{}),
-        if (hidden > 0 || truncated)
-          Padding(
-            padding: const EdgeInsets.only(top: Spacing.s4, left: Spacing.s8),
-            child: Text(
-              [
-                if (hidden > 0) '还有 $hidden 项未展示',
-                if (truncated) '后端已截断结果',
-              ].join(' · '),
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _transactionTile(BuildContext context, Map<String, Object?> tx) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final type = _asString(tx['type']) ?? '';
-    final qty = _asDouble(tx['quantity']) ?? 0;
-    final price = _asDouble(tx['price']) ?? 0;
-    final amount = qty * price;
-    final currency = _asString(tx['currency']) ?? 'CNY';
-    final assetId = _asString(tx['assetId']) ?? '';
-    final date = _asDate(tx['tradeDate']);
-    final sign = _txSign(type);
-    final signed = amount * sign;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s6,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3)),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(_txIcon(type), size: 16, color: _txIconColor(context, type)),
-          const SizedBox(width: Spacing.s8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _txLabel(type, assetId),
-                  style: tt.bodySmall?.copyWith(color: cs.onSurface),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (date != null)
-                  Text(
-                    _displayDate(date),
-                    style: tt.labelSmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (sign != 0)
-            DeltaText(
-              value: signed,
-              currencyCode: currency,
-              style: tt.bodySmall,
-            )
-          else
-            MoneyText(
-              amount: amount,
-              currencyCode: currency,
-              style: tt.bodySmall,
-              color: cs.onSurface,
-            ),
-        ],
-      ),
-    );
-  }
-
-  IconData _txIcon(String type) => switch (type) {
-        'buy' || 'reinvest' || 'transferIn' => Icons.arrow_downward,
-        'sell' || 'transferOut' || 'withdraw' => Icons.arrow_upward,
-        'dividend' || 'interest' => Icons.savings_outlined,
-        'fee' || 'tax' => Icons.receipt_long_outlined,
-        'liabilityPayment' => Icons.credit_card_outlined,
-        'deposit' => Icons.account_balance_wallet_outlined,
-        _ => Icons.swap_horiz,
-      };
-
-  Color _txIconColor(BuildContext context, String type) {
-    final market = MarketColors.of(context);
-    return switch (type) {
-      'buy' || 'reinvest' || 'transferIn' || 'deposit' => market.up,
-      'sell' || 'transferOut' || 'withdraw' || 'liabilityPayment' =>
-        market.down,
-      _ => Theme.of(context).colorScheme.onSurfaceVariant,
-    };
-  }
-
-  /// Sign for the delta line. 0 means render as a neutral money cell
-  /// (we don't want to nudge the user with up/down colors for fees / tax).
-  double _txSign(String type) => switch (type) {
-        'buy' || 'reinvest' || 'transferIn' || 'deposit' => 1,
-        'sell' || 'transferOut' || 'withdraw' || 'liabilityPayment' => -1,
-        _ => 0,
-      };
-
-  String _txLabel(String type, String assetId) {
-    final friendly = switch (type) {
-      'buy' => '买入',
-      'sell' => '卖出',
-      'reinvest' => '再投资',
-      'transferIn' => '转入',
-      'transferOut' => '转出',
-      'dividend' => '分红',
-      'interest' => '利息',
-      'deposit' => '存入',
-      'withdraw' => '取出',
-      'fee' => '手续费',
-      'tax' => '税费',
-      'liabilityPayment' => '负债还款',
-      _ => type.isEmpty ? '交易' : type,
-    };
-    return assetId.isEmpty ? friendly : '$friendly · $assetId';
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -591,7 +428,6 @@ class _NetWorthSparkline extends StatelessWidget {
   }
 }
 
-
 // ---------------------------------------------------------------------------
 // get_*_breakdown → compact pie + top 3 categories.
 // Payload: { total, buckets: [ { label, cost_basis, share, currency } ] }
@@ -686,8 +522,9 @@ class _BreakdownView extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          NumberFormat.percentPattern()
-                              .format(top[i].share.clamp(0.0, 1.0)),
+                          NumberFormat.percentPattern().format(
+                            top[i].share.clamp(0.0, 1.0),
+                          ),
                           style: tt.bodySmall?.copyWith(
                             color: cs.onSurface,
                             fontFeatures: TypographyTokens.tabularFigures,
@@ -701,12 +538,7 @@ class _BreakdownView extends StatelessWidget {
                     padding: const EdgeInsets.only(top: Spacing.s4),
                     child: Text(
                       '其他 ${buckets.length - top.length} 类共 '
-                      '${NumberFormat.percentPattern().format(
-                        buckets
-                            .skip(top.length)
-                            .fold<double>(0, (s, b) => s + b.share)
-                            .clamp(0.0, 1.0),
-                      )}',
+                      '${NumberFormat.percentPattern().format(buckets.skip(top.length).fold<double>(0, (s, b) => s + b.share).clamp(0.0, 1.0))}',
                       style: tt.labelSmall?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
@@ -733,7 +565,6 @@ class _BreakdownBucket {
   final double share;
   final String currency;
 }
-
 
 // ---------------------------------------------------------------------------
 // get_risk_alerts → severity-tinted list.
@@ -764,9 +595,9 @@ class _RiskAlertList extends StatelessWidget {
           share: _asDouble(m['share']),
           subject:
               _asString(m['symbol']) ??
-                  _asString(m['industry']) ??
-                  _asString(m['asset_id']) ??
-                  '',
+              _asString(m['industry']) ??
+              _asString(m['asset_id']) ??
+              '',
         ),
       );
     }
@@ -818,10 +649,7 @@ class _RiskAlertList extends StatelessWidget {
         horizontal: Spacing.s8,
         vertical: Spacing.s6,
       ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: Radii.brXs,
-      ),
+      decoration: BoxDecoration(color: bg, borderRadius: Radii.brXs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -835,10 +663,7 @@ class _RiskAlertList extends StatelessWidget {
                   alert.subject.isEmpty ? '风险预警' : alert.subject,
                   style: tt.labelSmall?.copyWith(color: fg),
                 ),
-                Text(
-                  alert.message,
-                  style: tt.bodySmall?.copyWith(color: fg),
-                ),
+                Text(alert.message, style: tt.bodySmall?.copyWith(color: fg)),
               ],
             ),
           ),
@@ -846,8 +671,9 @@ class _RiskAlertList extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: Spacing.s8),
               child: Text(
-                NumberFormat.percentPattern()
-                    .format(alert.share!.clamp(0.0, 1.0)),
+                NumberFormat.percentPattern().format(
+                  alert.share!.clamp(0.0, 1.0),
+                ),
                 style: tt.labelSmall?.copyWith(
                   color: fg,
                   fontFeatures: TypographyTokens.tabularFigures,
@@ -920,9 +746,6 @@ bool isOversizedToolPayload(String toolName, Object? output) {
     case 'get_holdings':
       final holdings = _asMap(m['holdings']);
       return (holdings?.length ?? 0) > _kRawListLimit;
-    case 'get_transactions':
-      final list = _asList(m['transactions']);
-      return (list?.length ?? 0) > _kRawListLimit;
     case 'compute_net_worth':
       final list = _asList(m['series']);
       return (list?.length ?? 0) > _kRawListLimit;
