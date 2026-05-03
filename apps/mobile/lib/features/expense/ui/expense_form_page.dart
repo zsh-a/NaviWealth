@@ -224,6 +224,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
+    final allAccountsAsync = ref.watch(allAccountsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
       appBar: GlassAppBar(
@@ -264,7 +265,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     onChanged: (v) => setState(() => _currency = v),
                   ),
                   const SizedBox(height: Spacing.s8),
-                  accountsAsync.when(
+                  allAccountsAsync.when(
                     data: (allAccounts) {
                       final expenseAccounts = allAccounts
                           .where((a) => a.category == AccountCategory.expense)
@@ -362,7 +363,7 @@ class _NoAccountsHint extends StatelessWidget {
         title: Text(l10n.expenseFormNoAccountsTitle),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
         trailing: AppButton.tertiary(
-          onPressed: () => GoRouter.of(context).go('/accounts/new'),
+          onPressed: () => GoRouter.of(context).go('/portfolio/accounts/new'),
           label: l10n.expenseFormNoAccountsCta,
         ),
       ),

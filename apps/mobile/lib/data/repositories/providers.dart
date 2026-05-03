@@ -82,6 +82,17 @@ final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   yield* repo.watchActive();
 });
 
+/// Live stream of all active accounts **including** system accounts.
+/// Used by the expense category picker which needs seeded system expense
+/// accounts (food, transport, etc.) to be visible.
+final allAccountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
+  ref,
+) async* {
+  final repo = await ref.watch(accountRepositoryProvider.future);
+  await repo.seedSystemAccounts();
+  yield* repo.watchActiveIncludingSystem();
+});
+
 /// Live stream of all non-deleted manual-valuation assets (cash, deposits,
 /// wealth products). The Assets tab subscribes to this directly.
 final manualAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
