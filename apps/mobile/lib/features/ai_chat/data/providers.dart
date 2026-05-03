@@ -87,11 +87,11 @@ final chatSyncGateProvider = FutureProvider<ChatSyncGate>((ref) async {
 /// `ProposeCard` can resolve it once and pass it down to its action
 /// handlers, without each card re-resolving every repository.
 final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
-  final transactionRepo = await ref.watch(transactionRepositoryProvider.future);
   final tradeService = await ref.watch(tradeEntryServiceProvider.future);
   final journalEntryRepo = await ref.watch(
     journalEntryRepositoryProvider.future,
   );
+  final priceRepo = await ref.watch(priceRepositoryProvider.future);
   final accountRepo = await ref.watch(accountRepositoryProvider.future);
   final manualAssetRepo = await ref.watch(
     manualAssetRepositoryProvider.future,
@@ -99,9 +99,9 @@ final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
   final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
   final currentUserId = ref.watch(currentUserIdProvider);
   return ProposalApplier(
-    transactionRepo: transactionRepo,
     tradeEntryService: tradeService,
     journalEntryRepo: journalEntryRepo,
+    priceRepo: priceRepo,
     accountRepo: accountRepo,
     manualAssetRepo: manualAssetRepo,
     liabilityRepo: liabilityRepo,

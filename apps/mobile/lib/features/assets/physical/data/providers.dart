@@ -13,10 +13,12 @@ final physicalAssetRepositoryProvider =
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
   final jeRepo = await ref.watch(journalEntryRepositoryProvider.future);
+  final priceRepo = await ref.watch(priceRepositoryProvider.future);
   return PhysicalAssetRepository(
     db: db,
     outbox: outbox,
     stamper: stamper,
+    priceRepo: priceRepo,
     journalEntryRepo: jeRepo,
   );
 });

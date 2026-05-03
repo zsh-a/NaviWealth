@@ -1,8 +1,8 @@
 -- 0002_sync_schema.sql — sync schema (FIR-36).
 --
 -- Mirrors the client tables that participate in sync per docs/sync-protocol.md
--- (accounts, assets, transactions, liabilities, fx_rates, tags, goals,
--- devices) plus the cross-cutting `op_log` + `sync_state`. The `users` and
+-- (accounts, assets, journal_entries, postings, prices, liabilities, fx_rates,
+-- tags, goals, devices) plus the cross-cutting `op_log` + `sync_state`. The `users` and
 -- the auth-session `devices` tables are owned by FIR-29 in
 -- `0001_users_devices.sql`.
 --
@@ -82,7 +82,27 @@ CREATE TABLE IF NOT EXISTS assets (
   PRIMARY KEY (user_id, id)
 );
 
-CREATE TABLE IF NOT EXISTS transactions (
+CREATE TABLE IF NOT EXISTS journal_entries (
+  user_id            TEXT NOT NULL,
+  id                 TEXT NOT NULL,
+  payload            TEXT NOT NULL,
+  hlc_text           TEXT NOT NULL,
+  updated_by_device  TEXT NOT NULL,
+  deleted_at         TEXT,
+  PRIMARY KEY (user_id, id)
+);
+
+CREATE TABLE IF NOT EXISTS postings (
+  user_id            TEXT NOT NULL,
+  id                 TEXT NOT NULL,
+  payload            TEXT NOT NULL,
+  hlc_text           TEXT NOT NULL,
+  updated_by_device  TEXT NOT NULL,
+  deleted_at         TEXT,
+  PRIMARY KEY (user_id, id)
+);
+
+CREATE TABLE IF NOT EXISTS prices (
   user_id            TEXT NOT NULL,
   id                 TEXT NOT NULL,
   payload            TEXT NOT NULL,

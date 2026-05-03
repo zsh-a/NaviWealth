@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/haptics/haptics.dart';
-import '../../../data/repositories/expense_category_repository.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
@@ -371,8 +370,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       // the persisted last-used pick from initState. The
                       // ranking goes: explicit pick > last used > recent
                       // most-used > seeded "其它" > final list row.
-                      final fallbackId =
-                          ExpenseCategoryRepository.defaultIdFor('other');
+                      const fallbackId = 'expense-cat-default:other';
                       final candidates = <String?>[
                         _categoryId,
                         mostUsedCategoryId,

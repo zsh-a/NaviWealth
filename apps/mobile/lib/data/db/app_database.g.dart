@@ -2386,26 +2386,6 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, AssetRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> lastPrice =
-      GeneratedColumn<String>(
-        'last_price',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>($AssetsTable.$converterlastPricen);
-  static const VerificationMeta _lastPriceAtMeta = const VerificationMeta(
-    'lastPriceAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lastPriceAt = GeneratedColumn<DateTime>(
-    'last_price_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _logoUrlMeta = const VerificationMeta(
     'logoUrl',
   );
@@ -2444,8 +2424,6 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, AssetRow> {
     industry,
     region,
     isin,
-    lastPrice,
-    lastPriceAt,
     logoUrl,
     metadataJson,
   ];
@@ -2548,15 +2526,6 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, AssetRow> {
         isin.isAcceptableOrUnknown(data['isin']!, _isinMeta),
       );
     }
-    if (data.containsKey('last_price_at')) {
-      context.handle(
-        _lastPriceAtMeta,
-        lastPriceAt.isAcceptableOrUnknown(
-          data['last_price_at']!,
-          _lastPriceAtMeta,
-        ),
-      );
-    }
     if (data.containsKey('logo_url')) {
       context.handle(
         _logoUrlMeta,
@@ -2641,16 +2610,6 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, AssetRow> {
         DriftSqlType.string,
         data['${effectivePrefix}isin'],
       ),
-      lastPrice: $AssetsTable.$converterlastPricen.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}last_price'],
-        ),
-      ),
-      lastPriceAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_price_at'],
-      ),
       logoUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}logo_url'],
@@ -2670,10 +2629,6 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, AssetRow> {
   static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
   static TypeConverter<AssetType, String> $convertertype =
       const EnumStringConverter(AssetType.values);
-  static TypeConverter<Decimal, String> $converterlastPrice =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $converterlastPricen =
-      NullAwareTypeConverter.wrap($converterlastPrice);
 }
 
 class AssetRow extends DataClass implements Insertable<AssetRow> {
@@ -2707,8 +2662,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
   final String? industry;
   final String? region;
   final String? isin;
-  final Decimal? lastPrice;
-  final DateTime? lastPriceAt;
   final String? logoUrl;
   final String? metadataJson;
   const AssetRow({
@@ -2726,8 +2679,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
     this.industry,
     this.region,
     this.isin,
-    this.lastPrice,
-    this.lastPriceAt,
     this.logoUrl,
     this.metadataJson,
   });
@@ -2764,14 +2715,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
     if (!nullToAbsent || isin != null) {
       map['isin'] = Variable<String>(isin);
     }
-    if (!nullToAbsent || lastPrice != null) {
-      map['last_price'] = Variable<String>(
-        $AssetsTable.$converterlastPricen.toSql(lastPrice),
-      );
-    }
-    if (!nullToAbsent || lastPriceAt != null) {
-      map['last_price_at'] = Variable<DateTime>(lastPriceAt);
-    }
     if (!nullToAbsent || logoUrl != null) {
       map['logo_url'] = Variable<String>(logoUrl);
     }
@@ -2805,12 +2748,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
           ? const Value.absent()
           : Value(region),
       isin: isin == null && nullToAbsent ? const Value.absent() : Value(isin),
-      lastPrice: lastPrice == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastPrice),
-      lastPriceAt: lastPriceAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastPriceAt),
       logoUrl: logoUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(logoUrl),
@@ -2840,8 +2777,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
       industry: serializer.fromJson<String?>(json['industry']),
       region: serializer.fromJson<String?>(json['region']),
       isin: serializer.fromJson<String?>(json['isin']),
-      lastPrice: serializer.fromJson<Decimal?>(json['lastPrice']),
-      lastPriceAt: serializer.fromJson<DateTime?>(json['lastPriceAt']),
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
       metadataJson: serializer.fromJson<String?>(json['metadataJson']),
     );
@@ -2864,8 +2799,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
       'industry': serializer.toJson<String?>(industry),
       'region': serializer.toJson<String?>(region),
       'isin': serializer.toJson<String?>(isin),
-      'lastPrice': serializer.toJson<Decimal?>(lastPrice),
-      'lastPriceAt': serializer.toJson<DateTime?>(lastPriceAt),
       'logoUrl': serializer.toJson<String?>(logoUrl),
       'metadataJson': serializer.toJson<String?>(metadataJson),
     };
@@ -2886,8 +2819,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
     Value<String?> industry = const Value.absent(),
     Value<String?> region = const Value.absent(),
     Value<String?> isin = const Value.absent(),
-    Value<Decimal?> lastPrice = const Value.absent(),
-    Value<DateTime?> lastPriceAt = const Value.absent(),
     Value<String?> logoUrl = const Value.absent(),
     Value<String?> metadataJson = const Value.absent(),
   }) => AssetRow(
@@ -2905,8 +2836,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
     industry: industry.present ? industry.value : this.industry,
     region: region.present ? region.value : this.region,
     isin: isin.present ? isin.value : this.isin,
-    lastPrice: lastPrice.present ? lastPrice.value : this.lastPrice,
-    lastPriceAt: lastPriceAt.present ? lastPriceAt.value : this.lastPriceAt,
     logoUrl: logoUrl.present ? logoUrl.value : this.logoUrl,
     metadataJson: metadataJson.present ? metadataJson.value : this.metadataJson,
   );
@@ -2930,10 +2859,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
       industry: data.industry.present ? data.industry.value : this.industry,
       region: data.region.present ? data.region.value : this.region,
       isin: data.isin.present ? data.isin.value : this.isin,
-      lastPrice: data.lastPrice.present ? data.lastPrice.value : this.lastPrice,
-      lastPriceAt: data.lastPriceAt.present
-          ? data.lastPriceAt.value
-          : this.lastPriceAt,
       logoUrl: data.logoUrl.present ? data.logoUrl.value : this.logoUrl,
       metadataJson: data.metadataJson.present
           ? data.metadataJson.value
@@ -2958,8 +2883,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
           ..write('industry: $industry, ')
           ..write('region: $region, ')
           ..write('isin: $isin, ')
-          ..write('lastPrice: $lastPrice, ')
-          ..write('lastPriceAt: $lastPriceAt, ')
           ..write('logoUrl: $logoUrl, ')
           ..write('metadataJson: $metadataJson')
           ..write(')'))
@@ -2982,8 +2905,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
     industry,
     region,
     isin,
-    lastPrice,
-    lastPriceAt,
     logoUrl,
     metadataJson,
   );
@@ -3005,8 +2926,6 @@ class AssetRow extends DataClass implements Insertable<AssetRow> {
           other.industry == this.industry &&
           other.region == this.region &&
           other.isin == this.isin &&
-          other.lastPrice == this.lastPrice &&
-          other.lastPriceAt == this.lastPriceAt &&
           other.logoUrl == this.logoUrl &&
           other.metadataJson == this.metadataJson);
 }
@@ -3026,8 +2945,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
   final Value<String?> industry;
   final Value<String?> region;
   final Value<String?> isin;
-  final Value<Decimal?> lastPrice;
-  final Value<DateTime?> lastPriceAt;
   final Value<String?> logoUrl;
   final Value<String?> metadataJson;
   final Value<int> rowid;
@@ -3046,8 +2963,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
     this.industry = const Value.absent(),
     this.region = const Value.absent(),
     this.isin = const Value.absent(),
-    this.lastPrice = const Value.absent(),
-    this.lastPriceAt = const Value.absent(),
     this.logoUrl = const Value.absent(),
     this.metadataJson = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3067,8 +2982,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
     this.industry = const Value.absent(),
     this.region = const Value.absent(),
     this.isin = const Value.absent(),
-    this.lastPrice = const Value.absent(),
-    this.lastPriceAt = const Value.absent(),
     this.logoUrl = const Value.absent(),
     this.metadataJson = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3095,8 +3008,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
     Expression<String>? industry,
     Expression<String>? region,
     Expression<String>? isin,
-    Expression<String>? lastPrice,
-    Expression<DateTime>? lastPriceAt,
     Expression<String>? logoUrl,
     Expression<String>? metadataJson,
     Expression<int>? rowid,
@@ -3116,8 +3027,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
       if (industry != null) 'industry': industry,
       if (region != null) 'region': region,
       if (isin != null) 'isin': isin,
-      if (lastPrice != null) 'last_price': lastPrice,
-      if (lastPriceAt != null) 'last_price_at': lastPriceAt,
       if (logoUrl != null) 'logo_url': logoUrl,
       if (metadataJson != null) 'metadata_json': metadataJson,
       if (rowid != null) 'rowid': rowid,
@@ -3139,8 +3048,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
     Value<String?>? industry,
     Value<String?>? region,
     Value<String?>? isin,
-    Value<Decimal?>? lastPrice,
-    Value<DateTime?>? lastPriceAt,
     Value<String?>? logoUrl,
     Value<String?>? metadataJson,
     Value<int>? rowid,
@@ -3160,8 +3067,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
       industry: industry ?? this.industry,
       region: region ?? this.region,
       isin: isin ?? this.isin,
-      lastPrice: lastPrice ?? this.lastPrice,
-      lastPriceAt: lastPriceAt ?? this.lastPriceAt,
       logoUrl: logoUrl ?? this.logoUrl,
       metadataJson: metadataJson ?? this.metadataJson,
       rowid: rowid ?? this.rowid,
@@ -3217,14 +3122,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
     if (isin.present) {
       map['isin'] = Variable<String>(isin.value);
     }
-    if (lastPrice.present) {
-      map['last_price'] = Variable<String>(
-        $AssetsTable.$converterlastPricen.toSql(lastPrice.value),
-      );
-    }
-    if (lastPriceAt.present) {
-      map['last_price_at'] = Variable<DateTime>(lastPriceAt.value);
-    }
     if (logoUrl.present) {
       map['logo_url'] = Variable<String>(logoUrl.value);
     }
@@ -3254,8 +3151,6 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
           ..write('industry: $industry, ')
           ..write('region: $region, ')
           ..write('isin: $isin, ')
-          ..write('lastPrice: $lastPrice, ')
-          ..write('lastPriceAt: $lastPriceAt, ')
           ..write('logoUrl: $logoUrl, ')
           ..write('metadataJson: $metadataJson, ')
           ..write('rowid: $rowid')
@@ -3264,12 +3159,12 @@ class AssetsCompanion extends UpdateCompanion<AssetRow> {
   }
 }
 
-class $TransactionsTable extends Transactions
-    with TableInfo<$TransactionsTable, TransactionRow> {
+class $JournalEntriesTable extends JournalEntries
+    with TableInfo<$JournalEntriesTable, JournalEntryRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $TransactionsTable(this.attachedDatabase, [this._alias]);
+  $JournalEntriesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
     'ownerUserId',
   );
@@ -3311,7 +3206,7 @@ class $TransactionsTable extends Transactions
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<Hlc>($TransactionsTable.$converterhlc);
+      ).withConverter<Hlc>($JournalEntriesTable.$converterhlc);
   static const VerificationMeta _deletedAtMeta = const VerificationMeta(
     'deletedAt',
   );
@@ -3332,160 +3227,67 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _accountIdMeta = const VerificationMeta(
-    'accountId',
-  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
-  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
-    'account_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _assetIdMeta = const VerificationMeta(
-    'assetId',
-  );
-  @override
-  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
-    'asset_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<TransactionType, String> type =
-      GeneratedColumn<String>(
-        'type',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<TransactionType>($TransactionsTable.$convertertype);
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal, String> quantity =
-      GeneratedColumn<String>(
-        'quantity',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Decimal>($TransactionsTable.$converterquantity);
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal, String> price =
-      GeneratedColumn<String>(
-        'price',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Decimal>($TransactionsTable.$converterprice);
-  static const VerificationMeta _currencyMeta = const VerificationMeta(
-    'currency',
-  );
-  @override
-  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
-    'currency',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 3,
-      maxTextLength: 8,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _tradeDateMeta = const VerificationMeta(
-    'tradeDate',
-  );
-  @override
-  late final GeneratedColumn<DateTime> tradeDate = GeneratedColumn<DateTime>(
-    'trade_date',
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+    'date',
     aliasedName,
     false,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _settleDateMeta = const VerificationMeta(
-    'settleDate',
+  static const VerificationMeta _settledOnMeta = const VerificationMeta(
+    'settledOn',
   );
   @override
-  late final GeneratedColumn<DateTime> settleDate = GeneratedColumn<DateTime>(
-    'settle_date',
+  late final GeneratedColumn<DateTime> settledOn = GeneratedColumn<DateTime>(
+    'settled_on',
     aliasedName,
     true,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _narrationMeta = const VerificationMeta(
+    'narration',
+  );
   @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> fee =
+  late final GeneratedColumn<String> narration = GeneratedColumn<String>(
+    'narration',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
+  @override
+  late final GeneratedColumn<String> payee = GeneratedColumn<String>(
+    'payee',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<EntryFlag, String> flag =
       GeneratedColumn<String>(
-        'fee',
+        'flag',
         aliasedName,
-        true,
+        false,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-      ).withConverter<Decimal?>($TransactionsTable.$converterfeen);
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> tax =
-      GeneratedColumn<String>(
-        'tax',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>($TransactionsTable.$convertertaxn);
-  static const VerificationMeta _counterAccountIdMeta = const VerificationMeta(
-    'counterAccountId',
+        defaultValue: Constant(EntryFlag.confirmed.name),
+      ).withConverter<EntryFlag>($JournalEntriesTable.$converterflag);
+  static const VerificationMeta _tagIdsJsonMeta = const VerificationMeta(
+    'tagIdsJson',
   );
   @override
-  late final GeneratedColumn<String> counterAccountId = GeneratedColumn<String>(
-    'counter_account_id',
+  late final GeneratedColumn<String> tagIdsJson = GeneratedColumn<String>(
+    'tag_ids_json',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-  );
-  static const VerificationMeta _lotIdMeta = const VerificationMeta('lotId');
-  @override
-  late final GeneratedColumn<String> lotId = GeneratedColumn<String>(
-    'lot_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _expenseMetadataJsonMeta =
-      const VerificationMeta('expenseMetadataJson');
-  @override
-  late final GeneratedColumn<String> expenseMetadataJson =
-      GeneratedColumn<String>(
-        'expense_metadata_json',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _transferGroupIdMeta = const VerificationMeta(
-    'transferGroupId',
-  );
-  @override
-  late final GeneratedColumn<String> transferGroupId = GeneratedColumn<String>(
-    'transfer_group_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -3495,30 +3297,21 @@ class $TransactionsTable extends Transactions
     hlc,
     deletedAt,
     id,
-    accountId,
-    assetId,
-    type,
-    quantity,
-    price,
-    currency,
-    tradeDate,
-    settleDate,
-    fee,
-    tax,
-    counterAccountId,
-    lotId,
-    note,
-    expenseMetadataJson,
-    transferGroupId,
+    date,
+    settledOn,
+    narration,
+    payee,
+    flag,
+    tagIdsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'transactions';
+  static const String $name = 'journal_entries';
   @override
   VerificationContext validateIntegrity(
-    Insertable<TransactionRow> instance, {
+    Insertable<JournalEntryRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -3564,78 +3357,40 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('account_id')) {
+    if (data.containsKey('date')) {
       context.handle(
-        _accountIdMeta,
-        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
       );
     } else if (isInserting) {
-      context.missing(_accountIdMeta);
+      context.missing(_dateMeta);
     }
-    if (data.containsKey('asset_id')) {
+    if (data.containsKey('settled_on')) {
       context.handle(
-        _assetIdMeta,
-        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+        _settledOnMeta,
+        settledOn.isAcceptableOrUnknown(data['settled_on']!, _settledOnMeta),
       );
     }
-    if (data.containsKey('currency')) {
+    if (data.containsKey('narration')) {
       context.handle(
-        _currencyMeta,
-        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_currencyMeta);
-    }
-    if (data.containsKey('trade_date')) {
-      context.handle(
-        _tradeDateMeta,
-        tradeDate.isAcceptableOrUnknown(data['trade_date']!, _tradeDateMeta),
+        _narrationMeta,
+        narration.isAcceptableOrUnknown(data['narration']!, _narrationMeta),
       );
     } else if (isInserting) {
-      context.missing(_tradeDateMeta);
+      context.missing(_narrationMeta);
     }
-    if (data.containsKey('settle_date')) {
+    if (data.containsKey('payee')) {
       context.handle(
-        _settleDateMeta,
-        settleDate.isAcceptableOrUnknown(data['settle_date']!, _settleDateMeta),
+        _payeeMeta,
+        payee.isAcceptableOrUnknown(data['payee']!, _payeeMeta),
       );
     }
-    if (data.containsKey('counter_account_id')) {
+    if (data.containsKey('tag_ids_json')) {
       context.handle(
-        _counterAccountIdMeta,
-        counterAccountId.isAcceptableOrUnknown(
-          data['counter_account_id']!,
-          _counterAccountIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('lot_id')) {
-      context.handle(
-        _lotIdMeta,
-        lotId.isAcceptableOrUnknown(data['lot_id']!, _lotIdMeta),
-      );
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('expense_metadata_json')) {
-      context.handle(
-        _expenseMetadataJsonMeta,
-        expenseMetadataJson.isAcceptableOrUnknown(
-          data['expense_metadata_json']!,
-          _expenseMetadataJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('transfer_group_id')) {
-      context.handle(
-        _transferGroupIdMeta,
-        transferGroupId.isAcceptableOrUnknown(
-          data['transfer_group_id']!,
-          _transferGroupIdMeta,
+        _tagIdsJsonMeta,
+        tagIdsJson.isAcceptableOrUnknown(
+          data['tag_ids_json']!,
+          _tagIdsJsonMeta,
         ),
       );
     }
@@ -3645,9 +3400,9 @@ class $TransactionsTable extends Transactions
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  TransactionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+  JournalEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return TransactionRow(
+    return JournalEntryRow(
       ownerUserId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}owner_user_id'],
@@ -3660,7 +3415,7 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}updated_by_device'],
       )!,
-      hlc: $TransactionsTable.$converterhlc.fromSql(
+      hlc: $JournalEntriesTable.$converterhlc.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}hlc'],
@@ -3674,102 +3429,46 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      accountId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}account_id'],
-      )!,
-      assetId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}asset_id'],
-      ),
-      type: $TransactionsTable.$convertertype.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}type'],
-        )!,
-      ),
-      quantity: $TransactionsTable.$converterquantity.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}quantity'],
-        )!,
-      ),
-      price: $TransactionsTable.$converterprice.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}price'],
-        )!,
-      ),
-      currency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}currency'],
-      )!,
-      tradeDate: attachedDatabase.typeMapping.read(
+      date: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}trade_date'],
+        data['${effectivePrefix}date'],
       )!,
-      settleDate: attachedDatabase.typeMapping.read(
+      settledOn: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}settle_date'],
+        data['${effectivePrefix}settled_on'],
       ),
-      fee: $TransactionsTable.$converterfeen.fromSql(
+      narration: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}narration'],
+      )!,
+      payee: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payee'],
+      ),
+      flag: $JournalEntriesTable.$converterflag.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
-          data['${effectivePrefix}fee'],
-        ),
+          data['${effectivePrefix}flag'],
+        )!,
       ),
-      tax: $TransactionsTable.$convertertaxn.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}tax'],
-        ),
-      ),
-      counterAccountId: attachedDatabase.typeMapping.read(
+      tagIdsJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}counter_account_id'],
-      ),
-      lotId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}lot_id'],
-      ),
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      ),
-      expenseMetadataJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}expense_metadata_json'],
-      ),
-      transferGroupId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}transfer_group_id'],
-      ),
+        data['${effectivePrefix}tag_ids_json'],
+      )!,
     );
   }
 
   @override
-  $TransactionsTable createAlias(String alias) {
-    return $TransactionsTable(attachedDatabase, alias);
+  $JournalEntriesTable createAlias(String alias) {
+    return $JournalEntriesTable(attachedDatabase, alias);
   }
 
   static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<TransactionType, String> $convertertype =
-      const EnumStringConverter(TransactionType.values);
-  static TypeConverter<Decimal, String> $converterquantity =
-      const DecimalConverter();
-  static TypeConverter<Decimal, String> $converterprice =
-      const DecimalConverter();
-  static TypeConverter<Decimal, String> $converterfee =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $converterfeen =
-      NullAwareTypeConverter.wrap($converterfee);
-  static TypeConverter<Decimal, String> $convertertax =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $convertertaxn =
-      NullAwareTypeConverter.wrap($convertertax);
+  static TypeConverter<EntryFlag, String> $converterflag =
+      const EnumStringConverter(EntryFlag.values);
 }
 
-class TransactionRow extends DataClass implements Insertable<TransactionRow> {
+class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
   /// Owner partition. Sync filters every read by the active user id, so
   /// even multi-account installs never leak rows across boundaries.
   final String ownerUserId;
@@ -3792,57 +3491,45 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   /// during a separate `vacuum` pass.
   final DateTime? deletedAt;
   final String id;
-  final String accountId;
-  final String? assetId;
-  final TransactionType type;
-  final Decimal quantity;
-  final Decimal price;
-  final String currency;
-  final DateTime tradeDate;
-  final DateTime? settleDate;
-  final Decimal? fee;
-  final Decimal? tax;
-  final String? counterAccountId;
-  final String? lotId;
-  final String? note;
 
-  /// FIR-68: expense-specific payload (category id, tags, ...) when
-  /// `type = expense`. NULL for every other transaction kind. Kept as a
-  /// JSON blob for the same reason `assets.metadata_json` is — adding
-  /// expense-only columns would bloat the row for the 95% of transactions
-  /// that aren't expenses.
-  final String? expenseMetadataJson;
+  /// Trade date — when the event happened. Stored as a regular Drift
+  /// DateTime (seconds-since-epoch INTEGER) so range queries by date
+  /// hit the index rather than triggering text-comparison sorts.
+  final DateTime date;
 
-  /// FIR-124: shared id linking the two legs of a transfer. Both the
-  /// `transferOut` row on the source account and the matching `transferIn`
-  /// row on the destination account carry the same id, so the pair can be
-  /// joined, displayed and tombstoned as a single unit. NULL on every
-  /// non-transfer transaction; legacy single-leg transfers from before
-  /// FIR-124 also leave it NULL and are surfaced by the unbalanced-group
-  /// audit query.
-  final String? transferGroupId;
-  const TransactionRow({
+  /// Settlement date (broker T+2 etc.). NULL when same-day.
+  final DateTime? settledOn;
+
+  /// Free-form description. Required and non-empty by convention so the
+  /// timeline always has something to render; an empty string is
+  /// reserved for the synthetic padding rows ([EntryFlag.padding]).
+  final String narration;
+
+  /// Optional counter-party (merchant / payer name). Not indexed —
+  /// payee-driven views aggregate inside Dart since the surface is small.
+  final String? payee;
+
+  /// Beancount lifecycle flag. See `EntryFlag` in
+  /// `domain/journal_entry.dart` for the value semantics.
+  final EntryFlag flag;
+
+  /// JSON-encoded list of `tags.id` strings. Denormalised onto the JE so
+  /// reading entries doesn't require a join through `tag_links`. The
+  /// canonical writer / reader are [JournalEntryRow] code paths only.
+  final String tagIdsJson;
+  const JournalEntryRow({
     required this.ownerUserId,
     required this.updatedAt,
     required this.updatedByDevice,
     required this.hlc,
     this.deletedAt,
     required this.id,
-    required this.accountId,
-    this.assetId,
-    required this.type,
-    required this.quantity,
-    required this.price,
-    required this.currency,
-    required this.tradeDate,
-    this.settleDate,
-    this.fee,
-    this.tax,
-    this.counterAccountId,
-    this.lotId,
-    this.note,
-    this.expenseMetadataJson,
-    this.transferGroupId,
+    required this.date,
+    this.settledOn,
+    required this.narration,
+    this.payee,
+    required this.flag,
+    required this.tagIdsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3852,67 +3539,32 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     map['updated_by_device'] = Variable<String>(updatedByDevice);
     {
       map['hlc'] = Variable<String>(
-        $TransactionsTable.$converterhlc.toSql(hlc),
+        $JournalEntriesTable.$converterhlc.toSql(hlc),
       );
     }
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     map['id'] = Variable<String>(id);
-    map['account_id'] = Variable<String>(accountId);
-    if (!nullToAbsent || assetId != null) {
-      map['asset_id'] = Variable<String>(assetId);
+    map['date'] = Variable<DateTime>(date);
+    if (!nullToAbsent || settledOn != null) {
+      map['settled_on'] = Variable<DateTime>(settledOn);
+    }
+    map['narration'] = Variable<String>(narration);
+    if (!nullToAbsent || payee != null) {
+      map['payee'] = Variable<String>(payee);
     }
     {
-      map['type'] = Variable<String>(
-        $TransactionsTable.$convertertype.toSql(type),
+      map['flag'] = Variable<String>(
+        $JournalEntriesTable.$converterflag.toSql(flag),
       );
     }
-    {
-      map['quantity'] = Variable<String>(
-        $TransactionsTable.$converterquantity.toSql(quantity),
-      );
-    }
-    {
-      map['price'] = Variable<String>(
-        $TransactionsTable.$converterprice.toSql(price),
-      );
-    }
-    map['currency'] = Variable<String>(currency);
-    map['trade_date'] = Variable<DateTime>(tradeDate);
-    if (!nullToAbsent || settleDate != null) {
-      map['settle_date'] = Variable<DateTime>(settleDate);
-    }
-    if (!nullToAbsent || fee != null) {
-      map['fee'] = Variable<String>(
-        $TransactionsTable.$converterfeen.toSql(fee),
-      );
-    }
-    if (!nullToAbsent || tax != null) {
-      map['tax'] = Variable<String>(
-        $TransactionsTable.$convertertaxn.toSql(tax),
-      );
-    }
-    if (!nullToAbsent || counterAccountId != null) {
-      map['counter_account_id'] = Variable<String>(counterAccountId);
-    }
-    if (!nullToAbsent || lotId != null) {
-      map['lot_id'] = Variable<String>(lotId);
-    }
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
-    }
-    if (!nullToAbsent || expenseMetadataJson != null) {
-      map['expense_metadata_json'] = Variable<String>(expenseMetadataJson);
-    }
-    if (!nullToAbsent || transferGroupId != null) {
-      map['transfer_group_id'] = Variable<String>(transferGroupId);
-    }
+    map['tag_ids_json'] = Variable<String>(tagIdsJson);
     return map;
   }
 
-  TransactionsCompanion toCompanion(bool nullToAbsent) {
-    return TransactionsCompanion(
+  JournalEntriesCompanion toCompanion(bool nullToAbsent) {
+    return JournalEntriesCompanion(
       ownerUserId: Value(ownerUserId),
       updatedAt: Value(updatedAt),
       updatedByDevice: Value(updatedByDevice),
@@ -3921,65 +3573,37 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ? const Value.absent()
           : Value(deletedAt),
       id: Value(id),
-      accountId: Value(accountId),
-      assetId: assetId == null && nullToAbsent
+      date: Value(date),
+      settledOn: settledOn == null && nullToAbsent
           ? const Value.absent()
-          : Value(assetId),
-      type: Value(type),
-      quantity: Value(quantity),
-      price: Value(price),
-      currency: Value(currency),
-      tradeDate: Value(tradeDate),
-      settleDate: settleDate == null && nullToAbsent
+          : Value(settledOn),
+      narration: Value(narration),
+      payee: payee == null && nullToAbsent
           ? const Value.absent()
-          : Value(settleDate),
-      fee: fee == null && nullToAbsent ? const Value.absent() : Value(fee),
-      tax: tax == null && nullToAbsent ? const Value.absent() : Value(tax),
-      counterAccountId: counterAccountId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(counterAccountId),
-      lotId: lotId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lotId),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
-      expenseMetadataJson: expenseMetadataJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(expenseMetadataJson),
-      transferGroupId: transferGroupId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(transferGroupId),
+          : Value(payee),
+      flag: Value(flag),
+      tagIdsJson: Value(tagIdsJson),
     );
   }
 
-  factory TransactionRow.fromJson(
+  factory JournalEntryRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return TransactionRow(
+    return JournalEntryRow(
       ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
       hlc: serializer.fromJson<Hlc>(json['hlc']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
-      accountId: serializer.fromJson<String>(json['accountId']),
-      assetId: serializer.fromJson<String?>(json['assetId']),
-      type: serializer.fromJson<TransactionType>(json['type']),
-      quantity: serializer.fromJson<Decimal>(json['quantity']),
-      price: serializer.fromJson<Decimal>(json['price']),
-      currency: serializer.fromJson<String>(json['currency']),
-      tradeDate: serializer.fromJson<DateTime>(json['tradeDate']),
-      settleDate: serializer.fromJson<DateTime?>(json['settleDate']),
-      fee: serializer.fromJson<Decimal?>(json['fee']),
-      tax: serializer.fromJson<Decimal?>(json['tax']),
-      counterAccountId: serializer.fromJson<String?>(json['counterAccountId']),
-      lotId: serializer.fromJson<String?>(json['lotId']),
-      note: serializer.fromJson<String?>(json['note']),
-      expenseMetadataJson: serializer.fromJson<String?>(
-        json['expenseMetadataJson'],
-      ),
-      transferGroupId: serializer.fromJson<String?>(json['transferGroupId']),
+      date: serializer.fromJson<DateTime>(json['date']),
+      settledOn: serializer.fromJson<DateTime?>(json['settledOn']),
+      narration: serializer.fromJson<String>(json['narration']),
+      payee: serializer.fromJson<String?>(json['payee']),
+      flag: serializer.fromJson<EntryFlag>(json['flag']),
+      tagIdsJson: serializer.fromJson<String>(json['tagIdsJson']),
     );
   }
   @override
@@ -3992,77 +3616,44 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'hlc': serializer.toJson<Hlc>(hlc),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
-      'accountId': serializer.toJson<String>(accountId),
-      'assetId': serializer.toJson<String?>(assetId),
-      'type': serializer.toJson<TransactionType>(type),
-      'quantity': serializer.toJson<Decimal>(quantity),
-      'price': serializer.toJson<Decimal>(price),
-      'currency': serializer.toJson<String>(currency),
-      'tradeDate': serializer.toJson<DateTime>(tradeDate),
-      'settleDate': serializer.toJson<DateTime?>(settleDate),
-      'fee': serializer.toJson<Decimal?>(fee),
-      'tax': serializer.toJson<Decimal?>(tax),
-      'counterAccountId': serializer.toJson<String?>(counterAccountId),
-      'lotId': serializer.toJson<String?>(lotId),
-      'note': serializer.toJson<String?>(note),
-      'expenseMetadataJson': serializer.toJson<String?>(expenseMetadataJson),
-      'transferGroupId': serializer.toJson<String?>(transferGroupId),
+      'date': serializer.toJson<DateTime>(date),
+      'settledOn': serializer.toJson<DateTime?>(settledOn),
+      'narration': serializer.toJson<String>(narration),
+      'payee': serializer.toJson<String?>(payee),
+      'flag': serializer.toJson<EntryFlag>(flag),
+      'tagIdsJson': serializer.toJson<String>(tagIdsJson),
     };
   }
 
-  TransactionRow copyWith({
+  JournalEntryRow copyWith({
     String? ownerUserId,
     DateTime? updatedAt,
     String? updatedByDevice,
     Hlc? hlc,
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
-    String? accountId,
-    Value<String?> assetId = const Value.absent(),
-    TransactionType? type,
-    Decimal? quantity,
-    Decimal? price,
-    String? currency,
-    DateTime? tradeDate,
-    Value<DateTime?> settleDate = const Value.absent(),
-    Value<Decimal?> fee = const Value.absent(),
-    Value<Decimal?> tax = const Value.absent(),
-    Value<String?> counterAccountId = const Value.absent(),
-    Value<String?> lotId = const Value.absent(),
-    Value<String?> note = const Value.absent(),
-    Value<String?> expenseMetadataJson = const Value.absent(),
-    Value<String?> transferGroupId = const Value.absent(),
-  }) => TransactionRow(
+    DateTime? date,
+    Value<DateTime?> settledOn = const Value.absent(),
+    String? narration,
+    Value<String?> payee = const Value.absent(),
+    EntryFlag? flag,
+    String? tagIdsJson,
+  }) => JournalEntryRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
     updatedByDevice: updatedByDevice ?? this.updatedByDevice,
     hlc: hlc ?? this.hlc,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     id: id ?? this.id,
-    accountId: accountId ?? this.accountId,
-    assetId: assetId.present ? assetId.value : this.assetId,
-    type: type ?? this.type,
-    quantity: quantity ?? this.quantity,
-    price: price ?? this.price,
-    currency: currency ?? this.currency,
-    tradeDate: tradeDate ?? this.tradeDate,
-    settleDate: settleDate.present ? settleDate.value : this.settleDate,
-    fee: fee.present ? fee.value : this.fee,
-    tax: tax.present ? tax.value : this.tax,
-    counterAccountId: counterAccountId.present
-        ? counterAccountId.value
-        : this.counterAccountId,
-    lotId: lotId.present ? lotId.value : this.lotId,
-    note: note.present ? note.value : this.note,
-    expenseMetadataJson: expenseMetadataJson.present
-        ? expenseMetadataJson.value
-        : this.expenseMetadataJson,
-    transferGroupId: transferGroupId.present
-        ? transferGroupId.value
-        : this.transferGroupId,
+    date: date ?? this.date,
+    settledOn: settledOn.present ? settledOn.value : this.settledOn,
+    narration: narration ?? this.narration,
+    payee: payee.present ? payee.value : this.payee,
+    flag: flag ?? this.flag,
+    tagIdsJson: tagIdsJson ?? this.tagIdsJson,
   );
-  TransactionRow copyWithCompanion(TransactionsCompanion data) {
-    return TransactionRow(
+  JournalEntryRow copyWithCompanion(JournalEntriesCompanion data) {
+    return JournalEntryRow(
       ownerUserId: data.ownerUserId.present
           ? data.ownerUserId.value
           : this.ownerUserId,
@@ -4073,214 +3664,132 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       hlc: data.hlc.present ? data.hlc.value : this.hlc,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       id: data.id.present ? data.id.value : this.id,
-      accountId: data.accountId.present ? data.accountId.value : this.accountId,
-      assetId: data.assetId.present ? data.assetId.value : this.assetId,
-      type: data.type.present ? data.type.value : this.type,
-      quantity: data.quantity.present ? data.quantity.value : this.quantity,
-      price: data.price.present ? data.price.value : this.price,
-      currency: data.currency.present ? data.currency.value : this.currency,
-      tradeDate: data.tradeDate.present ? data.tradeDate.value : this.tradeDate,
-      settleDate: data.settleDate.present
-          ? data.settleDate.value
-          : this.settleDate,
-      fee: data.fee.present ? data.fee.value : this.fee,
-      tax: data.tax.present ? data.tax.value : this.tax,
-      counterAccountId: data.counterAccountId.present
-          ? data.counterAccountId.value
-          : this.counterAccountId,
-      lotId: data.lotId.present ? data.lotId.value : this.lotId,
-      note: data.note.present ? data.note.value : this.note,
-      expenseMetadataJson: data.expenseMetadataJson.present
-          ? data.expenseMetadataJson.value
-          : this.expenseMetadataJson,
-      transferGroupId: data.transferGroupId.present
-          ? data.transferGroupId.value
-          : this.transferGroupId,
+      date: data.date.present ? data.date.value : this.date,
+      settledOn: data.settledOn.present ? data.settledOn.value : this.settledOn,
+      narration: data.narration.present ? data.narration.value : this.narration,
+      payee: data.payee.present ? data.payee.value : this.payee,
+      flag: data.flag.present ? data.flag.value : this.flag,
+      tagIdsJson: data.tagIdsJson.present
+          ? data.tagIdsJson.value
+          : this.tagIdsJson,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('TransactionRow(')
+    return (StringBuffer('JournalEntryRow(')
           ..write('ownerUserId: $ownerUserId, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('updatedByDevice: $updatedByDevice, ')
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
-          ..write('accountId: $accountId, ')
-          ..write('assetId: $assetId, ')
-          ..write('type: $type, ')
-          ..write('quantity: $quantity, ')
-          ..write('price: $price, ')
-          ..write('currency: $currency, ')
-          ..write('tradeDate: $tradeDate, ')
-          ..write('settleDate: $settleDate, ')
-          ..write('fee: $fee, ')
-          ..write('tax: $tax, ')
-          ..write('counterAccountId: $counterAccountId, ')
-          ..write('lotId: $lotId, ')
-          ..write('note: $note, ')
-          ..write('expenseMetadataJson: $expenseMetadataJson, ')
-          ..write('transferGroupId: $transferGroupId')
+          ..write('date: $date, ')
+          ..write('settledOn: $settledOn, ')
+          ..write('narration: $narration, ')
+          ..write('payee: $payee, ')
+          ..write('flag: $flag, ')
+          ..write('tagIdsJson: $tagIdsJson')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hashAll([
+  int get hashCode => Object.hash(
     ownerUserId,
     updatedAt,
     updatedByDevice,
     hlc,
     deletedAt,
     id,
-    accountId,
-    assetId,
-    type,
-    quantity,
-    price,
-    currency,
-    tradeDate,
-    settleDate,
-    fee,
-    tax,
-    counterAccountId,
-    lotId,
-    note,
-    expenseMetadataJson,
-    transferGroupId,
-  ]);
+    date,
+    settledOn,
+    narration,
+    payee,
+    flag,
+    tagIdsJson,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is TransactionRow &&
+      (other is JournalEntryRow &&
           other.ownerUserId == this.ownerUserId &&
           other.updatedAt == this.updatedAt &&
           other.updatedByDevice == this.updatedByDevice &&
           other.hlc == this.hlc &&
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
-          other.accountId == this.accountId &&
-          other.assetId == this.assetId &&
-          other.type == this.type &&
-          other.quantity == this.quantity &&
-          other.price == this.price &&
-          other.currency == this.currency &&
-          other.tradeDate == this.tradeDate &&
-          other.settleDate == this.settleDate &&
-          other.fee == this.fee &&
-          other.tax == this.tax &&
-          other.counterAccountId == this.counterAccountId &&
-          other.lotId == this.lotId &&
-          other.note == this.note &&
-          other.expenseMetadataJson == this.expenseMetadataJson &&
-          other.transferGroupId == this.transferGroupId);
+          other.date == this.date &&
+          other.settledOn == this.settledOn &&
+          other.narration == this.narration &&
+          other.payee == this.payee &&
+          other.flag == this.flag &&
+          other.tagIdsJson == this.tagIdsJson);
 }
 
-class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
+class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
   final Value<String> ownerUserId;
   final Value<DateTime> updatedAt;
   final Value<String> updatedByDevice;
   final Value<Hlc> hlc;
   final Value<DateTime?> deletedAt;
   final Value<String> id;
-  final Value<String> accountId;
-  final Value<String?> assetId;
-  final Value<TransactionType> type;
-  final Value<Decimal> quantity;
-  final Value<Decimal> price;
-  final Value<String> currency;
-  final Value<DateTime> tradeDate;
-  final Value<DateTime?> settleDate;
-  final Value<Decimal?> fee;
-  final Value<Decimal?> tax;
-  final Value<String?> counterAccountId;
-  final Value<String?> lotId;
-  final Value<String?> note;
-  final Value<String?> expenseMetadataJson;
-  final Value<String?> transferGroupId;
+  final Value<DateTime> date;
+  final Value<DateTime?> settledOn;
+  final Value<String> narration;
+  final Value<String?> payee;
+  final Value<EntryFlag> flag;
+  final Value<String> tagIdsJson;
   final Value<int> rowid;
-  const TransactionsCompanion({
+  const JournalEntriesCompanion({
     this.ownerUserId = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.updatedByDevice = const Value.absent(),
     this.hlc = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.id = const Value.absent(),
-    this.accountId = const Value.absent(),
-    this.assetId = const Value.absent(),
-    this.type = const Value.absent(),
-    this.quantity = const Value.absent(),
-    this.price = const Value.absent(),
-    this.currency = const Value.absent(),
-    this.tradeDate = const Value.absent(),
-    this.settleDate = const Value.absent(),
-    this.fee = const Value.absent(),
-    this.tax = const Value.absent(),
-    this.counterAccountId = const Value.absent(),
-    this.lotId = const Value.absent(),
-    this.note = const Value.absent(),
-    this.expenseMetadataJson = const Value.absent(),
-    this.transferGroupId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.settledOn = const Value.absent(),
+    this.narration = const Value.absent(),
+    this.payee = const Value.absent(),
+    this.flag = const Value.absent(),
+    this.tagIdsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  TransactionsCompanion.insert({
+  JournalEntriesCompanion.insert({
     required String ownerUserId,
     required DateTime updatedAt,
     required String updatedByDevice,
     required Hlc hlc,
     this.deletedAt = const Value.absent(),
     required String id,
-    required String accountId,
-    this.assetId = const Value.absent(),
-    required TransactionType type,
-    required Decimal quantity,
-    required Decimal price,
-    required String currency,
-    required DateTime tradeDate,
-    this.settleDate = const Value.absent(),
-    this.fee = const Value.absent(),
-    this.tax = const Value.absent(),
-    this.counterAccountId = const Value.absent(),
-    this.lotId = const Value.absent(),
-    this.note = const Value.absent(),
-    this.expenseMetadataJson = const Value.absent(),
-    this.transferGroupId = const Value.absent(),
+    required DateTime date,
+    this.settledOn = const Value.absent(),
+    required String narration,
+    this.payee = const Value.absent(),
+    this.flag = const Value.absent(),
+    this.tagIdsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
        updatedByDevice = Value(updatedByDevice),
        hlc = Value(hlc),
        id = Value(id),
-       accountId = Value(accountId),
-       type = Value(type),
-       quantity = Value(quantity),
-       price = Value(price),
-       currency = Value(currency),
-       tradeDate = Value(tradeDate);
-  static Insertable<TransactionRow> custom({
+       date = Value(date),
+       narration = Value(narration);
+  static Insertable<JournalEntryRow> custom({
     Expression<String>? ownerUserId,
     Expression<DateTime>? updatedAt,
     Expression<String>? updatedByDevice,
     Expression<String>? hlc,
     Expression<DateTime>? deletedAt,
     Expression<String>? id,
-    Expression<String>? accountId,
-    Expression<String>? assetId,
-    Expression<String>? type,
-    Expression<String>? quantity,
-    Expression<String>? price,
-    Expression<String>? currency,
-    Expression<DateTime>? tradeDate,
-    Expression<DateTime>? settleDate,
-    Expression<String>? fee,
-    Expression<String>? tax,
-    Expression<String>? counterAccountId,
-    Expression<String>? lotId,
-    Expression<String>? note,
-    Expression<String>? expenseMetadataJson,
-    Expression<String>? transferGroupId,
+    Expression<DateTime>? date,
+    Expression<DateTime>? settledOn,
+    Expression<String>? narration,
+    Expression<String>? payee,
+    Expression<String>? flag,
+    Expression<String>? tagIdsJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4290,72 +3799,44 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (hlc != null) 'hlc': hlc,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (id != null) 'id': id,
-      if (accountId != null) 'account_id': accountId,
-      if (assetId != null) 'asset_id': assetId,
-      if (type != null) 'type': type,
-      if (quantity != null) 'quantity': quantity,
-      if (price != null) 'price': price,
-      if (currency != null) 'currency': currency,
-      if (tradeDate != null) 'trade_date': tradeDate,
-      if (settleDate != null) 'settle_date': settleDate,
-      if (fee != null) 'fee': fee,
-      if (tax != null) 'tax': tax,
-      if (counterAccountId != null) 'counter_account_id': counterAccountId,
-      if (lotId != null) 'lot_id': lotId,
-      if (note != null) 'note': note,
-      if (expenseMetadataJson != null)
-        'expense_metadata_json': expenseMetadataJson,
-      if (transferGroupId != null) 'transfer_group_id': transferGroupId,
+      if (date != null) 'date': date,
+      if (settledOn != null) 'settled_on': settledOn,
+      if (narration != null) 'narration': narration,
+      if (payee != null) 'payee': payee,
+      if (flag != null) 'flag': flag,
+      if (tagIdsJson != null) 'tag_ids_json': tagIdsJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  TransactionsCompanion copyWith({
+  JournalEntriesCompanion copyWith({
     Value<String>? ownerUserId,
     Value<DateTime>? updatedAt,
     Value<String>? updatedByDevice,
     Value<Hlc>? hlc,
     Value<DateTime?>? deletedAt,
     Value<String>? id,
-    Value<String>? accountId,
-    Value<String?>? assetId,
-    Value<TransactionType>? type,
-    Value<Decimal>? quantity,
-    Value<Decimal>? price,
-    Value<String>? currency,
-    Value<DateTime>? tradeDate,
-    Value<DateTime?>? settleDate,
-    Value<Decimal?>? fee,
-    Value<Decimal?>? tax,
-    Value<String?>? counterAccountId,
-    Value<String?>? lotId,
-    Value<String?>? note,
-    Value<String?>? expenseMetadataJson,
-    Value<String?>? transferGroupId,
+    Value<DateTime>? date,
+    Value<DateTime?>? settledOn,
+    Value<String>? narration,
+    Value<String?>? payee,
+    Value<EntryFlag>? flag,
+    Value<String>? tagIdsJson,
     Value<int>? rowid,
   }) {
-    return TransactionsCompanion(
+    return JournalEntriesCompanion(
       ownerUserId: ownerUserId ?? this.ownerUserId,
       updatedAt: updatedAt ?? this.updatedAt,
       updatedByDevice: updatedByDevice ?? this.updatedByDevice,
       hlc: hlc ?? this.hlc,
       deletedAt: deletedAt ?? this.deletedAt,
       id: id ?? this.id,
-      accountId: accountId ?? this.accountId,
-      assetId: assetId ?? this.assetId,
-      type: type ?? this.type,
-      quantity: quantity ?? this.quantity,
-      price: price ?? this.price,
-      currency: currency ?? this.currency,
-      tradeDate: tradeDate ?? this.tradeDate,
-      settleDate: settleDate ?? this.settleDate,
-      fee: fee ?? this.fee,
-      tax: tax ?? this.tax,
-      counterAccountId: counterAccountId ?? this.counterAccountId,
-      lotId: lotId ?? this.lotId,
-      note: note ?? this.note,
-      expenseMetadataJson: expenseMetadataJson ?? this.expenseMetadataJson,
-      transferGroupId: transferGroupId ?? this.transferGroupId,
+      date: date ?? this.date,
+      settledOn: settledOn ?? this.settledOn,
+      narration: narration ?? this.narration,
+      payee: payee ?? this.payee,
+      flag: flag ?? this.flag,
+      tagIdsJson: tagIdsJson ?? this.tagIdsJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4374,7 +3855,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     }
     if (hlc.present) {
       map['hlc'] = Variable<String>(
-        $TransactionsTable.$converterhlc.toSql(hlc.value),
+        $JournalEntriesTable.$converterhlc.toSql(hlc.value),
       );
     }
     if (deletedAt.present) {
@@ -4383,62 +3864,25 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (accountId.present) {
-      map['account_id'] = Variable<String>(accountId.value);
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
     }
-    if (assetId.present) {
-      map['asset_id'] = Variable<String>(assetId.value);
+    if (settledOn.present) {
+      map['settled_on'] = Variable<DateTime>(settledOn.value);
     }
-    if (type.present) {
-      map['type'] = Variable<String>(
-        $TransactionsTable.$convertertype.toSql(type.value),
+    if (narration.present) {
+      map['narration'] = Variable<String>(narration.value);
+    }
+    if (payee.present) {
+      map['payee'] = Variable<String>(payee.value);
+    }
+    if (flag.present) {
+      map['flag'] = Variable<String>(
+        $JournalEntriesTable.$converterflag.toSql(flag.value),
       );
     }
-    if (quantity.present) {
-      map['quantity'] = Variable<String>(
-        $TransactionsTable.$converterquantity.toSql(quantity.value),
-      );
-    }
-    if (price.present) {
-      map['price'] = Variable<String>(
-        $TransactionsTable.$converterprice.toSql(price.value),
-      );
-    }
-    if (currency.present) {
-      map['currency'] = Variable<String>(currency.value);
-    }
-    if (tradeDate.present) {
-      map['trade_date'] = Variable<DateTime>(tradeDate.value);
-    }
-    if (settleDate.present) {
-      map['settle_date'] = Variable<DateTime>(settleDate.value);
-    }
-    if (fee.present) {
-      map['fee'] = Variable<String>(
-        $TransactionsTable.$converterfeen.toSql(fee.value),
-      );
-    }
-    if (tax.present) {
-      map['tax'] = Variable<String>(
-        $TransactionsTable.$convertertaxn.toSql(tax.value),
-      );
-    }
-    if (counterAccountId.present) {
-      map['counter_account_id'] = Variable<String>(counterAccountId.value);
-    }
-    if (lotId.present) {
-      map['lot_id'] = Variable<String>(lotId.value);
-    }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
-    if (expenseMetadataJson.present) {
-      map['expense_metadata_json'] = Variable<String>(
-        expenseMetadataJson.value,
-      );
-    }
-    if (transferGroupId.present) {
-      map['transfer_group_id'] = Variable<String>(transferGroupId.value);
+    if (tagIdsJson.present) {
+      map['tag_ids_json'] = Variable<String>(tagIdsJson.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -4448,28 +3892,1722 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
 
   @override
   String toString() {
-    return (StringBuffer('TransactionsCompanion(')
+    return (StringBuffer('JournalEntriesCompanion(')
           ..write('ownerUserId: $ownerUserId, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('updatedByDevice: $updatedByDevice, ')
           ..write('hlc: $hlc, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
+          ..write('date: $date, ')
+          ..write('settledOn: $settledOn, ')
+          ..write('narration: $narration, ')
+          ..write('payee: $payee, ')
+          ..write('flag: $flag, ')
+          ..write('tagIdsJson: $tagIdsJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PostingsTable extends Postings
+    with TableInfo<$PostingsTable, PostingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PostingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($PostingsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _journalEntryIdMeta = const VerificationMeta(
+    'journalEntryId',
+  );
+  @override
+  late final GeneratedColumn<String> journalEntryId = GeneratedColumn<String>(
+    'journal_entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> units =
+      GeneratedColumn<String>(
+        'units',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>($PostingsTable.$converterunits);
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> costPerUnit =
+      GeneratedColumn<String>(
+        'cost_per_unit',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($PostingsTable.$convertercostPerUnitn);
+  static const VerificationMeta _costCurrencyMeta = const VerificationMeta(
+    'costCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> costCurrency = GeneratedColumn<String>(
+    'cost_currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _costLotIdMeta = const VerificationMeta(
+    'costLotId',
+  );
+  @override
+  late final GeneratedColumn<String> costLotId = GeneratedColumn<String>(
+    'cost_lot_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _costAcquiredOnMeta = const VerificationMeta(
+    'costAcquiredOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> costAcquiredOn =
+      GeneratedColumn<DateTime>(
+        'cost_acquired_on',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> pricePerUnit =
+      GeneratedColumn<String>(
+        'price_per_unit',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($PostingsTable.$converterpricePerUnitn);
+  static const VerificationMeta _priceCurrencyMeta = const VerificationMeta(
+    'priceCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> priceCurrency = GeneratedColumn<String>(
+    'price_currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    journalEntryId,
+    position,
+    accountId,
+    units,
+    unit,
+    costPerUnit,
+    costCurrency,
+    costLotId,
+    costAcquiredOn,
+    pricePerUnit,
+    priceCurrency,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'postings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PostingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('journal_entry_id')) {
+      context.handle(
+        _journalEntryIdMeta,
+        journalEntryId.isAcceptableOrUnknown(
+          data['journal_entry_id']!,
+          _journalEntryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_journalEntryIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitMeta);
+    }
+    if (data.containsKey('cost_currency')) {
+      context.handle(
+        _costCurrencyMeta,
+        costCurrency.isAcceptableOrUnknown(
+          data['cost_currency']!,
+          _costCurrencyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cost_lot_id')) {
+      context.handle(
+        _costLotIdMeta,
+        costLotId.isAcceptableOrUnknown(data['cost_lot_id']!, _costLotIdMeta),
+      );
+    }
+    if (data.containsKey('cost_acquired_on')) {
+      context.handle(
+        _costAcquiredOnMeta,
+        costAcquiredOn.isAcceptableOrUnknown(
+          data['cost_acquired_on']!,
+          _costAcquiredOnMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_currency')) {
+      context.handle(
+        _priceCurrencyMeta,
+        priceCurrency.isAcceptableOrUnknown(
+          data['price_currency']!,
+          _priceCurrencyMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PostingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PostingRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $PostingsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      journalEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}journal_entry_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      units: $PostingsTable.$converterunits.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}units'],
+        )!,
+      ),
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      costPerUnit: $PostingsTable.$convertercostPerUnitn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}cost_per_unit'],
+        ),
+      ),
+      costCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cost_currency'],
+      ),
+      costLotId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cost_lot_id'],
+      ),
+      costAcquiredOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}cost_acquired_on'],
+      ),
+      pricePerUnit: $PostingsTable.$converterpricePerUnitn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}price_per_unit'],
+        ),
+      ),
+      priceCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}price_currency'],
+      ),
+    );
+  }
+
+  @override
+  $PostingsTable createAlias(String alias) {
+    return $PostingsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterunits =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertercostPerUnit =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertercostPerUnitn =
+      NullAwareTypeConverter.wrap($convertercostPerUnit);
+  static TypeConverter<Decimal, String> $converterpricePerUnit =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterpricePerUnitn =
+      NullAwareTypeConverter.wrap($converterpricePerUnit);
+}
+
+class PostingRow extends DataClass implements Insertable<PostingRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String journalEntryId;
+
+  /// 0-based render order within the parent JE. Stored explicitly so a
+  /// re-order is a single-column LWW update rather than a JE-wide
+  /// rewrite that touches every leg.
+  final int position;
+  final String accountId;
+
+  /// Signed delta applied to the account's balance in [unit] terms.
+  final Decimal units;
+
+  /// Either an ISO 4217 currency code (`'CNY'`, `'USD'`) or an
+  /// `assets.id` (`'us_stock:AAPL'`). The unit's namespace is
+  /// disambiguated at read time by joining against `assets`.
+  final String unit;
+  final Decimal? costPerUnit;
+  final String? costCurrency;
+  final String? costLotId;
+  final DateTime? costAcquiredOn;
+  final Decimal? pricePerUnit;
+  final String? priceCurrency;
+  const PostingRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.journalEntryId,
+    required this.position,
+    required this.accountId,
+    required this.units,
+    required this.unit,
+    this.costPerUnit,
+    this.costCurrency,
+    this.costLotId,
+    this.costAcquiredOn,
+    this.pricePerUnit,
+    this.priceCurrency,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>($PostingsTable.$converterhlc.toSql(hlc));
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['journal_entry_id'] = Variable<String>(journalEntryId);
+    map['position'] = Variable<int>(position);
+    map['account_id'] = Variable<String>(accountId);
+    {
+      map['units'] = Variable<String>(
+        $PostingsTable.$converterunits.toSql(units),
+      );
+    }
+    map['unit'] = Variable<String>(unit);
+    if (!nullToAbsent || costPerUnit != null) {
+      map['cost_per_unit'] = Variable<String>(
+        $PostingsTable.$convertercostPerUnitn.toSql(costPerUnit),
+      );
+    }
+    if (!nullToAbsent || costCurrency != null) {
+      map['cost_currency'] = Variable<String>(costCurrency);
+    }
+    if (!nullToAbsent || costLotId != null) {
+      map['cost_lot_id'] = Variable<String>(costLotId);
+    }
+    if (!nullToAbsent || costAcquiredOn != null) {
+      map['cost_acquired_on'] = Variable<DateTime>(costAcquiredOn);
+    }
+    if (!nullToAbsent || pricePerUnit != null) {
+      map['price_per_unit'] = Variable<String>(
+        $PostingsTable.$converterpricePerUnitn.toSql(pricePerUnit),
+      );
+    }
+    if (!nullToAbsent || priceCurrency != null) {
+      map['price_currency'] = Variable<String>(priceCurrency);
+    }
+    return map;
+  }
+
+  PostingsCompanion toCompanion(bool nullToAbsent) {
+    return PostingsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      journalEntryId: Value(journalEntryId),
+      position: Value(position),
+      accountId: Value(accountId),
+      units: Value(units),
+      unit: Value(unit),
+      costPerUnit: costPerUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costPerUnit),
+      costCurrency: costCurrency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costCurrency),
+      costLotId: costLotId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costLotId),
+      costAcquiredOn: costAcquiredOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costAcquiredOn),
+      pricePerUnit: pricePerUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pricePerUnit),
+      priceCurrency: priceCurrency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceCurrency),
+    );
+  }
+
+  factory PostingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PostingRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      journalEntryId: serializer.fromJson<String>(json['journalEntryId']),
+      position: serializer.fromJson<int>(json['position']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      units: serializer.fromJson<Decimal>(json['units']),
+      unit: serializer.fromJson<String>(json['unit']),
+      costPerUnit: serializer.fromJson<Decimal?>(json['costPerUnit']),
+      costCurrency: serializer.fromJson<String?>(json['costCurrency']),
+      costLotId: serializer.fromJson<String?>(json['costLotId']),
+      costAcquiredOn: serializer.fromJson<DateTime?>(json['costAcquiredOn']),
+      pricePerUnit: serializer.fromJson<Decimal?>(json['pricePerUnit']),
+      priceCurrency: serializer.fromJson<String?>(json['priceCurrency']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'journalEntryId': serializer.toJson<String>(journalEntryId),
+      'position': serializer.toJson<int>(position),
+      'accountId': serializer.toJson<String>(accountId),
+      'units': serializer.toJson<Decimal>(units),
+      'unit': serializer.toJson<String>(unit),
+      'costPerUnit': serializer.toJson<Decimal?>(costPerUnit),
+      'costCurrency': serializer.toJson<String?>(costCurrency),
+      'costLotId': serializer.toJson<String?>(costLotId),
+      'costAcquiredOn': serializer.toJson<DateTime?>(costAcquiredOn),
+      'pricePerUnit': serializer.toJson<Decimal?>(pricePerUnit),
+      'priceCurrency': serializer.toJson<String?>(priceCurrency),
+    };
+  }
+
+  PostingRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? journalEntryId,
+    int? position,
+    String? accountId,
+    Decimal? units,
+    String? unit,
+    Value<Decimal?> costPerUnit = const Value.absent(),
+    Value<String?> costCurrency = const Value.absent(),
+    Value<String?> costLotId = const Value.absent(),
+    Value<DateTime?> costAcquiredOn = const Value.absent(),
+    Value<Decimal?> pricePerUnit = const Value.absent(),
+    Value<String?> priceCurrency = const Value.absent(),
+  }) => PostingRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    journalEntryId: journalEntryId ?? this.journalEntryId,
+    position: position ?? this.position,
+    accountId: accountId ?? this.accountId,
+    units: units ?? this.units,
+    unit: unit ?? this.unit,
+    costPerUnit: costPerUnit.present ? costPerUnit.value : this.costPerUnit,
+    costCurrency: costCurrency.present ? costCurrency.value : this.costCurrency,
+    costLotId: costLotId.present ? costLotId.value : this.costLotId,
+    costAcquiredOn: costAcquiredOn.present
+        ? costAcquiredOn.value
+        : this.costAcquiredOn,
+    pricePerUnit: pricePerUnit.present ? pricePerUnit.value : this.pricePerUnit,
+    priceCurrency: priceCurrency.present
+        ? priceCurrency.value
+        : this.priceCurrency,
+  );
+  PostingRow copyWithCompanion(PostingsCompanion data) {
+    return PostingRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      journalEntryId: data.journalEntryId.present
+          ? data.journalEntryId.value
+          : this.journalEntryId,
+      position: data.position.present ? data.position.value : this.position,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      units: data.units.present ? data.units.value : this.units,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      costPerUnit: data.costPerUnit.present
+          ? data.costPerUnit.value
+          : this.costPerUnit,
+      costCurrency: data.costCurrency.present
+          ? data.costCurrency.value
+          : this.costCurrency,
+      costLotId: data.costLotId.present ? data.costLotId.value : this.costLotId,
+      costAcquiredOn: data.costAcquiredOn.present
+          ? data.costAcquiredOn.value
+          : this.costAcquiredOn,
+      pricePerUnit: data.pricePerUnit.present
+          ? data.pricePerUnit.value
+          : this.pricePerUnit,
+      priceCurrency: data.priceCurrency.present
+          ? data.priceCurrency.value
+          : this.priceCurrency,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PostingRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('journalEntryId: $journalEntryId, ')
+          ..write('position: $position, ')
           ..write('accountId: $accountId, ')
-          ..write('assetId: $assetId, ')
-          ..write('type: $type, ')
-          ..write('quantity: $quantity, ')
-          ..write('price: $price, ')
-          ..write('currency: $currency, ')
-          ..write('tradeDate: $tradeDate, ')
-          ..write('settleDate: $settleDate, ')
-          ..write('fee: $fee, ')
-          ..write('tax: $tax, ')
-          ..write('counterAccountId: $counterAccountId, ')
-          ..write('lotId: $lotId, ')
-          ..write('note: $note, ')
-          ..write('expenseMetadataJson: $expenseMetadataJson, ')
-          ..write('transferGroupId: $transferGroupId, ')
+          ..write('units: $units, ')
+          ..write('unit: $unit, ')
+          ..write('costPerUnit: $costPerUnit, ')
+          ..write('costCurrency: $costCurrency, ')
+          ..write('costLotId: $costLotId, ')
+          ..write('costAcquiredOn: $costAcquiredOn, ')
+          ..write('pricePerUnit: $pricePerUnit, ')
+          ..write('priceCurrency: $priceCurrency')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    journalEntryId,
+    position,
+    accountId,
+    units,
+    unit,
+    costPerUnit,
+    costCurrency,
+    costLotId,
+    costAcquiredOn,
+    pricePerUnit,
+    priceCurrency,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PostingRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.journalEntryId == this.journalEntryId &&
+          other.position == this.position &&
+          other.accountId == this.accountId &&
+          other.units == this.units &&
+          other.unit == this.unit &&
+          other.costPerUnit == this.costPerUnit &&
+          other.costCurrency == this.costCurrency &&
+          other.costLotId == this.costLotId &&
+          other.costAcquiredOn == this.costAcquiredOn &&
+          other.pricePerUnit == this.pricePerUnit &&
+          other.priceCurrency == this.priceCurrency);
+}
+
+class PostingsCompanion extends UpdateCompanion<PostingRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> journalEntryId;
+  final Value<int> position;
+  final Value<String> accountId;
+  final Value<Decimal> units;
+  final Value<String> unit;
+  final Value<Decimal?> costPerUnit;
+  final Value<String?> costCurrency;
+  final Value<String?> costLotId;
+  final Value<DateTime?> costAcquiredOn;
+  final Value<Decimal?> pricePerUnit;
+  final Value<String?> priceCurrency;
+  final Value<int> rowid;
+  const PostingsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.journalEntryId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.units = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.costPerUnit = const Value.absent(),
+    this.costCurrency = const Value.absent(),
+    this.costLotId = const Value.absent(),
+    this.costAcquiredOn = const Value.absent(),
+    this.pricePerUnit = const Value.absent(),
+    this.priceCurrency = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PostingsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String journalEntryId,
+    required int position,
+    required String accountId,
+    required Decimal units,
+    required String unit,
+    this.costPerUnit = const Value.absent(),
+    this.costCurrency = const Value.absent(),
+    this.costLotId = const Value.absent(),
+    this.costAcquiredOn = const Value.absent(),
+    this.pricePerUnit = const Value.absent(),
+    this.priceCurrency = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       journalEntryId = Value(journalEntryId),
+       position = Value(position),
+       accountId = Value(accountId),
+       units = Value(units),
+       unit = Value(unit);
+  static Insertable<PostingRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? journalEntryId,
+    Expression<int>? position,
+    Expression<String>? accountId,
+    Expression<String>? units,
+    Expression<String>? unit,
+    Expression<String>? costPerUnit,
+    Expression<String>? costCurrency,
+    Expression<String>? costLotId,
+    Expression<DateTime>? costAcquiredOn,
+    Expression<String>? pricePerUnit,
+    Expression<String>? priceCurrency,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (journalEntryId != null) 'journal_entry_id': journalEntryId,
+      if (position != null) 'position': position,
+      if (accountId != null) 'account_id': accountId,
+      if (units != null) 'units': units,
+      if (unit != null) 'unit': unit,
+      if (costPerUnit != null) 'cost_per_unit': costPerUnit,
+      if (costCurrency != null) 'cost_currency': costCurrency,
+      if (costLotId != null) 'cost_lot_id': costLotId,
+      if (costAcquiredOn != null) 'cost_acquired_on': costAcquiredOn,
+      if (pricePerUnit != null) 'price_per_unit': pricePerUnit,
+      if (priceCurrency != null) 'price_currency': priceCurrency,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PostingsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? journalEntryId,
+    Value<int>? position,
+    Value<String>? accountId,
+    Value<Decimal>? units,
+    Value<String>? unit,
+    Value<Decimal?>? costPerUnit,
+    Value<String?>? costCurrency,
+    Value<String?>? costLotId,
+    Value<DateTime?>? costAcquiredOn,
+    Value<Decimal?>? pricePerUnit,
+    Value<String?>? priceCurrency,
+    Value<int>? rowid,
+  }) {
+    return PostingsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      journalEntryId: journalEntryId ?? this.journalEntryId,
+      position: position ?? this.position,
+      accountId: accountId ?? this.accountId,
+      units: units ?? this.units,
+      unit: unit ?? this.unit,
+      costPerUnit: costPerUnit ?? this.costPerUnit,
+      costCurrency: costCurrency ?? this.costCurrency,
+      costLotId: costLotId ?? this.costLotId,
+      costAcquiredOn: costAcquiredOn ?? this.costAcquiredOn,
+      pricePerUnit: pricePerUnit ?? this.pricePerUnit,
+      priceCurrency: priceCurrency ?? this.priceCurrency,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $PostingsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (journalEntryId.present) {
+      map['journal_entry_id'] = Variable<String>(journalEntryId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (units.present) {
+      map['units'] = Variable<String>(
+        $PostingsTable.$converterunits.toSql(units.value),
+      );
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (costPerUnit.present) {
+      map['cost_per_unit'] = Variable<String>(
+        $PostingsTable.$convertercostPerUnitn.toSql(costPerUnit.value),
+      );
+    }
+    if (costCurrency.present) {
+      map['cost_currency'] = Variable<String>(costCurrency.value);
+    }
+    if (costLotId.present) {
+      map['cost_lot_id'] = Variable<String>(costLotId.value);
+    }
+    if (costAcquiredOn.present) {
+      map['cost_acquired_on'] = Variable<DateTime>(costAcquiredOn.value);
+    }
+    if (pricePerUnit.present) {
+      map['price_per_unit'] = Variable<String>(
+        $PostingsTable.$converterpricePerUnitn.toSql(pricePerUnit.value),
+      );
+    }
+    if (priceCurrency.present) {
+      map['price_currency'] = Variable<String>(priceCurrency.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PostingsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('journalEntryId: $journalEntryId, ')
+          ..write('position: $position, ')
+          ..write('accountId: $accountId, ')
+          ..write('units: $units, ')
+          ..write('unit: $unit, ')
+          ..write('costPerUnit: $costPerUnit, ')
+          ..write('costCurrency: $costCurrency, ')
+          ..write('costLotId: $costLotId, ')
+          ..write('costAcquiredOn: $costAcquiredOn, ')
+          ..write('pricePerUnit: $pricePerUnit, ')
+          ..write('priceCurrency: $priceCurrency, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PricesTable extends Prices with TableInfo<$PricesTable, PriceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PricesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($PricesTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quoteCurrencyMeta = const VerificationMeta(
+    'quoteCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> quoteCurrency = GeneratedColumn<String>(
+    'quote_currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _observedOnMeta = const VerificationMeta(
+    'observedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> observedOn = GeneratedColumn<DateTime>(
+    'observed_on',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> perUnit =
+      GeneratedColumn<String>(
+        'per_unit',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>($PricesTable.$converterperUnit);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    unit,
+    quoteCurrency,
+    observedOn,
+    perUnit,
+    source,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'prices';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PriceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitMeta);
+    }
+    if (data.containsKey('quote_currency')) {
+      context.handle(
+        _quoteCurrencyMeta,
+        quoteCurrency.isAcceptableOrUnknown(
+          data['quote_currency']!,
+          _quoteCurrencyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_quoteCurrencyMeta);
+    }
+    if (data.containsKey('observed_on')) {
+      context.handle(
+        _observedOnMeta,
+        observedOn.isAcceptableOrUnknown(data['observed_on']!, _observedOnMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_observedOnMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PriceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PriceRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $PricesTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      quoteCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quote_currency'],
+      )!,
+      observedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}observed_on'],
+      )!,
+      perUnit: $PricesTable.$converterperUnit.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}per_unit'],
+        )!,
+      ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+    );
+  }
+
+  @override
+  $PricesTable createAlias(String alias) {
+    return $PricesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterperUnit =
+      const DecimalConverter();
+}
+
+class PriceRow extends DataClass implements Insertable<PriceRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String unit;
+  final String quoteCurrency;
+  final DateTime observedOn;
+  final Decimal perUnit;
+  final String source;
+  const PriceRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.unit,
+    required this.quoteCurrency,
+    required this.observedOn,
+    required this.perUnit,
+    required this.source,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>($PricesTable.$converterhlc.toSql(hlc));
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['unit'] = Variable<String>(unit);
+    map['quote_currency'] = Variable<String>(quoteCurrency);
+    map['observed_on'] = Variable<DateTime>(observedOn);
+    {
+      map['per_unit'] = Variable<String>(
+        $PricesTable.$converterperUnit.toSql(perUnit),
+      );
+    }
+    map['source'] = Variable<String>(source);
+    return map;
+  }
+
+  PricesCompanion toCompanion(bool nullToAbsent) {
+    return PricesCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      unit: Value(unit),
+      quoteCurrency: Value(quoteCurrency),
+      observedOn: Value(observedOn),
+      perUnit: Value(perUnit),
+      source: Value(source),
+    );
+  }
+
+  factory PriceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PriceRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      unit: serializer.fromJson<String>(json['unit']),
+      quoteCurrency: serializer.fromJson<String>(json['quoteCurrency']),
+      observedOn: serializer.fromJson<DateTime>(json['observedOn']),
+      perUnit: serializer.fromJson<Decimal>(json['perUnit']),
+      source: serializer.fromJson<String>(json['source']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'unit': serializer.toJson<String>(unit),
+      'quoteCurrency': serializer.toJson<String>(quoteCurrency),
+      'observedOn': serializer.toJson<DateTime>(observedOn),
+      'perUnit': serializer.toJson<Decimal>(perUnit),
+      'source': serializer.toJson<String>(source),
+    };
+  }
+
+  PriceRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? unit,
+    String? quoteCurrency,
+    DateTime? observedOn,
+    Decimal? perUnit,
+    String? source,
+  }) => PriceRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    unit: unit ?? this.unit,
+    quoteCurrency: quoteCurrency ?? this.quoteCurrency,
+    observedOn: observedOn ?? this.observedOn,
+    perUnit: perUnit ?? this.perUnit,
+    source: source ?? this.source,
+  );
+  PriceRow copyWithCompanion(PricesCompanion data) {
+    return PriceRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      quoteCurrency: data.quoteCurrency.present
+          ? data.quoteCurrency.value
+          : this.quoteCurrency,
+      observedOn: data.observedOn.present
+          ? data.observedOn.value
+          : this.observedOn,
+      perUnit: data.perUnit.present ? data.perUnit.value : this.perUnit,
+      source: data.source.present ? data.source.value : this.source,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PriceRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('unit: $unit, ')
+          ..write('quoteCurrency: $quoteCurrency, ')
+          ..write('observedOn: $observedOn, ')
+          ..write('perUnit: $perUnit, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    unit,
+    quoteCurrency,
+    observedOn,
+    perUnit,
+    source,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PriceRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.unit == this.unit &&
+          other.quoteCurrency == this.quoteCurrency &&
+          other.observedOn == this.observedOn &&
+          other.perUnit == this.perUnit &&
+          other.source == this.source);
+}
+
+class PricesCompanion extends UpdateCompanion<PriceRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> unit;
+  final Value<String> quoteCurrency;
+  final Value<DateTime> observedOn;
+  final Value<Decimal> perUnit;
+  final Value<String> source;
+  final Value<int> rowid;
+  const PricesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.quoteCurrency = const Value.absent(),
+    this.observedOn = const Value.absent(),
+    this.perUnit = const Value.absent(),
+    this.source = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PricesCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String unit,
+    required String quoteCurrency,
+    required DateTime observedOn,
+    required Decimal perUnit,
+    required String source,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       unit = Value(unit),
+       quoteCurrency = Value(quoteCurrency),
+       observedOn = Value(observedOn),
+       perUnit = Value(perUnit),
+       source = Value(source);
+  static Insertable<PriceRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? unit,
+    Expression<String>? quoteCurrency,
+    Expression<DateTime>? observedOn,
+    Expression<String>? perUnit,
+    Expression<String>? source,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (unit != null) 'unit': unit,
+      if (quoteCurrency != null) 'quote_currency': quoteCurrency,
+      if (observedOn != null) 'observed_on': observedOn,
+      if (perUnit != null) 'per_unit': perUnit,
+      if (source != null) 'source': source,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PricesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? unit,
+    Value<String>? quoteCurrency,
+    Value<DateTime>? observedOn,
+    Value<Decimal>? perUnit,
+    Value<String>? source,
+    Value<int>? rowid,
+  }) {
+    return PricesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      unit: unit ?? this.unit,
+      quoteCurrency: quoteCurrency ?? this.quoteCurrency,
+      observedOn: observedOn ?? this.observedOn,
+      perUnit: perUnit ?? this.perUnit,
+      source: source ?? this.source,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $PricesTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (quoteCurrency.present) {
+      map['quote_currency'] = Variable<String>(quoteCurrency.value);
+    }
+    if (observedOn.present) {
+      map['observed_on'] = Variable<DateTime>(observedOn.value);
+    }
+    if (perUnit.present) {
+      map['per_unit'] = Variable<String>(
+        $PricesTable.$converterperUnit.toSql(perUnit.value),
+      );
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PricesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('unit: $unit, ')
+          ..write('quoteCurrency: $quoteCurrency, ')
+          ..write('observedOn: $observedOn, ')
+          ..write('perUnit: $perUnit, ')
+          ..write('source: $source, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8969,737 +10107,6 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
           ..write('name: $name, ')
           ..write('parentId: $parentId, ')
           ..write('sortOrder: $sortOrder, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ExpenseCategoriesTable extends ExpenseCategories
-    with TableInfo<$ExpenseCategoriesTable, ExpenseCategoryRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ExpenseCategoriesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($ExpenseCategoriesTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _parentIdMeta = const VerificationMeta(
-    'parentId',
-  );
-  @override
-  late final GeneratedColumn<String> parentId = GeneratedColumn<String>(
-    'parent_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _iconMeta = const VerificationMeta('icon');
-  @override
-  late final GeneratedColumn<String> icon = GeneratedColumn<String>(
-    'icon',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _colorMeta = const VerificationMeta('color');
-  @override
-  late final GeneratedColumn<String> color = GeneratedColumn<String>(
-    'color',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
-    'sortOrder',
-  );
-  @override
-  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
-    'sort_order',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _archivedAtMeta = const VerificationMeta(
-    'archivedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> archivedAt = GeneratedColumn<DateTime>(
-    'archived_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    name,
-    parentId,
-    icon,
-    color,
-    sortOrder,
-    archivedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'expense_categories';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ExpenseCategoryRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('parent_id')) {
-      context.handle(
-        _parentIdMeta,
-        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
-      );
-    }
-    if (data.containsKey('icon')) {
-      context.handle(
-        _iconMeta,
-        icon.isAcceptableOrUnknown(data['icon']!, _iconMeta),
-      );
-    }
-    if (data.containsKey('color')) {
-      context.handle(
-        _colorMeta,
-        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
-      );
-    }
-    if (data.containsKey('sort_order')) {
-      context.handle(
-        _sortOrderMeta,
-        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
-      );
-    }
-    if (data.containsKey('archived_at')) {
-      context.handle(
-        _archivedAtMeta,
-        archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  ExpenseCategoryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ExpenseCategoryRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $ExpenseCategoriesTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      parentId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}parent_id'],
-      ),
-      icon: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}icon'],
-      ),
-      color: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}color'],
-      ),
-      sortOrder: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}sort_order'],
-      ),
-      archivedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}archived_at'],
-      ),
-    );
-  }
-
-  @override
-  $ExpenseCategoriesTable createAlias(String alias) {
-    return $ExpenseCategoriesTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class ExpenseCategoryRow extends DataClass
-    implements Insertable<ExpenseCategoryRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String name;
-  final String? parentId;
-  final String? icon;
-  final String? color;
-  final int? sortOrder;
-  final DateTime? archivedAt;
-  const ExpenseCategoryRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.name,
-    this.parentId,
-    this.icon,
-    this.color,
-    this.sortOrder,
-    this.archivedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $ExpenseCategoriesTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['name'] = Variable<String>(name);
-    if (!nullToAbsent || parentId != null) {
-      map['parent_id'] = Variable<String>(parentId);
-    }
-    if (!nullToAbsent || icon != null) {
-      map['icon'] = Variable<String>(icon);
-    }
-    if (!nullToAbsent || color != null) {
-      map['color'] = Variable<String>(color);
-    }
-    if (!nullToAbsent || sortOrder != null) {
-      map['sort_order'] = Variable<int>(sortOrder);
-    }
-    if (!nullToAbsent || archivedAt != null) {
-      map['archived_at'] = Variable<DateTime>(archivedAt);
-    }
-    return map;
-  }
-
-  ExpenseCategoriesCompanion toCompanion(bool nullToAbsent) {
-    return ExpenseCategoriesCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      name: Value(name),
-      parentId: parentId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(parentId),
-      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
-      color: color == null && nullToAbsent
-          ? const Value.absent()
-          : Value(color),
-      sortOrder: sortOrder == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sortOrder),
-      archivedAt: archivedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(archivedAt),
-    );
-  }
-
-  factory ExpenseCategoryRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ExpenseCategoryRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      name: serializer.fromJson<String>(json['name']),
-      parentId: serializer.fromJson<String?>(json['parentId']),
-      icon: serializer.fromJson<String?>(json['icon']),
-      color: serializer.fromJson<String?>(json['color']),
-      sortOrder: serializer.fromJson<int?>(json['sortOrder']),
-      archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'name': serializer.toJson<String>(name),
-      'parentId': serializer.toJson<String?>(parentId),
-      'icon': serializer.toJson<String?>(icon),
-      'color': serializer.toJson<String?>(color),
-      'sortOrder': serializer.toJson<int?>(sortOrder),
-      'archivedAt': serializer.toJson<DateTime?>(archivedAt),
-    };
-  }
-
-  ExpenseCategoryRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? name,
-    Value<String?> parentId = const Value.absent(),
-    Value<String?> icon = const Value.absent(),
-    Value<String?> color = const Value.absent(),
-    Value<int?> sortOrder = const Value.absent(),
-    Value<DateTime?> archivedAt = const Value.absent(),
-  }) => ExpenseCategoryRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    name: name ?? this.name,
-    parentId: parentId.present ? parentId.value : this.parentId,
-    icon: icon.present ? icon.value : this.icon,
-    color: color.present ? color.value : this.color,
-    sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
-    archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
-  );
-  ExpenseCategoryRow copyWithCompanion(ExpenseCategoriesCompanion data) {
-    return ExpenseCategoryRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      name: data.name.present ? data.name.value : this.name,
-      parentId: data.parentId.present ? data.parentId.value : this.parentId,
-      icon: data.icon.present ? data.icon.value : this.icon,
-      color: data.color.present ? data.color.value : this.color,
-      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
-      archivedAt: data.archivedAt.present
-          ? data.archivedAt.value
-          : this.archivedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ExpenseCategoryRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('parentId: $parentId, ')
-          ..write('icon: $icon, ')
-          ..write('color: $color, ')
-          ..write('sortOrder: $sortOrder, ')
-          ..write('archivedAt: $archivedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    name,
-    parentId,
-    icon,
-    color,
-    sortOrder,
-    archivedAt,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ExpenseCategoryRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.name == this.name &&
-          other.parentId == this.parentId &&
-          other.icon == this.icon &&
-          other.color == this.color &&
-          other.sortOrder == this.sortOrder &&
-          other.archivedAt == this.archivedAt);
-}
-
-class ExpenseCategoriesCompanion extends UpdateCompanion<ExpenseCategoryRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> name;
-  final Value<String?> parentId;
-  final Value<String?> icon;
-  final Value<String?> color;
-  final Value<int?> sortOrder;
-  final Value<DateTime?> archivedAt;
-  final Value<int> rowid;
-  const ExpenseCategoriesCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.name = const Value.absent(),
-    this.parentId = const Value.absent(),
-    this.icon = const Value.absent(),
-    this.color = const Value.absent(),
-    this.sortOrder = const Value.absent(),
-    this.archivedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  ExpenseCategoriesCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String name,
-    this.parentId = const Value.absent(),
-    this.icon = const Value.absent(),
-    this.color = const Value.absent(),
-    this.sortOrder = const Value.absent(),
-    this.archivedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       name = Value(name);
-  static Insertable<ExpenseCategoryRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? name,
-    Expression<String>? parentId,
-    Expression<String>? icon,
-    Expression<String>? color,
-    Expression<int>? sortOrder,
-    Expression<DateTime>? archivedAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (name != null) 'name': name,
-      if (parentId != null) 'parent_id': parentId,
-      if (icon != null) 'icon': icon,
-      if (color != null) 'color': color,
-      if (sortOrder != null) 'sort_order': sortOrder,
-      if (archivedAt != null) 'archived_at': archivedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  ExpenseCategoriesCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? name,
-    Value<String?>? parentId,
-    Value<String?>? icon,
-    Value<String?>? color,
-    Value<int?>? sortOrder,
-    Value<DateTime?>? archivedAt,
-    Value<int>? rowid,
-  }) {
-    return ExpenseCategoriesCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      name: name ?? this.name,
-      parentId: parentId ?? this.parentId,
-      icon: icon ?? this.icon,
-      color: color ?? this.color,
-      sortOrder: sortOrder ?? this.sortOrder,
-      archivedAt: archivedAt ?? this.archivedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $ExpenseCategoriesTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (parentId.present) {
-      map['parent_id'] = Variable<String>(parentId.value);
-    }
-    if (icon.present) {
-      map['icon'] = Variable<String>(icon.value);
-    }
-    if (color.present) {
-      map['color'] = Variable<String>(color.value);
-    }
-    if (sortOrder.present) {
-      map['sort_order'] = Variable<int>(sortOrder.value);
-    }
-    if (archivedAt.present) {
-      map['archived_at'] = Variable<DateTime>(archivedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ExpenseCategoriesCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('parentId: $parentId, ')
-          ..write('icon: $icon, ')
-          ..write('color: $color, ')
-          ..write('sortOrder: $sortOrder, ')
-          ..write('archivedAt: $archivedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -14430,2461 +14837,6 @@ class SecuritiesCatalogMetaCompanion
   }
 }
 
-class $JournalEntriesTable extends JournalEntries
-    with TableInfo<$JournalEntriesTable, JournalEntryRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $JournalEntriesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($JournalEntriesTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _dateMeta = const VerificationMeta('date');
-  @override
-  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
-    'date',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _settledOnMeta = const VerificationMeta(
-    'settledOn',
-  );
-  @override
-  late final GeneratedColumn<DateTime> settledOn = GeneratedColumn<DateTime>(
-    'settled_on',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _narrationMeta = const VerificationMeta(
-    'narration',
-  );
-  @override
-  late final GeneratedColumn<String> narration = GeneratedColumn<String>(
-    'narration',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
-  @override
-  late final GeneratedColumn<String> payee = GeneratedColumn<String>(
-    'payee',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<EntryFlag, String> flag =
-      GeneratedColumn<String>(
-        'flag',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: Constant(EntryFlag.confirmed.name),
-      ).withConverter<EntryFlag>($JournalEntriesTable.$converterflag);
-  static const VerificationMeta _tagIdsJsonMeta = const VerificationMeta(
-    'tagIdsJson',
-  );
-  @override
-  late final GeneratedColumn<String> tagIdsJson = GeneratedColumn<String>(
-    'tag_ids_json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('[]'),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    date,
-    settledOn,
-    narration,
-    payee,
-    flag,
-    tagIdsJson,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'journal_entries';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<JournalEntryRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('date')) {
-      context.handle(
-        _dateMeta,
-        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_dateMeta);
-    }
-    if (data.containsKey('settled_on')) {
-      context.handle(
-        _settledOnMeta,
-        settledOn.isAcceptableOrUnknown(data['settled_on']!, _settledOnMeta),
-      );
-    }
-    if (data.containsKey('narration')) {
-      context.handle(
-        _narrationMeta,
-        narration.isAcceptableOrUnknown(data['narration']!, _narrationMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_narrationMeta);
-    }
-    if (data.containsKey('payee')) {
-      context.handle(
-        _payeeMeta,
-        payee.isAcceptableOrUnknown(data['payee']!, _payeeMeta),
-      );
-    }
-    if (data.containsKey('tag_ids_json')) {
-      context.handle(
-        _tagIdsJsonMeta,
-        tagIdsJson.isAcceptableOrUnknown(
-          data['tag_ids_json']!,
-          _tagIdsJsonMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  JournalEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return JournalEntryRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $JournalEntriesTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      date: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}date'],
-      )!,
-      settledOn: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}settled_on'],
-      ),
-      narration: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}narration'],
-      )!,
-      payee: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}payee'],
-      ),
-      flag: $JournalEntriesTable.$converterflag.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}flag'],
-        )!,
-      ),
-      tagIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}tag_ids_json'],
-      )!,
-    );
-  }
-
-  @override
-  $JournalEntriesTable createAlias(String alias) {
-    return $JournalEntriesTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<EntryFlag, String> $converterflag =
-      const EnumStringConverter(EntryFlag.values);
-}
-
-class JournalEntryRow extends DataClass implements Insertable<JournalEntryRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-
-  /// Trade date — when the event happened. Stored as a regular Drift
-  /// DateTime (seconds-since-epoch INTEGER) so range queries by date
-  /// hit the index rather than triggering text-comparison sorts.
-  final DateTime date;
-
-  /// Settlement date (broker T+2 etc.). NULL when same-day.
-  final DateTime? settledOn;
-
-  /// Free-form description. Required and non-empty by convention so the
-  /// timeline always has something to render; an empty string is
-  /// reserved for the synthetic padding rows ([EntryFlag.padding]).
-  final String narration;
-
-  /// Optional counter-party (merchant / payer name). Not indexed —
-  /// payee-driven views aggregate inside Dart since the surface is small.
-  final String? payee;
-
-  /// Beancount lifecycle flag. See `EntryFlag` in
-  /// `domain/journal_entry.dart` for the value semantics.
-  final EntryFlag flag;
-
-  /// JSON-encoded list of `tags.id` strings. Denormalised onto the JE so
-  /// reading entries doesn't require a join through `tag_links`. The
-  /// canonical writer / reader are [JournalEntryRow] code paths only.
-  final String tagIdsJson;
-  const JournalEntryRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.date,
-    this.settledOn,
-    required this.narration,
-    this.payee,
-    required this.flag,
-    required this.tagIdsJson,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $JournalEntriesTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['date'] = Variable<DateTime>(date);
-    if (!nullToAbsent || settledOn != null) {
-      map['settled_on'] = Variable<DateTime>(settledOn);
-    }
-    map['narration'] = Variable<String>(narration);
-    if (!nullToAbsent || payee != null) {
-      map['payee'] = Variable<String>(payee);
-    }
-    {
-      map['flag'] = Variable<String>(
-        $JournalEntriesTable.$converterflag.toSql(flag),
-      );
-    }
-    map['tag_ids_json'] = Variable<String>(tagIdsJson);
-    return map;
-  }
-
-  JournalEntriesCompanion toCompanion(bool nullToAbsent) {
-    return JournalEntriesCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      date: Value(date),
-      settledOn: settledOn == null && nullToAbsent
-          ? const Value.absent()
-          : Value(settledOn),
-      narration: Value(narration),
-      payee: payee == null && nullToAbsent
-          ? const Value.absent()
-          : Value(payee),
-      flag: Value(flag),
-      tagIdsJson: Value(tagIdsJson),
-    );
-  }
-
-  factory JournalEntryRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return JournalEntryRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      date: serializer.fromJson<DateTime>(json['date']),
-      settledOn: serializer.fromJson<DateTime?>(json['settledOn']),
-      narration: serializer.fromJson<String>(json['narration']),
-      payee: serializer.fromJson<String?>(json['payee']),
-      flag: serializer.fromJson<EntryFlag>(json['flag']),
-      tagIdsJson: serializer.fromJson<String>(json['tagIdsJson']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'date': serializer.toJson<DateTime>(date),
-      'settledOn': serializer.toJson<DateTime?>(settledOn),
-      'narration': serializer.toJson<String>(narration),
-      'payee': serializer.toJson<String?>(payee),
-      'flag': serializer.toJson<EntryFlag>(flag),
-      'tagIdsJson': serializer.toJson<String>(tagIdsJson),
-    };
-  }
-
-  JournalEntryRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    DateTime? date,
-    Value<DateTime?> settledOn = const Value.absent(),
-    String? narration,
-    Value<String?> payee = const Value.absent(),
-    EntryFlag? flag,
-    String? tagIdsJson,
-  }) => JournalEntryRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    date: date ?? this.date,
-    settledOn: settledOn.present ? settledOn.value : this.settledOn,
-    narration: narration ?? this.narration,
-    payee: payee.present ? payee.value : this.payee,
-    flag: flag ?? this.flag,
-    tagIdsJson: tagIdsJson ?? this.tagIdsJson,
-  );
-  JournalEntryRow copyWithCompanion(JournalEntriesCompanion data) {
-    return JournalEntryRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      date: data.date.present ? data.date.value : this.date,
-      settledOn: data.settledOn.present ? data.settledOn.value : this.settledOn,
-      narration: data.narration.present ? data.narration.value : this.narration,
-      payee: data.payee.present ? data.payee.value : this.payee,
-      flag: data.flag.present ? data.flag.value : this.flag,
-      tagIdsJson: data.tagIdsJson.present
-          ? data.tagIdsJson.value
-          : this.tagIdsJson,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('JournalEntryRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('date: $date, ')
-          ..write('settledOn: $settledOn, ')
-          ..write('narration: $narration, ')
-          ..write('payee: $payee, ')
-          ..write('flag: $flag, ')
-          ..write('tagIdsJson: $tagIdsJson')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    date,
-    settledOn,
-    narration,
-    payee,
-    flag,
-    tagIdsJson,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is JournalEntryRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.date == this.date &&
-          other.settledOn == this.settledOn &&
-          other.narration == this.narration &&
-          other.payee == this.payee &&
-          other.flag == this.flag &&
-          other.tagIdsJson == this.tagIdsJson);
-}
-
-class JournalEntriesCompanion extends UpdateCompanion<JournalEntryRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<DateTime> date;
-  final Value<DateTime?> settledOn;
-  final Value<String> narration;
-  final Value<String?> payee;
-  final Value<EntryFlag> flag;
-  final Value<String> tagIdsJson;
-  final Value<int> rowid;
-  const JournalEntriesCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.date = const Value.absent(),
-    this.settledOn = const Value.absent(),
-    this.narration = const Value.absent(),
-    this.payee = const Value.absent(),
-    this.flag = const Value.absent(),
-    this.tagIdsJson = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  JournalEntriesCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required DateTime date,
-    this.settledOn = const Value.absent(),
-    required String narration,
-    this.payee = const Value.absent(),
-    this.flag = const Value.absent(),
-    this.tagIdsJson = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       date = Value(date),
-       narration = Value(narration);
-  static Insertable<JournalEntryRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<DateTime>? date,
-    Expression<DateTime>? settledOn,
-    Expression<String>? narration,
-    Expression<String>? payee,
-    Expression<String>? flag,
-    Expression<String>? tagIdsJson,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (date != null) 'date': date,
-      if (settledOn != null) 'settled_on': settledOn,
-      if (narration != null) 'narration': narration,
-      if (payee != null) 'payee': payee,
-      if (flag != null) 'flag': flag,
-      if (tagIdsJson != null) 'tag_ids_json': tagIdsJson,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  JournalEntriesCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<DateTime>? date,
-    Value<DateTime?>? settledOn,
-    Value<String>? narration,
-    Value<String?>? payee,
-    Value<EntryFlag>? flag,
-    Value<String>? tagIdsJson,
-    Value<int>? rowid,
-  }) {
-    return JournalEntriesCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      date: date ?? this.date,
-      settledOn: settledOn ?? this.settledOn,
-      narration: narration ?? this.narration,
-      payee: payee ?? this.payee,
-      flag: flag ?? this.flag,
-      tagIdsJson: tagIdsJson ?? this.tagIdsJson,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $JournalEntriesTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (date.present) {
-      map['date'] = Variable<DateTime>(date.value);
-    }
-    if (settledOn.present) {
-      map['settled_on'] = Variable<DateTime>(settledOn.value);
-    }
-    if (narration.present) {
-      map['narration'] = Variable<String>(narration.value);
-    }
-    if (payee.present) {
-      map['payee'] = Variable<String>(payee.value);
-    }
-    if (flag.present) {
-      map['flag'] = Variable<String>(
-        $JournalEntriesTable.$converterflag.toSql(flag.value),
-      );
-    }
-    if (tagIdsJson.present) {
-      map['tag_ids_json'] = Variable<String>(tagIdsJson.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('JournalEntriesCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('date: $date, ')
-          ..write('settledOn: $settledOn, ')
-          ..write('narration: $narration, ')
-          ..write('payee: $payee, ')
-          ..write('flag: $flag, ')
-          ..write('tagIdsJson: $tagIdsJson, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $PostingsTable extends Postings
-    with TableInfo<$PostingsTable, PostingRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $PostingsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($PostingsTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _journalEntryIdMeta = const VerificationMeta(
-    'journalEntryId',
-  );
-  @override
-  late final GeneratedColumn<String> journalEntryId = GeneratedColumn<String>(
-    'journal_entry_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _positionMeta = const VerificationMeta(
-    'position',
-  );
-  @override
-  late final GeneratedColumn<int> position = GeneratedColumn<int>(
-    'position',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _accountIdMeta = const VerificationMeta(
-    'accountId',
-  );
-  @override
-  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
-    'account_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal, String> units =
-      GeneratedColumn<String>(
-        'units',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Decimal>($PostingsTable.$converterunits);
-  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
-  @override
-  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
-    'unit',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> costPerUnit =
-      GeneratedColumn<String>(
-        'cost_per_unit',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>($PostingsTable.$convertercostPerUnitn);
-  static const VerificationMeta _costCurrencyMeta = const VerificationMeta(
-    'costCurrency',
-  );
-  @override
-  late final GeneratedColumn<String> costCurrency = GeneratedColumn<String>(
-    'cost_currency',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _costLotIdMeta = const VerificationMeta(
-    'costLotId',
-  );
-  @override
-  late final GeneratedColumn<String> costLotId = GeneratedColumn<String>(
-    'cost_lot_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _costAcquiredOnMeta = const VerificationMeta(
-    'costAcquiredOn',
-  );
-  @override
-  late final GeneratedColumn<DateTime> costAcquiredOn =
-      GeneratedColumn<DateTime>(
-        'cost_acquired_on',
-        aliasedName,
-        true,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: false,
-      );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal?, String> pricePerUnit =
-      GeneratedColumn<String>(
-        'price_per_unit',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<Decimal?>($PostingsTable.$converterpricePerUnitn);
-  static const VerificationMeta _priceCurrencyMeta = const VerificationMeta(
-    'priceCurrency',
-  );
-  @override
-  late final GeneratedColumn<String> priceCurrency = GeneratedColumn<String>(
-    'price_currency',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    journalEntryId,
-    position,
-    accountId,
-    units,
-    unit,
-    costPerUnit,
-    costCurrency,
-    costLotId,
-    costAcquiredOn,
-    pricePerUnit,
-    priceCurrency,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'postings';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<PostingRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('journal_entry_id')) {
-      context.handle(
-        _journalEntryIdMeta,
-        journalEntryId.isAcceptableOrUnknown(
-          data['journal_entry_id']!,
-          _journalEntryIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_journalEntryIdMeta);
-    }
-    if (data.containsKey('position')) {
-      context.handle(
-        _positionMeta,
-        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_positionMeta);
-    }
-    if (data.containsKey('account_id')) {
-      context.handle(
-        _accountIdMeta,
-        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_accountIdMeta);
-    }
-    if (data.containsKey('unit')) {
-      context.handle(
-        _unitMeta,
-        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_unitMeta);
-    }
-    if (data.containsKey('cost_currency')) {
-      context.handle(
-        _costCurrencyMeta,
-        costCurrency.isAcceptableOrUnknown(
-          data['cost_currency']!,
-          _costCurrencyMeta,
-        ),
-      );
-    }
-    if (data.containsKey('cost_lot_id')) {
-      context.handle(
-        _costLotIdMeta,
-        costLotId.isAcceptableOrUnknown(data['cost_lot_id']!, _costLotIdMeta),
-      );
-    }
-    if (data.containsKey('cost_acquired_on')) {
-      context.handle(
-        _costAcquiredOnMeta,
-        costAcquiredOn.isAcceptableOrUnknown(
-          data['cost_acquired_on']!,
-          _costAcquiredOnMeta,
-        ),
-      );
-    }
-    if (data.containsKey('price_currency')) {
-      context.handle(
-        _priceCurrencyMeta,
-        priceCurrency.isAcceptableOrUnknown(
-          data['price_currency']!,
-          _priceCurrencyMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  PostingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return PostingRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $PostingsTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      journalEntryId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}journal_entry_id'],
-      )!,
-      position: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}position'],
-      )!,
-      accountId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}account_id'],
-      )!,
-      units: $PostingsTable.$converterunits.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}units'],
-        )!,
-      ),
-      unit: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}unit'],
-      )!,
-      costPerUnit: $PostingsTable.$convertercostPerUnitn.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}cost_per_unit'],
-        ),
-      ),
-      costCurrency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}cost_currency'],
-      ),
-      costLotId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}cost_lot_id'],
-      ),
-      costAcquiredOn: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}cost_acquired_on'],
-      ),
-      pricePerUnit: $PostingsTable.$converterpricePerUnitn.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}price_per_unit'],
-        ),
-      ),
-      priceCurrency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}price_currency'],
-      ),
-    );
-  }
-
-  @override
-  $PostingsTable createAlias(String alias) {
-    return $PostingsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<Decimal, String> $converterunits =
-      const DecimalConverter();
-  static TypeConverter<Decimal, String> $convertercostPerUnit =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $convertercostPerUnitn =
-      NullAwareTypeConverter.wrap($convertercostPerUnit);
-  static TypeConverter<Decimal, String> $converterpricePerUnit =
-      const DecimalConverter();
-  static TypeConverter<Decimal?, String?> $converterpricePerUnitn =
-      NullAwareTypeConverter.wrap($converterpricePerUnit);
-}
-
-class PostingRow extends DataClass implements Insertable<PostingRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String journalEntryId;
-
-  /// 0-based render order within the parent JE. Stored explicitly so a
-  /// re-order is a single-column LWW update rather than a JE-wide
-  /// rewrite that touches every leg.
-  final int position;
-  final String accountId;
-
-  /// Signed delta applied to the account's balance in [unit] terms.
-  final Decimal units;
-
-  /// Either an ISO 4217 currency code (`'CNY'`, `'USD'`) or an
-  /// `assets.id` (`'us_stock:AAPL'`). The unit's namespace is
-  /// disambiguated at read time by joining against `assets`.
-  final String unit;
-  final Decimal? costPerUnit;
-  final String? costCurrency;
-  final String? costLotId;
-  final DateTime? costAcquiredOn;
-  final Decimal? pricePerUnit;
-  final String? priceCurrency;
-  const PostingRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.journalEntryId,
-    required this.position,
-    required this.accountId,
-    required this.units,
-    required this.unit,
-    this.costPerUnit,
-    this.costCurrency,
-    this.costLotId,
-    this.costAcquiredOn,
-    this.pricePerUnit,
-    this.priceCurrency,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>($PostingsTable.$converterhlc.toSql(hlc));
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['journal_entry_id'] = Variable<String>(journalEntryId);
-    map['position'] = Variable<int>(position);
-    map['account_id'] = Variable<String>(accountId);
-    {
-      map['units'] = Variable<String>(
-        $PostingsTable.$converterunits.toSql(units),
-      );
-    }
-    map['unit'] = Variable<String>(unit);
-    if (!nullToAbsent || costPerUnit != null) {
-      map['cost_per_unit'] = Variable<String>(
-        $PostingsTable.$convertercostPerUnitn.toSql(costPerUnit),
-      );
-    }
-    if (!nullToAbsent || costCurrency != null) {
-      map['cost_currency'] = Variable<String>(costCurrency);
-    }
-    if (!nullToAbsent || costLotId != null) {
-      map['cost_lot_id'] = Variable<String>(costLotId);
-    }
-    if (!nullToAbsent || costAcquiredOn != null) {
-      map['cost_acquired_on'] = Variable<DateTime>(costAcquiredOn);
-    }
-    if (!nullToAbsent || pricePerUnit != null) {
-      map['price_per_unit'] = Variable<String>(
-        $PostingsTable.$converterpricePerUnitn.toSql(pricePerUnit),
-      );
-    }
-    if (!nullToAbsent || priceCurrency != null) {
-      map['price_currency'] = Variable<String>(priceCurrency);
-    }
-    return map;
-  }
-
-  PostingsCompanion toCompanion(bool nullToAbsent) {
-    return PostingsCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      journalEntryId: Value(journalEntryId),
-      position: Value(position),
-      accountId: Value(accountId),
-      units: Value(units),
-      unit: Value(unit),
-      costPerUnit: costPerUnit == null && nullToAbsent
-          ? const Value.absent()
-          : Value(costPerUnit),
-      costCurrency: costCurrency == null && nullToAbsent
-          ? const Value.absent()
-          : Value(costCurrency),
-      costLotId: costLotId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(costLotId),
-      costAcquiredOn: costAcquiredOn == null && nullToAbsent
-          ? const Value.absent()
-          : Value(costAcquiredOn),
-      pricePerUnit: pricePerUnit == null && nullToAbsent
-          ? const Value.absent()
-          : Value(pricePerUnit),
-      priceCurrency: priceCurrency == null && nullToAbsent
-          ? const Value.absent()
-          : Value(priceCurrency),
-    );
-  }
-
-  factory PostingRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return PostingRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      journalEntryId: serializer.fromJson<String>(json['journalEntryId']),
-      position: serializer.fromJson<int>(json['position']),
-      accountId: serializer.fromJson<String>(json['accountId']),
-      units: serializer.fromJson<Decimal>(json['units']),
-      unit: serializer.fromJson<String>(json['unit']),
-      costPerUnit: serializer.fromJson<Decimal?>(json['costPerUnit']),
-      costCurrency: serializer.fromJson<String?>(json['costCurrency']),
-      costLotId: serializer.fromJson<String?>(json['costLotId']),
-      costAcquiredOn: serializer.fromJson<DateTime?>(json['costAcquiredOn']),
-      pricePerUnit: serializer.fromJson<Decimal?>(json['pricePerUnit']),
-      priceCurrency: serializer.fromJson<String?>(json['priceCurrency']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'journalEntryId': serializer.toJson<String>(journalEntryId),
-      'position': serializer.toJson<int>(position),
-      'accountId': serializer.toJson<String>(accountId),
-      'units': serializer.toJson<Decimal>(units),
-      'unit': serializer.toJson<String>(unit),
-      'costPerUnit': serializer.toJson<Decimal?>(costPerUnit),
-      'costCurrency': serializer.toJson<String?>(costCurrency),
-      'costLotId': serializer.toJson<String?>(costLotId),
-      'costAcquiredOn': serializer.toJson<DateTime?>(costAcquiredOn),
-      'pricePerUnit': serializer.toJson<Decimal?>(pricePerUnit),
-      'priceCurrency': serializer.toJson<String?>(priceCurrency),
-    };
-  }
-
-  PostingRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? journalEntryId,
-    int? position,
-    String? accountId,
-    Decimal? units,
-    String? unit,
-    Value<Decimal?> costPerUnit = const Value.absent(),
-    Value<String?> costCurrency = const Value.absent(),
-    Value<String?> costLotId = const Value.absent(),
-    Value<DateTime?> costAcquiredOn = const Value.absent(),
-    Value<Decimal?> pricePerUnit = const Value.absent(),
-    Value<String?> priceCurrency = const Value.absent(),
-  }) => PostingRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    journalEntryId: journalEntryId ?? this.journalEntryId,
-    position: position ?? this.position,
-    accountId: accountId ?? this.accountId,
-    units: units ?? this.units,
-    unit: unit ?? this.unit,
-    costPerUnit: costPerUnit.present ? costPerUnit.value : this.costPerUnit,
-    costCurrency: costCurrency.present ? costCurrency.value : this.costCurrency,
-    costLotId: costLotId.present ? costLotId.value : this.costLotId,
-    costAcquiredOn: costAcquiredOn.present
-        ? costAcquiredOn.value
-        : this.costAcquiredOn,
-    pricePerUnit: pricePerUnit.present ? pricePerUnit.value : this.pricePerUnit,
-    priceCurrency: priceCurrency.present
-        ? priceCurrency.value
-        : this.priceCurrency,
-  );
-  PostingRow copyWithCompanion(PostingsCompanion data) {
-    return PostingRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      journalEntryId: data.journalEntryId.present
-          ? data.journalEntryId.value
-          : this.journalEntryId,
-      position: data.position.present ? data.position.value : this.position,
-      accountId: data.accountId.present ? data.accountId.value : this.accountId,
-      units: data.units.present ? data.units.value : this.units,
-      unit: data.unit.present ? data.unit.value : this.unit,
-      costPerUnit: data.costPerUnit.present
-          ? data.costPerUnit.value
-          : this.costPerUnit,
-      costCurrency: data.costCurrency.present
-          ? data.costCurrency.value
-          : this.costCurrency,
-      costLotId: data.costLotId.present ? data.costLotId.value : this.costLotId,
-      costAcquiredOn: data.costAcquiredOn.present
-          ? data.costAcquiredOn.value
-          : this.costAcquiredOn,
-      pricePerUnit: data.pricePerUnit.present
-          ? data.pricePerUnit.value
-          : this.pricePerUnit,
-      priceCurrency: data.priceCurrency.present
-          ? data.priceCurrency.value
-          : this.priceCurrency,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PostingRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('journalEntryId: $journalEntryId, ')
-          ..write('position: $position, ')
-          ..write('accountId: $accountId, ')
-          ..write('units: $units, ')
-          ..write('unit: $unit, ')
-          ..write('costPerUnit: $costPerUnit, ')
-          ..write('costCurrency: $costCurrency, ')
-          ..write('costLotId: $costLotId, ')
-          ..write('costAcquiredOn: $costAcquiredOn, ')
-          ..write('pricePerUnit: $pricePerUnit, ')
-          ..write('priceCurrency: $priceCurrency')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    journalEntryId,
-    position,
-    accountId,
-    units,
-    unit,
-    costPerUnit,
-    costCurrency,
-    costLotId,
-    costAcquiredOn,
-    pricePerUnit,
-    priceCurrency,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is PostingRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.journalEntryId == this.journalEntryId &&
-          other.position == this.position &&
-          other.accountId == this.accountId &&
-          other.units == this.units &&
-          other.unit == this.unit &&
-          other.costPerUnit == this.costPerUnit &&
-          other.costCurrency == this.costCurrency &&
-          other.costLotId == this.costLotId &&
-          other.costAcquiredOn == this.costAcquiredOn &&
-          other.pricePerUnit == this.pricePerUnit &&
-          other.priceCurrency == this.priceCurrency);
-}
-
-class PostingsCompanion extends UpdateCompanion<PostingRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> journalEntryId;
-  final Value<int> position;
-  final Value<String> accountId;
-  final Value<Decimal> units;
-  final Value<String> unit;
-  final Value<Decimal?> costPerUnit;
-  final Value<String?> costCurrency;
-  final Value<String?> costLotId;
-  final Value<DateTime?> costAcquiredOn;
-  final Value<Decimal?> pricePerUnit;
-  final Value<String?> priceCurrency;
-  final Value<int> rowid;
-  const PostingsCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.journalEntryId = const Value.absent(),
-    this.position = const Value.absent(),
-    this.accountId = const Value.absent(),
-    this.units = const Value.absent(),
-    this.unit = const Value.absent(),
-    this.costPerUnit = const Value.absent(),
-    this.costCurrency = const Value.absent(),
-    this.costLotId = const Value.absent(),
-    this.costAcquiredOn = const Value.absent(),
-    this.pricePerUnit = const Value.absent(),
-    this.priceCurrency = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  PostingsCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String journalEntryId,
-    required int position,
-    required String accountId,
-    required Decimal units,
-    required String unit,
-    this.costPerUnit = const Value.absent(),
-    this.costCurrency = const Value.absent(),
-    this.costLotId = const Value.absent(),
-    this.costAcquiredOn = const Value.absent(),
-    this.pricePerUnit = const Value.absent(),
-    this.priceCurrency = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       journalEntryId = Value(journalEntryId),
-       position = Value(position),
-       accountId = Value(accountId),
-       units = Value(units),
-       unit = Value(unit);
-  static Insertable<PostingRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? journalEntryId,
-    Expression<int>? position,
-    Expression<String>? accountId,
-    Expression<String>? units,
-    Expression<String>? unit,
-    Expression<String>? costPerUnit,
-    Expression<String>? costCurrency,
-    Expression<String>? costLotId,
-    Expression<DateTime>? costAcquiredOn,
-    Expression<String>? pricePerUnit,
-    Expression<String>? priceCurrency,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (journalEntryId != null) 'journal_entry_id': journalEntryId,
-      if (position != null) 'position': position,
-      if (accountId != null) 'account_id': accountId,
-      if (units != null) 'units': units,
-      if (unit != null) 'unit': unit,
-      if (costPerUnit != null) 'cost_per_unit': costPerUnit,
-      if (costCurrency != null) 'cost_currency': costCurrency,
-      if (costLotId != null) 'cost_lot_id': costLotId,
-      if (costAcquiredOn != null) 'cost_acquired_on': costAcquiredOn,
-      if (pricePerUnit != null) 'price_per_unit': pricePerUnit,
-      if (priceCurrency != null) 'price_currency': priceCurrency,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  PostingsCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? journalEntryId,
-    Value<int>? position,
-    Value<String>? accountId,
-    Value<Decimal>? units,
-    Value<String>? unit,
-    Value<Decimal?>? costPerUnit,
-    Value<String?>? costCurrency,
-    Value<String?>? costLotId,
-    Value<DateTime?>? costAcquiredOn,
-    Value<Decimal?>? pricePerUnit,
-    Value<String?>? priceCurrency,
-    Value<int>? rowid,
-  }) {
-    return PostingsCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      journalEntryId: journalEntryId ?? this.journalEntryId,
-      position: position ?? this.position,
-      accountId: accountId ?? this.accountId,
-      units: units ?? this.units,
-      unit: unit ?? this.unit,
-      costPerUnit: costPerUnit ?? this.costPerUnit,
-      costCurrency: costCurrency ?? this.costCurrency,
-      costLotId: costLotId ?? this.costLotId,
-      costAcquiredOn: costAcquiredOn ?? this.costAcquiredOn,
-      pricePerUnit: pricePerUnit ?? this.pricePerUnit,
-      priceCurrency: priceCurrency ?? this.priceCurrency,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $PostingsTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (journalEntryId.present) {
-      map['journal_entry_id'] = Variable<String>(journalEntryId.value);
-    }
-    if (position.present) {
-      map['position'] = Variable<int>(position.value);
-    }
-    if (accountId.present) {
-      map['account_id'] = Variable<String>(accountId.value);
-    }
-    if (units.present) {
-      map['units'] = Variable<String>(
-        $PostingsTable.$converterunits.toSql(units.value),
-      );
-    }
-    if (unit.present) {
-      map['unit'] = Variable<String>(unit.value);
-    }
-    if (costPerUnit.present) {
-      map['cost_per_unit'] = Variable<String>(
-        $PostingsTable.$convertercostPerUnitn.toSql(costPerUnit.value),
-      );
-    }
-    if (costCurrency.present) {
-      map['cost_currency'] = Variable<String>(costCurrency.value);
-    }
-    if (costLotId.present) {
-      map['cost_lot_id'] = Variable<String>(costLotId.value);
-    }
-    if (costAcquiredOn.present) {
-      map['cost_acquired_on'] = Variable<DateTime>(costAcquiredOn.value);
-    }
-    if (pricePerUnit.present) {
-      map['price_per_unit'] = Variable<String>(
-        $PostingsTable.$converterpricePerUnitn.toSql(pricePerUnit.value),
-      );
-    }
-    if (priceCurrency.present) {
-      map['price_currency'] = Variable<String>(priceCurrency.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PostingsCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('journalEntryId: $journalEntryId, ')
-          ..write('position: $position, ')
-          ..write('accountId: $accountId, ')
-          ..write('units: $units, ')
-          ..write('unit: $unit, ')
-          ..write('costPerUnit: $costPerUnit, ')
-          ..write('costCurrency: $costCurrency, ')
-          ..write('costLotId: $costLotId, ')
-          ..write('costAcquiredOn: $costAcquiredOn, ')
-          ..write('pricePerUnit: $pricePerUnit, ')
-          ..write('priceCurrency: $priceCurrency, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $PricesTable extends Prices with TableInfo<$PricesTable, PriceRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $PricesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($PricesTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
-  @override
-  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
-    'unit',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _quoteCurrencyMeta = const VerificationMeta(
-    'quoteCurrency',
-  );
-  @override
-  late final GeneratedColumn<String> quoteCurrency = GeneratedColumn<String>(
-    'quote_currency',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 3,
-      maxTextLength: 8,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _observedOnMeta = const VerificationMeta(
-    'observedOn',
-  );
-  @override
-  late final GeneratedColumn<DateTime> observedOn = GeneratedColumn<DateTime>(
-    'observed_on',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Decimal, String> perUnit =
-      GeneratedColumn<String>(
-        'per_unit',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Decimal>($PricesTable.$converterperUnit);
-  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
-  @override
-  late final GeneratedColumn<String> source = GeneratedColumn<String>(
-    'source',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    unit,
-    quoteCurrency,
-    observedOn,
-    perUnit,
-    source,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'prices';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<PriceRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('unit')) {
-      context.handle(
-        _unitMeta,
-        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_unitMeta);
-    }
-    if (data.containsKey('quote_currency')) {
-      context.handle(
-        _quoteCurrencyMeta,
-        quoteCurrency.isAcceptableOrUnknown(
-          data['quote_currency']!,
-          _quoteCurrencyMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_quoteCurrencyMeta);
-    }
-    if (data.containsKey('observed_on')) {
-      context.handle(
-        _observedOnMeta,
-        observedOn.isAcceptableOrUnknown(data['observed_on']!, _observedOnMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_observedOnMeta);
-    }
-    if (data.containsKey('source')) {
-      context.handle(
-        _sourceMeta,
-        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_sourceMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  PriceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return PriceRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $PricesTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      unit: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}unit'],
-      )!,
-      quoteCurrency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}quote_currency'],
-      )!,
-      observedOn: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}observed_on'],
-      )!,
-      perUnit: $PricesTable.$converterperUnit.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}per_unit'],
-        )!,
-      ),
-      source: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source'],
-      )!,
-    );
-  }
-
-  @override
-  $PricesTable createAlias(String alias) {
-    return $PricesTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<Decimal, String> $converterperUnit =
-      const DecimalConverter();
-}
-
-class PriceRow extends DataClass implements Insertable<PriceRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String unit;
-  final String quoteCurrency;
-  final DateTime observedOn;
-  final Decimal perUnit;
-  final String source;
-  const PriceRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.unit,
-    required this.quoteCurrency,
-    required this.observedOn,
-    required this.perUnit,
-    required this.source,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>($PricesTable.$converterhlc.toSql(hlc));
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['unit'] = Variable<String>(unit);
-    map['quote_currency'] = Variable<String>(quoteCurrency);
-    map['observed_on'] = Variable<DateTime>(observedOn);
-    {
-      map['per_unit'] = Variable<String>(
-        $PricesTable.$converterperUnit.toSql(perUnit),
-      );
-    }
-    map['source'] = Variable<String>(source);
-    return map;
-  }
-
-  PricesCompanion toCompanion(bool nullToAbsent) {
-    return PricesCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      unit: Value(unit),
-      quoteCurrency: Value(quoteCurrency),
-      observedOn: Value(observedOn),
-      perUnit: Value(perUnit),
-      source: Value(source),
-    );
-  }
-
-  factory PriceRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return PriceRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      unit: serializer.fromJson<String>(json['unit']),
-      quoteCurrency: serializer.fromJson<String>(json['quoteCurrency']),
-      observedOn: serializer.fromJson<DateTime>(json['observedOn']),
-      perUnit: serializer.fromJson<Decimal>(json['perUnit']),
-      source: serializer.fromJson<String>(json['source']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'unit': serializer.toJson<String>(unit),
-      'quoteCurrency': serializer.toJson<String>(quoteCurrency),
-      'observedOn': serializer.toJson<DateTime>(observedOn),
-      'perUnit': serializer.toJson<Decimal>(perUnit),
-      'source': serializer.toJson<String>(source),
-    };
-  }
-
-  PriceRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? unit,
-    String? quoteCurrency,
-    DateTime? observedOn,
-    Decimal? perUnit,
-    String? source,
-  }) => PriceRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    unit: unit ?? this.unit,
-    quoteCurrency: quoteCurrency ?? this.quoteCurrency,
-    observedOn: observedOn ?? this.observedOn,
-    perUnit: perUnit ?? this.perUnit,
-    source: source ?? this.source,
-  );
-  PriceRow copyWithCompanion(PricesCompanion data) {
-    return PriceRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      unit: data.unit.present ? data.unit.value : this.unit,
-      quoteCurrency: data.quoteCurrency.present
-          ? data.quoteCurrency.value
-          : this.quoteCurrency,
-      observedOn: data.observedOn.present
-          ? data.observedOn.value
-          : this.observedOn,
-      perUnit: data.perUnit.present ? data.perUnit.value : this.perUnit,
-      source: data.source.present ? data.source.value : this.source,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PriceRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('unit: $unit, ')
-          ..write('quoteCurrency: $quoteCurrency, ')
-          ..write('observedOn: $observedOn, ')
-          ..write('perUnit: $perUnit, ')
-          ..write('source: $source')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    unit,
-    quoteCurrency,
-    observedOn,
-    perUnit,
-    source,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is PriceRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.unit == this.unit &&
-          other.quoteCurrency == this.quoteCurrency &&
-          other.observedOn == this.observedOn &&
-          other.perUnit == this.perUnit &&
-          other.source == this.source);
-}
-
-class PricesCompanion extends UpdateCompanion<PriceRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> unit;
-  final Value<String> quoteCurrency;
-  final Value<DateTime> observedOn;
-  final Value<Decimal> perUnit;
-  final Value<String> source;
-  final Value<int> rowid;
-  const PricesCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.unit = const Value.absent(),
-    this.quoteCurrency = const Value.absent(),
-    this.observedOn = const Value.absent(),
-    this.perUnit = const Value.absent(),
-    this.source = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  PricesCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String unit,
-    required String quoteCurrency,
-    required DateTime observedOn,
-    required Decimal perUnit,
-    required String source,
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       unit = Value(unit),
-       quoteCurrency = Value(quoteCurrency),
-       observedOn = Value(observedOn),
-       perUnit = Value(perUnit),
-       source = Value(source);
-  static Insertable<PriceRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? unit,
-    Expression<String>? quoteCurrency,
-    Expression<DateTime>? observedOn,
-    Expression<String>? perUnit,
-    Expression<String>? source,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (unit != null) 'unit': unit,
-      if (quoteCurrency != null) 'quote_currency': quoteCurrency,
-      if (observedOn != null) 'observed_on': observedOn,
-      if (perUnit != null) 'per_unit': perUnit,
-      if (source != null) 'source': source,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  PricesCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? unit,
-    Value<String>? quoteCurrency,
-    Value<DateTime>? observedOn,
-    Value<Decimal>? perUnit,
-    Value<String>? source,
-    Value<int>? rowid,
-  }) {
-    return PricesCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      unit: unit ?? this.unit,
-      quoteCurrency: quoteCurrency ?? this.quoteCurrency,
-      observedOn: observedOn ?? this.observedOn,
-      perUnit: perUnit ?? this.perUnit,
-      source: source ?? this.source,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $PricesTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (unit.present) {
-      map['unit'] = Variable<String>(unit.value);
-    }
-    if (quoteCurrency.present) {
-      map['quote_currency'] = Variable<String>(quoteCurrency.value);
-    }
-    if (observedOn.present) {
-      map['observed_on'] = Variable<DateTime>(observedOn.value);
-    }
-    if (perUnit.present) {
-      map['per_unit'] = Variable<String>(
-        $PricesTable.$converterperUnit.toSql(perUnit.value),
-      );
-    }
-    if (source.present) {
-      map['source'] = Variable<String>(source.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PricesCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('unit: $unit, ')
-          ..write('quoteCurrency: $quoteCurrency, ')
-          ..write('observedOn: $observedOn, ')
-          ..write('perUnit: $perUnit, ')
-          ..write('source: $source, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -16892,7 +14844,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SettingsTableTable settingsTable = $SettingsTableTable(this);
   late final $AccountsTable accounts = $AccountsTable(this);
   late final $AssetsTable assets = $AssetsTable(this);
-  late final $TransactionsTable transactions = $TransactionsTable(this);
+  late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
+  late final $PostingsTable postings = $PostingsTable(this);
+  late final $PricesTable prices = $PricesTable(this);
   late final $LiabilitiesTable liabilities = $LiabilitiesTable(this);
   late final $AmortizationEntriesTable amortizationEntries =
       $AmortizationEntriesTable(this);
@@ -16901,8 +14855,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TagsTable tags = $TagsTable(this);
   late final $TagLinksTable tagLinks = $TagLinksTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
-  late final $ExpenseCategoriesTable expenseCategories =
-      $ExpenseCategoriesTable(this);
   late final $GoalsTable goals = $GoalsTable(this);
   late final $DevicesTable devices = $DevicesTable(this);
   late final $OpLogsTable opLogs = $OpLogsTable(this);
@@ -16915,9 +14867,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SecuritiesCatalogTable(this);
   late final $SecuritiesCatalogMetaTable securitiesCatalogMeta =
       $SecuritiesCatalogMetaTable(this);
-  late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
-  late final $PostingsTable postings = $PostingsTable(this);
-  late final $PricesTable prices = $PricesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -16927,7 +14876,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     settingsTable,
     accounts,
     assets,
-    transactions,
+    journalEntries,
+    postings,
+    prices,
     liabilities,
     amortizationEntries,
     currencies,
@@ -16935,7 +14886,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     tags,
     tagLinks,
     categories,
-    expenseCategories,
     goals,
     devices,
     opLogs,
@@ -16944,9 +14894,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     marketSymbolSearches,
     securitiesCatalog,
     securitiesCatalogMeta,
-    journalEntries,
-    postings,
-    prices,
   ];
 }
 
@@ -17987,8 +15934,6 @@ typedef $$AssetsTableCreateCompanionBuilder =
       Value<String?> industry,
       Value<String?> region,
       Value<String?> isin,
-      Value<Decimal?> lastPrice,
-      Value<DateTime?> lastPriceAt,
       Value<String?> logoUrl,
       Value<String?> metadataJson,
       Value<int> rowid,
@@ -18009,8 +15954,6 @@ typedef $$AssetsTableUpdateCompanionBuilder =
       Value<String?> industry,
       Value<String?> region,
       Value<String?> isin,
-      Value<Decimal?> lastPrice,
-      Value<DateTime?> lastPriceAt,
       Value<String?> logoUrl,
       Value<String?> metadataJson,
       Value<int> rowid,
@@ -18094,17 +16037,6 @@ class $$AssetsTableFilterComposer
 
   ColumnFilters<String> get isin => $composableBuilder(
     column: $table.isin,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get lastPrice =>
-      $composableBuilder(
-        column: $table.lastPrice,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get lastPriceAt => $composableBuilder(
-    column: $table.lastPriceAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18198,16 +16130,6 @@ class $$AssetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get lastPrice => $composableBuilder(
-    column: $table.lastPrice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get lastPriceAt => $composableBuilder(
-    column: $table.lastPriceAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get logoUrl => $composableBuilder(
     column: $table.logoUrl,
     builder: (column) => ColumnOrderings(column),
@@ -18274,14 +16196,6 @@ class $$AssetsTableAnnotationComposer
   GeneratedColumn<String> get isin =>
       $composableBuilder(column: $table.isin, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<Decimal?, String> get lastPrice =>
-      $composableBuilder(column: $table.lastPrice, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastPriceAt => $composableBuilder(
-    column: $table.lastPriceAt,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<String> get logoUrl =>
       $composableBuilder(column: $table.logoUrl, builder: (column) => column);
 
@@ -18333,8 +16247,6 @@ class $$AssetsTableTableManager
                 Value<String?> industry = const Value.absent(),
                 Value<String?> region = const Value.absent(),
                 Value<String?> isin = const Value.absent(),
-                Value<Decimal?> lastPrice = const Value.absent(),
-                Value<DateTime?> lastPriceAt = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
                 Value<String?> metadataJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -18353,8 +16265,6 @@ class $$AssetsTableTableManager
                 industry: industry,
                 region: region,
                 isin: isin,
-                lastPrice: lastPrice,
-                lastPriceAt: lastPriceAt,
                 logoUrl: logoUrl,
                 metadataJson: metadataJson,
                 rowid: rowid,
@@ -18375,8 +16285,6 @@ class $$AssetsTableTableManager
                 Value<String?> industry = const Value.absent(),
                 Value<String?> region = const Value.absent(),
                 Value<String?> isin = const Value.absent(),
-                Value<Decimal?> lastPrice = const Value.absent(),
-                Value<DateTime?> lastPriceAt = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
                 Value<String?> metadataJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -18395,8 +16303,6 @@ class $$AssetsTableTableManager
                 industry: industry,
                 region: region,
                 isin: isin,
-                lastPrice: lastPrice,
-                lastPriceAt: lastPriceAt,
                 logoUrl: logoUrl,
                 metadataJson: metadataJson,
                 rowid: rowid,
@@ -18423,60 +16329,42 @@ typedef $$AssetsTableProcessedTableManager =
       AssetRow,
       PrefetchHooks Function()
     >;
-typedef $$TransactionsTableCreateCompanionBuilder =
-    TransactionsCompanion Function({
+typedef $$JournalEntriesTableCreateCompanionBuilder =
+    JournalEntriesCompanion Function({
       required String ownerUserId,
       required DateTime updatedAt,
       required String updatedByDevice,
       required Hlc hlc,
       Value<DateTime?> deletedAt,
       required String id,
-      required String accountId,
-      Value<String?> assetId,
-      required TransactionType type,
-      required Decimal quantity,
-      required Decimal price,
-      required String currency,
-      required DateTime tradeDate,
-      Value<DateTime?> settleDate,
-      Value<Decimal?> fee,
-      Value<Decimal?> tax,
-      Value<String?> counterAccountId,
-      Value<String?> lotId,
-      Value<String?> note,
-      Value<String?> expenseMetadataJson,
-      Value<String?> transferGroupId,
+      required DateTime date,
+      Value<DateTime?> settledOn,
+      required String narration,
+      Value<String?> payee,
+      Value<EntryFlag> flag,
+      Value<String> tagIdsJson,
       Value<int> rowid,
     });
-typedef $$TransactionsTableUpdateCompanionBuilder =
-    TransactionsCompanion Function({
+typedef $$JournalEntriesTableUpdateCompanionBuilder =
+    JournalEntriesCompanion Function({
       Value<String> ownerUserId,
       Value<DateTime> updatedAt,
       Value<String> updatedByDevice,
       Value<Hlc> hlc,
       Value<DateTime?> deletedAt,
       Value<String> id,
-      Value<String> accountId,
-      Value<String?> assetId,
-      Value<TransactionType> type,
-      Value<Decimal> quantity,
-      Value<Decimal> price,
-      Value<String> currency,
-      Value<DateTime> tradeDate,
-      Value<DateTime?> settleDate,
-      Value<Decimal?> fee,
-      Value<Decimal?> tax,
-      Value<String?> counterAccountId,
-      Value<String?> lotId,
-      Value<String?> note,
-      Value<String?> expenseMetadataJson,
-      Value<String?> transferGroupId,
+      Value<DateTime> date,
+      Value<DateTime?> settledOn,
+      Value<String> narration,
+      Value<String?> payee,
+      Value<EntryFlag> flag,
+      Value<String> tagIdsJson,
       Value<int> rowid,
     });
 
-class $$TransactionsTableFilterComposer
-    extends Composer<_$AppDatabase, $TransactionsTable> {
-  $$TransactionsTableFilterComposer({
+class $$JournalEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTable> {
+  $$JournalEntriesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -18514,90 +16402,41 @@ class $$TransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get accountId => $composableBuilder(
-    column: $table.accountId,
+  ColumnFilters<DateTime> get date => $composableBuilder(
+    column: $table.date,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get assetId => $composableBuilder(
-    column: $table.assetId,
+  ColumnFilters<DateTime> get settledOn => $composableBuilder(
+    column: $table.settledOn,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<TransactionType, TransactionType, String>
-  get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
+  ColumnFilters<String> get narration => $composableBuilder(
+    column: $table.narration,
+    builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get quantity =>
+  ColumnFilters<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<EntryFlag, EntryFlag, String> get flag =>
       $composableBuilder(
-        column: $table.quantity,
+        column: $table.flag,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
 
-  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get price =>
-      $composableBuilder(
-        column: $table.price,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get currency => $composableBuilder(
-    column: $table.currency,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get tradeDate => $composableBuilder(
-    column: $table.tradeDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get settleDate => $composableBuilder(
-    column: $table.settleDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get fee =>
-      $composableBuilder(
-        column: $table.fee,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get tax =>
-      $composableBuilder(
-        column: $table.tax,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get counterAccountId => $composableBuilder(
-    column: $table.counterAccountId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get lotId => $composableBuilder(
-    column: $table.lotId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get expenseMetadataJson => $composableBuilder(
-    column: $table.expenseMetadataJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get transferGroupId => $composableBuilder(
-    column: $table.transferGroupId,
+  ColumnFilters<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
     builder: (column) => ColumnFilters(column),
   );
 }
 
-class $$TransactionsTableOrderingComposer
-    extends Composer<_$AppDatabase, $TransactionsTable> {
-  $$TransactionsTableOrderingComposer({
+class $$JournalEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTable> {
+  $$JournalEntriesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -18634,85 +16473,40 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get accountId => $composableBuilder(
-    column: $table.accountId,
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+    column: $table.date,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get assetId => $composableBuilder(
-    column: $table.assetId,
+  ColumnOrderings<DateTime> get settledOn => $composableBuilder(
+    column: $table.settledOn,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get type => $composableBuilder(
-    column: $table.type,
+  ColumnOrderings<String> get narration => $composableBuilder(
+    column: $table.narration,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get quantity => $composableBuilder(
-    column: $table.quantity,
+  ColumnOrderings<String> get payee => $composableBuilder(
+    column: $table.payee,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get price => $composableBuilder(
-    column: $table.price,
+  ColumnOrderings<String> get flag => $composableBuilder(
+    column: $table.flag,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get currency => $composableBuilder(
-    column: $table.currency,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get tradeDate => $composableBuilder(
-    column: $table.tradeDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get settleDate => $composableBuilder(
-    column: $table.settleDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get fee => $composableBuilder(
-    column: $table.fee,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get tax => $composableBuilder(
-    column: $table.tax,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get counterAccountId => $composableBuilder(
-    column: $table.counterAccountId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get lotId => $composableBuilder(
-    column: $table.lotId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get expenseMetadataJson => $composableBuilder(
-    column: $table.expenseMetadataJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get transferGroupId => $composableBuilder(
-    column: $table.transferGroupId,
+  ColumnOrderings<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
     builder: (column) => ColumnOrderings(column),
   );
 }
 
-class $$TransactionsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $TransactionsTable> {
-  $$TransactionsTableAnnotationComposer({
+class $$JournalEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $JournalEntriesTable> {
+  $$JournalEntriesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -18741,89 +16535,62 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get accountId =>
-      $composableBuilder(column: $table.accountId, builder: (column) => column);
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
 
-  GeneratedColumn<String> get assetId =>
-      $composableBuilder(column: $table.assetId, builder: (column) => column);
+  GeneratedColumn<DateTime> get settledOn =>
+      $composableBuilder(column: $table.settledOn, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<TransactionType, String> get type =>
-      $composableBuilder(column: $table.type, builder: (column) => column);
+  GeneratedColumn<String> get narration =>
+      $composableBuilder(column: $table.narration, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<Decimal, String> get quantity =>
-      $composableBuilder(column: $table.quantity, builder: (column) => column);
+  GeneratedColumn<String> get payee =>
+      $composableBuilder(column: $table.payee, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<Decimal, String> get price =>
-      $composableBuilder(column: $table.price, builder: (column) => column);
+  GeneratedColumnWithTypeConverter<EntryFlag, String> get flag =>
+      $composableBuilder(column: $table.flag, builder: (column) => column);
 
-  GeneratedColumn<String> get currency =>
-      $composableBuilder(column: $table.currency, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get tradeDate =>
-      $composableBuilder(column: $table.tradeDate, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get settleDate => $composableBuilder(
-    column: $table.settleDate,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get fee =>
-      $composableBuilder(column: $table.fee, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get tax =>
-      $composableBuilder(column: $table.tax, builder: (column) => column);
-
-  GeneratedColumn<String> get counterAccountId => $composableBuilder(
-    column: $table.counterAccountId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get lotId =>
-      $composableBuilder(column: $table.lotId, builder: (column) => column);
-
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
-
-  GeneratedColumn<String> get expenseMetadataJson => $composableBuilder(
-    column: $table.expenseMetadataJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get transferGroupId => $composableBuilder(
-    column: $table.transferGroupId,
+  GeneratedColumn<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
     builder: (column) => column,
   );
 }
 
-class $$TransactionsTableTableManager
+class $$JournalEntriesTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $TransactionsTable,
-          TransactionRow,
-          $$TransactionsTableFilterComposer,
-          $$TransactionsTableOrderingComposer,
-          $$TransactionsTableAnnotationComposer,
-          $$TransactionsTableCreateCompanionBuilder,
-          $$TransactionsTableUpdateCompanionBuilder,
+          $JournalEntriesTable,
+          JournalEntryRow,
+          $$JournalEntriesTableFilterComposer,
+          $$JournalEntriesTableOrderingComposer,
+          $$JournalEntriesTableAnnotationComposer,
+          $$JournalEntriesTableCreateCompanionBuilder,
+          $$JournalEntriesTableUpdateCompanionBuilder,
           (
-            TransactionRow,
-            BaseReferences<_$AppDatabase, $TransactionsTable, TransactionRow>,
+            JournalEntryRow,
+            BaseReferences<
+              _$AppDatabase,
+              $JournalEntriesTable,
+              JournalEntryRow
+            >,
           ),
-          TransactionRow,
+          JournalEntryRow,
           PrefetchHooks Function()
         > {
-  $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
-    : super(
+  $$JournalEntriesTableTableManager(
+    _$AppDatabase db,
+    $JournalEntriesTable table,
+  ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$TransactionsTableFilterComposer($db: db, $table: table),
+              $$JournalEntriesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$TransactionsTableOrderingComposer($db: db, $table: table),
+              $$JournalEntriesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$TransactionsTableAnnotationComposer($db: db, $table: table),
+              $$JournalEntriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> ownerUserId = const Value.absent(),
@@ -18832,44 +16599,26 @@ class $$TransactionsTableTableManager
                 Value<Hlc> hlc = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
-                Value<String> accountId = const Value.absent(),
-                Value<String?> assetId = const Value.absent(),
-                Value<TransactionType> type = const Value.absent(),
-                Value<Decimal> quantity = const Value.absent(),
-                Value<Decimal> price = const Value.absent(),
-                Value<String> currency = const Value.absent(),
-                Value<DateTime> tradeDate = const Value.absent(),
-                Value<DateTime?> settleDate = const Value.absent(),
-                Value<Decimal?> fee = const Value.absent(),
-                Value<Decimal?> tax = const Value.absent(),
-                Value<String?> counterAccountId = const Value.absent(),
-                Value<String?> lotId = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<String?> expenseMetadataJson = const Value.absent(),
-                Value<String?> transferGroupId = const Value.absent(),
+                Value<DateTime> date = const Value.absent(),
+                Value<DateTime?> settledOn = const Value.absent(),
+                Value<String> narration = const Value.absent(),
+                Value<String?> payee = const Value.absent(),
+                Value<EntryFlag> flag = const Value.absent(),
+                Value<String> tagIdsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => TransactionsCompanion(
+              }) => JournalEntriesCompanion(
                 ownerUserId: ownerUserId,
                 updatedAt: updatedAt,
                 updatedByDevice: updatedByDevice,
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
-                accountId: accountId,
-                assetId: assetId,
-                type: type,
-                quantity: quantity,
-                price: price,
-                currency: currency,
-                tradeDate: tradeDate,
-                settleDate: settleDate,
-                fee: fee,
-                tax: tax,
-                counterAccountId: counterAccountId,
-                lotId: lotId,
-                note: note,
-                expenseMetadataJson: expenseMetadataJson,
-                transferGroupId: transferGroupId,
+                date: date,
+                settledOn: settledOn,
+                narration: narration,
+                payee: payee,
+                flag: flag,
+                tagIdsJson: tagIdsJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -18880,44 +16629,26 @@ class $$TransactionsTableTableManager
                 required Hlc hlc,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
-                required String accountId,
-                Value<String?> assetId = const Value.absent(),
-                required TransactionType type,
-                required Decimal quantity,
-                required Decimal price,
-                required String currency,
-                required DateTime tradeDate,
-                Value<DateTime?> settleDate = const Value.absent(),
-                Value<Decimal?> fee = const Value.absent(),
-                Value<Decimal?> tax = const Value.absent(),
-                Value<String?> counterAccountId = const Value.absent(),
-                Value<String?> lotId = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<String?> expenseMetadataJson = const Value.absent(),
-                Value<String?> transferGroupId = const Value.absent(),
+                required DateTime date,
+                Value<DateTime?> settledOn = const Value.absent(),
+                required String narration,
+                Value<String?> payee = const Value.absent(),
+                Value<EntryFlag> flag = const Value.absent(),
+                Value<String> tagIdsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => TransactionsCompanion.insert(
+              }) => JournalEntriesCompanion.insert(
                 ownerUserId: ownerUserId,
                 updatedAt: updatedAt,
                 updatedByDevice: updatedByDevice,
                 hlc: hlc,
                 deletedAt: deletedAt,
                 id: id,
-                accountId: accountId,
-                assetId: assetId,
-                type: type,
-                quantity: quantity,
-                price: price,
-                currency: currency,
-                tradeDate: tradeDate,
-                settleDate: settleDate,
-                fee: fee,
-                tax: tax,
-                counterAccountId: counterAccountId,
-                lotId: lotId,
-                note: note,
-                expenseMetadataJson: expenseMetadataJson,
-                transferGroupId: transferGroupId,
+                date: date,
+                settledOn: settledOn,
+                narration: narration,
+                payee: payee,
+                flag: flag,
+                tagIdsJson: tagIdsJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -18928,21 +16659,786 @@ class $$TransactionsTableTableManager
       );
 }
 
-typedef $$TransactionsTableProcessedTableManager =
+typedef $$JournalEntriesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $TransactionsTable,
-      TransactionRow,
-      $$TransactionsTableFilterComposer,
-      $$TransactionsTableOrderingComposer,
-      $$TransactionsTableAnnotationComposer,
-      $$TransactionsTableCreateCompanionBuilder,
-      $$TransactionsTableUpdateCompanionBuilder,
+      $JournalEntriesTable,
+      JournalEntryRow,
+      $$JournalEntriesTableFilterComposer,
+      $$JournalEntriesTableOrderingComposer,
+      $$JournalEntriesTableAnnotationComposer,
+      $$JournalEntriesTableCreateCompanionBuilder,
+      $$JournalEntriesTableUpdateCompanionBuilder,
       (
-        TransactionRow,
-        BaseReferences<_$AppDatabase, $TransactionsTable, TransactionRow>,
+        JournalEntryRow,
+        BaseReferences<_$AppDatabase, $JournalEntriesTable, JournalEntryRow>,
       ),
-      TransactionRow,
+      JournalEntryRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PostingsTableCreateCompanionBuilder =
+    PostingsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String journalEntryId,
+      required int position,
+      required String accountId,
+      required Decimal units,
+      required String unit,
+      Value<Decimal?> costPerUnit,
+      Value<String?> costCurrency,
+      Value<String?> costLotId,
+      Value<DateTime?> costAcquiredOn,
+      Value<Decimal?> pricePerUnit,
+      Value<String?> priceCurrency,
+      Value<int> rowid,
+    });
+typedef $$PostingsTableUpdateCompanionBuilder =
+    PostingsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> journalEntryId,
+      Value<int> position,
+      Value<String> accountId,
+      Value<Decimal> units,
+      Value<String> unit,
+      Value<Decimal?> costPerUnit,
+      Value<String?> costCurrency,
+      Value<String?> costLotId,
+      Value<DateTime?> costAcquiredOn,
+      Value<Decimal?> pricePerUnit,
+      Value<String?> priceCurrency,
+      Value<int> rowid,
+    });
+
+class $$PostingsTableFilterComposer
+    extends Composer<_$AppDatabase, $PostingsTable> {
+  $$PostingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get journalEntryId => $composableBuilder(
+    column: $table.journalEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get units =>
+      $composableBuilder(
+        column: $table.units,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get costPerUnit =>
+      $composableBuilder(
+        column: $table.costPerUnit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get costCurrency => $composableBuilder(
+    column: $table.costCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get costLotId => $composableBuilder(
+    column: $table.costLotId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get costAcquiredOn => $composableBuilder(
+    column: $table.costAcquiredOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get pricePerUnit =>
+      $composableBuilder(
+        column: $table.pricePerUnit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get priceCurrency => $composableBuilder(
+    column: $table.priceCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PostingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PostingsTable> {
+  $$PostingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get journalEntryId => $composableBuilder(
+    column: $table.journalEntryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get units => $composableBuilder(
+    column: $table.units,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get costPerUnit => $composableBuilder(
+    column: $table.costPerUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get costCurrency => $composableBuilder(
+    column: $table.costCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get costLotId => $composableBuilder(
+    column: $table.costLotId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get costAcquiredOn => $composableBuilder(
+    column: $table.costAcquiredOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pricePerUnit => $composableBuilder(
+    column: $table.pricePerUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get priceCurrency => $composableBuilder(
+    column: $table.priceCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PostingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PostingsTable> {
+  $$PostingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get journalEntryId => $composableBuilder(
+    column: $table.journalEntryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get units =>
+      $composableBuilder(column: $table.units, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get costPerUnit =>
+      $composableBuilder(
+        column: $table.costPerUnit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get costCurrency => $composableBuilder(
+    column: $table.costCurrency,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get costLotId =>
+      $composableBuilder(column: $table.costLotId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get costAcquiredOn => $composableBuilder(
+    column: $table.costAcquiredOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get pricePerUnit =>
+      $composableBuilder(
+        column: $table.pricePerUnit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get priceCurrency => $composableBuilder(
+    column: $table.priceCurrency,
+    builder: (column) => column,
+  );
+}
+
+class $$PostingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PostingsTable,
+          PostingRow,
+          $$PostingsTableFilterComposer,
+          $$PostingsTableOrderingComposer,
+          $$PostingsTableAnnotationComposer,
+          $$PostingsTableCreateCompanionBuilder,
+          $$PostingsTableUpdateCompanionBuilder,
+          (
+            PostingRow,
+            BaseReferences<_$AppDatabase, $PostingsTable, PostingRow>,
+          ),
+          PostingRow,
+          PrefetchHooks Function()
+        > {
+  $$PostingsTableTableManager(_$AppDatabase db, $PostingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PostingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PostingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PostingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> journalEntryId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<Decimal> units = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<Decimal?> costPerUnit = const Value.absent(),
+                Value<String?> costCurrency = const Value.absent(),
+                Value<String?> costLotId = const Value.absent(),
+                Value<DateTime?> costAcquiredOn = const Value.absent(),
+                Value<Decimal?> pricePerUnit = const Value.absent(),
+                Value<String?> priceCurrency = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PostingsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                journalEntryId: journalEntryId,
+                position: position,
+                accountId: accountId,
+                units: units,
+                unit: unit,
+                costPerUnit: costPerUnit,
+                costCurrency: costCurrency,
+                costLotId: costLotId,
+                costAcquiredOn: costAcquiredOn,
+                pricePerUnit: pricePerUnit,
+                priceCurrency: priceCurrency,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String journalEntryId,
+                required int position,
+                required String accountId,
+                required Decimal units,
+                required String unit,
+                Value<Decimal?> costPerUnit = const Value.absent(),
+                Value<String?> costCurrency = const Value.absent(),
+                Value<String?> costLotId = const Value.absent(),
+                Value<DateTime?> costAcquiredOn = const Value.absent(),
+                Value<Decimal?> pricePerUnit = const Value.absent(),
+                Value<String?> priceCurrency = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PostingsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                journalEntryId: journalEntryId,
+                position: position,
+                accountId: accountId,
+                units: units,
+                unit: unit,
+                costPerUnit: costPerUnit,
+                costCurrency: costCurrency,
+                costLotId: costLotId,
+                costAcquiredOn: costAcquiredOn,
+                pricePerUnit: pricePerUnit,
+                priceCurrency: priceCurrency,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PostingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PostingsTable,
+      PostingRow,
+      $$PostingsTableFilterComposer,
+      $$PostingsTableOrderingComposer,
+      $$PostingsTableAnnotationComposer,
+      $$PostingsTableCreateCompanionBuilder,
+      $$PostingsTableUpdateCompanionBuilder,
+      (PostingRow, BaseReferences<_$AppDatabase, $PostingsTable, PostingRow>),
+      PostingRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PricesTableCreateCompanionBuilder =
+    PricesCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String unit,
+      required String quoteCurrency,
+      required DateTime observedOn,
+      required Decimal perUnit,
+      required String source,
+      Value<int> rowid,
+    });
+typedef $$PricesTableUpdateCompanionBuilder =
+    PricesCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> unit,
+      Value<String> quoteCurrency,
+      Value<DateTime> observedOn,
+      Value<Decimal> perUnit,
+      Value<String> source,
+      Value<int> rowid,
+    });
+
+class $$PricesTableFilterComposer
+    extends Composer<_$AppDatabase, $PricesTable> {
+  $$PricesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get quoteCurrency => $composableBuilder(
+    column: $table.quoteCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get observedOn => $composableBuilder(
+    column: $table.observedOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get perUnit =>
+      $composableBuilder(
+        column: $table.perUnit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PricesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PricesTable> {
+  $$PricesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quoteCurrency => $composableBuilder(
+    column: $table.quoteCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get observedOn => $composableBuilder(
+    column: $table.observedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get perUnit => $composableBuilder(
+    column: $table.perUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PricesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PricesTable> {
+  $$PricesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get quoteCurrency => $composableBuilder(
+    column: $table.quoteCurrency,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get observedOn => $composableBuilder(
+    column: $table.observedOn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get perUnit =>
+      $composableBuilder(column: $table.perUnit, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+}
+
+class $$PricesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PricesTable,
+          PriceRow,
+          $$PricesTableFilterComposer,
+          $$PricesTableOrderingComposer,
+          $$PricesTableAnnotationComposer,
+          $$PricesTableCreateCompanionBuilder,
+          $$PricesTableUpdateCompanionBuilder,
+          (PriceRow, BaseReferences<_$AppDatabase, $PricesTable, PriceRow>),
+          PriceRow,
+          PrefetchHooks Function()
+        > {
+  $$PricesTableTableManager(_$AppDatabase db, $PricesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PricesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PricesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PricesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<String> quoteCurrency = const Value.absent(),
+                Value<DateTime> observedOn = const Value.absent(),
+                Value<Decimal> perUnit = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PricesCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                unit: unit,
+                quoteCurrency: quoteCurrency,
+                observedOn: observedOn,
+                perUnit: perUnit,
+                source: source,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String unit,
+                required String quoteCurrency,
+                required DateTime observedOn,
+                required Decimal perUnit,
+                required String source,
+                Value<int> rowid = const Value.absent(),
+              }) => PricesCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                unit: unit,
+                quoteCurrency: quoteCurrency,
+                observedOn: observedOn,
+                perUnit: perUnit,
+                source: source,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PricesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PricesTable,
+      PriceRow,
+      $$PricesTableFilterComposer,
+      $$PricesTableOrderingComposer,
+      $$PricesTableAnnotationComposer,
+      $$PricesTableCreateCompanionBuilder,
+      $$PricesTableUpdateCompanionBuilder,
+      (PriceRow, BaseReferences<_$AppDatabase, $PricesTable, PriceRow>),
+      PriceRow,
       PrefetchHooks Function()
     >;
 typedef $$LiabilitiesTableCreateCompanionBuilder =
@@ -21096,359 +19592,6 @@ typedef $$CategoriesTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $CategoriesTable, CategoryRow>,
       ),
       CategoryRow,
-      PrefetchHooks Function()
-    >;
-typedef $$ExpenseCategoriesTableCreateCompanionBuilder =
-    ExpenseCategoriesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String name,
-      Value<String?> parentId,
-      Value<String?> icon,
-      Value<String?> color,
-      Value<int?> sortOrder,
-      Value<DateTime?> archivedAt,
-      Value<int> rowid,
-    });
-typedef $$ExpenseCategoriesTableUpdateCompanionBuilder =
-    ExpenseCategoriesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> name,
-      Value<String?> parentId,
-      Value<String?> icon,
-      Value<String?> color,
-      Value<int?> sortOrder,
-      Value<DateTime?> archivedAt,
-      Value<int> rowid,
-    });
-
-class $$ExpenseCategoriesTableFilterComposer
-    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
-  $$ExpenseCategoriesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get parentId => $composableBuilder(
-    column: $table.parentId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get icon => $composableBuilder(
-    column: $table.icon,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get color => $composableBuilder(
-    column: $table.color,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get sortOrder => $composableBuilder(
-    column: $table.sortOrder,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get archivedAt => $composableBuilder(
-    column: $table.archivedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$ExpenseCategoriesTableOrderingComposer
-    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
-  $$ExpenseCategoriesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get parentId => $composableBuilder(
-    column: $table.parentId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get icon => $composableBuilder(
-    column: $table.icon,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get color => $composableBuilder(
-    column: $table.color,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get sortOrder => $composableBuilder(
-    column: $table.sortOrder,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get archivedAt => $composableBuilder(
-    column: $table.archivedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$ExpenseCategoriesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
-  $$ExpenseCategoriesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get parentId =>
-      $composableBuilder(column: $table.parentId, builder: (column) => column);
-
-  GeneratedColumn<String> get icon =>
-      $composableBuilder(column: $table.icon, builder: (column) => column);
-
-  GeneratedColumn<String> get color =>
-      $composableBuilder(column: $table.color, builder: (column) => column);
-
-  GeneratedColumn<int> get sortOrder =>
-      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get archivedAt => $composableBuilder(
-    column: $table.archivedAt,
-    builder: (column) => column,
-  );
-}
-
-class $$ExpenseCategoriesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $ExpenseCategoriesTable,
-          ExpenseCategoryRow,
-          $$ExpenseCategoriesTableFilterComposer,
-          $$ExpenseCategoriesTableOrderingComposer,
-          $$ExpenseCategoriesTableAnnotationComposer,
-          $$ExpenseCategoriesTableCreateCompanionBuilder,
-          $$ExpenseCategoriesTableUpdateCompanionBuilder,
-          (
-            ExpenseCategoryRow,
-            BaseReferences<
-              _$AppDatabase,
-              $ExpenseCategoriesTable,
-              ExpenseCategoryRow
-            >,
-          ),
-          ExpenseCategoryRow,
-          PrefetchHooks Function()
-        > {
-  $$ExpenseCategoriesTableTableManager(
-    _$AppDatabase db,
-    $ExpenseCategoriesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ExpenseCategoriesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ExpenseCategoriesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ExpenseCategoriesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String?> parentId = const Value.absent(),
-                Value<String?> icon = const Value.absent(),
-                Value<String?> color = const Value.absent(),
-                Value<int?> sortOrder = const Value.absent(),
-                Value<DateTime?> archivedAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => ExpenseCategoriesCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                name: name,
-                parentId: parentId,
-                icon: icon,
-                color: color,
-                sortOrder: sortOrder,
-                archivedAt: archivedAt,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String name,
-                Value<String?> parentId = const Value.absent(),
-                Value<String?> icon = const Value.absent(),
-                Value<String?> color = const Value.absent(),
-                Value<int?> sortOrder = const Value.absent(),
-                Value<DateTime?> archivedAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => ExpenseCategoriesCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                name: name,
-                parentId: parentId,
-                icon: icon,
-                color: color,
-                sortOrder: sortOrder,
-                archivedAt: archivedAt,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$ExpenseCategoriesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $ExpenseCategoriesTable,
-      ExpenseCategoryRow,
-      $$ExpenseCategoriesTableFilterComposer,
-      $$ExpenseCategoriesTableOrderingComposer,
-      $$ExpenseCategoriesTableAnnotationComposer,
-      $$ExpenseCategoriesTableCreateCompanionBuilder,
-      $$ExpenseCategoriesTableUpdateCompanionBuilder,
-      (
-        ExpenseCategoryRow,
-        BaseReferences<
-          _$AppDatabase,
-          $ExpenseCategoriesTable,
-          ExpenseCategoryRow
-        >,
-      ),
-      ExpenseCategoryRow,
       PrefetchHooks Function()
     >;
 typedef $$GoalsTableCreateCompanionBuilder =
@@ -23792,1118 +21935,6 @@ typedef $$SecuritiesCatalogMetaTableProcessedTableManager =
       SecuritiesCatalogMetaRow,
       PrefetchHooks Function()
     >;
-typedef $$JournalEntriesTableCreateCompanionBuilder =
-    JournalEntriesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required DateTime date,
-      Value<DateTime?> settledOn,
-      required String narration,
-      Value<String?> payee,
-      Value<EntryFlag> flag,
-      Value<String> tagIdsJson,
-      Value<int> rowid,
-    });
-typedef $$JournalEntriesTableUpdateCompanionBuilder =
-    JournalEntriesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<DateTime> date,
-      Value<DateTime?> settledOn,
-      Value<String> narration,
-      Value<String?> payee,
-      Value<EntryFlag> flag,
-      Value<String> tagIdsJson,
-      Value<int> rowid,
-    });
-
-class $$JournalEntriesTableFilterComposer
-    extends Composer<_$AppDatabase, $JournalEntriesTable> {
-  $$JournalEntriesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get date => $composableBuilder(
-    column: $table.date,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get settledOn => $composableBuilder(
-    column: $table.settledOn,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get narration => $composableBuilder(
-    column: $table.narration,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get payee => $composableBuilder(
-    column: $table.payee,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<EntryFlag, EntryFlag, String> get flag =>
-      $composableBuilder(
-        column: $table.flag,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get tagIdsJson => $composableBuilder(
-    column: $table.tagIdsJson,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$JournalEntriesTableOrderingComposer
-    extends Composer<_$AppDatabase, $JournalEntriesTable> {
-  $$JournalEntriesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get date => $composableBuilder(
-    column: $table.date,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get settledOn => $composableBuilder(
-    column: $table.settledOn,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get narration => $composableBuilder(
-    column: $table.narration,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get payee => $composableBuilder(
-    column: $table.payee,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get flag => $composableBuilder(
-    column: $table.flag,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get tagIdsJson => $composableBuilder(
-    column: $table.tagIdsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$JournalEntriesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $JournalEntriesTable> {
-  $$JournalEntriesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get date =>
-      $composableBuilder(column: $table.date, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get settledOn =>
-      $composableBuilder(column: $table.settledOn, builder: (column) => column);
-
-  GeneratedColumn<String> get narration =>
-      $composableBuilder(column: $table.narration, builder: (column) => column);
-
-  GeneratedColumn<String> get payee =>
-      $composableBuilder(column: $table.payee, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<EntryFlag, String> get flag =>
-      $composableBuilder(column: $table.flag, builder: (column) => column);
-
-  GeneratedColumn<String> get tagIdsJson => $composableBuilder(
-    column: $table.tagIdsJson,
-    builder: (column) => column,
-  );
-}
-
-class $$JournalEntriesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $JournalEntriesTable,
-          JournalEntryRow,
-          $$JournalEntriesTableFilterComposer,
-          $$JournalEntriesTableOrderingComposer,
-          $$JournalEntriesTableAnnotationComposer,
-          $$JournalEntriesTableCreateCompanionBuilder,
-          $$JournalEntriesTableUpdateCompanionBuilder,
-          (
-            JournalEntryRow,
-            BaseReferences<
-              _$AppDatabase,
-              $JournalEntriesTable,
-              JournalEntryRow
-            >,
-          ),
-          JournalEntryRow,
-          PrefetchHooks Function()
-        > {
-  $$JournalEntriesTableTableManager(
-    _$AppDatabase db,
-    $JournalEntriesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$JournalEntriesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$JournalEntriesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$JournalEntriesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<DateTime> date = const Value.absent(),
-                Value<DateTime?> settledOn = const Value.absent(),
-                Value<String> narration = const Value.absent(),
-                Value<String?> payee = const Value.absent(),
-                Value<EntryFlag> flag = const Value.absent(),
-                Value<String> tagIdsJson = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => JournalEntriesCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                date: date,
-                settledOn: settledOn,
-                narration: narration,
-                payee: payee,
-                flag: flag,
-                tagIdsJson: tagIdsJson,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required DateTime date,
-                Value<DateTime?> settledOn = const Value.absent(),
-                required String narration,
-                Value<String?> payee = const Value.absent(),
-                Value<EntryFlag> flag = const Value.absent(),
-                Value<String> tagIdsJson = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => JournalEntriesCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                date: date,
-                settledOn: settledOn,
-                narration: narration,
-                payee: payee,
-                flag: flag,
-                tagIdsJson: tagIdsJson,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$JournalEntriesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $JournalEntriesTable,
-      JournalEntryRow,
-      $$JournalEntriesTableFilterComposer,
-      $$JournalEntriesTableOrderingComposer,
-      $$JournalEntriesTableAnnotationComposer,
-      $$JournalEntriesTableCreateCompanionBuilder,
-      $$JournalEntriesTableUpdateCompanionBuilder,
-      (
-        JournalEntryRow,
-        BaseReferences<_$AppDatabase, $JournalEntriesTable, JournalEntryRow>,
-      ),
-      JournalEntryRow,
-      PrefetchHooks Function()
-    >;
-typedef $$PostingsTableCreateCompanionBuilder =
-    PostingsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String journalEntryId,
-      required int position,
-      required String accountId,
-      required Decimal units,
-      required String unit,
-      Value<Decimal?> costPerUnit,
-      Value<String?> costCurrency,
-      Value<String?> costLotId,
-      Value<DateTime?> costAcquiredOn,
-      Value<Decimal?> pricePerUnit,
-      Value<String?> priceCurrency,
-      Value<int> rowid,
-    });
-typedef $$PostingsTableUpdateCompanionBuilder =
-    PostingsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> journalEntryId,
-      Value<int> position,
-      Value<String> accountId,
-      Value<Decimal> units,
-      Value<String> unit,
-      Value<Decimal?> costPerUnit,
-      Value<String?> costCurrency,
-      Value<String?> costLotId,
-      Value<DateTime?> costAcquiredOn,
-      Value<Decimal?> pricePerUnit,
-      Value<String?> priceCurrency,
-      Value<int> rowid,
-    });
-
-class $$PostingsTableFilterComposer
-    extends Composer<_$AppDatabase, $PostingsTable> {
-  $$PostingsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get journalEntryId => $composableBuilder(
-    column: $table.journalEntryId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get position => $composableBuilder(
-    column: $table.position,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get accountId => $composableBuilder(
-    column: $table.accountId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get units =>
-      $composableBuilder(
-        column: $table.units,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get unit => $composableBuilder(
-    column: $table.unit,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get costPerUnit =>
-      $composableBuilder(
-        column: $table.costPerUnit,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get costCurrency => $composableBuilder(
-    column: $table.costCurrency,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get costLotId => $composableBuilder(
-    column: $table.costLotId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get costAcquiredOn => $composableBuilder(
-    column: $table.costAcquiredOn,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get pricePerUnit =>
-      $composableBuilder(
-        column: $table.pricePerUnit,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get priceCurrency => $composableBuilder(
-    column: $table.priceCurrency,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$PostingsTableOrderingComposer
-    extends Composer<_$AppDatabase, $PostingsTable> {
-  $$PostingsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get journalEntryId => $composableBuilder(
-    column: $table.journalEntryId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get position => $composableBuilder(
-    column: $table.position,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get accountId => $composableBuilder(
-    column: $table.accountId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get units => $composableBuilder(
-    column: $table.units,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get unit => $composableBuilder(
-    column: $table.unit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get costPerUnit => $composableBuilder(
-    column: $table.costPerUnit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get costCurrency => $composableBuilder(
-    column: $table.costCurrency,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get costLotId => $composableBuilder(
-    column: $table.costLotId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get costAcquiredOn => $composableBuilder(
-    column: $table.costAcquiredOn,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get pricePerUnit => $composableBuilder(
-    column: $table.pricePerUnit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get priceCurrency => $composableBuilder(
-    column: $table.priceCurrency,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$PostingsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PostingsTable> {
-  $$PostingsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get journalEntryId => $composableBuilder(
-    column: $table.journalEntryId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get position =>
-      $composableBuilder(column: $table.position, builder: (column) => column);
-
-  GeneratedColumn<String> get accountId =>
-      $composableBuilder(column: $table.accountId, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<Decimal, String> get units =>
-      $composableBuilder(column: $table.units, builder: (column) => column);
-
-  GeneratedColumn<String> get unit =>
-      $composableBuilder(column: $table.unit, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get costPerUnit =>
-      $composableBuilder(
-        column: $table.costPerUnit,
-        builder: (column) => column,
-      );
-
-  GeneratedColumn<String> get costCurrency => $composableBuilder(
-    column: $table.costCurrency,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get costLotId =>
-      $composableBuilder(column: $table.costLotId, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get costAcquiredOn => $composableBuilder(
-    column: $table.costAcquiredOn,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Decimal?, String> get pricePerUnit =>
-      $composableBuilder(
-        column: $table.pricePerUnit,
-        builder: (column) => column,
-      );
-
-  GeneratedColumn<String> get priceCurrency => $composableBuilder(
-    column: $table.priceCurrency,
-    builder: (column) => column,
-  );
-}
-
-class $$PostingsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $PostingsTable,
-          PostingRow,
-          $$PostingsTableFilterComposer,
-          $$PostingsTableOrderingComposer,
-          $$PostingsTableAnnotationComposer,
-          $$PostingsTableCreateCompanionBuilder,
-          $$PostingsTableUpdateCompanionBuilder,
-          (
-            PostingRow,
-            BaseReferences<_$AppDatabase, $PostingsTable, PostingRow>,
-          ),
-          PostingRow,
-          PrefetchHooks Function()
-        > {
-  $$PostingsTableTableManager(_$AppDatabase db, $PostingsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$PostingsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$PostingsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$PostingsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> journalEntryId = const Value.absent(),
-                Value<int> position = const Value.absent(),
-                Value<String> accountId = const Value.absent(),
-                Value<Decimal> units = const Value.absent(),
-                Value<String> unit = const Value.absent(),
-                Value<Decimal?> costPerUnit = const Value.absent(),
-                Value<String?> costCurrency = const Value.absent(),
-                Value<String?> costLotId = const Value.absent(),
-                Value<DateTime?> costAcquiredOn = const Value.absent(),
-                Value<Decimal?> pricePerUnit = const Value.absent(),
-                Value<String?> priceCurrency = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => PostingsCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                journalEntryId: journalEntryId,
-                position: position,
-                accountId: accountId,
-                units: units,
-                unit: unit,
-                costPerUnit: costPerUnit,
-                costCurrency: costCurrency,
-                costLotId: costLotId,
-                costAcquiredOn: costAcquiredOn,
-                pricePerUnit: pricePerUnit,
-                priceCurrency: priceCurrency,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String journalEntryId,
-                required int position,
-                required String accountId,
-                required Decimal units,
-                required String unit,
-                Value<Decimal?> costPerUnit = const Value.absent(),
-                Value<String?> costCurrency = const Value.absent(),
-                Value<String?> costLotId = const Value.absent(),
-                Value<DateTime?> costAcquiredOn = const Value.absent(),
-                Value<Decimal?> pricePerUnit = const Value.absent(),
-                Value<String?> priceCurrency = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => PostingsCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                journalEntryId: journalEntryId,
-                position: position,
-                accountId: accountId,
-                units: units,
-                unit: unit,
-                costPerUnit: costPerUnit,
-                costCurrency: costCurrency,
-                costLotId: costLotId,
-                costAcquiredOn: costAcquiredOn,
-                pricePerUnit: pricePerUnit,
-                priceCurrency: priceCurrency,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$PostingsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $PostingsTable,
-      PostingRow,
-      $$PostingsTableFilterComposer,
-      $$PostingsTableOrderingComposer,
-      $$PostingsTableAnnotationComposer,
-      $$PostingsTableCreateCompanionBuilder,
-      $$PostingsTableUpdateCompanionBuilder,
-      (PostingRow, BaseReferences<_$AppDatabase, $PostingsTable, PostingRow>),
-      PostingRow,
-      PrefetchHooks Function()
-    >;
-typedef $$PricesTableCreateCompanionBuilder =
-    PricesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String unit,
-      required String quoteCurrency,
-      required DateTime observedOn,
-      required Decimal perUnit,
-      required String source,
-      Value<int> rowid,
-    });
-typedef $$PricesTableUpdateCompanionBuilder =
-    PricesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> unit,
-      Value<String> quoteCurrency,
-      Value<DateTime> observedOn,
-      Value<Decimal> perUnit,
-      Value<String> source,
-      Value<int> rowid,
-    });
-
-class $$PricesTableFilterComposer
-    extends Composer<_$AppDatabase, $PricesTable> {
-  $$PricesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get unit => $composableBuilder(
-    column: $table.unit,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get quoteCurrency => $composableBuilder(
-    column: $table.quoteCurrency,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get observedOn => $composableBuilder(
-    column: $table.observedOn,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get perUnit =>
-      $composableBuilder(
-        column: $table.perUnit,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$PricesTableOrderingComposer
-    extends Composer<_$AppDatabase, $PricesTable> {
-  $$PricesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get unit => $composableBuilder(
-    column: $table.unit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get quoteCurrency => $composableBuilder(
-    column: $table.quoteCurrency,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get observedOn => $composableBuilder(
-    column: $table.observedOn,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get perUnit => $composableBuilder(
-    column: $table.perUnit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$PricesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PricesTable> {
-  $$PricesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get unit =>
-      $composableBuilder(column: $table.unit, builder: (column) => column);
-
-  GeneratedColumn<String> get quoteCurrency => $composableBuilder(
-    column: $table.quoteCurrency,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get observedOn => $composableBuilder(
-    column: $table.observedOn,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Decimal, String> get perUnit =>
-      $composableBuilder(column: $table.perUnit, builder: (column) => column);
-
-  GeneratedColumn<String> get source =>
-      $composableBuilder(column: $table.source, builder: (column) => column);
-}
-
-class $$PricesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $PricesTable,
-          PriceRow,
-          $$PricesTableFilterComposer,
-          $$PricesTableOrderingComposer,
-          $$PricesTableAnnotationComposer,
-          $$PricesTableCreateCompanionBuilder,
-          $$PricesTableUpdateCompanionBuilder,
-          (PriceRow, BaseReferences<_$AppDatabase, $PricesTable, PriceRow>),
-          PriceRow,
-          PrefetchHooks Function()
-        > {
-  $$PricesTableTableManager(_$AppDatabase db, $PricesTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$PricesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$PricesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$PricesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> unit = const Value.absent(),
-                Value<String> quoteCurrency = const Value.absent(),
-                Value<DateTime> observedOn = const Value.absent(),
-                Value<Decimal> perUnit = const Value.absent(),
-                Value<String> source = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => PricesCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                unit: unit,
-                quoteCurrency: quoteCurrency,
-                observedOn: observedOn,
-                perUnit: perUnit,
-                source: source,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String unit,
-                required String quoteCurrency,
-                required DateTime observedOn,
-                required Decimal perUnit,
-                required String source,
-                Value<int> rowid = const Value.absent(),
-              }) => PricesCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                unit: unit,
-                quoteCurrency: quoteCurrency,
-                observedOn: observedOn,
-                perUnit: perUnit,
-                source: source,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$PricesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $PricesTable,
-      PriceRow,
-      $$PricesTableFilterComposer,
-      $$PricesTableOrderingComposer,
-      $$PricesTableAnnotationComposer,
-      $$PricesTableCreateCompanionBuilder,
-      $$PricesTableUpdateCompanionBuilder,
-      (PriceRow, BaseReferences<_$AppDatabase, $PricesTable, PriceRow>),
-      PriceRow,
-      PrefetchHooks Function()
-    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -24916,8 +21947,12 @@ class $AppDatabaseManager {
       $$AccountsTableTableManager(_db, _db.accounts);
   $$AssetsTableTableManager get assets =>
       $$AssetsTableTableManager(_db, _db.assets);
-  $$TransactionsTableTableManager get transactions =>
-      $$TransactionsTableTableManager(_db, _db.transactions);
+  $$JournalEntriesTableTableManager get journalEntries =>
+      $$JournalEntriesTableTableManager(_db, _db.journalEntries);
+  $$PostingsTableTableManager get postings =>
+      $$PostingsTableTableManager(_db, _db.postings);
+  $$PricesTableTableManager get prices =>
+      $$PricesTableTableManager(_db, _db.prices);
   $$LiabilitiesTableTableManager get liabilities =>
       $$LiabilitiesTableTableManager(_db, _db.liabilities);
   $$AmortizationEntriesTableTableManager get amortizationEntries =>
@@ -24931,8 +21966,6 @@ class $AppDatabaseManager {
       $$TagLinksTableTableManager(_db, _db.tagLinks);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
-  $$ExpenseCategoriesTableTableManager get expenseCategories =>
-      $$ExpenseCategoriesTableTableManager(_db, _db.expenseCategories);
   $$GoalsTableTableManager get goals =>
       $$GoalsTableTableManager(_db, _db.goals);
   $$DevicesTableTableManager get devices =>
@@ -24949,10 +21982,4 @@ class $AppDatabaseManager {
       $$SecuritiesCatalogTableTableManager(_db, _db.securitiesCatalog);
   $$SecuritiesCatalogMetaTableTableManager get securitiesCatalogMeta =>
       $$SecuritiesCatalogMetaTableTableManager(_db, _db.securitiesCatalogMeta);
-  $$JournalEntriesTableTableManager get journalEntries =>
-      $$JournalEntriesTableTableManager(_db, _db.journalEntries);
-  $$PostingsTableTableManager get postings =>
-      $$PostingsTableTableManager(_db, _db.postings);
-  $$PricesTableTableManager get prices =>
-      $$PricesTableTableManager(_db, _db.prices);
 }

@@ -37,8 +37,6 @@
   "@assetsCorporateActionAction": { "description": "Action that opens the corporate-action entry form (dividend, split, rights issue, DRIP)." },
   "assetsAccountsTooltip": "Accounts",
   "assetsLiabilitiesTooltip": "Liabilities & repayment plans",
-  "assetsTransactionsTooltip": "Transactions",
-  "@assetsTransactionsTooltip": { "description": "AppBar action that opens the transaction list page from /assets." },
   "assetsLoadError": "Failed to load: {error}",
   "@assetsLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -810,39 +808,6 @@
   "tradeTypeSplit": "Split",
   "tradeTypeLiabilityPayment": "Loan payment",
   "tradeTypeExpense": "Expense",
-
-  "transactionsAppBarTitle": "Transactions",
-  "transactionsEmptyHint": "No trades recorded yet. Tap the button below to log your first buy or sell.",
-  "transactionsAddAction": "Record trade",
-  "transactionsLoadError": "Failed to load transactions: {error}",
-  "@transactionsLoadError": {
-    "placeholders": { "error": { "type": "String" } }
-  },
-  "transactionsRowTitle": "{type} · {symbol}",
-  "@transactionsRowTitle": {
-    "description": "List row primary line — '{type chip} · {asset symbol}'.",
-    "placeholders": {
-      "type": { "type": "String", "example": "Buy" },
-      "symbol": { "type": "String", "example": "AAPL" }
-    }
-  },
-  "transactionsRowQuantityPrice": "{quantity} @ {price}",
-  "@transactionsRowQuantityPrice": {
-    "description": "Quantity and unit price summary on a transaction row.",
-    "placeholders": {
-      "quantity": { "type": "String", "example": "100" },
-      "price": { "type": "String", "example": "¥120.50" }
-    }
-  },
-  "transactionsMonthHeader": "{year}-{month}",
-  "@transactionsMonthHeader": {
-    "description": "Sticky-style header that groups transactions by calendar month.",
-    "placeholders": {
-      "year": { "type": "String", "example": "2026" },
-      "month": { "type": "String", "example": "05" }
-    }
-  },
-  "commandPaletteGoTransactions": "Go to transactions",
 
   "expenseFormCreateTitle": "New expense",
   "expenseFormEditTitle": "Edit expense",

@@ -1,9 +1,5 @@
-import 'package:decimal/decimal.dart';
-
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/liability.dart';
-import '../../../data/domain/manual_asset_metadata.dart';
-import '../../../data/repositories/manual_asset_repository.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
@@ -146,19 +142,7 @@ class DashboardAggregator {
   final List<CurrencyMismatch> _mismatches = [];
 
   CategoryItem? _itemForManualAsset(Asset asset) {
-    final price = asset.lastPrice ?? Decimal.zero;
-    if (price.sign <= 0) return null;
-    final converted = _tryConvert(asset.id, Money(price, asset.currency));
-    if (converted == null) return null;
-    return CategoryItem(
-      id: asset.id,
-      name: asset.name ?? asset.symbol,
-      subtitle: _manualAssetSubtitle(asset),
-      valueInBase: converted,
-      nativeAmount: price,
-      nativeCurrency: asset.currency,
-      routeHint: '/assets/${asset.id}',
-    );
+    return null;
   }
 
   /// Build a [CategoryItem] for a securities position. The market value is
@@ -211,19 +195,4 @@ class DashboardAggregator {
     }
   }
 
-  String? _manualAssetSubtitle(Asset asset) {
-    final meta = asset.manualMetadata;
-    if (meta is DepositMetadata) {
-      final pct = (meta.interestRate * Decimal.fromInt(100)).toString();
-      return '$pct% · ${asset.currency}';
-    }
-    if (meta is WealthProductMetadata) {
-      final pct =
-          (meta.expectedAnnualReturn * Decimal.fromInt(100)).toString();
-      return '$pct% · ${asset.currency}';
-    }
-    return asset.currency;
-  }
-
 }
-

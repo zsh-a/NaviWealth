@@ -87,7 +87,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       _principalController.text = meta.principal.toString();
       _expectedReturnPctController.text =
           (meta.expectedAnnualReturn * Decimal.fromInt(100)).toString();
-      _valuationController.text = existing.lastPrice?.toString() ?? '';
+      _valuationController.text = '';
       _startDate = meta.startDate;
       _maturityDate = meta.maturityDate;
       _issuerController.text = meta.issuer ?? '';

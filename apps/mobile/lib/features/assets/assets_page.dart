@@ -106,12 +106,6 @@ class _AssetsMaster extends ConsumerWidget {
           title: Text(l10n.assetsAppBarTitle),
           actions: [
             IconButton(
-              key: const Key('assets-appbar-transactions'),
-              icon: const Icon(Icons.receipt_long_outlined),
-              tooltip: l10n.assetsTransactionsTooltip,
-              onPressed: () => context.push('/transactions'),
-            ),
-            IconButton(
               icon: const Icon(Icons.account_balance_outlined),
               tooltip: l10n.assetsAccountsTooltip,
               onPressed: () => context.go('/accounts'),
@@ -559,13 +553,7 @@ class _SecurityTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final qty = snapshot?.quantity;
     final mvNative = snapshot?.marketValueInAssetCurrency;
-    // Fall back to qty * lastPrice when the holding pipeline hasn't yet
-    // produced a snapshot — the salvage in TransactionRepository.recordTrade
-    // populates lastPrice synchronously, so a freshly recorded trade
-    // already shows non-zero market value here.
-    final fallbackPrice = asset.lastPrice;
-    final displayValue = mvNative ??
-        ((qty != null && fallbackPrice != null) ? qty * fallbackPrice : null);
+    final displayValue = mvNative;
     final hasQty = qty != null && qty.sign != 0;
     final qtyLabel = hasQty
         ? l10n.securitiesHoldingQuantity('$qty')
@@ -695,7 +683,6 @@ class _AssetTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final price = asset.lastPrice ?? Decimal.zero;
     final chips = _chipsFor(asset, l10n);
     return MergeSemantics(
       child: InkWell(
@@ -739,15 +726,6 @@ class _AssetTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: Spacing.s12),
-                OptionalHero(
-                  tag: 'asset-${asset.id}-value',
-                  enabled: heroEnabled,
-                  child: MoneyText(
-                    amount: price.toDouble(),
-                    currencyCode: asset.currency,
-                    style: TypographyTokens.numericBody,
-                  ),
-                ),
               ],
             ),
           ),

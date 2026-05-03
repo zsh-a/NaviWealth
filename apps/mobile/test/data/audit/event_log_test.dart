@@ -8,6 +8,7 @@ import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
+import 'package:naviwealth/data/repositories/price_repository.dart';
 
 import '../db/test_database.dart';
 import '../repositories/_stub_stamper.dart';
@@ -137,12 +138,17 @@ void main() {
   });
 
   group('ManualAssetRepository writes audit rows', () {
-    test('recordValuationAdjust 100 → 300 records before/after of last_price',
+    test('recordValuationAdjust 100 → 300 records before/after valuation',
         () async {
       final repo = ManualAssetRepository(
         db: db,
         outbox: outbox,
         stamper: makeStubStamper(),
+        priceRepo: PriceRepository(
+          db: db,
+          outbox: outbox,
+          stamper: makeStubStamper(),
+        ),
       );
       final asset = await repo.createCash(
         accountId: 'acc-1',
@@ -160,12 +166,12 @@ void main() {
         entityId: asset.id,
       );
       expect(events, hasLength(2));
-      // Acceptance criterion from FIR-125: the change event carries the
-      // pair {"last_price": "100"} → {"last_price": "300"}.
       final change = events[1];
       expect(change.kind, DomainEventKind.fieldChanged);
-      expect(change.before!['last_price'], '100');
-      expect(change.after!['last_price'], '300');
+      expect(change.before!['valuation'], '100');
+      expect(change.after!['valuation'], '300');
+      expect(change.before!['observed_on'], isA<String>());
+      expect(change.after!['observed_on'], isA<String>());
       expect(change.reason, '对账修正');
     });
 
@@ -174,6 +180,11 @@ void main() {
         db: db,
         outbox: outbox,
         stamper: makeStubStamper(),
+        priceRepo: PriceRepository(
+          db: db,
+          outbox: outbox,
+          stamper: makeStubStamper(),
+        ),
       );
       final asset = await repo.createCash(
         accountId: 'acc-1',

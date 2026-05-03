@@ -65,9 +65,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assetsLiabilitiesTooltip => '负债与还款计划';
 
   @override
-  String get assetsTransactionsTooltip => '交易记录';
-
-  @override
   String assetsLoadError(String error) {
     return '加载失败：$error';
   }
@@ -1561,38 +1558,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeTypeExpense => '支出';
-
-  @override
-  String get transactionsAppBarTitle => '交易记录';
-
-  @override
-  String get transactionsEmptyHint => '尚未录入交易。点击下方按钮记录第一笔买入或卖出。';
-
-  @override
-  String get transactionsAddAction => '录入交易';
-
-  @override
-  String transactionsLoadError(String error) {
-    return '加载交易失败：$error';
-  }
-
-  @override
-  String transactionsRowTitle(String type, String symbol) {
-    return '$type · $symbol';
-  }
-
-  @override
-  String transactionsRowQuantityPrice(String quantity, String price) {
-    return '$quantity @ $price';
-  }
-
-  @override
-  String transactionsMonthHeader(String year, String month) {
-    return '$year-$month';
-  }
-
-  @override
-  String get commandPaletteGoTransactions => '前往 交易记录';
 
   @override
   String get expenseFormCreateTitle => '新建支出';

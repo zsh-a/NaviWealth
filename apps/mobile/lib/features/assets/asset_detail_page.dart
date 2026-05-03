@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
-import '../../data/domain/transaction.dart';
 import '../../data/market/market_data_providers.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
@@ -73,8 +72,7 @@ class AssetDetailPage extends ConsumerWidget {
 }
 
 /// Detail view for equity-type assets — renders a holding card, a P&L card,
-/// a 30-day mini price chart and the most recent transactions, plus the
-/// FIR-78 "同步元数据" enrichment shortcut.
+/// a 30-day mini price chart and the FIR-78 "同步元数据" enrichment shortcut.
 ///
 /// Watches the repository (rather than holding the [Asset] passed in)
 /// so a successful enrichment immediately reflects in the rendered card
@@ -206,8 +204,6 @@ class _EquityAssetDetailPageState
               _PnLCard(asset: asset),
               const SizedBox(height: Spacing.s12),
               _TrendMiniChartCard(asset: asset),
-              const SizedBox(height: Spacing.s12),
-              _RecentTradesCard(asset: asset),
               const SizedBox(height: Spacing.s16),
               AppButton.primary(
                 icon: Icons.add,
@@ -343,10 +339,9 @@ class _HoldingCard extends ConsumerWidget {
   }
 }
 
-/// Unrealized P&L (amount + %), realized P&L, and the current day's
-/// price-driven change. Unrealized + base-currency view come from the
-/// FIR-48 snapshot; daily change is derived from the same 30-day history
-/// the mini-chart uses, multiplied by the snapshot quantity.
+/// Unrealized P&L (amount + %) and the current day's price-driven change.
+/// Realized P&L will come from the postings read model once that projection
+/// lands; the legacy `Transaction` replay path has been removed.
 class _PnLCard extends ConsumerWidget {
   const _PnLCard({required this.asset});
 
@@ -355,7 +350,6 @@ class _PnLCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
-    final realizedAsync = ref.watch(assetRealizedPnlProvider(asset.id));
     final marketKey = _historyKey(asset);
     final historyAsync = marketKey == null
         ? null
@@ -395,7 +389,6 @@ class _PnLCard extends ConsumerWidget {
             .toDecimal(scaleOnInfinitePrecision: 6)
             .toDouble();
 
-    final realized = realizedAsync.value;
     final dailyChange = (snap == null || !hasPosition)
         ? null
         : _dailyChangeFromHistory(historyAsync, snap.quantity);
@@ -447,19 +440,6 @@ class _PnLCard extends ConsumerWidget {
               ),
             ],
             const Divider(height: Spacing.s24),
-            _MetricRow(
-              label: '已实现盈亏',
-              trailing: realizedAsync.isLoading
-                  ? const SizedBox(
-                      width: 80,
-                      child: SkeletonBox(height: 14, radius: Radii.xs),
-                    )
-                  : DeltaText(
-                      value: realized?.toDouble(),
-                      currencyCode: asset.currency,
-                    ),
-            ),
-            const SizedBox(height: Spacing.s8),
             _MetricRow(
               label: '今日变动',
               trailing: _DailyChangeView(
@@ -704,183 +684,6 @@ class _StaleBadge extends StatelessWidget {
   }
 }
 
-/// Latest 10 trades for this asset, plus a "查看全部" entry that opens the
-/// full list as a draggable bottom sheet — avoids spawning a new route just
-/// to host the longer view.
-class _RecentTradesCard extends ConsumerWidget {
-  const _RecentTradesCard({required this.asset});
-
-  final Asset asset;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final txsAsync = ref.watch(assetTransactionsStreamProvider(asset.id));
-    final theme = Theme.of(context);
-    return txsAsync.when(
-      loading: () => const SkeletonCard(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SkeletonBox(width: 80, height: 14, radius: Radii.xs),
-            SizedBox(height: Spacing.s12),
-            SkeletonBox(height: 14),
-            SizedBox(height: Spacing.s8),
-            SkeletonBox(height: 14),
-            SizedBox(height: Spacing.s8),
-            SkeletonBox(height: 14),
-          ],
-        ),
-      ),
-      error: (e, _) => _ErrorCard(message: '交易记录加载失败：$e'),
-      data: (txs) {
-        if (txs.isEmpty) {
-          return Card(
-            child: Padding(
-              padding: Spacing.card,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('最近交易', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: Spacing.s8),
-                  Text(
-                    '暂无交易记录',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        final recent = txs.take(10).toList();
-        final hasMore = txs.length > recent.length;
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Spacing.s16,
-                    Spacing.s8,
-                    Spacing.s16,
-                    Spacing.s8,
-                  ),
-                  child: Text('最近交易', style: theme.textTheme.titleSmall),
-                ),
-                for (final tx in recent)
-                  _TransactionTile(asset: asset, tx: tx),
-                if (hasMore)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AppButton.tertiary(
-                      onPressed: () => _showAll(context, txs),
-                      label: '查看全部',
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showAll(BuildContext context, List<Transaction> txs) {
-    showGlassModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.7,
-          maxChildSize: 0.95,
-          minChildSize: 0.4,
-          builder: (_, controller) {
-            return Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: Spacing.s12),
-                  child: Text('全部交易'),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    controller: controller,
-                    itemCount: txs.length,
-                    itemBuilder: (_, i) =>
-                        _TransactionTile(asset: asset, tx: txs[i]),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({required this.asset, required this.tx});
-
-  final Asset asset;
-  final Transaction tx;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dateLabel = DateFormat.yMMMd().format(tx.tradeDate.toLocal());
-    final notional = tx.quantity * tx.price;
-    final isBuySide = _isBuySide(tx.type);
-    final isSellSide = _isSellSide(tx.type);
-    final signedNotional = isSellSide
-        ? notional
-        : isBuySide
-            ? -notional
-            : Decimal.zero;
-    return ListTile(
-      dense: true,
-      title: Row(
-        children: [
-          Text(
-            _typeLabel(tx.type),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: Spacing.s8),
-          Expanded(
-            child: Text(
-              dateLabel,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-      subtitle: Text(
-        '${_formatQuantity(tx.quantity)} @ '
-        '${_formatPrice(tx.price, asset.type)} ${tx.currency}',
-        style: theme.textTheme.bodySmall,
-      ),
-      trailing: signedNotional.sign == 0
-          ? MoneyText(
-              amount: notional.toDouble(),
-              currencyCode: tx.currency,
-            )
-          : DeltaText(
-              value: signedNotional.toDouble(),
-              currencyCode: tx.currency,
-              showIcon: false,
-            ),
-    );
-  }
-}
-
 class _MetricRow extends StatelessWidget {
   const _MetricRow({required this.label, this.value, this.trailing});
 
@@ -958,12 +761,6 @@ String _formatQuantity(Decimal qty) {
   return raw.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
 }
 
-String _formatPrice(Decimal price, AssetType type) {
-  final digits = _priceFractionDigits(type);
-  final fmt = NumberFormat.decimalPatternDigits(decimalDigits: digits);
-  return fmt.format(price.toDouble());
-}
-
 int _priceFractionDigits(AssetType type) {
   switch (type) {
     case AssetType.crypto:
@@ -975,61 +772,5 @@ int _priceFractionDigits(AssetType type) {
       return 2;
     default:
       return 2;
-  }
-}
-
-bool _isBuySide(TransactionType type) {
-  switch (type) {
-    case TransactionType.buy:
-    case TransactionType.reinvest:
-    case TransactionType.transferIn:
-      return true;
-    default:
-      return false;
-  }
-}
-
-bool _isSellSide(TransactionType type) {
-  switch (type) {
-    case TransactionType.sell:
-    case TransactionType.transferOut:
-      return true;
-    default:
-      return false;
-  }
-}
-
-String _typeLabel(TransactionType type) {
-  switch (type) {
-    case TransactionType.buy:
-      return '买入';
-    case TransactionType.sell:
-      return '卖出';
-    case TransactionType.transferIn:
-      return '转入';
-    case TransactionType.transferOut:
-      return '转出';
-    case TransactionType.reinvest:
-      return '再投';
-    case TransactionType.dividend:
-      return '股息';
-    case TransactionType.interest:
-      return '利息';
-    case TransactionType.deposit:
-      return '存入';
-    case TransactionType.withdraw:
-      return '提取';
-    case TransactionType.fee:
-      return '费用';
-    case TransactionType.tax:
-      return '税费';
-    case TransactionType.valuationAdjust:
-      return '估值调整';
-    case TransactionType.split:
-      return '拆股';
-    case TransactionType.liabilityPayment:
-      return '负债还款';
-    case TransactionType.expense:
-      return '支出';
   }
 }

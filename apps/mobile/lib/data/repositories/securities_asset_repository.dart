@@ -398,8 +398,6 @@ class SecuritiesAssetRepository {
       industry: row.industry,
       region: row.region,
       isin: row.isin,
-      lastPrice: row.lastPrice,
-      lastPriceAt: row.lastPriceAt,
       logoUrl: row.logoUrl,
       metadataJson: row.metadataJson,
       sync: SyncMeta(

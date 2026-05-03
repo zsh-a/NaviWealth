@@ -4,12 +4,25 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
+import 'package:naviwealth/data/domain/invariants.dart';
+import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/liabilities/data/liability_repository.dart';
 
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 
 Decimal d(String s) => Decimal.parse(s);
+
+class _IdentityFx implements FxRateSource {
+  const _IdentityFx();
+
+  @override
+  Decimal? rate({
+    required String from,
+    required String to,
+    required DateTime asOf,
+  }) => Decimal.one;
+}
 
 void main() {
   late AppDatabase db;
@@ -23,6 +36,13 @@ void main() {
       db: db,
       outbox: outbox,
       stamper: makeStubStamper(),
+      journalEntryRepo: JournalEntryRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+        fxRateSource: const _IdentityFx(),
+        baseCurrency: 'CNY',
+      ),
       clock: () => DateTime.utc(2026, 1, 1),
     );
   });
@@ -81,8 +101,8 @@ void main() {
   });
 
   test(
-    'registerPayment marks period paid, writes a transaction, and queues '
-    'amortization-update + transactions-insert ops',
+    'registerPayment marks period paid, writes a journal entry, and queues '
+    'amortization-update + journal-entry/posting ops',
     () async {
       final l = await repo.create(
         type: LiabilityType.mortgage,
@@ -98,28 +118,28 @@ void main() {
       // Drain create-time ops so the next assertion is easier to read.
       await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
-      final txId = await repo.registerPayment(
+      final journalEntryId = await repo.registerPayment(
         liabilityId: l.id,
         periodIndex: 1,
       );
-      expect(txId, isNotEmpty);
+      expect(journalEntryId, isNotEmpty);
 
       final schedule = await repo.scheduleFor(l.id);
       expect(schedule.first.paidAt, isNotNull);
       expect(schedule[1].paidAt, isNull);
 
       final batch = await outbox.peekBatch();
-      expect(batch, hasLength(2));
+      expect(batch, hasLength(5));
       final amortOp = batch.firstWhere(
         (o) => o.tableName == 'amortization_entries',
       );
       expect(amortOp.opType, OpType.update);
       expect(amortOp.fieldsDiff!.containsKey('paid_at'), isTrue);
-      final txOp = batch.firstWhere((o) => o.tableName == 'transactions');
-      expect(txOp.opType, OpType.insert);
-      expect(txOp.rowId, txId);
-      expect(txOp.fieldsDiff!['type'], 'liabilityPayment');
-      expect(txOp.fieldsDiff!['account_id'], 'acc-1');
+      final jeOp = batch.firstWhere((o) => o.tableName == 'journal_entries');
+      expect(jeOp.opType, OpType.insert);
+      expect(jeOp.rowId, journalEntryId);
+      final postingOps = batch.where((o) => o.tableName == 'postings');
+      expect(postingOps, hasLength(3));
     },
   );
 

@@ -67,9 +67,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetsLiabilitiesTooltip => 'Liabilities & repayment plans';
 
   @override
-  String get assetsTransactionsTooltip => 'Transactions';
-
-  @override
   String assetsLoadError(String error) {
     return 'Failed to load: $error';
   }
@@ -1630,39 +1627,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeTypeExpense => 'Expense';
-
-  @override
-  String get transactionsAppBarTitle => 'Transactions';
-
-  @override
-  String get transactionsEmptyHint =>
-      'No trades recorded yet. Tap the button below to log your first buy or sell.';
-
-  @override
-  String get transactionsAddAction => 'Record trade';
-
-  @override
-  String transactionsLoadError(String error) {
-    return 'Failed to load transactions: $error';
-  }
-
-  @override
-  String transactionsRowTitle(String type, String symbol) {
-    return '$type · $symbol';
-  }
-
-  @override
-  String transactionsRowQuantityPrice(String quantity, String price) {
-    return '$quantity @ $price';
-  }
-
-  @override
-  String transactionsMonthHeader(String year, String month) {
-    return '$year-$month';
-  }
-
-  @override
-  String get commandPaletteGoTransactions => 'Go to transactions';
 
   @override
   String get expenseFormCreateTitle => 'New expense';

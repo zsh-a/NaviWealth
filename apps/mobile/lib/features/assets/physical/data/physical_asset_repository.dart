@@ -10,6 +10,7 @@ import '../../../../data/repositories/account_repository.dart';
 import '../../../../data/repositories/journal_entry_builders.dart';
 import '../../../../data/repositories/journal_entry_repository.dart';
 import '../../../../data/repositories/mutation_context.dart';
+import '../../../../data/repositories/price_repository.dart';
 import 'physical_asset.dart';
 import 'physical_asset_meta.dart';
 
@@ -26,17 +27,20 @@ class PhysicalAssetRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    required PriceRepository priceRepo,
     JournalEntryRepository? journalEntryRepo,
     Uuid uuid = const Uuid(),
   })  : _db = db,
         _outbox = outbox,
         _stamper = stamper,
+        _priceRepo = priceRepo,
         _journalEntryRepo = journalEntryRepo,
         _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final PriceRepository _priceRepo;
   final JournalEntryRepository? _journalEntryRepo;
   final Uuid _uuid;
 
@@ -90,20 +94,16 @@ class PhysicalAssetRepository {
   /// Returns the valuation history for [assetId] in chronological order.
   ///
   /// Includes a synthesised "purchase" point as the first entry so the UI
-  /// chart never starts mid-air. Subsequent points are rows in
-  /// [Transactions] with `type = valuationAdjust`.
+  /// chart never starts mid-air. Subsequent points are rows in `prices`.
   Future<List<ValuationPoint>> getValuationHistory(String assetId) async {
     final asset = await getById(assetId);
     if (asset == null) return const [];
 
-    final adjusts = await (_db.select(_db.transactions)
-          ..where(
-            (t) =>
-                t.assetId.equals(assetId) &
-                t.type.equalsValue(TransactionType.valuationAdjust) &
-                t.deletedAt.isNull(),
-          )
-          ..orderBy([(t) => OrderingTerm(expression: t.tradeDate)]))
+    final prices = await (_db.select(_db.prices)
+          ..where((t) => t.unit.equals(assetId))
+          ..where((t) => t.quoteCurrency.equals(asset.currency))
+          ..where((t) => t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm(expression: t.observedOn)]))
         .get();
 
     final points = <ValuationPoint>[
@@ -112,12 +112,12 @@ class PhysicalAssetRepository {
         value: asset.purchasePrice,
         kind: ValuationPointKind.purchase,
       ),
-      for (final tx in adjusts)
+      for (final price in prices)
         ValuationPoint(
-          asOf: tx.tradeDate,
-          value: tx.price,
+          asOf: price.observedOn,
+          value: price.perUnit,
           kind: ValuationPointKind.manual,
-          note: tx.note,
+          note: price.source,
         ),
     ];
     return points;
@@ -173,9 +173,7 @@ class PhysicalAssetRepository {
 
   /// Manual valuation update.
   ///
-  /// Atomically: bumps `Assets.lastPrice` / `lastPriceAt`, inserts a
-  /// `valuationAdjust` transaction so the change is visible in the
-  /// history, and enqueues sync ops for both rows.
+  /// Appends a price observation and a balanced valuation journal entry.
   Future<void> updateValuation({
     required String assetId,
     required Decimal newValuation,
@@ -187,101 +185,21 @@ class PhysicalAssetRepository {
       throw StateError('Asset $assetId does not exist or was deleted');
     }
 
-    await _db.transaction(() async {
-      final assetStamp = await _stamper.stamp();
-      await (_db.update(_db.assets)..where((t) => t.id.equals(assetId))).write(
-        AssetsCompanion(
-          lastPrice: Value(newValuation),
-          lastPriceAt: Value(asOf),
-          updatedAt: Value(assetStamp.now),
-          updatedByDevice: Value(assetStamp.deviceId),
-          hlc: Value(assetStamp.hlc),
-        ),
-      );
-      await _enqueue(
-        tableName: 'assets',
-        rowId: assetId,
-        opType: OpType.update,
-        stamp: assetStamp,
-        fields: <String, Object?>{
-          'last_price': newValuation.toString(),
-          'last_price_at': asOf.toUtc().toIso8601String(),
-          'updated_at': assetStamp.now.toUtc().toIso8601String(),
-          'updated_by_device': assetStamp.deviceId,
-          'hlc': assetStamp.hlc.toString(),
-        },
-      );
-
-      final txStamp = await _stamper.stamp();
-      final txId = _uuid.v4();
-      // Quantity is fixed at 1 — physical assets are unitary, and the
-      // analytics layer treats `valuationAdjust` rows as authoritative
-      // mark-to-market events on the underlying asset rather than
-      // quantity changes.
-      final txQuantity = Decimal.one;
-      await _db.into(_db.transactions).insert(
-            TransactionsCompanion.insert(
-              id: txId,
-              accountId: assetId,
-              assetId: Value(assetId),
-              type: TransactionType.valuationAdjust,
-              quantity: txQuantity,
-              price: newValuation,
-              currency: existing.currency,
-              tradeDate: asOf,
-              note: Value(note),
-              ownerUserId: txStamp.ownerUserId,
-              updatedAt: txStamp.now,
-              updatedByDevice: txStamp.deviceId,
-              hlc: txStamp.hlc,
-            ),
-          );
-      await _enqueue(
-        tableName: 'transactions',
-        rowId: txId,
-        opType: OpType.insert,
-        stamp: txStamp,
-        fields: <String, Object?>{
-          'id': txId,
-          'account_id': assetId,
-          'asset_id': assetId,
-          'type': TransactionType.valuationAdjust.name,
-          'quantity': txQuantity.toString(),
-          'price': newValuation.toString(),
-          'currency': existing.currency,
-          'trade_date': asOf.toUtc().toIso8601String(),
-          'note': ?note,
-          'owner_user_id': txStamp.ownerUserId,
-          'updated_at': txStamp.now.toUtc().toIso8601String(),
-          'updated_by_device': txStamp.deviceId,
-          'hlc': txStamp.hlc.toString(),
-        },
-      );
-
-      // FIR-131 dual-write: JE for the ledger stack alongside the legacy
-      // transactions row (read paths still consume it).
-      final jeRepo = _journalEntryRepo;
-      if (jeRepo != null) {
-        final equityAccountId = AccountRepository.systemAccountIdForPath(
-          'equity:adjustments',
-          ownerUserId: txStamp.ownerUserId,
-        );
-        final build = JournalEntryBuilders.valuationAdjust(
-          date: asOf,
-          accountId: assetId,
-          equityAccountId: equityAccountId,
-          assetUnit: assetId,
-          quantity: txQuantity,
-          newValuation: newValuation,
-          currency: existing.currency,
-          narration: note,
-        );
-        await jeRepo.create(
-          entry: build.entry,
-          postings: build.postings,
-        );
-      }
-    });
+    await _priceRepo.record(
+      unit: assetId,
+      quoteCurrency: existing.currency,
+      observedOn: asOf,
+      perUnit: newValuation,
+      source: note ?? 'manual',
+    );
+    await _recordValuationJournal(
+      assetId: assetId,
+      currency: existing.currency,
+      valuation: newValuation,
+      asOf: asOf,
+      ownerUserId: existing.row.ownerUserId,
+      narration: note,
+    );
   }
 
   /// Soft-delete the asset. The row stays in the table with `deleted_at`
@@ -374,8 +292,6 @@ class PhysicalAssetRepository {
               symbol: id,
               currency: currency,
               name: Value(name),
-              lastPrice: Value(currentValuation),
-              lastPriceAt: Value(stamp.now),
               metadataJson: Value(encoded),
               ownerUserId: stamp.ownerUserId,
               updatedAt: stamp.now,
@@ -394,8 +310,6 @@ class PhysicalAssetRepository {
           'symbol': id,
           'currency': currency,
           'name': name,
-          'last_price': currentValuation.toString(),
-          'last_price_at': stamp.now.toUtc().toIso8601String(),
           'metadata_json': encoded,
           'owner_user_id': stamp.ownerUserId,
           'updated_at': stamp.now.toUtc().toIso8601String(),
@@ -409,7 +323,48 @@ class PhysicalAssetRepository {
     if (created == null) {
       throw StateError('Asset $id was inserted but could not be re-read');
     }
+    await _priceRepo.record(
+      unit: id,
+      quoteCurrency: currency,
+      observedOn: created.purchaseDate,
+      perUnit: currentValuation,
+      source: 'manual',
+    );
+    await _recordValuationJournal(
+      assetId: id,
+      currency: currency,
+      valuation: currentValuation,
+      asOf: created.purchaseDate,
+      ownerUserId: created.row.ownerUserId,
+    );
     return created;
+  }
+
+  Future<void> _recordValuationJournal({
+    required String assetId,
+    required String currency,
+    required Decimal valuation,
+    required DateTime asOf,
+    required String ownerUserId,
+    String? narration,
+  }) async {
+    final jeRepo = _journalEntryRepo;
+    if (jeRepo == null) return;
+    final equityAccountId = AccountRepository.systemAccountIdForPath(
+      'equity:adjustments',
+      ownerUserId: ownerUserId,
+    );
+    final build = JournalEntryBuilders.valuationAdjust(
+      date: asOf,
+      accountId: assetId,
+      equityAccountId: equityAccountId,
+      assetUnit: assetId,
+      quantity: Decimal.one,
+      newValuation: valuation,
+      currency: currency,
+      narration: narration,
+    );
+    await jeRepo.create(entry: build.entry, postings: build.postings);
   }
 
   Future<void> _enqueue({
