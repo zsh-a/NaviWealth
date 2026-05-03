@@ -249,7 +249,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
               AppButton.secondary(
                 icon: Icons.add,
                 label: '新建账户',
-                onPressed: () => context.go('/accounts/new'),
+                onPressed: () => context.go('/portfolio/accounts/new'),
               ),
             ],
           ),

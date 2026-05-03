@@ -188,7 +188,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
               AppButton.secondary(
                 icon: Icons.add,
                 label: l10n.cashFormCreateAccountAction,
-                onPressed: () => context.go('/accounts/new'),
+                onPressed: () => context.go('/portfolio/accounts/new'),
               ),
             ],
           ),

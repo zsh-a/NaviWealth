@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'More'**
   String get navMore;
 
+  /// Bottom nav: AI assistant tab
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get navAI;
+
   /// Bottom nav / More hub: accounts tab
   ///
   /// In en, this message translates to:

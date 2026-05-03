@@ -99,7 +99,7 @@ class AllocationCard extends StatelessWidget {
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
                   child: AppButton.tertiary(
-                    onPressed: () => context.push('/rebalance'),
+                    onPressed: () => context.push('/analytics/rebalance'),
                     icon: Icons.balance,
                     label: l10n.rebalanceNavLink,
                   ),

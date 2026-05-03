@@ -33,6 +33,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navMore => '更多';
 
   @override
+  String get navAI => 'AI';
+
+  @override
   String get navAccounts => '账户';
 
   @override

@@ -33,7 +33,6 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_compari
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/home/home_page.dart';
-import 'package:naviwealth/features/more/more_page.dart';
 import 'package:naviwealth/features/portfolio/portfolio_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
@@ -218,10 +217,10 @@ void main() {
       expect(_currentPath(container), '/portfolio');
     });
 
-    testWidgets('/more renders More', (tester) async {
+    testWidgets('/more redirects to /', (tester) async {
       final container = await _pumpAt(tester, initialLocation: '/more');
-      expect(find.byType(MorePage), findsOneWidget);
-      expect(_currentPath(container), '/more');
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(_currentPath(container), '/');
     });
 
     testWidgets('/assets/trade redirects to /portfolio/trade', (tester) async {
@@ -265,15 +264,15 @@ void main() {
       expect(_currentPath(container), '/portfolio');
       expect(find.byType(PortfolioPage), findsOneWidget);
 
-      container.read(appRouterProvider).go('/expenses');
+      container.read(appRouterProvider).go('/analytics');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), '/expenses');
+      expect(_currentPath(container), '/analytics');
 
-      container.read(appRouterProvider).go('/more');
+      container.read(appRouterProvider).go('/ai');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), '/more');
+      expect(_currentPath(container), '/ai');
 
       container.read(appRouterProvider).go('/');
       await tester.pump();
@@ -314,13 +313,13 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 4-tab layout: Home(0) | Portfolio(1) | Expenses(2) | More(3)
+      // 4-tab layout: Home(0) | Portfolio(1) | Analytics(2) | AI(3)
       final container = await _pumpAt(tester, initialLocation: '/analytics');
-      // /analytics falls under the More tab (index 3).
+      // /analytics is now tab index 2.
       final bar = tester.widget<FloatingPillNavigationBar>(
         find.byType(FloatingPillNavigationBar),
       );
-      expect(bar.selectedIndex, 3);
+      expect(bar.selectedIndex, 2);
 
       container.read(appRouterProvider).go('/settings');
       await tester.pump();
@@ -328,7 +327,8 @@ void main() {
       final updated = tester.widget<FloatingPillNavigationBar>(
         find.byType(FloatingPillNavigationBar),
       );
-      expect(updated.selectedIndex, 3);
+      // Settings highlights Portfolio (index 1).
+      expect(updated.selectedIndex, 1);
       await _drainTimers(tester);
     });
   });
@@ -377,8 +377,8 @@ void main() {
         viewportSize: _tabletSize,
       );
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      // /analytics → More tab (index 3)
-      expect(rail.selectedIndex, 3);
+      // /analytics is now tab index 2
+      expect(rail.selectedIndex, 2);
 
       container.read(appRouterProvider).go('/portfolio');
       await tester.pump();
@@ -399,8 +399,8 @@ void main() {
       final sidebar = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      // /fire → More tab (index 3)
-      expect(sidebar.selectedIndex, 3);
+      // /fire → Analytics tab (index 2)
+      expect(sidebar.selectedIndex, 2);
 
       container.read(appRouterProvider).go('/portfolio');
       await tester.pump();

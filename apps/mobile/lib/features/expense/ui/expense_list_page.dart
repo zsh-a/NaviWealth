@@ -93,7 +93,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           IconButton(
             tooltip: l10n.expensesReportTooltip,
             icon: const Icon(Icons.insights_outlined),
-            onPressed: () => context.go('/expenses/report'),
+            onPressed: () => context.go('/portfolio/expenses/report'),
           ),
         ],
       ),
@@ -123,7 +123,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
                         expenses: filtered,
                         expenseAccountById: expenseAccountById,
                         grouping: _filters.grouping,
-                        onTap: (e) => context.go('/expenses/${e.id}'),
+                        onTap: (e) => context.go('/portfolio/expenses/${e.id}'),
                       ),
               ),
             ],
@@ -131,13 +131,6 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败：$e')),
-      ),
-      floatingActionButton: ScrollAwareFab(
-        child: AppFab.extended(
-          onPressed: () => context.go('/expenses/new'),
-          icon: const Icon(Icons.add),
-          label: const Text('记一笔'),
-        ),
       ),
     );
   }
