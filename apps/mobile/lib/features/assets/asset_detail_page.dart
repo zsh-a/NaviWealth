@@ -209,7 +209,7 @@ class _EquityAssetDetailPageState
                 icon: Icons.add,
                 label: '新交易',
                 onPressed: () =>
-                    context.push('/assets/trade?assetId=${asset.id}'),
+                    context.push('/portfolio/trade?assetId=${asset.id}'),
               ),
             ],
           ),

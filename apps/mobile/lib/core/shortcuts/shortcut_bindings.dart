@@ -24,7 +24,7 @@ class ShortcutBinding {
 /// Kept here (not imported from the router) so `core/shortcuts/` stays free of
 /// feature-layer dependencies — the [SwitchPrimaryTabIntent] handler is wired
 /// up by `app/`, which knows about routes.
-const int kPrimaryTabCount = 6;
+const int kPrimaryTabCount = 4;
 
 /// Returns the global shortcut bindings, including both the macOS (`meta`) and
 /// non-macOS (`control`) variant for `Cmd/Ctrl+...` combos so the same map

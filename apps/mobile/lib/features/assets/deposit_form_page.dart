@@ -150,7 +150,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           ));
       if (!mounted) return;
       Haptics.success();
-      context.go('/assets');
+      context.go('/portfolio');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -181,7 +181,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go('/assets');
+      context.go('/portfolio');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

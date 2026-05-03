@@ -17,6 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    SuperFab.disablePulseGlobally = true;
+    addTearDown(() => SuperFab.disablePulseGlobally = false);
   });
 
   testWidgets('NaviWealthApp boots into the home shell', (tester) async {
@@ -70,6 +72,6 @@ void main() {
     // Home page localized title — "Overview" in en-US, "总览" in zh-CN.
     // Test environment falls back to the first supported locale (en).
     expect(find.text('Overview'), findsWidgets);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FloatingPillNavigationBar), findsOneWidget);
   });
 }

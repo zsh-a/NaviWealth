@@ -27,6 +27,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettings => '设置';
 
   @override
+  String get navPortfolio => '投资组合';
+
+  @override
+  String get navMore => '更多';
+
+  @override
+  String get navAccounts => '账户';
+
+  @override
+  String get portfolioAssetsTab => '资产';
+
+  @override
+  String get portfolioLiabilitiesTab => '负债';
+
+  @override
+  String get moreAccountsSubtitle => '银行、券商与钱包';
+
+  @override
+  String get moreAnalyticsSubtitle => '配置、风险与基准';
+
+  @override
+  String get moreFireSubtitle => '财务自由追踪';
+
+  @override
+  String get moreAiSubtitle => 'AI 财务助手';
+
+  @override
+  String get moreRebalanceSubtitle => '目标与实际配置';
+
+  @override
+  String get moreSettingsSubtitle => '应用设置与设备';
+
+  @override
+  String get superFabTrade => '交易';
+
+  @override
+  String get superFabExpense => '记账';
+
+  @override
+  String get superFabAsset => '资产';
+
+  @override
+  String get superFabTransfer => '转账';
+
+  @override
+  String get superFabLiability => '负债';
+
+  @override
   String get homeAppBarTitle => '总览';
 
   @override

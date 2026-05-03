@@ -90,7 +90,7 @@ class DashboardAggregator {
           valueInBase: converted,
           nativeAmount: outstanding,
           nativeCurrency: liability.currency,
-          routeHint: '/assets/liabilities/${liability.id}',
+          routeHint: '/portfolio/liabilities/${liability.id}',
         ),
       );
     }
@@ -154,7 +154,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: '/assets/${asset.id}',
+      routeHint: '/portfolio/${asset.id}',
     );
   }
 
@@ -174,7 +174,7 @@ class DashboardAggregator {
       valueInBase: Money(snap.marketValueInBase, baseCurrency),
       nativeAmount: snap.marketValueInAssetCurrency,
       nativeCurrency: snap.assetCurrency,
-      routeHint: '/assets/${asset.id}',
+      routeHint: '/portfolio/${asset.id}',
     );
   }
 
@@ -190,7 +190,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: '/assets/physical/${asset.id}',
+      routeHint: '/portfolio/physical/${asset.id}',
     );
   }
 

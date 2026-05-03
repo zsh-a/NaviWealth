@@ -69,8 +69,10 @@ class _GlobalShortcutsScopeState extends State<GlobalShortcutsScope> {
       final key = event.logicalKey;
       if (key == LogicalKeyboardKey.keyH) {
         widget.onVimGoto('home');
-      } else if (key == LogicalKeyboardKey.keyA) {
-        widget.onVimGoto('assets');
+      } else if (key == LogicalKeyboardKey.keyP) {
+        widget.onVimGoto('portfolio');
+      } else if (key == LogicalKeyboardKey.keyM) {
+        widget.onVimGoto('more');
       } else if (key == LogicalKeyboardKey.keyI) {
         widget.onVimGoto('ai');
       } else if (key == LogicalKeyboardKey.keyF) {

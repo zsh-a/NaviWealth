@@ -14,7 +14,8 @@ import 'shell_preferences.dart';
 /// Vim-style `g`+key → route path mapping.
 const Map<String, String> _kVimGotoRoutes = <String, String>{
   'home': '/',
-  'assets': '/assets',
+  'portfolio': '/portfolio',
+  'more': '/more',
   'ai': '/ai',
   'fire': '/fire',
   'settings': '/settings',
