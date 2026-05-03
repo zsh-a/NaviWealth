@@ -91,19 +91,3 @@ class PriceProvenance {
   final DateTime? fxOn;
 }
 
-/// Tombstone instruction returned by [TradeEntryService.buildDeletePlan].
-///
-/// The trade-entry service does not own persistence; it only describes the
-/// delete in terms the OpLog writer understands.
-class TransactionDeletePlan {
-  const TransactionDeletePlan({
-    required this.transactionId,
-    required this.releaseLotIds,
-  });
-
-  final String transactionId;
-
-  /// Ids of lots the original transaction created. Persistence layer will
-  /// remove (or also tombstone) these so the holding view stays consistent.
-  final List<String> releaseLotIds;
-}
