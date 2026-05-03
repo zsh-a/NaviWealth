@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -21,51 +20,6 @@ class PortfolioPage extends ConsumerWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.navPortfolio),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            tooltip: l10n.navMore,
-            onSelected: (value) {
-              switch (value) {
-                case 'accounts':
-                  context.push('/portfolio/accounts');
-                case 'expenses':
-                  context.push('/portfolio/expenses');
-                case 'settings':
-                  context.push('/settings');
-              }
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'accounts',
-                child: ListTile(
-                  leading: const Icon(Icons.account_balance_outlined),
-                  title: Text(l10n.navAccounts),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'expenses',
-                child: ListTile(
-                  leading: const Icon(Icons.receipt_long_outlined),
-                  title: Text(l10n.navExpenses),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: Text(l10n.navSettings),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: _SegmentedControl(

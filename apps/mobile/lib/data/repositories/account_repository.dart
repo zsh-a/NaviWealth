@@ -58,6 +58,16 @@ class AccountRepository {
     return query.watch().map((rows) => rows.map(_toAccount).toList());
   }
 
+  /// Like [watchActive] but includes system accounts. Used by the expense
+  /// category picker which needs to display seeded system expense accounts.
+  Stream<List<Account>> watchActiveIncludingSystem() {
+    final query = _db.select(_db.accounts)
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.archived.equals(false))
+      ..orderBy([(t) => OrderingTerm(expression: t.name)]);
+    return query.watch().map((rows) => rows.map(_toAccount).toList());
+  }
+
   Future<List<Account>> listActive() async {
     final rows =
         await (_db.select(_db.accounts)
