@@ -1629,6 +1629,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeTypeExpense => 'Expense';
 
   @override
+  String get expensesReportTooltip => 'Monthly report';
+
+  @override
   String get expenseFormCreateTitle => 'New expense';
 
   @override

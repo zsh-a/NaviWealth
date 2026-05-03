@@ -13,6 +13,7 @@ import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../ai_chat/ui/ai_chat_sheet.dart';
 import '../investment/data/providers.dart';
 import '../investment/domain/models/holding_snapshot.dart';
 import 'asset_detail_page.dart';
@@ -106,6 +107,11 @@ class _AssetsMaster extends ConsumerWidget {
           title: Text(l10n.assetsAppBarTitle),
           actions: [
             IconButton(
+              icon: const Icon(Icons.auto_awesome_outlined),
+              tooltip: l10n.homeAiAssistantTooltip,
+              onPressed: () => showAiChatSheet(context),
+            ),
+            IconButton(
               icon: const Icon(Icons.account_balance_outlined),
               tooltip: l10n.assetsAccountsTooltip,
               onPressed: () => context.go('/accounts'),
@@ -126,10 +132,12 @@ class _AssetsMaster extends ConsumerWidget {
           selectedAssetId: selectedAssetId,
           inMasterDetail: inMasterDetail,
         ),
-        floatingActionButton: AppFab.extended(
-          onPressed: () => _showAddSheet(context),
-          icon: const Icon(Icons.add),
-          label: Text(l10n.assetsAddAction),
+        floatingActionButton: ScrollAwareFab(
+          child: AppFab.extended(
+            onPressed: () => _showAddSheet(context),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.assetsAddAction),
+          ),
         ),
       ),
     );

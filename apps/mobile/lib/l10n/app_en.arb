@@ -809,6 +809,9 @@
   "tradeTypeLiabilityPayment": "Loan payment",
   "tradeTypeExpense": "Expense",
 
+  "expensesReportTooltip": "Monthly report",
+  "@expensesReportTooltip": { "description": "Tooltip for the expenses list AppBar action that opens the monthly report." },
+
   "expenseFormCreateTitle": "New expense",
   "expenseFormEditTitle": "Edit expense",
   "expenseFormDeleteTooltip": "Delete",

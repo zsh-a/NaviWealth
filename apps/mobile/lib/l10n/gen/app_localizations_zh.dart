@@ -1560,6 +1560,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeTypeExpense => '支出';
 
   @override
+  String get expensesReportTooltip => '月度报表';
+
+  @override
   String get expenseFormCreateTitle => '新建支出';
 
   @override
