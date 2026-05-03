@@ -161,4 +161,112 @@ void main() {
       }
     },
   );
+
+  group('FIR-131 wave 3d — watchAllWithPostings', () {
+    test('emits an empty list when the ledger has no entries', () async {
+      final first = await repo.watchAllWithPostings().first;
+      expect(first, isEmpty);
+    });
+
+    test(
+      'after a create, emits the JE with its posting sub-list grouped',
+      () async {
+        await repo.create(
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026, 1, 15),
+            narration: 'Transfer',
+          ),
+          postings: [
+            cashLeg('acct:bank:a', '-100.00'),
+            cashLeg('acct:bank:b', '100.00'),
+          ],
+        );
+        final list = await repo.watchAllWithPostings().first;
+        expect(list, hasLength(1));
+        expect(list.single.entry.narration, 'Transfer');
+        expect(list.single.postings, hasLength(2));
+        // Postings come back ordered by position.
+        expect(list.single.postings[0].position, 0);
+        expect(list.single.postings[0].units, Decimal.parse('-100.00'));
+        expect(list.single.postings[1].position, 1);
+        expect(list.single.postings[1].units, Decimal.parse('100.00'));
+      },
+    );
+
+    test(
+      'orders by `(date DESC, id ASC)` so newest entries surface first',
+      () async {
+        await repo.create(
+          entry: JournalEntryDraft(
+            id: 'je-old',
+            date: DateTime.utc(2026, 1, 1),
+            narration: 'Old',
+          ),
+          postings: [cashLeg('a', '-1'), cashLeg('b', '1')],
+        );
+        await repo.create(
+          entry: JournalEntryDraft(
+            id: 'je-new',
+            date: DateTime.utc(2026, 6, 1),
+            narration: 'New',
+          ),
+          postings: [cashLeg('a', '-2'), cashLeg('b', '2')],
+        );
+        final list = await repo.watchAllWithPostings().first;
+        expect(list.map((e) => e.entry.narration), ['New', 'Old']);
+      },
+    );
+
+    test('soft-deleted JEs and their postings drop out of the stream',
+        () async {
+      final je = await repo.create(
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026, 1, 15),
+          narration: 'Doomed',
+        ),
+        postings: [cashLeg('a', '-1'), cashLeg('b', '1')],
+      );
+      expect(await repo.watchAllWithPostings().first, hasLength(1));
+      await repo.softDelete(je.entry.id);
+      expect(await repo.watchAllWithPostings().first, isEmpty);
+    });
+
+    test(
+      'each emission is independent — the per-JE posting list is a fresh '
+      'snapshot, never mutated in place',
+      () async {
+        // Defends against an `addAll` regression where two JEs that share
+        // a `journal_entry_id` group could accidentally see each other's
+        // postings. We seed two JEs with overlapping accounts but
+        // distinct posting ids and assert the cross-pollination doesn't
+        // happen.
+        await repo.create(
+          entry: JournalEntryDraft(
+            id: 'je-1',
+            date: DateTime.utc(2026, 1, 1),
+            narration: 'One',
+          ),
+          postings: [cashLeg('shared', '-1'), cashLeg('a', '1')],
+        );
+        await repo.create(
+          entry: JournalEntryDraft(
+            id: 'je-2',
+            date: DateTime.utc(2026, 2, 1),
+            narration: 'Two',
+          ),
+          postings: [cashLeg('shared', '-2'), cashLeg('b', '2')],
+        );
+        final list = await repo.watchAllWithPostings().first;
+        expect(list.map((e) => e.entry.id).toSet(), {'je-1', 'je-2'});
+        for (final je in list) {
+          expect(
+            je.postings.every((p) => p.journalEntryId == je.entry.id),
+            isTrue,
+            reason: 'cross-pollinated postings for ${je.entry.id}: '
+                '${je.postings.map((p) => p.journalEntryId).toList()}',
+          );
+        }
+      },
+    );
+  });
 }

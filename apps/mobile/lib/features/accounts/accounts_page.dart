@@ -79,11 +79,16 @@ class _AccountsMaster extends ConsumerWidget {
       child: Scaffold(
         appBar: GlassAppBar(
           title: Text(l10n.accountsAppBarTitle),
-          // FIR-131 wave 3a — quick action to create a transfer
-          // between two of the user's accounts. The form runs through
-          // [JournalEntryRepository] / [JournalEntryBuilders.transfer]
-          // rather than the legacy `recordTransfer` path.
+          // FIR-131 wave 3a / 3d — quick actions on top of the new
+          // ledger stack. `swap_horiz` opens the cross-currency
+          // transfer form; `history` opens the read-only journal
+          // list backed by `journal_entries` / `postings`.
           actions: [
+            IconButton(
+              tooltip: 'Journal',
+              icon: const Icon(Icons.history),
+              onPressed: () => context.go('/accounts/journal'),
+            ),
             IconButton(
               tooltip: 'New transfer',
               icon: const Icon(Icons.swap_horiz),
