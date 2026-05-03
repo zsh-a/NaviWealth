@@ -287,11 +287,18 @@ void main() {
       expect(restored!.lastPrice, Decimal.parse('1000000'));
     });
 
-    test('liability_payment writes a liabilityPayment transaction', () async {
+    test('liability_payment writes a JE with liability + cash postings',
+        () async {
       final fromAccount = await h.accountRepo.create(
         type: AccountType.bank,
         name: '工资账户',
         currency: 'CNY',
+      );
+      final liabilityAccount = await h.accountRepo.create(
+        type: AccountType.liability,
+        name: '信用卡负债',
+        currency: 'CNY',
+        category: AccountCategory.liability,
       );
       final liability = await h.liabilityRepo.create(
         type: LiabilityType.creditCard,
@@ -299,6 +306,7 @@ void main() {
         principal: Decimal.parse('5000'),
         interestRate: Decimal.parse('0.18'),
         currency: 'CNY',
+        accountId: liabilityAccount.id,
       );
       final plan = ReadyProposalPlan(
         proposalId: 'p',
@@ -313,10 +321,24 @@ void main() {
       );
       final state = await h.applier.apply(plan);
       expect(state.status, ProposalApplyStatus.applied);
-      final tx = await h.transactionRepo.findById(state.appliedEntityId!);
-      expect(tx, isNotNull);
-      expect(tx!.type, TransactionType.liabilityPayment);
-      expect(tx.price, Decimal.parse('1000'));
+      expect(state.appliedTable, 'journal_entries');
+
+      final je = await h.journalEntryRepo.getById(state.appliedEntityId!);
+      expect(je, isNotNull);
+      expect(je!.postings, hasLength(2));
+      // Liability leg (debit): reducing the debt.
+      final liabilityLeg =
+          je.postings.firstWhere((p) => p.accountId == liabilityAccount.id);
+      expect(liabilityLeg.units, Decimal.parse('1000'));
+      // Cash leg (credit): outflow from the payer account.
+      final cashLeg =
+          je.postings.firstWhere((p) => p.accountId == fromAccount.id);
+      expect(cashLeg.units, Decimal.parse('-1000'));
+
+      // Undo tombstones the JE.
+      await h.applier.undo(state);
+      final remaining = await h.journalEntryRepo.watchAll().first;
+      expect(remaining, isEmpty);
     });
 
     test('apply throws ProposalApplyException on missing required field',

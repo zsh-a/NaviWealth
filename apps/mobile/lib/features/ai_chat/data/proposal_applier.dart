@@ -345,21 +345,47 @@ class ProposalApplier {
     final fromAccountId = _requireString(plan, 'from_account_id');
     final amount = _requireDecimal(plan, 'amount');
     final currency = plan.get('currency') ?? 'CNY';
-    final date = _parseDate(plan.get('date'));
+    final date = _parseDate(plan.get('date')) ?? DateTime.now();
     final note = plan.get('note');
 
-    final txId = await liabilityRepo.recordAdhocPayment(
-      liabilityId: liabilityId,
-      fromAccountId: fromAccountId,
-      amount: amount,
-      currency: currency,
+    final liability = await liabilityRepo.findById(liabilityId);
+    if (liability == null) {
+      throw ProposalApplyException('负债 $liabilityId 不存在');
+    }
+    final liabilityAccountId = liability.accountId;
+    if (liabilityAccountId == null) {
+      throw ProposalApplyException(
+        '负债 ${liability.name} 未关联账户，无法记录还款',
+      );
+    }
+
+    final uid = await currentUserId();
+    // Interest leg is unused (interest = 0) but the builder requires a
+    // valid account id.  expense:trading:interest is the closest match.
+    final interestExpenseAccountId =
+        AccountRepository.systemAccountIdForPath(
+      'expense:trading:interest',
+      ownerUserId: uid,
+    );
+
+    final build = JournalEntryBuilders.liabilityPayment(
       date: date,
-      note: note,
+      liabilityAccountId: liabilityAccountId,
+      fromAccountId: fromAccountId,
+      interestExpenseAccountId: interestExpenseAccountId,
+      principal: amount,
+      interest: Decimal.zero,
+      currency: currency,
+      narration: note ?? 'Liability ${liability.name} payment',
+    );
+    final stored = await journalEntryRepo.create(
+      entry: build.entry,
+      postings: build.postings,
     );
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
-      appliedEntityId: txId,
-      appliedTable: 'transactions',
+      appliedEntityId: stored.entry.id,
+      appliedTable: 'journal_entries',
       appliedAt: at,
       shortLabel: '已${plan.summaryZh}',
     );
