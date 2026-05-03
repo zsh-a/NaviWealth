@@ -55,6 +55,15 @@ void main() {
       'flag',
       'call_split',
       'tune',
+      // FIR-131 wave 3g — round-out seeds for legacy expense slugs.
+      'chair',
+      'sports_esports',
+      'medical_services',
+      'school',
+      'shopping_bag',
+      'flight',
+      'smartphone',
+      'card_giftcard',
     ];
     for (final name in seeded) {
       expect(

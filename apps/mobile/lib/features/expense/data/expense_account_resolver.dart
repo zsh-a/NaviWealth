@@ -8,36 +8,40 @@ import '../../../data/repositories/account_repository.dart';
 /// The expense form + AI proposal applier both still pick a legacy
 /// `categoryId`; on the JE write path we need to know which expense
 /// account the category maps to. Until FIR-132 retires the legacy
-/// category surface entirely, the mapping is a small static table:
+/// category surface entirely, this static table covers every default
+/// slug from `ExpenseCategoryRepository.defaultSeeds` losslessly —
+/// FIR-131 wave 3g extended the FIR-133 seed so each common slug
+/// has its own dedicated account.
 ///
-///   * Slugs that have a direct counterpart in the FIR-133 seed
-///     (`food`, `transport`/`transit`, `rent`/`housing`) hit their
-///     dedicated account.
-///   * Anything else (entertainment, medical, education, shopping,
-///     travel, …) falls back to `Expenses:Other` so the JE still
-///     balances and lands in the journal.
-///
-/// The lossy fallback is **explicit** for now: a follow-up wave can
-/// extend the FIR-133 seed to cover the missing 8 slugs and round-
-/// trip mapping becomes lossless. Until then the user-typed
-/// `JournalEntry.narration` carries the original intent so nothing is
-/// silently lost.
+/// User-created categories (anything outside the default seed
+/// prefix) still fall through to `Expenses:Other`; the JE narration
+/// preserves the user's text so nothing is silently lost.
 class LegacyExpenseCategoryToAccount {
   const LegacyExpenseCategoryToAccount._();
 
   /// Mapping from a legacy category slug to the FIR-133 expense
-  /// account path suffix. Anything not in this map hits the fallback
-  /// `expense:other` slug.
+  /// account path suffix. Covers every slug in
+  /// `ExpenseCategoryRepository.defaultSeeds`; any user-created
+  /// category falls through to [_fallbackPath].
   static const Map<String, String> _slugToAccountPath = <String, String>{
     'food': 'expense:food',
-    'transport': 'expense:transit',
+    'transport': 'expense:transport',
     'rent': 'expense:housing',
+    'household': 'expense:household',
+    'entertainment': 'expense:entertainment',
+    'medical': 'expense:medical',
+    'education': 'expense:education',
+    'shopping': 'expense:shopping',
+    'travel': 'expense:travel',
+    'communication': 'expense:communication',
+    'gift': 'expense:gift',
     'other': 'expense:other',
   };
 
-  /// Best-effort fallback used when the slug isn't in [_slugToAccountPath]
-  /// or when the legacy category id isn't a default-prefixed seed (i.e.
-  /// the user created their own category and we have no mapping).
+  /// Used when the legacy category id isn't a default-prefixed seed
+  /// (i.e. the user created their own category and we have no
+  /// mapping). All FIR-131 wave 3g default seeds are now covered by
+  /// [_slugToAccountPath] explicitly.
   static const String _fallbackPath = 'expense:other';
 
   /// Resolve a legacy `expense_categories.id` to the FIR-133 expense
