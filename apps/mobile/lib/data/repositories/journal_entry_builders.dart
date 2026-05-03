@@ -335,9 +335,18 @@ class JournalEntryBuilders {
   // ---------- Transfer ----------
 
   /// Two-leg cash transfer between [fromAccountId] and [toAccountId].
-  /// Cross-currency transfers pass [toAmount] + [toCurrency]; the
-  /// invariant validator folds both legs through [FxRateSource] so the
-  /// builder doesn't need an explicit price annotation.
+  ///
+  /// Same-currency transfers (the default) skip any FX annotation —
+  /// both legs net to zero in the source unit.
+  ///
+  /// Cross-currency transfers pass [toAmount] + [toCurrency]. The
+  /// builder attaches a `Price` annotation to the destination leg
+  /// equal to `amount / toAmount` in [currency], so the invariant
+  /// validator folds both legs to the *user's chosen rate* rather than
+  /// whatever rate the [FxRateSource] happens to know on that day.
+  /// That keeps the JE balanced at submit time even when the
+  /// fx_rates table lags or disagrees, and it preserves the user's
+  /// "I converted at X rate today" intent in the audit ledger.
   static JournalEntryBuild transfer({
     required DateTime date,
     required String fromAccountId,
@@ -356,6 +365,18 @@ class JournalEntryBuilders {
 
     final destCcy = toCurrency ?? currency;
     final destAmt = toAmount ?? amount;
+
+    // Beancount-style price annotation: "1 unit of destCcy is worth N
+    // of currency". `amount / destAmt` gives that exchange rate. We
+    // only attach when the currencies actually differ — same-currency
+    // transfers stay clean (no superfluous price row).
+    Price? destPrice;
+    if (destCcy != currency) {
+      destPrice = Price(
+        perUnit: (amount / destAmt).toDecimal(scaleOnInfinitePrecision: 12),
+        currency: currency,
+      );
+    }
 
     return JournalEntryBuild(
       entry: JournalEntryDraft(
@@ -377,6 +398,7 @@ class JournalEntryBuilders {
           accountId: toAccountId,
           units: destAmt,
           unit: destCcy,
+          price: destPrice,
         ),
       ],
     );

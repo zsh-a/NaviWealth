@@ -21,7 +21,7 @@ import 'providers.dart';
 ///     consult it during the Σ(weight) = 0 invariant check; same-
 ///     currency entries take a fast path back from
 ///     `IdentityFxRateSource.rate(from == to)`.
-///   * [_currentFxLookupProvider] holds an in-memory [FxRateLookup]
+///   * [currentFxLookupProvider] holds an in-memory [FxRateLookup]
 ///     built off the live `fx_rates` stream. Rebuilds whenever a new
 ///     rate lands so journal-entry writes always see fresh FX data
 ///     without the repo having to re-query SQLite per leg.
@@ -46,7 +46,7 @@ class _FxRateLookupAdapter implements FxRateSource {
   }
 }
 
-final _currentFxLookupProvider = Provider<FxRateLookup>((ref) {
+final currentFxLookupProvider = Provider<FxRateLookup>((ref) {
   // The stream provider hydrates from Drift; while the first frame is
   // resolving we serve an empty lookup, which the
   // [_FxRateLookupAdapter] turns into `null` for any non-identity
@@ -61,7 +61,7 @@ final journalEntryRepositoryProvider =
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
-  final lookup = ref.watch(_currentFxLookupProvider);
+  final lookup = ref.watch(currentFxLookupProvider);
   final base = ref.watch(baseCurrencyProvider);
   return JournalEntryRepository(
     db: db,
