@@ -6,8 +6,10 @@ import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/db/providers.dart';
+import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 import 'package:naviwealth/data/repositories/expense_repository.dart';
+import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/data/repositories/mutation_context.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
@@ -81,6 +83,7 @@ void main() {
     late ChatRepository chatRepo;
     late AccountRepository accountRepo;
     late MutationStamper stamper;
+    late ExpenseRepository expenseRepoForProvider;
 
     setUp(() async {
       db = makeTestDatabase();
@@ -124,14 +127,25 @@ void main() {
         ownerUserId: 'u',
         deviceId: 'd',
       );
+      final journalEntryRepo = JournalEntryRepository(
+        db: db,
+        outbox: outbox,
+        stamper: stamper,
+        fxRateSource: const IdentityFxRateSource(),
+        baseCurrency: 'CNY',
+      );
       applier = ProposalApplier(
         transactionRepo: transactionRepo,
         tradeEntryService: tradeService,
-        expenseRepo: expenseRepo,
+        journalEntryRepo: journalEntryRepo,
         accountRepo: accountRepo,
         manualAssetRepo: manualAssetRepo,
         liabilityRepo: liabilityRepo,
+        currentUserId: () async => 'u',
       );
+      // Hold a reference for the provider override below — the
+      // applier no longer exposes the legacy ExpenseRepository.
+      expenseRepoForProvider = expenseRepo;
       chatRepo = ChatRepository(
         store: store,
         api: _NoopApi(),
@@ -158,7 +172,7 @@ void main() {
             (ref) async => applier.tradeEntryService,
           ),
           expenseRepositoryProvider.overrideWith(
-            (ref) async => applier.expenseRepo,
+            (ref) async => expenseRepoForProvider,
           ),
           manualAssetRepositoryProvider.overrideWith(
             (ref) async => applier.manualAssetRepo,

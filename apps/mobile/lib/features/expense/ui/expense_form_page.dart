@@ -8,10 +8,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/expense_category_repository.dart';
+import '../../../data/repositories/journal_entry_builders.dart';
+import '../../../data/repositories/journal_entry_providers.dart';
+import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
+import '../data/expense_account_resolver.dart';
 import '../data/recent_expense_categories.dart';
 import 'category_grid_picker.dart';
 import 'expense_history_timeline.dart';
@@ -133,13 +137,35 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       retryLabel: l10n.commonRetry,
       write: () async {
         if (initial == null) {
-          await repo.create(
-            accountId: accountId,
+          // FIR-131 wave 3f — new expenses go through the journal-
+          // entry stack. The legacy `expense_categories` taxonomy is
+          // still the picker the user sees, so we translate
+          // `categoryId` to a FIR-133 expense account on the way
+          // through. Edit / delete flows below stay on the legacy
+          // repo until FIR-132 retires the read path.
+          final ownerUserId =
+              await ref.read(currentUserIdProvider).call();
+          final expenseAccountId =
+              LegacyExpenseCategoryToAccount.resolveAccountId(
             categoryId: categoryId,
+            ownerUserId: ownerUserId,
+          );
+          final journalRepo =
+              await ref.read(journalEntryRepositoryProvider.future);
+          final build = JournalEntryBuilders.expense(
+            date: date,
+            expenseAccountId: expenseAccountId,
+            fromAccountId: accountId,
             amount: amount,
             currency: currency,
-            tradeDate: date,
-            note: note,
+            // The builder defaults narration to 'Expense' when null;
+            // the user's free-text note (when present) is the more
+            // useful headline in JournalEntryListPage.
+            narration: note,
+          );
+          await journalRepo.create(
+            entry: build.entry,
+            postings: build.postings,
           );
         } else {
           await repo.update(
