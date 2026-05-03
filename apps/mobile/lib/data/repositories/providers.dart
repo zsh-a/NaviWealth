@@ -113,9 +113,7 @@ final expenseRepositoryProvider = FutureProvider<ExpenseRepository>((
   ref,
 ) async {
   final db = await ref.watch(appDatabaseProvider.future);
-  final outbox = await ref.watch(outboxStoreProvider.future);
-  final stamper = await ref.watch(mutationStamperProvider.future);
-  return ExpenseRepository(db: db, outbox: outbox, stamper: stamper);
+  return ExpenseRepository(db: db);
 });
 
 /// Live stream of non-archived, non-deleted expense categories — what the

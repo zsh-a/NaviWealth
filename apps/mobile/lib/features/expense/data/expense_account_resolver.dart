@@ -79,4 +79,39 @@ class LegacyExpenseCategoryToAccount {
       ownerUserId: ownerUserId,
     );
   }
+
+  /// Inverse of [resolveAccountId]: given an expense JE leg's
+  /// `accountId` (e.g. `system-account:<u>:expense:food`), recover the
+  /// matching legacy `expense_categories.id` so the form's existing
+  /// `CategoryGridPicker` preselects the right cell when a user re-
+  /// opens an existing JE-based expense for editing.
+  ///
+  /// Returns `null` when the account id isn't a FIR-133 system
+  /// account (caller can fall back to its own default-picking logic
+  /// — same as a user-created legacy category that has no FIR-133
+  /// counterpart).
+  static String? legacyCategoryIdFromAccountId({
+    required String expenseAccountId,
+    required String ownerUserId,
+  }) {
+    final prefix = AccountRepository.systemAccountIdForPath(
+      '',
+      ownerUserId: ownerUserId,
+    );
+    if (!expenseAccountId.startsWith(prefix)) return null;
+    final path = expenseAccountId.substring(prefix.length);
+    if (!path.startsWith('expense:')) return null;
+    final slug = path.substring('expense:'.length);
+    // Reject deeper paths like `trading:fee` — they're not in the
+    // legacy default seeds, so the picker handles them with its
+    // own most-used / "other" fallback.
+    if (slug.contains(':')) return null;
+    // We only round-trip slugs that were in the forward map. Any
+    // other slug (custom-seeded by a future PR) falls back to
+    // category-not-found so the form renders its default selection.
+    if (!_slugToAccountPath.values.contains('expense:$slug')) {
+      return null;
+    }
+    return 'expense-cat-default:$slug';
+  }
 }
