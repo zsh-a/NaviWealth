@@ -19,6 +19,8 @@
   "@navPortfolio": { "description": "Bottom nav: portfolio tab (assets + liabilities)" },
   "navMore": "More",
   "@navMore": { "description": "Bottom nav: more/overflow tab" },
+  "navAI": "AI",
+  "@navAI": { "description": "Bottom nav: AI assistant tab" },
   "navAccounts": "Accounts",
   "@navAccounts": { "description": "Bottom nav / More hub: accounts tab" },
   "portfolioAssetsTab": "Assets",

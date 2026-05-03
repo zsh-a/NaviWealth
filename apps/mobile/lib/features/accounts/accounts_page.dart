@@ -92,12 +92,12 @@ class _AccountsMaster extends ConsumerWidget {
             IconButton(
               tooltip: 'Journal',
               icon: const Icon(Icons.history),
-              onPressed: () => context.go('/accounts/journal'),
+              onPressed: () => context.go('/portfolio/accounts/journal'),
             ),
             IconButton(
               tooltip: 'New transfer',
               icon: const Icon(Icons.swap_horiz),
-              onPressed: () => context.go('/accounts/transfer'),
+              onPressed: () => context.go('/portfolio/accounts/transfer'),
             ),
           ],
         ),
@@ -114,7 +114,7 @@ class _AccountsMaster extends ConsumerWidget {
         ),
         floatingActionButton: ScrollAwareFab(
           child: AppFab.extended(
-            onPressed: () => context.go('/accounts/new'),
+            onPressed: () => context.go('/portfolio/accounts/new'),
             icon: const Icon(Icons.add),
             label: Text(l10n.accountsCreateAction),
           ),
@@ -144,7 +144,7 @@ class _AccountsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: '/accounts',
+      path: '/portfolio/accounts',
       selected: allIds[nextIndex],
     );
   }
@@ -285,9 +285,9 @@ class _AccountTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/accounts', selected: account.id);
+      replaceSelectedQuery(context, path: '/portfolio/accounts', selected: account.id);
     } else {
-      context.go('/accounts/${account.id}');
+      context.go('/portfolio/accounts/${account.id}');
     }
   }
 

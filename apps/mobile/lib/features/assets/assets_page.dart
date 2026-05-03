@@ -155,7 +155,7 @@ class _AssetsMaster extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.account_balance_outlined),
               tooltip: l10n.assetsAccountsTooltip,
-              onPressed: () => context.go('/accounts'),
+              onPressed: () => context.go('/portfolio/accounts'),
             ),
             IconButton(
               icon: const Icon(Icons.payments_outlined),

@@ -45,8 +45,8 @@ class _ShortcutHelpSheet extends StatelessWidget {
         keys: 'g p',
       ),
       _ManualShortcutEntry(
-        label: l10n.shortcutVimGoto(l10n.navMore),
-        keys: 'g m',
+        label: l10n.shortcutVimGoto(l10n.navAnalytics),
+        keys: 'g a',
       ),
       _ManualShortcutEntry(
         label: l10n.shortcutVimGoto('AI'),
@@ -159,9 +159,9 @@ class _ShortcutHelpSheet extends StatelessWidget {
       case 'shortcutSwitchTab1':
         return l10n.shortcutSwitchTab(2, l10n.navPortfolio);
       case 'shortcutSwitchTab2':
-        return l10n.shortcutSwitchTab(3, l10n.navExpenses);
+        return l10n.shortcutSwitchTab(3, l10n.navAnalytics);
       case 'shortcutSwitchTab3':
-        return l10n.shortcutSwitchTab(4, l10n.navMore);
+        return l10n.shortcutSwitchTab(4, l10n.navAI);
     }
     return key;
   }

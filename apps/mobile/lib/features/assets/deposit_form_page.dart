@@ -228,7 +228,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         .where((a) => _eligibleAccountTypes.contains(a.type))
         .toList(growable: false);
     if (eligible.isEmpty) {
-      return _PromptCreateAccount(onTap: () => context.go('/accounts/new'));
+      return _PromptCreateAccount(onTap: () => context.go('/portfolio/accounts/new'));
     }
     if (!_hydratedFromList && !widget.isEdit) {
       final hasCurrent = _accountId != null &&

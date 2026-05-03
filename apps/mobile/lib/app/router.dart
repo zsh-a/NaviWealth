@@ -36,7 +36,6 @@ import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
-import '../features/more/more_page.dart' deferred as more_lib;
 import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/fx_rates/fx_rates_page.dart';
@@ -57,8 +56,8 @@ import 'shell_preferences.dart';
 const List<String> kPrimaryTabPaths = <String>[
   '/',
   '/portfolio',
-  '/expenses',
-  '/more',
+  '/analytics',
+  '/ai',
 ];
 
 /// Test-only: eagerly resolve every deferred-as library the router maps to
@@ -80,7 +79,6 @@ Future<void> preloadDeferredRoutesForTest() async {
     rebalance_lib.loadLibrary(),
     ai_chat_lib.loadLibrary(),
     portfolio_lib.loadLibrary(),
-    more_lib.loadLibrary(),
   ]);
 }
 
@@ -191,6 +189,64 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 ],
               ),
               GoRoute(
+                path: 'expenses',
+                name: 'expenses',
+                builder: (context, state) => const ExpenseListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    name: 'expense-new',
+                    builder: (context, state) => const ExpenseFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'report',
+                    name: 'expense-report',
+                    builder: (context, state) => const ExpenseReportPage(),
+                  ),
+                  GoRoute(
+                    path: ':expenseId',
+                    name: 'expense-detail',
+                    builder: (context, state) => ExpenseFormPage(
+                      expenseId: state.pathParameters['expenseId'],
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'accounts',
+                name: 'accounts',
+                builder: (context, state) => const AccountsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    name: 'account-new',
+                    builder: (context, state) => const AccountFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'transfer',
+                    name: 'account-transfer',
+                    builder: (context, state) => const TransferFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'journal',
+                    name: 'account-journal',
+                    builder: (context, state) => const JournalEntryListPage(),
+                  ),
+                  GoRoute(
+                    path: ':accountId',
+                    name: 'account-detail',
+                    pageBuilder: (context, state) =>
+                        buildHeroAwareTransitionPage<void>(
+                      context: context,
+                      state: state,
+                      child: AccountFormPage(
+                        accountId: state.pathParameters['accountId'],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
                 path: ':assetId',
                 name: 'asset-detail',
                 pageBuilder: (context, state) => buildHeroAwareTransitionPage<void>(
@@ -220,64 +276,37 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
+          // ── Legacy /accounts redirect → /portfolio/accounts ───────────
           GoRoute(
             path: '/accounts',
-            name: 'accounts',
-            builder: (context, state) => const AccountsPage(),
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst('/accounts', '/portfolio/accounts');
+            },
             routes: [
               GoRoute(
-                path: 'new',
-                name: 'account-new',
-                builder: (context, state) => const AccountFormPage(),
-              ),
-              // Same-currency cash transfers between two of the user's
-              // asset / liability accounts. Routed under `/accounts` so
-              // the bottom-nav highlight stays on the Accounts tab.
-              GoRoute(
-                path: 'transfer',
-                name: 'account-transfer',
-                builder: (context, state) => const TransferFormPage(),
-              ),
-              // Read view over the journal/postings ledger.
-              GoRoute(
-                path: 'journal',
-                name: 'account-journal',
-                builder: (context, state) => const JournalEntryListPage(),
-              ),
-              GoRoute(
-                path: ':accountId',
-                name: 'account-detail',
-                pageBuilder: (context, state) => buildHeroAwareTransitionPage<void>(
-                  context: context,
-                  state: state,
-                  child: AccountFormPage(
-                    accountId: state.pathParameters['accountId'],
-                  ),
-                ),
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst('/accounts', '/portfolio/accounts');
+                },
               ),
             ],
           ),
+          // ── Legacy /expenses redirect → /portfolio/expenses ───────────
           GoRoute(
             path: '/expenses',
-            name: 'expenses',
-            builder: (context, state) => const ExpenseListPage(),
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst('/expenses', '/portfolio/expenses');
+            },
             routes: [
               GoRoute(
-                path: 'new',
-                name: 'expense-new',
-                builder: (context, state) => const ExpenseFormPage(),
-              ),
-              GoRoute(
-                path: 'report',
-                name: 'expense-report',
-                builder: (context, state) => const ExpenseReportPage(),
-              ),
-              GoRoute(
-                path: ':expenseId',
-                name: 'expense-detail',
-                builder: (context, state) => ExpenseFormPage(
-                  expenseId: state.pathParameters['expenseId'],
-                ),
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst('/expenses', '/portfolio/expenses');
+                },
               ),
             ],
           ),
@@ -288,22 +317,34 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               load: analytics_lib.loadLibrary,
               builder: (_) => analytics_lib.AnalyticsPage(),
             ),
+            routes: [
+              GoRoute(
+                path: 'fire',
+                name: 'fire',
+                builder: (context, state) => DeferredRoute(
+                  load: fire_lib.loadLibrary,
+                  builder: (_) => fire_lib.FirePage(),
+                ),
+              ),
+              GoRoute(
+                path: 'rebalance',
+                name: 'rebalance',
+                builder: (context, state) => DeferredRoute(
+                  load: rebalance_lib.loadLibrary,
+                  builder: (_) => rebalance_lib.RebalancePage(),
+                ),
+              ),
+            ],
           ),
+          // ── Legacy /fire redirect → /analytics/fire ─────────────────
           GoRoute(
             path: '/fire',
-            name: 'fire',
-            builder: (context, state) => DeferredRoute(
-              load: fire_lib.loadLibrary,
-              builder: (_) => fire_lib.FirePage(),
-            ),
+            redirect: (context, state) => '/analytics/fire',
           ),
+          // ── Legacy /rebalance redirect → /analytics/rebalance ───────
           GoRoute(
             path: '/rebalance',
-            name: 'rebalance',
-            builder: (context, state) => DeferredRoute(
-              load: rebalance_lib.loadLibrary,
-              builder: (_) => rebalance_lib.RebalancePage(),
-            ),
+            redirect: (context, state) => '/analytics/rebalance',
           ),
           GoRoute(
             path: '/ai',
@@ -336,14 +377,10 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── More tab (hub) ────────────────────────────────────────────
+          // ── Legacy /more redirect → / ────────────────────────────────
           GoRoute(
             path: '/more',
-            name: 'more',
-            builder: (context, state) => DeferredRoute(
-              load: more_lib.loadLibrary,
-              builder: (_) => more_lib.MorePage(),
-            ),
+            redirect: (context, state) => '/',
           ),
         ],
       ),
@@ -379,20 +416,21 @@ class _RootShell extends ConsumerWidget {
       );
     });
     // Tab index resolution for the 4-tab layout:
-    // Home(0) | Portfolio(1) | Expenses(2) | More(3)
+    // Home(0) | Portfolio(1) | Analytics(2) | AI(3)
     final int index;
-    if (location.startsWith('/portfolio') || location.startsWith('/assets')) {
+    if (location.startsWith('/portfolio') ||
+        location.startsWith('/assets') ||
+        location.startsWith('/expenses') ||
+        location.startsWith('/accounts')) {
       index = 1;
-    } else if (location.startsWith('/expenses')) {
-      index = 2;
-    } else if (location.startsWith('/more') ||
-        location.startsWith('/accounts') ||
-        location.startsWith('/analytics') ||
+    } else if (location.startsWith('/analytics') ||
         location.startsWith('/fire') ||
-        location.startsWith('/ai') ||
-        location.startsWith('/settings') ||
         location.startsWith('/rebalance')) {
+      index = 2;
+    } else if (location.startsWith('/ai')) {
       index = 3;
+    } else if (location.startsWith('/settings')) {
+      index = 1; // Settings highlights Portfolio (related to accounts/currencies)
     } else {
       index = 0;
     }
@@ -460,14 +498,14 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
       label: l10n.navPortfolio,
     ),
     _NavDestination(
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-      label: l10n.navExpenses,
+      icon: Icons.pie_chart_outline,
+      selectedIcon: Icons.pie_chart,
+      label: l10n.navAnalytics,
     ),
     _NavDestination(
-      icon: Icons.more_horiz,
-      selectedIcon: Icons.more_horiz,
-      label: l10n.navMore,
+      icon: Icons.smart_toy_outlined,
+      selectedIcon: Icons.smart_toy,
+      label: l10n.navAI,
     ),
   ];
 }
@@ -511,22 +549,12 @@ class _MobileShell extends StatelessWidget {
           SuperFabAction(
             icon: Icons.receipt_long_outlined,
             label: l10n.superFabExpense,
-            onTap: () => context.push('/expenses/new'),
+            onTap: () => context.push('/portfolio/expenses/new'),
           ),
           SuperFabAction(
             icon: Icons.account_balance_wallet_outlined,
             label: l10n.superFabAsset,
             onTap: () => context.push('/portfolio/new/cash'),
-          ),
-          SuperFabAction(
-            icon: Icons.swap_vert,
-            label: l10n.superFabTransfer,
-            onTap: () => context.push('/accounts/transfer'),
-          ),
-          SuperFabAction(
-            icon: Icons.payments_outlined,
-            label: l10n.superFabLiability,
-            onTap: () => context.push('/portfolio/liabilities'),
           ),
         ],
       ),

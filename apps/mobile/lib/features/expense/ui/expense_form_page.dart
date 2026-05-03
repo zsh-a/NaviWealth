@@ -146,7 +146,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     await submitOptimistic(
       pop: () {
         Haptics.success();
-        context.go('/expenses');
+        context.go('/portfolio/expenses');
       },
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -205,7 +205,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
       await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
-      context.go('/expenses');
+      context.go('/portfolio/expenses');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navMore => 'More';
 
   @override
+  String get navAI => 'AI';
+
+  @override
   String get navAccounts => 'Accounts';
 
   @override

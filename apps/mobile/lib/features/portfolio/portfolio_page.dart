@@ -24,14 +24,24 @@ class PortfolioPage extends ConsumerWidget {
         title: Text(l10n.navPortfolio),
         actions: [
           IconButton(
+            icon: const Icon(Icons.account_balance_outlined),
+            tooltip: l10n.navAccounts,
+            onPressed: () => context.push('/portfolio/accounts'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            tooltip: l10n.navExpenses,
+            onPressed: () => context.push('/portfolio/expenses'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l10n.navSettings,
+            onPressed: () => context.push('/settings'),
+          ),
+          IconButton(
             icon: const Icon(Icons.auto_awesome_outlined),
             tooltip: l10n.homeAiAssistantTooltip,
             onPressed: () => showAiChatSheet(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.balance_outlined),
-            tooltip: 'Rebalance',
-            onPressed: () => context.push('/rebalance'),
           ),
         ],
         bottom: PreferredSize(
