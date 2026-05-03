@@ -610,8 +610,13 @@ class _MobileShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      extendBody: false,
-      body: child,
+      extendBody: true,
+      body: Padding(
+        padding: const EdgeInsets.only(
+          bottom: FloatingPillNavigationBar.bottomReservedHeight,
+        ),
+        child: child,
+      ),
       bottomNavigationBar: FloatingPillNavigationBar(
         selectedIndex: selectedIndex,
         destinations: [

@@ -55,6 +55,10 @@ class FloatingPillNavigationBar extends StatelessWidget {
   static const double _bottomMargin = 12;
   static const double _fabGap = 68;
 
+  /// Space reserved at the bottom of the body so content is not hidden
+  /// behind the floating pill bar. = bar height + bottom margin.
+  static const double bottomReservedHeight = _barHeight + _bottomMargin;
+
   @override
   Widget build(BuildContext context) {
     final tokens = GlassTokens.of(context);
@@ -76,9 +80,7 @@ class FloatingPillNavigationBar extends StatelessWidget {
         _bottomMargin,
       ),
       child: SizedBox(
-        // Height must accommodate the SuperFab's full expansion radius so
-        // action items remain within the layout bounds (and thus tappable).
-        height: _barHeight + fabOverflow + 96 + 48 + 8,
+        height: _barHeight + fabOverflow,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
