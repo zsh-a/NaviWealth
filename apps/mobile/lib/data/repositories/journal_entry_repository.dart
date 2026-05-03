@@ -8,6 +8,7 @@ import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
 import '../db/app_database.dart';
 import '../domain/enums.dart';
+import '../domain/expense.dart';
 import '../domain/invariants.dart';
 import '../domain/journal_entry.dart';
 import '../domain/posting.dart';
@@ -160,6 +161,88 @@ class JournalEntryRepository {
       (rows) => rows
           .map((r) => _postingToDomain(r.readTable(_db.postings)))
           .toList(growable: false),
+    );
+  }
+
+  /// FIR-132 — live stream of expense entries materialised from the
+  /// journal. Each row is a JE whose expense-leg posting sits on an
+  /// `accounts.category = 'expense'` account. The result is shaped as
+  /// [Expense] so existing report / list UI can consume it without
+  /// changing their domain model.
+  Stream<List<Expense>> watchExpenses() {
+    final query = _db.select(_db.journalEntries).join([
+      innerJoin(
+        _db.postings,
+        _db.postings.journalEntryId.equalsExp(_db.journalEntries.id),
+      ),
+      innerJoin(
+        _db.accounts,
+        _db.accounts.id.equalsExp(_db.postings.accountId),
+      ),
+    ])
+      ..where(_db.accounts.category.equals(AccountCategory.expense.name))
+      ..where(_db.journalEntries.deletedAt.isNull())
+      ..where(_db.postings.deletedAt.isNull())
+      ..where(_db.accounts.deletedAt.isNull())
+      ..orderBy([
+        OrderingTerm(
+          expression: _db.journalEntries.date,
+          mode: OrderingMode.desc,
+        ),
+      ]);
+    return query.watch().map((rows) {
+      final out = <Expense>[];
+      for (final row in rows) {
+        final jeRow = row.readTable(_db.journalEntries);
+        final postingRow = row.readTable(_db.postings);
+        final e = _postingToExpense(jeRow, postingRow);
+        if (e != null) out.add(e);
+      }
+      return out;
+    });
+  }
+
+  /// Maps a JE + its expense-leg posting to an [Expense] domain object.
+  ///
+  /// The inverse of `LegacyExpenseCategoryToAccount.resolveAccountId`:
+  /// strips the `system-account:<uid>:` prefix from the expense account
+  /// id, recovers the `expense:<slug>` path, and round-trips the slug
+  /// back to a legacy `expense-cat-default:<slug>` category id.
+  Expense? _postingToExpense(JournalEntryRow jeRow, PostingRow postingRow) {
+    const prefix = 'system-account:';
+    final accountId = postingRow.accountId;
+    if (!accountId.startsWith(prefix)) return null;
+    final afterPrefix = accountId.substring(prefix.length);
+    final expenseIdx = afterPrefix.indexOf(':expense:');
+    if (expenseIdx < 0) return null;
+    final ownerUserId = afterPrefix.substring(0, expenseIdx);
+    final path = afterPrefix.substring(expenseIdx + 1); // 'expense:<slug>'
+    final slug = path.substring('expense:'.length);
+    if (slug.contains(':')) return null;
+    const knownSlugs = {
+      'food', 'transport', 'housing', 'household', 'entertainment',
+      'medical', 'education', 'shopping', 'travel', 'communication',
+      'gift', 'other',
+    };
+    if (!knownSlugs.contains(slug)) return null;
+
+    final tagIds = (jsonDecode(jeRow.tagIdsJson) as List<dynamic>).cast<String>();
+    return Expense(
+      id: jeRow.id,
+      accountId: '', // cash-leg account — not needed by list/report UI
+      categoryId: 'expense-cat-default:$slug',
+      amount: postingRow.units.abs(),
+      currency: postingRow.unit,
+      tradeDate: jeRow.date,
+      tags: tagIds,
+      note: jeRow.narration,
+      sync: SyncMeta(
+        ownerUserId: ownerUserId,
+        updatedAt: jeRow.updatedAt,
+        updatedByDevice: jeRow.updatedByDevice,
+        hlc: jeRow.hlc,
+        deletedAt: jeRow.deletedAt,
+      ),
     );
   }
 

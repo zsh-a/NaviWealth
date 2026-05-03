@@ -9,11 +9,9 @@ import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
-import '../domain/expense.dart';
 import '../domain/expense_category.dart';
 import 'account_repository.dart';
 import 'expense_category_repository.dart';
-import 'expense_repository.dart';
 import 'fx_rate_repository.dart';
 import 'manual_asset_repository.dart';
 import 'mutation_context.dart';
@@ -109,13 +107,6 @@ final expenseCategoryRepositoryProvider =
       );
     });
 
-final expenseRepositoryProvider = FutureProvider<ExpenseRepository>((
-  ref,
-) async {
-  final db = await ref.watch(appDatabaseProvider.future);
-  return ExpenseRepository(db: db);
-});
-
 /// Live stream of non-archived, non-deleted expense categories — what the
 /// expense entry picker subscribes to.
 ///
@@ -139,16 +130,6 @@ final allExpenseCategoriesStreamProvider =
       await repo.seedDefaults();
       yield* repo.watchAllExceptDeleted();
     });
-
-/// Live stream of all non-deleted expenses across all accounts. Feature
-/// screens that want a per-account view should call
-/// `repo.watchExpenses(accountId: ...)` directly.
-final expensesStreamProvider = StreamProvider.autoDispose<List<Expense>>((
-  ref,
-) async* {
-  final repo = await ref.watch(expenseRepositoryProvider.future);
-  yield* repo.watchExpenses();
-});
 
 /// Repository for the local `fx_rates` table. Not synced (FX rates are
 /// global market data, not user data) so this repo bypasses the outbox.

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/expense.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
@@ -42,7 +43,7 @@ Future<ProviderContainer> _container({
   return ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      expensesStreamProvider.overrideWith((ref) => Stream.value(expenses)),
+      journalExpensesStreamProvider.overrideWith((ref) => Stream.value(expenses)),
       // expense report converter chains through fxRatesStreamProvider →
       // appDatabaseProvider; stub it so tests don't touch the real DB.
       fxRatesStreamProvider.overrideWith(
@@ -83,7 +84,7 @@ void main() {
     // Listen to keep the entire dependency chain alive.
     final sub = container.listen(effectiveMonthlyExpenseProvider, (p, n) {});
     addTearDown(sub.close);
-    await container.read(expensesStreamProvider.future);
+    await container.read(journalExpensesStreamProvider.future);
 
     final effective = container
         .read(effectiveMonthlyExpenseProvider)
@@ -104,7 +105,7 @@ void main() {
     addTearDown(container.dispose);
     final sub = container.listen(effectiveMonthlyExpenseProvider, (p, n) {});
     addTearDown(sub.close);
-    await container.read(expensesStreamProvider.future);
+    await container.read(journalExpensesStreamProvider.future);
 
     final effective = container
         .read(effectiveMonthlyExpenseProvider)
@@ -127,7 +128,7 @@ void main() {
     addTearDown(container.dispose);
     final sub = container.listen(effectiveMonthlyExpenseProvider, (p, n) {});
     addTearDown(sub.close);
-    await container.read(expensesStreamProvider.future);
+    await container.read(journalExpensesStreamProvider.future);
 
     final controller = container.read(
       monthlyExpensePreferencesProvider.notifier,

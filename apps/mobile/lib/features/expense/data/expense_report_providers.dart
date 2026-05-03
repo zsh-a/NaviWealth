@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../../domain/services/currency_converter.dart';
@@ -57,7 +58,7 @@ final expenseReportBaseCurrencyProvider = Provider<String>(
 /// Live aggregated [ExpenseReport]. Re-computes whenever the range,
 /// expenses, or categories change.
 final expenseReportProvider = Provider<AsyncValue<ExpenseReport>>((ref) {
-  final expensesAsync = ref.watch(expensesStreamProvider);
+  final expensesAsync = ref.watch(journalExpensesStreamProvider);
   final categoriesAsync = ref.watch(allExpenseCategoriesStreamProvider);
   final range = ref.watch(expenseReportRangeProvider);
   final converter = ref.watch(expenseReportCurrencyConverterProvider);
@@ -101,7 +102,7 @@ final monthlyExpensePreferencesProvider =
 /// Auto-derived rolling average. Pure read — does not consult overrides.
 final autoMonthlyExpenseProvider = Provider<AsyncValue<MonthlyExpenseAverage>>(
   (ref) {
-    final expensesAsync = ref.watch(expensesStreamProvider);
+    final expensesAsync = ref.watch(journalExpensesStreamProvider);
     final converter = ref.watch(expenseReportCurrencyConverterProvider);
     final base = ref.watch(expenseReportBaseCurrencyProvider);
     final prefs = ref.watch(monthlyExpensePreferencesProvider);
