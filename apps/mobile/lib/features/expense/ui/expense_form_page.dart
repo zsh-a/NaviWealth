@@ -6,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/haptics/haptics.dart';
-import '../../../data/domain/expense.dart';
 import '../../../data/repositories/expense_category_repository.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
+import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -18,11 +18,18 @@ import '../../shared/forms/forms.dart';
 import '../data/expense_account_resolver.dart';
 import '../data/recent_expense_categories.dart';
 import 'category_grid_picker.dart';
-import 'expense_history_timeline.dart';
 
-/// Quick-entry page for a single expense. Shared between create and edit
-/// flows — when [expenseId] is non-null we hydrate the form from the
-/// repository and call `update`; otherwise we call `recordExpense`.
+/// Quick-entry page for a single expense. Shared between create and
+/// edit flows — when [expenseId] is non-null we hydrate the form from
+/// the journal entry the id refers to and call `replacePostings` on
+/// save; otherwise we call `JournalEntryRepository.create`.
+///
+/// FIR-131 wave 3h — both branches now route through the JE stack.
+/// Legacy `transactions` rows from before wave 3f no longer hydrate
+/// the form; tapping such a row from the legacy expense list pops
+/// with an error. The legacy list itself stays alive (read-only) so
+/// the user can still see history; full retirement waits for the
+/// FIR-132 read-path port.
 class ExpenseFormPage extends ConsumerStatefulWidget {
   const ExpenseFormPage({super.key, this.expenseId});
 
@@ -51,7 +58,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   String? _currency = 'CNY';
   DateTime _date = DateTime.now();
   bool _busy = false;
-  Expense? _initial;
+  JournalEntryWithPostings? _initial;
 
   @override
   void initState() {
@@ -73,18 +80,76 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 
   Future<void> _loadInitial() async {
-    final repo = await ref.read(expenseRepositoryProvider.future);
-    final existing = await repo.findById(widget.expenseId!);
-    if (existing == null || !mounted) return;
+    final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
+    final existing = await journalRepo.getById(widget.expenseId!);
+    if (existing == null) {
+      // FIR-131 wave 3h — legacy `transactions` row or stale id.
+      // Pop with a friendly error rather than rendering an empty
+      // form the user can't usefully save. TODO(l10n): swap this
+      // English literal for a localized key once the broader
+      // FIR-131 wave 3 ARB pass lands.
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        "Couldn't load expense — it may be a legacy row no longer "
+            'editable on the new ledger. Create a new entry instead.',
+      );
+      unawaited(Navigator.of(context).maybePop());
+      return;
+    }
+    if (!mounted) return;
+    final ownerUserId = await ref.read(currentUserIdProvider).call();
+    if (!mounted) return;
+    final summary = _summariseJournalEntry(existing, ownerUserId);
     setState(() {
       _initial = existing;
-      _amountController.text = existing.amount.toString();
-      _noteController.text = existing.note ?? '';
-      _categoryId = existing.categoryId;
-      _accountId = existing.accountId;
-      _currency = existing.currency;
-      _date = existing.tradeDate;
+      _amountController.text = summary.amount.toString();
+      _noteController.text = existing.entry.narration;
+      _categoryId = summary.legacyCategoryId;
+      _accountId = summary.fromAccountId;
+      _currency = summary.currency;
+      _date = existing.entry.date;
     });
+  }
+
+  /// Pulls the four UI-bound fields (amount / currency / from-account
+  /// id / legacy category id) out of a hydrated JE. Returns `null`
+  /// values for any field whose posting can't be classified — the
+  /// form's existing fall-back logic (most-used category, first
+  /// account) covers those cases.
+  _ExpenseFormHydration _summariseJournalEntry(
+    JournalEntryWithPostings je,
+    String ownerUserId,
+  ) {
+    String? expenseAccountId;
+    String? fromAccountId;
+    Decimal amount = Decimal.zero;
+    String currency = 'CNY';
+    for (final p in je.postings) {
+      // Sign convention (FIR-128 §6): expense leg is `+amount`,
+      // cash / asset leg is `-amount`. Magnitude matches the
+      // user-facing amount the form input takes.
+      if (p.units > Decimal.zero) {
+        expenseAccountId = p.accountId;
+        amount = p.units;
+        currency = p.unit;
+      } else {
+        fromAccountId = p.accountId;
+      }
+    }
+    final categoryId = expenseAccountId == null
+        ? null
+        : LegacyExpenseCategoryToAccount.legacyCategoryIdFromAccountId(
+            expenseAccountId: expenseAccountId,
+            ownerUserId: ownerUserId,
+          );
+    return _ExpenseFormHydration(
+      amount: amount,
+      currency: currency,
+      fromAccountId: fromAccountId,
+      legacyCategoryId: categoryId,
+    );
   }
 
   Future<void> _save() async {
@@ -102,7 +167,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       return;
     }
     setState(() => _busy = true);
-    final repo = await ref.read(expenseRepositoryProvider.future);
     final note = _noteController.text.trim().isEmpty
         ? null
         : _noteController.text.trim();
@@ -168,15 +232,32 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
             postings: build.postings,
           );
         } else {
-          await repo.update(
-            initial.id,
-            accountId: accountId,
+          // FIR-131 wave 3h — edit branch routes through
+          // `JournalEntryRepository.replacePostings`. Same builder as
+          // create produces the new posting layout; the JE id stays
+          // stable so audit / sync history threads through to peers
+          // as a single update + posting-replace batch.
+          final ownerUserId =
+              await ref.read(currentUserIdProvider).call();
+          final expenseAccountId =
+              LegacyExpenseCategoryToAccount.resolveAccountId(
+            categoryId: categoryId,
+            ownerUserId: ownerUserId,
+          );
+          final journalRepo =
+              await ref.read(journalEntryRepositoryProvider.future);
+          final build = JournalEntryBuilders.expense(
+            date: date,
+            expenseAccountId: expenseAccountId,
+            fromAccountId: accountId,
             amount: amount,
             currency: currency,
-            tradeDate: date,
-            categoryId: categoryId,
-            note: note,
-            clearNote: note == null && (initial.note ?? '').isNotEmpty,
+            narration: note,
+          );
+          await journalRepo.replacePostings(
+            id: initial.entry.id,
+            entry: build.entry,
+            postings: build.postings,
           );
         }
       },
@@ -206,8 +287,13 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     if (ok != true) return;
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(expenseRepositoryProvider.future);
-      await repo.softDelete(_initial!.id);
+      // FIR-131 wave 3h — soft-delete cascades to the JE's postings
+      // in the same Drift transaction (see
+      // `JournalEntryRepository.softDelete`).
+      final journalRepo = await ref.read(
+        journalEntryRepositoryProvider.future,
+      );
+      await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
       context.go('/expenses');
     } finally {
@@ -363,15 +449,25 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     onPressed: _busy ? null : _save,
                     label: _busy ? l10n.commonSaving : l10n.commonSave,
                   ),
-                  if (widget.isEdit && _initial != null) ...[
-                    const SizedBox(height: Spacing.s24),
-                    ExpenseHistoryTimeline(expenseId: _initial!.id),
-                  ],
                 ],
               ),
             ),
     );
   }
+}
+
+class _ExpenseFormHydration {
+  const _ExpenseFormHydration({
+    required this.amount,
+    required this.currency,
+    required this.fromAccountId,
+    required this.legacyCategoryId,
+  });
+
+  final Decimal amount;
+  final String currency;
+  final String? fromAccountId;
+  final String? legacyCategoryId;
 }
 
 class _NoAccountsHint extends StatelessWidget {

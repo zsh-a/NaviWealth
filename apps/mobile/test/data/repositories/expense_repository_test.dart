@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show Value, Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/expense_metadata.dart';
@@ -15,17 +14,13 @@ import 'package:uuid/uuid.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 
-/// FIR-131 wave 3f — `ExpenseRepository.create` retired (write path now
-/// flows through `JournalEntryBuilders.expense + JournalEntryRepository`,
-/// see `expense_account_resolver.dart`). The remaining tests cover
-/// `update`, `softDelete`, `watchExpenses`, `listExpenses`, and the
-/// signed-quantity cash-flow roll-up — all kept alive while the legacy
-/// expense list / report still query the `transactions WHERE
-/// type='expense'` projection.
+/// FIR-131 wave 3h — `ExpenseRepository` is now a read-only view over
+/// `transactions WHERE type='expense'`. All write paths (`create`,
+/// `update`, `softDelete`) flow through the journal-entry stack.
 ///
-/// Setup that previously called `repo.create` now goes through the
-/// [_insertLegacyExpense] helper, which writes the same row layout
-/// directly via Drift.
+/// These tests exercise the remaining surface (`watchExpenses`,
+/// `listExpenses`, signed-quantity cash-flow roll-up) using the
+/// [_insertLegacyExpense] helper to seed rows directly via Drift.
 Future<String> _insertLegacyExpense({
   required AppDatabase db,
   required MutationStamper stamper,
@@ -80,7 +75,7 @@ void main() {
       outbox: outbox,
       stamper: stamper,
     );
-    repo = ExpenseRepository(db: db, outbox: outbox, stamper: stamper);
+    repo = ExpenseRepository(db: db);
     final acc = await accountRepo.create(
       type: AccountType.cash,
       name: '现金',
@@ -94,87 +89,6 @@ void main() {
 
   tearDown(() async {
     await db.close();
-  });
-
-  test('update only diffs the changed fields and re-encodes metadata',
-      () async {
-    final id = await _insertLegacyExpense(
-      db: db,
-      stamper: stamper,
-      accountId: accountId,
-      categoryId: categoryId,
-      amount: Decimal.parse('50'),
-      tradeDate: DateTime.utc(2026, 4, 1),
-    );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
-
-    final newCategory = await categoryRepo.create(name: '交通');
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
-
-    final updated = await repo.update(
-      id,
-      amount: Decimal.parse('75'),
-      categoryId: newCategory.id,
-      tags: const ['taxi'],
-    );
-
-    expect(updated.amount, Decimal.parse('75'));
-    expect(updated.categoryId, newCategory.id);
-    expect(updated.tags, ['taxi']);
-
-    final op = (await outbox.peekBatch()).single;
-    expect(op.opType, OpType.update);
-    final diff = op.fieldsDiff!;
-    expect(diff['quantity'], '-75');
-    expect(diff.containsKey('expense_metadata_json'), isTrue);
-    final encoded = diff['expense_metadata_json']! as String;
-    final meta = ExpenseMetadata.decode(encoded)!;
-    expect(meta.categoryId, newCategory.id);
-    expect(meta.tags, ['taxi']);
-    // Trade date wasn't touched.
-    expect(diff.containsKey('trade_date'), isFalse);
-  });
-
-  test('update preserves existing tags when only categoryId is changed',
-      () async {
-    final id = await _insertLegacyExpense(
-      db: db,
-      stamper: stamper,
-      accountId: accountId,
-      categoryId: categoryId,
-      amount: Decimal.parse('10'),
-      tradeDate: DateTime.utc(2026, 4, 1),
-      tags: const ['recurring', 'subscription'],
-    );
-    final newCategory = await categoryRepo.create(name: '订阅');
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
-
-    final updated = await repo.update(id, categoryId: newCategory.id);
-    expect(updated.tags, ['recurring', 'subscription']);
-  });
-
-  test('softDelete tombstones the expense and queues a delete op', () async {
-    final id = await _insertLegacyExpense(
-      db: db,
-      stamper: stamper,
-      accountId: accountId,
-      categoryId: categoryId,
-      amount: Decimal.parse('30'),
-      tradeDate: DateTime.utc(2026, 4, 1),
-    );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
-
-    await repo.softDelete(id);
-    final reloaded = await repo.findById(id);
-    expect(reloaded!.sync.deletedAt, isNotNull);
-
-    final op = (await outbox.peekBatch()).single;
-    expect(op.opType, OpType.delete);
-    expect(op.fieldsDiff, isNull);
-
-    // listExpenses must filter the tombstoned row.
-    final live = await repo.listExpenses();
-    expect(live, isEmpty);
   });
 
   test('watchExpenses streams new and updated rows scoped by account',
@@ -204,7 +118,6 @@ void main() {
       tradeDate: DateTime.utc(2026, 4, 10),
     );
 
-    // Take the first non-empty snapshot for this account.
     final snapshot = await stream.firstWhere((rows) => rows.isNotEmpty);
     expect(snapshot.length, 1);
     expect(snapshot.single.accountId, accountId);
@@ -245,7 +158,6 @@ void main() {
 
   test('expense outflow rolls into account cash flow via signed quantity',
       () async {
-    // Drop a deposit + two expenses on the same account.
     await db.into(db.transactions).insert(
           await _depositCompanion(
             db: db,
@@ -278,7 +190,6 @@ void main() {
           variables: [Variable.withString(accountId)],
         )
         .getSingle();
-    // SQLite returns SUM(REAL) as a double; Drift surfaces it via read<double>.
     final net = row.read<double>('net');
     // 500 - 120 - 80 = 300 — proves the negative-quantity convention
     // composes with existing cash flows without per-type knowledge.
@@ -288,15 +199,11 @@ void main() {
 
 /// Test-only helper: forge a "deposit" transaction directly so the cash-flow
 /// roll-up assertion has a positive baseline to fold the expenses against.
-/// Bypasses the repo on purpose — there is no DepositRepository yet, but
-/// the math we're asserting only depends on the table shape.
 Future<TransactionsCompanion> _depositCompanion({
   required AppDatabase db,
   required String accountId,
   required Decimal amount,
 }) async {
-  // Use a constant HLC + owner so the row passes NOT NULL constraints.
-  // The actual values don't matter for the SUM assertion above.
   final stamp = await makeStubStamper(initialMillis: 1_700_001_000_000).stamp();
   return TransactionsCompanion.insert(
     id: 'tx-deposit-${stamp.now.microsecondsSinceEpoch}',

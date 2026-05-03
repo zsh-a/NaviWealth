@@ -100,11 +100,7 @@ void main() {
         outbox: outbox,
         stamper: stamper,
       );
-      final expenseRepo = ExpenseRepository(
-        db: db,
-        outbox: outbox,
-        stamper: stamper,
-      );
+      final expenseRepo = ExpenseRepository(db: db);
       final manualAssetRepo = ManualAssetRepository(
         db: db,
         outbox: outbox,
