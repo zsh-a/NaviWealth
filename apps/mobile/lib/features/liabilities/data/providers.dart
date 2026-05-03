@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/liability.dart';
+import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../domain/amortization_calculator.dart';
@@ -15,7 +16,13 @@ final liabilityRepositoryProvider = FutureProvider<LiabilityRepository>((
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
-  return LiabilityRepository(db: db, outbox: outbox, stamper: stamper);
+  final jeRepo = await ref.watch(journalEntryRepositoryProvider.future);
+  return LiabilityRepository(
+    db: db,
+    outbox: outbox,
+    stamper: stamper,
+    journalEntryRepo: jeRepo,
+  );
 });
 
 final liabilitiesStreamProvider =
