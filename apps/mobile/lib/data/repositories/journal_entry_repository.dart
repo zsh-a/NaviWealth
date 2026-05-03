@@ -94,6 +94,49 @@ class JournalEntryRepository {
     );
   }
 
+  /// FIR-131 wave 3d — live stream of every non-deleted JE *with* its
+  /// postings, materialised as a grouped `List<JournalEntryWithPostings>`.
+  /// Drives the journal list page; subscribers re-render whenever the
+  /// JE list changes (insert / update / soft-delete a JE).
+  ///
+  /// Implementation: rides on top of the JE-list stream and pulls the
+  /// matching postings in a single `WHERE journal_entry_id IN (...)`
+  /// query per emission. This means a JE-write atomically (which is
+  /// the FIR-130 `JournalEntryRepository.create` contract — every
+  /// posting batch ships with its parent JE in one transaction) hits
+  /// the consumer with a fresh snapshot. Posting-only mutations (e.g.
+  /// a sync-borne posting update without its JE row changing) won't
+  /// re-emit by themselves; we accept that today because the local
+  /// write path always co-mutates both. A follow-up PR can pair the
+  /// JE watch with a posting-watch trigger if cross-device sync
+  /// surfaces lag here.
+  Stream<List<JournalEntryWithPostings>> watchAllWithPostings() {
+    return watchAll().asyncMap((entries) async {
+      if (entries.isEmpty) return const <JournalEntryWithPostings>[];
+      final ids = entries.map((e) => e.id).toList(growable: false);
+      final postingRows =
+          await (_db.select(_db.postings)
+                ..where((t) => t.journalEntryId.isIn(ids))
+                ..where((t) => t.deletedAt.isNull())
+                ..orderBy([(t) => OrderingTerm(expression: t.position)]))
+              .get();
+      final byEntry = <String, List<Posting>>{};
+      for (final p in postingRows) {
+        byEntry
+            .putIfAbsent(p.journalEntryId, () => <Posting>[])
+            .add(_postingToDomain(p));
+      }
+      return entries
+          .map(
+            (e) => JournalEntryWithPostings(
+              entry: e,
+              postings: byEntry[e.id] ?? const <Posting>[],
+            ),
+          )
+          .toList(growable: false);
+    });
+  }
+
   /// Live stream of every non-deleted [Posting] for a single account,
   /// joined to its JE so callers can sort by trade date without a
   /// follow-up read. Drives the account-detail timeline / balance

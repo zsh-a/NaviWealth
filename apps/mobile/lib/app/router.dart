@@ -10,6 +10,7 @@ import '../design_system/design_system.dart';
 // docs/web-bundle.md for the resulting bundle layout.
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
+import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
@@ -223,6 +224,15 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'transfer',
                 name: 'account-transfer',
                 builder: (context, state) => const TransferFormPage(),
+              ),
+              // FIR-131 wave 3d — read view over the new
+              // `journal_entries` / `postings` ledger. Coexists with
+              // the legacy `/transactions` list while FIR-132
+              // migrates the read paths.
+              GoRoute(
+                path: 'journal',
+                name: 'account-journal',
+                builder: (context, state) => const JournalEntryListPage(),
               ),
               GoRoute(
                 path: ':accountId',

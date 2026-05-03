@@ -71,3 +71,13 @@ final journalEntryRepositoryProvider =
     baseCurrency: base,
   );
 });
+
+/// FIR-131 wave 3d — live stream of every non-deleted journal entry
+/// with its postings, ordered by `(date DESC, id ASC)`. Subscribers
+/// (journal list page, future net-worth derivations) get a fresh
+/// snapshot whenever a JE write lands.
+final journalEntriesWithPostingsStreamProvider =
+    StreamProvider.autoDispose<List<JournalEntryWithPostings>>((ref) async* {
+  final repo = await ref.watch(journalEntryRepositoryProvider.future);
+  yield* repo.watchAllWithPostings();
+});
