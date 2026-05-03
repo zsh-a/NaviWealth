@@ -17,8 +17,10 @@ import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/account_repository.dart';
 import '../../../data/repositories/expense_category_repository.dart';
-import '../../../data/repositories/expense_repository.dart';
+import '../../../data/repositories/journal_entry_builders.dart';
+import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/manual_asset_repository.dart';
+import '../../expense/data/expense_account_resolver.dart';
 import '../../investment/data/transaction_repository.dart';
 import '../../investment/domain/models/lot.dart';
 import '../../investment/domain/trade_entry/trade_draft.dart';
@@ -48,18 +50,27 @@ class ProposalApplier {
   ProposalApplier({
     required this.transactionRepo,
     required this.tradeEntryService,
-    required this.expenseRepo,
+    required this.journalEntryRepo,
     required this.accountRepo,
     required this.manualAssetRepo,
     required this.liabilityRepo,
+    required this.currentUserId,
   });
 
   final TransactionRepository transactionRepo;
   final TradeEntryService tradeEntryService;
-  final ExpenseRepository expenseRepo;
+  final JournalEntryRepository journalEntryRepo;
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
+
+  /// Resolves the current single-user owner id, used to mint stable
+  /// `system-account:<userId>:<path>` ids for the FIR-133 seeded
+  /// expense / liability tree. Same shape as
+  /// [MutationStamper.currentUserId] — production wiring delegates
+  /// to that lookup so the applier never disagrees with the repo
+  /// about the active user.
+  final Future<String> Function() currentUserId;
 
   /// Run the compensating write encoded in [state]. No-op if [state] isn't
   /// in the `applied` status.
@@ -71,6 +82,11 @@ class ProposalApplier {
     switch (table) {
       case 'transactions':
         await transactionRepo.softDeleteById(id);
+      case 'journal_entries':
+        // FIR-131 wave 3f — expense proposals now write into the
+        // ledger stack. Soft-deleting the JE cascades the postings
+        // tombstone so the undo restores both legs in one step.
+        await journalEntryRepo.softDelete(id);
       case 'accounts':
         await accountRepo.softDelete(id);
       case 'assets':
@@ -175,27 +191,41 @@ class ProposalApplier {
     ReadyProposalPlan plan,
     DateTime at,
   ) async {
-    final accountId = _requireString(plan, 'account_id');
+    final fromAccountId = _requireString(plan, 'account_id');
     final amount = _requireDecimal(plan, 'amount');
     final currency = plan.get('currency') ?? 'CNY';
     final tradeDate = _parseDate(plan.get('date')) ?? DateTime.now();
     final note = plan.get('note');
     final categorySlug = plan.get('category') ?? 'other';
     final localSlug = _expenseCategorySlugAliases[categorySlug] ?? categorySlug;
+    // The legacy `expense_categories` table is still queried by the
+    // expense reports (FIR-132 retires the read path), so the slug
+    // round-trips through `defaultIdFor` to stay compatible with that
+    // surface. The resolver translates the resulting category id to
+    // a FIR-133 expense account so the JE write lands cleanly.
     final categoryId = ExpenseCategoryRepository.defaultIdFor(localSlug);
-
-    final stored = await expenseRepo.create(
-      accountId: accountId,
+    final ownerUserId = await currentUserId();
+    final expenseAccountId = LegacyExpenseCategoryToAccount.resolveAccountId(
       categoryId: categoryId,
+      ownerUserId: ownerUserId,
+    );
+
+    final build = JournalEntryBuilders.expense(
+      date: tradeDate,
+      expenseAccountId: expenseAccountId,
+      fromAccountId: fromAccountId,
       amount: amount,
       currency: currency,
-      tradeDate: tradeDate,
-      note: note,
+      narration: note ?? plan.summaryZh,
+    );
+    final stored = await journalEntryRepo.create(
+      entry: build.entry,
+      postings: build.postings,
     );
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
-      appliedEntityId: stored.id,
-      appliedTable: 'transactions',
+      appliedEntityId: stored.entry.id,
+      appliedTable: 'journal_entries',
       appliedAt: at,
       shortLabel: '已记录${plan.summaryZh}',
     );

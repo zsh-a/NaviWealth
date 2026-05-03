@@ -7,8 +7,6 @@ import 'package:naviwealth/data/audit/event_log_writer.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
-import 'package:naviwealth/data/repositories/expense_category_repository.dart';
-import 'package:naviwealth/data/repositories/expense_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 
 import '../db/test_database.dart';
@@ -245,52 +243,11 @@ void main() {
     });
   });
 
-  group('ExpenseRepository writes audit rows', () {
-    test('update records amount before/after as positive magnitudes',
-        () async {
-      final stamper = makeStubStamper();
-      final accountRepo = AccountRepository(
-        db: db,
-        outbox: outbox,
-        stamper: stamper,
-      );
-      final categoryRepo = ExpenseCategoryRepository(
-        db: db,
-        outbox: outbox,
-        stamper: stamper,
-      );
-      final repo = ExpenseRepository(
-        db: db,
-        outbox: outbox,
-        stamper: stamper,
-      );
-      final acc = await accountRepo.create(
-        type: AccountType.cash,
-        name: '现金',
-        currency: 'CNY',
-      );
-      final cat = await categoryRepo.create(name: '餐饮');
-      final exp = await repo.create(
-        accountId: acc.id,
-        categoryId: cat.id,
-        amount: Decimal.parse('50'),
-        currency: 'CNY',
-        tradeDate: DateTime.utc(2026, 4, 1),
-      );
-
-      await repo.update(exp.id, amount: Decimal.parse('75'));
-
-      final events = await reader.listByEntity(
-        entityTable: 'transactions',
-        entityId: exp.id,
-      );
-      expect(events, hasLength(2));
-      final change = events.last;
-      expect(change.kind, DomainEventKind.fieldChanged);
-      // Audit ledger mirrors the domain entity (positive magnitude),
-      // not the signed-quantity storage convention.
-      expect(change.before!['amount'], '50');
-      expect(change.after!['amount'], '75');
-    });
-  });
+  // FIR-131 wave 3f — the legacy `ExpenseRepository.create` audit
+  // assertion lived in this group. The write path now flows through
+  // `JournalEntryRepository`, so the audit shape changes (the event
+  // log entries become JE-shaped). The new audit coverage will land
+  // alongside the JE-aware repos in a follow-up; for now the
+  // `update` audit row is still tested via `expense_repository_test.dart`
+  // (legacy `update` is still on the legacy repo).
 }

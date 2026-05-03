@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:drift/drift.dart' show Variable;
+import 'package:drift/drift.dart' show Value, Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/op.dart';
@@ -9,13 +9,61 @@ import 'package:naviwealth/data/domain/expense_metadata.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 import 'package:naviwealth/data/repositories/expense_category_repository.dart';
 import 'package:naviwealth/data/repositories/expense_repository.dart';
+import 'package:naviwealth/data/repositories/mutation_context.dart';
+import 'package:uuid/uuid.dart';
 
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 
+/// FIR-131 wave 3f — `ExpenseRepository.create` retired (write path now
+/// flows through `JournalEntryBuilders.expense + JournalEntryRepository`,
+/// see `expense_account_resolver.dart`). The remaining tests cover
+/// `update`, `softDelete`, `watchExpenses`, `listExpenses`, and the
+/// signed-quantity cash-flow roll-up — all kept alive while the legacy
+/// expense list / report still query the `transactions WHERE
+/// type='expense'` projection.
+///
+/// Setup that previously called `repo.create` now goes through the
+/// [_insertLegacyExpense] helper, which writes the same row layout
+/// directly via Drift.
+Future<String> _insertLegacyExpense({
+  required AppDatabase db,
+  required MutationStamper stamper,
+  required String accountId,
+  required String categoryId,
+  required Decimal amount,
+  String currency = 'CNY',
+  required DateTime tradeDate,
+  List<String> tags = const [],
+  String? note,
+}) async {
+  final id = const Uuid().v4();
+  final metadata = ExpenseMetadata(categoryId: categoryId, tags: tags);
+  final stamp = await stamper.stamp();
+  await db.into(db.transactions).insert(
+    TransactionsCompanion.insert(
+      id: id,
+      accountId: accountId,
+      type: TransactionType.expense,
+      quantity: -amount,
+      price: Decimal.one,
+      currency: currency,
+      tradeDate: tradeDate,
+      note: Value(note),
+      expenseMetadataJson: Value(metadata.encode()),
+      ownerUserId: stamp.ownerUserId,
+      updatedAt: stamp.now,
+      updatedByDevice: stamp.deviceId,
+      hlc: stamp.hlc,
+    ),
+  );
+  return id;
+}
+
 void main() {
   late AppDatabase db;
   late InMemoryOutboxStore outbox;
+  late MutationStamper stamper;
   late ExpenseRepository repo;
   late AccountRepository accountRepo;
   late ExpenseCategoryRepository categoryRepo;
@@ -25,7 +73,7 @@ void main() {
   setUp(() async {
     db = makeTestDatabase();
     outbox = InMemoryOutboxStore();
-    final stamper = makeStubStamper();
+    stamper = makeStubStamper();
     accountRepo = AccountRepository(db: db, outbox: outbox, stamper: stamper);
     categoryRepo = ExpenseCategoryRepository(
       db: db,
@@ -48,100 +96,14 @@ void main() {
     await db.close();
   });
 
-  test('create writes a negative-quantity transaction with metadata',
-      () async {
-    final expense = await repo.create(
-      accountId: accountId,
-      categoryId: categoryId,
-      amount: Decimal.parse('120.50'),
-      currency: 'CNY',
-      tradeDate: DateTime.utc(2026, 4, 30),
-      tags: const ['lunch'],
-      note: 'team lunch',
-    );
-
-    expect(expense.amount, Decimal.parse('120.50'));
-    expect(expense.categoryId, categoryId);
-    expect(expense.tags, ['lunch']);
-    expect(expense.note, 'team lunch');
-
-    // The underlying transaction stores the quantity signed-negative so
-    // SUM(quantity * price) over the account folds into the right cash
-    // outflow without needing per-type sign logic.
-    final raw = await db
-        .customSelect(
-          'SELECT type, quantity, price, currency, expense_metadata_json '
-          'FROM transactions WHERE id = ?',
-          variables: [Variable.withString(expense.id)],
-        )
-        .getSingle();
-    expect(raw.read<String>('type'), 'expense');
-    expect(Decimal.parse(raw.read<String>('quantity')), Decimal.parse('-120.50'));
-    expect(Decimal.parse(raw.read<String>('price')), Decimal.one);
-    expect(raw.read<String>('currency'), 'CNY');
-    final metadata = ExpenseMetadata.decode(
-      raw.read<String?>('expense_metadata_json'),
-    );
-    expect(metadata!.categoryId, categoryId);
-    expect(metadata.tags, ['lunch']);
-  });
-
-  test('create rejects zero or negative amount', () async {
-    expect(
-      () => repo.create(
-        accountId: accountId,
-        categoryId: categoryId,
-        amount: Decimal.zero,
-        currency: 'CNY',
-        tradeDate: DateTime.utc(2026, 4, 30),
-      ),
-      throwsArgumentError,
-    );
-    expect(
-      () => repo.create(
-        accountId: accountId,
-        categoryId: categoryId,
-        amount: Decimal.parse('-1'),
-        currency: 'CNY',
-        tradeDate: DateTime.utc(2026, 4, 30),
-      ),
-      throwsArgumentError,
-    );
-  });
-
-  test('cross-currency expense (USD account / CNY spend) is preserved',
-      () async {
-    final usd = await accountRepo.create(
-      type: AccountType.bank,
-      name: 'US Checking',
-      currency: 'USD',
-    );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
-
-    final exp = await repo.create(
-      accountId: usd.id,
-      categoryId: categoryId,
-      amount: Decimal.parse('88.00'),
-      currency: 'CNY',
-      tradeDate: DateTime.utc(2026, 4, 30),
-    );
-
-    expect(exp.currency, 'CNY');
-    expect(exp.amount, Decimal.parse('88.00'));
-    final reload = await repo.findById(exp.id);
-    expect(reload!.currency, 'CNY');
-    // Account currency stays USD; we never overwrite it from the expense.
-    final acc = await accountRepo.findById(usd.id);
-    expect(acc!.currency, 'USD');
-  });
-
   test('update only diffs the changed fields and re-encodes metadata',
       () async {
-    final exp = await repo.create(
+    final id = await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('50'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 1),
     );
     await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
@@ -150,7 +112,7 @@ void main() {
     await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
     final updated = await repo.update(
-      exp.id,
+      id,
       amount: Decimal.parse('75'),
       categoryId: newCategory.id,
       tags: const ['taxi'],
@@ -175,33 +137,35 @@ void main() {
 
   test('update preserves existing tags when only categoryId is changed',
       () async {
-    final exp = await repo.create(
+    final id = await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('10'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 1),
       tags: const ['recurring', 'subscription'],
     );
     final newCategory = await categoryRepo.create(name: '订阅');
     await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
-    final updated = await repo.update(exp.id, categoryId: newCategory.id);
+    final updated = await repo.update(id, categoryId: newCategory.id);
     expect(updated.tags, ['recurring', 'subscription']);
   });
 
   test('softDelete tombstones the expense and queues a delete op', () async {
-    final exp = await repo.create(
+    final id = await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('30'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 1),
     );
     await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
-    await repo.softDelete(exp.id);
-    final reloaded = await repo.findById(exp.id);
+    await repo.softDelete(id);
+    final reloaded = await repo.findById(id);
     expect(reloaded!.sync.deletedAt, isNotNull);
 
     final op = (await outbox.peekBatch()).single;
@@ -223,48 +187,52 @@ void main() {
     await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
     final stream = repo.watchExpenses(accountId: accountId);
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('15'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 10),
     );
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: other.id,
       categoryId: categoryId,
       amount: Decimal.parse('99'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 10),
     );
 
     // Take the first non-empty snapshot for this account.
-    final snapshot = await stream
-        .firstWhere((rows) => rows.isNotEmpty);
+    final snapshot = await stream.firstWhere((rows) => rows.isNotEmpty);
     expect(snapshot.length, 1);
     expect(snapshot.single.accountId, accountId);
   });
 
   test('listExpenses filters by date range', () async {
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('1'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 3, 31),
     );
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('2'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 15),
     );
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('3'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 5, 1),
     );
 
@@ -273,37 +241,6 @@ void main() {
       to: DateTime.utc(2026, 5, 1),
     );
     expect(april.map((e) => e.amount), [Decimal.parse('2')]);
-  });
-
-  test('insert op carries a JSON-decodable expense metadata blob '
-      '(sync round trip)', () async {
-    final exp = await repo.create(
-      accountId: accountId,
-      categoryId: categoryId,
-      amount: Decimal.parse('42'),
-      currency: 'CNY',
-      tradeDate: DateTime.utc(2026, 4, 30),
-      tags: const ['cafe'],
-      note: 'morning coffee',
-    );
-
-    // Round-trip the queued op through its wire encoding to mirror what the
-    // server sees on push and what peers replay on pull.
-    final op = (await outbox.peekBatch()).single;
-    final wire = op.encode();
-    final decodedOp = Op.decode(wire);
-    expect(decodedOp.tableName, 'transactions');
-    expect(decodedOp.opType, OpType.insert);
-    expect(decodedOp.rowId, exp.id);
-    final fields = decodedOp.fieldsDiff!;
-    expect(fields['type'], 'expense');
-    expect(fields['quantity'], '-42');
-    expect(fields['currency'], 'CNY');
-    final meta = ExpenseMetadata.decode(
-      fields['expense_metadata_json']! as String,
-    );
-    expect(meta!.categoryId, categoryId);
-    expect(meta.tags, ['cafe']);
   });
 
   test('expense outflow rolls into account cash flow via signed quantity',
@@ -316,18 +253,20 @@ void main() {
             amount: Decimal.parse('500'),
           ),
         );
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('120'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 10),
     );
-    await repo.create(
+    await _insertLegacyExpense(
+      db: db,
+      stamper: stamper,
       accountId: accountId,
       categoryId: categoryId,
       amount: Decimal.parse('80'),
-      currency: 'CNY',
       tradeDate: DateTime.utc(2026, 4, 11),
     );
 
@@ -373,4 +312,3 @@ Future<TransactionsCompanion> _depositCompanion({
     hlc: stamp.hlc,
   );
 }
-
