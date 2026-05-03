@@ -84,9 +84,7 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
     _scrimEntry = OverlayEntry(
       builder: (_) => AnimatedBuilder(
         animation: _popupController,
-        builder: (context, _) => GestureDetector(
-          onTap: _dismiss,
-          behavior: HitTestBehavior.translucent,
+        builder: (context, _) => IgnorePointer(
           child: Container(
             color: Colors.black.withValues(
               alpha: 0.25 * _popupController.value,
