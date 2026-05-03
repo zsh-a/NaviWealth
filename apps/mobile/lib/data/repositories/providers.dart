@@ -13,6 +13,7 @@ import '../domain/expense_category.dart';
 import 'account_repository.dart';
 import 'expense_category_repository.dart';
 import 'fx_rate_repository.dart';
+import 'journal_entry_providers.dart';
 import 'manual_asset_repository.dart';
 import 'mutation_context.dart';
 import 'securities_asset_repository.dart';
@@ -40,7 +41,13 @@ final manualAssetRepositoryProvider = FutureProvider<ManualAssetRepository>((
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
-  return ManualAssetRepository(db: db, outbox: outbox, stamper: stamper);
+  final jeRepo = await ref.watch(journalEntryRepositoryProvider.future);
+  return ManualAssetRepository(
+    db: db,
+    outbox: outbox,
+    stamper: stamper,
+    journalEntryRepo: jeRepo,
+  );
 });
 
 /// FIR-75: securities-class assets (stock / ETF / fund / bond / crypto).

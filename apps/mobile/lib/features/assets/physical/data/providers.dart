@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/db/providers.dart';
+import '../../../../data/repositories/journal_entry_providers.dart';
 import '../../../../data/repositories/mutation_context.dart';
 import '../../../../data/repositories/providers.dart';
 import 'physical_asset.dart';
@@ -11,7 +12,13 @@ final physicalAssetRepositoryProvider =
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
-  return PhysicalAssetRepository(db: db, outbox: outbox, stamper: stamper);
+  final jeRepo = await ref.watch(journalEntryRepositoryProvider.future);
+  return PhysicalAssetRepository(
+    db: db,
+    outbox: outbox,
+    stamper: stamper,
+    journalEntryRepo: jeRepo,
+  );
 });
 
 final physicalAssetsListProvider =

@@ -10,6 +10,9 @@ import '../domain/asset.dart';
 import '../domain/enums.dart';
 import '../domain/manual_asset_metadata.dart';
 import '../domain/sync_meta.dart';
+import 'account_repository.dart';
+import 'journal_entry_builders.dart';
+import 'journal_entry_repository.dart';
 import 'mutation_context.dart';
 
 /// Read/write API for "manual valuation" [Asset] rows — those whose
@@ -26,17 +29,20 @@ class ManualAssetRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    JournalEntryRepository? journalEntryRepo,
     EventLogWriter? eventLog,
     Uuid uuid = const Uuid(),
   }) : _db = db,
        _outbox = outbox,
        _stamper = stamper,
+       _journalEntryRepo = journalEntryRepo,
        _eventLog = eventLog ?? EventLogWriter(db: db, uuid: uuid),
        _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final JournalEntryRepository? _journalEntryRepo;
   final EventLogWriter _eventLog;
   final Uuid _uuid;
 
@@ -348,6 +354,30 @@ class ManualAssetRepository {
         },
         reason: reason,
       );
+
+      // FIR-131 dual-write: JE for the ledger stack alongside the legacy
+      // transactions row (read paths still consume it).
+      final jeRepo = _journalEntryRepo;
+      if (jeRepo != null) {
+        final equityAccountId = AccountRepository.systemAccountIdForPath(
+          'equity:adjustments',
+          ownerUserId: stamp.ownerUserId,
+        );
+        final build = JournalEntryBuilders.valuationAdjust(
+          date: tradeDate,
+          accountId: txAccountId,
+          equityAccountId: equityAccountId,
+          assetUnit: assetId,
+          quantity: Decimal.zero,
+          newValuation: newValuation,
+          currency: priorRow.currency,
+          narration: reason,
+        );
+        await jeRepo.create(
+          entry: build.entry,
+          postings: build.postings,
+        );
+      }
     });
     return (await findById(assetId))!;
   }
@@ -581,6 +611,28 @@ class ManualAssetRepository {
           },
           stamp: stamp,
         );
+
+        // FIR-131 dual-write: JE for the ledger stack.
+        final jeRepo = _journalEntryRepo;
+        if (jeRepo != null) {
+          final equityAccountId = AccountRepository.systemAccountIdForPath(
+            'equity:adjustments',
+            ownerUserId: stamp.ownerUserId,
+          );
+          final build = JournalEntryBuilders.valuationAdjust(
+            date: tradeDate,
+            accountId: accountId,
+            equityAccountId: equityAccountId,
+            assetUnit: id,
+            quantity: Decimal.zero,
+            newValuation: lastPrice,
+            currency: currency,
+          );
+          await jeRepo.create(
+            entry: build.entry,
+            postings: build.postings,
+          );
+        }
       }
     });
   }
