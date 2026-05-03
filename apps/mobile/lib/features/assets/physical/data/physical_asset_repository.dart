@@ -6,6 +6,9 @@ import '../../../../core/sync/op.dart';
 import '../../../../core/sync/op_outbox.dart';
 import '../../../../data/db/app_database.dart';
 import '../../../../data/domain/enums.dart';
+import '../../../../data/repositories/account_repository.dart';
+import '../../../../data/repositories/journal_entry_builders.dart';
+import '../../../../data/repositories/journal_entry_repository.dart';
 import '../../../../data/repositories/mutation_context.dart';
 import 'physical_asset.dart';
 import 'physical_asset_meta.dart';
@@ -23,15 +26,18 @@ class PhysicalAssetRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    JournalEntryRepository? journalEntryRepo,
     Uuid uuid = const Uuid(),
   })  : _db = db,
         _outbox = outbox,
         _stamper = stamper,
+        _journalEntryRepo = journalEntryRepo,
         _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+  final JournalEntryRepository? _journalEntryRepo;
   final Uuid _uuid;
 
   static const Set<AssetType> _physicalTypes = {
@@ -251,6 +257,30 @@ class PhysicalAssetRepository {
           'hlc': txStamp.hlc.toString(),
         },
       );
+
+      // FIR-131 dual-write: JE for the ledger stack alongside the legacy
+      // transactions row (read paths still consume it).
+      final jeRepo = _journalEntryRepo;
+      if (jeRepo != null) {
+        final equityAccountId = AccountRepository.systemAccountIdForPath(
+          'equity:adjustments',
+          ownerUserId: txStamp.ownerUserId,
+        );
+        final build = JournalEntryBuilders.valuationAdjust(
+          date: asOf,
+          accountId: assetId,
+          equityAccountId: equityAccountId,
+          assetUnit: assetId,
+          quantity: txQuantity,
+          newValuation: newValuation,
+          currency: existing.currency,
+          narration: note,
+        );
+        await jeRepo.create(
+          entry: build.entry,
+          postings: build.postings,
+        );
+      }
     });
   }
 
