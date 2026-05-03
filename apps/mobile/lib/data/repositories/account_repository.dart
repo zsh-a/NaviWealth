@@ -825,9 +825,14 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#EF4444',
   ),
   _SystemAccountSeed(
-    path: 'expense:transit',
+    // FIR-131 wave 3g — renamed from `expense:transit` so the seed
+    // path matches the legacy `transport` slug from
+    // `ExpenseCategoryRepository.defaultSeeds`. The
+    // `LegacyExpenseCategoryToAccount` resolver now round-trips that
+    // slug losslessly.
+    path: 'expense:transport',
     parentPath: 'expense',
-    name: 'Transit',
+    name: 'Transport',
     category: AccountCategory.expense,
     icon: 'directions_bus',
     color: '#EF4444',
@@ -838,6 +843,74 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Housing',
     category: AccountCategory.expense,
     icon: 'home',
+    color: '#EF4444',
+  ),
+  // FIR-131 wave 3g — round out the expense leaves so every default
+  // slug from `ExpenseCategoryRepository.defaultSeeds` has a
+  // dedicated FIR-133 account; the resolver no longer falls back to
+  // `Expenses:Other` for the common categories.
+  _SystemAccountSeed(
+    path: 'expense:household',
+    parentPath: 'expense',
+    name: 'Household',
+    category: AccountCategory.expense,
+    icon: 'chair',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:entertainment',
+    parentPath: 'expense',
+    name: 'Entertainment',
+    category: AccountCategory.expense,
+    icon: 'sports_esports',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:medical',
+    parentPath: 'expense',
+    name: 'Medical',
+    category: AccountCategory.expense,
+    icon: 'medical_services',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:education',
+    parentPath: 'expense',
+    name: 'Education',
+    category: AccountCategory.expense,
+    icon: 'school',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:shopping',
+    parentPath: 'expense',
+    name: 'Shopping',
+    category: AccountCategory.expense,
+    icon: 'shopping_bag',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:travel',
+    parentPath: 'expense',
+    name: 'Travel',
+    category: AccountCategory.expense,
+    icon: 'flight',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:communication',
+    parentPath: 'expense',
+    name: 'Communication',
+    category: AccountCategory.expense,
+    icon: 'smartphone',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:gift',
+    parentPath: 'expense',
+    name: 'Gift',
+    category: AccountCategory.expense,
+    icon: 'card_giftcard',
     color: '#EF4444',
   ),
   _SystemAccountSeed(

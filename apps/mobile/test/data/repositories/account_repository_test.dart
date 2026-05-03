@@ -189,9 +189,12 @@ void main() {
 
     test('seedSystemAccounts inserts the full tree once', () async {
       final inserted = await repo.seedSystemAccounts();
-      // 3 roots (income / expense / equity) plus 16 children — the
-      // FIR-133 default tree.
-      expect(inserted, 19);
+      // 3 roots (income / expense / equity) + the FIR-133 leaves +
+      // FIR-131 wave 3g's expanded expense subtree (one account per
+      // default `ExpenseCategoryRepository.defaultSeeds` slug). 27
+      // total today — the count is asserted concretely so a future
+      // seed change has to update the contract.
+      expect(inserted, 27);
 
       // Re-running is a free no-op — same primary keys, no duplicates.
       final reseeded = await repo.seedSystemAccounts();
@@ -199,7 +202,7 @@ void main() {
 
       final ops = await outbox.peekBatch();
       // Inserts on the first call only; the no-op doesn't queue.
-      expect(ops, hasLength(19));
+      expect(ops, hasLength(27));
       // The tree's three top-level buckets are present.
       final categories = ops.map((o) => o.fieldsDiff!['category']).toSet();
       expect(categories, {'income', 'expense', 'equity'});
@@ -392,10 +395,13 @@ void main() {
       final subtree = await repo.walkSubtree(
         'system-account:u-test:expense',
       );
-      // Expenses subtree: 1 root + 5 direct children (food / transit /
-      // housing / trading / other) + 3 grand-children under trading
-      // = 9 nodes.
-      expect(subtree, hasLength(9));
+      // FIR-131 wave 3g — Expenses subtree: 1 root + 12 direct
+      // children (one per default `ExpenseCategoryRepository` slug:
+      // food / transport / housing / household / entertainment /
+      // medical / education / shopping / travel / communication /
+      // gift / other) + 1 trading branch + 3 trading grand-children
+      // = 17 nodes.
+      expect(subtree, hasLength(17));
       expect(subtree.first.id, 'system-account:u-test:expense');
       expect(
         subtree.map((a) => a.id),
@@ -404,6 +410,9 @@ void main() {
           'system-account:u-test:expense:trading:fee',
           'system-account:u-test:expense:trading:tax',
           'system-account:u-test:expense:trading:interest',
+          'system-account:u-test:expense:transport',
+          'system-account:u-test:expense:education',
+          'system-account:u-test:expense:gift',
         ]),
       );
     });
