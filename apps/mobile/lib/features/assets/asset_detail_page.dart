@@ -340,8 +340,8 @@ class _HoldingCard extends ConsumerWidget {
 }
 
 /// Unrealized P&L (amount + %) and the current day's price-driven change.
-/// Realized P&L will come from the postings read model once that projection
-/// lands; the legacy `Transaction` replay path has been removed.
+/// Realized P&L will come from the postings read model once that
+/// projection lands.
 class _PnLCard extends ConsumerWidget {
   const _PnLCard({required this.asset});
 

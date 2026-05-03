@@ -95,7 +95,7 @@ lib/
   core/           Cross-cutting: auth, config, sync, logging, security, PWA, shortcuts, backup
   data/
     db/           Drift ORM (app_database, tables, converters, connection variants)
-    domain/       Domain model classes (freezed): Account, Asset, Transaction, Liability...
+    domain/       Domain model classes (freezed): Account, Asset, JournalEntry, Posting, Liability, Expense...
     market/       Market data providers (Yahoo Finance, CoinGecko, Sina), cache, rate limiter
     repositories/ Data repositories
   domain/         Pure domain services: net worth, currency converter, market data, quotes
