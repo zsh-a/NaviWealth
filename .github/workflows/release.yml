@@ -1,22 +1,26 @@
 name: release
 
-# Tag-driven releases. Convention:
-#   mobile-vX.Y.Z       — mobile (Flutter) release
-#   backend-vX.Y.Z      — backend (Workers) release
-# Both produce a GitHub Release with build artifacts. Build numbers are
-# derived from the total commit count on main so they are monotonically
-# increasing and reproducible from history alone.
+# Unified release workflow. Convention:
+#   v0.2.0 — stamps version into both mobile (pubspec.yaml) and backend
+#            (Cargo.toml), creates a GitHub Release with mobile artifacts,
+#            and optionally builds + deploys the backend.
+#
+# Tag push (vX.Y.Z) always builds both mobile and backend.
+# Manual dispatch allows skipping the backend build via the `backend` input.
 
 on:
   push:
     tags:
-      - 'mobile-v[0-9]+.[0-9]+.[0-9]+'
-      - 'backend-v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag to build (mobile-vX.Y.Z or backend-vX.Y.Z)'
+      version:
+        description: 'Semver version (X.Y.Z)'
         required: true
+      backend:
+        description: 'Also build & deploy backend'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -26,23 +30,28 @@ jobs:
     name: resolve metadata
     runs-on: ubuntu-latest
     outputs:
-      kind: ${{ steps.parse.outputs.kind }}
       semver: ${{ steps.parse.outputs.semver }}
       build_number: ${{ steps.parse.outputs.build_number }}
+      do_backend: ${{ steps.flags.outputs.do_backend }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: parse
         env:
-          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          TAG: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
-          if [[ "$TAG" =~ ^(mobile|backend)-v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "kind=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
-            echo "semver=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            ver="${TAG#v}"
           else
-            echo "::error::Tag '$TAG' does not match (mobile|backend)-vX.Y.Z"
+            ver="$INPUT_VERSION"
+          fi
+          if [[ "$ver" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "semver=$ver" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Version '$ver' does not match X.Y.Z"
             exit 1
           fi
           # Build number = commits reachable from tag (or HEAD if dispatched).
@@ -52,12 +61,21 @@ jobs:
           fi
           build="$(git rev-list --count "$ref")"
           echo "build_number=$build" >> "$GITHUB_OUTPUT"
-          echo "Resolved: kind=${BASH_REMATCH[1]} semver=${BASH_REMATCH[2]} build=$build"
+          echo "Resolved: semver=$ver build=$build"
+      - id: flags
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_BACKEND: ${{ github.event.inputs.backend }}
+        run: |
+          if [ "$EVENT" = "push" ]; then
+            echo "do_backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "do_backend=${INPUT_BACKEND:-true}" >> "$GITHUB_OUTPUT"
+          fi
 
   mobile-release:
-    name: mobile release artifacts
+    name: mobile release
     needs: meta
-    if: needs.meta.outputs.kind == 'mobile'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -78,8 +96,6 @@ jobs:
           BUILD: ${{ needs.meta.outputs.build_number }}
         run: |
           set -euo pipefail
-          # Replace the leading `version:` line with the tag-derived value.
-          # Build number = commit count, semver from tag.
           sed -i -E "s/^version: .*/version: ${SEMVER}+${BUILD}/" pubspec.yaml
           grep '^version:' pubspec.yaml
       - run: flutter pub get
@@ -87,14 +103,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Refresh securities catalog from upstream feeds
-        # Pulls fresh listings from HKEX, NASDAQ Trader, SEC and CoinGecko,
-        # then bakes a new securities.v1.ndjson the Flutter build will pick
-        # up. BaoStock + mootdx are mainland-only and unreachable from
-        # GitHub-hosted runners; --allow-degraded keeps the last-committed
-        # A-share CSVs in that case so the release still ships. To pick
-        # up A-share refreshes, run ./tool/build-asset-catalog.sh --full
-        # locally on a CN host and commit the resulting CSVs + bundle
-        # before tagging, or move this step onto a self-hosted CN runner.
         working-directory: ${{ github.workspace }}
         run: |
           ./tool/build-asset-catalog.sh --full --allow-degraded \
@@ -129,18 +137,18 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          name: mobile ${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
+          tag_name: ${{ github.ref_name }}
+          name: v${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
           generate_release_notes: true
           files: |
             apps/mobile/naviwealth-web-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz
             apps/mobile/build/app/outputs/flutter-apk/app-release.apk
             apps/mobile/build/app/outputs/bundle/release/app-release.aab
 
-  backend-release:
-    name: backend release artifacts
+  backend-build:
+    name: backend build
     needs: meta
-    if: needs.meta.outputs.kind == 'backend'
+    if: needs.meta.outputs.do_backend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -170,11 +178,25 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          name: backend ${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
+          tag_name: ${{ github.ref_name }}
+          name: backend v${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
           generate_release_notes: true
           files: |
             apps/backend/naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz
+
+  backend-deploy:
+    name: backend deploy
+    needs: [meta, backend-build]
+    if: always() && needs.backend-build.result == 'success'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: backend-deploy-prod
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: apps/backend
+    steps:
+      - uses: actions/checkout@v4
       - name: Check deploy credentials
         id: deploy-gate
         env:

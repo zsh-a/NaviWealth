@@ -126,8 +126,8 @@ PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流�
 - 发版示例：
 
   ```bash
-  ./tool/bump-version.sh mobile 0.2.0
+  ./tool/bump-version.sh 0.2.0           # stamps both mobile + backend, tags v0.2.0
   git push origin HEAD --follow-tags
   ```
 
-  会修改 `pubspec.yaml`、提交、打 tag，并由 `release.yml` 在构建时把 `version: 0.2.0+1` 重写成 `0.2.0+<commit-count>`。
+  会同时修改 `pubspec.yaml` 和 `Cargo.toml`、提交、打 tag `v0.2.0`，并由 `release.yml` 在构建时把版本号重写成 `0.2.0+<commit-count>`。
