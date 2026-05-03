@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/services/currency_converter.dart';
 import '../../features/settings/data/base_currency_preference.dart';
 import '../db/providers.dart';
+import '../domain/expense.dart';
 import '../domain/invariants.dart';
 import 'journal_entry_repository.dart';
 import 'mutation_context.dart';
@@ -80,4 +81,13 @@ final journalEntriesWithPostingsStreamProvider =
     StreamProvider.autoDispose<List<JournalEntryWithPostings>>((ref) async* {
   final repo = await ref.watch(journalEntryRepositoryProvider.future);
   yield* repo.watchAllWithPostings();
+});
+
+/// FIR-132 — live stream of expense entries materialised from the
+/// journal. Replaces the legacy `expensesStreamProvider` that read
+/// from the `transactions` table.
+final journalExpensesStreamProvider =
+    StreamProvider.autoDispose<List<Expense>>((ref) async* {
+  final repo = await ref.watch(journalEntryRepositoryProvider.future);
+  yield* repo.watchExpenses();
 });

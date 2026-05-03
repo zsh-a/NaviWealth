@@ -6,6 +6,7 @@ import 'package:naviwealth/data/domain/expense.dart';
 import 'package:naviwealth/data/domain/expense_category.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/expense/data/expense_report_providers.dart';
@@ -55,7 +56,7 @@ Future<ProviderScope> _wrap({
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      expensesStreamProvider.overrideWith((ref) => Stream.value(expenses)),
+      journalExpensesStreamProvider.overrideWith((ref) => Stream.value(expenses)),
       allExpenseCategoriesStreamProvider.overrideWith(
         (ref) => Stream.value(categories),
       ),

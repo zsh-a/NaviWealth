@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/repositories/providers.dart';
+import '../../../data/repositories/journal_entry_providers.dart';
 
 /// Window used to compute the "most-used recently" expense category that
 /// the form pre-selects on first open. Matches the FIR-95 spec ("近 30 天
@@ -13,7 +13,7 @@ const Duration kRecentExpenseCategoryWindow = Duration(days: 30);
 /// stream is still loading or when the user has no recent spends, so
 /// callers fall back to the seeded "其它" bucket the form already uses.
 final mostUsedExpenseCategoryProvider = Provider<String?>((ref) {
-  final expensesAsync = ref.watch(expensesStreamProvider);
+  final expensesAsync = ref.watch(journalExpensesStreamProvider);
   return expensesAsync.maybeWhen(
     data: (expenses) {
       if (expenses.isEmpty) return null;
