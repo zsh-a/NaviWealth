@@ -51,6 +51,12 @@ awk -v v="$semver" '
 ' "$backend_file" > "${backend_file}.tmp" && mv "${backend_file}.tmp" "$backend_file"
 
 git add "$mobile_file" "$backend_file"
+
+if git diff --cached --quiet; then
+  echo "error: version $semver is already set — nothing to commit." >&2
+  exit 1
+fi
+
 git commit -m "release: $semver"
 git tag -a "$tag" -m "release $semver"
 
