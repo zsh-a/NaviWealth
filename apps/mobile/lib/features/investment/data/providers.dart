@@ -17,8 +17,10 @@ import '../domain/holding_price_source.dart';
 import '../domain/holding_service.dart';
 import '../domain/models/holding_snapshot.dart';
 import '../domain/models/lot.dart';
+import '../domain/returns/portfolio_return.dart';
 import '../domain/trade_entry/default_trade_entry_service.dart';
 import '../domain/trade_entry/trade_entry_service.dart';
+import 'portfolio_return_service.dart';
 
 final _tradeCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
   return FxRateCurrencyConverter(InMemoryFxRateLookup(const []));
@@ -46,6 +48,25 @@ final _priceRowsStreamProvider = StreamProvider.autoDispose<List<PriceRow>>((
   final db = await ref.watch(appDatabaseProvider.future);
   final query = db.select(db.prices)..where((t) => t.deletedAt.isNull());
   yield* query.watch();
+});
+
+final _ledgerRevisionProvider = StreamProvider.autoDispose<int>((ref) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final query =
+      db.select(db.postings).join([
+          innerJoin(
+            db.journalEntries,
+            db.journalEntries.id.equalsExp(db.postings.journalEntryId),
+          ),
+          leftOuterJoin(
+            db.accounts,
+            db.accounts.id.equalsExp(db.postings.accountId),
+          ),
+        ])
+        ..where(db.postings.deletedAt.isNull())
+        ..where(db.journalEntries.deletedAt.isNull());
+  var revision = 0;
+  yield* query.watch().map((_) => revision++);
 });
 
 final holdingPriceSourceProvider = Provider<HoldingPriceSource>((ref) {
@@ -92,9 +113,27 @@ final holdingServiceProvider = FutureProvider<HoldingService>((ref) async {
 
 final holdingsSnapshotProvider =
     FutureProvider.autoDispose<Map<String, HoldingSnapshot>>((ref) async {
+      ref.watch(_ledgerRevisionProvider);
       final service = await ref.watch(holdingServiceProvider.future);
       return service.computeAt(DateTime.now().toUtc());
     });
+
+final portfolioReturnServiceProvider = FutureProvider<PortfolioReturnService>((
+  ref,
+) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
+  final holdings = await ref.watch(holdingServiceProvider.future);
+  final converter = ref.watch(returnsCurrencyConverterProvider);
+  final base = ref.watch(holdingBaseCurrencyProvider);
+  return LedgerPortfolioReturnService(
+    db: db,
+    ownerUserId: ownerUserId,
+    baseCurrency: base,
+    holdings: holdings,
+    converter: converter,
+  );
+});
 
 Asset _assetFromRow(AssetRow row) {
   return Asset(

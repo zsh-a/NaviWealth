@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../data/db/app_database.dart';
+import '../../../data/db/providers.dart';
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
@@ -93,6 +95,45 @@ final dashboardTimeRangeProvider = Provider<DashboardTimeRange>((ref) {
   );
 });
 
+final _dashboardPriceRowsProvider = StreamProvider.autoDispose<List<PriceRow>>((
+  ref,
+) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final query = db.select(db.prices)..where((t) => t.deletedAt.isNull());
+  yield* query.watch();
+});
+
+final dashboardManualAssetValuationsProvider =
+    Provider<AsyncValue<List<ManualAssetValuation>>>((ref) {
+      final manual = ref.watch(manualAssetsStreamProvider);
+      if (manual.isLoading) return const AsyncValue.loading();
+      if (manual.hasError) {
+        return AsyncValue.error(
+          manual.error!,
+          manual.stackTrace ?? StackTrace.current,
+        );
+      }
+      final manualList = manual.value ?? const <Asset>[];
+      if (manualList.isEmpty) {
+        return const AsyncValue.data(<ManualAssetValuation>[]);
+      }
+
+      final prices = ref.watch(_dashboardPriceRowsProvider);
+      if (prices.isLoading) return const AsyncValue.loading();
+      if (prices.hasError) {
+        return AsyncValue.error(
+          prices.error!,
+          prices.stackTrace ?? StackTrace.current,
+        );
+      }
+      return AsyncValue.data(
+        _buildManualAssetValuations(
+          manualAssets: manualList,
+          priceRows: prices.value ?? const <PriceRow>[],
+        ),
+      );
+    });
+
 /// Live snapshot of asset / liability allocations grouped by big-bucket
 /// category. Re-computes whenever any upstream stream emits — including
 /// the postings-derived [holdingsSnapshotProvider], so a newly recorded
@@ -100,7 +141,7 @@ final dashboardTimeRangeProvider = Provider<DashboardTimeRange>((ref) {
 final dashboardSnapshotProvider = Provider<AsyncValue<DashboardSnapshot>>((
   ref,
 ) {
-  final manual = ref.watch(manualAssetsStreamProvider);
+  final manualValuations = ref.watch(dashboardManualAssetValuationsProvider);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
   final assets = ref.watch(allAssetsStreamProvider);
@@ -108,20 +149,20 @@ final dashboardSnapshotProvider = Provider<AsyncValue<DashboardSnapshot>>((
   final converter = ref.watch(dashboardCurrencyConverterProvider);
   final base = ref.watch(dashboardBaseCurrencyProvider);
 
-  if (manual.isLoading || physical.isLoading || liab.isLoading) {
+  if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
     return const AsyncValue.loading();
   }
-  final err = manual.error ?? physical.error ?? liab.error;
+  final err = manualValuations.error ?? physical.error ?? liab.error;
   if (err != null) {
     return AsyncValue.error(
       err,
-      manual.stackTrace ??
+      manualValuations.stackTrace ??
           physical.stackTrace ??
           liab.stackTrace ??
           StackTrace.current,
     );
   }
-  final manualList = manual.value ?? const <Asset>[];
+  final manualList = manualValuations.value ?? const <ManualAssetValuation>[];
   final physicalList = physical.value ?? const <PhysicalAsset>[];
   final liabList = liab.value ?? const <Liability>[];
   // Holdings degrade to empty (rather than blocking the dashboard) while
@@ -174,6 +215,63 @@ List<SecurityHolding> _buildSecurityHoldings({
   return out;
 }
 
+List<ManualAssetValuation> _buildManualAssetValuations({
+  required List<Asset> manualAssets,
+  required List<PriceRow> priceRows,
+}) {
+  if (manualAssets.isEmpty) return const [];
+  final pricesByUnit = <String, List<PriceRow>>{};
+  for (final row in priceRows) {
+    pricesByUnit.putIfAbsent(row.unit, () => <PriceRow>[]).add(row);
+  }
+
+  final out = <ManualAssetValuation>[];
+  for (final asset in manualAssets) {
+    final rows =
+        (pricesByUnit[asset.id] ?? const <PriceRow>[])
+            .where((row) => row.quoteCurrency == asset.currency)
+            .toList(growable: false)
+          ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
+    if (rows.isEmpty) continue;
+    out.add(
+      ManualAssetValuation(
+        asset: asset,
+        observations: [
+          for (final row in rows)
+            ManualAssetValuePoint(
+              observedOn: row.observedOn,
+              value: row.perUnit,
+            ),
+        ],
+      ),
+    );
+  }
+  return List.unmodifiable(out);
+}
+
+Future<List<ManualAssetValuation>> _manualAssetValuationsForHeader(
+  Ref ref,
+) async {
+  final async = ref.watch(dashboardManualAssetValuationsProvider);
+  if (async.hasValue) {
+    return async.value ?? const <ManualAssetValuation>[];
+  }
+  if (async.hasError) {
+    Error.throwWithStackTrace(
+      async.error!,
+      async.stackTrace ?? StackTrace.current,
+    );
+  }
+
+  final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
+  if (manualAssets.isEmpty) return const <ManualAssetValuation>[];
+  final priceRows = await ref.watch(_dashboardPriceRowsProvider.future);
+  return _buildManualAssetValuations(
+    manualAssets: manualAssets,
+    priceRows: priceRows,
+  );
+}
+
 /// Schedule rows for every liability, keyed by liability id. The trend
 /// builder needs the schedule so it can walk outstanding balance back
 /// through time. We watch each schedule provider individually so a paid
@@ -196,7 +294,7 @@ final dashboardLiabilitySchedulesProvider =
 /// selected [DashboardTimeRange]. Re-evaluates when the range changes or
 /// any upstream stream emits.
 final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
-  final manual = ref.watch(manualAssetsStreamProvider);
+  final manualValuations = ref.watch(dashboardManualAssetValuationsProvider);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
   final converter = ref.watch(dashboardCurrencyConverterProvider);
@@ -204,14 +302,14 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   final range = ref.watch(dashboardTimeRangeProvider);
   final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
 
-  if (manual.isLoading || physical.isLoading || liab.isLoading) {
+  if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
     return const AsyncValue.loading();
   }
-  final err = manual.error ?? physical.error ?? liab.error;
+  final err = manualValuations.error ?? physical.error ?? liab.error;
   if (err != null) {
     return AsyncValue.error(
       err,
-      manual.stackTrace ??
+      manualValuations.stackTrace ??
           physical.stackTrace ??
           liab.stackTrace ??
           StackTrace.current,
@@ -223,7 +321,7 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   );
   final trend = builder.build(
     range: range,
-    manualAssets: manual.value ?? const <Asset>[],
+    manualAssets: manualValuations.value ?? const <ManualAssetValuation>[],
     physicalAssets: physical.value ?? const <PhysicalAsset>[],
     liabilities: liab.value ?? const <Liability>[],
     liabilitySchedules: schedules,
@@ -241,8 +339,9 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
 /// — a simple percent change suitable for short windows where path-
 /// dependent flows are noise. `null` when `nw(monthStart)` is zero.
 ///
-/// `ytdChangePct` is reserved for the postings-derived return read model.
-/// It is `null` until that model lands, and the UI renders `—`.
+/// `ytdChangePct` is the postings-derived money-weighted return. It uses
+/// XIRR when the ledger has a solvable set of cash flows, and falls back to
+/// cumulative absolute return for degenerate windows.
 @immutable
 class DashboardHeaderMetrics {
   const DashboardHeaderMetrics({
@@ -261,7 +360,10 @@ class DashboardHeaderMetrics {
 final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
   ref,
 ) async {
-  final manualList = await ref.watch(manualAssetsStreamProvider.future);
+  // Establish the same postings-derived invalidation edge as the dashboard
+  // snapshot. The return service does the historical XIRR query below.
+  ref.watch(holdingsSnapshotProvider);
+  final manualList = await _manualAssetValuationsForHeader(ref);
   final physicalList = await ref.watch(physicalAssetsListProvider.future);
   final liabList = await ref.watch(liabilitiesStreamProvider.future);
   final converter = ref.watch(dashboardCurrencyConverterProvider);
@@ -318,11 +420,12 @@ final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
   );
 });
 
-/// Placeholder until returns are derived from postings.
 Future<double?> _ytdRatio(
   Ref ref, {
   required DateTime from,
   required DateTime to,
 }) async {
-  return null;
+  final service = await ref.watch(portfolioReturnServiceProvider.future);
+  final result = await service.compute(from: from, to: to);
+  return result.displayReturn;
 }

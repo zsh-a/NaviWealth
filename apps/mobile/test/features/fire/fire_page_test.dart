@@ -15,6 +15,8 @@ import 'package:naviwealth/features/fire/data/fire_goal_preferences.dart';
 import 'package:naviwealth/features/fire/domain/fire_goal.dart';
 import 'package:naviwealth/features/fire/presentation/fire_page.dart';
 import 'package:naviwealth/features/fire/presentation/fire_progress_gauge.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
@@ -22,19 +24,19 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 4, 1),
-      updatedByDevice: 't',
-      hlc: Hlc.zero('t'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 4, 1),
+  updatedByDevice: 't',
+  hlc: Hlc.zero('t'),
+);
 
 Asset _cash(String id) => Asset(
-      id: id,
-      type: AssetType.cash,
-      symbol: id,
-      currency: 'CNY',
-      sync: _meta(),
-    );
+  id: id,
+  type: AssetType.cash,
+  symbol: id,
+  currency: 'CNY',
+  sync: _meta(),
+);
 
 Future<Widget> _wrap({
   required SharedPreferences prefs,
@@ -46,12 +48,11 @@ Future<Widget> _wrap({
       manualAssetsStreamProvider.overrideWith(
         (ref) => Stream.value(manualAssets),
       ),
-      physicalAssetsListProvider.overrideWith(
-        (ref) => Stream.value(const []),
+      dashboardManualAssetValuationsProvider.overrideWith(
+        (ref) => const AsyncValue.data(<ManualAssetValuation>[]),
       ),
-      liabilitiesStreamProvider.overrideWith(
-        (ref) => Stream.value(const []),
-      ),
+      physicalAssetsListProvider.overrideWith((ref) => Stream.value(const [])),
+      liabilitiesStreamProvider.overrideWith((ref) => Stream.value(const [])),
       fxRatesStreamProvider.overrideWith(
         (ref) => Stream<List<FxRate>>.value(const []),
       ),
@@ -72,8 +73,9 @@ Future<Widget> _wrap({
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('renders empty state with set-goal CTA when no goal configured',
-      (tester) async {
+  testWidgets('renders empty state with set-goal CTA when no goal configured', (
+    tester,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(await _wrap(prefs: prefs));
     await tester.pumpAndSettle();
@@ -83,8 +85,9 @@ void main() {
     expect(find.byType(FireProgressGauge), findsNothing);
   });
 
-  testWidgets('renders the gauge and scenario table once a goal is saved',
-      (tester) async {
+  testWidgets('renders the gauge and scenario table once a goal is saved', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({
       'naviwealth.fire.target_amount': '1000000',
       'naviwealth.fire.monthly_expenses': '4000',
@@ -93,10 +96,9 @@ void main() {
     });
     final prefs = await SharedPreferences.getInstance();
 
-    await tester.pumpWidget(await _wrap(
-      prefs: prefs,
-      manualAssets: [_cash('cash-1')],
-    ));
+    await tester.pumpWidget(
+      await _wrap(prefs: prefs, manualAssets: [_cash('cash-1')]),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(FireProgressGauge), findsOneWidget);
@@ -129,6 +131,9 @@ void main() {
           manualAssetsStreamProvider.overrideWith(
             (ref) => Stream.value(const <Asset>[]),
           ),
+          dashboardManualAssetValuationsProvider.overrideWith(
+            (ref) => const AsyncValue.data(<ManualAssetValuation>[]),
+          ),
           physicalAssetsListProvider.overrideWith(
             (ref) => Stream.value(const []),
           ),
@@ -138,9 +143,7 @@ void main() {
           fxRatesStreamProvider.overrideWith(
             (ref) => Stream<List<FxRate>>.value(const []),
           ),
-          allAssetsStreamProvider.overrideWith(
-            (ref) => Stream.value(const []),
-          ),
+          allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
           holdingsSnapshotProvider.overrideWith(
             (ref) async => const <String, HoldingSnapshot>{},
           ),
@@ -149,10 +152,12 @@ void main() {
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Consumer(builder: (context, ref, _) {
-            container = ProviderScope.containerOf(context, listen: false);
-            return const FirePage();
-          }),
+          home: Consumer(
+            builder: (context, ref, _) {
+              container = ProviderScope.containerOf(context, listen: false);
+              return const FirePage();
+            },
+          ),
         ),
       ),
     );

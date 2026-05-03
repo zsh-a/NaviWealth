@@ -58,7 +58,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     } else {
       final defaults = ref.read(formDefaultsProvider);
       _accountId = defaults.assetAccountId;
-      if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+      if (defaults.assetCurrency != null &&
+          defaults.assetCurrency!.isNotEmpty) {
         _currency = defaults.assetCurrency;
       }
     }
@@ -70,9 +71,11 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     if (existing == null || !mounted) return;
     final meta = existing.manualMetadata;
     final accountId = meta is CashMetadata ? meta.accountId : null;
+    final valuation = await repo.latestValuation(existing.id);
+    if (!mounted) return;
     setState(() {
       _initial = existing;
-      _balanceController.text = '';
+      _balanceController.text = valuation?.toString() ?? '';
       _nicknameController.text = existing.name ?? '';
       _currency = existing.currency;
       _accountId = accountId;
@@ -106,10 +109,11 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
           );
         }
       }
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
-            accountId: _accountId,
-            currency: _currency,
-          ));
+      unawaited(
+        ref
+            .read(formDefaultsProvider.notifier)
+            .rememberAsset(accountId: _accountId, currency: _currency),
+      );
       if (!mounted) return;
       Haptics.success();
       context.go('/assets');
@@ -179,10 +183,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                l10n.cashFormNeedAccountHint,
-                textAlign: TextAlign.center,
-              ),
+              Text(l10n.cashFormNeedAccountHint, textAlign: TextAlign.center),
               const SizedBox(height: Spacing.s12),
               AppButton.secondary(
                 icon: Icons.add,
@@ -198,8 +199,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       // Make sure the persisted last-used account is still around. If
       // the user archived/deleted it the persistence is stale; fall back
       // to the first eligible row instead of forcing the user to pick.
-      final hasCurrent = _accountId != null &&
-          eligible.any((a) => a.id == _accountId);
+      final hasCurrent =
+          _accountId != null && eligible.any((a) => a.id == _accountId);
       if (!hasCurrent) {
         _accountId = eligible.first.id;
       }

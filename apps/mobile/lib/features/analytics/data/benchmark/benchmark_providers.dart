@@ -1,10 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../../data/domain/asset.dart';
 import '../../../../data/domain/liability.dart';
 import '../../../../data/market/market_data_providers.dart';
-import '../../../../data/repositories/providers.dart';
 import '../../../assets/physical/data/physical_asset.dart';
 import '../../../assets/physical/data/providers.dart';
 import '../../../home/data/dashboard_providers.dart';
@@ -58,7 +56,7 @@ final benchmarkComparisonTimeRangeProvider = Provider<DashboardTimeRange>((
 /// while keeping this curve as the chart series.
 final benchmarkComparisonPortfolioSeriesProvider =
     Provider<AsyncValue<List<TimeSeriesPoint>>>((ref) {
-      final manual = ref.watch(manualAssetsStreamProvider);
+      final manual = ref.watch(dashboardManualAssetValuationsProvider);
       final physical = ref.watch(physicalAssetsListProvider);
       final liab = ref.watch(liabilitiesStreamProvider);
       final converter = ref.watch(dashboardCurrencyConverterProvider);
@@ -85,7 +83,7 @@ final benchmarkComparisonPortfolioSeriesProvider =
       );
       final trend = builder.build(
         range: range,
-        manualAssets: manual.value ?? const <Asset>[],
+        manualAssets: manual.value ?? const [],
         physicalAssets: physical.value ?? const <PhysicalAsset>[],
         liabilities: liab.value ?? const <Liability>[],
         liabilitySchedules: schedules,
