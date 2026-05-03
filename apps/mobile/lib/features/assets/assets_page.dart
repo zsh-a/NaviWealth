@@ -13,7 +13,6 @@ import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../ai_chat/ui/ai_chat_sheet.dart';
 import '../investment/data/providers.dart';
 import '../investment/domain/models/holding_snapshot.dart';
 import 'asset_detail_page.dart';
@@ -147,11 +146,6 @@ class _AssetsMaster extends ConsumerWidget {
         appBar: GlassAppBar(
           title: Text(l10n.assetsAppBarTitle),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.auto_awesome_outlined),
-              tooltip: l10n.homeAiAssistantTooltip,
-              onPressed: () => showAiChatSheet(context),
-            ),
             IconButton(
               icon: const Icon(Icons.account_balance_outlined),
               tooltip: l10n.assetsAccountsTooltip,

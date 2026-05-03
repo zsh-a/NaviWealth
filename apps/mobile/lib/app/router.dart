@@ -36,6 +36,7 @@ import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
+import '../features/me/me_page.dart';
 import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/fx_rates/fx_rates_page.dart';
@@ -57,7 +58,7 @@ const List<String> kPrimaryTabPaths = <String>[
   '/',
   '/portfolio',
   '/analytics',
-  '/ai',
+  '/me',
 ];
 
 /// Test-only: eagerly resolve every deferred-as library the router maps to
@@ -354,6 +355,88 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               builder: (_) => ai_chat_lib.AiChatPage(),
             ),
           ),
+          // ── Me tab (hub: accounts, expenses, AI, settings) ─────────
+          GoRoute(
+            path: '/me',
+            name: 'me',
+            builder: (context, state) => const MePage(),
+            routes: [
+              GoRoute(
+                path: 'ai',
+                name: 'me-ai',
+                builder: (context, state) => DeferredRoute(
+                  load: ai_chat_lib.loadLibrary,
+                  builder: (_) => ai_chat_lib.AiChatPage(),
+                ),
+              ),
+              GoRoute(
+                path: 'accounts',
+                redirect: (context, state) {
+                  final rest = state.uri.toString().replaceFirst(
+                        '/me/accounts',
+                        '/portfolio/accounts',
+                      );
+                  return rest;
+                },
+                routes: [
+                  GoRoute(
+                    path: ':_(.*)',
+                    redirect: (context, state) {
+                      final rest = state.uri.toString().replaceFirst(
+                            '/me/accounts',
+                            '/portfolio/accounts',
+                          );
+                      return rest;
+                    },
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'expenses',
+                redirect: (context, state) {
+                  final rest = state.uri.toString().replaceFirst(
+                        '/me/expenses',
+                        '/portfolio/expenses',
+                      );
+                  return rest;
+                },
+                routes: [
+                  GoRoute(
+                    path: ':_(.*)',
+                    redirect: (context, state) {
+                      final rest = state.uri.toString().replaceFirst(
+                            '/me/expenses',
+                            '/portfolio/expenses',
+                          );
+                      return rest;
+                    },
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'settings',
+                redirect: (context, state) {
+                  final rest = state.uri.toString().replaceFirst(
+                        '/me/settings',
+                        '/settings',
+                      );
+                  return rest;
+                },
+                routes: [
+                  GoRoute(
+                    path: ':_(.*)',
+                    redirect: (context, state) {
+                      final rest = state.uri.toString().replaceFirst(
+                            '/me/settings',
+                            '/settings',
+                          );
+                      return rest;
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
           GoRoute(
             path: '/settings',
             name: 'settings',
@@ -416,7 +499,7 @@ class _RootShell extends ConsumerWidget {
       );
     });
     // Tab index resolution for the 4-tab layout:
-    // Home(0) | Portfolio(1) | Analytics(2) | AI(3)
+    // Home(0) | Portfolio(1) | Analytics(2) | Me(3)
     final int index;
     if (location.startsWith('/portfolio') ||
         location.startsWith('/assets') ||
@@ -427,10 +510,10 @@ class _RootShell extends ConsumerWidget {
         location.startsWith('/fire') ||
         location.startsWith('/rebalance')) {
       index = 2;
-    } else if (location.startsWith('/ai')) {
+    } else if (location.startsWith('/me') ||
+        location.startsWith('/ai') ||
+        location.startsWith('/settings')) {
       index = 3;
-    } else if (location.startsWith('/settings')) {
-      index = 1; // Settings highlights Portfolio (related to accounts/currencies)
     } else {
       index = 0;
     }
@@ -503,9 +586,9 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
       label: l10n.navAnalytics,
     ),
     _NavDestination(
-      icon: Icons.smart_toy_outlined,
-      selectedIcon: Icons.smart_toy,
-      label: l10n.navAI,
+      icon: Icons.person_outline,
+      selectedIcon: Icons.person,
+      label: l10n.navMe,
     ),
   ];
 }

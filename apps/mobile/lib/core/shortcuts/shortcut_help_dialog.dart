@@ -161,7 +161,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
       case 'shortcutSwitchTab2':
         return l10n.shortcutSwitchTab(3, l10n.navAnalytics);
       case 'shortcutSwitchTab3':
-        return l10n.shortcutSwitchTab(4, l10n.navAI);
+        return l10n.shortcutSwitchTab(4, l10n.navMe);
     }
     return key;
   }

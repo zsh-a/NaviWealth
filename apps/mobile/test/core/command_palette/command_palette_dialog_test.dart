@@ -349,7 +349,7 @@ void main() {
       expect(ids, containsAll(<String>[
         'nav.home',
         'nav.portfolio',
-        'nav.ai',
+        'nav.me',
         'nav.accounts',
         'nav.expenses',
         'nav.analytics',

@@ -12,7 +12,6 @@ import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/ui/ai_chat_sheet.dart';
 import 'expense_category_visuals.dart';
 
 /// User-selectable bucket size for the expense list.
@@ -85,11 +84,6 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
       appBar: GlassAppBar(
         title: Text(l10n.navExpenses),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_outlined),
-            tooltip: l10n.homeAiAssistantTooltip,
-            onPressed: () => showAiChatSheet(context),
-          ),
           IconButton(
             tooltip: l10n.expensesReportTooltip,
             icon: const Icon(Icons.insights_outlined),
@@ -427,7 +421,7 @@ class _Empty extends StatelessWidget {
             const Icon(Icons.receipt_long_outlined, size: 48),
             const SizedBox(height: Spacing.s12),
             Text(
-              filtered ? '没有匹配的支出。' : '还没有记账。点右下角加一笔，开始追踪日常消费。',
+              filtered ? '没有匹配的支出。' : '还没有记账。点底部加号按钮，开始追踪日常消费。',
               textAlign: TextAlign.center,
             ),
           ],

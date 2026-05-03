@@ -36,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAI => 'AI';
 
   @override
+  String get navMe => 'Me';
+
+  @override
   String get navAccounts => 'Accounts';
 
   @override
@@ -46,6 +49,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreAccountsSubtitle => 'Bank, brokerage, and wallets';
+
+  @override
+  String get moreExpenseSubtitle => 'Track daily spending and reports';
 
   @override
   String get moreAnalyticsSubtitle => 'Allocation, risk, and benchmarks';

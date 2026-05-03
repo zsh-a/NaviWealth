@@ -6,7 +6,6 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/ui/ai_chat_sheet.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_form.dart';
@@ -34,13 +33,7 @@ class FirePage extends ConsumerWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.fireAppBarTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_outlined),
-            tooltip: l10n.homeAiAssistantTooltip,
-            onPressed: () => showAiChatSheet(context),
-          ),
-        ],
+        actions: const [],
       ),
       body: PageSkeletonShell<FireDashboardView>(
         skeleton: const FireSkeleton(),

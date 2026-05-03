@@ -8,7 +8,6 @@ import '../../core/format/providers.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../ai_chat/ui/ai_chat_sheet.dart';
 import 'data/providers.dart';
 import 'domain/equity_allocation.dart';
 import 'domain/equity_classification.dart';
@@ -72,13 +71,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.analyticsAppBarTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_outlined),
-            tooltip: l10n.homeAiAssistantTooltip,
-            onPressed: () => showAiChatSheet(context),
-          ),
-        ],
+        actions: const [],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

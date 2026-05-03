@@ -76,7 +76,9 @@ class FloatingPillNavigationBar extends StatelessWidget {
         _bottomMargin,
       ),
       child: SizedBox(
-        height: _barHeight + fabOverflow,
+        // Height must accommodate the SuperFab's full expansion radius so
+        // action items remain within the layout bounds (and thus tappable).
+        height: _barHeight + fabOverflow + 96 + 48 + 8,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
