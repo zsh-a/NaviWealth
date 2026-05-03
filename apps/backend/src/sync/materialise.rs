@@ -32,7 +32,9 @@ pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
     match wire {
         "accounts" => Ok("accounts"),
         "assets" => Ok("assets"),
-        "transactions" => Ok("transactions"),
+        "journal_entries" => Ok("journal_entries"),
+        "postings" => Ok("postings"),
+        "prices" => Ok("prices"),
         "liabilities" => Ok("liabilities"),
         "fx_rates" => Ok("fx_rates"),
         "tags" => Ok("tags"),
@@ -288,6 +290,12 @@ mod tests {
     #[test]
     fn sql_table_name_known_tables() {
         assert_eq!(sql_table_name("accounts").unwrap(), "accounts");
+        assert_eq!(
+            sql_table_name("journal_entries").unwrap(),
+            "journal_entries"
+        );
+        assert_eq!(sql_table_name("postings").unwrap(), "postings");
+        assert_eq!(sql_table_name("prices").unwrap(), "prices");
         assert_eq!(sql_table_name("devices").unwrap(), "synced_devices");
     }
 

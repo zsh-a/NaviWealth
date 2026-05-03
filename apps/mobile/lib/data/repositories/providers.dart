@@ -10,12 +10,14 @@ import '../domain/account.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
 import '../domain/expense_category.dart';
+import '../domain/hlc.dart';
+import '../domain/sync_meta.dart';
 import 'account_repository.dart';
-import 'expense_category_repository.dart';
 import 'fx_rate_repository.dart';
 import 'journal_entry_providers.dart';
 import 'manual_asset_repository.dart';
 import 'mutation_context.dart';
+import 'price_repository.dart';
 import 'securities_asset_repository.dart';
 
 /// FIFO outbox bound to the local database. Mirrors the engine's outbox so
@@ -42,11 +44,13 @@ final manualAssetRepositoryProvider = FutureProvider<ManualAssetRepository>((
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
   final jeRepo = await ref.watch(journalEntryRepositoryProvider.future);
+  final priceRepo = await ref.watch(priceRepositoryProvider.future);
   return ManualAssetRepository(
     db: db,
     outbox: outbox,
     stamper: stamper,
     journalEntryRepo: jeRepo,
+    priceRepo: priceRepo,
   );
 });
 
@@ -102,47 +106,62 @@ final securitiesAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
   yield* repo.watchSecurities(types: kSecuritiesAssetTypes);
 });
 
-final expenseCategoryRepositoryProvider =
-    FutureProvider<ExpenseCategoryRepository>((ref) async {
-      final db = await ref.watch(appDatabaseProvider.future);
-      final outbox = await ref.watch(outboxStoreProvider.future);
-      final stamper = await ref.watch(mutationStamperProvider.future);
-      return ExpenseCategoryRepository(
-        db: db,
-        outbox: outbox,
-        stamper: stamper,
-      );
-    });
-
-/// Live stream of non-archived, non-deleted expense categories — what the
-/// expense entry picker subscribes to.
-///
-/// First read also triggers default-category seeding so a brand-new install
-/// has the canonical 12 buckets ready before the picker paints. The seed
-/// is idempotent across devices (deterministic ids), so doing this on
-/// every cold start is safe.
 final expenseCategoriesStreamProvider =
     StreamProvider.autoDispose<List<ExpenseCategory>>((ref) async* {
-      final repo = await ref.watch(expenseCategoryRepositoryProvider.future);
-      await repo.seedDefaults();
-      yield* repo.watchActive();
+      yield _defaultExpenseCategories();
     });
 
-/// Live stream of every non-tombstoned expense category, archived rows
-/// included. Drives the management page; the active picker keeps using
-/// [expenseCategoriesStreamProvider] so it doesn't paint archived rows.
 final allExpenseCategoriesStreamProvider =
     StreamProvider.autoDispose<List<ExpenseCategory>>((ref) async* {
-      final repo = await ref.watch(expenseCategoryRepositoryProvider.future);
-      await repo.seedDefaults();
-      yield* repo.watchAllExceptDeleted();
+      yield _defaultExpenseCategories();
     });
+
+List<ExpenseCategory> _defaultExpenseCategories() {
+  final sync = SyncMeta(
+    ownerUserId: 'system',
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    updatedByDevice: 'system',
+    hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'system'),
+  );
+  const rows = <({String slug, String name, String icon, String color})>[
+    (slug: 'food', name: 'Food', icon: 'restaurant', color: '#22c55e'),
+    (slug: 'transport', name: 'Transport', icon: 'directions_car', color: '#0ea5e9'),
+    (slug: 'rent', name: 'Housing', icon: 'home', color: '#6366f1'),
+    (slug: 'household', name: 'Household', icon: 'chair', color: '#14b8a6'),
+    (slug: 'entertainment', name: 'Entertainment', icon: 'movie', color: '#f43f5e'),
+    (slug: 'medical', name: 'Medical', icon: 'local_hospital', color: '#ef4444'),
+    (slug: 'education', name: 'Education', icon: 'school', color: '#8b5cf6'),
+    (slug: 'shopping', name: 'Shopping', icon: 'shopping_bag', color: '#f97316'),
+    (slug: 'travel', name: 'Travel', icon: 'flight', color: '#06b6d4'),
+    (slug: 'communication', name: 'Communication', icon: 'phone_iphone', color: '#64748b'),
+    (slug: 'gift', name: 'Gift', icon: 'card_giftcard', color: '#ec4899'),
+    (slug: 'other', name: 'Other', icon: 'category', color: '#71717a'),
+  ];
+  return [
+    for (var i = 0; i < rows.length; i++)
+      ExpenseCategory(
+        id: 'expense-cat-default:${rows[i].slug}',
+        name: rows[i].name,
+        icon: rows[i].icon,
+        color: rows[i].color,
+        sortOrder: i,
+        sync: sync,
+      ),
+  ];
+}
 
 /// Repository for the local `fx_rates` table. Not synced (FX rates are
 /// global market data, not user data) so this repo bypasses the outbox.
 final fxRateRepositoryProvider = FutureProvider<FxRateRepository>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return FxRateRepository(db: db);
+});
+
+final priceRepositoryProvider = FutureProvider<PriceRepository>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final outbox = await ref.watch(outboxStoreProvider.future);
+  final stamper = await ref.watch(mutationStamperProvider.future);
+  return PriceRepository(db: db, outbox: outbox, stamper: stamper);
 });
 
 /// Live stream of every recorded FX rate. The dashboard converter and the

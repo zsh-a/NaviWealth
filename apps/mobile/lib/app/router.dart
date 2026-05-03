@@ -27,7 +27,6 @@ import '../features/assets/wealth_product_form_page.dart';
 import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
-import '../features/expense/ui/expense_categories_page.dart';
 import '../features/expense/ui/expense_form_page.dart';
 import '../features/expense/ui/expense_list_page.dart';
 import '../features/expense/ui/expense_report_page.dart';
@@ -36,7 +35,6 @@ import '../features/home/home_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import '../features/investment/presentation/trade_entry_form_page.dart';
-import '../features/investment/presentation/transactions_list_page.dart';
 import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
@@ -225,10 +223,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 name: 'account-transfer',
                 builder: (context, state) => const TransferFormPage(),
               ),
-              // FIR-131 wave 3d — read view over the new
-              // `journal_entries` / `postings` ledger. Coexists with
-              // the legacy `/transactions` list while FIR-132
-              // migrates the read paths.
+              // Read view over the journal/postings ledger.
               GoRoute(
                 path: 'journal',
                 name: 'account-journal',
@@ -248,11 +243,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             ],
           ),
           GoRoute(
-            path: '/transactions',
-            name: 'transactions',
-            builder: (context, state) => const TransactionsListPage(),
-          ),
-          GoRoute(
             path: '/expenses',
             name: 'expenses',
             builder: (context, state) => const ExpenseListPage(),
@@ -261,11 +251,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'new',
                 name: 'expense-new',
                 builder: (context, state) => const ExpenseFormPage(),
-              ),
-              GoRoute(
-                path: 'categories',
-                name: 'expense-categories',
-                builder: (context, state) => const ExpenseCategoriesPage(),
               ),
               GoRoute(
                 path: 'report',

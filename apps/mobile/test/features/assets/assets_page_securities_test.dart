@@ -30,7 +30,6 @@ Asset _security({
   String currency = 'USD',
   String market = 'us_stock',
   String name = '',
-  String? lastPrice,
 }) {
   return Asset(
     id: '$market:$symbol',
@@ -39,8 +38,6 @@ Asset _security({
     currency: currency,
     name: name.isEmpty ? null : name,
     market: market,
-    lastPrice: lastPrice == null ? null : Decimal.parse(lastPrice),
-    lastPriceAt: lastPrice == null ? null : DateTime.utc(2026, 5, 1),
     sync: _meta(),
   );
 }
@@ -108,7 +105,6 @@ void main() {
     final aapl = _security(
       symbol: 'AAPL',
       name: 'Apple Inc.',
-      lastPrice: '180',
     );
     await tester.pumpWidget(
       _wrap(
@@ -129,13 +125,12 @@ void main() {
     expect(find.textContaining('Apple Inc.'), findsWidgets);
   });
 
-  testWidgets('falls back to qty * lastPrice when no holding snapshot exists',
+  testWidgets('renders a security row without a holding snapshot',
       (tester) async {
     final prefs = await SharedPreferences.getInstance();
     final aapl = _security(
       symbol: 'AAPL',
       name: 'Apple Inc.',
-      lastPrice: '180',
     );
     await tester.pumpWidget(
       _wrap(
@@ -146,16 +141,5 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('AAPL'), findsWidgets);
-  });
-
-  testWidgets('AppBar exposes the transactions navigation action',
-      (tester) async {
-    final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(_wrap(prefs: prefs));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const Key('assets-appbar-transactions')),
-      findsOneWidget,
-    );
   });
 }

@@ -29,9 +29,8 @@ class PhysicalAssetMeta {
   /// and is shown on detail pages for both kinds.
   final DateTime purchaseDate;
 
-  /// Purchase price in the asset's currency. The `Assets.lastPrice` column
-  /// holds the *current* valuation; this field is the historical anchor and
-  /// is never recomputed.
+  /// Purchase price in the asset's currency. Current valuations live in
+  /// `prices`; this field is the historical anchor and is never recomputed.
   final Decimal purchasePrice;
 
   /// Optional link to a `Liabilities.id` (typically a mortgage / car loan).

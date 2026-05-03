@@ -83,7 +83,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       _principalController.text = meta.principal.toString();
       _ratePercentController.text = (meta.interestRate * Decimal.fromInt(100))
           .toString();
-      _valuationController.text = existing.lastPrice?.toString() ?? '';
+      _valuationController.text = '';
       _startDate = meta.startDate;
       _maturityDate = meta.maturityDate;
       _autoRenew = meta.autoRenew;

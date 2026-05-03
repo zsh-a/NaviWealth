@@ -206,12 +206,6 @@ abstract class AppLocalizations {
   /// **'Liabilities & repayment plans'**
   String get assetsLiabilitiesTooltip;
 
-  /// AppBar action that opens the transaction list page from /assets.
-  ///
-  /// In en, this message translates to:
-  /// **'Transactions'**
-  String get assetsTransactionsTooltip;
-
   /// No description provided for @assetsLoadError.
   ///
   /// In en, this message translates to:
@@ -2927,54 +2921,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expense'**
   String get tradeTypeExpense;
-
-  /// No description provided for @transactionsAppBarTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Transactions'**
-  String get transactionsAppBarTitle;
-
-  /// No description provided for @transactionsEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'No trades recorded yet. Tap the button below to log your first buy or sell.'**
-  String get transactionsEmptyHint;
-
-  /// No description provided for @transactionsAddAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Record trade'**
-  String get transactionsAddAction;
-
-  /// No description provided for @transactionsLoadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to load transactions: {error}'**
-  String transactionsLoadError(String error);
-
-  /// List row primary line — '{type chip} · {asset symbol}'.
-  ///
-  /// In en, this message translates to:
-  /// **'{type} · {symbol}'**
-  String transactionsRowTitle(String type, String symbol);
-
-  /// Quantity and unit price summary on a transaction row.
-  ///
-  /// In en, this message translates to:
-  /// **'{quantity} @ {price}'**
-  String transactionsRowQuantityPrice(String quantity, String price);
-
-  /// Sticky-style header that groups transactions by calendar month.
-  ///
-  /// In en, this message translates to:
-  /// **'{year}-{month}'**
-  String transactionsMonthHeader(String year, String month);
-
-  /// No description provided for @commandPaletteGoTransactions.
-  ///
-  /// In en, this message translates to:
-  /// **'Go to transactions'**
-  String get commandPaletteGoTransactions;
 
   /// No description provided for @expenseFormCreateTitle.
   ///

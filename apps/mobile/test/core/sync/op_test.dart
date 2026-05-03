@@ -119,10 +119,10 @@ void main() {
     test('round-trip JSON', () {
       final op = Op(
         opId: 'op-rt',
-        tableName: 'transactions',
-        rowId: 'T1',
+        tableName: 'journal_entries',
+        rowId: 'JE1',
         opType: OpType.update,
-        fieldsDiff: const {'amount': 12.34, 'note': 'rebate'},
+        fieldsDiff: const {'description': 'rebate'},
         hlc: hlc,
         deviceId: dev,
       );
@@ -136,12 +136,8 @@ void main() {
     });
   });
 
-  // FIR-130 — pin the closed enum so any future add / drop is a
-  // deliberate change, not a silent edit. The Beancount-style ledger
-  // tables (`journal_entries`, `postings`, `prices`) are part of the
-  // wire enum from this issue forward; the legacy `transactions` /
-  // `expense_categories` rows remain in the set during the FIR-131 /
-  // FIR-132 cutover.
+  // Pin the forward-only sync enum so any future add / drop is a deliberate
+  // schema change, not a silent edit.
   group('kSyncableTables', () {
     test('contains the FIR-130 ledger triple', () {
       expect(
@@ -150,18 +146,12 @@ void main() {
       );
     });
 
-    test('still carries the legacy tables until FIR-131/132 retire them', () {
-      expect(kSyncableTables, contains('transactions'));
-      expect(kSyncableTables, contains('expense_categories'));
-    });
-
     test('matches the documented v1 closed set', () {
       // Mirror of `docs/sync-protocol.md` §4.1. Updating either side
       // without the other is the bug this test catches.
       const expected = <String>{
         'accounts',
         'assets',
-        'transactions',
         'liabilities',
         'fx_rates',
         'tags',
@@ -170,7 +160,6 @@ void main() {
         'devices',
         'amortization_entries',
         'categories',
-        'expense_categories',
         'settings',
         'users',
         'journal_entries',

@@ -80,6 +80,16 @@ class LegacyExpenseCategoryToAccount {
     );
   }
 
+  static String resolveSlug({
+    required String slug,
+    required String ownerUserId,
+  }) {
+    return AccountRepository.systemAccountIdForPath(
+      _slugToAccountPath[slug] ?? _fallbackPath,
+      ownerUserId: ownerUserId,
+    );
+  }
+
   /// Inverse of [resolveAccountId]: given an expense JE leg's
   /// `accountId` (e.g. `system-account:<u>:expense:food`), recover the
   /// matching legacy `expense_categories.id` so the form's existing

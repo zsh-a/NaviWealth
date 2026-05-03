@@ -72,7 +72,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     final accountId = meta is CashMetadata ? meta.accountId : null;
     setState(() {
       _initial = existing;
-      _balanceController.text = existing.lastPrice?.toString() ?? '';
+      _balanceController.text = '';
       _nicknameController.text = existing.name ?? '';
       _currency = existing.currency;
       _accountId = accountId;

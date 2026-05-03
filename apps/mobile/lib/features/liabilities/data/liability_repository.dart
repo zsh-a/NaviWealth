@@ -20,10 +20,7 @@ import '../domain/amortization_calculator.dart';
 ///
 /// Owns three tables together because they're inseparable from a user's
 /// POV: the [Liability] header, its [AmortizationEntry] schedule rows, and
-/// the [TransactionType.liabilityPayment] cash-flow records that mark
-/// scheduled rows paid. Splitting them across three repositories would
-/// force the UI to coordinate transactions across them, which is exactly
-/// the bug surface this layer exists to prevent.
+/// the journal entries that mark scheduled rows paid.
 ///
 /// Mutation contract matches `AccountRepository` / `ManualAssetRepository`:
 /// every write happens inside a Drift transaction that *both* persists the
@@ -35,7 +32,7 @@ class LiabilityRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
-    JournalEntryRepository? journalEntryRepo,
+    required JournalEntryRepository journalEntryRepo,
     AmortizationCalculator? calculator,
     Uuid uuid = const Uuid(),
     DateTime Function()? clock,
@@ -50,14 +47,13 @@ class LiabilityRepository {
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
-  final JournalEntryRepository? _journalEntryRepo;
+  final JournalEntryRepository _journalEntryRepo;
   final AmortizationCalculator _calc;
   final Uuid _uuid;
   final DateTime Function() _clock;
 
   static const String _liabilityTable = 'liabilities';
   static const String _amortTable = 'amortization_entries';
-  static const String _txTable = 'transactions';
 
   // ---------- Reads ----------
 
@@ -211,14 +207,13 @@ class LiabilityRepository {
     return (await findById(id))!;
   }
 
-  /// Mark a single amortization period paid and emit the matching
-  /// `liabilityPayment` transaction. The two writes (plus the matching
-  /// `update` and `insert` outbox ops) commit together so a crash never
-  /// leaves the schedule out of sync with the cash-flow ledger.
+  /// Mark a single amortization period paid and emit the matching journal
+  /// entry.
   ///
   /// [paidAt] defaults to "now" but is parameterized so historical entries
   /// (catching up after vacation) record the correct date for reporting.
-  /// Returns the transaction id so callers can navigate / undo.
+  /// Returns the journal entry id when a journal entry is produced, otherwise
+  /// the amortization entry id.
   Future<String> registerPayment({
     required String liabilityId,
     required int periodIndex,
@@ -258,8 +253,7 @@ class LiabilityRepository {
 
     final whenPaid = paidAt ?? _clock();
     final stamp = await _stamper.stamp();
-    final txId = _uuid.v4();
-    final totalPayment = entry.principalPayment + entry.interestPayment;
+    String? journalEntryId;
 
     await _db.transaction(() async {
       await (_db.update(_db.amortizationEntries)
@@ -285,74 +279,33 @@ class LiabilityRepository {
         stamp: stamp,
       );
 
-      final txCompanion = TransactionsCompanion.insert(
-        id: txId,
-        accountId: accountId,
-        type: TransactionType.liabilityPayment,
-        quantity: Decimal.one,
-        price: totalPayment,
-        currency: liability.currency,
-        tradeDate: whenPaid,
-        note: Value('Liability ${liability.name} · period $periodIndex'),
+      final liabilityAccountId = AccountRepository.systemAccountIdForPath(
+        'liability:${liability.id}',
         ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
       );
-      await _db.into(_db.transactions).insert(txCompanion);
-      await _enqueue(
-        table: _txTable,
-        opType: OpType.insert,
-        rowId: txId,
-        fields: <String, Object?>{
-          'id': txId,
-          'account_id': accountId,
-          'type': TransactionType.liabilityPayment.name,
-          'quantity': Decimal.one.toString(),
-          'price': totalPayment.toString(),
-          'currency': liability.currency,
-          'trade_date': whenPaid.toUtc().toIso8601String(),
-          'note': 'Liability ${liability.name} · period $periodIndex',
-          'owner_user_id': stamp.ownerUserId,
-          'updated_at': stamp.now.toUtc().toIso8601String(),
-          'updated_by_device': stamp.deviceId,
-          'hlc': stamp.hlc.toString(),
-        },
-        stamp: stamp,
+      final interestExpenseAccountId =
+          AccountRepository.systemAccountIdForPath(
+        'expense:trading:interest',
+        ownerUserId: stamp.ownerUserId,
       );
-
-      // FIR-131 dual-write: JE for the ledger stack alongside the legacy
-      // transactions row (read paths still consume it).
-      final jeRepo = _journalEntryRepo;
-      if (jeRepo != null) {
-        final liabilityAccountId =
-            AccountRepository.systemAccountIdForPath(
-          'liability:${liability.id}',
-          ownerUserId: stamp.ownerUserId,
-        );
-        final interestExpenseAccountId =
-            AccountRepository.systemAccountIdForPath(
-          'expense:trading:interest',
-          ownerUserId: stamp.ownerUserId,
-        );
-        final build = JournalEntryBuilders.liabilityPayment(
-          date: whenPaid,
-          liabilityAccountId: liabilityAccountId,
-          fromAccountId: accountId,
-          interestExpenseAccountId: interestExpenseAccountId,
-          principal: entry.principalPayment,
-          interest: entry.interestPayment,
-          currency: liability.currency,
-          narration: 'Liability ${liability.name} · period $periodIndex',
-        );
-        await jeRepo.create(
-          entry: build.entry,
-          postings: build.postings,
-        );
-      }
+      final build = JournalEntryBuilders.liabilityPayment(
+        date: whenPaid,
+        liabilityAccountId: liabilityAccountId,
+        fromAccountId: accountId,
+        interestExpenseAccountId: interestExpenseAccountId,
+        principal: entry.principalPayment,
+        interest: entry.interestPayment,
+        currency: liability.currency,
+        narration: 'Liability ${liability.name} · period $periodIndex',
+      );
+      final stored = await _journalEntryRepo.create(
+        entry: build.entry,
+        postings: build.postings,
+      );
+      journalEntryId = stored.entry.id;
     });
 
-    return txId;
+    return journalEntryId!;
   }
 
   // ---------- Internals ----------
@@ -547,4 +500,3 @@ class LiabilityRepository {
     );
   }
 }
-

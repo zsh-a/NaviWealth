@@ -140,8 +140,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final securitiesRepo =
         await ref.read(securitiesAssetRepositoryProvider.future);
     final tradeService = await ref.read(tradeEntryServiceProvider.future);
-    final repo = await ref.read(transactionRepositoryProvider.future);
     final jeRepo = await ref.read(journalEntryRepositoryProvider.future);
+    final priceRepo = await ref.read(priceRepositoryProvider.future);
     final currentUserId = ref.read(currentUserIdProvider);
     if (!mounted) return;
 
@@ -253,6 +253,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               entry: build.entry,
               postings: build.postings,
             );
+            await priceRepo.record(
+              unit: tx.assetId!,
+              quoteCurrency: currency,
+              observedOn: tx.tradeDate,
+              perUnit: tx.price,
+              source: 'trade',
+            );
           } else {
             // Sell — cost basis comes from the resolved lots.
             final capGainsAccountId =
@@ -303,10 +310,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               entry: build.entry,
               postings: build.postings,
             );
+            await priceRepo.record(
+              unit: tx.assetId!,
+              quoteCurrency: currency,
+              observedOn: tx.tradeDate,
+              perUnit: tx.price,
+              source: 'trade',
+            );
           }
         } else {
-          // valuationAdjust — dual-write: legacy transactions row (read
-          // paths still consume it) + JE for the ledger stack.
           final equityAccountId =
               AccountRepository.systemAccountIdForPath(
             'equity:adjustments',
@@ -322,13 +334,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             currency: currency,
             narration: note,
           );
-          await Future.wait([
-            repo.recordTrade(plan),
-            jeRepo.create(
-              entry: build.entry,
-              postings: build.postings,
-            ),
-          ]);
+          await jeRepo.create(entry: build.entry, postings: build.postings);
+          await priceRepo.record(
+            unit: tx.assetId!,
+            quoteCurrency: currency,
+            observedOn: tx.tradeDate,
+            perUnit: tx.price,
+            source: 'manual',
+          );
         }
       },
     );

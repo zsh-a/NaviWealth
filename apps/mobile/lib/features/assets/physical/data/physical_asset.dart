@@ -22,12 +22,10 @@ class PhysicalAsset {
   bool get isRealEstate => row.type == AssetType.realEstate;
   bool get isVehicle => row.type == AssetType.vehicle;
 
-  /// Last *manually-recorded* valuation (or the purchase price on day 1).
-  /// Stored on `Assets.lastPrice` so it round-trips through sync without a
-  /// metadata-shape migration.
-  Decimal get currentValuation => row.lastPrice ?? meta.purchasePrice;
+  /// Baseline valuation. Current valuations are read from `prices`.
+  Decimal get currentValuation => meta.purchasePrice;
 
-  DateTime? get lastValuationAt => row.lastPriceAt;
+  DateTime? get lastValuationAt => null;
 
   DateTime get purchaseDate => meta.purchaseDate;
   Decimal get purchasePrice => meta.purchasePrice;
@@ -38,7 +36,7 @@ class PhysicalAsset {
 }
 
 /// One point on the valuation history chart. Sourced from
-/// `Transactions` rows with `type = valuationAdjust`, plus a synthesised
+/// `prices` rows, plus a synthesised
 /// "purchase" point so the chart starts at the cost basis.
 class ValuationPoint {
   const ValuationPoint({
@@ -59,7 +57,7 @@ enum ValuationPointKind {
   /// point on the chart.
   purchase,
 
-  /// User-entered manual update. Backed by a `valuationAdjust` transaction.
+  /// User-entered manual update. Backed by a `prices` observation.
   manual,
 
   /// Computed point from the depreciation curve (vehicles with

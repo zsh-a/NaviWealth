@@ -160,14 +160,6 @@ class DashboardTrendBuilder {
     void Function(String id, String currency) report,
   ) {
     var total = Money.zero(baseCurrency);
-    for (final asset in manualAssets) {
-      final price = asset.lastPrice;
-      if (price == null || price.sign <= 0) continue;
-      // Until valuation history is captured, hold cash / deposit / wealth
-      // products flat across the window — better than dropping them.
-      final amount = Money(price, asset.currency);
-      total = _addInBase(total, amount, date, asset.id, report);
-    }
     for (final pa in physicalAssets) {
       if (pa.purchaseDate.isAfter(date)) continue;
       final value = _valueOfPhysicalAt(pa, date);

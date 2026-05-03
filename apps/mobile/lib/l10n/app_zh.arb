@@ -20,7 +20,6 @@
   "assetsCorporateActionAction": "录入公司行动",
   "assetsAccountsTooltip": "账户管理",
   "assetsLiabilitiesTooltip": "负债与还款计划",
-  "assetsTransactionsTooltip": "交易记录",
   "assetsLoadError": "加载失败：{error}",
   "assetsAddCashTitle": "现金 / 多币种余额",
   "assetsAddCashSubtitle": "登记银行活期或现金账户中的可用余额",
@@ -516,15 +515,6 @@
   "tradeTypeSplit": "拆股",
   "tradeTypeLiabilityPayment": "还款",
   "tradeTypeExpense": "支出",
-
-  "transactionsAppBarTitle": "交易记录",
-  "transactionsEmptyHint": "尚未录入交易。点击下方按钮记录第一笔买入或卖出。",
-  "transactionsAddAction": "录入交易",
-  "transactionsLoadError": "加载交易失败：{error}",
-  "transactionsRowTitle": "{type} · {symbol}",
-  "transactionsRowQuantityPrice": "{quantity} @ {price}",
-  "transactionsMonthHeader": "{year}-{month}",
-  "commandPaletteGoTransactions": "前往 交易记录",
 
   "expenseFormCreateTitle": "新建支出",
   "expenseFormEditTitle": "编辑支出",

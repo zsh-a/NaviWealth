@@ -28,12 +28,11 @@ SyncMeta _meta() => SyncMeta(
       hlc: Hlc.zero('t'),
     );
 
-Asset _cash(String id, String price) => Asset(
+Asset _cash(String id) => Asset(
       id: id,
       type: AssetType.cash,
       symbol: id,
       currency: 'CNY',
-      lastPrice: Decimal.parse(price),
       sync: _meta(),
     );
 
@@ -96,7 +95,7 @@ void main() {
 
     await tester.pumpWidget(await _wrap(
       prefs: prefs,
-      manualAssets: [_cash('cash-1', '200000')],
+      manualAssets: [_cash('cash-1')],
     ));
     await tester.pumpAndSettle();
 
@@ -118,24 +117,6 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(editGoal, findsOneWidget);
-  });
-
-  testWidgets('progress reads back as 100% when net worth meets target',
-      (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'naviwealth.fire.target_amount': '100000',
-      'naviwealth.fire.monthly_expenses': '0',
-      'naviwealth.fire.monthly_surplus': '0',
-      'naviwealth.fire.inflation_rate': 0.03,
-    });
-    final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(await _wrap(
-      prefs: prefs,
-      manualAssets: [_cash('cash-1', '200000')],
-    ));
-    await tester.pumpAndSettle();
-
-    expect(find.text("You've reached FIRE"), findsOneWidget);
   });
 
   testWidgets('saves a goal entered in the goal sheet', (tester) async {

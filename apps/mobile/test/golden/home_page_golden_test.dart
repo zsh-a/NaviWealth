@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -24,12 +23,11 @@ SyncMeta _meta() => SyncMeta(
       hlc: Hlc.zero('t'),
     );
 
-Asset _cash(String id, String price) => Asset(
+Asset _cash(String id) => Asset(
       id: id,
       type: AssetType.cash,
       symbol: id,
       currency: 'CNY',
-      lastPrice: Decimal.parse(price),
       sync: _meta(),
     );
 
@@ -53,8 +51,8 @@ void main() {
         sharedPreferencesProvider.overrideWithValue(prefs),
         manualAssetsStreamProvider.overrideWith(
           (_) => Stream.value([
-            _cash('cash-1', '120000'),
-            _cash('cash-2', '85000'),
+            _cash('cash-1'),
+            _cash('cash-2'),
           ]),
         ),
         physicalAssetsListProvider.overrideWith(

@@ -21,18 +21,7 @@ import '../domain/models/lot.dart';
 import '../domain/returns/returns_service.dart';
 import '../domain/trade_entry/default_trade_entry_service.dart';
 import '../domain/trade_entry/trade_entry_service.dart';
-import 'transaction_repository.dart';
 
-final transactionRepositoryProvider =
-    FutureProvider<TransactionRepository>((ref) async {
-  final db = await ref.watch(appDatabaseProvider.future);
-  final outbox = await ref.watch(outboxStoreProvider.future);
-  final stamper = await ref.watch(mutationStamperProvider.future);
-  return TransactionRepository(db: db, outbox: outbox, stamper: stamper);
-});
-
-/// Currency converter for trade-entry FX backfill.
-/// Uses the same stub as the dashboard until a persistent FX rate repo ships.
 final _tradeCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
   return FxRateCurrencyConverter(InMemoryFxRateLookup(const []));
 });
@@ -52,13 +41,6 @@ final tradeEntryServiceProvider = FutureProvider<TradeEntryService>((ref) async 
   );
 });
 
-/// Live stream of every non-deleted [Asset] in the local database. The
-/// holding pipeline needs to look up prices and currency for any asset id
-/// it sees in a transaction, regardless of whether it's a manual cash row
-/// or a securities row — so this is a single read over the full table
-/// rather than the type-filtered streams the analytics or assets tabs use.
-/// Also consumed by the dashboard to pair securities holdings with their
-/// asset metadata (type → category bucket, name, currency).
 final allAssetsStreamProvider =
     StreamProvider.autoDispose<List<Asset>>((ref) async* {
   final db = await ref.watch(appDatabaseProvider.future);
@@ -66,96 +48,59 @@ final allAssetsStreamProvider =
   yield* query.watch().map((rows) => rows.map(_assetFromRow).toList());
 });
 
-/// Live stream of every non-deleted transaction. The holding and returns
-/// adapters consume this synchronously, so a new trade flows through to
-/// the dashboard and analytics snapshots without manual invalidation.
-final transactionsStreamProvider =
-    StreamProvider.autoDispose<List<Transaction>>((ref) async* {
-  final repo = await ref.watch(transactionRepositoryProvider.future);
-  yield* repo.watchAll();
+final _priceRowsStreamProvider =
+    StreamProvider.autoDispose<List<PriceRow>>((ref) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final query = db.select(db.prices)..where((t) => t.deletedAt.isNull());
+  yield* query.watch();
 });
 
-/// Per-asset price source for the holding pipeline. Forward-fills from
-/// `Asset.lastPrice` — the most recent observed close. Granular price
-/// history (intraday / per-day bars) is a follow-up; for "value the
-/// portfolio at noon today" the current `lastPrice` is the right answer
-/// in single-currency simulations and good enough for the dashboard's
-/// XIRR bookend valuations.
-///
-/// Returns `null` when no price has ever been observed (asset row exists
-/// but `lastPrice` is null) or when the requested `asOf` predates
-/// `lastPriceAt` — refusing to forward-fill from "tomorrow's close" into
-/// "yesterday's value" prevents look-ahead bias in historical XIRR runs.
 final holdingPriceSourceProvider = Provider<HoldingPriceSource>((ref) {
-  final assets = ref.watch(allAssetsStreamProvider).value ?? const <Asset>[];
-  return _AssetLastPriceHoldingPriceSource(assets);
+  final rows = ref.watch(_priceRowsStreamProvider).value ?? const <PriceRow>[];
+  return InMemoryHoldingPriceSource([
+    for (final row in rows)
+      HoldingPriceObservation(
+        assetId: row.unit,
+        asOf: row.observedOn,
+        price: row.perUnit,
+        currency: row.quoteCurrency,
+      ),
+  ]);
 });
 
-/// Currency converter wired through to the live fx_rates stream — same
-/// fallback as the dashboard converter so XIRR sees the same FX state.
 final returnsCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
   final rates = ref.watch(fxRatesStreamProvider).value ?? const <dom.FxRate>[];
   return FxRateCurrencyConverter(InMemoryFxRateLookup(rates));
 });
 
-/// Cost-basis method used by the holding pipeline. Default to FIFO until
-/// settings exposes a preference. (LIFO / average will require a Riverpod
-/// override or a settings-backed provider.)
 final holdingCostBasisMethodProvider = Provider<CostBasisMethod>(
   (ref) => CostBasisMethod.fifo,
 );
 
-/// In-memory daily snapshot store — first-launch warm cache. The Drift-
-/// backed implementation lands alongside the post-close snapshot job.
 final holdingDailySnapshotStoreProvider =
     Provider<HoldingDailySnapshotStore>((ref) {
   return InMemoryHoldingDailySnapshotStore();
 });
 
-/// Adapter exposing [transactionsStreamProvider] as a
-/// [HoldingTransactionsRepository]. Filters in memory by owner / date —
-/// fine for personal-portfolio sizes; a Drift-side range query is the
-/// natural follow-up for large-history users. Rebuilds whenever the
-/// transactions stream emits, which is what makes new trades surface in
-/// the dashboard / holdings views without explicit invalidation.
 final holdingTransactionsRepositoryProvider =
     Provider<HoldingTransactionsRepository>((ref) {
-  final txns =
-      ref.watch(transactionsStreamProvider).value ?? const <Transaction>[];
-  return _TransactionListHoldingAdapter(txns);
+  return const _EmptyHoldingTransactionsAdapter();
 });
 
-/// Adapter exposing [transactionsStreamProvider] as a
-/// [ReturnsTransactionsRepository]. Same shape as the holding adapter.
 final returnsTransactionsRepositoryProvider =
     Provider<ReturnsTransactionsRepository>((ref) {
-  final txns =
-      ref.watch(transactionsStreamProvider).value ?? const <Transaction>[];
-  return _TransactionListReturnsAdapter(txns);
+  return const _EmptyReturnsTransactionsAdapter();
 });
 
-/// Owner user id resolver — same MutationStamper-backed resolver every
-/// other repo uses, surfaced as a Riverpod-friendly Future for the
-/// holding / returns service constructors.
 final _currentOwnerUserIdProvider = FutureProvider<String>((ref) async {
   final stamper = await ref.watch(mutationStamperProvider.future);
   return stamper.currentUserId();
 });
 
-/// Default base currency for the holding service. The analytics layer
-/// keeps its own [analyticsBaseCurrencyProvider]; the dashboard uses
-/// [dashboardBaseCurrencyProvider]. Both eventually read the same
-/// settings preference, so we follow the dashboard's wiring here.
 final holdingBaseCurrencyProvider = Provider<String>((ref) {
   return ref.watch(baseCurrencyProvider);
 });
 
-/// Production [HoldingService] — composes the transaction adapter, the
-/// in-memory snapshot store, the asset-driven price source, and the
-/// dashboard FX converter.
-///
-/// Tests override this directly with a fake (see analytics_page_test.dart)
-/// rather than overriding every dependency individually.
 final holdingServiceProvider =
     FutureProvider<HoldingService>((ref) async {
   final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
@@ -176,28 +121,18 @@ final holdingServiceProvider =
   );
 });
 
-/// Per-asset portfolio snapshot at "now". Single seam consumed by both
-/// the dashboard (rolls market value into `总资产`) and the analytics
-/// page (allocation / concentration views). Re-fires whenever the
-/// underlying transactions stream, asset prices, or FX rates change, so
-/// recording a trade reactively updates every downstream chart.
 final holdingsSnapshotProvider =
     FutureProvider.autoDispose<Map<String, HoldingSnapshot>>((ref) async {
   final service = await ref.watch(holdingServiceProvider.future);
   return service.computeAt(DateTime.now().toUtc());
 });
 
-/// Adapter exposing [HoldingService.lotsAt] as a [ReturnsLotsSource].
 final returnsLotsSourceProvider =
     FutureProvider<ReturnsLotsSource>((ref) async {
   final service = await ref.watch(holdingServiceProvider.future);
   return _HoldingServiceReturnsLotsSource(service);
 });
 
-/// FIR-89: composes [ReturnsService] for portfolio / asset / bucket XIRR.
-/// Reuses the holding-service adapter for lot bookends, the same
-/// transaction repository for in-window flows, and the dashboard's FX
-/// converter so cross-currency cash flows roll up consistently.
 final returnsServiceProvider =
     FutureProvider<ReturnsService>((ref) async {
   final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
@@ -227,8 +162,6 @@ Asset _assetFromRow(AssetRow row) {
     industry: row.industry,
     region: row.region,
     isin: row.isin,
-    lastPrice: row.lastPrice,
-    lastPriceAt: row.lastPriceAt,
     logoUrl: row.logoUrl,
     metadataJson: row.metadataJson,
     sync: SyncMeta(
@@ -241,45 +174,9 @@ Asset _assetFromRow(AssetRow row) {
   );
 }
 
-class _AssetLastPriceHoldingPriceSource implements HoldingPriceSource {
-  _AssetLastPriceHoldingPriceSource(Iterable<Asset> assets)
-      : _byId = {
-          for (final a in assets)
-            if (a.lastPrice != null) a.id: a,
-        };
-
-  final Map<String, Asset> _byId;
-
-  @override
-  HoldingPrice? priceFor(String assetId, {required DateTime asOf}) {
-    final a = _byId[assetId];
-    if (a == null || a.lastPrice == null) return null;
-    final ts = a.lastPriceAt;
-    if (ts != null && ts.isAfter(asOf)) return null;
-    return HoldingPrice(price: a.lastPrice!, currency: a.currency);
-  }
-}
-
-List<Transaction> _filter(
-  List<Transaction> all,
-  String ownerUserId,
-  DateTime from,
-  DateTime to,
-) {
-  return all
-      .where(
-        (t) =>
-            t.sync.ownerUserId == ownerUserId &&
-            t.sync.deletedAt == null &&
-            !t.tradeDate.isBefore(from) &&
-            !t.tradeDate.isAfter(to),
-      )
-      .toList();
-}
-
-class _TransactionListHoldingAdapter implements HoldingTransactionsRepository {
-  _TransactionListHoldingAdapter(this._txns);
-  final List<Transaction> _txns;
+class _EmptyHoldingTransactionsAdapter
+    implements HoldingTransactionsRepository {
+  const _EmptyHoldingTransactionsAdapter();
 
   @override
   Future<List<Transaction>> transactionsInRange({
@@ -287,7 +184,7 @@ class _TransactionListHoldingAdapter implements HoldingTransactionsRepository {
     required DateTime from,
     required DateTime to,
   }) async =>
-      _filter(_txns, ownerUserId, from, to);
+      const <Transaction>[];
 
   @override
   Future<List<CorporateAction>> corporateActionsInRange({
@@ -298,9 +195,9 @@ class _TransactionListHoldingAdapter implements HoldingTransactionsRepository {
       const <CorporateAction>[];
 }
 
-class _TransactionListReturnsAdapter implements ReturnsTransactionsRepository {
-  _TransactionListReturnsAdapter(this._txns);
-  final List<Transaction> _txns;
+class _EmptyReturnsTransactionsAdapter
+    implements ReturnsTransactionsRepository {
+  const _EmptyReturnsTransactionsAdapter();
 
   @override
   Future<List<Transaction>> transactionsInRange({
@@ -308,7 +205,7 @@ class _TransactionListReturnsAdapter implements ReturnsTransactionsRepository {
     required DateTime from,
     required DateTime to,
   }) async =>
-      _filter(_txns, ownerUserId, from, to);
+      const <Transaction>[];
 }
 
 class _HoldingServiceReturnsLotsSource implements ReturnsLotsSource {

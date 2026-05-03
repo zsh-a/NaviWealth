@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Asset {
 
- String get id; AssetType get type; String get symbol; String get currency; String? get name; String? get market; String? get industry; String? get region; String? get isin; Decimal? get lastPrice; DateTime? get lastPriceAt; String? get logoUrl; String? get metadataJson; SyncMeta get sync;
+ String get id; AssetType get type; String get symbol; String get currency; String? get name; String? get market; String? get industry; String? get region; String? get isin; String? get logoUrl; String? get metadataJson; SyncMeta get sync;
 /// Create a copy of Asset
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AssetCopyWith<Asset> get copyWith => _$AssetCopyWithImpl<Asset>(this as Asset, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.lastPrice, lastPrice) || other.lastPrice == lastPrice)&&(identical(other.lastPriceAt, lastPriceAt) || other.lastPriceAt == lastPriceAt)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,lastPrice,lastPriceAt,logoUrl,metadataJson,sync);
+int get hashCode => Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,logoUrl,metadataJson,sync);
 
 @override
 String toString() {
-  return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, lastPrice: $lastPrice, lastPriceAt: $lastPriceAt, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
+  return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AssetCopyWith<$Res>  {
   factory $AssetCopyWith(Asset value, $Res Function(Asset) _then) = _$AssetCopyWithImpl;
 @useResult
 $Res call({
- String id, AssetType type, String symbol, String currency, String? name, String? market, String? industry, String? region, String? isin, Decimal? lastPrice, DateTime? lastPriceAt, String? logoUrl, String? metadataJson, SyncMeta sync
+ String id, AssetType type, String symbol, String currency, String? name, String? market, String? industry, String? region, String? isin, String? logoUrl, String? metadataJson, SyncMeta sync
 });
 
 
@@ -62,7 +62,7 @@ class _$AssetCopyWithImpl<$Res>
 
 /// Create a copy of Asset
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? symbol = null,Object? currency = null,Object? name = freezed,Object? market = freezed,Object? industry = freezed,Object? region = freezed,Object? isin = freezed,Object? lastPrice = freezed,Object? lastPriceAt = freezed,Object? logoUrl = freezed,Object? metadataJson = freezed,Object? sync = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? symbol = null,Object? currency = null,Object? name = freezed,Object? market = freezed,Object? industry = freezed,Object? region = freezed,Object? isin = freezed,Object? logoUrl = freezed,Object? metadataJson = freezed,Object? sync = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -73,9 +73,7 @@ as String?,market: freezed == market ? _self.market : market // ignore: cast_nul
 as String?,industry: freezed == industry ? _self.industry : industry // ignore: cast_nullable_to_non_nullable
 as String?,region: freezed == region ? _self.region : region // ignore: cast_nullable_to_non_nullable
 as String?,isin: freezed == isin ? _self.isin : isin // ignore: cast_nullable_to_non_nullable
-as String?,lastPrice: freezed == lastPrice ? _self.lastPrice : lastPrice // ignore: cast_nullable_to_non_nullable
-as Decimal?,lastPriceAt: freezed == lastPriceAt ? _self.lastPriceAt : lastPriceAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as String?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
@@ -172,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AssetType type,  String symbol,  String currency,  String? name,  String? market,  String? industry,  String? region,  String? isin,  Decimal? lastPrice,  DateTime? lastPriceAt,  String? logoUrl,  String? metadataJson,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AssetType type,  String symbol,  String currency,  String? name,  String? market,  String? industry,  String? region,  String? isin,  String? logoUrl,  String? metadataJson,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Asset() when $default != null:
-return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that.market,_that.industry,_that.region,_that.isin,_that.lastPrice,_that.lastPriceAt,_that.logoUrl,_that.metadataJson,_that.sync);case _:
+return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that.market,_that.industry,_that.region,_that.isin,_that.logoUrl,_that.metadataJson,_that.sync);case _:
   return orElse();
 
 }
@@ -193,10 +191,10 @@ return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AssetType type,  String symbol,  String currency,  String? name,  String? market,  String? industry,  String? region,  String? isin,  Decimal? lastPrice,  DateTime? lastPriceAt,  String? logoUrl,  String? metadataJson,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AssetType type,  String symbol,  String currency,  String? name,  String? market,  String? industry,  String? region,  String? isin,  String? logoUrl,  String? metadataJson,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _Asset():
-return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that.market,_that.industry,_that.region,_that.isin,_that.lastPrice,_that.lastPriceAt,_that.logoUrl,_that.metadataJson,_that.sync);case _:
+return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that.market,_that.industry,_that.region,_that.isin,_that.logoUrl,_that.metadataJson,_that.sync);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -213,10 +211,10 @@ return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AssetType type,  String symbol,  String currency,  String? name,  String? market,  String? industry,  String? region,  String? isin,  Decimal? lastPrice,  DateTime? lastPriceAt,  String? logoUrl,  String? metadataJson,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AssetType type,  String symbol,  String currency,  String? name,  String? market,  String? industry,  String? region,  String? isin,  String? logoUrl,  String? metadataJson,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _Asset() when $default != null:
-return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that.market,_that.industry,_that.region,_that.isin,_that.lastPrice,_that.lastPriceAt,_that.logoUrl,_that.metadataJson,_that.sync);case _:
+return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that.market,_that.industry,_that.region,_that.isin,_that.logoUrl,_that.metadataJson,_that.sync);case _:
   return null;
 
 }
@@ -228,7 +226,7 @@ return $default(_that.id,_that.type,_that.symbol,_that.currency,_that.name,_that
 
 
 class _Asset extends Asset {
-  const _Asset({required this.id, required this.type, required this.symbol, required this.currency, this.name, this.market, this.industry, this.region, this.isin, this.lastPrice, this.lastPriceAt, this.logoUrl, this.metadataJson, required this.sync}): super._();
+  const _Asset({required this.id, required this.type, required this.symbol, required this.currency, this.name, this.market, this.industry, this.region, this.isin, this.logoUrl, this.metadataJson, required this.sync}): super._();
   
 
 @override final  String id;
@@ -240,8 +238,6 @@ class _Asset extends Asset {
 @override final  String? industry;
 @override final  String? region;
 @override final  String? isin;
-@override final  Decimal? lastPrice;
-@override final  DateTime? lastPriceAt;
 @override final  String? logoUrl;
 @override final  String? metadataJson;
 @override final  SyncMeta sync;
@@ -256,16 +252,16 @@ _$AssetCopyWith<_Asset> get copyWith => __$AssetCopyWithImpl<_Asset>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.lastPrice, lastPrice) || other.lastPrice == lastPrice)&&(identical(other.lastPriceAt, lastPriceAt) || other.lastPriceAt == lastPriceAt)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,lastPrice,lastPriceAt,logoUrl,metadataJson,sync);
+int get hashCode => Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,logoUrl,metadataJson,sync);
 
 @override
 String toString() {
-  return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, lastPrice: $lastPrice, lastPriceAt: $lastPriceAt, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
+  return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
 }
 
 
@@ -276,7 +272,7 @@ abstract mixin class _$AssetCopyWith<$Res> implements $AssetCopyWith<$Res> {
   factory _$AssetCopyWith(_Asset value, $Res Function(_Asset) _then) = __$AssetCopyWithImpl;
 @override @useResult
 $Res call({
- String id, AssetType type, String symbol, String currency, String? name, String? market, String? industry, String? region, String? isin, Decimal? lastPrice, DateTime? lastPriceAt, String? logoUrl, String? metadataJson, SyncMeta sync
+ String id, AssetType type, String symbol, String currency, String? name, String? market, String? industry, String? region, String? isin, String? logoUrl, String? metadataJson, SyncMeta sync
 });
 
 
@@ -293,7 +289,7 @@ class __$AssetCopyWithImpl<$Res>
 
 /// Create a copy of Asset
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? symbol = null,Object? currency = null,Object? name = freezed,Object? market = freezed,Object? industry = freezed,Object? region = freezed,Object? isin = freezed,Object? lastPrice = freezed,Object? lastPriceAt = freezed,Object? logoUrl = freezed,Object? metadataJson = freezed,Object? sync = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? symbol = null,Object? currency = null,Object? name = freezed,Object? market = freezed,Object? industry = freezed,Object? region = freezed,Object? isin = freezed,Object? logoUrl = freezed,Object? metadataJson = freezed,Object? sync = null,}) {
   return _then(_Asset(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -304,9 +300,7 @@ as String?,market: freezed == market ? _self.market : market // ignore: cast_nul
 as String?,industry: freezed == industry ? _self.industry : industry // ignore: cast_nullable_to_non_nullable
 as String?,region: freezed == region ? _self.region : region // ignore: cast_nullable_to_non_nullable
 as String?,isin: freezed == isin ? _self.isin : isin // ignore: cast_nullable_to_non_nullable
-as String?,lastPrice: freezed == lastPrice ? _self.lastPrice : lastPrice // ignore: cast_nullable_to_non_nullable
-as Decimal?,lastPriceAt: freezed == lastPriceAt ? _self.lastPriceAt : lastPriceAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as String?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,metadataJson: freezed == metadataJson ? _self.metadataJson : metadataJson // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,

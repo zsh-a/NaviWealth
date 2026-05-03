@@ -70,7 +70,7 @@ class EventLogReader {
           'WHERE entity_table = ? AND entity_id = ? '
           'ORDER BY hlc ASC$limitClause',
           variables: args,
-          readsFrom: {_db.assets, _db.accounts, _db.transactions},
+          readsFrom: {_db.assets, _db.accounts, _db.journalEntries},
         )
         .watch()
         .map((rows) => rows.map(_rowToEvent).toList(growable: false));

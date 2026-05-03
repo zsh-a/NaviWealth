@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/values/asset_market.dart';
@@ -23,8 +22,6 @@ abstract class Asset with _$Asset {
     String? industry,
     String? region,
     String? isin,
-    Decimal? lastPrice,
-    DateTime? lastPriceAt,
     String? logoUrl,
     String? metadataJson,
     required SyncMeta sync,

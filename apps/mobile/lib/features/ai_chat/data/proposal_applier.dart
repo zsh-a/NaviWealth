@@ -15,14 +15,12 @@ import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
-import '../../../data/domain/transaction.dart';
 import '../../../data/repositories/account_repository.dart';
-import '../../../data/repositories/expense_category_repository.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/manual_asset_repository.dart';
+import '../../../data/repositories/price_repository.dart';
 import '../../expense/data/expense_account_resolver.dart';
-import '../../investment/data/transaction_repository.dart';
 import '../../investment/domain/models/lot.dart';
 import '../../investment/domain/trade_entry/trade_draft.dart';
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
@@ -49,18 +47,18 @@ class ProposalApplyException implements Exception {
 
 class ProposalApplier {
   ProposalApplier({
-    required this.transactionRepo,
     required this.tradeEntryService,
     required this.journalEntryRepo,
+    required this.priceRepo,
     required this.accountRepo,
     required this.manualAssetRepo,
     required this.liabilityRepo,
     required this.currentUserId,
   });
 
-  final TransactionRepository transactionRepo;
   final TradeEntryService tradeEntryService;
   final JournalEntryRepository journalEntryRepo;
+  final PriceRepository priceRepo;
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
@@ -81,31 +79,12 @@ class ProposalApplier {
     final table = state.appliedTable;
     if (id == null || table == null) return;
     switch (table) {
-      case 'transactions':
-        await transactionRepo.softDeleteById(id);
       case 'journal_entries':
-        // FIR-131 wave 3f — expense proposals now write into the
-        // ledger stack. Soft-deleting the JE cascades the postings
-        // tombstone so the undo restores both legs in one step.
         await journalEntryRepo.softDelete(id);
       case 'accounts':
         await accountRepo.softDelete(id);
       case 'assets':
-        // Valuation undo restores the previous `last_price` by appending a
-        // compensating `valuationAdjust` event (FIR-123 — there is no
-        // direct UPDATE path on `assets.last_price` any more). We capture
-        // the prior value pre-write into `undoData['previous_value']`;
-        // restoring null is legitimate (the asset never had a price
-        // before) and round-trips through `Decimal.zero`.
-        final raw = state.undoData?['previous_value'];
-        final prev = raw == null
-            ? Decimal.zero
-            : Decimal.tryParse(raw.toString()) ?? Decimal.zero;
-        await manualAssetRepo.recordValuationAdjust(
-          assetId: id,
-          newValuation: prev,
-          reason: 'undo',
-        );
+        await manualAssetRepo.softDelete(id, reason: 'undo');
       default:
         throw ProposalApplyException('unknown undo table: $table');
     }
@@ -216,6 +195,13 @@ class ProposalApplier {
           entry: build.entry,
           postings: build.postings,
         );
+        await priceRepo.record(
+          unit: tx.assetId!,
+          quoteCurrency: currency,
+          observedOn: tx.tradeDate,
+          perUnit: tx.price,
+          source: 'trade',
+        );
         return ProposalApplyState(
           status: ProposalApplyStatus.applied,
           appliedEntityId: stored.entry.id,
@@ -273,6 +259,13 @@ class ProposalApplier {
           entry: build.entry,
           postings: build.postings,
         );
+        await priceRepo.record(
+          unit: tx.assetId!,
+          quoteCurrency: currency,
+          observedOn: tx.tradeDate,
+          perUnit: tx.price,
+          source: 'trade',
+        );
         return ProposalApplyState(
           status: ProposalApplyStatus.applied,
           appliedEntityId: stored.entry.id,
@@ -283,8 +276,6 @@ class ProposalApplier {
       }
     }
 
-    // valuationAdjust — dual-write: legacy transactions row (read
-    // paths still consume it) + JE for the ledger stack.
     final uid = await currentUserId();
     final equityAccountId = AccountRepository.systemAccountIdForPath(
       'equity:adjustments',
@@ -300,20 +291,21 @@ class ProposalApplier {
       currency: currency,
       narration: note,
     );
-    // Fire both writes concurrently; recordTrade returns the persisted
-    // transaction we need for the undo handle.
-    final results = await Future.wait([
-      transactionRepo.recordTrade(tradePlan),
-      journalEntryRepo.create(
-        entry: build.entry,
-        postings: build.postings,
-      ),
-    ]);
-    final stored = results[0] as Transaction;
+    final stored = await journalEntryRepo.create(
+      entry: build.entry,
+      postings: build.postings,
+    );
+    await priceRepo.record(
+      unit: tx.assetId!,
+      quoteCurrency: currency,
+      observedOn: tx.tradeDate,
+      perUnit: tx.price,
+      source: 'manual',
+    );
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
-      appliedEntityId: stored.id,
-      appliedTable: 'transactions',
+      appliedEntityId: stored.entry.id,
+      appliedTable: 'journal_entries',
       appliedAt: at,
       shortLabel: '已记录${plan.summaryZh}',
     );
@@ -330,15 +322,9 @@ class ProposalApplier {
     final note = plan.get('note');
     final categorySlug = plan.get('category') ?? 'other';
     final localSlug = _expenseCategorySlugAliases[categorySlug] ?? categorySlug;
-    // The legacy `expense_categories` table is still queried by the
-    // expense reports (FIR-132 retires the read path), so the slug
-    // round-trips through `defaultIdFor` to stay compatible with that
-    // surface. The resolver translates the resulting category id to
-    // a FIR-133 expense account so the JE write lands cleanly.
-    final categoryId = ExpenseCategoryRepository.defaultIdFor(localSlug);
     final ownerUserId = await currentUserId();
-    final expenseAccountId = LegacyExpenseCategoryToAccount.resolveAccountId(
-      categoryId: categoryId,
+    final expenseAccountId = LegacyExpenseCategoryToAccount.resolveSlug(
+      slug: localSlug,
       ownerUserId: ownerUserId,
     );
 
@@ -453,7 +439,6 @@ class ProposalApplier {
     if (existing == null) {
       throw ProposalApplyException('asset $assetId 不存在或不是手工估值类型');
     }
-    final previousValue = existing.lastPrice?.toString();
     await manualAssetRepo.recordValuationAdjust(
       assetId: assetId,
       newValuation: newValue,
@@ -463,9 +448,6 @@ class ProposalApplier {
       appliedEntityId: assetId,
       appliedTable: 'assets',
       appliedAt: at,
-      undoData: <String, Object?>{
-        'previous_value': ?previousValue,
-      },
       shortLabel: '已${plan.summaryZh}',
     );
   }
