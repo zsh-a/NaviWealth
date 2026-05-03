@@ -16,7 +16,6 @@ import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
-import '../features/assets/assets_page.dart' deferred as assets_lib;
 import '../features/assets/cash_form_page.dart';
 import '../features/assets/deposit_form_page.dart';
 import '../features/assets/physical/ui/physical_asset_detail_page.dart'
@@ -37,6 +36,8 @@ import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
+import '../features/more/more_page.dart' deferred as more_lib;
+import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
@@ -49,17 +50,15 @@ import 'route_error_page.dart';
 import 'route_guard.dart';
 import 'shell_preferences.dart';
 
-/// Paths of the six primary tabs in the root shell, in display order.
+/// Paths of the four primary tabs in the root shell, in display order.
 ///
-/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`6` to these
+/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`4` to these
 /// indexes — keep order in sync with `_RootShell`'s NavigationBar.
 const List<String> kPrimaryTabPaths = <String>[
   '/',
-  '/assets',
+  '/portfolio',
   '/expenses',
-  '/analytics',
-  '/fire',
-  '/settings',
+  '/more',
 ];
 
 /// Test-only: eagerly resolve every deferred-as library the router maps to
@@ -70,7 +69,6 @@ const List<String> kPrimaryTabPaths = <String>[
 @visibleForTesting
 Future<void> preloadDeferredRoutesForTest() async {
   await Future.wait<void>(<Future<void>>[
-    assets_lib.loadLibrary(),
     analytics_lib.loadLibrary(),
     settings_lib.loadLibrary(),
     fire_lib.loadLibrary(),
@@ -81,6 +79,8 @@ Future<void> preloadDeferredRoutesForTest() async {
     devices_lib.loadLibrary(),
     rebalance_lib.loadLibrary(),
     ai_chat_lib.loadLibrary(),
+    portfolio_lib.loadLibrary(),
+    more_lib.loadLibrary(),
   ]);
 }
 
@@ -108,12 +108,13 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             name: 'home',
             builder: (context, state) => const HomePage(),
           ),
+          // ── Portfolio tab (assets + liabilities) ──────────────────────
           GoRoute(
-            path: '/assets',
-            name: 'assets',
+            path: '/portfolio',
+            name: 'portfolio',
             builder: (context, state) => DeferredRoute(
-              load: assets_lib.loadLibrary,
-              builder: (_) => assets_lib.AssetsPage(),
+              load: portfolio_lib.loadLibrary,
+              builder: (_) => portfolio_lib.PortfolioPage(),
             ),
             routes: [
               GoRoute(
@@ -199,6 +200,23 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     assetId: state.pathParameters['assetId']!,
                   ),
                 ),
+              ),
+            ],
+          ),
+          // ── Legacy /assets redirect → /portfolio ─────────────────────
+          GoRoute(
+            path: '/assets',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst('/assets', '/portfolio');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst('/assets', '/portfolio');
+                },
               ),
             ],
           ),
@@ -318,6 +336,15 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
+          // ── More tab (hub) ────────────────────────────────────────────
+          GoRoute(
+            path: '/more',
+            name: 'more',
+            builder: (context, state) => DeferredRoute(
+              load: more_lib.loadLibrary,
+              builder: (_) => more_lib.MorePage(),
+            ),
+          ),
         ],
       ),
     ],
@@ -351,19 +378,21 @@ class _RootShell extends ConsumerWidget {
         path: location,
       );
     });
-    // Sub-routes under `/assets` and `/accounts` keep the Assets tab
-    // highlighted: e.g. `/assets/new/cash` is "still" assets-tab content.
+    // Tab index resolution for the 4-tab layout:
+    // Home(0) | Portfolio(1) | Expenses(2) | More(3)
     final int index;
-    if (location.startsWith('/assets') || location.startsWith('/accounts')) {
+    if (location.startsWith('/portfolio') || location.startsWith('/assets')) {
       index = 1;
     } else if (location.startsWith('/expenses')) {
       index = 2;
-    } else if (location.startsWith('/analytics')) {
+    } else if (location.startsWith('/more') ||
+        location.startsWith('/accounts') ||
+        location.startsWith('/analytics') ||
+        location.startsWith('/fire') ||
+        location.startsWith('/ai') ||
+        location.startsWith('/settings') ||
+        location.startsWith('/rebalance')) {
       index = 3;
-    } else if (location.startsWith('/fire')) {
-      index = 4;
-    } else if (location.startsWith('/settings')) {
-      index = 5;
     } else {
       index = 0;
     }
@@ -428,7 +457,7 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
     _NavDestination(
       icon: Icons.account_balance_wallet_outlined,
       selectedIcon: Icons.account_balance_wallet,
-      label: l10n.navAssets,
+      label: l10n.navPortfolio,
     ),
     _NavDestination(
       icon: Icons.receipt_long_outlined,
@@ -436,19 +465,9 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
       label: l10n.navExpenses,
     ),
     _NavDestination(
-      icon: Icons.pie_chart_outline,
-      selectedIcon: Icons.pie_chart,
-      label: l10n.navAnalytics,
-    ),
-    _NavDestination(
-      icon: Icons.flag_outlined,
-      selectedIcon: Icons.flag,
-      label: l10n.navFire,
-    ),
-    _NavDestination(
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-      label: l10n.navSettings,
+      icon: Icons.more_horiz,
+      selectedIcon: Icons.more_horiz,
+      label: l10n.navMore,
     ),
   ];
 }
@@ -468,23 +487,48 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // `extendBody: true` lets the body paint underneath the bottom nav,
-    // which is what the glass blur composes over — without it, the bar
-    // sits on a solid scaffold gap and the blur has nothing to read.
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       extendBody: true,
       body: child,
-      bottomNavigationBar: GlassNavigationBar(
+      bottomNavigationBar: FloatingPillNavigationBar(
         selectedIndex: selectedIndex,
         destinations: [
           for (final d in destinations)
-            NavigationDestination(
-              icon: Icon(d.icon),
-              selectedIcon: Icon(d.selectedIcon),
+            PillNavDestination(
+              icon: d.icon,
+              selectedIcon: d.selectedIcon,
               label: d.label,
             ),
         ],
         onDestinationSelected: onDestinationSelected,
+        superFabActions: [
+          SuperFabAction(
+            icon: Icons.swap_horiz,
+            label: l10n.superFabTrade,
+            onTap: () => context.push('/portfolio/trade'),
+          ),
+          SuperFabAction(
+            icon: Icons.receipt_long_outlined,
+            label: l10n.superFabExpense,
+            onTap: () => context.push('/expenses/new'),
+          ),
+          SuperFabAction(
+            icon: Icons.account_balance_wallet_outlined,
+            label: l10n.superFabAsset,
+            onTap: () => context.push('/portfolio/new/cash'),
+          ),
+          SuperFabAction(
+            icon: Icons.swap_vert,
+            label: l10n.superFabTransfer,
+            onTap: () => context.push('/accounts/transfer'),
+          ),
+          SuperFabAction(
+            icon: Icons.payments_outlined,
+            label: l10n.superFabLiability,
+            onTap: () => context.push('/portfolio/liabilities'),
+          ),
+        ],
       ),
     );
   }

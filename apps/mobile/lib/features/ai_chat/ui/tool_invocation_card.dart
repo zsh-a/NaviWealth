@@ -158,11 +158,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   void _navigate(BuildContext context, _Jump jump) {
     switch (jump.kind) {
       case _JumpKind.asset:
-        context.go('/assets/${Uri.encodeComponent(jump.id)}');
+        context.go('/portfolio/${Uri.encodeComponent(jump.id)}');
       case _JumpKind.account:
         context.go('/accounts/${Uri.encodeComponent(jump.id)}');
       case _JumpKind.liability:
-        context.go('/assets/liabilities/${Uri.encodeComponent(jump.id)}');
+        context.go('/portfolio/liabilities/${Uri.encodeComponent(jump.id)}');
     }
   }
 

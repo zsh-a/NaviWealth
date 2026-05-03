@@ -52,7 +52,7 @@ class HomePage extends ConsumerWidget {
       ),
       floatingActionButton: ScrollAwareFab(
         child: AppFab.extended(
-          onPressed: () => context.push('/assets/trade'),
+          onPressed: () => context.push('/portfolio/trade'),
           icon: const Icon(Icons.add),
           label: Text(l10n.homeRecordTradeTooltip),
         ),

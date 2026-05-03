@@ -15,12 +15,36 @@ import 'liability_l10n.dart';
 /// List of all of the user's liabilities. Tapping a row drills into the
 /// detail / amortization screen. The FAB opens the create form.
 class LiabilitiesPage extends ConsumerWidget {
-  const LiabilitiesPage({super.key});
+  const LiabilitiesPage({super.key, this.embedded = false});
+
+  /// When true, renders without Scaffold/AppBar/FAB — for embedding
+  /// inside [PortfolioPage].
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final asyncList = ref.watch(liabilitiesStreamProvider);
+
+    final body = asyncList.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('$e')),
+      data: (items) {
+        if (items.isEmpty) {
+          return _LiabilitiesEmptyState(l10n: l10n);
+        }
+        return ListView.separated(
+          padding: Spacing.pageMobile,
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
+          itemBuilder: (context, i) =>
+              _LiabilityListTile(liability: items[i]),
+        );
+      },
+    );
+
+    if (embedded) return body;
+
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.liabilitiesAppBarTitle),
@@ -32,22 +56,7 @@ class LiabilitiesPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: asyncList.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (items) {
-          if (items.isEmpty) {
-            return _LiabilitiesEmptyState(l10n: l10n);
-          }
-          return ListView.separated(
-            padding: Spacing.pageMobile,
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
-            itemBuilder: (context, i) =>
-                _LiabilityListTile(liability: items[i]),
-          );
-        },
-      ),
+      body: body,
       floatingActionButton: ScrollAwareFab(
         child: AppFab.extended(
           onPressed: () {
@@ -147,7 +156,7 @@ class _LiabilityListTile extends ConsumerWidget {
                 style: theme.textTheme.titleMedium,
               ),
         onTap: () =>
-            context.push('/assets/liabilities/${liability.id}'),
+            context.push('/portfolio/liabilities/${liability.id}'),
       ),
     );
   }

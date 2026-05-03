@@ -151,7 +151,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           ));
       if (!mounted) return;
       Haptics.success();
-      context.go('/assets');
+      context.go('/portfolio');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -182,7 +182,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go('/assets');
+      context.go('/portfolio');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

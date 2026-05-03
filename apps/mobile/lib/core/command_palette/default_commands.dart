@@ -29,11 +29,18 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go('/'),
     ),
     CommandPaletteEntry(
-      id: 'nav.assets',
-      label: l10n.commandPaletteGoAssets,
+      id: 'nav.portfolio',
+      label: l10n.navPortfolio,
       icon: Icons.account_balance_wallet_outlined,
-      keywords: const <String>['/assets', 'assets', '资产'],
-      run: (BuildContext ctx) => ctx.go('/assets'),
+      keywords: const <String>['/portfolio', 'portfolio', 'assets', '资产', '投资组合'],
+      run: (BuildContext ctx) => ctx.go('/portfolio'),
+    ),
+    CommandPaletteEntry(
+      id: 'nav.more',
+      label: l10n.navMore,
+      icon: Icons.more_horiz,
+      keywords: const <String>['/more', 'more', '更多'],
+      run: (BuildContext ctx) => ctx.go('/more'),
     ),
     CommandPaletteEntry(
       id: 'nav.accounts',
@@ -76,8 +83,8 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       id: 'action.newTrade',
       label: l10n.commandPaletteNewTrade,
       icon: Icons.add_chart_outlined,
-      keywords: const <String>['/assets/trade', 'trade', 'buy', 'sell', '交易'],
-      run: (BuildContext ctx) => ctx.push('/assets/trade'),
+      keywords: const <String>['/portfolio/trade', 'trade', 'buy', 'sell', '交易'],
+      run: (BuildContext ctx) => ctx.push('/portfolio/trade'),
     ),
     CommandPaletteEntry(
       id: 'action.newExpense',

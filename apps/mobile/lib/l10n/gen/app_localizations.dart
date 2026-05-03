@@ -134,6 +134,102 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
+  /// Bottom nav: portfolio tab (assets + liabilities)
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get navPortfolio;
+
+  /// Bottom nav: more/overflow tab
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get navMore;
+
+  /// Bottom nav / More hub: accounts tab
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get navAccounts;
+
+  /// Portfolio segmented control: assets sub-tab
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get portfolioAssetsTab;
+
+  /// Portfolio segmented control: liabilities sub-tab
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get portfolioLiabilitiesTab;
+
+  /// No description provided for @moreAccountsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank, brokerage, and wallets'**
+  String get moreAccountsSubtitle;
+
+  /// No description provided for @moreAnalyticsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation, risk, and benchmarks'**
+  String get moreAnalyticsSubtitle;
+
+  /// No description provided for @moreFireSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial independence tracker'**
+  String get moreFireSubtitle;
+
+  /// No description provided for @moreAiSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI financial assistant'**
+  String get moreAiSubtitle;
+
+  /// No description provided for @moreRebalanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Target vs. actual allocation'**
+  String get moreRebalanceSubtitle;
+
+  /// No description provided for @moreSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App preferences and devices'**
+  String get moreSettingsSubtitle;
+
+  /// No description provided for @superFabTrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade'**
+  String get superFabTrade;
+
+  /// No description provided for @superFabExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get superFabExpense;
+
+  /// No description provided for @superFabAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get superFabAsset;
+
+  /// No description provided for @superFabTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get superFabTransfer;
+
+  /// No description provided for @superFabLiability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability'**
+  String get superFabLiability;
+
   /// No description provided for @homeAppBarTitle.
   ///
   /// In en, this message translates to:

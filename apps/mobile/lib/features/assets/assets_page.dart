@@ -33,7 +33,11 @@ import 'physical/ui/physical_asset_create_sheet.dart';
 /// row at narrower widths still pushes the detail route in the usual
 /// way.
 class AssetsPage extends ConsumerWidget {
-  const AssetsPage({super.key});
+  const AssetsPage({super.key, this.embedded = false});
+
+  /// When true, renders without Scaffold/AppBar/FAB — for embedding
+  /// inside [PortfolioPage].
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,21 +48,34 @@ class AssetsPage extends ConsumerWidget {
         );
         final selected = selectedQueryOf(context);
         if (masterDetail) {
+          final detail = selected == null
+              ? const _AssetsDetailEmpty()
+              : AssetDetailPage(assetId: selected);
+          if (embedded) {
+            return MasterDetailLayout(
+              master: _AssetsMaster(
+                selectedAssetId: selected,
+                inMasterDetail: true,
+                embedded: true,
+              ),
+              detail: detail,
+            );
+          }
           return Scaffold(
             body: MasterDetailLayout(
               master: _AssetsMaster(
                 selectedAssetId: selected,
                 inMasterDetail: true,
+                embedded: false,
               ),
-              detail: selected == null
-                  ? const _AssetsDetailEmpty()
-                  : AssetDetailPage(assetId: selected),
+              detail: detail,
             ),
           );
         }
-        return const _AssetsMaster(
+        return _AssetsMaster(
           selectedAssetId: null,
           inMasterDetail: false,
+          embedded: embedded,
         );
       },
     );
@@ -71,10 +88,12 @@ class _AssetsMaster extends ConsumerWidget {
   const _AssetsMaster({
     required this.selectedAssetId,
     required this.inMasterDetail,
+    this.embedded = false,
   });
 
   final String? selectedAssetId;
   final bool inMasterDetail;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -94,6 +113,28 @@ class _AssetsMaster extends ConsumerWidget {
       ...securitiesOrdered.map((a) => a.id),
       ...?(physicalAsync.value?.map((a) => a.id)),
     ];
+
+    final body = _AssetsBody(
+      manualAsync: manualAsync,
+      physicalAsync: physicalAsync,
+      securitiesAsync: securitiesAsync,
+      securities: securitiesOrdered,
+      holdings: holdingsAsync.value ?? const <String, HoldingSnapshot>{},
+      selectedAssetId: selectedAssetId,
+      inMasterDetail: inMasterDetail,
+    );
+
+    if (embedded) {
+      return MasterDetailShortcuts(
+        onSelectNext: allIds.isEmpty
+            ? null
+            : () => _selectAdjacent(context, allIds, delta: 1),
+        onSelectPrevious: allIds.isEmpty
+            ? null
+            : () => _selectAdjacent(context, allIds, delta: -1),
+        child: body,
+      );
+    }
 
     return MasterDetailShortcuts(
       onSelectNext: allIds.isEmpty
@@ -119,19 +160,11 @@ class _AssetsMaster extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.payments_outlined),
               tooltip: l10n.assetsLiabilitiesTooltip,
-              onPressed: () => context.push('/assets/liabilities'),
+              onPressed: () => context.push('/portfolio/liabilities'),
             ),
           ],
         ),
-        body: _AssetsBody(
-          manualAsync: manualAsync,
-          physicalAsync: physicalAsync,
-          securitiesAsync: securitiesAsync,
-          securities: securitiesOrdered,
-          holdings: holdingsAsync.value ?? const <String, HoldingSnapshot>{},
-          selectedAssetId: selectedAssetId,
-          inMasterDetail: inMasterDetail,
-        ),
+        body: body,
         floatingActionButton: ScrollAwareFab(
           child: AppFab.extended(
             onPressed: () => _showAddSheet(context),
@@ -163,7 +196,7 @@ class _AssetsMaster extends ConsumerWidget {
         if (nextIndex < 0) nextIndex += allIds.length;
       }
     }
-    replaceSelectedQuery(context, path: '/assets', selected: allIds[nextIndex]);
+    replaceSelectedQuery(context, path: '/portfolio', selected: allIds[nextIndex]);
   }
 
   void _showAddSheet(BuildContext context) {
@@ -181,7 +214,7 @@ class _AssetsMaster extends ConsumerWidget {
               subtitle: Text(l10n.assetsAddCashSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
-                context.go('/assets/new/cash');
+                context.go('/portfolio/new/cash');
               },
             ),
             ListTile(
@@ -190,7 +223,7 @@ class _AssetsMaster extends ConsumerWidget {
               subtitle: Text(l10n.assetsAddDepositSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
-                context.go('/assets/new/deposit');
+                context.go('/portfolio/new/deposit');
               },
             ),
             ListTile(
@@ -199,7 +232,7 @@ class _AssetsMaster extends ConsumerWidget {
               subtitle: Text(l10n.assetsAddWealthSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
-                context.go('/assets/new/wealth');
+                context.go('/portfolio/new/wealth');
               },
             ),
             ListTile(
@@ -226,7 +259,7 @@ class _AssetsMaster extends ConsumerWidget {
               subtitle: Text(l10n.assetsAddLiabilitySubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
-                context.push('/assets/liabilities');
+                context.push('/portfolio/liabilities');
               },
             ),
             ListTile(
@@ -235,7 +268,7 @@ class _AssetsMaster extends ConsumerWidget {
               subtitle: Text(l10n.assetsAddCorporateActionSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
-                context.push('/assets/corporate-action');
+                context.push('/portfolio/corporate-action');
               },
             ),
             ListTile(
@@ -244,7 +277,7 @@ class _AssetsMaster extends ConsumerWidget {
               subtitle: Text(l10n.assetsAddTradeSubtitle),
               onTap: () {
                 Navigator.of(ctx).pop();
-                context.push('/assets/trade');
+                context.push('/portfolio/trade');
               },
             ),
           ],
@@ -634,9 +667,9 @@ class _SecurityTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/assets', selected: asset.id);
+      replaceSelectedQuery(context, path: '/portfolio', selected: asset.id);
     } else {
-      context.go('/assets/${asset.id}');
+      context.go('/portfolio/${asset.id}');
     }
   }
 }
@@ -745,9 +778,9 @@ class _AssetTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/assets', selected: asset.id);
+      replaceSelectedQuery(context, path: '/portfolio', selected: asset.id);
     } else {
-      context.go('/assets/${asset.id}');
+      context.go('/portfolio/${asset.id}');
     }
   }
 

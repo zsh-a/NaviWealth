@@ -348,7 +348,8 @@ void main() {
       final ids = entries.map((e) => e.id).toSet();
       expect(ids, containsAll(<String>[
         'nav.home',
-        'nav.assets',
+        'nav.portfolio',
+        'nav.more',
         'nav.accounts',
         'nav.expenses',
         'nav.analytics',

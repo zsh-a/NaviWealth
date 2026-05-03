@@ -27,6 +27,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
+  String get navPortfolio => 'Portfolio';
+
+  @override
+  String get navMore => 'More';
+
+  @override
+  String get navAccounts => 'Accounts';
+
+  @override
+  String get portfolioAssetsTab => 'Assets';
+
+  @override
+  String get portfolioLiabilitiesTab => 'Liabilities';
+
+  @override
+  String get moreAccountsSubtitle => 'Bank, brokerage, and wallets';
+
+  @override
+  String get moreAnalyticsSubtitle => 'Allocation, risk, and benchmarks';
+
+  @override
+  String get moreFireSubtitle => 'Financial independence tracker';
+
+  @override
+  String get moreAiSubtitle => 'AI financial assistant';
+
+  @override
+  String get moreRebalanceSubtitle => 'Target vs. actual allocation';
+
+  @override
+  String get moreSettingsSubtitle => 'App preferences and devices';
+
+  @override
+  String get superFabTrade => 'Trade';
+
+  @override
+  String get superFabExpense => 'Expense';
+
+  @override
+  String get superFabAsset => 'Asset';
+
+  @override
+  String get superFabTransfer => 'Transfer';
+
+  @override
+  String get superFabLiability => 'Liability';
+
+  @override
   String get homeAppBarTitle => 'Overview';
 
   @override
