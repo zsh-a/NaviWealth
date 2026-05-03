@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../data/domain/enums.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../assets/assets_page.dart';
+import '../assets/physical/ui/physical_asset_create_sheet.dart';
 import '../liabilities/ui/liabilities_page.dart';
 
 /// Portfolio tab — umbrella page with a segmented control toggling
@@ -20,6 +23,13 @@ class PortfolioPage extends ConsumerWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.navPortfolio),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: l10n.assetsAddAction,
+            onPressed: () => _showAddSheet(context),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: _SegmentedControl(
@@ -30,9 +40,80 @@ class PortfolioPage extends ConsumerWidget {
         ),
       ),
       body: tab == PortfolioTab.assets
-          ? const AssetsPage(embedded: true)
+          ? const AssetsPage()
           : const LiabilitiesPage(embedded: true),
     );
+  }
+
+  void _showAddSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showGlassModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => ListView(
+        shrinkWrap: true,
+        children: [
+            ListTile(
+              leading: const Icon(Icons.savings_outlined),
+              title: Text(l10n.assetsAddDepositTitle),
+              subtitle: Text(l10n.assetsAddDepositSubtitle),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/portfolio/new/deposit');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_graph_outlined),
+              title: Text(l10n.assetsAddWealthTitle),
+              subtitle: Text(l10n.assetsAddWealthSubtitle),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/portfolio/new/wealth');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: Text(l10n.physicalAssetAddRealEstate),
+              subtitle: Text(l10n.assetsAddRealEstateSubtitle),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _openPhysicalCreate(context, AssetType.realEstate);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.directions_car_outlined),
+              title: Text(l10n.physicalAssetAddVehicle),
+              subtitle: Text(l10n.assetsAddVehicleSubtitle),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _openPhysicalCreate(context, AssetType.vehicle);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.payments_outlined),
+              title: Text(l10n.assetsAddLiabilityTitle),
+              subtitle: Text(l10n.assetsAddLiabilitySubtitle),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.push('/portfolio/liabilities');
+              },
+            ),
+          ],
+        ),
+    );
+  }
+
+  Future<void> _openPhysicalCreate(
+    BuildContext context,
+    AssetType type,
+  ) async {
+    final created = await PhysicalAssetCreateSheet.show(context, type: type);
+    if (created != null && context.mounted) {
+      context.goNamed(
+        'physicalAssetDetail',
+        pathParameters: {'id': created.id},
+      );
+    }
   }
 }
 

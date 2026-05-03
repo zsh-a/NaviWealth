@@ -19,24 +19,21 @@ import 'asset_detail_page.dart';
 import 'physical/data/physical_asset.dart';
 import 'physical/data/providers.dart';
 import 'physical/ui/physical_asset_card.dart';
-import 'physical/ui/physical_asset_create_sheet.dart';
 
-/// Tab body for `/assets`. Shows the manual-valuation asset book
-/// (cash, deposits, wealth products) grouped by type, plus a "real estate
-/// & vehicles" section for non-financial assets, and a FAB that opens a
-/// bottom sheet to choose which kind of asset to add.
+/// Tab body for the Portfolio page's Assets segment. Shows the
+/// manual-valuation asset book (cash, deposits, wealth products) grouped
+/// by type, plus a "real estate & vehicles" section for non-financial
+/// assets.
 ///
 /// At desktop width (≥ 1240) the page renders as a master-detail surface
 /// (FIR-106): a 380dp asset list on the left and the asset detail page
 /// on the right, driven by the `?selected=` query parameter. Tapping a
 /// row at narrower widths still pushes the detail route in the usual
 /// way.
+///
+/// Always embedded inside [PortfolioPage] — no Scaffold/AppBar/FAB.
 class AssetsPage extends ConsumerWidget {
-  const AssetsPage({super.key, this.embedded = false});
-
-  /// When true, renders without Scaffold/AppBar/FAB — for embedding
-  /// inside [PortfolioPage].
-  final bool embedded;
+  const AssetsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,31 +47,17 @@ class AssetsPage extends ConsumerWidget {
           final detail = selected == null
               ? const _AssetsDetailEmpty()
               : AssetDetailPage(assetId: selected);
-          if (embedded) {
-            return MasterDetailLayout(
-              master: _AssetsMaster(
-                selectedAssetId: selected,
-                inMasterDetail: true,
-                embedded: true,
-              ),
-              detail: detail,
-            );
-          }
-          return Scaffold(
-            body: MasterDetailLayout(
-              master: _AssetsMaster(
-                selectedAssetId: selected,
-                inMasterDetail: true,
-                embedded: false,
-              ),
-              detail: detail,
+          return MasterDetailLayout(
+            master: _AssetsMaster(
+              selectedAssetId: selected,
+              inMasterDetail: true,
             ),
+            detail: detail,
           );
         }
-        return _AssetsMaster(
+        return const _AssetsMaster(
           selectedAssetId: null,
           inMasterDetail: false,
-          embedded: embedded,
         );
       },
     );
@@ -87,16 +70,13 @@ class _AssetsMaster extends ConsumerWidget {
   const _AssetsMaster({
     required this.selectedAssetId,
     required this.inMasterDetail,
-    this.embedded = false,
   });
 
   final String? selectedAssetId;
   final bool inMasterDetail;
-  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final manualAsync = ref.watch(manualAssetsStreamProvider);
     final physicalAsync = ref.watch(physicalAssetsListProvider);
     final securitiesAsync = ref.watch(securitiesAssetsStreamProvider);
@@ -123,18 +103,6 @@ class _AssetsMaster extends ConsumerWidget {
       inMasterDetail: inMasterDetail,
     );
 
-    if (embedded) {
-      return MasterDetailShortcuts(
-        onSelectNext: allIds.isEmpty
-            ? null
-            : () => _selectAdjacent(context, allIds, delta: 1),
-        onSelectPrevious: allIds.isEmpty
-            ? null
-            : () => _selectAdjacent(context, allIds, delta: -1),
-        child: body,
-      );
-    }
-
     return MasterDetailShortcuts(
       onSelectNext: allIds.isEmpty
           ? null
@@ -142,31 +110,7 @@ class _AssetsMaster extends ConsumerWidget {
       onSelectPrevious: allIds.isEmpty
           ? null
           : () => _selectAdjacent(context, allIds, delta: -1),
-      child: Scaffold(
-        appBar: GlassAppBar(
-          title: Text(l10n.assetsAppBarTitle),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.account_balance_outlined),
-              tooltip: l10n.assetsAccountsTooltip,
-              onPressed: () => context.go('/portfolio/accounts'),
-            ),
-            IconButton(
-              icon: const Icon(Icons.payments_outlined),
-              tooltip: l10n.assetsLiabilitiesTooltip,
-              onPressed: () => context.push('/portfolio/liabilities'),
-            ),
-          ],
-        ),
-        body: body,
-        floatingActionButton: ScrollAwareFab(
-          child: AppFab.extended(
-            onPressed: () => _showAddSheet(context),
-            icon: const Icon(Icons.add),
-            label: Text(l10n.assetsAddAction),
-          ),
-        ),
-      ),
+      child: body,
     );
   }
 
@@ -191,106 +135,6 @@ class _AssetsMaster extends ConsumerWidget {
       }
     }
     replaceSelectedQuery(context, path: '/portfolio', selected: allIds[nextIndex]);
-  }
-
-  void _showAddSheet(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    showGlassModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.payments_outlined),
-              title: Text(l10n.assetsAddCashTitle),
-              subtitle: Text(l10n.assetsAddCashSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.go('/portfolio/new/cash');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.savings_outlined),
-              title: Text(l10n.assetsAddDepositTitle),
-              subtitle: Text(l10n.assetsAddDepositSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.go('/portfolio/new/deposit');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_graph_outlined),
-              title: Text(l10n.assetsAddWealthTitle),
-              subtitle: Text(l10n.assetsAddWealthSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.go('/portfolio/new/wealth');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.home_outlined),
-              title: Text(l10n.physicalAssetAddRealEstate),
-              subtitle: Text(l10n.assetsAddRealEstateSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _openPhysicalCreate(context, AssetType.realEstate);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.directions_car_outlined),
-              title: Text(l10n.physicalAssetAddVehicle),
-              subtitle: Text(l10n.assetsAddVehicleSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _openPhysicalCreate(context, AssetType.vehicle);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_balance_outlined),
-              title: Text(l10n.assetsAddLiabilityTitle),
-              subtitle: Text(l10n.assetsAddLiabilitySubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push('/portfolio/liabilities');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_tree_outlined),
-              title: Text(l10n.assetsCorporateActionAction),
-              subtitle: Text(l10n.assetsAddCorporateActionSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push('/portfolio/corporate-action');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.swap_horiz_outlined),
-              title: Text(l10n.assetsAddTradeTitle),
-              subtitle: Text(l10n.assetsAddTradeSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push('/portfolio/trade');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openPhysicalCreate(
-    BuildContext context,
-    AssetType type,
-  ) async {
-    final created = await PhysicalAssetCreateSheet.show(context, type: type);
-    if (created != null && context.mounted) {
-      context.goNamed(
-        'physicalAssetDetail',
-        pathParameters: {'id': created.id},
-      );
-    }
   }
 }
 
