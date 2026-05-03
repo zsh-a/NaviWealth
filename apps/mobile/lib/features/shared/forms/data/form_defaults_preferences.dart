@@ -15,6 +15,7 @@ import '../../../../design_system/preferences/theme_preferences.dart';
 class FormDefaults {
   const FormDefaults({
     this.tradeAccountId,
+    this.tradeCashAccountId,
     this.tradeCurrency,
     this.expenseAccountId,
     this.expenseCategoryId,
@@ -24,6 +25,7 @@ class FormDefaults {
   });
 
   final String? tradeAccountId;
+  final String? tradeCashAccountId;
   final String? tradeCurrency;
   final String? expenseAccountId;
   final String? expenseCategoryId;
@@ -33,6 +35,7 @@ class FormDefaults {
 
   FormDefaults copyWith({
     Object? tradeAccountId = _sentinel,
+    Object? tradeCashAccountId = _sentinel,
     Object? tradeCurrency = _sentinel,
     Object? expenseAccountId = _sentinel,
     Object? expenseCategoryId = _sentinel,
@@ -44,6 +47,9 @@ class FormDefaults {
       tradeAccountId: tradeAccountId == _sentinel
           ? this.tradeAccountId
           : tradeAccountId as String?,
+      tradeCashAccountId: tradeCashAccountId == _sentinel
+          ? this.tradeCashAccountId
+          : tradeCashAccountId as String?,
       tradeCurrency: tradeCurrency == _sentinel
           ? this.tradeCurrency
           : tradeCurrency as String?,
@@ -84,6 +90,7 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
   final SharedPreferences _prefs;
 
   static const _kTradeAccount = 'naviwealth.forms.trade.account';
+  static const _kTradeCashAccount = 'naviwealth.forms.trade.cashAccount';
   static const _kTradeCurrency = 'naviwealth.forms.trade.currency';
   static const _kExpenseAccount = 'naviwealth.forms.expense.account';
   static const _kExpenseCategory = 'naviwealth.forms.expense.category';
@@ -93,6 +100,7 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
 
   static FormDefaults _load(SharedPreferences p) => FormDefaults(
         tradeAccountId: _read(p, _kTradeAccount),
+        tradeCashAccountId: _read(p, _kTradeCashAccount),
         tradeCurrency: _read(p, _kTradeCurrency),
         expenseAccountId: _read(p, _kExpenseAccount),
         expenseCategoryId: _read(p, _kExpenseCategory),
@@ -107,12 +115,18 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
     return raw;
   }
 
-  Future<void> rememberTrade({String? accountId, String? currency}) async {
+  Future<void> rememberTrade({
+    String? accountId,
+    String? cashAccountId,
+    String? currency,
+  }) async {
     state = state.copyWith(
       tradeAccountId: accountId ?? state.tradeAccountId,
+      tradeCashAccountId: cashAccountId ?? state.tradeCashAccountId,
       tradeCurrency: currency ?? state.tradeCurrency,
     );
     await _writeIfPresent(_kTradeAccount, accountId);
+    await _writeIfPresent(_kTradeCashAccount, cashAccountId);
     await _writeIfPresent(_kTradeCurrency, currency);
   }
 

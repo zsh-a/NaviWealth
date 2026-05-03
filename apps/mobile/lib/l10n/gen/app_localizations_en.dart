@@ -1570,6 +1570,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeEntryTaxLabel => 'Tax';
 
   @override
+  String get tradeEntryCashAccountLabel => 'Cash account';
+
+  @override
   String tradeEntryCatalogLoadError(String error) {
     return 'Couldn\'t load catalog: $error';
   }

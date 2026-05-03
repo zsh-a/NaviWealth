@@ -497,6 +497,7 @@
   "tradeEntryDateLabel": "交易日期",
   "tradeEntryFeeLabel": "手续费",
   "tradeEntryTaxLabel": "税费",
+  "tradeEntryCashAccountLabel": "资金账户",
   "tradeEntryCatalogLoadError": "目录加载失败：{error}",
   "tradeEntryDecimalScaleHintGeneric": "股票/ETF 最多 8 位小数，加密最多 18 位",
   "tradeEntryDecimalScaleHint": "最多 {scale} 位小数",
