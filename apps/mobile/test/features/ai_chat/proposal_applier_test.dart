@@ -64,11 +64,7 @@ class _Harness {
       outbox: outbox,
       stamper: stamper,
     );
-    final expenseRepo = ExpenseRepository(
-      db: db,
-      outbox: outbox,
-      stamper: stamper,
-    );
+    final expenseRepo = ExpenseRepository(db: db);
     final expenseCategoryRepo = ExpenseCategoryRepository(
       db: db,
       outbox: outbox,

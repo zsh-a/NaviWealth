@@ -243,11 +243,7 @@ void main() {
     });
   });
 
-  // FIR-131 wave 3f — the legacy `ExpenseRepository.create` audit
-  // assertion lived in this group. The write path now flows through
-  // `JournalEntryRepository`, so the audit shape changes (the event
-  // log entries become JE-shaped). The new audit coverage will land
-  // alongside the JE-aware repos in a follow-up; for now the
-  // `update` audit row is still tested via `expense_repository_test.dart`
-  // (legacy `update` is still on the legacy repo).
+  // FIR-131 wave 3h — `ExpenseRepository` is now read-only; all expense
+  // writes flow through `JournalEntryRepository`. JE-side audit
+  // coverage will land alongside the JE-aware repos in a follow-up.
 }
