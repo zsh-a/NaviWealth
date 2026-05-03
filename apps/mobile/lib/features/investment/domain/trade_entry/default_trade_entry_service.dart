@@ -140,24 +140,6 @@ class DefaultTradeEntryService implements TradeEntryService {
     }
   }
 
-  @override
-  TransactionDeletePlan buildDeletePlan({
-    required String transactionId,
-    required List<String> createdLotIds,
-  }) {
-    if (transactionId.isEmpty) {
-      throw TradeEntryException(
-        TradeEntryErrorCode.fieldRequired,
-        'transactionId is required',
-        field: 'transactionId',
-      );
-    }
-    return TransactionDeletePlan(
-      transactionId: transactionId,
-      releaseLotIds: List.unmodifiable(createdLotIds),
-    );
-  }
-
   // ────────────────────────── internals ──────────────────────────
 
   void _validate(TradeDraft draft) {

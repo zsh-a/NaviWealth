@@ -29,13 +29,4 @@ abstract class TradeEntryService {
     required List<Lot> openLots,
   });
 
-  /// Build the tombstone plan for an existing transaction. The caller
-  /// supplies the lots [createdLotIds] originally produced (typically via
-  /// `where lot.opening_transaction_id = txId`); the persistence layer
-  /// applies the resulting [TransactionDeletePlan] under one DB transaction
-  /// alongside the OpLog write.
-  TransactionDeletePlan buildDeletePlan({
-    required String transactionId,
-    required List<String> createdLotIds,
-  });
 }
