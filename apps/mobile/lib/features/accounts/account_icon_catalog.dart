@@ -53,16 +53,23 @@ const List<AccountIconChoice> kAccountIconCatalogue = [
   AccountIconChoice('home', Icons.home),
   AccountIconChoice('apartment', Icons.apartment),
   AccountIconChoice('bolt', Icons.bolt),
+  AccountIconChoice('chair', Icons.chair),
 
   // Shopping / lifestyle
   AccountIconChoice('shopping_cart', Icons.shopping_cart),
   AccountIconChoice('shopping_bag', Icons.shopping_bag),
   AccountIconChoice('redeem', Icons.redeem),
+  AccountIconChoice('card_giftcard', Icons.card_giftcard),
 
   // Health / leisure
   AccountIconChoice('medical_services', Icons.medical_services),
   AccountIconChoice('fitness_center', Icons.fitness_center),
   AccountIconChoice('movie', Icons.movie),
+  AccountIconChoice('sports_esports', Icons.sports_esports),
+
+  // Education / communication
+  AccountIconChoice('school', Icons.school),
+  AccountIconChoice('smartphone', Icons.smartphone),
 
   // Trading / equity
   AccountIconChoice('show_chart', Icons.show_chart),
