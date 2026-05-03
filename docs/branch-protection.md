@@ -67,7 +67,6 @@ monotonically increasing and reproducible from history.
 Cut a release with the helper script:
 
 ```bash
-./tool/bump-version.sh mobile 0.2.0       # bumps pubspec.yaml + tags
-./tool/bump-version.sh backend 0.2.0      # bumps Cargo.toml + tags
+./tool/bump-version.sh 0.2.0              # stamps both mobile + backend, tags v0.2.0
 git push origin main --follow-tags
 ```

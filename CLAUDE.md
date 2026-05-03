@@ -58,9 +58,8 @@ cd web_smoke && npm install && npm test
 ### Versioning & Release
 
 ```bash
-./tool/bump-version.sh mobile 0.2.0    # bump, commit, tag
-./tool/bump-version.sh backend 0.2.0
-git push origin HEAD --follow-tags      # triggers release.yml
+./tool/bump-version.sh 0.2.0           # stamps both mobile + backend, commit, tag v0.2.0
+git push origin HEAD --follow-tags      # triggers release.yml (mobile + backend)
 ```
 
 Build number = `git rev-list --count <tag>` (monotonic, reproducible).
@@ -220,7 +219,7 @@ test/
 | `mobile.yml` | `apps/mobile/**` changes | format, analyze, build_runner check, test+coverage, web+android+ios build |
 | `backend.yml` | `apps/backend/**` changes | fmt, clippy, check (wasm32), cargo audit, deploy/preview |
 | `security.yml` | Weekly Monday + lockfile changes | dart pub outdated, cargo audit, Trivy scan |
-| `release.yml` | Tag `mobile-vX.Y.Z` / `backend-vX.Y.Z` | Version stamp, build, GitHub Release |
+| `release.yml` | Tag `vX.Y.Z` + manual dispatch | Version stamp, build mobile + backend (optional), GitHub Release, deploy backend |
 | `web-smoke.yml` | Nightly + manual | Playwright smoke tests (Chromium, Firefox, WebKit) |
 
 ---
