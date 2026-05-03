@@ -110,89 +110,14 @@ class ExpenseRepository {
 
   // ---------- Writes ----------
 
-  Future<Expense> create({
-    required String accountId,
-    required String categoryId,
-    required Decimal amount,
-    required String currency,
-    required DateTime tradeDate,
-    List<String> tags = const [],
-    String? note,
-  }) async {
-    if (amount.sign <= 0) {
-      throw ArgumentError.value(
-        amount,
-        'amount',
-        'Expense amount must be a positive magnitude; the negative direction '
-            'is encoded by TransactionType.expense.',
-      );
-    }
-    final stamp = await _stamper.stamp();
-    final id = _uuid.v4();
-    final metadata = ExpenseMetadata(categoryId: categoryId, tags: tags);
-    final encoded = metadata.encode();
-    final signedQuantity = -amount;
-    final companion = TransactionsCompanion.insert(
-      id: id,
-      accountId: accountId,
-      type: TransactionType.expense,
-      quantity: signedQuantity,
-      price: Decimal.one,
-      currency: currency,
-      tradeDate: tradeDate,
-      note: Value(note),
-      expenseMetadataJson: Value(encoded),
-      ownerUserId: stamp.ownerUserId,
-      updatedAt: stamp.now,
-      updatedByDevice: stamp.deviceId,
-      hlc: stamp.hlc,
-    );
-    final fields = <String, Object?>{
-      'id': id,
-      'account_id': accountId,
-      'asset_id': null,
-      'type': TransactionType.expense.name,
-      'quantity': signedQuantity.toString(),
-      'price': Decimal.one.toString(),
-      'currency': currency,
-      'trade_date': tradeDate.toUtc().toIso8601String(),
-      'settle_date': null,
-      'fee': null,
-      'tax': null,
-      'counter_account_id': null,
-      'lot_id': null,
-      'note': note,
-      'expense_metadata_json': encoded,
-      'owner_user_id': stamp.ownerUserId,
-      'updated_at': stamp.now.toUtc().toIso8601String(),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
-    await _db.transaction(() async {
-      await _db.into(_db.transactions).insert(companion);
-      await _enqueue(
-        opType: OpType.insert,
-        rowId: id,
-        fields: fields,
-        stamp: stamp,
-      );
-      await _eventLog.recordCreated(
-        entityTable: _tableName,
-        entityId: id,
-        stamp: stamp,
-        after: <String, Object?>{
-          'account_id': accountId,
-          'type': TransactionType.expense.name,
-          'quantity': signedQuantity.toString(),
-          'currency': currency,
-          'trade_date': tradeDate.toUtc().toIso8601String(),
-          'note': note,
-          'expense_metadata_json': encoded,
-        },
-      );
-    });
-    return (await findById(id))!;
-  }
+  // FIR-131 wave 3f — `create(...)` retired. New expenses go through
+  // `JournalEntryBuilders.expense + JournalEntryRepository.create`,
+  // wired up at the form (`expense_form_page._save`) and AI proposal
+  // applier (`ProposalApplier._applyExpense`) call sites. The
+  // remaining `update` / `softDelete` stay alive while the legacy
+  // `transactions WHERE type = 'expense'` read path is still served
+  // by `expense_list_page` / `expense_report_page`; FIR-132 retires
+  // those reads, after which the repo file can be deleted.
 
   /// Updates an existing expense. Any non-null parameter is a change; the
   /// `clear*` flags allow setting fields back to null. Caller must keep

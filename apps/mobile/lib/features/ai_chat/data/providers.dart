@@ -5,6 +5,8 @@ import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
+import '../../../data/repositories/journal_entry_providers.dart';
+import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../investment/data/providers.dart';
 import '../../liabilities/data/providers.dart';
@@ -87,18 +89,22 @@ final chatSyncGateProvider = FutureProvider<ChatSyncGate>((ref) async {
 final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
   final transactionRepo = await ref.watch(transactionRepositoryProvider.future);
   final tradeService = await ref.watch(tradeEntryServiceProvider.future);
-  final expenseRepo = await ref.watch(expenseRepositoryProvider.future);
+  final journalEntryRepo = await ref.watch(
+    journalEntryRepositoryProvider.future,
+  );
   final accountRepo = await ref.watch(accountRepositoryProvider.future);
   final manualAssetRepo = await ref.watch(
     manualAssetRepositoryProvider.future,
   );
   final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
+  final currentUserId = ref.watch(currentUserIdProvider);
   return ProposalApplier(
     transactionRepo: transactionRepo,
     tradeEntryService: tradeService,
-    expenseRepo: expenseRepo,
+    journalEntryRepo: journalEntryRepo,
     accountRepo: accountRepo,
     manualAssetRepo: manualAssetRepo,
     liabilityRepo: liabilityRepo,
+    currentUserId: currentUserId,
   );
 });

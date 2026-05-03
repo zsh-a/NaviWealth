@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
+import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 import 'package:naviwealth/data/repositories/expense_category_repository.dart';
 import 'package:naviwealth/data/repositories/expense_repository.dart';
+import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/ai_chat/data/proposal_applier.dart';
 import 'package:naviwealth/features/ai_chat/domain/proposal_apply_state.dart';
@@ -33,6 +35,7 @@ class _Harness {
     required this.expenseCategoryRepo,
     required this.manualAssetRepo,
     required this.liabilityRepo,
+    required this.journalEntryRepo,
   });
 
   final AppDatabase db;
@@ -44,6 +47,7 @@ class _Harness {
   final ExpenseCategoryRepository expenseCategoryRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
+  final JournalEntryRepository journalEntryRepo;
 
   static Future<_Harness> create() async {
     final db = makeTestDatabase();
@@ -80,6 +84,15 @@ class _Harness {
       outbox: outbox,
       stamper: stamper,
     );
+    final journalEntryRepo = JournalEntryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: stamper,
+      // FIR-131 wave 3f — expense JEs land in CNY (matching the
+      // legacy expense flow's default), so identity FX is enough.
+      fxRateSource: const IdentityFxRateSource(),
+      baseCurrency: 'CNY',
+    );
 
     final tradeService = DefaultTradeEntryService(
       market: FakeMarketDataService(),
@@ -97,10 +110,11 @@ class _Harness {
     final applier = ProposalApplier(
       transactionRepo: transactionRepo,
       tradeEntryService: tradeService,
-      expenseRepo: expenseRepo,
+      journalEntryRepo: journalEntryRepo,
       accountRepo: accountRepo,
       manualAssetRepo: manualAssetRepo,
       liabilityRepo: liabilityRepo,
+      currentUserId: () async => 'u-test',
     );
     await expenseCategoryRepo.seedDefaults();
     return _Harness(
@@ -113,6 +127,7 @@ class _Harness {
       expenseCategoryRepo: expenseCategoryRepo,
       manualAssetRepo: manualAssetRepo,
       liabilityRepo: liabilityRepo,
+      journalEntryRepo: journalEntryRepo,
     );
   }
 }
@@ -170,18 +185,44 @@ void main() {
           'note': '午饭',
         },
       );
+      // FIR-131 wave 3f — expense proposals now write into the JE
+      // ledger, not the legacy `transactions WHERE type='expense'`
+      // projection. The applied state should point at
+      // `journal_entries`, the JE itself should reflect the user's
+      // narration + 2 postings (expense leg + cash leg), and undo
+      // soft-deletes the whole entry.
       final state = await h.applier.apply(plan);
       expect(state.status, ProposalApplyStatus.applied);
-      final expenses = await h.expenseRepo.listExpenses();
-      expect(expenses.single.amount, Decimal.parse('35'));
-      expect(expenses.single.note, '午饭');
+      expect(state.appliedTable, 'journal_entries');
 
+      final entries = await h.journalEntryRepo.watchAll().first;
+      expect(entries, hasLength(1));
+      final je = await h.journalEntryRepo.getById(entries.single.id);
+      expect(je!.entry.narration, '午饭');
+      expect(je.postings, hasLength(2));
+      // Cash leg (asset account) carries -35; expense leg carries +35.
+      final expenseLeg = je.postings.firstWhere(
+        (p) => p.units == Decimal.parse('35'),
+      );
+      expect(expenseLeg.unit, 'CNY');
+      // Slug "food" → FIR-133 `expense:food` account.
+      expect(
+        expenseLeg.accountId,
+        AccountRepository.systemAccountIdForPath(
+          'expense:food',
+          ownerUserId: 'u-test',
+        ),
+      );
+      final cashLeg = je.postings.firstWhere((p) => p.accountId == account.id);
+      expect(cashLeg.units, Decimal.parse('-35'));
+
+      // Undo tombstones the JE so the live stream stops surfacing it.
       await h.applier.undo(state);
-      final after = await h.expenseRepo.listExpenses();
-      expect(after, isEmpty);
+      final remaining = await h.journalEntryRepo.watchAll().first;
+      expect(remaining, isEmpty);
     });
 
-    test('expense maps backend "housing" slug to local "rent" category',
+    test('expense maps backend "housing" slug to FIR-133 housing account',
         () async {
       final account = await h.accountRepo.create(
         type: AccountType.cash,
@@ -200,10 +241,19 @@ void main() {
         },
       );
       await h.applier.apply(plan);
-      final expense = (await h.expenseRepo.listExpenses()).single;
+      // Backend "housing" slug aliases to local "rent" → FIR-133
+      // `expense:housing` account (the resolver inverts the alias).
+      final entries = await h.journalEntryRepo.watchAll().first;
+      final je = await h.journalEntryRepo.getById(entries.single.id);
+      final expenseLeg = je!.postings.firstWhere(
+        (p) => p.units == Decimal.parse('4000'),
+      );
       expect(
-        expense.categoryId,
-        ExpenseCategoryRepository.defaultIdFor('rent'),
+        expenseLeg.accountId,
+        AccountRepository.systemAccountIdForPath(
+          'expense:housing',
+          ownerUserId: 'u-test',
+        ),
       );
     });
 
