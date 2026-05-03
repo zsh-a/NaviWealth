@@ -2,8 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/data/domain/account.dart';
+import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/expense.dart';
-import 'package:naviwealth/data/domain/expense_category.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/journal_entry_providers.dart';
@@ -22,34 +23,34 @@ SyncMeta _meta() => SyncMeta(
       hlc: Hlc.zero('t'),
     );
 
-ExpenseCategory _cat(String id, {String? parent, String? name}) =>
-    ExpenseCategory(
-      id: id,
-      name: name ?? id,
-      parentId: parent,
-      sync: _meta(),
-    );
-
 Expense _expense({
   required String id,
-  required String categoryId,
+  required String expenseAccountId,
   required Decimal amount,
   required DateTime date,
 }) =>
     Expense(
       id: id,
-      accountId: 'acct-1',
-      categoryId: categoryId,
+      expenseAccountId: expenseAccountId,
       amount: amount,
       currency: 'CNY',
       tradeDate: date,
       sync: _meta(),
     );
 
+Account _account(String id, String name) => Account(
+      id: id,
+      type: AccountType.other,
+      name: name,
+      currency: 'CNY',
+      category: AccountCategory.expense,
+      sync: _meta(),
+    );
+
 Future<ProviderScope> _wrap({
   required Widget child,
   List<Expense> expenses = const [],
-  List<ExpenseCategory> categories = const [],
+  List<Account> accounts = const [],
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final prefs = await SharedPreferences.getInstance();
@@ -57,12 +58,7 @@ Future<ProviderScope> _wrap({
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       journalExpensesStreamProvider.overrideWith((ref) => Stream.value(expenses)),
-      allExpenseCategoriesStreamProvider.overrideWith(
-        (ref) => Stream.value(categories),
-      ),
-      // Accounts stream isn't relevant to the report — empty list keeps the
-      // loading state from sticking forever.
-      accountsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      accountsStreamProvider.overrideWith((ref) => Stream.value(accounts)),
       // FX rates stream — empty list is fine for single-currency tests.
       fxRatesStreamProvider.overrideWith((ref) => Stream.value(const [])),
     ],
@@ -89,10 +85,6 @@ void main() {
 
   testWidgets('expense report renders pie + trend chart when data present',
       (tester) async {
-    final categories = [
-      _cat('food', name: '餐饮'),
-      _cat('transport', name: '交通'),
-    ];
     final today = DateTime.now();
     // Use a date safely inside the m3 range (5 days ago) to avoid
     // flakiness when today is early in the month.
@@ -100,22 +92,27 @@ void main() {
     final expenses = [
       _expense(
         id: 'e1',
-        categoryId: 'food',
+        expenseAccountId: 'food',
         amount: Decimal.parse('120'),
         date: inMonth,
       ),
       _expense(
         id: 'e2',
-        categoryId: 'transport',
+        expenseAccountId: 'transport',
         amount: Decimal.parse('40'),
         date: inMonth,
       ),
     ];
 
+    final accounts = [
+      _account('food', '餐饮'),
+      _account('transport', '交通'),
+    ];
+
     final widget = await _wrap(
       child: const ExpenseReportPage(),
       expenses: expenses,
-      categories: categories,
+      accounts: accounts,
     );
     await tester.pumpWidget(widget);
     await tester.pumpAndSettle();

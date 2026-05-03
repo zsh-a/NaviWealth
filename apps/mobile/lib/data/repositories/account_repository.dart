@@ -553,9 +553,8 @@ class AccountRepository {
     required String ownerUserId,
   }) => '$_systemAccountIdPrefix$ownerUserId:$path';
 
-  /// Convenience for the three root system accounts. Kept for back-compat
-  /// with FIR-126 callers; prefer [systemAccountIdForPath] for the deeper
-  /// nodes the FIR-133 tree introduces.
+  /// Convenience for the three root system accounts.
+  /// Prefer [systemAccountIdForPath] for deeper nodes.
   static String systemAccountIdFor(
     AccountCategory category, {
     required String ownerUserId,
@@ -825,11 +824,6 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#EF4444',
   ),
   _SystemAccountSeed(
-    // FIR-131 wave 3g — renamed from `expense:transit` so the seed
-    // path matches the legacy `transport` slug from
-    // `ExpenseCategoryRepository.defaultSeeds`. The
-    // `LegacyExpenseCategoryToAccount` resolver now round-trips that
-    // slug losslessly.
     path: 'expense:transport',
     parentPath: 'expense',
     name: 'Transport',
@@ -845,10 +839,6 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     icon: 'home',
     color: '#EF4444',
   ),
-  // FIR-131 wave 3g — round out the expense leaves so every default
-  // slug from `ExpenseCategoryRepository.defaultSeeds` has a
-  // dedicated FIR-133 account; the resolver no longer falls back to
-  // `Expenses:Other` for the common categories.
   _SystemAccountSeed(
     path: 'expense:household',
     parentPath: 'expense',

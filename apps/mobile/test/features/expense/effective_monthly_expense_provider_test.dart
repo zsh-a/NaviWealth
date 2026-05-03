@@ -26,8 +26,7 @@ Expense _expense({
 }) =>
     Expense(
       id: id,
-      accountId: 'acct-1',
-      categoryId: 'cat-1',
+      expenseAccountId: 'cat-1',
       amount: amount,
       currency: 'CNY',
       tradeDate: date,

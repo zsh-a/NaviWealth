@@ -1,19 +1,9 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../../data/domain/asset.dart';
-import '../../../../data/domain/enums.dart';
 
-/// Operations the trade-entry service understands. Pure cash flows
-/// (deposit / withdraw / fee / tax) live on [TransactionType] but never reach
-/// this service — they have no asset, no lot, and no market backfill, so
-/// they're handled by the cash-flow entry feature.
-const Set<TransactionType> kSecurityTransactionTypes = {
-  TransactionType.buy,
-  TransactionType.sell,
-  TransactionType.transferIn,
-  TransactionType.transferOut,
-  TransactionType.valuationAdjust,
-};
+/// The three trade operations the trade-entry form supports.
+enum TradeType { buy, sell, valuationAdjust }
 
 /// Input value-object describing a trade the user is about to record.
 ///
@@ -44,7 +34,7 @@ class TradeDraft {
   /// [feeOrZero] / [taxOrZero] helpers below.
   static const Decimal? _zeroFallback = null;
 
-  final TransactionType type;
+  final TradeType type;
   final Asset asset;
   final String accountId;
   final Decimal quantity;
@@ -64,6 +54,4 @@ class TradeDraft {
 
   Decimal get feeOrZero => fee ?? Decimal.zero;
   Decimal get taxOrZero => tax ?? Decimal.zero;
-
-  bool get isSecurityTrade => kSecurityTransactionTypes.contains(type);
 }

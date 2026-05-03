@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../data/domain/asset.dart';
-import '../../../../data/domain/enums.dart';
+import '../../../../data/domain/enums.dart' show AssetType;
 import '../../../../domain/entities/historical_bar.dart';
 import '../../../../domain/services/currency_converter.dart';
 import '../../../../domain/services/market_data_service.dart';
@@ -81,42 +81,25 @@ class DefaultTradeEntryService implements TradeEntryService {
     );
 
     switch (draft.type) {
-      case TransactionType.buy:
-      case TransactionType.transferIn:
+      case TradeType.buy:
         return _planOpening(draft, trade, priceResult.provenance);
-      case TransactionType.sell:
-      case TransactionType.transferOut:
+      case TradeType.sell:
         return _planClosing(
           draft,
           trade,
           priceResult.provenance,
           openLots: openLots,
-          realize: draft.type == TransactionType.sell,
         );
-      case TransactionType.valuationAdjust:
+      case TradeType.valuationAdjust:
         // Valuation adjusts write a price observation and a balancing
         // journal entry; they do not open or close lots.
         return TradeEntryPlan(trade: trade, pricing: priceResult.provenance);
-      default:
-        // Defensive: validation rejects everything else upstream.
-        throw TradeEntryException(
-          TradeEntryErrorCode.fieldRequired,
-          'Unsupported transaction type for trade-entry: ${draft.type.name}',
-          field: 'type',
-        );
     }
   }
 
   // ────────────────────────── internals ──────────────────────────
 
   void _validate(TradeDraft draft) {
-    if (!draft.isSecurityTrade) {
-      throw TradeEntryException(
-        TradeEntryErrorCode.fieldRequired,
-        'Trade-entry only handles security trades; got ${draft.type.name}',
-        field: 'type',
-      );
-    }
     if (draft.accountId.isEmpty) {
       throw TradeEntryException(
         TradeEntryErrorCode.fieldRequired,
@@ -141,7 +124,7 @@ class DefaultTradeEntryService implements TradeEntryService {
 
     // valuationAdjust is allowed to have zero quantity (it's a price-only
     // event); everything else must be a positive movement.
-    if (draft.type != TransactionType.valuationAdjust) {
+    if (draft.type != TradeType.valuationAdjust) {
       if (draft.quantity.sign <= 0) {
         throw TradeEntryException(
           TradeEntryErrorCode.quantityNotPositive,
@@ -173,18 +156,6 @@ class DefaultTradeEntryService implements TradeEntryService {
         TradeEntryErrorCode.amountNegative,
         'tax must be >= 0',
         field: 'tax',
-      );
-    }
-
-    final isTransfer =
-        draft.type == TransactionType.transferIn ||
-        draft.type == TransactionType.transferOut;
-    if (isTransfer &&
-        (draft.counterAccountId == null || draft.counterAccountId!.isEmpty)) {
-      throw TradeEntryException(
-        TradeEntryErrorCode.transferMissingCounterAccount,
-        '${draft.type.name} requires counterAccountId',
-        field: 'counterAccountId',
       );
     }
   }
@@ -349,7 +320,6 @@ class DefaultTradeEntryService implements TradeEntryService {
     PlannedTrade trade,
     PriceProvenance pricing, {
     required List<Lot> openLots,
-    required bool realize,
   }) {
     final result = _engine.applySell(
       SellEvent(
@@ -374,13 +344,10 @@ class DefaultTradeEntryService implements TradeEntryService {
       );
     }
 
-    // For transferOut we drop the realized P&L records: a transfer between
-    // two accounts owned by the same user isn't a tax event. Updated lot
-    // state still flows through so quantities stay consistent.
     return TradeEntryPlan(
       trade: trade,
       updatedLots: _onlyChanged(openLots, result.updatedLots),
-      realizedPnL: realize ? result.realizedPnL : const [],
+      realizedPnL: result.realizedPnL,
       unfulfilledQuantity: result.unfulfilledQuantity,
       pricing: pricing,
     );

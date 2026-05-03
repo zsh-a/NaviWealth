@@ -12,7 +12,7 @@ library;
 import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart';
+import '../../../data/domain/enums.dart' show AccountType, AssetType;
 import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/account_repository.dart';
@@ -20,22 +20,12 @@ import '../../../data/repositories/journal_entry_builders.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/manual_asset_repository.dart';
 import '../../../data/repositories/price_repository.dart';
-import '../../expense/data/expense_account_resolver.dart';
 import '../../investment/domain/models/lot.dart';
-import '../../investment/domain/trade_entry/trade_draft.dart';
+import '../../investment/domain/trade_entry/trade_draft.dart' show TradeDraft, TradeType;
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
 import '../../liabilities/data/liability_repository.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
-
-/// Backend `propose_expense` slugs that don't match the local
-/// `ExpenseCategoryRepository.defaultIdFor` slug naming. Mapping here
-/// because the FIR-66 backend's closed list and FIR-68's seed list diverged
-/// (e.g. backend "housing" → local "rent"). Unknown slugs fall back to
-/// "other" rather than failing — the user can still edit the row after.
-const Map<String, String> _expenseCategorySlugAliases = <String, String>{
-  'housing': 'rent',
-};
 
 class ProposalApplyException implements Exception {
   ProposalApplyException(this.message);
@@ -131,7 +121,7 @@ class ProposalApplier {
     final tax = _optionalDecimal(plan, 'tax');
     final tradeDate = _parseDate(plan.get('trade_date')) ?? DateTime.now();
     final note = plan.get('note');
-    final type = _parseTransactionType(plan.get('type'));
+    final type = _parseTradeType(plan.get('type'));
 
     final asset = Asset(
       id: assetId,
@@ -159,7 +149,7 @@ class ProposalApplier {
     );
     final tx = tradePlan.trade;
 
-    if (type == TransactionType.buy || type == TransactionType.sell) {
+    if (type == TradeType.buy || type == TradeType.sell) {
       final uid = await currentUserId();
       final cashAccountId = plan.get('counter_account_id') ?? accountId;
       final feeAccountId = AccountRepository.systemAccountIdForPath(
@@ -171,7 +161,7 @@ class ProposalApplier {
         ownerUserId: uid,
       );
 
-      if (type == TransactionType.buy) {
+      if (type == TradeType.buy) {
         final build = JournalEntryBuilders.buy(
           date: tx.tradeDate,
           accountId: accountId,
@@ -320,10 +310,9 @@ class ProposalApplier {
     final tradeDate = _parseDate(plan.get('date')) ?? DateTime.now();
     final note = plan.get('note');
     final categorySlug = plan.get('category') ?? 'other';
-    final localSlug = _expenseCategorySlugAliases[categorySlug] ?? categorySlug;
     final ownerUserId = await currentUserId();
-    final expenseAccountId = LegacyExpenseCategoryToAccount.resolveSlug(
-      slug: localSlug,
+    final expenseAccountId = AccountRepository.systemAccountIdForPath(
+      'expense:$categorySlug',
       ownerUserId: ownerUserId,
     );
 
@@ -489,13 +478,11 @@ class ProposalApplier {
     return parsed?.toLocal();
   }
 
-  TransactionType _parseTransactionType(String? s) {
+  TradeType _parseTradeType(String? s) {
     return switch (s) {
-      'buy' => TransactionType.buy,
-      'sell' => TransactionType.sell,
-      'transferIn' => TransactionType.transferIn,
-      'transferOut' => TransactionType.transferOut,
-      'valuationAdjust' => TransactionType.valuationAdjust,
+      'buy' => TradeType.buy,
+      'sell' => TradeType.sell,
+      'valuationAdjust' => TradeType.valuationAdjust,
       _ => throw ProposalApplyException('不支持的交易类型: $s'),
     };
   }

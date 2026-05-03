@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
@@ -55,32 +54,28 @@ final expenseReportBaseCurrencyProvider = Provider<String>(
   (ref) => ref.watch(dashboardBaseCurrencyProvider),
 );
 
-/// Live aggregated [ExpenseReport]. Re-computes whenever the range,
-/// expenses, or categories change.
+/// Live aggregated [ExpenseReport]. Re-computes whenever the range
+/// or expenses change.
 final expenseReportProvider = Provider<AsyncValue<ExpenseReport>>((ref) {
   final expensesAsync = ref.watch(journalExpensesStreamProvider);
-  final categoriesAsync = ref.watch(allExpenseCategoriesStreamProvider);
   final range = ref.watch(expenseReportRangeProvider);
   final converter = ref.watch(expenseReportCurrencyConverterProvider);
   final base = ref.watch(expenseReportBaseCurrencyProvider);
 
-  if (expensesAsync.isLoading || categoriesAsync.isLoading) {
+  if (expensesAsync.isLoading) {
     return const AsyncValue.loading();
   }
-  final err = expensesAsync.error ?? categoriesAsync.error;
+  final err = expensesAsync.error;
   if (err != null) {
     return AsyncValue.error(
       err,
-      expensesAsync.stackTrace ??
-          categoriesAsync.stackTrace ??
-          StackTrace.current,
+      expensesAsync.stackTrace ?? StackTrace.current,
     );
   }
   final aggregator =
       ExpenseReportAggregator(converter: converter, baseCurrency: base);
   final report = aggregator.aggregate(
     expenses: expensesAsync.value ?? const [],
-    categories: categoriesAsync.value ?? const [],
     range: range,
   );
   return AsyncValue.data(report);

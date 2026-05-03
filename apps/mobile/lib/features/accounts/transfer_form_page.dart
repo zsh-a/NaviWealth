@@ -18,16 +18,12 @@ import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
 import '../shared/postings_preview.dart';
 
-/// FIR-131 wave 3a — first user-facing form built on the
-/// [JournalEntryRepository] / [JournalEntryBuilders] stack.
-///
 /// Records a transfer between two of the user's asset / liability
-/// accounts. Wave 3a shipped the same-currency happy path; wave 3c
-/// adds cross-currency support: when the two accounts hold different
-/// currencies the form surfaces a "To amount" input (defaulted from
-/// the FX rate book, editable) and the builder attaches a price
-/// annotation pinning the user's chosen rate so the JE invariant is
-/// satisfied no matter what `fx_rates` happens to know on that day.
+/// accounts using the [JournalEntryRepository] / [JournalEntryBuilders]
+/// stack. When the two accounts hold different currencies the form
+/// surfaces a "To amount" input (defaulted from the FX rate book,
+/// editable) and the builder attaches a price annotation pinning the
+/// user's chosen rate so the JE invariant is satisfied.
 class TransferFormPage extends ConsumerStatefulWidget {
   const TransferFormPage({super.key});
 

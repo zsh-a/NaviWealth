@@ -9,9 +9,6 @@ import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
-import '../domain/expense_category.dart';
-import '../domain/hlc.dart';
-import '../domain/sync_meta.dart';
 import 'account_repository.dart';
 import 'fx_rate_repository.dart';
 import 'journal_entry_providers.dart';
@@ -105,50 +102,6 @@ final securitiesAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
   final repo = await ref.watch(securitiesAssetRepositoryProvider.future);
   yield* repo.watchSecurities(types: kSecuritiesAssetTypes);
 });
-
-final expenseCategoriesStreamProvider =
-    StreamProvider.autoDispose<List<ExpenseCategory>>((ref) async* {
-      yield _defaultExpenseCategories();
-    });
-
-final allExpenseCategoriesStreamProvider =
-    StreamProvider.autoDispose<List<ExpenseCategory>>((ref) async* {
-      yield _defaultExpenseCategories();
-    });
-
-List<ExpenseCategory> _defaultExpenseCategories() {
-  final sync = SyncMeta(
-    ownerUserId: 'system',
-    updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-    updatedByDevice: 'system',
-    hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'system'),
-  );
-  const rows = <({String slug, String name, String icon, String color})>[
-    (slug: 'food', name: 'Food', icon: 'restaurant', color: '#22c55e'),
-    (slug: 'transport', name: 'Transport', icon: 'directions_car', color: '#0ea5e9'),
-    (slug: 'rent', name: 'Housing', icon: 'home', color: '#6366f1'),
-    (slug: 'household', name: 'Household', icon: 'chair', color: '#14b8a6'),
-    (slug: 'entertainment', name: 'Entertainment', icon: 'movie', color: '#f43f5e'),
-    (slug: 'medical', name: 'Medical', icon: 'local_hospital', color: '#ef4444'),
-    (slug: 'education', name: 'Education', icon: 'school', color: '#8b5cf6'),
-    (slug: 'shopping', name: 'Shopping', icon: 'shopping_bag', color: '#f97316'),
-    (slug: 'travel', name: 'Travel', icon: 'flight', color: '#06b6d4'),
-    (slug: 'communication', name: 'Communication', icon: 'phone_iphone', color: '#64748b'),
-    (slug: 'gift', name: 'Gift', icon: 'card_giftcard', color: '#ec4899'),
-    (slug: 'other', name: 'Other', icon: 'category', color: '#71717a'),
-  ];
-  return [
-    for (var i = 0; i < rows.length; i++)
-      ExpenseCategory(
-        id: 'expense-cat-default:${rows[i].slug}',
-        name: rows[i].name,
-        icon: rows[i].icon,
-        color: rows[i].color,
-        sortOrder: i,
-        sync: sync,
-      ),
-  ];
-}
 
 /// Repository for the local `fx_rates` table. Not synced (FX rates are
 /// global market data, not user data) so this repo bypasses the outbox.

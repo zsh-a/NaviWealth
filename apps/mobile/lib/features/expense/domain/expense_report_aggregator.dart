@@ -1,18 +1,17 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/expense.dart';
-import '../../../data/domain/expense_category.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import 'expense_report.dart';
 import 'expense_report_range.dart';
 
-/// FIR-70 — pure roll-up from raw [Expense] rows to the report model.
+/// Pure roll-up from raw [Expense] rows to the report model.
 ///
 /// Holds no state; the aggregator is constructed per snapshot so the
 /// provider layer can pass in a fresh [CurrencyConverter] / base currency
 /// without invalidating cached buckets. Performance: a single linear pass
-/// over expenses; categories are looked up via a map built once up-front.
+/// over expenses.
 class ExpenseReportAggregator {
   ExpenseReportAggregator({
     required this.converter,
@@ -22,40 +21,15 @@ class ExpenseReportAggregator {
   final CurrencyConverter converter;
   final String baseCurrency;
 
-  /// Aggregate [expenses] over [range]. [categories] is the full active +
-  /// archived list (the report still needs to render archived categories
-  /// that own historical expenses). `parent_id`-linked rows are flattened
-  /// into their top-level ancestor for the pie chart; the original
-  /// sub-category lives under [CategoryBreakdown.subCategories].
+  /// Aggregate [expenses] over [range].
   ExpenseReport aggregate({
     required Iterable<Expense> expenses,
-    required Iterable<ExpenseCategory> categories,
     required ExpenseReportRange range,
   }) {
-    final categoryById = {for (final c in categories) c.id: c};
-
-    // Top-level resolution: walk up the parent chain (max one hop given
-    // the two-level taxonomy) until we find a row without a parent or
-    // we've broken a cycle / hit a missing parent.
-    String topLevelOf(String id) {
-      var cursor = categoryById[id];
-      var hops = 0;
-      while (cursor != null && cursor.parentId != null && hops < 4) {
-        final parent = categoryById[cursor.parentId];
-        if (parent == null) break;
-        cursor = parent;
-        hops++;
-      }
-      return cursor?.id ?? id;
-    }
-
     final monthlyTotals = _seedMonthlyBuckets(range);
 
-    // Top-level totals + per-top-level sub-category accumulation.
-    final topTotals = <String, Decimal>{};
-    final topItems = <String, List<Expense>>{};
-    final subTotals = <String, Map<String, Decimal>>{};
-    final subItems = <String, Map<String, List<Expense>>>{};
+    final accountTotals = <String, Decimal>{};
+    final accountItems = <String, List<Expense>>{};
 
     var grandTotal = Decimal.zero;
     var skippedFxCount = 0;
@@ -85,26 +59,9 @@ class ExpenseReportAggregator {
           '${localTradeDate.month.toString().padLeft(2, '0')}';
       monthlyTotals[monthKey] = (monthlyTotals[monthKey] ?? Decimal.zero) + delta;
 
-      final top = topLevelOf(expense.categoryId);
-      topTotals[top] = (topTotals[top] ?? Decimal.zero) + delta;
-      topItems.putIfAbsent(top, () => <Expense>[]).add(expense);
-
-      // Track sub-category totals only when the expense is filed under a
-      // child of [top] — top-level expenses aren't sub-totaled against
-      // themselves (that would double-count in the drill-down pie).
-      if (expense.categoryId != top) {
-        subTotals
-            .putIfAbsent(top, () => <String, Decimal>{})
-            .update(
-              expense.categoryId,
-              (v) => v + delta,
-              ifAbsent: () => delta,
-            );
-        subItems
-            .putIfAbsent(top, () => <String, List<Expense>>{})
-            .putIfAbsent(expense.categoryId, () => <Expense>[])
-            .add(expense);
-      }
+      final accountId = expense.expenseAccountId;
+      accountTotals[accountId] = (accountTotals[accountId] ?? Decimal.zero) + delta;
+      accountItems.putIfAbsent(accountId, () => <Expense>[]).add(expense);
     }
 
     // Materialise the trend buckets in chronological order.
@@ -118,24 +75,11 @@ class ExpenseReportAggregator {
     }).toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
-    final breakdowns = topTotals.entries.map((entry) {
-      final subs = (subTotals[entry.key] ?? const <String, Decimal>{})
-          .entries
-          .map(
-            (sub) => CategoryBreakdown(
-              categoryId: sub.key,
-              total: Money(sub.value, baseCurrency),
-              items: subItems[entry.key]?[sub.key] ?? const <Expense>[],
-            ),
-          )
-          .toList()
-        ..sort((a, b) => b.total.amount.compareTo(a.total.amount));
-
+    final breakdowns = accountTotals.entries.map((entry) {
       return CategoryBreakdown(
-        categoryId: entry.key,
+        expenseAccountId: entry.key,
         total: Money(entry.value, baseCurrency),
-        items: topItems[entry.key] ?? const <Expense>[],
-        subCategories: subs,
+        items: accountItems[entry.key] ?? const <Expense>[],
       );
     }).toList()
       ..sort((a, b) => b.total.amount.compareTo(a.total.amount));

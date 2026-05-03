@@ -95,10 +95,10 @@ class JournalEntryRepository {
     );
   }
 
-  /// FIR-131 wave 3d — live stream of every non-deleted JE *with* its
-  /// postings, materialised as a grouped `List<JournalEntryWithPostings>`.
-  /// Drives the journal list page; subscribers re-render whenever the
-  /// JE list changes (insert / update / soft-delete a JE).
+  /// Live stream of every non-deleted JE *with* its postings,
+  /// materialised as a grouped `List<JournalEntryWithPostings>`.
+  /// Drives the journal list page; subscribers re-render whenever
+  /// the JE list changes (insert / update / soft-delete a JE).
   ///
   /// Implementation: rides on top of the JE-list stream and pulls the
   /// matching postings in a single `WHERE journal_entry_id IN (...)`
@@ -203,41 +203,18 @@ class JournalEntryRepository {
   }
 
   /// Maps a JE + its expense-leg posting to an [Expense] domain object.
-  ///
-  /// The inverse of `LegacyExpenseCategoryToAccount.resolveAccountId`:
-  /// strips the `system-account:<uid>:` prefix from the expense account
-  /// id, recovers the `expense:<slug>` path, and round-trips the slug
-  /// back to a legacy `expense-cat-default:<slug>` category id.
   Expense? _postingToExpense(JournalEntryRow jeRow, PostingRow postingRow) {
-    const prefix = 'system-account:';
-    final accountId = postingRow.accountId;
-    if (!accountId.startsWith(prefix)) return null;
-    final afterPrefix = accountId.substring(prefix.length);
-    final expenseIdx = afterPrefix.indexOf(':expense:');
-    if (expenseIdx < 0) return null;
-    final ownerUserId = afterPrefix.substring(0, expenseIdx);
-    final path = afterPrefix.substring(expenseIdx + 1); // 'expense:<slug>'
-    final slug = path.substring('expense:'.length);
-    if (slug.contains(':')) return null;
-    const knownSlugs = {
-      'food', 'transport', 'housing', 'household', 'entertainment',
-      'medical', 'education', 'shopping', 'travel', 'communication',
-      'gift', 'other',
-    };
-    if (!knownSlugs.contains(slug)) return null;
-
     final tagIds = (jsonDecode(jeRow.tagIdsJson) as List<dynamic>).cast<String>();
     return Expense(
       id: jeRow.id,
-      accountId: '', // cash-leg account — not needed by list/report UI
-      categoryId: 'expense-cat-default:$slug',
+      expenseAccountId: postingRow.accountId,
       amount: postingRow.units.abs(),
       currency: postingRow.unit,
       tradeDate: jeRow.date,
       tags: tagIds,
       note: jeRow.narration,
       sync: SyncMeta(
-        ownerUserId: ownerUserId,
+        ownerUserId: jeRow.ownerUserId,
         updatedAt: jeRow.updatedAt,
         updatedByDevice: jeRow.updatedByDevice,
         hlc: jeRow.hlc,
@@ -337,8 +314,8 @@ class JournalEntryRepository {
     );
   }
 
-  /// FIR-131 wave 3h — atomically replace a JE's postings + (some of)
-  /// its envelope fields. The semantics: in one Drift transaction,
+  /// Atomically replace a JE's postings + (some of) its envelope
+  /// fields. The semantics: in one Drift transaction,
   ///
   ///   1. update the JE row (date / settledOn / narration / payee /
   ///      flag / tagIds) with a fresh sync stamp,

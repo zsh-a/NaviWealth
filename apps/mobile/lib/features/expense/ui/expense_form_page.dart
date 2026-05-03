@@ -6,16 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/haptics/haptics.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
-import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
-import '../data/expense_account_resolver.dart';
-import '../data/recent_expense_categories.dart';
 import 'category_grid_picker.dart';
 
 /// Quick-entry page for a single expense. Shared between create and
@@ -39,14 +37,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
-  // amount → note. Note's keyboard action stays as `newline`, so we don't
-  // chain past it; the user submits via the FilledButton or by hitting
-  // done from the amount field when no note is desired.
   final _amountFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  String? _categoryId;
-  String? _accountId;
+  /// The expense account id (from the `accounts` table where category=expense).
+  String? _expenseAccountId;
+  String? _fromAccountId;
   String? _currency = 'CNY';
   DateTime _date = DateTime.now();
   bool _busy = false;
@@ -58,12 +54,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     if (widget.isEdit) {
       _loadInitial();
     } else {
-      // Smart defaults from last entry. Concrete account / category may be
-      // re-validated against the live lists below; this is just the
-      // initial seed.
       final defaults = ref.read(formDefaultsProvider);
-      _accountId = defaults.expenseAccountId;
-      _categoryId = defaults.expenseCategoryId;
+      _fromAccountId = defaults.expenseAccountId;
+      _expenseAccountId = defaults.expenseCategoryId;
       if (defaults.expenseCurrency != null &&
           defaults.expenseCurrency!.isNotEmpty) {
         _currency = defaults.expenseCurrency;
@@ -75,10 +68,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
     final existing = await journalRepo.getById(widget.expenseId!);
     if (existing == null) {
-      // Pop with a friendly error rather than rendering an empty
-      // form the user can't usefully save. TODO(l10n): swap this
-      // English literal for a localized key once the broader ARB
-      // pass lands.
       if (!mounted) return;
       AppMessenger.show(
         context,
@@ -89,37 +78,11 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       return;
     }
     if (!mounted) return;
-    final ownerUserId = await ref.read(currentUserIdProvider).call();
-    if (!mounted) return;
-    final summary = _summariseJournalEntry(existing, ownerUserId);
-    setState(() {
-      _initial = existing;
-      _amountController.text = summary.amount.toString();
-      _noteController.text = existing.entry.narration;
-      _categoryId = summary.legacyCategoryId;
-      _accountId = summary.fromAccountId;
-      _currency = summary.currency;
-      _date = existing.entry.date;
-    });
-  }
-
-  /// Pulls the four UI-bound fields (amount / currency / from-account
-  /// id / picker category id) out of a hydrated JE. Returns `null`
-  /// values for any field whose posting can't be classified — the
-  /// form's existing fall-back logic (most-used category, first
-  /// account) covers those cases.
-  _ExpenseFormHydration _summariseJournalEntry(
-    JournalEntryWithPostings je,
-    String ownerUserId,
-  ) {
     String? expenseAccountId;
     String? fromAccountId;
     Decimal amount = Decimal.zero;
     String currency = 'CNY';
-    for (final p in je.postings) {
-      // Sign convention (FIR-128 §6): expense leg is `+amount`,
-      // cash / asset leg is `-amount`. Magnitude matches the
-      // user-facing amount the form input takes.
+    for (final p in existing.postings) {
       if (p.units > Decimal.zero) {
         expenseAccountId = p.accountId;
         amount = p.units;
@@ -128,18 +91,15 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
         fromAccountId = p.accountId;
       }
     }
-    final categoryId = expenseAccountId == null
-        ? null
-        : LegacyExpenseCategoryToAccount.legacyCategoryIdFromAccountId(
-            expenseAccountId: expenseAccountId,
-            ownerUserId: ownerUserId,
-          );
-    return _ExpenseFormHydration(
-      amount: amount,
-      currency: currency,
-      fromAccountId: fromAccountId,
-      legacyCategoryId: categoryId,
-    );
+    setState(() {
+      _initial = existing;
+      _amountController.text = amount.toString();
+      _noteController.text = existing.entry.narration;
+      _expenseAccountId = expenseAccountId;
+      _fromAccountId = fromAccountId;
+      _currency = currency;
+      _date = existing.entry.date;
+    });
   }
 
   Future<void> _save() async {
@@ -155,7 +115,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       );
       return;
     }
-    if (_categoryId == null || _accountId == null || _currency == null) {
+    if (_expenseAccountId == null || _fromAccountId == null || _currency == null) {
       Haptics.error();
       AppMessenger.show(
         context,
@@ -168,31 +128,23 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final note = _noteController.text.trim().isEmpty
         ? null
         : _noteController.text.trim();
-    final accountId = _accountId!;
-    final categoryId = _categoryId!;
+    final fromAccountId = _fromAccountId!;
+    final expenseAccountId = _expenseAccountId!;
     final currency = _currency!;
     final date = _date;
     final initial = _initial;
     if (!mounted) return;
-    // Persist last-used picks so the next entry skips category/account
-    // tapping. Fire-and-forget: it's a SharedPreferences write that doesn't
-    // gate the user-visible flow, and the user has already committed by
-    // tapping save.
     unawaited(
       ref
           .read(formDefaultsProvider.notifier)
           .rememberExpense(
-            accountId: accountId,
-            categoryId: categoryId,
+            accountId: fromAccountId,
+            categoryId: expenseAccountId,
             currency: currency,
           ),
     );
     await submitOptimistic(
       pop: () {
-        // Fire the success haptic at pop time — the user feels confirmation
-        // the moment the form closes, even though the write is still
-        // in flight. Failure replays via Haptics.error() inside the
-        // OptimisticFormSubmit failure path.
         Haptics.success();
         context.go('/expenses');
       },
@@ -200,57 +152,23 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       failureMessage: (_) => l10n.commonSaveFailed,
       retryLabel: l10n.commonRetry,
       write: () async {
+        final journalRepo = await ref.read(
+          journalEntryRepositoryProvider.future,
+        );
+        final build = JournalEntryBuilders.expense(
+          date: date,
+          expenseAccountId: expenseAccountId,
+          fromAccountId: fromAccountId,
+          amount: amount,
+          currency: currency,
+          narration: note,
+        );
         if (initial == null) {
-          // The picker still uses the expense-category list, so we
-          // translate `categoryId` to a FIR-133 expense account on
-          // the way into the journal entry.
-          final ownerUserId = await ref.read(currentUserIdProvider).call();
-          final expenseAccountId =
-              LegacyExpenseCategoryToAccount.resolveAccountId(
-                categoryId: categoryId,
-                ownerUserId: ownerUserId,
-              );
-          final journalRepo = await ref.read(
-            journalEntryRepositoryProvider.future,
-          );
-          final build = JournalEntryBuilders.expense(
-            date: date,
-            expenseAccountId: expenseAccountId,
-            fromAccountId: accountId,
-            amount: amount,
-            currency: currency,
-            // The builder defaults narration to 'Expense' when null;
-            // the user's free-text note (when present) is the more
-            // useful headline in JournalEntryListPage.
-            narration: note,
-          );
           await journalRepo.create(
             entry: build.entry,
             postings: build.postings,
           );
         } else {
-          // FIR-131 wave 3h — edit branch routes through
-          // `JournalEntryRepository.replacePostings`. Same builder as
-          // create produces the new posting layout; the JE id stays
-          // stable so audit / sync history threads through to peers
-          // as a single update + posting-replace batch.
-          final ownerUserId = await ref.read(currentUserIdProvider).call();
-          final expenseAccountId =
-              LegacyExpenseCategoryToAccount.resolveAccountId(
-                categoryId: categoryId,
-                ownerUserId: ownerUserId,
-              );
-          final journalRepo = await ref.read(
-            journalEntryRepositoryProvider.future,
-          );
-          final build = JournalEntryBuilders.expense(
-            date: date,
-            expenseAccountId: expenseAccountId,
-            fromAccountId: accountId,
-            amount: amount,
-            currency: currency,
-            narration: note,
-          );
           await journalRepo.replacePostings(
             id: initial.entry.id,
             entry: build.entry,
@@ -284,9 +202,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     if (ok != true) return;
     setState(() => _busy = true);
     try {
-      // FIR-131 wave 3h — soft-delete cascades to the JE's postings
-      // in the same Drift transaction (see
-      // `JournalEntryRepository.softDelete`).
       final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
       await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
@@ -310,8 +225,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
     final accountsAsync = ref.watch(accountsStreamProvider);
-    final categoriesAsync = ref.watch(expenseCategoriesStreamProvider);
-    final mostUsedCategoryId = ref.watch(mostUsedExpenseCategoryProvider);
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(
@@ -351,9 +264,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     onChanged: (v) => setState(() => _currency = v),
                   ),
                   const SizedBox(height: Spacing.s8),
-                  categoriesAsync.when(
-                    data: (cats) {
-                      if (cats.isEmpty) {
+                  accountsAsync.when(
+                    data: (allAccounts) {
+                      final expenseAccounts = allAccounts
+                          .where((a) => a.category == AccountCategory.expense)
+                          .toList(growable: false);
+                      if (expenseAccounts.isEmpty) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: Spacing.s12,
@@ -361,35 +277,18 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           child: Text(l10n.expenseFormCategoriesLoading),
                         );
                       }
-                      // Picker only fires the default fallback if the
-                      // user hasn't already chosen something — including
-                      // the persisted last-used pick from initState. The
-                      // ranking goes: explicit pick > last used > recent
-                      // most-used > seeded "其它" > final list row.
-                      const fallbackId = 'expense-cat-default:other';
-                      final candidates = <String?>[
-                        _categoryId,
-                        mostUsedCategoryId,
-                      ];
-                      String? resolved;
-                      for (final candidate in candidates) {
-                        if (candidate != null &&
-                            cats.any((c) => c.id == candidate)) {
-                          resolved = candidate;
-                          break;
-                        }
+                      // Resolve default: explicit pick > first account
+                      if (_expenseAccountId == null ||
+                          !expenseAccounts.any(
+                            (a) => a.id == _expenseAccountId,
+                          )) {
+                        _expenseAccountId = expenseAccounts.first.id;
                       }
-                      resolved ??= cats
-                          .firstWhere(
-                            (c) => c.id == fallbackId,
-                            orElse: () => cats.last,
-                          )
-                          .id;
-                      _categoryId = resolved;
                       return CategoryGridPicker(
-                        categories: cats,
-                        selectedId: _categoryId,
-                        onSelect: (id) => setState(() => _categoryId = id),
+                        accounts: expenseAccounts,
+                        selectedId: _expenseAccountId,
+                        onSelect: (id) =>
+                            setState(() => _expenseAccountId = id),
                       );
                     },
                     loading: () => const Padding(
@@ -402,22 +301,26 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                   const SizedBox(height: Spacing.s12),
                   accountsAsync.when(
                     data: (accounts) {
-                      if (accounts.isEmpty) {
+                      final fromAccounts = accounts
+                          .where(
+                            (a) =>
+                                a.category == AccountCategory.asset &&
+                                a.type != AccountType.other,
+                          )
+                          .toList(growable: false);
+                      if (fromAccounts.isEmpty) {
                         return _NoAccountsHint();
                       }
-                      // Drop a stale persisted account if it no longer
-                      // exists; otherwise honour the user's pick over the
-                      // first-row default.
                       final hasCurrent =
-                          _accountId != null &&
-                          accounts.any((a) => a.id == _accountId);
+                          _fromAccountId != null &&
+                          fromAccounts.any((a) => a.id == _fromAccountId);
                       if (!hasCurrent) {
-                        _accountId = accounts.first.id;
+                        _fromAccountId = fromAccounts.first.id;
                       }
                       return AccountPicker(
-                        accounts: accounts,
-                        value: _accountId,
-                        onChanged: (v) => setState(() => _accountId = v),
+                        accounts: fromAccounts,
+                        value: _fromAccountId,
+                        onChanged: (v) => setState(() => _fromAccountId = v),
                         label: l10n.expenseFormAccountLabel,
                       );
                     },
@@ -446,20 +349,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
             ),
     );
   }
-}
-
-class _ExpenseFormHydration {
-  const _ExpenseFormHydration({
-    required this.amount,
-    required this.currency,
-    required this.fromAccountId,
-    required this.legacyCategoryId,
-  });
-
-  final Decimal amount;
-  final String currency;
-  final String? fromAccountId;
-  final String? legacyCategoryId;
 }
 
 class _NoAccountsHint extends StatelessWidget {

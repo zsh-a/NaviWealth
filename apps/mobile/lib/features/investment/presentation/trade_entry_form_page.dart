@@ -18,7 +18,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/models/lot.dart';
-import '../domain/trade_entry/trade_draft.dart';
+import '../domain/trade_entry/trade_draft.dart' show TradeDraft, TradeType;
 import '../domain/trade_entry/trade_entry_errors.dart';
 
 /// Create / edit form for a security trade (stock / ETF / crypto).
@@ -60,7 +60,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   final _taxFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  TransactionType _type = TransactionType.buy;
+  TradeType _type = TradeType.buy;
   String? _accountId;
   String? _cashAccountId;
   String? _currency = 'CNY';
@@ -69,23 +69,21 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   bool _busy = false;
   bool _hydratedDefaults = false;
 
-  // FIR-124: transferIn / transferOut are deliberately absent from this
-  // form — they can never be created as a single user-entered leg.
-  // FIR-131 wave 3a wired up `TransferFormPage` (under `/accounts/transfer`)
-  // which writes the two legs atomically via `JournalEntryRepository`,
-  // and that's now the only path to transfer creation.
+  // transferIn / transferOut are deliberately absent from this form —
+  // they can never be created as a single user-entered leg.
+  // `TransferFormPage` (under `/accounts/transfer`) writes the two
+  // legs atomically via `JournalEntryRepository`.
   static const _tradeTypes = [
-    TransactionType.buy,
-    TransactionType.sell,
-    TransactionType.valuationAdjust,
+    TradeType.buy,
+    TradeType.sell,
+    TradeType.valuationAdjust,
   ];
 
-  String _typeLabel(AppLocalizations l10n, TransactionType type) {
+  String _typeLabel(AppLocalizations l10n, TradeType type) {
     return switch (type) {
-      TransactionType.buy => l10n.tradeTypeBuy,
-      TransactionType.sell => l10n.tradeTypeSell,
-      TransactionType.valuationAdjust => l10n.tradeTypeValuationAdjust,
-      _ => type.name,
+      TradeType.buy => l10n.tradeTypeBuy,
+      TradeType.sell => l10n.tradeTypeSell,
+      TradeType.valuationAdjust => l10n.tradeTypeValuationAdjust,
     };
   }
 
@@ -221,7 +219,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         final tx = plan.trade;
         final uid = await currentUserId();
 
-        if (type == TransactionType.buy || type == TransactionType.sell) {
+        if (type == TradeType.buy || type == TradeType.sell) {
           final cashAcct = _cashAccountId ?? accountId;
           final feeAccountId = AccountRepository.systemAccountIdForPath(
             'expense:trading:fee',
@@ -232,7 +230,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             ownerUserId: uid,
           );
 
-          if (type == TransactionType.buy) {
+          if (type == TradeType.buy) {
             final build = JournalEntryBuilders.buy(
               date: tx.tradeDate,
               accountId: accountId,
@@ -398,8 +396,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             value: _accountId,
             onChanged: (v) => setState(() => _accountId = v),
           ),
-          if (_type == TransactionType.buy ||
-              _type == TransactionType.sell) ...[
+          if (_type == TradeType.buy ||
+              _type == TradeType.sell) ...[
             const SizedBox(height: Spacing.s12),
             AccountPicker(
               key: const Key('trade-entry-cash-account'),

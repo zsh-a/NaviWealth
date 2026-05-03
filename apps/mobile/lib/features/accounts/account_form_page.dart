@@ -61,9 +61,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   bool _busy = false;
   Account? _initial;
 
-  /// FIR-131 wave 3b — selected parent in the Beancount tree. `null`
-  /// means top-level. Constrained on save to a same-category account
-  /// (asset under asset, etc.) so the tree never crosses categories.
+  /// Selected parent in the Beancount tree. `null` means top-level.
+  /// Constrained on save to a same-category account (asset under
+  /// asset, etc.) so the tree never crosses categories.
   String? _parentId;
   /// Icon name; `null` falls back to the bullet glyph in the picker /
   /// list rows. See [account_icon_catalog.dart] for the canonical set.
@@ -393,9 +393,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   }
 }
 
-/// FIR-131 wave 3b — parent picker + clear button. Filters the
-/// candidate list to same-category accounts and excludes the current
-/// account plus its descendants so the tree can never form a cycle.
+/// Parent picker + clear button. Filters the candidate list to
+/// same-category accounts and excludes the current account plus its
+/// descendants so the tree can never form a cycle.
 class _ParentAccountPickerSection extends ConsumerWidget {
   const _ParentAccountPickerSection({
     required this.currentAccountId,
@@ -473,9 +473,9 @@ class _ParentAccountPickerSection extends ConsumerWidget {
   }
 }
 
-/// FIR-131 wave 3b — horizontal grid of icon options keyed off
-/// [kAccountIconCatalogue]. Selecting an icon snaps the form's
-/// `_icon`; the leading "None" tile clears it.
+/// Horizontal grid of icon options keyed off [kAccountIconCatalogue].
+/// Selecting an icon snaps the form's `_icon`; the leading "None"
+/// tile clears it.
 class _IconPickerSection extends StatelessWidget {
   const _IconPickerSection({
     required this.selected,
@@ -583,9 +583,9 @@ class _IconChip extends StatelessWidget {
   }
 }
 
-/// FIR-131 wave 3b — horizontal palette of preset hex colours from
-/// [kAccountColorPalette]. Tapping a swatch snaps `_color`; the leading
-/// "None" tile clears it.
+/// Horizontal palette of preset hex colours from
+/// [kAccountColorPalette]. Tapping a swatch snaps `_color`; the
+/// leading "None" tile clears it.
 class _ColorPickerSection extends StatelessWidget {
   const _ColorPickerSection({
     required this.selected,
