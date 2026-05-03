@@ -2814,6 +2814,12 @@ abstract class AppLocalizations {
   /// **'Tax'**
   String get tradeEntryTaxLabel;
 
+  /// No description provided for @tradeEntryCashAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash account'**
+  String get tradeEntryCashAccountLabel;
+
   /// No description provided for @tradeEntryCatalogLoadError.
   ///
   /// In en, this message translates to:

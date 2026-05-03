@@ -1502,6 +1502,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeEntryTaxLabel => '税费';
 
   @override
+  String get tradeEntryCashAccountLabel => '资金账户';
+
+  @override
   String tradeEntryCatalogLoadError(String error) {
     return '目录加载失败：$error';
   }
