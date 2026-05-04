@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/format/providers.dart';
-import '../../../design_system/tokens/spacing_tokens.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/concentration_risk.dart';
@@ -58,9 +58,9 @@ class _AlertList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Spacing.s12),
-        Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
+        LiquidGlassCard(
+          layer: GlassLayer.tertiary,
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (var i = 0; i < alerts.length; i++) ...[

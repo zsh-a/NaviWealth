@@ -21,35 +21,33 @@ class BenchmarkComparisonCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final resultAsync = ref.watch(benchmarkComparisonResultProvider);
 
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.benchmarkComparisonTitle,
-              style: theme.textTheme.titleMedium,
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.benchmarkComparisonTitle,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            l10n.benchmarkComparisonSubtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              l10n.benchmarkComparisonSubtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: Spacing.s12),
-            const _BenchmarkSelectionChips(),
-            const SizedBox(height: Spacing.s12),
-            const _BenchmarkRangeChips(),
-            const SizedBox(height: Spacing.s16),
-            resultAsync.when(
-              loading: () => const _CardSkeleton(),
-              error: (e, _) => _CardError(error: e),
-              data: (result) => _BenchmarkContent(result: result),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: Spacing.s12),
+          const _BenchmarkSelectionChips(),
+          const SizedBox(height: Spacing.s12),
+          const _BenchmarkRangeChips(),
+          const SizedBox(height: Spacing.s16),
+          resultAsync.when(
+            loading: () => const _CardSkeleton(),
+            error: (e, _) => _CardError(error: e),
+            data: (result) => _BenchmarkContent(result: result),
+          ),
+        ],
       ),
     );
   }

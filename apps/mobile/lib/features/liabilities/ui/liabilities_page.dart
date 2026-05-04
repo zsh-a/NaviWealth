@@ -32,7 +32,11 @@ class LiabilitiesPage extends ConsumerWidget {
           return _LiabilitiesEmptyState(l10n: l10n);
         }
         return ListView.separated(
-          padding: Spacing.pageMobile,
+          padding: Spacing.pageMobile.copyWith(
+            bottom: Spacing.pageMobile.bottom +
+                Spacing.floatingBarClearance +
+                MediaQuery.paddingOf(context).bottom,
+          ),
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
           itemBuilder: (context, i) =>

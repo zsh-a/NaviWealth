@@ -174,9 +174,11 @@ class _SegmentedControl extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.5,
-          ),
+          color: theme.brightness == Brightness.dark
+              ? const Color(0xFF2C2C2E)
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
           borderRadius: BorderRadius.circular(Radii.full),
         ),
         padding: const EdgeInsets.all(2),

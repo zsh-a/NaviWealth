@@ -23,9 +23,7 @@ class HomePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return Scaffold(
-      appBar: GlassAppBar(
-        title: Text(l10n.homeAppBarTitle),
-      ),
+      appBar: GlassAppBar(title: Text(l10n.homeAppBarTitle)),
       body: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
         isLoading: snapshotAsync.isLoading,
@@ -80,7 +78,11 @@ class _DashboardBody extends StatelessWidget {
           );
         }
         return ListView(
-          padding: padding,
+          padding: padding.copyWith(
+            bottom: padding.bottom +
+                Spacing.floatingBarClearance +
+                MediaQuery.paddingOf(context).bottom,
+          ),
           children: [
             header,
             const SizedBox(height: Spacing.s12),

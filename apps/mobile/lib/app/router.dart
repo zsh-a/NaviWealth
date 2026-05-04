@@ -603,7 +603,7 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
   ];
 }
 
-class _MobileShell extends StatelessWidget {
+class _MobileShell extends StatefulWidget {
   const _MobileShell({
     required this.destinations,
     required this.selectedIndex,
@@ -616,40 +616,99 @@ class _MobileShell extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
-  static const double _barHeight = 64;
-  static const double _barBottomGap = 12;
+  static const double barHeight = 64;
+
+  @override
+  State<_MobileShell> createState() => _MobileShellState();
+}
+
+class _MobileShellState extends State<_MobileShell>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _dialController = AnimationController(
+    duration: const Duration(milliseconds: 350),
+    vsync: this,
+  );
+
+  @override
+  void dispose() {
+    _dialController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSpeedDial() {
+    if (_dialController.isAnimating) return;
+    if (_dialController.isCompleted) {
+      _dialController.reverse();
+    } else {
+      _dialController.forward();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final bottomSafe = MediaQuery.of(context).viewPadding.bottom;
     final glowColors = lgw.GlassThemeData.of(context).glowColorsFor(context);
 
-    // Total inset = bar height + its internal vertical padding (20×2) +
-    // bottom gap + safe area.
-    final totalBottomInset = _barHeight + 40 + _barBottomGap + bottomSafe;
+    // Android 3-button nav: push bar above opaque buttons.
+    // On iOS / gesture-nav Android, sysBottom is 0.
+    final platform = Theme.of(context).platform;
+    final isIOS =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+    final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
+    const gap = 4.0;
 
     return Stack(
       children: [
-        // Content — padded so last item clears the bar.
-        Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: totalBottomInset),
-            child: child,
-          ),
+        Positioned.fill(child: widget.child),
+        // Speed-dial scrim — always in tree so it can listen to animation.
+        AnimatedBuilder(
+          animation: _dialController,
+          builder: (context, _) {
+            if (_dialController.value == 0) return const SizedBox.shrink();
+            final t = Curves.easeOut.transform(_dialController.value);
+            return Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _dialController.reverse(),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.25 * t),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-        // Floating GlassBottomBar — lifted above the home indicator.
+        // Action list — always in tree, positioned above the bar.
+        AnimatedBuilder(
+          animation: _dialController,
+          builder: (context, _) {
+            if (_dialController.value == 0) return const SizedBox.shrink();
+            return Positioned(
+              left: 0,
+              right: 0,
+              bottom: sysBottom + _MobileShell.barHeight + gap,
+              child: _SpeedDialActions(
+                controller: _dialController,
+                onDismiss: () => _dialController.reverse(),
+              ),
+            );
+          },
+        ),
+        // Glass bottom bar — always at the screen bottom.
         Positioned(
           left: 0,
           right: 0,
-          bottom: bottomSafe + _barBottomGap,
+          bottom: sysBottom,
           child: lgw.GlassBottomBar(
-            barHeight: _barHeight,
+            barHeight: _MobileShell.barHeight,
+            verticalPadding: 0,
             quality: lgw.GlassQuality.premium,
-            selectedIndex: selectedIndex,
-            onTabSelected: onDestinationSelected,
+            selectedIndex: widget.selectedIndex,
+            onTabSelected: widget.onDestinationSelected,
             tabs: [
-              for (final d in destinations)
+              for (final d in widget.destinations)
                 lgw.GlassBottomBarTab(
                   label: d.label,
                   icon: Icon(d.icon),
@@ -661,15 +720,45 @@ class _MobileShell extends StatelessWidget {
               icon: const Icon(Icons.add, color: Colors.white, size: 24),
               label: l10n.superFabTrade,
               size: 56,
-              onTap: () => _showSpeedDial(context, l10n),
+              onTap: _toggleSpeedDial,
             ),
           ),
         ),
       ],
     );
   }
+}
 
-  void _showSpeedDial(BuildContext context, AppLocalizations l10n) {
+class _SpeedDialAction {
+  const _SpeedDialAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+/// Animated list of speed-dial action chips.
+class _SpeedDialActions extends StatelessWidget {
+  const _SpeedDialActions({
+    required this.controller,
+    required this.onDismiss,
+  });
+
+  final AnimationController controller;
+  final VoidCallback onDismiss;
+
+  static const double _actionHeight = 52.0;
+  static const double _actionGap = 10.0;
+  static const double _actionHorizontalPadding = 16.0;
+  static const _staggerStep = 0.08;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final actions = <_SpeedDialAction>[
       _SpeedDialAction(
         icon: Icons.swap_horiz,
@@ -692,130 +781,28 @@ class _MobileShell extends StatelessWidget {
         onTap: () => context.push('/portfolio/new/cash'),
       ),
     ];
-    _SpeedDialOverlay.show(context, actions);
-  }
-}
 
-class _SpeedDialAction {
-  const _SpeedDialAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-}
-
-/// Speed-dial overlay shown from the GlassBottomBar's extra button.
-class _SpeedDialOverlay {
-  static const double _actionHeight = 52.0;
-  static const double _actionGap = 10.0;
-  static const double _actionHorizontalPadding = 16.0;
-  static const double _barBottomGap = 12.0;
-
-  static void show(BuildContext context, List<_SpeedDialAction> actions) {
-    final controller = AnimationController(
-      duration: const Duration(milliseconds: 350),
-      vsync: Navigator.of(context),
-    );
-    final overlay = OverlayEntry(
-      builder: (_) => _SpeedDialOverlayWidget(
-        controller: controller,
-        actions: actions,
-      ),
-    );
-    Overlay.of(context).insert(overlay);
-
-    controller.forward();
-    controller.addStatusListener((status) {
-      if (status == AnimationStatus.dismissed) {
-        overlay.remove();
-        controller.dispose();
-      }
-    });
-  }
-}
-
-class _SpeedDialOverlayWidget extends StatelessWidget {
-  const _SpeedDialOverlayWidget({
-    required this.controller,
-    required this.actions,
-  });
-
-  final AnimationController controller;
-  final List<_SpeedDialAction> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomSafe = MediaQuery.of(context).padding.bottom;
-    // Position above the GlassBottomBar.
-    final barBottom = bottomSafe + _SpeedDialOverlay._barBottomGap;
-    const barHeight = _MobileShell._barHeight;
-    const gap = 4.0;
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final t = Curves.easeOut.transform(controller.value);
-        return Stack(
-          children: [
-            // Scrim — soft dim + blur, tap to dismiss.
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => controller.reverse(),
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
-                  child: ColoredBox(
-                    color: Colors.black.withValues(alpha: 0.25 * t),
-                  ),
-                ),
-              ),
-            ),
-            // Action list — positioned above the bar.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: barBottom + barHeight + gap,
-              child: _buildActionList(t),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildActionList(double globalT) {
-    const staggerStep = 0.08;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (int i = 0; i < actions.length; i++)
-          _buildActionItem(actions[i], i, actions.length, staggerStep),
+          _buildItem(actions[i], i, actions.length),
       ],
     );
   }
 
-  Widget _buildActionItem(
-    _SpeedDialAction action,
-    int index,
-    int total,
-    double staggerStep,
-  ) {
+  Widget _buildItem(_SpeedDialAction action, int index, int total) {
     final reversedIndex = total - 1 - index;
-    final stagger = reversedIndex * staggerStep;
+    final stagger = reversedIndex * _staggerStep;
     final itemT = (controller.value - stagger).clamp(0.0, 1.0);
     final curved = Curves.easeOutCubic.transform(itemT);
     final slideOffset = (1 - curved) * 24.0;
-    final opacity = itemT.clamp(0.0, 1.0);
 
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
         return Opacity(
-          opacity: opacity,
+          opacity: itemT.clamp(0.0, 1.0),
           child: Transform.translate(
             offset: Offset(0, slideOffset),
             child: child,
@@ -823,11 +810,12 @@ class _SpeedDialOverlayWidget extends StatelessWidget {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.only(bottom: _SpeedDialOverlay._actionGap),
+        padding: const EdgeInsets.only(bottom: _actionGap),
         child: _GlassActionChip(
           action: action,
-          height: _SpeedDialOverlay._actionHeight,
-          horizontalPadding: _SpeedDialOverlay._actionHorizontalPadding,
+          height: _actionHeight,
+          horizontalPadding: _actionHorizontalPadding,
+          onDismiss: onDismiss,
         ),
       ),
     );
@@ -840,11 +828,13 @@ class _GlassActionChip extends StatelessWidget {
     required this.action,
     required this.height,
     required this.horizontalPadding,
+    required this.onDismiss,
   });
 
   final _SpeedDialAction action;
   final double height;
   final double horizontalPadding;
+  final VoidCallback onDismiss;
 
   @override
   Widget build(BuildContext context) {
@@ -854,7 +844,7 @@ class _GlassActionChip extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        Navigator.of(context).pop();
+        onDismiss();
         action.onTap();
       },
       child: lgw.GlassContainer(

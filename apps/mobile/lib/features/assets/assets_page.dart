@@ -208,7 +208,11 @@ class _AssetsBody extends StatelessWidget {
       return const _EmptyHint();
     }
     return ListView(
-      padding: Spacing.pageMobile,
+      padding: Spacing.pageMobile.copyWith(
+        bottom: Spacing.pageMobile.bottom +
+            Spacing.floatingBarClearance +
+            MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         if (manual.isNotEmpty)
           _ManualAssetsSection(

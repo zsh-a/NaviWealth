@@ -16,6 +16,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/desktop_sidebar.dart';
 import 'package:naviwealth/app/router.dart';
@@ -40,7 +41,6 @@ import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/portfolio/portfolio_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
