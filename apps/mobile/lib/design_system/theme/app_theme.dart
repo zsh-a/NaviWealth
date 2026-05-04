@@ -118,7 +118,7 @@ class AppTheme {
             width: 1,
           ),
         ),
-        color: scheme.surfaceContainerLow,
+        color: isDark ? const Color(0xFF1C1C1E) : scheme.surfaceContainerLow,
         surfaceTintColor: Colors.transparent,
         clipBehavior: Clip.antiAlias,
       ),

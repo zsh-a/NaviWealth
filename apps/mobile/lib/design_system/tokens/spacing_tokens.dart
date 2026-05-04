@@ -35,6 +35,14 @@ class Spacing {
   /// Padding inside a hero card (e.g. net worth header).
   static const EdgeInsets cardHero = EdgeInsets.all(s20);
 
+  /// Padding for section header labels (Apple News style).
+  static const EdgeInsets sectionHeader = EdgeInsets.fromLTRB(s16, s20, s16, s8);
+
+  /// Extra bottom clearance for scrollable content behind a floating
+  /// glass bottom bar (Scaffold.extendBody = true).
+  /// Combine with `MediaQuery.paddingOf(context).bottom` for the full inset.
+  static const double floatingBarClearance = 64; // GlassBottomBar height
+
   /// Width of the AI Chat sessions side panel on desktop (FIR-93).
   /// Sized to fit a session title + timestamp + per-row action without
   /// truncating typical Chinese titles, while leaving the conversation

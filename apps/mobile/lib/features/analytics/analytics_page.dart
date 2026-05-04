@@ -34,7 +34,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     final equityColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionHeader(
+        GlassSectionHeader(
           title: l10n.analyticsEquityTitle,
           subtitle: l10n.analyticsEquitySubtitle,
         ),
@@ -76,39 +76,19 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+          final basePadding = isWide ? Spacing.pageWide : Spacing.pageMobile;
           return ListView(
-            padding: isWide ? Spacing.pageWide : Spacing.pageMobile,
+            padding: basePadding.copyWith(
+              bottom: basePadding.bottom +
+                  Spacing.floatingBarClearance +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
             children: [
               ResponsiveTwoColumn(left: equityColumn, right: riskColumn),
             ],
           );
         },
       ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: theme.textTheme.titleLarge),
-        const SizedBox(height: Spacing.s4),
-        Text(
-          subtitle,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -129,30 +109,109 @@ class DimensionSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedButton<EquityAllocationDimension>(
-      segments: [
-        ButtonSegment(
-          value: EquityAllocationDimension.sector,
-          icon: const Icon(Icons.category_outlined),
-          label: Text(l10n.analyticsDimensionSector),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    const selectedColor = ColorPalette.brand500;
+
+    final labels = <EquityAllocationDimension, String>{
+      EquityAllocationDimension.sector: l10n.analyticsDimensionSector,
+      EquityAllocationDimension.region: l10n.analyticsDimensionRegion,
+      EquityAllocationDimension.marketCap: l10n.analyticsDimensionMarketCap,
+    };
+    final icons = <EquityAllocationDimension, IconData>{
+      EquityAllocationDimension.sector: Icons.category_outlined,
+      EquityAllocationDimension.region: Icons.public,
+      EquityAllocationDimension.marketCap: Icons.bar_chart,
+    };
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF2C2C2E)
+            : theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
+        borderRadius: BorderRadius.circular(Radii.full),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: Row(
+        children: [
+          for (final dim in EquityAllocationDimension.values)
+            Expanded(
+              child: _DimensionChip(
+                label: labels[dim]!,
+                icon: icons[dim]!,
+                selected: dim == value,
+                selectedColor: selectedColor,
+                onTap: () {
+                  Haptics.selection();
+                  onChanged(dim);
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DimensionChip extends StatelessWidget {
+  const _DimensionChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: Motion.medium,
+        curve: Motion.emphasizedDecelerate,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? theme.colorScheme.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(Radii.full),
+          boxShadow: selected ? AppElevations.of(context).level1 : null,
         ),
-        ButtonSegment(
-          value: EquityAllocationDimension.region,
-          icon: const Icon(Icons.public),
-          label: Text(l10n.analyticsDimensionRegion),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected
+                  ? selectedColor
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: selected
+                      ? selectedColor
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
         ),
-        ButtonSegment(
-          value: EquityAllocationDimension.marketCap,
-          icon: const Icon(Icons.bar_chart),
-          label: Text(l10n.analyticsDimensionMarketCap),
-        ),
-      ],
-      selected: {value},
-      onSelectionChanged: (s) {
-        Haptics.selection();
-        onChanged(s.first);
-      },
-      showSelectedIcon: false,
+      ),
     );
   }
 }
@@ -213,9 +272,9 @@ class EquityAllocationContent extends ConsumerWidget {
           _UnclassifiedBanner(count: view.unclassifiedCount),
         if (view.unclassifiedCount > 0)
           const SizedBox(height: Spacing.s12),
-        Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
+        LiquidGlassCard(
+          layer: GlassLayer.tertiary,
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (final bucket in view.buckets)
@@ -363,14 +422,11 @@ class _UnclassifiedBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return Container(
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.s12,
         vertical: Spacing.s12,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [

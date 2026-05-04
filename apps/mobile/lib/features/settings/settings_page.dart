@@ -26,110 +26,147 @@ class SettingsPage extends ConsumerWidget {
         actions: const [],
       ),
       body: ListView(
+        padding: Spacing.pageMobile.copyWith(
+          bottom: Spacing.pageMobile.bottom +
+              Spacing.floatingBarClearance +
+              MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: Text(l10n.settingsAccountTitle),
-            subtitle: Text(l10n.settingsAccountSubtitle),
-          ),
-          ListTile(
-            leading: const Icon(Icons.devices_outlined),
-            title: Text(l10n.settingsDevicesTitle),
-            subtitle: Text(l10n.settingsDevicesSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.goNamed('devices'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.currency_exchange),
-            title: Text(l10n.settingsBaseCurrencyTitle),
-            subtitle: Text(l10n.settingsBaseCurrencyHint),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+          // ── Account ──
+          LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: Column(
               children: [
-                Text(
-                  baseCurrency,
-                  style: Theme.of(context).textTheme.titleMedium,
+                ListTile(
+                  leading: const Icon(Icons.account_circle_outlined),
+                  title: Text(l10n.settingsAccountTitle),
+                  subtitle: Text(l10n.settingsAccountSubtitle),
                 ),
-                const SizedBox(width: Spacing.s4),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-            onTap: () => _pickBaseCurrency(context, ref, baseCurrency),
-          ),
-          ListTile(
-            leading: const Icon(Icons.published_with_changes_outlined),
-            title: Text(l10n.settingsFxRatesTitle),
-            subtitle: Text(l10n.settingsFxRatesSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.goNamed('fx-rates'),
-          ),
-          const Divider(),
-          _SectionHeader(label: l10n.settingsAppearanceSection),
-          ListTile(
-            leading: const Icon(Icons.brightness_6_outlined),
-            title: Text(l10n.settingsThemeModeTitle),
-            subtitle: Text(_themeModeLabel(l10n, themeMode)),
-            trailing: SegmentedButton<ThemeMode>(
-              segments: [
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  icon: const Icon(Icons.brightness_auto),
-                  tooltip: l10n.themeModeSystem,
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.devices_outlined),
+                  title: Text(l10n.settingsDevicesTitle),
+                  subtitle: Text(l10n.settingsDevicesSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.goNamed('devices'),
                 ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: const Icon(Icons.light_mode_outlined),
-                  tooltip: l10n.themeModeLight,
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: const Icon(Icons.dark_mode_outlined),
-                  tooltip: l10n.themeModeDark,
-                ),
-              ],
-              selected: {themeMode},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) {
-                Haptics.selection();
-                ref.read(themeModeProvider.notifier).set(s.first);
-              },
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.swap_vert),
-            title: Text(l10n.settingsMarketColorTitle),
-            subtitle: Text(_marketModeLabel(l10n, marketMode)),
-            trailing: PopupMenuButton<MarketColorMode>(
-              icon: const Icon(Icons.tune),
-              onSelected: (m) =>
-                  ref.read(marketColorModeProvider.notifier).set(m),
-              itemBuilder: (context) => [
-                for (final m in MarketColorMode.values)
-                  PopupMenuItem(
-                    value: m,
-                    child: Row(
-                      children: [
-                        if (m == marketMode)
-                          const Icon(Icons.check, size: 18)
-                        else
-                          const SizedBox(width: 18),
-                        const SizedBox(width: 8),
-                        Text(_marketModeLabel(l10n, m)),
-                      ],
-                    ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.currency_exchange),
+                  title: Text(l10n.settingsBaseCurrencyTitle),
+                  subtitle: Text(l10n.settingsBaseCurrencyHint),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        baseCurrency,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(width: Spacing.s4),
+                      const Icon(Icons.chevron_right),
+                    ],
                   ),
+                  onTap: () =>
+                      _pickBaseCurrency(context, ref, baseCurrency),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading:
+                      const Icon(Icons.published_with_changes_outlined),
+                  title: Text(l10n.settingsFxRatesTitle),
+                  subtitle: Text(l10n.settingsFxRatesSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.goNamed('fx-rates'),
+                ),
               ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: _MarketColorPreview(),
+          // ── Appearance ──
+          GlassSectionHeader(title: l10n.settingsAppearanceSection),
+          LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.brightness_6_outlined),
+                  title: Text(l10n.settingsThemeModeTitle),
+                  subtitle: Text(_themeModeLabel(l10n, themeMode)),
+                  trailing: SegmentedButton<ThemeMode>(
+                    segments: [
+                      ButtonSegment(
+                        value: ThemeMode.system,
+                        icon: const Icon(Icons.brightness_auto),
+                        tooltip: l10n.themeModeSystem,
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        icon: const Icon(Icons.light_mode_outlined),
+                        tooltip: l10n.themeModeLight,
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.dark,
+                        icon: const Icon(Icons.dark_mode_outlined),
+                        tooltip: l10n.themeModeDark,
+                      ),
+                    ],
+                    selected: {themeMode},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (s) {
+                      Haptics.selection();
+                      ref.read(themeModeProvider.notifier).set(s.first);
+                    },
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.swap_vert),
+                  title: Text(l10n.settingsMarketColorTitle),
+                  subtitle: Text(_marketModeLabel(l10n, marketMode)),
+                  trailing: PopupMenuButton<MarketColorMode>(
+                    icon: const Icon(Icons.tune),
+                    onSelected: (m) =>
+                        ref.read(marketColorModeProvider.notifier).set(m),
+                    itemBuilder: (context) => [
+                      for (final m in MarketColorMode.values)
+                        PopupMenuItem(
+                          value: m,
+                          child: Row(
+                            children: [
+                              if (m == marketMode)
+                                const Icon(Icons.check, size: 18)
+                              else
+                                const SizedBox(width: 18),
+                              const SizedBox(width: 8),
+                              Text(_marketModeLabel(l10n, m)),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: _MarketColorPreview(),
+                ),
+              ],
+            ),
           ),
-          const Divider(),
-          _SectionHeader(label: l10n.settingsRiskSection),
-          const _RiskThresholdSettings(),
-          const Divider(),
-          const _AboutTile(),
+          // ── Risk ──
+          GlassSectionHeader(title: l10n.settingsRiskSection),
+          const LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: _RiskThresholdSettings(),
+          ),
+          // ── About ──
+          const SizedBox(height: Spacing.s12),
+          const LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: _AboutTile(),
+          ),
         ],
       ),
     );
@@ -230,24 +267,6 @@ class _AboutTile extends ConsumerWidget {
       leading: const Icon(Icons.info_outline),
       title: Text(l10n.settingsAboutTitle),
       subtitle: Text(subtitle),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
     );
   }
 }

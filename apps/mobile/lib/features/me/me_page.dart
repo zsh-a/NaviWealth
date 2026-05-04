@@ -46,7 +46,11 @@ class MePage extends StatelessWidget {
         builder: (context, constraints) {
           final crossAxisCount = constraints.maxWidth > 600 ? 2 : 2;
           return GridView.builder(
-            padding: Spacing.pageMobile,
+            padding: Spacing.pageMobile.copyWith(
+              bottom: Spacing.pageMobile.bottom +
+                  Spacing.floatingBarClearance +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
               mainAxisSpacing: Spacing.s12,
@@ -85,36 +89,34 @@ class _MeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: item.onTap,
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(item.icon, size: 28, color: theme.colorScheme.primary),
-              const SizedBox(height: Spacing.s12),
-              Text(
-                item.title,
-                style: theme.textTheme.titleSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+    return LiquidGlassCard(
+      padding: EdgeInsets.zero,
+      onTap: item.onTap,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(item.icon, size: 28, color: theme.colorScheme.primary),
+            const SizedBox(height: Spacing.s12),
+            Text(
+              item.title,
+              style: theme.textTheme.titleSmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              item.subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: Spacing.s4),
-              Text(
-                item.subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );

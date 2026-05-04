@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
+import 'app_ink_well.dart';
+
 /// Glass hierarchy levels mapping to package quality tiers.
 enum GlassLayer {
   /// Nav bars, modals — full shader pipeline.
@@ -31,6 +33,7 @@ class LiquidGlassCard extends StatelessWidget {
     this.padding,
     this.margin,
     this.borderRadius,
+    this.onTap,
   });
 
   final Widget child;
@@ -38,6 +41,7 @@ class LiquidGlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final double? borderRadius;
+  final VoidCallback? onTap;
 
   lgw.GlassQuality get _quality => switch (layer) {
         GlassLayer.primary => lgw.GlassQuality.premium,
@@ -47,16 +51,24 @@ class LiquidGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return lgw.GlassContainer(
+    final radius = borderRadius ?? 16;
+    Widget card = lgw.GlassContainer(
       useOwnLayer: true,
       quality: _quality,
       padding: padding,
       margin: margin,
-      shape: lgw.LiquidRoundedSuperellipse(
-        borderRadius: borderRadius ?? 16,
-      ),
+      shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius),
       clipBehavior: Clip.antiAlias,
       child: child,
     );
+
+    if (onTap != null) {
+      card = AppInkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: card,
+      );
+    }
+    return card;
   }
 }

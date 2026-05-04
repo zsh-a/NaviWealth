@@ -189,6 +189,14 @@ class TypographyTokens {
     weight: FontWeight.w500,
   );
 
+  /// Section header title — bold, accent-colored (Apple News style).
+  static TextStyle sectionHeaderTitle(Color accentColor) =>
+      titleLarge.copyWith(color: accentColor);
+
+  /// Section header subtitle — muted secondary text.
+  static TextStyle sectionHeaderSubtitle(Color onSurfaceVariant) =>
+      bodyMedium.copyWith(color: onSurfaceVariant);
+
   /// Material 3 [TextTheme] composed from the tokens above. Used by
   /// `AppTheme` so that `Theme.of(context).textTheme.titleMedium` resolves to
   /// the design-system value.
