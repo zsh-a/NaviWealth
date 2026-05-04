@@ -1,9 +1,7 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../tokens/color_palette.dart';
-import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
@@ -58,8 +56,6 @@ class FloatingPillNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = GlassTokens.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Split destinations: first half left of FAB, second half right.
     final mid = destinations.length ~/ 2;
@@ -73,10 +69,12 @@ class FloatingPillNavigationBar extends StatelessWidget {
         _horizontalMargin,
         _bottomMargin,
       ),
-      child: _GlassBar(
-        tokens: tokens,
-        isDark: isDark,
+      child: lgw.GlassContainer(
+        useOwnLayer: true,
+        quality: lgw.GlassQuality.premium,
         height: _barHeight,
+        shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.xxl),
+        clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
             for (int i = 0; i < leftDests.length; i++)
@@ -104,66 +102,6 @@ class FloatingPillNavigationBar extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Apple-style frosted glass bar: heavy blur, subtle tint, no hard shadows.
-/// A thin hairline border defines edges without visual weight.
-class _GlassBar extends StatelessWidget {
-  const _GlassBar({
-    required this.tokens,
-    required this.isDark,
-    required this.height,
-    required this.child,
-  });
-
-  final GlassTokens tokens;
-  final bool isDark;
-  final double height;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderRadius = BorderRadius.circular(Radii.xxl);
-
-    // Apple-style: low-opacity tint, strong blur, minimal border.
-    final tintColor = isDark
-        ? const Color(0xB30A0A0F) // dark: 70% near-black
-        : const Color(0xA3F2F2F7); // light: 64% systemGray6
-
-    Widget bar = Container(
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        // No hard shadow — glass effect provides depth.
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: tintColor,
-          border: Border.all(
-            color: isDark
-                ? const Color(0x14FFFFFF) // 8% white
-                : const Color(0x14000000), // 8% black
-            width: 0.5,
-          ),
-        ),
-        child: child,
-      ),
-    );
-
-    // Backdrop blur for the frosted effect.
-    if (GlassTokens.isSupported()) {
-      bar = ClipRRect(
-        borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-          child: bar,
-        ),
-      );
-    }
-
-    return bar;
   }
 }
 

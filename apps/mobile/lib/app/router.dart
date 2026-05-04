@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../design_system/design_system.dart';
 
@@ -626,7 +627,7 @@ class _MobileShell extends StatelessWidget {
             padding: const EdgeInsets.only(
               bottom: FloatingPillNavigationBar.overlayBottomInset,
             ),
-            child: child,
+            child: lgw.GlassBackdropScope(child: child),
           ),
         ),
         // Floating nav bar — overlays the bottom of the content.

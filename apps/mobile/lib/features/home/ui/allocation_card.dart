@@ -53,10 +53,9 @@ class AllocationCard extends StatelessWidget {
         ),
     ];
 
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: LayoutBuilder(
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= Breakpoints.mobile;
             final pie = _PieSection(
@@ -108,7 +107,6 @@ class AllocationCard extends StatelessWidget {
             );
           },
         ),
-      ),
     );
   }
 
