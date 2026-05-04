@@ -72,7 +72,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: apps/mobile/web_smoke/package-lock.json
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: web-smoke-build
           path: apps/mobile/build/web
