@@ -48,11 +48,10 @@ class FloatingPillNavigationBar extends StatelessWidget {
 
   static const double _barHeight = 68;
   static const double _horizontalMargin = Spacing.s12;
-  static const double _bottomMargin = 8;
 
-  /// Bottom inset injected into MediaQuery so child scroll views can
-  /// scroll past the floating bar. = bar height + bottom margin.
-  static const double overlayBottomInset = _barHeight + _bottomMargin;
+  /// Total height the floating bar occupies (bar only, no margin).
+  /// The shell adds its own bottom margin + safe area on top of this.
+  static const double overlayBottomInset = _barHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -63,12 +62,7 @@ class FloatingPillNavigationBar extends StatelessWidget {
     final rightDests = destinations.sublist(mid);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        _horizontalMargin,
-        0,
-        _horizontalMargin,
-        _bottomMargin,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: _horizontalMargin),
       child: lgw.GlassContainer(
         useOwnLayer: true,
         quality: lgw.GlassQuality.premium,

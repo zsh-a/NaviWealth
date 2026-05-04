@@ -40,6 +40,7 @@ import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/portfolio/portfolio_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
@@ -199,7 +200,7 @@ void main() {
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);
-      expect(find.byType(FloatingPillNavigationBar), findsOneWidget);
+      expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
     });
 
     testWidgets('/assets redirects to /portfolio and renders Portfolio', (
@@ -208,7 +209,7 @@ void main() {
       final container = await _pumpAt(tester, initialLocation: '/assets');
       expect(find.byType(PortfolioPage), findsOneWidget);
       expect(_currentPath(container), '/portfolio');
-      expect(find.byType(FloatingPillNavigationBar), findsOneWidget);
+      expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
     });
 
     testWidgets('/portfolio renders Portfolio', (tester) async {
@@ -288,24 +289,25 @@ void main() {
       final container = await _pumpAt(tester);
       expect(_currentPath(container), '/');
 
-      // Find the pill bar and calculate nav item positions.
-      // Layout: [item0] [item1]  [68dp gap]  [item2] [item3]
-      final barFinder = find.byType(FloatingPillNavigationBar);
+      // Find the GlassBottomBar and calculate nav item positions.
+      // Layout: [tab0] [tab1]  [extraBtn]  [tab2] [tab3]
+      final barFinder = find.byType(lgw.GlassBottomBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
       final barOrigin = barBox.localToGlobal(Offset.zero);
 
-      // The pill bar is at the bottom 64px of the 96px stack.
-      // Nav items are centered vertically in the pill bar.
-      final pillBarTop = barOrigin.dy + (barSize.height - 64);
-      final pillBarCenterY = pillBarTop + 32;
+      final barCenterY = barOrigin.dy + barSize.height / 2;
 
-      // Each Expanded item gets (barWidth - 68) / 4 width.
-      final itemW = (barSize.width - 68) / 4;
+      // With 4 tabs + 1 extra button (56dp), each tab gets roughly
+      // (barWidth - extraButtonSize - spacing*4) / 4 width.
+      final barWidth = barSize.width;
+      const extraSize = 56.0;
+      const spacing = 8.0;
+      final tabW = (barWidth - extraSize - spacing * 4) / 4;
 
       // Item 1 = Portfolio (second from left).
-      final portfolioX = barOrigin.dx + itemW * 1.5;
-      await tester.tapAt(Offset(portfolioX, pillBarCenterY));
+      final portfolioX = barOrigin.dx + tabW * 1.5 + spacing;
+      await tester.tapAt(Offset(portfolioX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), '/portfolio');
@@ -313,19 +315,19 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 4-tab layout: Home(0) | Portfolio(1) | Analytics(2) | AI(3)
+      // 4-tab layout: Home(0) | Portfolio(1) | Analytics(2) | Me(3)
       final container = await _pumpAt(tester, initialLocation: '/analytics');
       // /analytics is now tab index 2.
-      final bar = tester.widget<FloatingPillNavigationBar>(
-        find.byType(FloatingPillNavigationBar),
+      final bar = tester.widget<lgw.GlassBottomBar>(
+        find.byType(lgw.GlassBottomBar),
       );
       expect(bar.selectedIndex, 2);
 
       container.read(appRouterProvider).go('/settings');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      final updated = tester.widget<FloatingPillNavigationBar>(
-        find.byType(FloatingPillNavigationBar),
+      final updated = tester.widget<lgw.GlassBottomBar>(
+        find.byType(lgw.GlassBottomBar),
       );
       // Settings highlights Me tab (index 3).
       expect(updated.selectedIndex, 3);
@@ -338,9 +340,9 @@ void main() {
     // (extended above 900), ≥ 1240 → NavigationDrawer. Tabs and selectedIndex
     // stay consistent across the three layouts.
 
-    testWidgets('mobile width uses FloatingPillNavigationBar at the bottom', (tester) async {
+    testWidgets('mobile width uses GlassBottomBar at the bottom', (tester) async {
       await _pumpAt(tester, viewportSize: _mobileSize);
-      expect(find.byType(FloatingPillNavigationBar), findsOneWidget);
+      expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
       expect(find.byType(NavigationRail), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
@@ -349,7 +351,7 @@ void main() {
       // 800px is below the 900px extended-rail threshold.
       await _pumpAt(tester, viewportSize: _tabletSize);
       expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byType(FloatingPillNavigationBar), findsNothing);
+      expect(find.byType(lgw.GlassBottomBar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
       expect(rail.extended, isFalse);
@@ -365,7 +367,7 @@ void main() {
       await _pumpAt(tester, viewportSize: _desktopSize);
       expect(find.byType(DesktopSidebar), findsOneWidget);
       expect(find.byType(NavigationRail), findsNothing);
-      expect(find.byType(FloatingPillNavigationBar), findsNothing);
+      expect(find.byType(lgw.GlassBottomBar), findsNothing);
     });
 
     testWidgets('NavigationRail selectedIndex follows the current URL', (
