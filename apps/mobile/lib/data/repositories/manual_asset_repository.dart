@@ -81,6 +81,36 @@ class ManualAssetRepository {
     return observed?.perUnit;
   }
 
+  /// Current balance for a cash asset, derived from the postings ledger.
+  ///
+  /// Returns the algebraic sum of all non-deleted posting units on the
+  /// account linked to [assetId].  Returns `null` when the asset has no
+  /// postings or the metadata cannot be decoded.
+  Future<Decimal?> cashBalanceFromPostings(String assetId) async {
+    final assetRow = await (_db.select(
+      _db.assets,
+    )..where((t) => t.id.equals(assetId))).getSingleOrNull();
+    if (assetRow == null) return null;
+    final meta = ManualAssetMetadata.decode(assetRow.metadataJson);
+    if (meta == null) return null;
+    final rows = await (_db.select(_db.postings).join([
+      innerJoin(
+        _db.journalEntries,
+        _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+      ),
+    ])
+          ..where(_db.postings.accountId.equals(meta.accountId))
+          ..where(_db.postings.deletedAt.isNull())
+          ..where(_db.journalEntries.deletedAt.isNull()))
+        .get();
+    if (rows.isEmpty) return null;
+    var sum = Decimal.zero;
+    for (final row in rows) {
+      sum += row.readTable(_db.postings).units;
+    }
+    return sum;
+  }
+
   Future<Asset> createCash({
     required String accountId,
     required String currency,
