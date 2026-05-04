@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -72,6 +73,6 @@ void main() {
     // Home page localized title — "Overview" in en-US, "总览" in zh-CN.
     // Test environment falls back to the first supported locale (en).
     expect(find.text('Overview'), findsWidgets);
-    expect(find.byType(FloatingPillNavigationBar), findsOneWidget);
+    expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
   });
 }

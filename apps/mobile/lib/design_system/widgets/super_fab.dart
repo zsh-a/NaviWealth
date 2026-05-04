@@ -8,6 +8,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
+import 'floating_pill_navigation_bar.dart';
 
 /// A single action item displayed in the [SuperFab] speed-dial popup.
 class SuperFabAction {
@@ -189,10 +190,11 @@ class _SpeedDialOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
 
     // Position above the floating nav bar's top edge.
-    const barInset = 76.0; // overlayBottomInset: bar height + margin
+    const barInset = FloatingPillNavigationBar.overlayBottomInset;
+    const floatGap = 20.0;
     const gap = 4.0;
 
     return AnimatedBuilder(
@@ -218,7 +220,7 @@ class _SpeedDialOverlay extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
-              bottom: barInset + bottomPadding + gap,
+              bottom: barInset + floatGap + bottomSafe + gap,
               child: _buildActionList(context, t),
             ),
           ],

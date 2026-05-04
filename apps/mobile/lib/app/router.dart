@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -614,63 +616,283 @@ class _MobileShell extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
+  static const double _barHeight = 64;
+  static const double _barBottomGap = 12;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final bottomSafe = MediaQuery.of(context).viewPadding.bottom;
+    final glowColors = lgw.GlassThemeData.of(context).glowColorsFor(context);
+
+    // Total inset = bar height + its internal vertical padding (20×2) +
+    // bottom gap + safe area.
+    final totalBottomInset = _barHeight + 40 + _barBottomGap + bottomSafe;
+
     return Stack(
       children: [
-        // Page content — padded at the bottom so the last item clears
-        // the floating bar. The bar's glass effect makes it look like
-        // content extends behind it.
+        // Content — padded so last item clears the bar.
         Positioned.fill(
           child: Padding(
-            padding: const EdgeInsets.only(
-              bottom: FloatingPillNavigationBar.overlayBottomInset,
-            ),
-            child: lgw.GlassBackdropScope(child: child),
+            padding: EdgeInsets.only(bottom: totalBottomInset),
+            child: child,
           ),
         ),
-        // Floating nav bar — overlays the bottom of the content.
+        // Floating GlassBottomBar — lifted above the home indicator.
         Positioned(
           left: 0,
           right: 0,
-          bottom: 0,
-          child: FloatingPillNavigationBar(
+          bottom: bottomSafe + _barBottomGap,
+          child: lgw.GlassBottomBar(
+            barHeight: _barHeight,
+            quality: lgw.GlassQuality.premium,
             selectedIndex: selectedIndex,
-            destinations: [
+            onTabSelected: onDestinationSelected,
+            tabs: [
               for (final d in destinations)
-                PillNavDestination(
-                  icon: d.icon,
-                  selectedIcon: d.selectedIcon,
+                lgw.GlassBottomBarTab(
                   label: d.label,
+                  icon: Icon(d.icon),
+                  activeIcon: Icon(d.selectedIcon),
+                  glowColor: glowColors.primary,
                 ),
             ],
-            onDestinationSelected: onDestinationSelected,
-            superFabActions: [
-              SuperFabAction(
-                icon: Icons.swap_horiz,
-                label: l10n.superFabTrade,
-                onTap: () => context.push('/portfolio/trade'),
-              ),
-              SuperFabAction(
-                icon: Icons.receipt_long_outlined,
-                label: l10n.superFabExpense,
-                onTap: () => context.push('/portfolio/expenses/new'),
-              ),
-              SuperFabAction(
-                icon: Icons.swap_vert,
-                label: l10n.superFabTransfer,
-                onTap: () => context.push('/portfolio/accounts/transfer'),
-              ),
-              SuperFabAction(
-                icon: Icons.account_balance_wallet_outlined,
-                label: l10n.superFabAsset,
-                onTap: () => context.push('/portfolio/new/cash'),
-              ),
-            ],
+            extraButton: lgw.GlassBottomBarExtraButton(
+              icon: const Icon(Icons.add, color: Colors.white, size: 24),
+              label: l10n.superFabTrade,
+              size: 56,
+              onTap: () => _showSpeedDial(context, l10n),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  void _showSpeedDial(BuildContext context, AppLocalizations l10n) {
+    final actions = <_SpeedDialAction>[
+      _SpeedDialAction(
+        icon: Icons.swap_horiz,
+        label: l10n.superFabTrade,
+        onTap: () => context.push('/portfolio/trade'),
+      ),
+      _SpeedDialAction(
+        icon: Icons.receipt_long_outlined,
+        label: l10n.superFabExpense,
+        onTap: () => context.push('/portfolio/expenses/new'),
+      ),
+      _SpeedDialAction(
+        icon: Icons.swap_vert,
+        label: l10n.superFabTransfer,
+        onTap: () => context.push('/portfolio/accounts/transfer'),
+      ),
+      _SpeedDialAction(
+        icon: Icons.account_balance_wallet_outlined,
+        label: l10n.superFabAsset,
+        onTap: () => context.push('/portfolio/new/cash'),
+      ),
+    ];
+    _SpeedDialOverlay.show(context, actions);
+  }
+}
+
+class _SpeedDialAction {
+  const _SpeedDialAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+/// Speed-dial overlay shown from the GlassBottomBar's extra button.
+class _SpeedDialOverlay {
+  static const double _actionHeight = 52.0;
+  static const double _actionGap = 10.0;
+  static const double _actionHorizontalPadding = 16.0;
+  static const double _barBottomGap = 12.0;
+
+  static void show(BuildContext context, List<_SpeedDialAction> actions) {
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 350),
+      vsync: Navigator.of(context),
+    );
+    final overlay = OverlayEntry(
+      builder: (_) => _SpeedDialOverlayWidget(
+        controller: controller,
+        actions: actions,
+      ),
+    );
+    Overlay.of(context).insert(overlay);
+
+    controller.forward();
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed) {
+        overlay.remove();
+        controller.dispose();
+      }
+    });
+  }
+}
+
+class _SpeedDialOverlayWidget extends StatelessWidget {
+  const _SpeedDialOverlayWidget({
+    required this.controller,
+    required this.actions,
+  });
+
+  final AnimationController controller;
+  final List<_SpeedDialAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
+    // Position above the GlassBottomBar.
+    final barBottom = bottomSafe + _SpeedDialOverlay._barBottomGap;
+    const barHeight = _MobileShell._barHeight;
+    const gap = 4.0;
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final t = Curves.easeOut.transform(controller.value);
+        return Stack(
+          children: [
+            // Scrim — soft dim + blur, tap to dismiss.
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => controller.reverse(),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.25 * t),
+                  ),
+                ),
+              ),
+            ),
+            // Action list — positioned above the bar.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: barBottom + barHeight + gap,
+              child: _buildActionList(t),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActionList(double globalT) {
+    const staggerStep = 0.08;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < actions.length; i++)
+          _buildActionItem(actions[i], i, actions.length, staggerStep),
+      ],
+    );
+  }
+
+  Widget _buildActionItem(
+    _SpeedDialAction action,
+    int index,
+    int total,
+    double staggerStep,
+  ) {
+    final reversedIndex = total - 1 - index;
+    final stagger = reversedIndex * staggerStep;
+    final itemT = (controller.value - stagger).clamp(0.0, 1.0);
+    final curved = Curves.easeOutCubic.transform(itemT);
+    final slideOffset = (1 - curved) * 24.0;
+    final opacity = itemT.clamp(0.0, 1.0);
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, slideOffset),
+            child: child,
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: _SpeedDialOverlay._actionGap),
+        child: _GlassActionChip(
+          action: action,
+          height: _SpeedDialOverlay._actionHeight,
+          horizontalPadding: _SpeedDialOverlay._actionHorizontalPadding,
+        ),
+      ),
+    );
+  }
+}
+
+/// Glass-style action chip for the speed-dial overlay.
+class _GlassActionChip extends StatelessWidget {
+  const _GlassActionChip({
+    required this.action,
+    required this.height,
+    required this.horizontalPadding,
+  });
+
+  final _SpeedDialAction action;
+  final double height;
+  final double horizontalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        Navigator.of(context).pop();
+        action.onTap();
+      },
+      child: lgw.GlassContainer(
+        useOwnLayer: true,
+        quality: lgw.GlassQuality.minimal,
+        height: height,
+        margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.full),
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: ColorPalette.brand500.withValues(alpha: 0.15),
+              ),
+              alignment: Alignment.center,
+              child: Icon(action.icon, size: 18, color: ColorPalette.brand500),
+            ),
+            const SizedBox(width: Spacing.s12),
+            Flexible(
+              child: Text(
+                action.label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
