@@ -105,37 +105,60 @@ final _dashboardPriceRowsProvider = StreamProvider.autoDispose<List<PriceRow>>((
   yield* query.watch();
 });
 
-/// Cash-account balances derived from the postings ledger. The map is
-/// keyed by `accountId` (the link between an [AssetType.cash] asset row
-/// and its journal-entry legs) and valued at the algebraic sum of all
-/// non-deleted posting units for that account.
-final _cashBalancesFromPostingsProvider =
-    StreamProvider.autoDispose<Map<String, Decimal>>((ref) async* {
+/// Historical cash-account balances derived from the postings ledger.
+///
+/// Keyed by `accountId`, each value is a chronologically ordered list of
+/// [ManualAssetValuePoint]s representing the running balance after every
+/// posting date.  The dashboard snapshot uses the last point per account;
+/// the trend builder walks the full series via [ManualAssetValuation.valueAt].
+final _cashPostingHistoryProvider =
+    StreamProvider.autoDispose<Map<String, List<ManualAssetValuePoint>>>((
+      ref,
+    ) async* {
       final db = await ref.watch(appDatabaseProvider.future);
-      final query = db.select(db.postings).join([
-        innerJoin(
-          db.journalEntries,
-          db.journalEntries.id.equalsExp(db.postings.journalEntryId),
-        ),
-        innerJoin(db.assets, db.assets.id.equalsExp(db.postings.accountId)),
+      final je = db.journalEntries;
+      final p = db.postings;
+      final a = db.assets;
+      final query = db.select(p).join([
+        innerJoin(je, je.id.equalsExp(p.journalEntryId)),
+        innerJoin(a, a.id.equalsExp(p.accountId)),
       ])
-        ..where(db.postings.deletedAt.isNull())
-        ..where(db.journalEntries.deletedAt.isNull())
-        ..where(db.assets.deletedAt.isNull())
-        ..where(db.assets.type.equalsValue(AssetType.cash));
+        ..where(p.deletedAt.isNull())
+        ..where(je.deletedAt.isNull())
+        ..where(a.deletedAt.isNull())
+        ..where(a.type.equalsValue(AssetType.cash))
+        ..addColumns([je.date])
+        ..orderBy([
+          OrderingTerm.asc(p.accountId),
+          OrderingTerm.asc(je.date),
+        ]);
       yield* query.watch().map((rows) {
-        final map = <String, Decimal>{};
+        final raw = <String, List<(DateTime, Decimal)>>{};
         for (final row in rows) {
-          final p = row.readTable(db.postings);
-          map.update(
-            p.accountId,
-            (prev) => prev + p.units,
-            ifAbsent: () => p.units,
-          );
+          final posting = row.readTable(p);
+          final date = row.read(je.date)!;
+          raw
+              .putIfAbsent(posting.accountId, () => [])
+              .add((date, posting.units));
         }
-        return map;
+        return {
+          for (final entry in raw.entries)
+            entry.key: _runningBalance(entry.value),
+        };
       });
     });
+
+List<ManualAssetValuePoint> _runningBalance(
+  List<(DateTime date, Decimal delta)> rows,
+) {
+  final out = <ManualAssetValuePoint>[];
+  var cumulative = Decimal.zero;
+  for (final (date, delta) in rows) {
+    cumulative += delta;
+    out.add(ManualAssetValuePoint(observedOn: date, value: cumulative));
+  }
+  return out;
+}
 
 final dashboardManualAssetValuationsProvider =
     Provider<AsyncValue<List<ManualAssetValuation>>>((ref) {
@@ -152,15 +175,15 @@ final dashboardManualAssetValuationsProvider =
         return const AsyncValue.data(<ManualAssetValuation>[]);
       }
 
-      final cashBalances = ref.watch(_cashBalancesFromPostingsProvider);
+      final cashHistory = ref.watch(_cashPostingHistoryProvider);
       final prices = ref.watch(_dashboardPriceRowsProvider);
-      if (cashBalances.isLoading || prices.isLoading) {
+      if (cashHistory.isLoading || prices.isLoading) {
         return const AsyncValue.loading();
       }
-      if (cashBalances.hasError) {
+      if (cashHistory.hasError) {
         return AsyncValue.error(
-          cashBalances.error!,
-          cashBalances.stackTrace ?? StackTrace.current,
+          cashHistory.error!,
+          cashHistory.stackTrace ?? StackTrace.current,
         );
       }
       if (prices.hasError) {
@@ -173,7 +196,7 @@ final dashboardManualAssetValuationsProvider =
         _buildManualAssetValuations(
           manualAssets: manualList,
           priceRows: prices.value ?? const <PriceRow>[],
-          cashBalances: cashBalances.value ?? const {},
+          cashHistory: cashHistory.value ?? const {},
         ),
       );
     });
@@ -262,7 +285,7 @@ List<SecurityHolding> _buildSecurityHoldings({
 List<ManualAssetValuation> _buildManualAssetValuations({
   required List<Asset> manualAssets,
   required List<PriceRow> priceRows,
-  required Map<String, Decimal> cashBalances,
+  required Map<String, List<ManualAssetValuePoint>> cashHistory,
 }) {
   if (manualAssets.isEmpty) return const [];
   final pricesByUnit = <String, List<PriceRow>>{};
@@ -274,18 +297,11 @@ List<ManualAssetValuation> _buildManualAssetValuations({
   for (final asset in manualAssets) {
     if (asset.type == AssetType.cash) {
       final meta = ManualAssetMetadata.decode(asset.metadataJson);
-      final balance = meta != null ? cashBalances[meta.accountId] : null;
-      if (balance == null) continue;
+      final observations =
+          meta != null ? cashHistory[meta.accountId] : null;
+      if (observations == null || observations.isEmpty) continue;
       out.add(
-        ManualAssetValuation(
-          asset: asset,
-          observations: [
-            ManualAssetValuePoint(
-              observedOn: DateTime.utc(2000),
-              value: balance,
-            ),
-          ],
-        ),
+        ManualAssetValuation(asset: asset, observations: observations),
       );
       continue;
     }
@@ -327,13 +343,13 @@ Future<List<ManualAssetValuation>> _manualAssetValuationsForHeader(
 
   final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
   if (manualAssets.isEmpty) return const <ManualAssetValuation>[];
-  final cashBalances =
-      await ref.watch(_cashBalancesFromPostingsProvider.future);
+  final cashHistory =
+      await ref.watch(_cashPostingHistoryProvider.future);
   final priceRows = await ref.watch(_dashboardPriceRowsProvider.future);
   return _buildManualAssetValuations(
     manualAssets: manualAssets,
     priceRows: priceRows,
-    cashBalances: cashBalances,
+    cashHistory: cashHistory,
   );
 }
 

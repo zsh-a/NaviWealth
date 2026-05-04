@@ -71,7 +71,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     if (existing == null || !mounted) return;
     final meta = existing.manualMetadata;
     final accountId = meta is CashMetadata ? meta.accountId : null;
-    final valuation = await repo.latestValuation(existing.id);
+    final valuation = await repo.cashBalanceFromPostings(existing.id);
     if (!mounted) return;
     setState(() {
       _initial = existing;
