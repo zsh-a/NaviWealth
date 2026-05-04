@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -6,9 +6,10 @@ import '../../core/haptics/haptics.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import 'glass_surface.dart';
+import '../tokens/radius_tokens.dart';
+import '../tokens/spacing_tokens.dart';
 
-/// A single action item displayed in the [SuperFab] radial popup.
+/// A single action item displayed in the [SuperFab] speed-dial popup.
 class SuperFabAction {
   const SuperFabAction({
     required this.icon,
@@ -21,11 +22,11 @@ class SuperFabAction {
   final VoidCallback onTap;
 }
 
-/// Central floating action button with a radial popup that fans out
-/// action items in a semicircle above the FAB.
+/// Central floating action button with a vertical speed-dial popup that
+/// expands action items above the FAB.
 ///
 /// Resting state: 56dp circle with a subtle pulse animation.
-/// Expanded state: staggered scale+fade per action item with scrim backdrop.
+/// Expanded state: staggered vertical list with frosted scrim backdrop.
 class SuperFab extends StatefulWidget {
   const SuperFab({super.key, required this.actions, this.enablePulse = true});
 
@@ -46,15 +47,17 @@ class SuperFab extends StatefulWidget {
   State<SuperFab> createState() => _SuperFabState();
 }
 
+const double _actionHeight = 52.0;
+const double _actionGap = 10.0;
+const double _actionHorizontalPadding = 16.0;
+
 class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final AnimationController _popupController;
   bool _isOpen = false;
-  OverlayEntry? _scrimEntry;
+  OverlayEntry? _overlayEntry;
 
   static const double _fabSize = SuperFab.fabSize;
-  static const double _actionSize = 48;
-  static const double _radius = 96;
 
   @override
   void initState() {
@@ -64,7 +67,7 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
       vsync: this,
     );
     _popupController = AnimationController(
-      duration: Motion.slow,
+      duration: Motion.medium,
       vsync: this,
     );
     if (widget.enablePulse && !SuperFab.disablePulseGlobally) {
@@ -74,31 +77,33 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _removeScrim();
+    _removeOverlay();
     _pulseController.dispose();
     _popupController.dispose();
     super.dispose();
   }
 
-  void _insertScrim() {
-    _scrimEntry = OverlayEntry(
-      builder: (_) => AnimatedBuilder(
+  void _insertOverlay() {
+    _removeOverlay();
+    _overlayEntry = OverlayEntry(
+      builder: (_) => _SpeedDialOverlay(
         animation: _popupController,
-        builder: (context, _) => IgnorePointer(
-          child: Container(
-            color: Colors.black.withValues(
-              alpha: 0.25 * _popupController.value,
-            ),
-          ),
-        ),
+        actions: widget.actions,
+        actionHeight: _actionHeight,
+        actionGap: _actionGap,
+        onDismiss: _dismiss,
+        onActionTap: (action) {
+          _dismiss();
+          action.onTap();
+        },
       ),
     );
-    Overlay.of(context).insert(_scrimEntry!);
+    Overlay.of(context).insert(_overlayEntry!);
   }
 
-  void _removeScrim() {
-    _scrimEntry?.remove();
-    _scrimEntry = null;
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   void _toggle() {
@@ -106,11 +111,11 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
     setState(() => _isOpen = !_isOpen);
     if (_isOpen) {
       _pulseController.stop();
-      _insertScrim();
+      _insertOverlay();
       _popupController.forward();
     } else {
       _popupController.reverse().then((_) {
-        _removeScrim();
+        _removeOverlay();
         if (mounted && widget.enablePulse && !SuperFab.disablePulseGlobally) {
           _pulseController.repeat(reverse: true);
         }
@@ -124,104 +129,7 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final actions = widget.actions;
-    final total = actions.length;
-
-    // Layout: FAB at bottom-center, actions fan out in a semicircle above.
-    // Coordinate origin = FAB center.
-    // Stack size: width spans the full diameter + action overflow,
-    // height spans FAB + radius upward + action overflow.
-    const stackW = _radius * 2 + _actionSize + _fabSize;
-    const stackH = _radius + _actionSize + _fabSize;
-    const fabCenterX = stackW / 2;
-    const fabCenterY = stackH - _fabSize / 2;
-
-    // Semicircle from left to right, above the FAB.
-    const startAngle = math.pi; // left (180°)
-    const endAngle = 0.0; // right (0°)
-
-    return SizedBox(
-      width: stackW,
-      height: stackH,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Radial action items.
-          for (int i = 0; i < total; i++)
-            _buildActionItem(
-              actions[i],
-              i,
-              total,
-              startAngle,
-              endAngle,
-              fabCenterX,
-              fabCenterY,
-            ),
-          // Central FAB.
-          Positioned(
-            left: fabCenterX - _fabSize / 2,
-            top: fabCenterY - _fabSize / 2,
-            child: _buildFabButton(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionItem(
-    SuperFabAction action,
-    int index,
-    int total,
-    double startAngle,
-    double endAngle,
-    double fabCX,
-    double fabCY,
-  ) {
-    // Distribute evenly across the semicircle.
-    final t = total > 1 ? index / (total - 1) : 0.5;
-    final angle = startAngle + (endAngle - startAngle) * t;
-    final targetX = _radius * math.cos(angle);
-    final targetY = -_radius * math.sin(angle); // screen Y is inverted
-
-    // Stagger: each item appears 12% after the previous.
-    final stagger = index * 0.12;
-
-    return AnimatedBuilder(
-      animation: _popupController,
-      builder: (context, _) {
-        final raw = _popupController.value;
-        final itemT = (raw - stagger).clamp(0.0, 1.0);
-        final curved = Curves.easeOutBack.transform(itemT);
-
-        final dx = targetX * curved;
-        final dy = targetY * curved;
-        final scale = itemT < 0.01 ? 0.0 : curved.clamp(0.0, 1.2);
-        final opacity = itemT.clamp(0.0, 1.0);
-
-        // Position: action center = FAB center + offset.
-        final cx = fabCX + dx;
-        final cy = fabCY + dy;
-
-        return Positioned(
-          left: cx - _actionSize / 2,
-          top: cy - _actionSize / 2 - 12, // 12px label space below
-          child: Opacity(
-            opacity: opacity,
-            child: Transform.scale(
-              scale: scale,
-              child: _ActionBubble(
-                action: action,
-                size: _actionSize,
-                onTap: () {
-                  _dismiss();
-                  action.onTap();
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    return _buildFabButton();
   }
 
   Widget _buildFabButton() {
@@ -233,29 +141,27 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
       },
       child: GestureDetector(
         onTap: _toggle,
-        child: Container(
+        child: AnimatedContainer(
+          duration: Motion.medium,
+          curve: Motion.emphasizedDecelerate,
           width: _fabSize,
           height: _fabSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [ColorPalette.brand400, ColorPalette.brand600],
-            ),
+            color: _isOpen ? ColorPalette.brand600 : ColorPalette.brand500,
             boxShadow: [
               BoxShadow(
-                color: ColorPalette.brand500.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+                color: ColorPalette.brand500.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: AnimatedRotation(
-            turns: _isOpen ? 0.125 : 0,
+            turns: _isOpen ? 0.125 : 0, // 45° rotation for "+" → "×"
             duration: Motion.medium,
             curve: Motion.emphasizedDecelerate,
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
+            child: const Icon(Icons.add, color: Colors.white, size: 24),
           ),
         ),
       ),
@@ -263,49 +169,193 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
   }
 }
 
-class _ActionBubble extends StatelessWidget {
-  const _ActionBubble({
+/// Overlay widget that renders the speed-dial menu and scrim.
+class _SpeedDialOverlay extends StatelessWidget {
+  const _SpeedDialOverlay({
+    required this.animation,
+    required this.actions,
+    required this.actionHeight,
+    required this.actionGap,
+    required this.onDismiss,
+    required this.onActionTap,
+  });
+
+  final Animation<double> animation;
+  final List<SuperFabAction> actions;
+  final double actionHeight;
+  final double actionGap;
+  final VoidCallback onDismiss;
+  final ValueChanged<SuperFabAction> onActionTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    // Position above the floating nav bar's top edge.
+    const barInset = 76.0; // overlayBottomInset: bar height + margin
+    const gap = 4.0;
+
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final t = Curves.easeOut.transform(animation.value);
+        return Stack(
+          children: [
+            // Scrim — soft dim + blur, tap to dismiss.
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onDismiss,
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.25 * t),
+                  ),
+                ),
+              ),
+            ),
+            // Action items — positioned above the nav bar.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: barInset + bottomPadding + gap,
+              child: _buildActionList(context, t),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActionList(BuildContext context, double globalT) {
+    final total = actions.length;
+    const staggerStep = 0.08;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < total; i++)
+          _buildActionItem(context, actions[i], i, total, staggerStep),
+      ],
+    );
+  }
+
+  Widget _buildActionItem(
+    BuildContext context,
+    SuperFabAction action,
+    int index,
+    int total,
+    double staggerStep,
+  ) {
+    final reversedIndex = total - 1 - index;
+    final stagger = reversedIndex * staggerStep;
+    final itemT = (animation.value - stagger).clamp(0.0, 1.0);
+    final curved = Curves.easeOutCubic.transform(itemT);
+
+    final slideOffset = (1 - curved) * 24.0;
+    final opacity = itemT.clamp(0.0, 1.0);
+
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, slideOffset),
+            child: child,
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: _actionGap),
+        child: _GlassActionChip(
+          action: action,
+          height: actionHeight,
+          onTap: () => onActionTap(action),
+        ),
+      ),
+    );
+  }
+}
+
+/// Apple-glass style action chip: frosted background, soft glow, refined icon.
+class _GlassActionChip extends StatelessWidget {
+  const _GlassActionChip({
     required this.action,
-    required this.size,
+    required this.height,
     required this.onTap,
   });
 
   final SuperFabAction action;
-  final double size;
+  final double height;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tokens = theme.extension<GlassTokens>() ?? GlassTokens.light();
-    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final glassTint = isDark
+        ? const Color(0xCC1C1C1E) // dark: 80% systemGray6
+        : const Color(0xB3F2F2F7); // light: 70% systemGray6
+
+    final borderColor = isDark
+        ? const Color(0x22FFFFFF) // 13% white
+        : const Color(0x22000000); // 13% black
+
+    Widget chip = Container(
+      height: height,
+      margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
+      padding: const EdgeInsets.symmetric(horizontal: _actionHorizontalPadding),
+      decoration: BoxDecoration(
+        color: glassTint,
+        borderRadius: BorderRadius.circular(Radii.full),
+        border: Border.all(color: borderColor, width: 0.5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          GlassSurface(
-            sigma: 16,
-            borderRadius: BorderRadius.circular(size / 2),
-            border: Border.all(color: tokens.hairlineColor, width: 1),
-            child: Container(
-              width: size,
-              height: size,
-              alignment: Alignment.center,
-              child: Icon(action.icon, size: 22, color: colorScheme.onSurface),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: ColorPalette.brand500.withValues(alpha: 0.15),
             ),
+            alignment: Alignment.center,
+            child: Icon(action.icon, size: 18, color: ColorPalette.brand500),
           ),
-          const SizedBox(height: 4),
-          Text(
-            action.label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: Spacing.s12),
+          Flexible(
+            child: Text(
+              action.label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : theme.colorScheme.onSurface,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
+    );
+
+    // Frosted glass blur — only on platforms that support it.
+    if (GlassTokens.isSupported()) {
+      chip = ClipRRect(
+        borderRadius: BorderRadius.circular(Radii.full),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: chip,
+        ),
+      );
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: chip,
     );
   }
 }

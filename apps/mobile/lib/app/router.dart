@@ -36,6 +36,7 @@ import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
+import '../features/liabilities/ui/liability_form_page.dart';
 import '../features/me/me_page.dart';
 import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
@@ -175,6 +176,12 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   builder: (_) => liabilities_lib.LiabilitiesPage(),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'new',
+                    name: 'liability-new',
+                    builder: (context, state) =>
+                        const LiabilityFormPage(),
+                  ),
                   GoRoute(
                     path: ':id',
                     name: 'liabilityDetail',
@@ -609,43 +616,60 @@ class _MobileShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      extendBody: true,
-      body: Padding(
-        padding: const EdgeInsets.only(
-          bottom: FloatingPillNavigationBar.bottomReservedHeight,
-        ),
-        child: child,
-      ),
-      bottomNavigationBar: FloatingPillNavigationBar(
-        selectedIndex: selectedIndex,
-        destinations: [
-          for (final d in destinations)
-            PillNavDestination(
-              icon: d.icon,
-              selectedIcon: d.selectedIcon,
-              label: d.label,
+    return Stack(
+      children: [
+        // Page content — padded at the bottom so the last item clears
+        // the floating bar. The bar's glass effect makes it look like
+        // content extends behind it.
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              bottom: FloatingPillNavigationBar.overlayBottomInset,
             ),
-        ],
-        onDestinationSelected: onDestinationSelected,
-        superFabActions: [
-          SuperFabAction(
-            icon: Icons.swap_horiz,
-            label: l10n.superFabTrade,
-            onTap: () => context.push('/portfolio/trade'),
+            child: child,
           ),
-          SuperFabAction(
-            icon: Icons.receipt_long_outlined,
-            label: l10n.superFabExpense,
-            onTap: () => context.push('/portfolio/expenses/new'),
+        ),
+        // Floating nav bar — overlays the bottom of the content.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: FloatingPillNavigationBar(
+            selectedIndex: selectedIndex,
+            destinations: [
+              for (final d in destinations)
+                PillNavDestination(
+                  icon: d.icon,
+                  selectedIcon: d.selectedIcon,
+                  label: d.label,
+                ),
+            ],
+            onDestinationSelected: onDestinationSelected,
+            superFabActions: [
+              SuperFabAction(
+                icon: Icons.swap_horiz,
+                label: l10n.superFabTrade,
+                onTap: () => context.push('/portfolio/trade'),
+              ),
+              SuperFabAction(
+                icon: Icons.receipt_long_outlined,
+                label: l10n.superFabExpense,
+                onTap: () => context.push('/portfolio/expenses/new'),
+              ),
+              SuperFabAction(
+                icon: Icons.swap_vert,
+                label: l10n.superFabTransfer,
+                onTap: () => context.push('/portfolio/accounts/transfer'),
+              ),
+              SuperFabAction(
+                icon: Icons.account_balance_wallet_outlined,
+                label: l10n.superFabAsset,
+                onTap: () => context.push('/portfolio/new/cash'),
+              ),
+            ],
           ),
-          SuperFabAction(
-            icon: Icons.account_balance_wallet_outlined,
-            label: l10n.superFabAsset,
-            onTap: () => context.push('/portfolio/new/cash'),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
