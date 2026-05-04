@@ -27,6 +27,7 @@ dependencies:
   go_router: ^17.2.2
   intl: ^0.20.2
   json_annotation: ^4.11.0
+  liquid_glass_widgets: ^0.10.1
   logger: ^2.5.0
   package_info_plus: ^8.1.2
   path: ^1.9.0

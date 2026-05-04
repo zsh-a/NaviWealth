@@ -106,55 +106,53 @@ class _NetWorthHeader extends ConsumerWidget {
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.homeNetWorthTitle,
-              style: theme.textTheme.titleMedium,
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.homeNetWorthTitle,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: Spacing.s8),
+          // Cap dynamic-text scaling on the 32dp hero number so users on
+          // 200% system font size don't blow the card out of its row.
+          // FittedBox handles the long-currency / many-digits case
+          // (e.g. ¥123,456,789.00) by scaling the glyphs down to fit.
+          MediaQuery.withClampedTextScaling(
+            maxScaleFactor: 1.3,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: AnimatedMoneyText(
+                amount: value,
+                currencyCode: snapshot.baseCurrency,
+                style: TypographyTokens.numericDisplay,
+                showSign: value != null && value < 0,
+              ),
             ),
+          ),
+          if (hasData) ...[
             const SizedBox(height: Spacing.s8),
-            // Cap dynamic-text scaling on the 32dp hero number so users on
-            // 200% system font size don't blow the card out of its row.
-            // FittedBox handles the long-currency / many-digits case
-            // (e.g. ¥123,456,789.00) by scaling the glyphs down to fit.
-            MediaQuery.withClampedTextScaling(
-              maxScaleFactor: 1.3,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: AnimatedMoneyText(
-                  amount: value,
-                  currencyCode: snapshot.baseCurrency,
-                  style: TypographyTokens.numericDisplay,
-                  showSign: value != null && value < 0,
-                ),
-              ),
-            ),
-            if (hasData) ...[
-              const SizedBox(height: Spacing.s8),
-              _DeltaMetricsRow(metrics: metricsAsync),
-            ],
-            const SizedBox(height: Spacing.s4),
-            Text(
-              hasData
-                  ? l10n.dashboardNetWorthBreakdown(
-                      _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
-                      _formatBaseAmount(
-                        snapshot.totalLiabilities.amount.toDouble(),
-                      ),
-                      snapshot.baseCurrency,
-                    )
-                  : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+            _DeltaMetricsRow(metrics: metricsAsync),
           ],
-        ),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            hasData
+                ? l10n.dashboardNetWorthBreakdown(
+                    _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
+                    _formatBaseAmount(
+                      snapshot.totalLiabilities.amount.toDouble(),
+                    ),
+                    snapshot.baseCurrency,
+                  )
+                : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

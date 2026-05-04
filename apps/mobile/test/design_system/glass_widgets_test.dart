@@ -46,8 +46,7 @@ void main() {
     });
 
     testWidgets(
-      'wraps the inner AppBar in a transparent surface so the glass '
-      'tint is what shows through',
+      'delegates to the liquid_glass_widgets package for glass rendering',
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
@@ -56,11 +55,12 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final inner = tester.widget<AppBar>(find.byType(AppBar));
-        expect(inner.backgroundColor, Colors.transparent);
-        expect(inner.surfaceTintColor, Colors.transparent);
-        expect(inner.elevation, 0);
-        expect(inner.scrolledUnderElevation, 0);
+        // The package's GlassAppBar builds its own SafeArea + Row layout
+        // instead of wrapping a Flutter AppBar. Verify the title renders
+        // and the GlassAppBar widget is present in the tree.
+        expect(find.text('x'), findsOneWidget);
+        final glass = tester.widget<GlassAppBar>(find.byType(GlassAppBar));
+        expect(glass.preferredSize.height, kToolbarHeight);
       },
     );
   });

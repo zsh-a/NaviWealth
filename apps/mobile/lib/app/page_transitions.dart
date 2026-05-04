@@ -39,7 +39,7 @@ CustomTransitionPage<T> buildHeroAwareTransitionPage<T>({
       final isMobile = Breakpoints.isMobile(width);
       final curved = CurvedAnimation(
         parent: animation,
-        curve: Motion.emphasizedDecelerate,
+        curve: Motion.liquidAppear,
         reverseCurve: Motion.standardAccelerate,
       );
       if (isMobile) {

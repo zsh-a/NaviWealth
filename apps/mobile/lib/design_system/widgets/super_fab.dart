@@ -1,10 +1,10 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../../core/haptics/haptics.dart';
 import '../tokens/color_palette.dart';
-import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
@@ -142,8 +142,8 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
       child: GestureDetector(
         onTap: _toggle,
         child: AnimatedContainer(
-          duration: Motion.medium,
-          curve: Motion.emphasizedDecelerate,
+          duration: Motion.slow,
+          curve: Motion.liquidPress,
           width: _fabSize,
           height: _fabSize,
           decoration: BoxDecoration(
@@ -295,67 +295,45 @@ class _GlassActionChip extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final glassTint = isDark
-        ? const Color(0xCC1C1C1E) // dark: 80% systemGray6
-        : const Color(0xB3F2F2F7); // light: 70% systemGray6
-
-    final borderColor = isDark
-        ? const Color(0x22FFFFFF) // 13% white
-        : const Color(0x22000000); // 13% black
-
-    Widget chip = Container(
-      height: height,
-      margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
-      padding: const EdgeInsets.symmetric(horizontal: _actionHorizontalPadding),
-      decoration: BoxDecoration(
-        color: glassTint,
-        borderRadius: BorderRadius.circular(Radii.full),
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: ColorPalette.brand500.withValues(alpha: 0.15),
-            ),
-            alignment: Alignment.center,
-            child: Icon(action.icon, size: 18, color: ColorPalette.brand500),
-          ),
-          const SizedBox(width: Spacing.s12),
-          Flexible(
-            child: Text(
-              action.label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : theme.colorScheme.onSurface,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    // Frosted glass blur — only on platforms that support it.
-    if (GlassTokens.isSupported()) {
-      chip = ClipRRect(
-        borderRadius: BorderRadius.circular(Radii.full),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: chip,
-        ),
-      );
-    }
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: chip,
+      child: lgw.GlassContainer(
+        useOwnLayer: true,
+        quality: lgw.GlassQuality.minimal,
+        height: height,
+        margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
+        padding: const EdgeInsets.symmetric(horizontal: _actionHorizontalPadding),
+        shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.full),
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: ColorPalette.brand500.withValues(alpha: 0.15),
+              ),
+              alignment: Alignment.center,
+              child: Icon(action.icon, size: 18, color: ColorPalette.brand500),
+            ),
+            const SizedBox(width: Spacing.s12),
+            Flexible(
+              child: Text(
+                action.label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

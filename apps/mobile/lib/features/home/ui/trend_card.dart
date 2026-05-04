@@ -23,38 +23,36 @@ class TrendCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final trendAsync = ref.watch(dashboardTrendProvider);
 
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.dashboardTrendTitle,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
-                MoneyText(
-                  amount: snapshot.netWorth.amount.toDouble(),
-                  currencyCode: snapshot.baseCurrency,
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.dashboardTrendTitle,
                   style: theme.textTheme.titleMedium,
-                  showSign: snapshot.netWorth.isNegative,
                 ),
-              ],
-            ),
-            const SizedBox(height: Spacing.s12),
-            const _RangeChips(),
-            const SizedBox(height: Spacing.s12),
-            trendAsync.when(
-              loading: () => const _TrendSkeleton(),
-              error: (e, st) => _TrendError(error: e),
-              data: (trend) => _TrendChart(trend: trend),
-            ),
-          ],
-        ),
+              ),
+              MoneyText(
+                amount: snapshot.netWorth.amount.toDouble(),
+                currencyCode: snapshot.baseCurrency,
+                style: theme.textTheme.titleMedium,
+                showSign: snapshot.netWorth.isNegative,
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.s12),
+          const _RangeChips(),
+          const SizedBox(height: Spacing.s12),
+          trendAsync.when(
+            loading: () => const _TrendSkeleton(),
+            error: (e, st) => _TrendError(error: e),
+            data: (trend) => _TrendChart(trend: trend),
+          ),
+        ],
       ),
     );
   }
