@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'super_fab.dart';
 
@@ -107,8 +106,8 @@ class FloatingPillNavigationBar extends StatelessWidget {
   }
 }
 
-/// Apple-style frosted glass bar: heavy blur, subtle tint, no hard shadows.
-/// A thin hairline border defines edges without visual weight.
+/// Liquid glass bar: high blur, very translucent tint, specular highlight
+/// on the top edge, and subtle inner glow for glass boundary definition.
 class _GlassBar extends StatelessWidget {
   const _GlassBar({
     required this.tokens,
@@ -124,40 +123,57 @@ class _GlassBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderRadius = BorderRadius.circular(Radii.xxl);
-
-    // Apple-style: low-opacity tint, strong blur, minimal border.
-    final tintColor = isDark
-        ? const Color(0xB30A0A0F) // dark: 70% near-black
-        : const Color(0xA3F2F2F7); // light: 64% systemGray6
+    final borderRadius = BorderRadius.circular(tokens.borderRadius);
 
     Widget bar = Container(
       height: height,
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        // No hard shadow — glass effect provides depth.
       ),
       clipBehavior: Clip.antiAlias,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: tintColor,
+          color: tokens.surfaceColor,
           border: Border.all(
-            color: isDark
-                ? const Color(0x14FFFFFF) // 8% white
-                : const Color(0x14000000), // 8% black
+            color: tokens.hairlineColor,
             width: 0.5,
           ),
         ),
-        child: child,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                tokens.specularColor,
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.4],
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: tokens.innerGlowColor,
+                width: 0.5,
+              ),
+            ),
+            child: child,
+          ),
+        ),
       ),
     );
 
-    // Backdrop blur for the frosted effect.
+    // Backdrop blur for the liquid glass effect.
     if (GlassTokens.isSupported()) {
       bar = ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          filter: ui.ImageFilter.blur(
+            sigmaX: tokens.blurSigma,
+            sigmaY: tokens.blurSigma,
+          ),
           child: bar,
         ),
       );

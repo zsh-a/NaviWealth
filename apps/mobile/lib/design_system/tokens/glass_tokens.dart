@@ -61,6 +61,8 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     required this.surfaceColor,
     required this.hairlineColor,
     required this.borderRadius,
+    this.specularColor = Colors.transparent,
+    this.innerGlowColor = Colors.transparent,
   });
 
   final double blurSigma;
@@ -68,22 +70,34 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
   final Color hairlineColor;
   final double borderRadius;
 
-  /// Dark-mode glass — heavier blur (24) over a deep onyx wash so the
-  /// content layer underneath is hinted but not legible.
+  /// Top-edge specular highlight for liquid glass depth simulation.
+  final Color specularColor;
+
+  /// Subtle inner edge glow that defines glass boundaries.
+  final Color innerGlowColor;
+
+  /// Dark-mode liquid glass — high blur (32) with very low alpha so content
+  /// bleeds through. Specular highlight simulates light refraction on the
+  /// top edge; inner glow defines the glass boundary.
   factory GlassTokens.dark() => const GlassTokens(
-    blurSigma: 24,
-    surfaceColor: Color(0xB80D0E14), // rgba(13,14,20,0.72)
-    hairlineColor: Color(0x0FFFFFFF), // rgba(255,255,255,0.06)
-    borderRadius: 20,
+    blurSigma: 32,
+    surfaceColor: Color(0x520D0E14), // rgba(13,14,20,0.32) — very translucent
+    hairlineColor: Color(0x14FFFFFF), // rgba(255,255,255,0.08)
+    borderRadius: 24,
+    specularColor: Color(0x18FFFFFF), // rgba(255,255,255,0.09)
+    innerGlowColor: Color(0x0AFFFFFF), // rgba(255,255,255,0.04)
   );
 
-  /// Light-mode glass — softer blur (16) over a near-white wash so text
-  /// reads cleanly without a heavy frost.
+  /// Light-mode liquid glass — medium blur (24) with moderate alpha for
+  /// clean readability. Specular highlight adds a bright top edge;
+  /// inner glow softly defines the glass boundary.
   factory GlassTokens.light() => const GlassTokens(
-    blurSigma: 16,
-    surfaceColor: Color(0xD1FFFFFF), // rgba(255,255,255,0.82)
-    hairlineColor: Color(0x0F000000), // rgba(0,0,0,0.06)
-    borderRadius: 20,
+    blurSigma: 24,
+    surfaceColor: Color(0x8AFFFFFF), // rgba(255,255,255,0.54) — translucent
+    hairlineColor: Color(0x14000000), // rgba(0,0,0,0.08)
+    borderRadius: 24,
+    specularColor: Color(0x28FFFFFF), // rgba(255,255,255,0.16)
+    innerGlowColor: Color(0x14000000), // rgba(0,0,0,0.08)
   );
 
   static GlassTokens of(BuildContext context) =>
@@ -113,12 +127,16 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     Color? surfaceColor,
     Color? hairlineColor,
     double? borderRadius,
+    Color? specularColor,
+    Color? innerGlowColor,
   }) {
     return GlassTokens(
       blurSigma: blurSigma ?? this.blurSigma,
       surfaceColor: surfaceColor ?? this.surfaceColor,
       hairlineColor: hairlineColor ?? this.hairlineColor,
       borderRadius: borderRadius ?? this.borderRadius,
+      specularColor: specularColor ?? this.specularColor,
+      innerGlowColor: innerGlowColor ?? this.innerGlowColor,
     );
   }
 
@@ -130,6 +148,8 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       surfaceColor: Color.lerp(surfaceColor, other.surfaceColor, t)!,
       hairlineColor: Color.lerp(hairlineColor, other.hairlineColor, t)!,
       borderRadius: ui.lerpDouble(borderRadius, other.borderRadius, t)!,
+      specularColor: Color.lerp(specularColor, other.specularColor, t)!,
+      innerGlowColor: Color.lerp(innerGlowColor, other.innerGlowColor, t)!,
     );
   }
 }

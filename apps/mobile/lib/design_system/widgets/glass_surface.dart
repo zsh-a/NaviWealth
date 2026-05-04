@@ -33,6 +33,7 @@ class GlassSurface extends StatelessWidget {
     this.alpha,
     this.borderRadius,
     this.border,
+    this.enableSpecular = false,
   });
 
   /// Content rendered on top of the blurred backdrop.
@@ -54,6 +55,9 @@ class GlassSurface extends StatelessWidget {
   /// `Border(top: ..., left: ..., right: ...)` for sheets, etc.
   final Border? border;
 
+  /// Whether to render the liquid glass specular highlight and inner glow.
+  final bool enableSpecular;
+
   @override
   Widget build(BuildContext context) {
     final tokens = GlassTokens.of(context);
@@ -63,10 +67,52 @@ class GlassSurface extends StatelessWidget {
     final useBlur = GlassTokens.isSupported();
     final effectiveSigma = sigma ?? tokens.blurSigma;
 
-    Widget surface = DecoratedBox(
-      decoration: BoxDecoration(color: tint, border: border),
-      child: child,
-    );
+    Widget surface;
+
+    if (enableSpecular && borderRadius != null) {
+      // Liquid glass rendering: tint + specular highlight gradient + inner glow.
+      surface = DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              tint,
+              tint,
+            ],
+            stops: const [0.0, 1.0],
+          ),
+          border: border,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                tokens.specularColor,
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.4],
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: tokens.innerGlowColor,
+                width: 0.5,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      );
+    } else {
+      surface = DecoratedBox(
+        decoration: BoxDecoration(color: tint, border: border),
+        child: child,
+      );
+    }
 
     if (useBlur) {
       surface = BackdropFilter(

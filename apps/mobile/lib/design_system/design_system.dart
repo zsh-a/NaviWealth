@@ -34,6 +34,7 @@ export 'widgets/glass_app_bar.dart';
 export 'widgets/glass_modal_bottom_sheet.dart';
 export 'widgets/glass_navigation_bar.dart';
 export 'widgets/glass_surface.dart';
+export 'widgets/liquid_glass_card.dart';
 export 'widgets/money_text.dart';
 export 'widgets/optional_hero.dart';
 export 'widgets/responsive_two_column.dart';

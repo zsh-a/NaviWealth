@@ -102,23 +102,18 @@ class AppTheme {
         titleTextStyle: textTheme.titleLarge,
       ),
       cardTheme: CardThemeData(
-        // Cards get their depth from a 1-px hairline + a subtle surface
-        // tint, not from a Material drop shadow. In dark mode we drop
-        // shadows entirely; light mode keeps the hairline as a quiet
-        // separator (Sheet/Modal still use AppElevations.level1 directly
-        // when they need extra lift).
+        // Liquid glass cards: translucent surface with hairline border.
+        // Depth comes from the glass effect, not shadows.
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: Radii.brLg,
+          borderRadius: BorderRadius.circular(glass.borderRadius),
           side: BorderSide(
-            color: isDark
-                ? const Color(0x0FFFFFFF) // rgba(255,255,255,0.06)
-                : const Color(0x0F000000), // rgba(0,0,0,0.06)
-            width: 1,
+            color: glass.hairlineColor,
+            width: 0.5,
           ),
         ),
-        color: scheme.surfaceContainerLow,
+        color: glass.surfaceColor,
         surfaceTintColor: Colors.transparent,
         clipBehavior: Clip.antiAlias,
       ),

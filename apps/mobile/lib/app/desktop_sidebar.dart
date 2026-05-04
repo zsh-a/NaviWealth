@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,54 +35,83 @@ class DesktopSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final collapsed = ref.watch(sidebarCollapsedProvider);
-    final theme = Theme.of(context);
-    return AnimatedContainer(
+    final tokens = GlassTokens.of(context);
+    final useBlur = GlassTokens.isSupported();
+
+    Widget sidebar = AnimatedContainer(
       duration: Motion.fast,
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: tokens.surfaceColor,
         border: Border(
           right: BorderSide(
-            color: theme.dividerTheme.color ?? theme.colorScheme.outlineVariant,
-            width: 1,
+            color: tokens.hairlineColor,
+            width: 0.5,
           ),
         ),
       ),
-      child: SafeArea(
-        right: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: Spacing.s12),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s8,
-                  vertical: Spacing.s4,
-                ),
-                itemCount: destinations.length,
-                itemBuilder: (_, i) => _SidebarItem(
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  collapsed: collapsed,
-                  onTap: () => onDestinationSelected(i),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              tokens.specularColor,
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.3],
+          ),
+        ),
+        child: SafeArea(
+          right: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: Spacing.s12),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s8,
+                    vertical: Spacing.s4,
+                  ),
+                  itemCount: destinations.length,
+                  itemBuilder: (_, i) => _SidebarItem(
+                    destination: destinations[i],
+                    selected: i == selectedIndex,
+                    collapsed: collapsed,
+                    onTap: () => onDestinationSelected(i),
+                  ),
                 ),
               ),
-            ),
-            Divider(
-              height: 1,
-              color: theme.dividerTheme.color,
-            ),
-            _CollapseToggle(
-              collapsed: collapsed,
-              onToggle: () =>
-                  ref.read(sidebarCollapsedProvider.notifier).toggle(),
-            ),
-          ],
+              Divider(
+                height: 1,
+                color: tokens.hairlineColor,
+              ),
+              _CollapseToggle(
+                collapsed: collapsed,
+                onToggle: () =>
+                    ref.read(sidebarCollapsedProvider.notifier).toggle(),
+              ),
+            ],
+          ),
         ),
       ),
     );
+
+    if (useBlur) {
+      sidebar = ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: tokens.blurSigma,
+            sigmaY: tokens.blurSigma,
+          ),
+          child: sidebar,
+        ),
+      );
+    }
+
+    return sidebar;
   }
 }
 

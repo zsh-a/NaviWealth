@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -691,27 +693,70 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = GlassTokens.of(context);
+    final useBlur = GlassTokens.isSupported();
+    final railWidth = extended ? 240.0 : 72.0;
+
+    Widget rail = Container(
+      width: railWidth,
+      decoration: BoxDecoration(
+        color: tokens.surfaceColor,
+        border: Border(
+          right: BorderSide(
+            color: tokens.hairlineColor,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              tokens.specularColor,
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.3],
+          ),
+        ),
+        child: NavigationRail(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: onDestinationSelected,
+          extended: extended,
+          backgroundColor: Colors.transparent,
+          labelType: extended
+              ? NavigationRailLabelType.none
+              : NavigationRailLabelType.all,
+          destinations: [
+            for (final d in destinations)
+              NavigationRailDestination(
+                icon: Icon(d.icon),
+                selectedIcon: Icon(d.selectedIcon),
+                label: Text(d.label),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (useBlur) {
+      rail = ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: tokens.blurSigma,
+            sigmaY: tokens.blurSigma,
+          ),
+          child: rail,
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
-            NavigationRail(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-              extended: extended,
-              labelType: extended
-                  ? NavigationRailLabelType.none
-                  : NavigationRailLabelType.all,
-              destinations: [
-                for (final d in destinations)
-                  NavigationRailDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon),
-                    label: Text(d.label),
-                  ),
-              ],
-            ),
-            const VerticalDivider(width: 1, thickness: 1),
+            rail,
             Expanded(child: child),
           ],
         ),
