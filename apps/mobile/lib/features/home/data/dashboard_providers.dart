@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -9,6 +10,7 @@ import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
+import '../../../data/domain/manual_asset_metadata.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/services/net_worth_service.dart';
@@ -103,6 +105,38 @@ final _dashboardPriceRowsProvider = StreamProvider.autoDispose<List<PriceRow>>((
   yield* query.watch();
 });
 
+/// Cash-account balances derived from the postings ledger. The map is
+/// keyed by `accountId` (the link between an [AssetType.cash] asset row
+/// and its journal-entry legs) and valued at the algebraic sum of all
+/// non-deleted posting units for that account.
+final _cashBalancesFromPostingsProvider =
+    StreamProvider.autoDispose<Map<String, Decimal>>((ref) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      final query = db.select(db.postings).join([
+        innerJoin(
+          db.journalEntries,
+          db.journalEntries.id.equalsExp(db.postings.journalEntryId),
+        ),
+        innerJoin(db.assets, db.assets.id.equalsExp(db.postings.accountId)),
+      ])
+        ..where(db.postings.deletedAt.isNull())
+        ..where(db.journalEntries.deletedAt.isNull())
+        ..where(db.assets.deletedAt.isNull())
+        ..where(db.assets.type.equalsValue(AssetType.cash));
+      yield* query.watch().map((rows) {
+        final map = <String, Decimal>{};
+        for (final row in rows) {
+          final p = row.readTable(db.postings);
+          map.update(
+            p.accountId,
+            (prev) => prev + p.units,
+            ifAbsent: () => p.units,
+          );
+        }
+        return map;
+      });
+    });
+
 final dashboardManualAssetValuationsProvider =
     Provider<AsyncValue<List<ManualAssetValuation>>>((ref) {
       final manual = ref.watch(manualAssetsStreamProvider);
@@ -118,8 +152,17 @@ final dashboardManualAssetValuationsProvider =
         return const AsyncValue.data(<ManualAssetValuation>[]);
       }
 
+      final cashBalances = ref.watch(_cashBalancesFromPostingsProvider);
       final prices = ref.watch(_dashboardPriceRowsProvider);
-      if (prices.isLoading) return const AsyncValue.loading();
+      if (cashBalances.isLoading || prices.isLoading) {
+        return const AsyncValue.loading();
+      }
+      if (cashBalances.hasError) {
+        return AsyncValue.error(
+          cashBalances.error!,
+          cashBalances.stackTrace ?? StackTrace.current,
+        );
+      }
       if (prices.hasError) {
         return AsyncValue.error(
           prices.error!,
@@ -130,6 +173,7 @@ final dashboardManualAssetValuationsProvider =
         _buildManualAssetValuations(
           manualAssets: manualList,
           priceRows: prices.value ?? const <PriceRow>[],
+          cashBalances: cashBalances.value ?? const {},
         ),
       );
     });
@@ -218,6 +262,7 @@ List<SecurityHolding> _buildSecurityHoldings({
 List<ManualAssetValuation> _buildManualAssetValuations({
   required List<Asset> manualAssets,
   required List<PriceRow> priceRows,
+  required Map<String, Decimal> cashBalances,
 }) {
   if (manualAssets.isEmpty) return const [];
   final pricesByUnit = <String, List<PriceRow>>{};
@@ -227,6 +272,23 @@ List<ManualAssetValuation> _buildManualAssetValuations({
 
   final out = <ManualAssetValuation>[];
   for (final asset in manualAssets) {
+    if (asset.type == AssetType.cash) {
+      final meta = ManualAssetMetadata.decode(asset.metadataJson);
+      final balance = meta != null ? cashBalances[meta.accountId] : null;
+      if (balance == null) continue;
+      out.add(
+        ManualAssetValuation(
+          asset: asset,
+          observations: [
+            ManualAssetValuePoint(
+              observedOn: DateTime.utc(2000),
+              value: balance,
+            ),
+          ],
+        ),
+      );
+      continue;
+    }
     final rows =
         (pricesByUnit[asset.id] ?? const <PriceRow>[])
             .where((row) => row.quoteCurrency == asset.currency)
@@ -265,10 +327,13 @@ Future<List<ManualAssetValuation>> _manualAssetValuationsForHeader(
 
   final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
   if (manualAssets.isEmpty) return const <ManualAssetValuation>[];
+  final cashBalances =
+      await ref.watch(_cashBalancesFromPostingsProvider.future);
   final priceRows = await ref.watch(_dashboardPriceRowsProvider.future);
   return _buildManualAssetValuations(
     manualAssets: manualAssets,
     priceRows: priceRows,
+    cashBalances: cashBalances,
   );
 }
 
