@@ -8,7 +8,6 @@ import '../../../data/domain/liability.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
-import 'liability_form_page.dart';
 import 'liability_l10n.dart';
 
 /// List of all of the user's liabilities. Tapping a row drills into the
@@ -50,20 +49,6 @@ class LiabilitiesPage extends ConsumerWidget {
         actions: const [],
       ),
       body: body,
-      floatingActionButton: ScrollAwareFab(
-        child: AppFab.extended(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const LiabilityFormPage(),
-                fullscreenDialog: true,
-              ),
-            );
-          },
-          icon: const Icon(Icons.add),
-          label: Text(l10n.liabilitiesAddAction),
-        ),
-      ),
     );
   }
 }

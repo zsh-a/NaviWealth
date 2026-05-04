@@ -47,59 +47,93 @@ class PortfolioPage extends ConsumerWidget {
 
   void _showAddSheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     showGlassModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (ctx) => ListView(
         shrinkWrap: true,
         children: [
-            ListTile(
-              leading: const Icon(Icons.savings_outlined),
-              title: Text(l10n.assetsAddDepositTitle),
-              subtitle: Text(l10n.assetsAddDepositSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push('/portfolio/new/deposit');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_graph_outlined),
-              title: Text(l10n.assetsAddWealthTitle),
-              subtitle: Text(l10n.assetsAddWealthSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push('/portfolio/new/wealth');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.home_outlined),
-              title: Text(l10n.physicalAssetAddRealEstate),
-              subtitle: Text(l10n.assetsAddRealEstateSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _openPhysicalCreate(context, AssetType.realEstate);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.directions_car_outlined),
-              title: Text(l10n.physicalAssetAddVehicle),
-              subtitle: Text(l10n.assetsAddVehicleSubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _openPhysicalCreate(context, AssetType.vehicle);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.payments_outlined),
-              title: Text(l10n.assetsAddLiabilityTitle),
-              subtitle: Text(l10n.assetsAddLiabilitySubtitle),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push('/portfolio/liabilities');
-              },
-            ),
-          ],
+          _sectionHeader(theme, l10n.portfolioAssetsTab),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined),
+            title: Text(l10n.assetsAddCashTitle),
+            subtitle: Text(l10n.assetsAddCashSubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              context.push('/portfolio/new/cash');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.savings_outlined),
+            title: Text(l10n.assetsAddDepositTitle),
+            subtitle: Text(l10n.assetsAddDepositSubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              context.push('/portfolio/new/deposit');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.auto_graph_outlined),
+            title: Text(l10n.assetsAddWealthTitle),
+            subtitle: Text(l10n.assetsAddWealthSubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              context.push('/portfolio/new/wealth');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.candlestick_chart_outlined),
+            title: Text(l10n.assetsAddTradeTitle),
+            subtitle: Text(l10n.assetsAddTradeSubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              context.push('/portfolio/trade');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.home_outlined),
+            title: Text(l10n.physicalAssetAddRealEstate),
+            subtitle: Text(l10n.assetsAddRealEstateSubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _openPhysicalCreate(context, AssetType.realEstate);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.directions_car_outlined),
+            title: Text(l10n.physicalAssetAddVehicle),
+            subtitle: Text(l10n.assetsAddVehicleSubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _openPhysicalCreate(context, AssetType.vehicle);
+            },
+          ),
+          _sectionHeader(theme, l10n.portfolioLiabilitiesTab),
+          ListTile(
+            leading: const Icon(Icons.payments_outlined),
+            title: Text(l10n.assetsAddLiabilityTitle),
+            subtitle: Text(l10n.assetsAddLiabilitySubtitle),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              context.push('/portfolio/liabilities/new');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(ThemeData theme, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        title,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
         ),
+      ),
     );
   }
 

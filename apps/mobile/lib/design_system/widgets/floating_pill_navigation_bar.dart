@@ -1,12 +1,12 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
-import '../theme/app_elevations.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
-import 'glass_surface.dart';
 import 'super_fab.dart';
 
 /// A navigation destination for the [FloatingPillNavigationBar].
@@ -22,16 +22,14 @@ class PillNavDestination {
   final String label;
 }
 
-/// Modern floating pill-shaped bottom navigation bar with a central
-/// [SuperFab] that consolidates all creation actions.
+/// Modern floating bottom navigation bar with a central [SuperFab] that
+/// consolidates all creation actions.
 ///
 /// Layout: `[nav0] [nav1]  [FAB]  [nav2] [nav3]`
 ///
-/// Design principles:
-/// - **Floating**: 16dp horizontal margin, 12dp bottom, fully rounded pill
-/// - **Glass**: frosted glass surface (sigma=24, 1px hairline border)
-/// - **Hide text**: unselected = icon only; selected = icon + label with
-///   micro-animation (scale 1.0→1.08, fade+slide label)
+/// Design: Apple-style frosted glass — high blur, minimal tint, no hard
+/// shadows. Labels are always visible below icons. Content scrolls behind
+/// the bar for an immersive feel.
 class FloatingPillNavigationBar extends StatelessWidget {
   const FloatingPillNavigationBar({
     super.key,
@@ -50,27 +48,23 @@ class FloatingPillNavigationBar extends StatelessWidget {
   /// Whether the SuperFab resting-state pulse animation plays.
   final bool enableSuperFabPulse;
 
-  static const double _barHeight = 64;
-  static const double _horizontalMargin = Spacing.s16;
-  static const double _bottomMargin = 12;
-  static const double _fabGap = 68;
+  static const double _barHeight = 68;
+  static const double _horizontalMargin = Spacing.s12;
+  static const double _bottomMargin = 8;
 
-  /// Space reserved at the bottom of the body so content is not hidden
-  /// behind the floating pill bar. = bar height + bottom margin.
-  static const double bottomReservedHeight = _barHeight + _bottomMargin;
+  /// Bottom inset injected into MediaQuery so child scroll views can
+  /// scroll past the floating bar. = bar height + bottom margin.
+  static const double overlayBottomInset = _barHeight + _bottomMargin;
 
   @override
   Widget build(BuildContext context) {
     final tokens = GlassTokens.of(context);
-    final elevations = AppElevations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Split destinations: first half left of FAB, second half right.
     final mid = destinations.length ~/ 2;
     final leftDests = destinations.sublist(0, mid);
     final rightDests = destinations.sublist(mid);
-
-    // The FAB overlaps half above the pill bar top edge.
-    const fabOverflow = SuperFab.fabSize / 2;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -79,72 +73,33 @@ class FloatingPillNavigationBar extends StatelessWidget {
         _horizontalMargin,
         _bottomMargin,
       ),
-      child: SizedBox(
-        // Tall enough that the SuperFab's action items stay within layout
-        // bounds — RenderStack.hitTest rejects children outside `size` even
-        // with Clip.none.
-        height: _barHeight + fabOverflow + 152,
-        child: Stack(
-          clipBehavior: Clip.none,
+      child: _GlassBar(
+        tokens: tokens,
+        isDark: isDark,
+        height: _barHeight,
+        child: Row(
           children: [
-            // The pill bar — positioned at the bottom of the stack.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                height: _barHeight,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(Radii.full),
-                  boxShadow: elevations.level3,
-                ),
-                child: GlassSurface(
-                  sigma: tokens.blurSigma,
-                  borderRadius: BorderRadius.circular(Radii.full),
-                  border: Border.all(
-                    color: tokens.hairlineColor,
-                    width: 1,
-                  ),
-                  child: Row(
-                    children: [
-                      // Left nav items.
-                      for (int i = 0; i < leftDests.length; i++)
-                        Expanded(
-                          child: _PillNavItem(
-                            destination: leftDests[i],
-                            isSelected: selectedIndex == i,
-                            onTap: () => onDestinationSelected(i),
-                          ),
-                        ),
-                      // Center gap for the FAB.
-                      const SizedBox(width: _fabGap),
-                      // Right nav items.
-                      for (int i = 0; i < rightDests.length; i++)
-                        Expanded(
-                          child: _PillNavItem(
-                            destination: rightDests[i],
-                            isSelected: selectedIndex == mid + i,
-                            onTap: () => onDestinationSelected(mid + i),
-                          ),
-                        ),
-                    ],
-                  ),
+            for (int i = 0; i < leftDests.length; i++)
+              Expanded(
+                child: _PillNavItem(
+                  destination: leftDests[i],
+                  isSelected: selectedIndex == i,
+                  onTap: () => onDestinationSelected(i),
                 ),
               ),
+            // Center FAB — flush with the bar, no overflow.
+            SuperFab(
+              actions: superFabActions,
+              enablePulse: enableSuperFabPulse,
             ),
-            // The Super FAB — centered horizontally, overlapping the top
-            // edge of the pill bar by half the FAB diameter.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: _barHeight - fabOverflow,
-              child: Center(
-                child: SuperFab(
-                  actions: superFabActions,
-                  enablePulse: enableSuperFabPulse,
+            for (int i = 0; i < rightDests.length; i++)
+              Expanded(
+                child: _PillNavItem(
+                  destination: rightDests[i],
+                  isSelected: selectedIndex == mid + i,
+                  onTap: () => onDestinationSelected(mid + i),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -152,10 +107,70 @@ class FloatingPillNavigationBar extends StatelessWidget {
   }
 }
 
-/// A single navigation item inside the pill bar.
+/// Apple-style frosted glass bar: heavy blur, subtle tint, no hard shadows.
+/// A thin hairline border defines edges without visual weight.
+class _GlassBar extends StatelessWidget {
+  const _GlassBar({
+    required this.tokens,
+    required this.isDark,
+    required this.height,
+    required this.child,
+  });
+
+  final GlassTokens tokens;
+  final bool isDark;
+  final double height;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(Radii.xxl);
+
+    // Apple-style: low-opacity tint, strong blur, minimal border.
+    final tintColor = isDark
+        ? const Color(0xB30A0A0F) // dark: 70% near-black
+        : const Color(0xA3F2F2F7); // light: 64% systemGray6
+
+    Widget bar = Container(
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        // No hard shadow — glass effect provides depth.
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tintColor,
+          border: Border.all(
+            color: isDark
+                ? const Color(0x14FFFFFF) // 8% white
+                : const Color(0x14000000), // 8% black
+            width: 0.5,
+          ),
+        ),
+        child: child,
+      ),
+    );
+
+    // Backdrop blur for the frosted effect.
+    if (GlassTokens.isSupported()) {
+      bar = ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          child: bar,
+        ),
+      );
+    }
+
+    return bar;
+  }
+}
+
+/// A single navigation item: icon above label, always visible.
 ///
-/// Unselected: icon only (neutral color).
-/// Selected: icon scales up + label fades in with slide animation.
+/// Selected: brand color + subtle scale bump.
+/// Unselected: muted color.
 class _PillNavItem extends StatelessWidget {
   const _PillNavItem({
     required this.destination,
@@ -178,53 +193,35 @@ class _PillNavItem extends StatelessWidget {
       onTap: onTap,
       child: SizedBox(
         height: FloatingPillNavigationBar._barHeight,
-        child: AnimatedContainer(
-          duration: Motion.medium,
-          curve: Motion.emphasizedDecelerate,
-          alignment: Alignment.center,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedScale(
-                  scale: isSelected ? 1.08 : 1.0,
-                  duration: Motion.medium,
-                  curve: Motion.emphasizedDecelerate,
-                  child: Icon(
-                    isSelected ? destination.selectedIcon : destination.icon,
-                    size: 24,
-                    color: isSelected ? selectedColor : unselectedColor,
-                  ),
-                ),
-                // Label: visible only when selected.
-                AnimatedSize(
-                  duration: Motion.medium,
-                  curve: Motion.emphasizedDecelerate,
-                  alignment: Alignment.centerLeft,
-                  child: isSelected
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: AnimatedOpacity(
-                            opacity: isSelected ? 1 : 0,
-                            duration: Motion.fast,
-                            child: Text(
-                              destination.label,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: selectedColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.clip,
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.1 : 1.0,
+              duration: Motion.medium,
+              curve: Motion.emphasizedDecelerate,
+              child: Icon(
+                isSelected ? destination.selectedIcon : destination.icon,
+                size: 24,
+                color: isSelected ? selectedColor : unselectedColor,
+              ),
             ),
-          ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: Motion.medium,
+              curve: Motion.emphasizedDecelerate,
+              style: theme.textTheme.labelSmall!.copyWith(
+                color: isSelected ? selectedColor : unselectedColor,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 10,
+              ),
+              child: Text(
+                destination.label,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
+              ),
+            ),
+          ],
         ),
       ),
     );
