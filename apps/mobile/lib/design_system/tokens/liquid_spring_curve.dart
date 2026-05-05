@@ -17,7 +17,7 @@ class LiquidSpringCurve extends Curve {
   /// - 0.5 = more elastic
   ///
   /// [response] is the natural period in seconds (e.g. 0.4 for 400ms).
-  const LiquidSpringCurve({
+  LiquidSpringCurve({
     this.dampingRatio = 0.75,
     this.response = 0.4,
   });
@@ -25,18 +25,22 @@ class LiquidSpringCurve extends Curve {
   final double dampingRatio;
   final double response;
 
-  @override
-  double transformInternal(double t) {
-    // Convert damping ratio + response to spring constants.
+  late final SpringSimulation _sim = () {
     final omega = 2 * math.pi / response;
-    final spring = SpringDescription(
-      mass: 1,
-      stiffness: omega * omega,
-      damping: 2 * dampingRatio * omega,
+    return SpringSimulation(
+      SpringDescription(
+        mass: 1,
+        stiffness: omega * omega,
+        damping: 2 * dampingRatio * omega,
+      ),
+      0,
+      1,
+      0,
     );
-    final simulation = SpringSimulation(spring, 0, 1, 0);
-    return simulation.x(t);
-  }
+  }();
+
+  @override
+  double transformInternal(double t) => _sim.x(t);
 }
 
 /// Predefined spring curves for common Liquid Glass interactions.
@@ -44,19 +48,19 @@ class LiquidSprings {
   const LiquidSprings._();
 
   /// Press feedback — slight overshoot on release.
-  static const Curve press = LiquidSpringCurve(
+  static final Curve press = LiquidSpringCurve(
     dampingRatio: 0.75,
     response: 0.4,
   );
 
   /// Element entrance — bouncy settle.
-  static const Curve appear = LiquidSpringCurve(
+  static final Curve appear = LiquidSpringCurve(
     dampingRatio: 0.8,
     response: 0.5,
   );
 
   /// Drag release — more elastic.
-  static const Curve drag = LiquidSpringCurve(
+  static final Curve drag = LiquidSpringCurve(
     dampingRatio: 0.6,
     response: 0.45,
   );

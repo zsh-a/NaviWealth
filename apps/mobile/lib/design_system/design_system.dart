@@ -43,6 +43,7 @@ export 'widgets/money_text.dart';
 export 'widgets/optional_hero.dart';
 export 'widgets/responsive_two_column.dart';
 export 'widgets/scroll_aware_fab.dart';
+export 'widgets/scroll_state.dart';
 export 'widgets/skeleton.dart';
 export 'widgets/skeletons/page_skeletons.dart';
 export 'widgets/super_fab.dart';

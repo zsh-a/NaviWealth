@@ -82,45 +82,49 @@ class _DashboardBody extends ConsumerWidget {
         const quickActions = QuickActionsGrid();
 
         if (isWide) {
-          return ListView(
-            padding: padding,
+          return ScrollNotificationHandler(
+            child: ListView(
+              padding: padding,
+              children: [
+                header,
+                if (insights.isNotEmpty) ...[
+                  const SizedBox(height: Spacing.s12),
+                  insightStrip,
+                ],
+                const SizedBox(height: Spacing.s16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: allocation),
+                    const SizedBox(width: Spacing.s16),
+                    const Expanded(child: trend),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+        return ScrollNotificationHandler(
+          child: ListView(
+            padding: padding.copyWith(
+              bottom: padding.bottom +
+                  Spacing.floatingBarClearance +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
             children: [
               header,
               if (insights.isNotEmpty) ...[
                 const SizedBox(height: Spacing.s12),
                 insightStrip,
               ],
-              const SizedBox(height: Spacing.s16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: allocation),
-                  const SizedBox(width: Spacing.s16),
-                  const Expanded(child: trend),
-                ],
-              ),
-            ],
-          );
-        }
-        return ListView(
-          padding: padding.copyWith(
-            bottom: padding.bottom +
-                Spacing.floatingBarClearance +
-                MediaQuery.paddingOf(context).bottom,
-          ),
-          children: [
-            header,
-            if (insights.isNotEmpty) ...[
               const SizedBox(height: Spacing.s12),
-              insightStrip,
+              allocation,
+              const SizedBox(height: Spacing.s12),
+              trend,
+              const SizedBox(height: Spacing.s16),
+              quickActions,
             ],
-            const SizedBox(height: Spacing.s12),
-            allocation,
-            const SizedBox(height: Spacing.s12),
-            trend,
-            const SizedBox(height: Spacing.s16),
-            quickActions,
-          ],
+          ),
         );
       },
     );

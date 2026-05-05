@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import 'app_ink_well.dart';
+import 'scroll_state.dart';
 
 /// Glass hierarchy levels mapping to package quality tiers.
 enum GlassLayer {
@@ -25,6 +26,10 @@ enum GlassLayer {
 /// - [GlassLayer.primary] for nav bars and modals (premium quality)
 /// - [GlassLayer.secondary] for dashboard cards (standard quality)
 /// - [GlassLayer.tertiary] for chips and badges (minimal quality)
+///
+/// During active scrolling the card automatically downgrades to
+/// [GlassLayer.tertiary] to avoid per-frame BackdropFilter cost, then
+/// restores the requested quality once scrolling stops.
 class LiquidGlassCard extends StatelessWidget {
   const LiquidGlassCard({
     super.key,
@@ -43,23 +48,36 @@ class LiquidGlassCard extends StatelessWidget {
   final double? borderRadius;
   final VoidCallback? onTap;
 
-  lgw.GlassQuality get _quality => switch (layer) {
-        GlassLayer.primary => lgw.GlassQuality.premium,
-        GlassLayer.secondary => lgw.GlassQuality.standard,
-        GlassLayer.tertiary => lgw.GlassQuality.minimal,
-      };
+  lgw.GlassQuality _quality({required bool isScrolling}) {
+    // During scroll, always use minimal quality to avoid GPU blur cost.
+    if (isScrolling && layer != GlassLayer.tertiary) {
+      return lgw.GlassQuality.minimal;
+    }
+    return switch (layer) {
+      GlassLayer.primary => lgw.GlassQuality.premium,
+      GlassLayer.secondary => lgw.GlassQuality.standard,
+      GlassLayer.tertiary => lgw.GlassQuality.minimal,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final radius = borderRadius ?? 16;
-    Widget card = lgw.GlassContainer(
-      useOwnLayer: true,
-      quality: _quality,
-      padding: padding,
-      margin: margin,
-      shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius),
-      clipBehavior: Clip.antiAlias,
-      child: child,
+    Widget card = ValueListenableBuilder<bool>(
+      valueListenable: isScrollingNotifier,
+      builder: (context, isScrolling, _) {
+        return RepaintBoundary(
+          child: lgw.GlassContainer(
+            useOwnLayer: true,
+            quality: _quality(isScrolling: isScrolling),
+            padding: padding,
+            margin: margin,
+            shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius),
+            clipBehavior: Clip.antiAlias,
+            child: child,
+          ),
+        );
+      },
     );
 
     if (onTap != null) {

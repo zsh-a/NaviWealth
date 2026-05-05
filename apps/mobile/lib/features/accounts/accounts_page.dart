@@ -226,9 +226,10 @@ class _AccountsByType extends StatelessWidget {
         .where((t) => grouped.containsKey(t))
         .toList(growable: false);
 
-    return ListView.builder(
-      padding: Spacing.pageMobile,
-      itemCount: order.length,
+    return ScrollNotificationHandler(
+      child: ListView.builder(
+        padding: Spacing.pageMobile,
+        itemCount: order.length,
       itemBuilder: (context, i) {
         final type = order[i];
         final group = grouped[type]!;
@@ -261,6 +262,7 @@ class _AccountsByType extends StatelessWidget {
           ],
         );
       },
+    ),
     );
   }
 }
