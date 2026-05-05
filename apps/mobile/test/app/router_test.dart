@@ -224,13 +224,13 @@ void main() {
       expect(_currentPath(container), '/');
     });
 
-    testWidgets('/assets/trade redirects to /portfolio/trade', (tester) async {
+    testWidgets('/assets/trade redirects to /activity/trade', (tester) async {
       final container = await _pumpAt(tester, initialLocation: '/assets/trade');
-      expect(_currentPath(container), '/portfolio/trade');
+      expect(_currentPath(container), '/activity/trade');
     });
 
-    testWidgets('/analytics renders Analytics', (tester) async {
-      await _pumpAt(tester, initialLocation: '/analytics');
+    testWidgets('/plan/analytics renders Analytics', (tester) async {
+      await _pumpAt(tester, initialLocation: '/plan/analytics');
       expect(find.byType(AnalyticsPage), findsOneWidget);
     });
 
@@ -242,10 +242,8 @@ void main() {
     testWidgets('unknown query params on a known path do not break the page', (
       tester,
     ) async {
-      // FIR-43 calls out /analytics?range=1y as a future query-driven deep
-      // link. The :range param itself isn't wired yet (that's a follow-up
-      // feature), but at minimum an unknown query string must not 404.
-      await _pumpAt(tester, initialLocation: '/analytics?range=1y');
+      // Query params on a redirect path should survive the redirect.
+      await _pumpAt(tester, initialLocation: '/plan/analytics?range=1y');
       expect(find.byType(AnalyticsPage), findsOneWidget);
     });
   });
@@ -265,15 +263,15 @@ void main() {
       expect(_currentPath(container), '/portfolio');
       expect(find.byType(PortfolioPage), findsOneWidget);
 
-      container.read(appRouterProvider).go('/analytics');
+      container.read(appRouterProvider).go('/activity');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), '/analytics');
+      expect(_currentPath(container), '/activity');
 
-      container.read(appRouterProvider).go('/ai');
+      container.read(appRouterProvider).go('/plan');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), '/ai');
+      expect(_currentPath(container), '/plan');
 
       container.read(appRouterProvider).go('/');
       await tester.pump();
@@ -290,23 +288,18 @@ void main() {
       expect(_currentPath(container), '/');
 
       // Find the GlassBottomBar and calculate nav item positions.
-      // Layout: [tab0] [tab1]  [extraBtn]  [tab2] [tab3]
+      // Layout: [tab0] [tab1] [tab2] [tab3] — 4 equally-spaced tabs, no extra button.
       final barFinder = find.byType(lgw.GlassBottomBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
       final barOrigin = barBox.localToGlobal(Offset.zero);
 
       final barCenterY = barOrigin.dy + barSize.height / 2;
-
-      // With 4 tabs + 1 extra button (56dp), each tab gets roughly
-      // (barWidth - extraButtonSize - spacing*4) / 4 width.
       final barWidth = barSize.width;
-      const extraSize = 56.0;
-      const spacing = 8.0;
-      final tabW = (barWidth - extraSize - spacing * 4) / 4;
+      final tabW = barWidth / 4;
 
       // Item 1 = Portfolio (second from left).
-      final portfolioX = barOrigin.dx + tabW * 1.5 + spacing;
+      final portfolioX = barOrigin.dx + tabW * 1.5;
       await tester.tapAt(Offset(portfolioX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -315,22 +308,20 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 4-tab layout: Home(0) | Portfolio(1) | Analytics(2) | Me(3)
-      final container = await _pumpAt(tester, initialLocation: '/analytics');
-      // /analytics is now tab index 2.
+      // 4-tab layout: Overview(0) | Portfolio(1) | Activity(2) | Plan(3)
+      final container = await _pumpAt(tester, initialLocation: '/plan');
       final bar = tester.widget<lgw.GlassBottomBar>(
         find.byType(lgw.GlassBottomBar),
       );
-      expect(bar.selectedIndex, 2);
+      expect(bar.selectedIndex, 3);
 
-      container.read(appRouterProvider).go('/settings');
+      container.read(appRouterProvider).go('/activity');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       final updated = tester.widget<lgw.GlassBottomBar>(
         find.byType(lgw.GlassBottomBar),
       );
-      // Settings highlights Me tab (index 3).
-      expect(updated.selectedIndex, 3);
+      expect(updated.selectedIndex, 2);
       await _drainTimers(tester);
     });
   });
@@ -375,12 +366,12 @@ void main() {
     ) async {
       final container = await _pumpAt(
         tester,
-        initialLocation: '/analytics',
+        initialLocation: '/plan',
         viewportSize: _tabletSize,
       );
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      // /analytics is now tab index 2
-      expect(rail.selectedIndex, 2);
+      // /plan is tab index 3
+      expect(rail.selectedIndex, 3);
 
       container.read(appRouterProvider).go('/portfolio');
       await tester.pump();
@@ -401,8 +392,8 @@ void main() {
       final sidebar = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      // /fire → Analytics tab (index 2)
-      expect(sidebar.selectedIndex, 2);
+      // /fire → /plan/fire → Plan tab (index 3)
+      expect(sidebar.selectedIndex, 3);
 
       container.read(appRouterProvider).go('/portfolio');
       await tester.pump();
@@ -445,7 +436,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(PortfolioPage), findsOneWidget);
 
-      router.go('/analytics');
+      router.go('/plan/analytics');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnalyticsPage), findsOneWidget);
@@ -458,11 +449,11 @@ void main() {
       expect(_currentPath(container), '/portfolio');
 
       // Simulate browser "forward".
-      router.go('/analytics');
+      router.go('/plan/analytics');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnalyticsPage), findsOneWidget);
-      expect(_currentPath(container), '/analytics');
+      expect(_currentPath(container), '/plan/analytics');
       await _drainTimers(tester);
     });
   });

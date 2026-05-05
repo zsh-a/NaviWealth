@@ -146,7 +146,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     await submitOptimistic(
       pop: () {
         Haptics.success();
-        context.go('/portfolio/expenses');
+        context.go('/activity/expenses');
       },
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -205,7 +205,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
       await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
-      context.go('/portfolio/expenses');
+      context.go('/activity/expenses');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -356,14 +356,17 @@ class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Card(
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
       child: ListTile(
-        leading: const Icon(Icons.warning_amber_outlined),
+        leading: Icon(
+          Icons.warning_amber_outlined,
+          color: Theme.of(context).colorScheme.error,
+        ),
         title: Text(l10n.expenseFormNoAccountsTitle),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
         trailing: AppButton.tertiary(
-          onPressed: () => GoRouter.of(context).go('/portfolio/accounts/new'),
+          onPressed: () => GoRouter.of(context).go('/activity/accounts/new'),
           label: l10n.expenseFormNoAccountsCta,
         ),
       ),

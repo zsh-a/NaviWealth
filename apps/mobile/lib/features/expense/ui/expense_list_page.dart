@@ -58,7 +58,11 @@ class _ExpenseFilters {
 }
 
 class ExpenseListPage extends ConsumerStatefulWidget {
-  const ExpenseListPage({super.key});
+  const ExpenseListPage({super.key, this.embedded = false});
+
+  /// When true, skips the Scaffold/AppBar so the page can be embedded
+  /// inside another Scaffold (e.g., the Activity tab).
+  final bool embedded;
 
   @override
   ConsumerState<ExpenseListPage> createState() => _ExpenseListPageState();
@@ -78,20 +82,9 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final expensesAsync = ref.watch(journalExpensesStreamProvider);
-    final accountsAsync = ref.watch(accountsStreamProvider);
+    final accountsAsync = ref.watch(allAccountsStreamProvider);
 
-    return Scaffold(
-      appBar: GlassAppBar(
-        title: Text(l10n.navExpenses),
-        actions: [
-          IconButton(
-            tooltip: l10n.expensesReportTooltip,
-            icon: const Icon(Icons.insights_outlined),
-            onPressed: () => context.go('/portfolio/expenses/report'),
-          ),
-        ],
-      ),
-      body: expensesAsync.when(
+    final body = expensesAsync.when(
         data: (all) {
           final accounts = accountsAsync.value ?? const <Account>[];
           final expenseAccountById = {
@@ -117,7 +110,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
                         expenses: filtered,
                         expenseAccountById: expenseAccountById,
                         grouping: _filters.grouping,
-                        onTap: (e) => context.go('/portfolio/expenses/${e.id}'),
+                        onTap: (e) => context.go('/activity/expenses/${e.id}'),
                       ),
               ),
             ],
@@ -125,7 +118,21 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败：$e')),
+      );
+
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: GlassAppBar(
+        title: Text(l10n.navExpenses),
+        actions: [
+          IconButton(
+            tooltip: l10n.expensesReportTooltip,
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => context.go('/activity/expenses/report'),
+          ),
+        ],
       ),
+      body: body,
     );
   }
 

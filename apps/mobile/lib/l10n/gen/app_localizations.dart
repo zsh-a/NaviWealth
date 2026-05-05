@@ -158,6 +158,18 @@ abstract class AppLocalizations {
   /// **'Me'**
   String get navMe;
 
+  /// Bottom nav: activity tab (expenses, accounts, trades)
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get navActivity;
+
+  /// Bottom nav: plan tab (FIRE, rebalance, analytics)
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get navPlan;
+
   /// Bottom nav / More hub: accounts tab
   ///
   /// In en, this message translates to:
@@ -4331,6 +4343,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get manualAssetDeleteConfirm;
+
+  /// Activity page segmented control: activity feed tab
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activityFeedTab;
+
+  /// Activity feed placeholder text
+  ///
+  /// In en, this message translates to:
+  /// **'Activity feed coming soon'**
+  String get activityFeedComingSoon;
+
+  /// Accounts page app bar: transfer action tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get accountsTransferAction;
+
+  /// Accounts page app bar: journal action tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get accountsJournalAction;
+
+  /// Expense list page app bar: report action tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Expense Report'**
+  String get expenseReportTitle;
+
+  /// Plan page: FIRE card title
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE'**
+  String get planFireTitle;
+
+  /// Plan page: FIRE card subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Financial independence calculator'**
+  String get planFireSubtitle;
+
+  /// Plan page: analytics card title
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get planAnalyticsTitle;
+
+  /// Plan page: analytics card subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio allocation analysis'**
+  String get planAnalyticsSubtitle;
+
+  /// Plan page: rebalance card title
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get planRebalanceTitle;
+
+  /// Plan page: rebalance card subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio drift & rebalancing'**
+  String get planRebalanceSubtitle;
 }
 
 class _AppLocalizationsDelegate

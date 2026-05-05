@@ -38,9 +38,13 @@ class AccountPicker extends StatelessWidget {
     final filtered = allowedTypes == null
         ? accounts
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
+    // Null out value if it doesn't exist in the filtered list to avoid
+    // DropdownButtonFormField assertion errors.
+    final effectiveValue =
+        filtered.any((a) => a.id == value) ? value : null;
     return DropdownButtonFormField<String>(
       // ignore: deprecated_member_use
-      value: value,
+      value: effectiveValue,
       decoration: InputDecoration(
         labelText: label ?? l10n.formAccountPickerLabelDefault,
         border: const OutlineInputBorder(),

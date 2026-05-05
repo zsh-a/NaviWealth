@@ -11,6 +11,8 @@
   "navMore": "更多",
   "navAI": "AI",
   "navMe": "我的",
+  "navActivity": "流水",
+  "navPlan": "规划",
   "navAccounts": "账户",
   "portfolioAssetsTab": "资产",
   "portfolioLiabilitiesTab": "负债",
@@ -775,5 +777,17 @@
   "manualAssetDeleteTitle": "删除资产",
   "manualAssetDeleteContent": "确认删除该资产记录？",
   "manualAssetDeleteCancel": "取消",
-  "manualAssetDeleteConfirm": "删除"
+  "manualAssetDeleteConfirm": "删除",
+
+  "activityFeedTab": "动态",
+  "activityFeedComingSoon": "动态流即将推出",
+  "accountsTransferAction": "转账",
+  "accountsJournalAction": "日记账",
+  "expenseReportTitle": "支出报表",
+  "planFireTitle": "FIRE",
+  "planFireSubtitle": "财务自由计算器",
+  "planAnalyticsTitle": "分析",
+  "planAnalyticsSubtitle": "投资组合配置分析",
+  "planRebalanceTitle": "再平衡",
+  "planRebalanceSubtitle": "投资组合偏离与再平衡"
 }

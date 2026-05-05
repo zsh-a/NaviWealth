@@ -16,9 +16,10 @@ import 'shell_preferences.dart';
 const Map<String, String> _kVimGotoRoutes = <String, String>{
   'home': '/',
   'portfolio': '/portfolio',
-  'analytics': '/analytics',
+  'activity': '/activity',
+  'plan': '/plan',
   'ai': '/ai',
-  'fire': '/analytics/fire',
+  'fire': '/plan/fire',
   'settings': '/settings',
 };
 

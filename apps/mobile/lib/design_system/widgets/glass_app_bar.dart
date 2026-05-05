@@ -39,9 +39,17 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveLeading = leading ??
+        (automaticallyImplyLeading && Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null);
+
     final appBar = lgw.GlassAppBar(
       title: title,
-      leading: leading,
+      leading: effectiveLeading,
       actions: actions,
       centerTitle: centerTitle ?? true,
       preferredSize: const Size.fromHeight(kToolbarHeight),
