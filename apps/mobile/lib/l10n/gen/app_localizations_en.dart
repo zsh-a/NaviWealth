@@ -2578,4 +2578,641 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupRestorePassphraseHint => 'Enter the backup passphrase';
+
+  @override
+  String get moreRebalanceTitle => 'Rebalance';
+
+  @override
+  String get logViewerClearTooltip => 'Clear';
+
+  @override
+  String activityFeedLoadError(String error) {
+    return 'Failed to load feed: $error';
+  }
+
+  @override
+  String get expenseFormLoadError =>
+      'Couldn\'t load expense. Create a new entry instead.';
+
+  @override
+  String get accountsJournalTooltip => 'Journal';
+
+  @override
+  String get accountsTransferTooltip => 'New transfer';
+
+  @override
+  String get accountFormParentLabel => 'Parent account (optional)';
+
+  @override
+  String get accountFormParentHelper =>
+      'Group this account under another in the tree.';
+
+  @override
+  String get accountFormMakeTopLevelTooltip => 'Make top-level';
+
+  @override
+  String get accountFormIconHeading => 'Icon';
+
+  @override
+  String get accountFormNoIconTooltip => 'No icon';
+
+  @override
+  String get accountFormColorHeading => 'Color';
+
+  @override
+  String get accountFormNoColorTooltip => 'No color';
+
+  @override
+  String get transferTitle => 'New transfer';
+
+  @override
+  String transferLoadError(String error) {
+    return 'Failed to load accounts: $error';
+  }
+
+  @override
+  String get transferFromLabel => 'From account';
+
+  @override
+  String get transferToLabel => 'To account';
+
+  @override
+  String get transferValidationRequired => 'Required';
+
+  @override
+  String get transferValidationDifferentAccount => 'Pick a different account';
+
+  @override
+  String get transferAmountLabel => 'Amount';
+
+  @override
+  String transferAmountWithCurrencyLabel(String currency) {
+    return 'Amount ($currency)';
+  }
+
+  @override
+  String transferToAmountLabel(String currency) {
+    return 'To amount ($currency)';
+  }
+
+  @override
+  String get transferFxRateHelper =>
+      'No FX rate on file — enter the converted amount.';
+
+  @override
+  String get transferFxRateEditHelper =>
+      'Edit to override the auto-filled rate.';
+
+  @override
+  String get transferDateLabel => 'Date';
+
+  @override
+  String get transferPreviewTitle => 'Transfer';
+
+  @override
+  String get transferSubmitAction => 'Transfer';
+
+  @override
+  String transferRateLabel(String from, String rate, String to) {
+    return 'Rate: 1 $from = $rate $to';
+  }
+
+  @override
+  String transferRejectedError(String message) {
+    return 'Transfer rejected: $message';
+  }
+
+  @override
+  String transferFailedError(String error) {
+    return 'Transfer failed: $error';
+  }
+
+  @override
+  String get transferRetryLabel => 'Retry';
+
+  @override
+  String get journalTitle => 'Journal';
+
+  @override
+  String journalLoadError(String error) {
+    return 'Failed to load journal: $error';
+  }
+
+  @override
+  String get journalEmptyHint =>
+      'No journal entries yet — record a transfer, expense, or trade and it will land here.';
+
+  @override
+  String get entryKindTrade => 'Trade';
+
+  @override
+  String get entryKindTransfer => 'Transfer';
+
+  @override
+  String get entryKindIncome => 'Income';
+
+  @override
+  String get entryKindExpense => 'Expense';
+
+  @override
+  String get entryKindPayment => 'Payment';
+
+  @override
+  String get entryKindAdjustment => 'Adjustment';
+
+  @override
+  String get entryKindOpening => 'Opening';
+
+  @override
+  String get entryKindEntry => 'Entry';
+
+  @override
+  String entryKindSemanticLabel(String kind) {
+    return 'Journal entry · $kind';
+  }
+
+  @override
+  String get chatCancelled => 'Cancelled';
+
+  @override
+  String get chatNewSession => 'New conversation';
+
+  @override
+  String chatContextTruncated(int count) {
+    return '$count earlier messages were folded to stay within the context limit.';
+  }
+
+  @override
+  String get expenseReportAppBarTitle => 'Expense Report';
+
+  @override
+  String expenseReportLoadError(String error) {
+    return 'Failed to load report: $error';
+  }
+
+  @override
+  String get expenseReportRangeThisMonth => 'This month';
+
+  @override
+  String get expenseReportRangeLast3Months => 'Last 3 months';
+
+  @override
+  String get expenseReportRangeLast6Months => 'Last 6 months';
+
+  @override
+  String get expenseReportRangeLast12Months => 'Last 12 months';
+
+  @override
+  String get expenseReportRangeCustom => 'Custom';
+
+  @override
+  String get expenseReportTotalExpenses => 'Total expenses';
+
+  @override
+  String get expenseReportMonthlyAverage => 'Monthly avg';
+
+  @override
+  String get expenseReportEntryCount => 'Entries';
+
+  @override
+  String get expenseReportCategoryCount => 'Categories';
+
+  @override
+  String expenseReportSkippedFx(int count) {
+    return '$count expenses excluded — missing FX rate.';
+  }
+
+  @override
+  String expenseReportBaseCurrency(String currency, int months) {
+    return 'Base currency $currency · monthly avg over $months months';
+  }
+
+  @override
+  String get expenseReportCategoryShare => 'Category share';
+
+  @override
+  String get expenseReportUncategorized => 'Uncategorized';
+
+  @override
+  String get expenseReportNoExpenses => 'No expenses in this period.';
+
+  @override
+  String expenseReportMonthLabel(int month) {
+    return '$month月';
+  }
+
+  @override
+  String get expenseReportMonthlyTrend => 'Monthly trend';
+
+  @override
+  String get expenseReportSeriesExpenses => 'Expenses';
+
+  @override
+  String get expenseReportMonthlyTrendSemantic => 'Monthly expense trend';
+
+  @override
+  String get expenseReportCategoryDetail => 'Category detail';
+
+  @override
+  String expenseReportItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get expenseListSearchHint => 'Search by note';
+
+  @override
+  String get expenseListAllCategories => 'All categories';
+
+  @override
+  String get expenseListGroupMonth => 'Month';
+
+  @override
+  String get expenseListGroupWeek => 'Week';
+
+  @override
+  String expenseListTotal(String amount) {
+    return 'Total $amount';
+  }
+
+  @override
+  String get expenseListUncategorized => 'Uncategorized';
+
+  @override
+  String get expenseListEmptyFiltered => 'No matching expenses.';
+
+  @override
+  String get expenseListEmptyDefault =>
+      'No expenses yet. Tap the + button to start tracking.';
+
+  @override
+  String expenseListMonthGroup(int year, int month) {
+    return '$year 年 $month 月';
+  }
+
+  @override
+  String expenseListWeekGroup(int year, int week) {
+    return '$year 年第 $week 周';
+  }
+
+  @override
+  String assetDetailLoadError(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String get assetDetailNotFound => 'Asset not found or deleted';
+
+  @override
+  String get assetDetailUnsupportedType =>
+      'This asset type does not support manual editing';
+
+  @override
+  String get assetDetailNoMetadataMatch => 'No matching metadata found';
+
+  @override
+  String get assetDetailMetadataSynced => 'Metadata synced';
+
+  @override
+  String get assetDetailMetadataUpToDate => 'Metadata is up to date';
+
+  @override
+  String get assetDetailNetworkUnavailable =>
+      'Network unavailable — cannot sync metadata';
+
+  @override
+  String get assetDetailSyncMetadataTooltip => 'Sync metadata';
+
+  @override
+  String get assetDetailNewTradeLabel => 'New trade';
+
+  @override
+  String get assetDetailUnknown => 'Unknown';
+
+  @override
+  String assetDetailHoldingsLoadError(String error) {
+    return 'Holdings load failed: $error';
+  }
+
+  @override
+  String get assetDetailHoldingsTitle => 'Holdings';
+
+  @override
+  String get assetDetailCurrentQuantity => 'Current qty';
+
+  @override
+  String get assetDetailAverageCost => 'Avg cost';
+
+  @override
+  String get assetDetailCurrentMarketValue => 'Market value';
+
+  @override
+  String get assetDetailPriceUnavailable =>
+      'Price unavailable — market value shows as zero';
+
+  @override
+  String assetDetailPnLLoadError(String error) {
+    return 'P&L load failed: $error';
+  }
+
+  @override
+  String get assetDetailPnLTitle => 'Profit & Loss';
+
+  @override
+  String get assetDetailUnrealizedPnL => 'Unrealized P&L';
+
+  @override
+  String assetDetailBaseCurrency(String currency) {
+    return 'Base currency: $currency';
+  }
+
+  @override
+  String get assetDetailTodayChange => 'Today';
+
+  @override
+  String get assetDetailQuoteStale => 'Quote stale';
+
+  @override
+  String get assetDetailQuoteUnavailable => 'Quote unavailable';
+
+  @override
+  String get assetDetailTrend30d => '30-day trend';
+
+  @override
+  String get assetDetailNoMarketLinked =>
+      'This asset is not linked to a market — no trend to display';
+
+  @override
+  String assetDetailTrendLoadError(String error) {
+    return 'Could not load quote: $error';
+  }
+
+  @override
+  String get assetDetailSeriesClosePrice => 'Close';
+
+  @override
+  String get assetDetailSeriesCostBasis => 'Cost basis';
+
+  @override
+  String get assetDetailTrendSemanticLabel => '30-day close price trend';
+
+  @override
+  String get assetDetailStaleBadge => 'Stale';
+
+  @override
+  String get assetDetailCategoryShareSemantic => 'Category share';
+
+  @override
+  String get depositMaturityRequired => 'Term deposits require a maturity date';
+
+  @override
+  String get depositDeleteTitle => 'Delete deposit';
+
+  @override
+  String get depositDeleteBody => 'Delete this deposit record?';
+
+  @override
+  String get depositCreateTitle => 'Record deposit';
+
+  @override
+  String get depositEditTitle => 'Edit deposit';
+
+  @override
+  String get depositDeleteTooltip => 'Delete';
+
+  @override
+  String get depositTypeTerm => 'Term';
+
+  @override
+  String get depositTypeDemand => 'Demand';
+
+  @override
+  String get depositNameLabel => 'Name';
+
+  @override
+  String get depositNameHelper => 'e.g. CMB 1-year term, ICBC demand savings';
+
+  @override
+  String get depositNameRequired => 'Enter a name';
+
+  @override
+  String get depositPrincipalLabel => 'Principal';
+
+  @override
+  String get depositRateLabel => 'Annual rate (%)';
+
+  @override
+  String get depositRateHelper => 'e.g. 3.25 means 3.25%';
+
+  @override
+  String get depositRateRequired => 'Enter the interest rate';
+
+  @override
+  String get depositRateInvalid => 'Invalid rate format';
+
+  @override
+  String get depositRateNegative => 'Rate cannot be negative';
+
+  @override
+  String get depositValueDateLabel => 'Value date';
+
+  @override
+  String get depositMaturityDateLabel => 'Maturity date';
+
+  @override
+  String get depositCurrentValuationLabel => 'Current valuation (optional)';
+
+  @override
+  String get depositCurrentValuationHelper =>
+      'Leave blank to use principal as current valuation';
+
+  @override
+  String get depositAutoRenewTitle => 'Auto-renew';
+
+  @override
+  String get depositAutoRenewSubtitle =>
+      'On maturity you\'ll be prompted to re-register; no new deposit is created automatically';
+
+  @override
+  String get depositNoAccountHint => 'Please create a bank account first.';
+
+  @override
+  String get depositCreateAccountAction => 'New account';
+
+  @override
+  String get wealthProductDeleteTitle => 'Delete wealth product';
+
+  @override
+  String get wealthProductDeleteBody => 'Delete this wealth product record?';
+
+  @override
+  String get wealthProductCreateTitle => 'Record wealth product';
+
+  @override
+  String get wealthProductEditTitle => 'Edit wealth product';
+
+  @override
+  String get wealthProductDeleteTooltip => 'Delete';
+
+  @override
+  String get wealthProductNoAccountHint =>
+      'Please create a bank / brokerage account first.';
+
+  @override
+  String get wealthProductCreateAccountAction => 'New account';
+
+  @override
+  String get wealthProductNameLabel => 'Product name';
+
+  @override
+  String get wealthProductNameRequired => 'Enter the product name';
+
+  @override
+  String get wealthProductIssuerLabel => 'Issuer (optional)';
+
+  @override
+  String get wealthProductCodeLabel => 'Product code (optional)';
+
+  @override
+  String get wealthProductAmountLabel => 'Subscription amount';
+
+  @override
+  String get wealthProductExpectedReturnLabel => 'Expected annual return (%)';
+
+  @override
+  String get wealthProductExpectedReturnHelper => 'e.g. 4.5 means 4.5%';
+
+  @override
+  String get wealthProductExpectedReturnRequired => 'Enter expected return';
+
+  @override
+  String get wealthProductInvalidFormat => 'Invalid format';
+
+  @override
+  String get wealthProductValueDateLabel => 'Value date';
+
+  @override
+  String get wealthProductMaturityDateLabel => 'Maturity date (optional)';
+
+  @override
+  String get wealthProductValuationLabel => 'Current valuation (manual)';
+
+  @override
+  String get wealthProductValuationHelper =>
+      'Leave blank to use subscription amount as current valuation';
+
+  @override
+  String get manualSecurityMarketCnA => 'A-shares';
+
+  @override
+  String get manualSecurityMarketHk => 'HK stocks';
+
+  @override
+  String get manualSecurityMarketUs => 'US stocks';
+
+  @override
+  String get manualSecurityMarketCrypto => 'Crypto';
+
+  @override
+  String get manualSecurityTypeStock => 'Stock';
+
+  @override
+  String get manualSecurityTypeEtf => 'ETF';
+
+  @override
+  String get manualSecurityTypeMutualFund => 'Mutual fund';
+
+  @override
+  String get manualSecurityTypeBond => 'Bond';
+
+  @override
+  String get manualSecurityTypeCrypto => 'Crypto';
+
+  @override
+  String get manualSecurityEnterCodeOrName => 'Enter a code or name first';
+
+  @override
+  String get manualSecurityNetworkUnavailable =>
+      'Network unavailable — use manual entry';
+
+  @override
+  String get manualSecurityNoMatch => 'No matches found — use manual entry';
+
+  @override
+  String get manualSecurityImported => 'Metadata imported from network';
+
+  @override
+  String get manualSecuritySelectMatchTitle => 'Select a match';
+
+  @override
+  String get manualSecuritySheetTitle => 'Add security manually';
+
+  @override
+  String get manualSecuritySheetDescription =>
+      'Saved locally. Tap \'Import from network\' to optionally fill fields from Yahoo / CoinGecko metadata.';
+
+  @override
+  String get manualSecurityCodeLabel => 'Code';
+
+  @override
+  String get manualSecurityCodeRequired => 'Enter the code';
+
+  @override
+  String get manualSecurityCodeNoColon => 'Code cannot contain \':\'';
+
+  @override
+  String get manualSecurityImportAction => 'Import from network';
+
+  @override
+  String get manualSecurityImporting => 'Importing…';
+
+  @override
+  String get manualSecurityNameLabel => 'Name (optional)';
+
+  @override
+  String get manualSecurityMarketLabel => 'Market';
+
+  @override
+  String get manualSecurityTypeLabel => 'Type';
+
+  @override
+  String get manualSecurityIsinLabel => 'ISIN (optional)';
+
+  @override
+  String get manualSecurityAddAction => 'Add';
+
+  @override
+  String get localSecuritiesSearchLabel => 'Asset search';
+
+  @override
+  String get localSecuritiesSearchHint => 'Enter code, name, or pinyin';
+
+  @override
+  String get localSecuritiesValidationRequired => 'Select an asset';
+
+  @override
+  String get localSecuritiesMyAssets => 'My assets';
+
+  @override
+  String get localSecuritiesCatalog => 'Local catalog';
+
+  @override
+  String get localSecuritiesManualAdd => 'Not found? Add manually';
+
+  @override
+  String localSecuritiesUseQueryAsCode(String query) {
+    return 'Use \"$query\" as code';
+  }
+
+  @override
+  String get formSaving => 'Saving…';
+
+  @override
+  String get formSave => 'Save';
 }

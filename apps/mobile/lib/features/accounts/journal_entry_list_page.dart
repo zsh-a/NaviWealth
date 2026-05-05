@@ -11,6 +11,7 @@ import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/journal_entry_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../shared/entry_kind_badge.dart';
 import '../shared/postings_preview.dart';
 
@@ -22,11 +23,12 @@ class JournalEntryListPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final journalAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
-      appBar: const GlassAppBar(title: Text('Journal')),
+      appBar: GlassAppBar(title: Text(l10n.journalTitle)),
       body: journalAsync.when(
         data: (entries) {
           if (entries.isEmpty) return const _EmptyJournal();
@@ -36,7 +38,7 @@ class JournalEntryListPage extends ConsumerWidget {
           return _JournalList(entries: entries, accountsById: accountsById);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load journal: $e')),
+        error: (e, _) => Center(child: Text(l10n.journalLoadError('$e'))),
       ),
     );
   }
@@ -47,6 +49,7 @@ class _EmptyJournal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: Spacing.pageMobile,
@@ -60,8 +63,7 @@ class _EmptyJournal extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.s12),
             Text(
-              'No journal entries yet — record a transfer, expense, or '
-              'trade and it will land here.',
+              l10n.journalEmptyHint,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,

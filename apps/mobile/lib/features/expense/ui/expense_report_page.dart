@@ -8,6 +8,7 @@ import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/expense_report_providers.dart';
 import '../domain/expense_report.dart';
 import '../domain/expense_report_range.dart';
@@ -24,12 +25,13 @@ class ExpenseReportPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final reportAsync = ref.watch(expenseReportProvider);
     return Scaffold(
-      appBar: const GlassAppBar(title: Text('支出报表')),
+      appBar: GlassAppBar(title: Text(l10n.expenseReportAppBarTitle)),
       body: reportAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('报表加载失败：$e')),
+        error: (e, _) => Center(child: Text(l10n.expenseReportLoadError('$e'))),
         data: (report) => _ReportBody(report: report),
       ),
     );
@@ -83,6 +85,7 @@ class _RangeChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final selected = ref.watch(expenseReportRangePresetProvider);
     return SizedBox(
       height: 40,
@@ -93,7 +96,7 @@ class _RangeChips extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(right: Spacing.s8),
               child: AppChoiceChip(
-                label: Text(_label(preset)),
+                label: Text(_label(preset, l10n)),
                 selected: preset == selected,
                 onSelected: (_) => _select(context, ref, preset),
               ),
@@ -131,18 +134,18 @@ class _RangeChips extends ConsumerWidget {
     ref.read(expenseReportRangePresetProvider.notifier).state = preset;
   }
 
-  String _label(ExpenseReportRangePreset preset) {
+  String _label(ExpenseReportRangePreset preset, AppLocalizations l10n) {
     switch (preset) {
       case ExpenseReportRangePreset.monthToDate:
-        return '本月';
+        return l10n.expenseReportRangeThisMonth;
       case ExpenseReportRangePreset.m3:
-        return '近 3 月';
+        return l10n.expenseReportRangeLast3Months;
       case ExpenseReportRangePreset.m6:
-        return '近 6 月';
+        return l10n.expenseReportRangeLast6Months;
       case ExpenseReportRangePreset.m12:
-        return '近 12 月';
+        return l10n.expenseReportRangeLast12Months;
       case ExpenseReportRangePreset.custom:
-        return '自定义';
+        return l10n.expenseReportRangeCustom;
     }
   }
 }
@@ -154,6 +157,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     final monthSpan = report.range.monthSpan;
@@ -166,7 +170,7 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('总支出', style: theme.textTheme.titleSmall),
+          Text(l10n.expenseReportTotalExpenses, style: theme.textTheme.titleSmall),
           const SizedBox(height: Spacing.s4),
           Text(
             formatter.currency(report.total.amount, code: report.baseCurrency),
@@ -179,7 +183,7 @@ class _SummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _Metric(
-                  label: '月均',
+                  label: l10n.expenseReportMonthlyAverage,
                   value: formatter.compactCurrency(
                     avgDecimal,
                     code: report.baseCurrency,
@@ -188,7 +192,7 @@ class _SummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _Metric(
-                  label: '记账数',
+                  label: l10n.expenseReportEntryCount,
                   value: report.byCategory
                       .fold<int>(0, (a, c) => a + c.items.length)
                       .toString(),
@@ -196,7 +200,7 @@ class _SummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _Metric(
-                  label: '类目数',
+                  label: l10n.expenseReportCategoryCount,
                   value: report.byCategory.length.toString(),
                 ),
               ),
@@ -205,7 +209,7 @@ class _SummaryCard extends StatelessWidget {
           if (report.skippedFxCount > 0) ...[
             const SizedBox(height: Spacing.s8),
             Text(
-              '${report.skippedFxCount} 笔支出因汇率缺失未计入合计。',
+              l10n.expenseReportSkippedFx(report.skippedFxCount),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
               ),
@@ -213,7 +217,7 @@ class _SummaryCard extends StatelessWidget {
           ],
           const SizedBox(height: Spacing.s4),
           Text(
-            '基础货币 ${report.baseCurrency} · 月均按 $monthSpan 个月折算',
+            l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -264,13 +268,14 @@ class _CategoryPieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return LiquidGlassCard(
       padding: Spacing.cardHero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('类目占比', style: theme.textTheme.titleMedium),
+          Text(l10n.expenseReportCategoryShare, style: theme.textTheme.titleMedium),
           const SizedBox(height: Spacing.s12),
           if (report.byCategory.isEmpty)
             LayoutBuilder(
@@ -325,11 +330,12 @@ class _Pie extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final palette = ChartPalette.of(context);
     final slices = <Slice>[
       for (var i = 0; i < report.byCategory.length; i++)
         Slice(
-          label: categoryById[report.byCategory[i].expenseAccountId]?.name ?? '未分类',
+          label: categoryById[report.byCategory[i].expenseAccountId]?.name ?? l10n.expenseReportUncategorized,
           value: report.byCategory[i].total.amount.toDouble(),
           colorOverride: palette.accentAt(i),
           meta: report.byCategory[i],
@@ -353,7 +359,7 @@ class _Pie extends StatelessWidget {
             ),
           );
         }),
-        semanticLabel: '类目占比',
+        semanticLabel: l10n.expenseReportCategoryShare,
       ),
     );
   }
@@ -367,6 +373,7 @@ class _PieLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final palette = ChartPalette.of(context);
     final total = report.total.amount.toDouble();
@@ -376,7 +383,7 @@ class _PieLegend extends StatelessWidget {
         for (var i = 0; i < report.byCategory.length; i++)
           _LegendRow(
             color: palette.accentAt(i),
-            label: categoryById[report.byCategory[i].expenseAccountId]?.name ?? '未分类',
+            label: categoryById[report.byCategory[i].expenseAccountId]?.name ?? l10n.expenseReportUncategorized,
             valueInBase: report.byCategory[i].total.amount.toDouble(),
             currencyCode: report.baseCurrency,
             percent: total == 0
@@ -395,7 +402,7 @@ class _PieLegend extends StatelessWidget {
           ),
         if (report.byCategory.isEmpty)
           Text(
-            '本期没有支出记录。',
+            l10n.expenseReportNoExpenses,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -480,12 +487,13 @@ class _TrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final palette = ChartPalette.of(context);
     final data = [
       for (final bucket in report.monthlyBuckets)
         CategoryDatum(
-          label: '${bucket.month}月',
+          label: l10n.expenseReportMonthLabel(bucket.month),
           value: bucket.total.amount.toDouble(),
           colorOverride: palette.accentAt(0),
         ),
@@ -495,7 +503,7 @@ class _TrendCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('月度趋势', style: theme.textTheme.titleMedium),
+          Text(l10n.expenseReportMonthlyTrend, style: theme.textTheme.titleMedium),
           const SizedBox(height: Spacing.s12),
           LayoutBuilder(
             builder: (context, c) {
@@ -509,13 +517,13 @@ class _TrendCard extends StatelessWidget {
               return SizedBox(
                 height: 220,
                 child: NwBarChart(
-                  series: [CategorySeries(name: '支出', data: data)],
+                  series: [CategorySeries(name: l10n.expenseReportSeriesExpenses, data: data)],
                   yAxis: ValueAxis.currency(
                     currencyCode: report.baseCurrency,
                     maxLabels: 4,
                   ),
                   aspectRatio: aspect,
-                  semanticLabel: '月度支出趋势',
+                  semanticLabel: l10n.expenseReportMonthlyTrendSemantic,
                 ),
               );
             },
@@ -539,6 +547,7 @@ class _CategoryListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     if (report.byCategory.isEmpty) {
       return const SizedBox.shrink();
@@ -559,7 +568,7 @@ class _CategoryListCard extends StatelessWidget {
               Spacing.s4,
             ),
             child: Text(
-              '类目明细',
+              l10n.expenseReportCategoryDetail,
               style: theme.textTheme.titleMedium,
             ),
           ),
@@ -591,6 +600,7 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final category = categoryById[breakdown.expenseAccountId];
     final accent =
@@ -610,8 +620,8 @@ class _CategoryTile extends StatelessWidget {
         backgroundColor: accent.withValues(alpha: 0.15),
         child: Icon(category?.iconData ?? Icons.payment, color: accent),
       ),
-      title: Text(category?.name ?? '未分类'),
-      subtitle: Text('${breakdown.items.length} 笔'),
+      title: Text(category?.name ?? l10n.expenseReportUncategorized),
+      subtitle: Text(l10n.expenseReportItemCount(breakdown.items.length)),
       trailing: MoneyText(
         amount: breakdown.total.amount.toDouble(),
         currencyCode: baseCurrency,
@@ -634,6 +644,7 @@ class _CategoryDrillDown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     final category = categoryById[breakdown.expenseAccountId];
@@ -665,7 +676,7 @@ class _CategoryDrillDown extends StatelessWidget {
                   const SizedBox(width: Spacing.s8),
                   Expanded(
                     child: Text(
-                      category?.name ?? '未分类',
+                      category?.name ?? l10n.expenseReportUncategorized,
                       style: theme.textTheme.titleLarge,
                     ),
                   ),
@@ -677,7 +688,7 @@ class _CategoryDrillDown extends StatelessWidget {
               ),
               const SizedBox(height: Spacing.s4),
               Text(
-                '${entries.length} 笔',
+                l10n.expenseReportItemCount(entries.length),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

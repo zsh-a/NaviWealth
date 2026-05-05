@@ -13,6 +13,7 @@ import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
 /// Create / edit form for term + demand bank deposits.
@@ -94,7 +95,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, '定期存款必须填写到期日');
+      AppMessenger.show(context, ToastKind.error, AppLocalizations.of(context).depositMaturityRequired);
       return;
     }
     setState(() => _busy = true);
@@ -158,6 +159,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
 
   Future<void> _delete() async {
     if (_initial == null) return;
+    final l10n = AppLocalizations.of(context);
     final ok = await showGlassModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
@@ -166,21 +168,21 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('删除存款', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(l10n.depositDeleteTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: Spacing.s8),
-            const Text('确认删除该存款记录？'),
+            Text(l10n.depositDeleteBody),
             const SizedBox(height: Spacing.s16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 AppButton.tertiary(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  label: '取消',
+                  label: l10n.commonCancel,
                 ),
                 const SizedBox(width: Spacing.s8),
                 AppButton.secondary(
                   onPressed: () => Navigator.of(ctx).pop(true),
-                  label: '删除',
+                  label: l10n.commonDelete,
                 ),
               ],
             ),
@@ -216,28 +218,30 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
       appBar: GlassAppBar(
-        title: Text(widget.isEdit ? '编辑存款' : '录入存款'),
+        title: Text(widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle),
         actions: [
           if (widget.isEdit)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: '删除',
+              tooltip: l10n.depositDeleteTooltip,
               onPressed: _busy ? null : _delete,
             ),
         ],
       ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
         data: (accounts) => _buildForm(accounts),
       ),
     );
   }
 
   Widget _buildForm(List<Account> accounts) {
+    final l10n = AppLocalizations.of(context);
     final eligible = accounts
         .where((a) => _eligibleAccountTypes.contains(a.type))
         .toList(growable: false);
@@ -268,7 +272,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
                 Expanded(
                   child: _DepositKindChip(
                     icon: Icons.lock_clock,
-                    label: '定期',
+                    label: l10n.depositTypeTerm,
                     selected: _kind == AssetType.bankDepositTerm,
                     onTap: () {
                       Haptics.selection();
@@ -279,7 +283,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
                 Expanded(
                   child: _DepositKindChip(
                     icon: Icons.savings_outlined,
-                    label: '活期',
+                    label: l10n.depositTypeDemand,
                     selected: _kind == AssetType.bankDepositDemand,
                     onTap: () {
                       Haptics.selection();
@@ -302,12 +306,12 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             focusNode: _nameFocus,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _principalFocus.requestFocus(),
-            decoration: const InputDecoration(
-              labelText: '名称',
-              helperText: '例如：招行 1 年期定期、工行活期储蓄',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.depositNameLabel,
+              helperText: l10n.depositNameHelper,
+              border: const OutlineInputBorder(),
             ),
-            validator: (v) => (v == null || v.trim().isEmpty) ? '请输入名称' : null,
+            validator: (v) => (v == null || v.trim().isEmpty) ? l10n.depositNameRequired : null,
           ),
           const SizedBox(height: Spacing.s12),
           CurrencyPicker(
@@ -316,7 +320,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
           AmountField(
-            label: '本金',
+            label: l10n.depositPrincipalLabel,
             controller: _principalController,
             currencyCode: _currency,
             focusNode: _principalFocus,
@@ -329,40 +333,40 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _valuationFocus.requestFocus(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '年化利率 (%)',
-              border: OutlineInputBorder(),
-              helperText: '例如：3.25 表示 3.25%',
+            decoration: InputDecoration(
+              labelText: l10n.depositRateLabel,
+              border: const OutlineInputBorder(),
+              helperText: l10n.depositRateHelper,
             ),
             validator: (v) {
               final trimmed = v?.trim() ?? '';
-              if (trimmed.isEmpty) return '请输入利率';
+              if (trimmed.isEmpty) return l10n.depositRateRequired;
               final parsed = Decimal.tryParse(trimmed);
-              if (parsed == null) return '利率格式不正确';
-              if (parsed < Decimal.zero) return '利率不能为负';
+              if (parsed == null) return l10n.depositRateInvalid;
+              if (parsed < Decimal.zero) return l10n.depositRateNegative;
               return null;
             },
           ),
           const SizedBox(height: Spacing.s12),
           DateField(
-            label: '起息日',
+            label: l10n.depositValueDateLabel,
             initialValue: _startDate,
             onChanged: (d) => setState(() => _startDate = d),
           ),
           const SizedBox(height: Spacing.s12),
           DateField(
-            label: '到期日',
+            label: l10n.depositMaturityDateLabel,
             initialValue: _maturityDate,
             required: _kind == AssetType.bankDepositTerm,
             onChanged: (d) => setState(() => _maturityDate = d),
           ),
           const SizedBox(height: Spacing.s12),
           AmountField(
-            label: '当前估值（可选）',
+            label: l10n.depositCurrentValuationLabel,
             controller: _valuationController,
             currencyCode: _currency,
             required: false,
-            helperText: '不填则使用本金作为当前估值',
+            helperText: l10n.depositCurrentValuationHelper,
             focusNode: _valuationFocus,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
@@ -370,15 +374,15 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           const SizedBox(height: Spacing.s12),
           if (_kind == AssetType.bankDepositTerm)
             SwitchListTile(
-              title: const Text('自动续存'),
-              subtitle: const Text('到期后系统提示重新登记，不会自动创建新存款'),
+              title: Text(l10n.depositAutoRenewTitle),
+              subtitle: Text(l10n.depositAutoRenewSubtitle),
               value: _autoRenew,
               onChanged: (v) => setState(() => _autoRenew = v),
             ),
           const SizedBox(height: Spacing.s24),
           AppButton.primary(
             onPressed: _busy ? null : _save,
-            label: _busy ? '保存中…' : '保存',
+            label: _busy ? l10n.formSaving : l10n.formSave,
           ),
         ],
       ),
@@ -393,17 +397,18 @@ class _PromptCreateAccount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: Spacing.pageMobile,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('请先创建一个银行账户。', textAlign: TextAlign.center),
+            Text(l10n.depositNoAccountHint, textAlign: TextAlign.center),
             const SizedBox(height: Spacing.s12),
             AppButton.secondary(
               icon: Icons.add,
-              label: '新建账户',
+              label: l10n.depositCreateAccountAction,
               onPressed: onTap,
             ),
           ],

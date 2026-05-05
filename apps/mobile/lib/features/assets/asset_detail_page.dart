@@ -13,6 +13,7 @@ import '../../domain/entities/historical_bar.dart';
 import '../../domain/entities/symbol_info.dart';
 import '../../domain/services/market_data_service.dart';
 import '../../domain/values/asset_market.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../investment/domain/models/holding_snapshot.dart';
 import 'asset_detail_providers.dart';
 import 'cash_form_page.dart';
@@ -32,10 +33,11 @@ class AssetDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final repoAsync = ref.watch(manualAssetRepositoryProvider);
     return repoAsync.when(
       loading: () => const Scaffold(body: AssetDetailSkeleton()),
-      error: (e, _) => Scaffold(body: Center(child: Text('加载失败：$e'))),
+      error: (e, _) => Scaffold(body: Center(child: Text(l10n.assetDetailLoadError('$e')))),
       data: (repo) {
         return FutureBuilder<Asset?>(
           future: repo.findById(assetId),
@@ -45,7 +47,7 @@ class AssetDetailPage extends ConsumerWidget {
             }
             final asset = snap.data;
             if (asset == null) {
-              return const Scaffold(body: Center(child: Text('资产不存在或已删除')));
+              return Scaffold(body: Center(child: Text(l10n.assetDetailNotFound)));
             }
             return switch (asset.type) {
               AssetType.cash => CashFormPage(assetId: asset.id),
@@ -61,7 +63,7 @@ class AssetDetailPage extends ConsumerWidget {
                 _EquityAssetDetailPage(assetId: asset.id),
               _ => Scaffold(
                 appBar: GlassAppBar(title: Text(asset.name ?? asset.symbol)),
-                body: const Center(child: Text('该资产类型暂不支持手动编辑')),
+                body: Center(child: Text(l10n.assetDetailUnsupportedType)),
               ),
             };
           },
@@ -104,6 +106,7 @@ class _EquityAssetDetailPageState
   }
 
   Future<void> _syncMetadata(Asset asset) async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _syncing = true);
     try {
       final market = await ref.read(marketDataServiceProvider.future);
@@ -117,7 +120,7 @@ class _EquityAssetDetailPageState
       final SymbolInfo? best = _pickBest(response.data, asset);
       if (best == null) {
         if (!mounted) return;
-        AppMessenger.show(context, ToastKind.error, '未找到匹配的元数据');
+        AppMessenger.show(context, ToastKind.error, l10n.assetDetailNoMetadataMatch);
         return;
       }
 
@@ -130,11 +133,11 @@ class _EquityAssetDetailPageState
       if (!mounted) return;
 
       final filledName = before.name == null && best.name.isNotEmpty;
-      AppMessenger.show(context, ToastKind.success, filledName ? '已补全元数据' : '元数据已是最新');
+      AppMessenger.show(context, ToastKind.success, filledName ? l10n.assetDetailMetadataSynced : l10n.assetDetailMetadataUpToDate);
       setState(_reload);
     } catch (_) {
       if (!mounted) return;
-      AppMessenger.show(context, ToastKind.error, '网络不可用，无法同步元数据');
+      AppMessenger.show(context, ToastKind.error, l10n.assetDetailNetworkUnavailable);
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
@@ -161,6 +164,7 @@ class _EquityAssetDetailPageState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder<Asset?>(
       future: _assetFuture,
       builder: (context, snap) {
@@ -171,7 +175,7 @@ class _EquityAssetDetailPageState
         }
         final asset = snap.data;
         if (asset == null) {
-          return const Scaffold(body: Center(child: Text('资产不存在或已删除')));
+          return Scaffold(body: Center(child: Text(l10n.assetDetailNotFound)));
         }
         return Scaffold(
           appBar: GlassAppBar(
@@ -182,7 +186,7 @@ class _EquityAssetDetailPageState
             actions: [
               IconButton(
                 key: const Key('asset-detail-sync-metadata'),
-                tooltip: '同步元数据',
+                tooltip: l10n.assetDetailSyncMetadataTooltip,
                 onPressed: _syncing ? null : () => _syncMetadata(asset),
                 icon: _syncing
                     ? const SizedBox(
@@ -207,7 +211,7 @@ class _EquityAssetDetailPageState
               const SizedBox(height: Spacing.s16),
               AppButton.primary(
                 icon: Icons.add,
-                label: '新交易',
+                label: l10n.assetDetailNewTradeLabel,
                 onPressed: () =>
                     context.push('/activity/trade?assetId=${asset.id}'),
               ),
@@ -226,6 +230,7 @@ class _AssetSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return LiquidGlassCard(
       padding: Spacing.card,
@@ -239,7 +244,7 @@ class _AssetSummaryCard extends StatelessWidget {
           ],
           const SizedBox(height: Spacing.s8),
           Text(
-            '${asset.market ?? "未知"} · ${asset.currency}',
+            '${asset.market ?? l10n.assetDetailUnknown} · ${asset.currency}',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -260,6 +265,7 @@ class _HoldingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
     final theme = Theme.of(context);
     return snapshotAsync.when(
@@ -276,7 +282,7 @@ class _HoldingCard extends ConsumerWidget {
           ],
         ),
       ),
-      error: (e, _) => _ErrorCard(message: '持仓加载失败：$e'),
+      error: (e, _) => _ErrorCard(message: l10n.assetDetailHoldingsLoadError('$e')),
       data: (snap) {
         final qty = snap?.quantity ?? Decimal.zero;
         final hasPosition = qty.sign > 0;
@@ -290,15 +296,15 @@ class _HoldingCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('持仓', style: theme.textTheme.titleSmall),
+              Text(l10n.assetDetailHoldingsTitle, style: theme.textTheme.titleSmall),
               const SizedBox(height: Spacing.s12),
               _MetricRow(
-                label: '当前数量',
+                label: l10n.assetDetailCurrentQuantity,
                 value: hasPosition ? _formatQuantity(qty) : '—',
               ),
               const SizedBox(height: Spacing.s8),
               _MetricRow(
-                label: '平均成本',
+                label: l10n.assetDetailAverageCost,
                 trailing: AnimatedMoneyText(
                   amount: avgCost?.toDouble(),
                   currencyCode: asset.currency,
@@ -307,7 +313,7 @@ class _HoldingCard extends ConsumerWidget {
               ),
               const SizedBox(height: Spacing.s8),
               _MetricRow(
-                label: '当前市值',
+                label: l10n.assetDetailCurrentMarketValue,
                 trailing: OptionalHero(
                   tag: 'asset-${asset.id}-value',
                   child: AnimatedMoneyText(
@@ -321,7 +327,7 @@ class _HoldingCard extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: Spacing.s8),
                   child: Text(
-                    '价格暂不可用，市值显示为零',
+                    l10n.assetDetailPriceUnavailable,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -345,6 +351,7 @@ class _PnLCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
     final marketKey = _historyKey(asset);
     final historyAsync = marketKey == null
@@ -370,7 +377,7 @@ class _PnLCard extends ConsumerWidget {
       );
     }
     if (snapshotAsync.hasError) {
-      return _ErrorCard(message: '盈亏加载失败：${snapshotAsync.error}');
+      return _ErrorCard(message: l10n.assetDetailPnLLoadError('${snapshotAsync.error}'));
     }
 
     final snap = snapshotAsync.value;
@@ -394,7 +401,7 @@ class _PnLCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('盈亏', style: theme.textTheme.titleSmall),
+          Text(l10n.assetDetailPnLTitle, style: theme.textTheme.titleSmall),
           const SizedBox(height: Spacing.s12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -404,7 +411,7 @@ class _PnLCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '未实现盈亏',
+                      l10n.assetDetailUnrealizedPnL,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -427,7 +434,7 @@ class _PnLCard extends ConsumerWidget {
           if (snap != null) ...[
             const SizedBox(height: Spacing.s8),
             Text(
-              '基础货币：${snap.baseCurrency} '
+              '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
               '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -436,7 +443,7 @@ class _PnLCard extends ConsumerWidget {
           ],
           const Divider(height: Spacing.s24),
           _MetricRow(
-            label: '今日变动',
+            label: l10n.assetDetailTodayChange,
             trailing: _DailyChangeView(
               value: dailyChange,
               currency: asset.currency,
@@ -480,6 +487,7 @@ class _DailyChangeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (!hasPosition || !hasHistory) {
       return Text(
         '—',
@@ -494,7 +502,7 @@ class _DailyChangeView extends StatelessWidget {
     }
     if (value == null) {
       return Text(
-        isStale ? '行情滞后' : '行情不可用',
+        isStale ? l10n.assetDetailQuoteStale : l10n.assetDetailQuoteUnavailable,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -515,6 +523,7 @@ class _TrendMiniChartCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final marketKey = _historyKey(asset);
     final theme = Theme.of(context);
     if (marketKey == null) {
@@ -523,10 +532,10 @@ class _TrendMiniChartCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('近 30 日走势', style: theme.textTheme.titleSmall),
+            Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
             const SizedBox(height: Spacing.s8),
             Text(
-              '该资产暂未关联市场，无走势可显示',
+              l10n.assetDetailNoMarketLinked,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -547,7 +556,7 @@ class _TrendMiniChartCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text('近 30 日走势', style: theme.textTheme.titleSmall),
+                child: Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
               ),
               if (historyAsync.value?.isStale == true)
                 _StaleBadge(),
@@ -578,6 +587,7 @@ class _ChartBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (history.isLoading && history.value == null) {
       return const SizedBox(
         height: 160,
@@ -589,7 +599,7 @@ class _ChartBody extends StatelessWidget {
         height: 160,
         child: Center(
           child: Text(
-            '无法获取行情：${history.error}',
+            l10n.assetDetailTrendLoadError('${history.error}'),
             style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
@@ -619,12 +629,12 @@ class _ChartBody extends StatelessWidget {
         : null;
     final series = <ChartSeries>[
       ChartSeries(
-        name: '收盘价',
+        name: l10n.assetDetailSeriesClosePrice,
         points: pricePoints,
       ),
       if (costBasisAvg != null)
         ChartSeries(
-          name: '成本基准',
+          name: l10n.assetDetailSeriesCostBasis,
           intent: SeriesIntent.muted,
           emphasis: SeriesEmphasis.dashed,
           points: [
@@ -644,7 +654,7 @@ class _ChartBody extends StatelessWidget {
           ),
           yAxis: ValueAxis.currency(currencyCode: currency, maxLabels: 4),
           aspectRatio: chartAspectFor(constraints.maxWidth),
-          semanticLabel: '近 30 日收盘价走势',
+          semanticLabel: l10n.assetDetailTrendSemanticLabel,
         ),
       ),
     );
@@ -654,6 +664,7 @@ class _ChartBody extends StatelessWidget {
 class _StaleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -665,7 +676,7 @@ class _StaleBadge extends StatelessWidget {
         borderRadius: Radii.brSm,
       ),
       child: Text(
-        '行情滞后',
+        l10n.assetDetailStaleBadge,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),

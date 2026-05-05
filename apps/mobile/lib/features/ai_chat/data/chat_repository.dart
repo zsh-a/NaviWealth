@@ -11,6 +11,14 @@ import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
 
+/// Sentinel value for new session titles. UI layer should resolve to
+/// localized string when displaying.
+const kNewSessionTitle = '新对话';
+
+/// Sentinel error message for cancelled requests. UI layer should
+/// resolve to localized string when displaying.
+const kCancelledError = '已取消';
+
 /// Outcome of a `sendMessage` turn — surfaced to the controller so the
 /// UI can flip from "streaming" back to "idle" deterministically.
 enum SendOutcome { completed, errored, cancelled }
@@ -51,7 +59,7 @@ class ChatRepository {
     final session = ChatSession(
       id: _uuid.v4(),
       ownerUserId: ownerUserId,
-      title: title ?? '新对话',
+      title: title ?? kNewSessionTitle,
       createdAt: now,
       updatedAt: now,
       lastMessageAt: null,
@@ -140,7 +148,7 @@ class ChatRepository {
       await insertSystemNotice(
         sessionId: sessionId,
         ownerUserId: ownerUserId,
-        content: '已折叠 ${ctx.droppedTurns} 条更早的历史以控制上下文长度。',
+        content: ChatRepository.contextTruncatedNotice(ctx.droppedTurns),
       );
     }
 
@@ -206,7 +214,7 @@ class ChatRepository {
         outcome = SendOutcome.cancelled;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
-          errorMessage: '已取消',
+          errorMessage: kCancelledError,
         );
         await _store.updateMessage(assistant);
       } else {
@@ -276,7 +284,7 @@ class ChatRepository {
   Future<void> _autotitleIfNeeded(String sessionId, String firstUserText) async {
     final session = await _store.findSession(sessionId);
     if (session == null) return;
-    if (session.title != '新对话') return;
+    if (session.title != kNewSessionTitle) return;
     final trimmed = firstUserText.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (trimmed.isEmpty) return;
     // Approximate "two dozen visible glyphs" by character count. CJK
@@ -285,6 +293,13 @@ class ChatRepository {
     final title = trimmed.length <= 24 ? trimmed : '${trimmed.substring(0, 24)}…';
     await _store.renameSession(sessionId, title);
   }
+
+  /// Generates the context-truncation notice text. Callers in the UI layer
+  /// may prefer `AppLocalizations.chatContextTruncated(count)` for proper
+  /// i18n; this static is provided for data-layer callers that lack
+  /// BuildContext.
+  static String contextTruncatedNotice(int count) =>
+      '已折叠 $count 条更早的历史以控制上下文长度。';
 
   String _describeError(Object e) {
     if (e is AiChatRequestException) {

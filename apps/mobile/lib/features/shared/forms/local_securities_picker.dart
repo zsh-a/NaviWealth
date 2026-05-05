@@ -7,6 +7,7 @@ import '../../../data/securities_catalog/asset_search_hit.dart';
 import '../../../data/securities_catalog/securities_search_service.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'manual_security_sheet.dart';
 
 /// Selection produced by [LocalSecuritiesPicker].
@@ -65,8 +66,8 @@ class LocalSecuritiesPicker extends StatefulWidget {
     super.key,
     required this.search,
     this.onSelected,
-    this.label = '资产搜索',
-    this.hintText = '输入代码、名称或拼音',
+    this.label = '',
+    this.hintText = '',
   });
 
   final SecuritiesSearchService search;
@@ -173,6 +174,9 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final effectiveLabel = widget.label.isEmpty ? l10n.localSecuritiesSearchLabel : widget.label;
+    final effectiveHint = widget.hintText.isEmpty ? l10n.localSecuritiesSearchHint : widget.hintText;
     final owned = _results
         .where((h) => h.source == AssetSearchHitSource.owned)
         .toList(growable: false);
@@ -191,8 +195,8 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
           controller: _controller,
           focusNode: _focusNode,
           decoration: InputDecoration(
-            labelText: widget.label,
-            hintText: widget.hintText,
+            labelText: effectiveLabel,
+            hintText: effectiveHint,
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.search),
             suffixIcon: _selected != null
@@ -214,7 +218,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
           onChanged: _onChanged,
           // Re-render so focus changes flip the dropdown.
           onTap: () => setState(() {}),
-          validator: (_) => _selected == null ? '请选择一个资产' : null,
+          validator: (_) => _selected == null ? l10n.localSecuritiesValidationRequired : null,
         ),
         if (showDropdown)
           LiquidGlassCard(
@@ -226,12 +230,12 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
                 shrinkWrap: true,
                 children: [
                   if (owned.isNotEmpty) ...[
-                    const _SectionHeader(text: '我的资产'),
+                    _SectionHeader(text: l10n.localSecuritiesMyAssets),
                     for (final hit in owned)
                       _HitTile(hit: hit, onTap: () => _select(hit)),
                   ],
                   if (catalog.isNotEmpty) ...[
-                    const _SectionHeader(text: '本地目录'),
+                    _SectionHeader(text: l10n.localSecuritiesCatalog),
                     for (final hit in catalog)
                       _HitTile(hit: hit, onTap: () => _select(hit)),
                   ],
@@ -239,11 +243,11 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
                   ListTile(
                     key: const Key('local-securities-picker-manual'),
                     leading: const Icon(Icons.add),
-                    title: const Text('未找到？手动添加'),
+                    title: Text(l10n.localSecuritiesManualAdd),
                     subtitle: _lastQuery.isEmpty
                         ? null
                         : Text(
-                            '使用 “$_lastQuery” 作为代码',
+                            l10n.localSecuritiesUseQueryAsCode(_lastQuery),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),

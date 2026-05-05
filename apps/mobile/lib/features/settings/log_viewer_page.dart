@@ -40,7 +40,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            tooltip: 'Clear',
+            tooltip: l10n.logViewerClearTooltip,
             onPressed: () {
               talker.cleanHistory();
               setState(() {});

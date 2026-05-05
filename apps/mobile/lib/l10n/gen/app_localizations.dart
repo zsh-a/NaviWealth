@@ -4667,6 +4667,1140 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter the backup passphrase'**
   String get backupRestorePassphraseHint;
+
+  /// More hub: rebalance card title
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get moreRebalanceTitle;
+
+  /// Log viewer page: clear logs tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get logViewerClearTooltip;
+
+  /// Activity feed: error loading journal entries
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load feed: {error}'**
+  String activityFeedLoadError(String error);
+
+  /// Expense form: toast when existing expense fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load expense. Create a new entry instead.'**
+  String get expenseFormLoadError;
+
+  /// Accounts page AppBar: journal history tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get accountsJournalTooltip;
+
+  /// Accounts page AppBar: new transfer tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'New transfer'**
+  String get accountsTransferTooltip;
+
+  /// Account form: parent account tree picker label
+  ///
+  /// In en, this message translates to:
+  /// **'Parent account (optional)'**
+  String get accountFormParentLabel;
+
+  /// Account form: parent account helper text
+  ///
+  /// In en, this message translates to:
+  /// **'Group this account under another in the tree.'**
+  String get accountFormParentHelper;
+
+  /// Account form: tooltip to clear parent selection
+  ///
+  /// In en, this message translates to:
+  /// **'Make top-level'**
+  String get accountFormMakeTopLevelTooltip;
+
+  /// Account form: icon picker section heading
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get accountFormIconHeading;
+
+  /// Account form: tooltip for the no-icon chip
+  ///
+  /// In en, this message translates to:
+  /// **'No icon'**
+  String get accountFormNoIconTooltip;
+
+  /// Account form: color picker section heading
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get accountFormColorHeading;
+
+  /// Account form: tooltip for the no-color swatch
+  ///
+  /// In en, this message translates to:
+  /// **'No color'**
+  String get accountFormNoColorTooltip;
+
+  /// Transfer form page: AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'New transfer'**
+  String get transferTitle;
+
+  /// Transfer form: error loading accounts
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load accounts: {error}'**
+  String transferLoadError(String error);
+
+  /// Transfer form: source account picker label
+  ///
+  /// In en, this message translates to:
+  /// **'From account'**
+  String get transferFromLabel;
+
+  /// Transfer form: destination account picker label
+  ///
+  /// In en, this message translates to:
+  /// **'To account'**
+  String get transferToLabel;
+
+  /// Transfer form: empty field validator
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get transferValidationRequired;
+
+  /// Transfer form: source and dest are the same
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a different account'**
+  String get transferValidationDifferentAccount;
+
+  /// Transfer form: amount field label (single currency)
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get transferAmountLabel;
+
+  /// Transfer form: amount field label with currency
+  ///
+  /// In en, this message translates to:
+  /// **'Amount ({currency})'**
+  String transferAmountWithCurrencyLabel(String currency);
+
+  /// Transfer form: destination amount label for cross-currency
+  ///
+  /// In en, this message translates to:
+  /// **'To amount ({currency})'**
+  String transferToAmountLabel(String currency);
+
+  /// Transfer form: helper when no FX rate exists
+  ///
+  /// In en, this message translates to:
+  /// **'No FX rate on file — enter the converted amount.'**
+  String get transferFxRateHelper;
+
+  /// Transfer form: helper for editing auto-filled rate
+  ///
+  /// In en, this message translates to:
+  /// **'Edit to override the auto-filled rate.'**
+  String get transferFxRateEditHelper;
+
+  /// Transfer form: date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get transferDateLabel;
+
+  /// Transfer form: preview section title
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transferPreviewTitle;
+
+  /// Transfer form: submit button text
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transferSubmitAction;
+
+  /// Transfer form: FX rate display
+  ///
+  /// In en, this message translates to:
+  /// **'Rate: 1 {from} = {rate} {to}'**
+  String transferRateLabel(String from, String rate, String to);
+
+  /// Transfer form: server rejection error
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer rejected: {message}'**
+  String transferRejectedError(String message);
+
+  /// Transfer form: generic transfer failure
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer failed: {error}'**
+  String transferFailedError(String error);
+
+  /// Transfer form: retry button label
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get transferRetryLabel;
+
+  /// Journal list page: AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get journalTitle;
+
+  /// Journal list page: error loading entries
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load journal: {error}'**
+  String journalLoadError(String error);
+
+  /// Journal list page: empty state message
+  ///
+  /// In en, this message translates to:
+  /// **'No journal entries yet — record a transfer, expense, or trade and it will land here.'**
+  String get journalEmptyHint;
+
+  /// Entry kind badge: trade label
+  ///
+  /// In en, this message translates to:
+  /// **'Trade'**
+  String get entryKindTrade;
+
+  /// Entry kind badge: transfer label
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get entryKindTransfer;
+
+  /// Entry kind badge: income label
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get entryKindIncome;
+
+  /// Entry kind badge: expense label
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get entryKindExpense;
+
+  /// Entry kind badge: payment label
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get entryKindPayment;
+
+  /// Entry kind badge: adjustment label
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get entryKindAdjustment;
+
+  /// Entry kind badge: opening label
+  ///
+  /// In en, this message translates to:
+  /// **'Opening'**
+  String get entryKindOpening;
+
+  /// Entry kind badge: generic entry label
+  ///
+  /// In en, this message translates to:
+  /// **'Entry'**
+  String get entryKindEntry;
+
+  /// Entry kind badge: accessibility semantic label
+  ///
+  /// In en, this message translates to:
+  /// **'Journal entry · {kind}'**
+  String entryKindSemanticLabel(String kind);
+
+  /// AI chat: error message when request is cancelled
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get chatCancelled;
+
+  /// AI chat: default session title
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get chatNewSession;
+
+  /// AI chat: system notice about context truncation
+  ///
+  /// In en, this message translates to:
+  /// **'{count} earlier messages were folded to stay within the context limit.'**
+  String chatContextTruncated(int count);
+
+  /// Expense report page: AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'Expense Report'**
+  String get expenseReportAppBarTitle;
+
+  /// Expense report page: load error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load report: {error}'**
+  String expenseReportLoadError(String error);
+
+  /// Expense report: range chip — this month
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get expenseReportRangeThisMonth;
+
+  /// Expense report: range chip — last 3 months
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get expenseReportRangeLast3Months;
+
+  /// Expense report: range chip — last 6 months
+  ///
+  /// In en, this message translates to:
+  /// **'Last 6 months'**
+  String get expenseReportRangeLast6Months;
+
+  /// Expense report: range chip — last 12 months
+  ///
+  /// In en, this message translates to:
+  /// **'Last 12 months'**
+  String get expenseReportRangeLast12Months;
+
+  /// Expense report: range chip — custom
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get expenseReportRangeCustom;
+
+  /// Expense report: summary card heading
+  ///
+  /// In en, this message translates to:
+  /// **'Total expenses'**
+  String get expenseReportTotalExpenses;
+
+  /// Expense report: monthly average metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly avg'**
+  String get expenseReportMonthlyAverage;
+
+  /// Expense report: entry count metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Entries'**
+  String get expenseReportEntryCount;
+
+  /// Expense report: category count metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get expenseReportCategoryCount;
+
+  /// Expense report: warning about skipped FX entries
+  ///
+  /// In en, this message translates to:
+  /// **'{count} expenses excluded — missing FX rate.'**
+  String expenseReportSkippedFx(int count);
+
+  /// Expense report: info line about base currency
+  ///
+  /// In en, this message translates to:
+  /// **'Base currency {currency} · monthly avg over {months} months'**
+  String expenseReportBaseCurrency(String currency, int months);
+
+  /// Expense report: category pie chart section title
+  ///
+  /// In en, this message translates to:
+  /// **'Category share'**
+  String get expenseReportCategoryShare;
+
+  /// Expense report: fallback category name
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get expenseReportUncategorized;
+
+  /// Expense report: empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses in this period.'**
+  String get expenseReportNoExpenses;
+
+  /// Expense report: chart bar month label
+  ///
+  /// In en, this message translates to:
+  /// **'{month}月'**
+  String expenseReportMonthLabel(int month);
+
+  /// Expense report: monthly trend chart section title
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly trend'**
+  String get expenseReportMonthlyTrend;
+
+  /// Expense report: chart series name
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get expenseReportSeriesExpenses;
+
+  /// Expense report: chart accessibility label
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly expense trend'**
+  String get expenseReportMonthlyTrendSemantic;
+
+  /// Expense report: category detail section title
+  ///
+  /// In en, this message translates to:
+  /// **'Category detail'**
+  String get expenseReportCategoryDetail;
+
+  /// Expense report: entry count per category
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 entry} other{{count} entries}}'**
+  String expenseReportItemCount(int count);
+
+  /// Expense list: search field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by note'**
+  String get expenseListSearchHint;
+
+  /// Expense list: filter chip — all categories
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get expenseListAllCategories;
+
+  /// Expense list: grouping chip — month
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get expenseListGroupMonth;
+
+  /// Expense list: grouping chip — week
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get expenseListGroupWeek;
+
+  /// Expense list: group total label
+  ///
+  /// In en, this message translates to:
+  /// **'Total {amount}'**
+  String expenseListTotal(String amount);
+
+  /// Expense list: fallback category name
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get expenseListUncategorized;
+
+  /// Expense list: empty state when filtered
+  ///
+  /// In en, this message translates to:
+  /// **'No matching expenses.'**
+  String get expenseListEmptyFiltered;
+
+  /// Expense list: empty state default
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses yet. Tap the + button to start tracking.'**
+  String get expenseListEmptyDefault;
+
+  /// Expense list: month group header
+  ///
+  /// In en, this message translates to:
+  /// **'{year} 年 {month} 月'**
+  String expenseListMonthGroup(int year, int month);
+
+  /// Expense list: week group header
+  ///
+  /// In en, this message translates to:
+  /// **'{year} 年第 {week} 周'**
+  String expenseListWeekGroup(int year, int week);
+
+  /// Asset detail page: generic load error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String assetDetailLoadError(String error);
+
+  /// Asset detail page: asset not found state
+  ///
+  /// In en, this message translates to:
+  /// **'Asset not found or deleted'**
+  String get assetDetailNotFound;
+
+  /// Asset detail page: unsupported type state
+  ///
+  /// In en, this message translates to:
+  /// **'This asset type does not support manual editing'**
+  String get assetDetailUnsupportedType;
+
+  /// Asset detail: toast — no metadata match
+  ///
+  /// In en, this message translates to:
+  /// **'No matching metadata found'**
+  String get assetDetailNoMetadataMatch;
+
+  /// Asset detail: toast — metadata filled
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata synced'**
+  String get assetDetailMetadataSynced;
+
+  /// Asset detail: toast — metadata already current
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata is up to date'**
+  String get assetDetailMetadataUpToDate;
+
+  /// Asset detail: toast — no network
+  ///
+  /// In en, this message translates to:
+  /// **'Network unavailable — cannot sync metadata'**
+  String get assetDetailNetworkUnavailable;
+
+  /// Asset detail: sync metadata button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Sync metadata'**
+  String get assetDetailSyncMetadataTooltip;
+
+  /// Asset detail: new trade button label
+  ///
+  /// In en, this message translates to:
+  /// **'New trade'**
+  String get assetDetailNewTradeLabel;
+
+  /// Asset detail: fallback for unknown market
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get assetDetailUnknown;
+
+  /// Asset detail: holdings section load error
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings load failed: {error}'**
+  String assetDetailHoldingsLoadError(String error);
+
+  /// Asset detail: holdings card heading
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings'**
+  String get assetDetailHoldingsTitle;
+
+  /// Asset detail: current quantity metric
+  ///
+  /// In en, this message translates to:
+  /// **'Current qty'**
+  String get assetDetailCurrentQuantity;
+
+  /// Asset detail: average cost metric
+  ///
+  /// In en, this message translates to:
+  /// **'Avg cost'**
+  String get assetDetailAverageCost;
+
+  /// Asset detail: current market value metric
+  ///
+  /// In en, this message translates to:
+  /// **'Market value'**
+  String get assetDetailCurrentMarketValue;
+
+  /// Asset detail: info when price is unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Price unavailable — market value shows as zero'**
+  String get assetDetailPriceUnavailable;
+
+  /// Asset detail: P&L section load error
+  ///
+  /// In en, this message translates to:
+  /// **'P&L load failed: {error}'**
+  String assetDetailPnLLoadError(String error);
+
+  /// Asset detail: P&L card heading
+  ///
+  /// In en, this message translates to:
+  /// **'Profit & Loss'**
+  String get assetDetailPnLTitle;
+
+  /// Asset detail: unrealized P&L label
+  ///
+  /// In en, this message translates to:
+  /// **'Unrealized P&L'**
+  String get assetDetailUnrealizedPnL;
+
+  /// Asset detail: base currency info
+  ///
+  /// In en, this message translates to:
+  /// **'Base currency: {currency}'**
+  String assetDetailBaseCurrency(String currency);
+
+  /// Asset detail: today's change metric
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get assetDetailTodayChange;
+
+  /// Asset detail: stale quote status
+  ///
+  /// In en, this message translates to:
+  /// **'Quote stale'**
+  String get assetDetailQuoteStale;
+
+  /// Asset detail: quote unavailable status
+  ///
+  /// In en, this message translates to:
+  /// **'Quote unavailable'**
+  String get assetDetailQuoteUnavailable;
+
+  /// Asset detail: 30-day trend chart heading
+  ///
+  /// In en, this message translates to:
+  /// **'30-day trend'**
+  String get assetDetailTrend30d;
+
+  /// Asset detail: info when no market is linked
+  ///
+  /// In en, this message translates to:
+  /// **'This asset is not linked to a market — no trend to display'**
+  String get assetDetailNoMarketLinked;
+
+  /// Asset detail: trend chart load error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load quote: {error}'**
+  String assetDetailTrendLoadError(String error);
+
+  /// Asset detail: chart series — close price
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get assetDetailSeriesClosePrice;
+
+  /// Asset detail: chart series — cost basis line
+  ///
+  /// In en, this message translates to:
+  /// **'Cost basis'**
+  String get assetDetailSeriesCostBasis;
+
+  /// Asset detail: chart accessibility label
+  ///
+  /// In en, this message translates to:
+  /// **'30-day close price trend'**
+  String get assetDetailTrendSemanticLabel;
+
+  /// Asset detail: stale quote badge text
+  ///
+  /// In en, this message translates to:
+  /// **'Stale'**
+  String get assetDetailStaleBadge;
+
+  /// Expense report: pie chart accessibility label
+  ///
+  /// In en, this message translates to:
+  /// **'Category share'**
+  String get assetDetailCategoryShareSemantic;
+
+  /// Deposit form: validation — maturity date required
+  ///
+  /// In en, this message translates to:
+  /// **'Term deposits require a maturity date'**
+  String get depositMaturityRequired;
+
+  /// Deposit form: delete dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete deposit'**
+  String get depositDeleteTitle;
+
+  /// Deposit form: delete dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this deposit record?'**
+  String get depositDeleteBody;
+
+  /// Deposit form: AppBar title (create)
+  ///
+  /// In en, this message translates to:
+  /// **'Record deposit'**
+  String get depositCreateTitle;
+
+  /// Deposit form: AppBar title (edit)
+  ///
+  /// In en, this message translates to:
+  /// **'Edit deposit'**
+  String get depositEditTitle;
+
+  /// Deposit form: delete button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get depositDeleteTooltip;
+
+  /// Deposit form: term deposit chip
+  ///
+  /// In en, this message translates to:
+  /// **'Term'**
+  String get depositTypeTerm;
+
+  /// Deposit form: demand deposit chip
+  ///
+  /// In en, this message translates to:
+  /// **'Demand'**
+  String get depositTypeDemand;
+
+  /// Deposit form: name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get depositNameLabel;
+
+  /// Deposit form: name field helper
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. CMB 1-year term, ICBC demand savings'**
+  String get depositNameHelper;
+
+  /// Deposit form: name validator
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get depositNameRequired;
+
+  /// Deposit form: principal field label
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get depositPrincipalLabel;
+
+  /// Deposit form: interest rate field label
+  ///
+  /// In en, this message translates to:
+  /// **'Annual rate (%)'**
+  String get depositRateLabel;
+
+  /// Deposit form: rate field helper
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 3.25 means 3.25%'**
+  String get depositRateHelper;
+
+  /// Deposit form: rate validator — empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the interest rate'**
+  String get depositRateRequired;
+
+  /// Deposit form: rate validator — bad format
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid rate format'**
+  String get depositRateInvalid;
+
+  /// Deposit form: rate validator — negative
+  ///
+  /// In en, this message translates to:
+  /// **'Rate cannot be negative'**
+  String get depositRateNegative;
+
+  /// Deposit form: value date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Value date'**
+  String get depositValueDateLabel;
+
+  /// Deposit form: maturity date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Maturity date'**
+  String get depositMaturityDateLabel;
+
+  /// Deposit form: current valuation field label
+  ///
+  /// In en, this message translates to:
+  /// **'Current valuation (optional)'**
+  String get depositCurrentValuationLabel;
+
+  /// Deposit form: valuation field helper
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to use principal as current valuation'**
+  String get depositCurrentValuationHelper;
+
+  /// Deposit form: auto-renew switch title
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-renew'**
+  String get depositAutoRenewTitle;
+
+  /// Deposit form: auto-renew switch subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'On maturity you\'ll be prompted to re-register; no new deposit is created automatically'**
+  String get depositAutoRenewSubtitle;
+
+  /// Deposit form: empty state when no bank account exists
+  ///
+  /// In en, this message translates to:
+  /// **'Please create a bank account first.'**
+  String get depositNoAccountHint;
+
+  /// Deposit form: create account button
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get depositCreateAccountAction;
+
+  /// Wealth product form: delete dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete wealth product'**
+  String get wealthProductDeleteTitle;
+
+  /// Wealth product form: delete dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this wealth product record?'**
+  String get wealthProductDeleteBody;
+
+  /// Wealth product form: AppBar title (create)
+  ///
+  /// In en, this message translates to:
+  /// **'Record wealth product'**
+  String get wealthProductCreateTitle;
+
+  /// Wealth product form: AppBar title (edit)
+  ///
+  /// In en, this message translates to:
+  /// **'Edit wealth product'**
+  String get wealthProductEditTitle;
+
+  /// Wealth product form: delete button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get wealthProductDeleteTooltip;
+
+  /// Wealth product form: empty state hint
+  ///
+  /// In en, this message translates to:
+  /// **'Please create a bank / brokerage account first.'**
+  String get wealthProductNoAccountHint;
+
+  /// Wealth product form: create account button
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get wealthProductCreateAccountAction;
+
+  /// Wealth product form: name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Product name'**
+  String get wealthProductNameLabel;
+
+  /// Wealth product form: name validator
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the product name'**
+  String get wealthProductNameRequired;
+
+  /// Wealth product form: issuer field label
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer (optional)'**
+  String get wealthProductIssuerLabel;
+
+  /// Wealth product form: code field label
+  ///
+  /// In en, this message translates to:
+  /// **'Product code (optional)'**
+  String get wealthProductCodeLabel;
+
+  /// Wealth product form: amount field label
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription amount'**
+  String get wealthProductAmountLabel;
+
+  /// Wealth product form: expected return field label
+  ///
+  /// In en, this message translates to:
+  /// **'Expected annual return (%)'**
+  String get wealthProductExpectedReturnLabel;
+
+  /// Wealth product form: return field helper
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 4.5 means 4.5%'**
+  String get wealthProductExpectedReturnHelper;
+
+  /// Wealth product form: return validator — empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter expected return'**
+  String get wealthProductExpectedReturnRequired;
+
+  /// Wealth product form: return validator — bad format
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid format'**
+  String get wealthProductInvalidFormat;
+
+  /// Wealth product form: value date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Value date'**
+  String get wealthProductValueDateLabel;
+
+  /// Wealth product form: maturity date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Maturity date (optional)'**
+  String get wealthProductMaturityDateLabel;
+
+  /// Wealth product form: valuation field label
+  ///
+  /// In en, this message translates to:
+  /// **'Current valuation (manual)'**
+  String get wealthProductValuationLabel;
+
+  /// Wealth product form: valuation field helper
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to use subscription amount as current valuation'**
+  String get wealthProductValuationHelper;
+
+  /// Manual security: CN A-shares market label
+  ///
+  /// In en, this message translates to:
+  /// **'A-shares'**
+  String get manualSecurityMarketCnA;
+
+  /// Manual security: Hong Kong market label
+  ///
+  /// In en, this message translates to:
+  /// **'HK stocks'**
+  String get manualSecurityMarketHk;
+
+  /// Manual security: US market label
+  ///
+  /// In en, this message translates to:
+  /// **'US stocks'**
+  String get manualSecurityMarketUs;
+
+  /// Manual security: crypto market label
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get manualSecurityMarketCrypto;
+
+  /// Manual security: stock type label
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get manualSecurityTypeStock;
+
+  /// Manual security: ETF type label
+  ///
+  /// In en, this message translates to:
+  /// **'ETF'**
+  String get manualSecurityTypeEtf;
+
+  /// Manual security: mutual fund type label
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual fund'**
+  String get manualSecurityTypeMutualFund;
+
+  /// Manual security: bond type label
+  ///
+  /// In en, this message translates to:
+  /// **'Bond'**
+  String get manualSecurityTypeBond;
+
+  /// Manual security: crypto type label
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get manualSecurityTypeCrypto;
+
+  /// Manual security: toast — empty input
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a code or name first'**
+  String get manualSecurityEnterCodeOrName;
+
+  /// Manual security: toast — no network
+  ///
+  /// In en, this message translates to:
+  /// **'Network unavailable — use manual entry'**
+  String get manualSecurityNetworkUnavailable;
+
+  /// Manual security: toast — no results
+  ///
+  /// In en, this message translates to:
+  /// **'No matches found — use manual entry'**
+  String get manualSecurityNoMatch;
+
+  /// Manual security: toast — import success
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata imported from network'**
+  String get manualSecurityImported;
+
+  /// Manual security: match dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Select a match'**
+  String get manualSecuritySelectMatchTitle;
+
+  /// Manual security: bottom sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Add security manually'**
+  String get manualSecuritySheetTitle;
+
+  /// Manual security: sheet description
+  ///
+  /// In en, this message translates to:
+  /// **'Saved locally. Tap \'Import from network\' to optionally fill fields from Yahoo / CoinGecko metadata.'**
+  String get manualSecuritySheetDescription;
+
+  /// Manual security: code field label
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get manualSecurityCodeLabel;
+
+  /// Manual security: code validator — empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code'**
+  String get manualSecurityCodeRequired;
+
+  /// Manual security: code validator — colon
+  ///
+  /// In en, this message translates to:
+  /// **'Code cannot contain \':\''**
+  String get manualSecurityCodeNoColon;
+
+  /// Manual security: import button label
+  ///
+  /// In en, this message translates to:
+  /// **'Import from network'**
+  String get manualSecurityImportAction;
+
+  /// Manual security: import button loading label
+  ///
+  /// In en, this message translates to:
+  /// **'Importing…'**
+  String get manualSecurityImporting;
+
+  /// Manual security: name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get manualSecurityNameLabel;
+
+  /// Manual security: market dropdown label
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get manualSecurityMarketLabel;
+
+  /// Manual security: type dropdown label
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get manualSecurityTypeLabel;
+
+  /// Manual security: ISIN field label
+  ///
+  /// In en, this message translates to:
+  /// **'ISIN (optional)'**
+  String get manualSecurityIsinLabel;
+
+  /// Manual security: add button label
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get manualSecurityAddAction;
+
+  /// Local securities picker: default search label
+  ///
+  /// In en, this message translates to:
+  /// **'Asset search'**
+  String get localSecuritiesSearchLabel;
+
+  /// Local securities picker: search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter code, name, or pinyin'**
+  String get localSecuritiesSearchHint;
+
+  /// Local securities picker: validator
+  ///
+  /// In en, this message translates to:
+  /// **'Select an asset'**
+  String get localSecuritiesValidationRequired;
+
+  /// Local securities picker: my assets section header
+  ///
+  /// In en, this message translates to:
+  /// **'My assets'**
+  String get localSecuritiesMyAssets;
+
+  /// Local securities picker: catalog section header
+  ///
+  /// In en, this message translates to:
+  /// **'Local catalog'**
+  String get localSecuritiesCatalog;
+
+  /// Local securities picker: manual add option
+  ///
+  /// In en, this message translates to:
+  /// **'Not found? Add manually'**
+  String get localSecuritiesManualAdd;
+
+  /// Local securities picker: use search query as code
+  ///
+  /// In en, this message translates to:
+  /// **'Use \"{query}\" as code'**
+  String localSecuritiesUseQueryAsCode(String query);
+
+  /// Shared form: saving button label
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get formSaving;
+
+  /// Shared form: save button label
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get formSave;
 }
 
 class _AppLocalizationsDelegate

@@ -13,6 +13,7 @@ import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
 /// Create / edit form for 理财产品 (manual-valuation wealth products).
@@ -159,6 +160,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
 
   Future<void> _delete() async {
     if (_initial == null) return;
+    final l10n = AppLocalizations.of(context);
     final ok = await showGlassModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
@@ -167,21 +169,21 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('删除理财产品', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(l10n.wealthProductDeleteTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: Spacing.s8),
-            const Text('确认删除该理财产品记录？'),
+            Text(l10n.wealthProductDeleteBody),
             const SizedBox(height: Spacing.s16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 AppButton.tertiary(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  label: '取消',
+                  label: l10n.commonCancel,
                 ),
                 const SizedBox(width: Spacing.s8),
                 AppButton.secondary(
                   onPressed: () => Navigator.of(ctx).pop(true),
-                  label: '删除',
+                  label: l10n.commonDelete,
                 ),
               ],
             ),
@@ -226,28 +228,30 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
       appBar: GlassAppBar(
-        title: Text(widget.isEdit ? '编辑理财产品' : '录入理财产品'),
+        title: Text(widget.isEdit ? l10n.wealthProductEditTitle : l10n.wealthProductCreateTitle),
         actions: [
           if (widget.isEdit)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: '删除',
+              tooltip: l10n.wealthProductDeleteTooltip,
               onPressed: _busy ? null : _delete,
             ),
         ],
       ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
         data: (accounts) => _buildForm(accounts),
       ),
     );
   }
 
   Widget _buildForm(List<Account> accounts) {
+    final l10n = AppLocalizations.of(context);
     final eligible = accounts
         .where((a) => _eligibleAccountTypes.contains(a.type))
         .toList(growable: false);
@@ -258,11 +262,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('请先创建银行 / 券商账户。', textAlign: TextAlign.center),
+              Text(l10n.wealthProductNoAccountHint, textAlign: TextAlign.center),
               const SizedBox(height: Spacing.s12),
               AppButton.secondary(
                 icon: Icons.add,
-                label: '新建账户',
+                label: l10n.wealthProductCreateAccountAction,
                 onPressed: () => context.go('/activity/accounts/new'),
               ),
             ],
@@ -296,12 +300,12 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             focusNode: _nameFocus,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _issuerFocus.requestFocus(),
-            decoration: const InputDecoration(
-              labelText: '产品名称',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.wealthProductNameLabel,
+              border: const OutlineInputBorder(),
             ),
             validator: (v) =>
-                (v == null || v.trim().isEmpty) ? '请输入产品名称' : null,
+                (v == null || v.trim().isEmpty) ? l10n.wealthProductNameRequired : null,
           ),
           const SizedBox(height: Spacing.s12),
           TextFormField(
@@ -309,9 +313,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             focusNode: _issuerFocus,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _productCodeFocus.requestFocus(),
-            decoration: const InputDecoration(
-              labelText: '发行机构（可选）',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.wealthProductIssuerLabel,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: Spacing.s12),
@@ -320,9 +324,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             focusNode: _productCodeFocus,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _principalFocus.requestFocus(),
-            decoration: const InputDecoration(
-              labelText: '产品代码（可选）',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.wealthProductCodeLabel,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: Spacing.s12),
@@ -332,7 +336,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
           AmountField(
-            label: '认购金额',
+            label: l10n.wealthProductAmountLabel,
             controller: _principalController,
             currencyCode: _currency,
             focusNode: _principalFocus,
@@ -345,38 +349,38 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _valuationFocus.requestFocus(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '预期年化收益率 (%)',
-              border: OutlineInputBorder(),
-              helperText: '例如：4.5 表示 4.5%',
+            decoration: InputDecoration(
+              labelText: l10n.wealthProductExpectedReturnLabel,
+              border: const OutlineInputBorder(),
+              helperText: l10n.wealthProductExpectedReturnHelper,
             ),
             validator: (v) {
               final trimmed = v?.trim() ?? '';
-              if (trimmed.isEmpty) return '请输入预期年化';
+              if (trimmed.isEmpty) return l10n.wealthProductExpectedReturnRequired;
               final parsed = Decimal.tryParse(trimmed);
-              if (parsed == null) return '格式不正确';
+              if (parsed == null) return l10n.wealthProductInvalidFormat;
               return null;
             },
           ),
           const SizedBox(height: Spacing.s12),
           DateField(
-            label: '起息日',
+            label: l10n.wealthProductValueDateLabel,
             initialValue: _startDate,
             onChanged: (d) => setState(() => _startDate = d),
           ),
           const SizedBox(height: Spacing.s12),
           DateField(
-            label: '到期日（可选）',
+            label: l10n.wealthProductMaturityDateLabel,
             initialValue: _maturityDate,
             onChanged: (d) => setState(() => _maturityDate = d),
           ),
           const SizedBox(height: Spacing.s12),
           AmountField(
-            label: '当前估值（手动维护）',
+            label: l10n.wealthProductValuationLabel,
             controller: _valuationController,
             currencyCode: _currency,
             required: false,
-            helperText: '不填则以认购金额作为当前估值',
+            helperText: l10n.wealthProductValuationHelper,
             focusNode: _valuationFocus,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
@@ -384,7 +388,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           const SizedBox(height: Spacing.s24),
           AppButton.primary(
             onPressed: _busy ? null : _save,
-            label: _busy ? '保存中…' : '保存',
+            label: _busy ? l10n.formSaving : l10n.formSave,
           ),
         ],
       ),

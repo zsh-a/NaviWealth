@@ -44,7 +44,7 @@ class ActivityFeed extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Failed to load feed: $e')),
+      error: (e, _) => Center(child: Text(l10n.activityFeedLoadError('$e'))),
     );
   }
 }

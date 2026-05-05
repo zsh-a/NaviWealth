@@ -115,12 +115,12 @@ class _AccountsMaster extends ConsumerWidget {
           title: Text(l10n.accountsAppBarTitle),
           actions: [
             IconButton(
-              tooltip: 'Journal',
+              tooltip: l10n.accountsJournalTooltip,
               icon: const Icon(Icons.history),
               onPressed: () => context.go('/activity/accounts/journal'),
             ),
             IconButton(
-              tooltip: 'New transfer',
+              tooltip: l10n.accountsTransferTooltip,
               icon: const Icon(Icons.swap_horiz),
               onPressed: () => context.go('/activity/accounts/transfer'),
             ),
