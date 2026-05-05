@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +68,26 @@ final _ledgerRevisionProvider = StreamProvider.autoDispose<int>((ref) async* {
         ..where(db.postings.deletedAt.isNull())
         ..where(db.journalEntries.deletedAt.isNull());
   var revision = 0;
-  yield* query.watch().map((_) => revision++);
+  // Debounce by 300ms: during rapid sync writes, only the last emission
+  // in a burst triggers the expensive holdings recomputation cascade.
+  Timer? timer;
+  final controller = StreamController<int>();
+  ref.onDispose(() {
+    timer?.cancel();
+    controller.close();
+  });
+  query.watch().listen(
+    (_) {
+      timer?.cancel();
+      timer = Timer(
+        const Duration(milliseconds: 300),
+        () => controller.add(revision++),
+      );
+    },
+    onError: controller.addError,
+    onDone: controller.close,
+  );
+  yield* controller.stream;
 });
 
 DateTime _floorToDay(DateTime d) {

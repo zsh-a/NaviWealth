@@ -24,7 +24,7 @@ class Motion {
   static const Curve standardAccelerate = Cubic(0.3, 0.0, 1.0, 1.0);
 
   // Liquid Glass spring curves — elastic, physics-driven.
-  static const Curve liquidPress = LiquidSprings.press;
-  static const Curve liquidAppear = LiquidSprings.appear;
-  static const Curve liquidDrag = LiquidSprings.drag;
+  static final Curve liquidPress = LiquidSprings.press;
+  static final Curve liquidAppear = LiquidSprings.appear;
+  static final Curve liquidDrag = LiquidSprings.drag;
 }

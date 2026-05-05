@@ -210,32 +210,37 @@ class _AssetsBody extends StatelessWidget {
     if (manual.isEmpty && physical.isEmpty && securities.isEmpty) {
       return const _EmptyHint();
     }
-    return ListView(
-      padding: Spacing.pageMobile.copyWith(
-        bottom: Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
-            MediaQuery.paddingOf(context).bottom,
+    // Build a flat list of section widgets for lazy construction.
+    final sections = <Widget>[
+      if (manual.isNotEmpty)
+        _ManualAssetsSection(
+          assets: manual,
+          selectedAssetId: selectedAssetId,
+          inMasterDetail: inMasterDetail,
+        ),
+      if (securities.isNotEmpty)
+        _SecuritiesAssetsSection(
+          assets: securities,
+          holdings: holdings,
+          selectedAssetId: selectedAssetId,
+          inMasterDetail: inMasterDetail,
+        ),
+      if (physical.isNotEmpty)
+        _PhysicalAssetsSection(
+          assets: physical,
+          selectedAssetId: selectedAssetId,
+        ),
+    ];
+    return ScrollNotificationHandler(
+      child: ListView.builder(
+        padding: Spacing.pageMobile.copyWith(
+          bottom: Spacing.pageMobile.bottom +
+              Spacing.floatingBarClearance +
+              MediaQuery.paddingOf(context).bottom,
+        ),
+        itemCount: sections.length,
+        itemBuilder: (context, i) => sections[i],
       ),
-      children: [
-        if (manual.isNotEmpty)
-          _ManualAssetsSection(
-            assets: manual,
-            selectedAssetId: selectedAssetId,
-            inMasterDetail: inMasterDetail,
-          ),
-        if (securities.isNotEmpty)
-          _SecuritiesAssetsSection(
-            assets: securities,
-            holdings: holdings,
-            selectedAssetId: selectedAssetId,
-            inMasterDetail: inMasterDetail,
-          ),
-        if (physical.isNotEmpty)
-          _PhysicalAssetsSection(
-            assets: physical,
-            selectedAssetId: selectedAssetId,
-          ),
-      ],
     );
   }
 }

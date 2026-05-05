@@ -115,30 +115,32 @@ class _FeedList extends StatelessWidget {
       }
     }
 
-    return ListView.builder(
-      padding: Spacing.pageMobile.copyWith(
-        bottom: Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
-            MediaQuery.paddingOf(context).bottom,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return switch (item) {
-          _FeedItemHeader(:final group) => _DateSectionHeader(
-              group: group,
-              l10n: l10n,
-            ),
-          _FeedItemEntry(:final entry) => Padding(
-              padding: const EdgeInsets.only(bottom: Spacing.s8),
-              child: _FeedEntryRow(
-                entry: entry,
-                accountsById: accountsById,
-                formatter: formatter,
+    return ScrollNotificationHandler(
+      child: ListView.builder(
+        padding: Spacing.pageMobile.copyWith(
+          bottom: Spacing.pageMobile.bottom +
+              Spacing.floatingBarClearance +
+              MediaQuery.paddingOf(context).bottom,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return switch (item) {
+            _FeedItemHeader(:final group) => _DateSectionHeader(
+                group: group,
+                l10n: l10n,
               ),
-            ),
-        };
-      },
+            _FeedItemEntry(:final entry) => Padding(
+                padding: const EdgeInsets.only(bottom: Spacing.s8),
+                child: _FeedEntryRow(
+                  entry: entry,
+                  accountsById: accountsById,
+                  formatter: formatter,
+                ),
+              ),
+          };
+        },
+      ),
     );
   }
 }

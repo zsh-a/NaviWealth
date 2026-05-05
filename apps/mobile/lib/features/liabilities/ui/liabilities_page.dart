@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/liability_summary.dart';
 import 'liability_l10n.dart';
 
 /// List of all of the user's liabilities. Tapping a row drills into the
@@ -22,7 +24,10 @@ class LiabilitiesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
     final asyncList = ref.watch(liabilitiesStreamProvider);
+    final summariesAsync = ref.watch(allLiabilitySummariesProvider);
+    final summaries = summariesAsync.value ?? const {};
 
     final body = asyncList.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -31,16 +36,24 @@ class LiabilitiesPage extends ConsumerWidget {
         if (items.isEmpty) {
           return _LiabilitiesEmptyState(l10n: l10n);
         }
-        return ListView.separated(
-          padding: Spacing.pageMobile.copyWith(
-            bottom: Spacing.pageMobile.bottom +
-                Spacing.floatingBarClearance +
-                MediaQuery.paddingOf(context).bottom,
+        // Standard two-line ListTile height — lets the scroll view skip
+        // per-item layout during scroll, critical for 120fps.
+        const itemHeight = 72.0 + Spacing.s8;
+        return ScrollNotificationHandler(
+          child: ListView.builder(
+            padding: Spacing.pageMobile.copyWith(
+              bottom: Spacing.pageMobile.bottom +
+                  Spacing.floatingBarClearance +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
+            itemCount: items.length,
+            itemExtent: itemHeight,
+            itemBuilder: (context, i) => _LiabilityListTile(
+              liability: items[i],
+              summary: summaries[items[i].id],
+              formatters: formatters,
+            ),
           ),
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
-          itemBuilder: (context, i) =>
-              _LiabilityListTile(liability: items[i]),
         );
       },
     );
@@ -91,21 +104,22 @@ class _LiabilitiesEmptyState extends StatelessWidget {
   }
 }
 
-class _LiabilityListTile extends ConsumerWidget {
-  const _LiabilityListTile({required this.liability});
+class _LiabilityListTile extends StatelessWidget {
+  const _LiabilityListTile({
+    required this.liability,
+    required this.summary,
+    required this.formatters,
+  });
 
   final Liability liability;
+  final LiabilitySummary? summary;
+  final AppFormatters formatters;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final formatters = context.formatters(ref);
-    final summary = ref.watch(liabilitySummaryProvider(liability.id));
-    final remaining = summary.maybeWhen(
-      data: (s) => s?.remainingPrincipal,
-      orElse: () => null,
-    );
+    final remaining = summary?.remainingPrincipal;
 
     return LiquidGlassCard(
       child: ListTile(
