@@ -1,10 +1,10 @@
-import 'package:logger/logger.dart';
+import 'package:talker/talker.dart';
 
 import '../config/app_config.dart';
 import 'crash_reporter.dart';
 
-/// Thin wrapper over the `logger` package that:
-///   * picks a verbosity per [AppEnvironment] (dev = trace, staging = info,
+/// Thin wrapper over the `talker` package that:
+///   * picks a verbosity per [AppEnvironment] (dev = verbose, staging = info,
 ///     prod = warning),
 ///   * forwards `warning` and above to the registered [CrashReporter] so a
 ///     single call site emits both a console log and a crash breadcrumb,
@@ -17,17 +17,24 @@ class AppLogger {
   AppLogger({required AppEnvironment environment, CrashReporter? crashReporter})
     : _environment = environment,
       _crashReporter = crashReporter ?? const NoopCrashReporter(),
-      _delegate = Logger(
-        level: _levelFor(environment),
-        filter: ProductionFilter(),
-        printer: _printerFor(environment),
+      _talker = Talker(
+        settings: TalkerSettings(
+          useConsoleLogs: true,
+          useHistory: true,
+          maxHistoryItems: 1000,
+          timeFormat: TimeFormat.timeAndSeconds,
+        ),
       );
 
   final AppEnvironment _environment;
   final CrashReporter _crashReporter;
-  final Logger _delegate;
+  final Talker _talker;
 
   AppEnvironment get environment => _environment;
+
+  /// Expose the underlying [Talker] for downstream use (Dio interceptors,
+  /// TalkerScreen, route observer).
+  Talker get talker => _talker;
 
   static AppLogger _instance = AppLogger(environment: AppEnvironment.dev);
 
@@ -40,14 +47,14 @@ class AppLogger {
     _instance = logger;
   }
 
-  void t(Object? message) => _delegate.t(message);
+  void t(Object? message) => _talker.verbose(message);
 
-  void d(Object? message) => _delegate.d(message);
+  void d(Object? message) => _talker.debug(message);
 
-  void i(Object? message) => _delegate.i(message);
+  void i(Object? message) => _talker.info(message);
 
   void w(Object? message, {Object? error, StackTrace? stackTrace}) {
-    _delegate.w(message, error: error, stackTrace: stackTrace);
+    _talker.warning(message, error, stackTrace);
     _crashReporter.recordBreadcrumb(
       message: '$message',
       level: BreadcrumbLevel.warning,
@@ -55,7 +62,7 @@ class AppLogger {
   }
 
   void e(Object? message, {Object? error, StackTrace? stackTrace}) {
-    _delegate.e(message, error: error, stackTrace: stackTrace);
+    _talker.error(message, error, stackTrace);
     if (error != null) {
       _crashReporter.captureError(
         error,
@@ -64,34 +71,6 @@ class AppLogger {
       );
     } else {
       _crashReporter.captureMessage('$message', level: BreadcrumbLevel.error);
-    }
-  }
-
-  static Level _levelFor(AppEnvironment env) {
-    switch (env) {
-      case AppEnvironment.dev:
-        return Level.trace;
-      case AppEnvironment.staging:
-        return Level.info;
-      case AppEnvironment.prod:
-        return Level.warning;
-    }
-  }
-
-  static LogPrinter _printerFor(AppEnvironment env) {
-    switch (env) {
-      case AppEnvironment.dev:
-        return PrettyPrinter(
-          methodCount: 0,
-          errorMethodCount: 8,
-          lineLength: 100,
-          colors: true,
-          printEmojis: false,
-          dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
-        );
-      case AppEnvironment.staging:
-      case AppEnvironment.prod:
-        return SimplePrinter(printTime: true, colors: false);
     }
   }
 }

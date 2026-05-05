@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import '../../data/domain/hlc.dart';
+import '../logging/app_logger.dart';
 import 'clock.dart';
 import 'cursor_store.dart';
 import 'errors.dart';
@@ -51,9 +52,11 @@ class SyncEngine {
     Random? random,
     this.batchMaxOps = kPushBatchMaxOps,
     this.batchMaxBytes = kPushBatchMaxBytes,
+    AppLogger? logger,
   }) : _clock = clock,
        _backoff = backoff,
-       _random = random ?? Random();
+       _random = random ?? Random(),
+       _logger = logger ?? AppLogger.instance;
 
   final SyncApiClient api;
   final OutboxStore outbox;
@@ -64,6 +67,7 @@ class SyncEngine {
   final Clock _clock;
   final BackoffPolicy _backoff;
   final Random _random;
+  final AppLogger _logger;
   final int batchMaxOps;
   final int batchMaxBytes;
 
@@ -118,6 +122,7 @@ class SyncEngine {
     var pushed = 0;
     var pulled = 0;
     final outboxDepth = await outbox.depth();
+    _logger.d('sync: cycle starting (outbox=$outboxDepth)');
     _emitStatus(SyncStatus.syncing, outboxDepth: outboxDepth);
 
     try {
@@ -129,6 +134,7 @@ class SyncEngine {
         _nextBackoff = null;
         _state = EngineState.idle;
         _lastSuccessAt = _clock.now();
+        _logger.d('sync: cycle complete (pushed=$pushed, pulled=$pulled)');
         _emitStatus(SyncStatus.online, outboxDepth: await outbox.depth());
         return SyncCycleResult(
           pushed: pushed,
@@ -157,6 +163,7 @@ class SyncEngine {
     final fatal = errors.where((e) => !e.isRetryable).toList();
     if (fatal.isNotEmpty) {
       _state = EngineState.halted;
+      _logger.e('sync: engine halted', error: fatal.first);
       _emitStatus(SyncStatus.failed, lastError: fatal.first.toString());
       return SyncCycleResult(pushed: pushed, pulled: pulled, errors: errors);
     }
@@ -177,6 +184,10 @@ class SyncEngine {
           );
     _nextBackoff = delay;
     _state = EngineState.backoff;
+    _logger.w(
+      'sync: backing off ${delay.inSeconds}s after $_consecutiveFailures failures',
+      error: errors.first,
+    );
     _emitStatus(SyncStatus.offline, lastError: errors.first.toString());
     return SyncCycleResult(pushed: pushed, pulled: pulled, errors: errors);
   }

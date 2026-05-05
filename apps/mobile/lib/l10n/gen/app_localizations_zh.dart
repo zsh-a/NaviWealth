@@ -2403,6 +2403,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSubtitle => '导出或导入加密数据备份';
 
   @override
+  String get settingsDeveloperSection => '开发者';
+
+  @override
+  String get settingsLogsTitle => '应用日志';
+
+  @override
+  String get settingsLogsSubtitle => '查看实时诊断日志';
+
+  @override
   String get backupExportTitle => '导出备份';
 
   @override

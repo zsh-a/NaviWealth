@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/db/providers.dart';
+import '../logging/providers.dart';
 import '../sync/drift_sync_storage.dart';
 import '../sync/providers.dart';
 import 'backup_codec.dart';
@@ -22,5 +23,6 @@ final backupServiceProvider = FutureProvider<BackupService>((ref) async {
     outbox: outbox,
     deviceId: deviceId,
     stampHlc: engine.stampHlc,
+    logger: ref.read(loggerProvider),
   );
 });

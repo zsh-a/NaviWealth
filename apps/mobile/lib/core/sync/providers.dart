@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../data/db/providers.dart';
 import '../logging/providers.dart';
@@ -27,7 +28,7 @@ final syncAuthTokenProvider = Provider<Future<String?> Function()>((ref) {
 /// retry semantics.
 final syncDioProvider = Provider<Dio>((ref) {
   final config = ref.watch(appConfigProvider);
-  return Dio(
+  final dio = Dio(
     BaseOptions(
       baseUrl: config.apiBaseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -35,6 +36,10 @@ final syncDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
+  dio.interceptors.add(
+    TalkerDioLogger(talker: ref.read(talkerProvider)),
+  );
+  return dio;
 });
 
 final syncApiClientProvider = Provider<SyncApiClient>((ref) {
@@ -83,12 +88,16 @@ final syncEngineProvider = FutureProvider<SyncEngine>((ref) async {
     applier: applier,
     deviceId: deviceId,
     statusBus: bus,
+    logger: ref.read(loggerProvider),
   );
 });
 
 final syncSchedulerProvider = FutureProvider<SyncScheduler>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);
-  final scheduler = SyncScheduler(engine: engine);
+  final scheduler = SyncScheduler(
+    engine: engine,
+    logger: ref.read(loggerProvider),
+  );
   ref.onDispose(scheduler.stop);
   return scheduler;
 });

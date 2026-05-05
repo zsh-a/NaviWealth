@@ -4500,6 +4500,24 @@ abstract class AppLocalizations {
   /// **'Export or import encrypted data backups'**
   String get settingsDataSubtitle;
 
+  /// Settings section header for developer tools
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get settingsDeveloperSection;
+
+  /// Settings tile that opens the log viewer
+  ///
+  /// In en, this message translates to:
+  /// **'App Logs'**
+  String get settingsLogsTitle;
+
+  /// Settings tile subtitle for log viewer
+  ///
+  /// In en, this message translates to:
+  /// **'View real-time diagnostic logs'**
+  String get settingsLogsSubtitle;
+
   /// Backup page: export tile title
   ///
   /// In en, this message translates to:

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/db/app_database.dart';
 import '../../data/domain/hlc.dart';
+import '../logging/app_logger.dart';
 import '../sync/op.dart';
 import '../sync/op_outbox.dart';
 import 'backup_codec.dart';
@@ -49,23 +50,27 @@ class BackupService {
     required OutboxStore outbox,
     required String deviceId,
     required Future<Hlc> Function() stampHlc,
+    AppLogger? logger,
   })  : _db = db,
         _codec = codec,
         _outbox = outbox,
         _deviceId = deviceId,
-        _stampHlc = stampHlc;
+        _stampHlc = stampHlc,
+        _logger = logger ?? AppLogger.instance;
 
   final AppDatabase _db;
   final BackupCodec _codec;
   final OutboxStore _outbox;
   final String _deviceId;
   final Future<Hlc> Function() _stampHlc;
+  final AppLogger _logger;
 
   /// Export all syncable user data as an encrypted backup envelope.
   Future<Uint8List> exportBackup({
     required String passphrase,
     int? overrideIterations,
   }) async {
+    _logger.i('backup: export starting');
     final schemaVersion = _db.schemaVersion;
     final tableCounts = <String, int>{};
     final data = <String, List<Map<String, Object?>>>{};
@@ -99,7 +104,9 @@ class BackupService {
       schemaVersion: schemaVersion,
       iterations: overrideIterations ?? backupPbkdf2Iterations,
     );
-    return envelope.encodeBytes();
+    final bytes = envelope.encodeBytes();
+    _logger.i('backup: export complete (${bytes.length} bytes)');
+    return bytes;
   }
 
   /// Decrypt and restore from backup bytes. Wipes all local data first.
@@ -112,11 +119,16 @@ class BackupService {
     void Function()? pauseSync,
     void Function()? resumeSync,
   }) async {
+    _logger.i('backup: restore starting');
     // 1. Decode and validate envelope.
     final envelope = BackupEnvelope.decodeBytes(fileBytes);
 
     // 2. Reject newer schema versions.
     if (envelope.schemaVersion > _db.schemaVersion) {
+      _logger.e(
+        'backup: schema too new (backup=${envelope.schemaVersion}, '
+        'current=${_db.schemaVersion})',
+      );
       throw BackupSchemaTooNewException(
         envelope.schemaVersion,
         _db.schemaVersion,
@@ -178,7 +190,9 @@ class BackupService {
         }
       });
 
-      return RestoreResult(tableCounts: tableCounts);
+      final result = RestoreResult(tableCounts: tableCounts);
+      _logger.i('backup: restore complete (${result.totalRows} rows)');
+      return result;
     } finally {
       resumeSync?.call();
     }

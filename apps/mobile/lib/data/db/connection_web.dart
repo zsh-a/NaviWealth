@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../core/logging/app_logger.dart';
+
 /// Opens the drift connection on the web target.
 ///
 /// Uses [WasmDatabase.open], which auto-selects the best available browser
@@ -25,8 +27,7 @@ Future<DatabaseConnection> _openWebConnection(String dbFileName) async {
   );
 
   if (kDebugMode) {
-    // ignore: avoid_print
-    print(
+    AppLogger.instance.d(
       'drift web: opened "$databaseName" via ${result.chosenImplementation.name}'
       '${result.missingFeatures.isEmpty ? '' : ' (missing: ${result.missingFeatures.map((f) => f.name).join(', ')})'}',
     );

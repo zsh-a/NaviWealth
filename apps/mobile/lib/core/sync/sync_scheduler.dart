@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../logging/app_logger.dart';
 import 'sync_engine.dart';
 
 /// Drives the SyncEngine on the cadences specified in
@@ -18,11 +19,14 @@ class SyncScheduler with WidgetsBindingObserver {
   SyncScheduler({
     required SyncEngine engine,
     Duration interval = const Duration(seconds: 30),
+    AppLogger? logger,
   }) : _engine = engine,
-       _interval = interval;
+       _interval = interval,
+       _logger = logger ?? AppLogger.instance;
 
   final SyncEngine _engine;
   final Duration _interval;
+  final AppLogger _logger;
   Timer? _timer;
   bool _started = false;
   bool _foreground = true;
@@ -32,6 +36,7 @@ class SyncScheduler with WidgetsBindingObserver {
   void start() {
     if (_started) return;
     _started = true;
+    _logger.i('sync_scheduler: started (interval=${_interval.inSeconds}s)');
     WidgetsBinding.instance.addObserver(this);
     _restartTimer();
     // Kick a sync immediately so cold-start UI gets fresh data.
@@ -41,6 +46,7 @@ class SyncScheduler with WidgetsBindingObserver {
   void stop() {
     if (!_started) return;
     _started = false;
+    _logger.i('sync_scheduler: stopped');
     WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _timer = null;
@@ -52,6 +58,7 @@ class SyncScheduler with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         if (!_foreground) {
           _foreground = true;
+          _logger.d('sync_scheduler: app resumed');
           if (!_paused) unawaited(triggerNow());
         }
         _restartTimer();
@@ -71,12 +78,16 @@ class SyncScheduler with WidgetsBindingObserver {
   }
 
   /// Pause sync. Used during backup restore to prevent concurrent mutations.
-  void pause() => _paused = true;
+  void pause() {
+    _paused = true;
+    _logger.i('sync_scheduler: paused');
+  }
 
   /// Resume sync and trigger an immediate cycle.
   void resume() {
     if (_paused) {
       _paused = false;
+      _logger.i('sync_scheduler: resumed');
       unawaited(triggerNow());
     }
   }
@@ -85,11 +96,11 @@ class SyncScheduler with WidgetsBindingObserver {
   /// future thanks to [SyncEngine.run]'s mutex.
   Future<void> triggerNow() async {
     if (_paused) return;
+    _logger.d('sync_scheduler: trigger');
     try {
       await _engine.run();
-    } catch (_) {
-      // Engine internalises errors into its status bus; we swallow here
-      // so timer ticks don't propagate exceptions out of unawaited futures.
+    } catch (e) {
+      _logger.w('sync_scheduler: cycle error (non-fatal)', error: e);
     }
   }
 }

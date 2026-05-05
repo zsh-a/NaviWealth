@@ -7,6 +7,8 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 // is loaded the first time the user navigates to that route. Home ships in
 // main.dart.js to avoid a part-file fetch on first paint. See
 // docs/web-bundle.md for the resulting bundle layout.
+import '../core/logging/providers.dart';
+import '../core/logging/talker_route_observer.dart';
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
 import '../features/accounts/journal_entry_list_page.dart';
@@ -42,6 +44,7 @@ import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
+import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
 import 'deferred_route.dart';
@@ -91,7 +94,10 @@ Future<void> preloadDeferredRoutesForTest() async {
 GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
-    observers: <NavigatorObserver>[ref.read(routeAnalyticsObserverProvider)],
+    observers: <NavigatorObserver>[
+      ref.read(routeAnalyticsObserverProvider),
+      TalkerRouteObserver(ref.read(talkerProvider)),
+    ],
     refreshListenable: ref.read(routeRefreshListenableProvider),
     redirect: (context, state) => routerRedirect(ref.container, context, state),
     errorBuilder: (context, state) => RouteErrorPage(state: state),
@@ -343,6 +349,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'backup',
                 name: 'backup',
                 builder: (context, state) => const BackupPage(),
+              ),
+              GoRoute(
+                path: 'logs',
+                name: 'logs',
+                builder: (context, state) => const LogViewerPage(),
               ),
             ],
           ),

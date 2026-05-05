@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
@@ -25,7 +26,7 @@ import 'proposal_applier.dart';
 /// though the worker is still emitting frames.
 final aiChatDioProvider = Provider<Dio>((ref) {
   final config = ref.watch(appConfigProvider);
-  return Dio(
+  final dio = Dio(
     BaseOptions(
       baseUrl: config.apiBaseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -33,6 +34,10 @@ final aiChatDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(minutes: 5),
     ),
   );
+  dio.interceptors.add(
+    TalkerDioLogger(talker: ref.read(talkerProvider)),
+  );
+  return dio;
 });
 
 final aiChatApiClientProvider = Provider<AiChatApiClient>(
