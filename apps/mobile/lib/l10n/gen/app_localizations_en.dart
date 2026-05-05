@@ -2397,6 +2397,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFormSave => 'Save';
 
   @override
+  String get cashFormDuplicateTitle => 'Cash already exists';
+
+  @override
+  String get cashFormDuplicateMessage =>
+      'This account already has a cash balance recorded. Would you like to edit the existing one instead?';
+
+  @override
+  String get cashFormDuplicateCancel => 'Cancel';
+
+  @override
+  String get cashFormDuplicateEdit => 'Edit existing';
+
+  @override
   String get manualAssetDeleteTitle => 'Delete asset';
 
   @override

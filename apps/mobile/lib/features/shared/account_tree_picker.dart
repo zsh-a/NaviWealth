@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
-import '../../design_system/tokens/spacing_tokens.dart';
+import '../../design_system/design_system.dart';
 import '../accounts/account_icon_catalog.dart';
 
 /// FIR-128 §1.2 — drop-in replacement for the legacy flat
@@ -75,19 +75,14 @@ class AccountTreePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = _buildEntries();
-    return DropdownButtonFormField<String>(
-      // ignore: deprecated_member_use
-      value: entries.any((e) => e.account.id == value) ? value : null,
-      decoration: InputDecoration(
-        labelText: label ?? 'Account',
-        helperText: helperText,
-        border: const OutlineInputBorder(),
-      ),
+    final effectiveValue =
+        entries.any((e) => e.account.id == value) ? value : null;
+    return AppDropdown<String>(
+      label: label ?? 'Account',
+      value: effectiveValue,
+      helperText: helperText,
+      enabled: entries.isNotEmpty,
       items: entries.map((e) {
-        // When [Account.icon] resolves to a known entry in the icon
-        // catalogue, render it as the leading affordance and tint by
-        // [Account.color] (when valid). Fall back to the original
-        // bullet glyph when either field is absent / unknown.
         final iconData = resolveAccountIcon(e.account.icon);
         final iconColor = _parseHexColor(e.account.color);
         final prefix = e.account.parentId == null ? '• ' : '› ';

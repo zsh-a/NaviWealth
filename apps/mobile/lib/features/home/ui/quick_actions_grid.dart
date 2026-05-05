@@ -14,6 +14,11 @@ class QuickActionsGrid extends StatelessWidget {
 
     final actions = <_QuickAction>[
       _QuickAction(
+        icon: Icons.account_balance_outlined,
+        label: l10n.navAccounts,
+        route: '/activity/accounts',
+      ),
+      _QuickAction(
         icon: Icons.receipt_long_outlined,
         label: l10n.superFabExpense,
         route: '/activity/expenses/new',
@@ -27,11 +32,6 @@ class QuickActionsGrid extends StatelessWidget {
         icon: Icons.swap_vert,
         label: l10n.superFabTransfer,
         route: '/activity/accounts/transfer',
-      ),
-      _QuickAction(
-        icon: Icons.account_balance_wallet_outlined,
-        label: l10n.superFabAsset,
-        route: '/portfolio/new/cash',
       ),
     ];
 

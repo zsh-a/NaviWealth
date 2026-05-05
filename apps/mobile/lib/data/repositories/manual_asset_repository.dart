@@ -111,6 +111,25 @@ class ManualAssetRepository {
     return sum;
   }
 
+  /// Find an existing non-deleted cash asset linked to [accountId].
+  ///
+  /// Returns `null` when no cash asset points to this account. Used by
+  /// the create flow to enforce the double-entry invariant that each
+  /// ledger account has at most one cash asset.
+  Future<Asset?> findCashByAccountId(String accountId) async {
+    final rows = await (_db.select(_db.assets)
+          ..where((t) => t.type.equalsValue(AssetType.cash))
+          ..where((t) => t.deletedAt.isNull()))
+        .get();
+    for (final row in rows) {
+      final meta = ManualAssetMetadata.decode(row.metadataJson);
+      if (meta is CashMetadata && meta.accountId == accountId) {
+        return _toAsset(row);
+      }
+    }
+    return null;
+  }
+
   Future<Asset> createCash({
     required String accountId,
     required String currency,

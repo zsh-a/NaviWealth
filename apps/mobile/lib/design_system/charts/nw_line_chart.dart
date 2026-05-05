@@ -144,7 +144,7 @@ class _NwLineChartState extends State<NwLineChart> {
                   FlLine(color: palette.gridLine, strokeWidth: 1),
             ),
             borderData: FlBorderData(show: false),
-            titlesData: _buildTitles(palette),
+            titlesData: _buildTitles(palette, minX, maxX, minY, maxY),
             lineBarsData: lineBars,
             lineTouchData: _buildTouchData(context, palette, processed),
           ),
@@ -263,10 +263,24 @@ class _NwLineChartState extends State<NwLineChart> {
     return Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.12;
   }
 
-  FlTitlesData _buildTitles(ChartPalette palette) {
+  FlTitlesData _buildTitles(
+    ChartPalette palette,
+    double minX,
+    double maxX,
+    double minY,
+    double maxY,
+  ) {
     final labelStyle = TypographyTokens.numericCaption.copyWith(
       color: palette.axisLabel,
     );
+    final xRange = (maxX - minX).abs();
+    final yRange = (maxY - minY).abs();
+    final xInterval = widget.xAxis.maxLabels > 0 && xRange > 0
+        ? xRange / widget.xAxis.maxLabels
+        : null;
+    final yInterval = widget.yAxis.maxLabels > 0 && yRange > 0
+        ? yRange / widget.yAxis.maxLabels
+        : null;
     return FlTitlesData(
       topTitles:
           const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -276,6 +290,7 @@ class _NwLineChartState extends State<NwLineChart> {
         sideTitles: SideTitles(
           showTitles: true,
           reservedSize: 24,
+          interval: xInterval,
           getTitlesWidget: (value, meta) {
             return Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -289,6 +304,7 @@ class _NwLineChartState extends State<NwLineChart> {
         sideTitles: SideTitles(
           showTitles: true,
           reservedSize: 44,
+          interval: yInterval,
           getTitlesWidget: (value, meta) {
             return Padding(
               padding: const EdgeInsets.only(right: 4),

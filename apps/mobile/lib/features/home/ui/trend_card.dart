@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_providers.dart';
-import '../domain/dashboard_models.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
 
@@ -13,9 +12,7 @@ import '../domain/dashboard_trend_builder.dart';
 /// The chart and chips watch [dashboardTrendProvider] / the selection
 /// providers directly so the UI has no internal state to keep in sync.
 class TrendCard extends ConsumerWidget {
-  const TrendCard({super.key, required this.snapshot});
-
-  final DashboardSnapshot snapshot;
+  const TrendCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,23 +25,11 @@ class TrendCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.dashboardTrendTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              MoneyText(
-                amount: snapshot.netWorth.amount.toDouble(),
-                currencyCode: snapshot.baseCurrency,
-                style: theme.textTheme.titleMedium,
-                showSign: snapshot.netWorth.isNegative,
-              ),
-            ],
+          Text(
+            l10n.dashboardTrendTitle,
+            style: theme.textTheme.titleMedium,
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: Spacing.s8),
           const _RangeChips(),
           const SizedBox(height: Spacing.s12),
           trendAsync.when(
@@ -181,8 +166,10 @@ class _TrendChart extends StatelessWidget {
                 yAxis: ValueAxis.currency(
                   currencyCode: trend.baseCurrency,
                   maxLabels: 4,
+                  showGrid: true,
                 ),
                 filled: true,
+                heroDots: true,
                 semanticLabel:
                     AppLocalizations.of(context).dashboardTrendTitle,
               ),

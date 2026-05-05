@@ -78,7 +78,7 @@ class _DashboardBody extends ConsumerWidget {
         final header = _NetWorthHeader(snapshot: snapshot);
         final insightStrip = InsightStrip(insights: insights);
         final allocation = AllocationCard(snapshot: snapshot);
-        final trend = TrendCard(snapshot: snapshot);
+        const trend = TrendCard();
         const quickActions = QuickActionsGrid();
 
         if (isWide) {
@@ -96,7 +96,7 @@ class _DashboardBody extends ConsumerWidget {
                 children: [
                   Expanded(child: allocation),
                   const SizedBox(width: Spacing.s16),
-                  Expanded(child: trend),
+                  const Expanded(child: trend),
                 ],
               ),
             ],
@@ -235,19 +235,33 @@ class _DeltaMetricsRow extends StatelessWidget {
             ),
             _MetricCell(
               label: l10n.dashboardHeaderDeltaMonthLabel,
-              child: DeltaChip(
-                value: m.monthlyChangePct == null
-                    ? null
-                    : m.monthlyChangePct! * 100,
-                fractionDigits: 2,
-              ),
+              child: m.monthlyChangePct == null
+                  ? const DeltaChip(value: null)
+                  : m.monthlyChangePct!.isFinite
+                      ? DeltaChip(
+                          value: m.monthlyChangePct! * 100,
+                          fractionDigits: 2,
+                        )
+                      : DeltaText(
+                          value: m.monthlyChange.amount.toDouble(),
+                          format: DeltaFormat.currency,
+                          currencyCode: m.baseCurrency,
+                        ),
             ),
             _MetricCell(
               label: l10n.dashboardHeaderDeltaYtdLabel,
-              child: DeltaText.percentFromRatio(
-                ratio: m.ytdChangePct,
-                fractionDigits: 2,
-              ),
+              child: m.ytdChangePct != null
+                  ? DeltaText.percentFromRatio(
+                      ratio: m.ytdChangePct,
+                      fractionDigits: 2,
+                    )
+                  : m.ytdChange.amount.sign != 0
+                      ? DeltaText(
+                          value: m.ytdChange.amount.toDouble(),
+                          format: DeltaFormat.currency,
+                          currencyCode: m.baseCurrency,
+                        )
+                      : DeltaText.percentFromRatio(ratio: null),
             ),
           ],
         );

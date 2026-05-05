@@ -168,7 +168,7 @@ List<ManualAssetValuePoint> _runningBalance(
   var cumulative = Decimal.zero;
   for (final (date, delta) in rows) {
     cumulative += delta;
-    out.add(ManualAssetValuePoint(observedOn: date, value: cumulative));
+    out.add(ManualAssetValuePoint(observedOn: _floorToDay(date), value: cumulative));
   }
   return out;
 }
@@ -317,10 +317,19 @@ Map<String, List<ManualAssetValuePoint>> _buildSecurityPriceHistory({
     if (rows.isEmpty) continue;
     out[asset.id] = [
       for (final row in rows)
-        ManualAssetValuePoint(observedOn: row.observedOn, value: row.perUnit),
+        ManualAssetValuePoint(observedOn: _floorToDay(row.observedOn), value: row.perUnit),
     ];
   }
   return out;
+}
+
+/// Floor a timestamp to the start of its UTC day. Trend sample dates are
+/// all at midnight UTC; observations with an intra-day time component
+/// (e.g. `12:25:33`) would fall *after* the sample date and be invisible
+/// to [ManualAssetValuation.valueAt].
+DateTime _floorToDay(DateTime d) {
+  final u = d.toUtc();
+  return DateTime.utc(u.year, u.month, u.day);
 }
 
 List<ManualAssetValuation> _buildManualAssetValuations({
@@ -340,22 +349,62 @@ List<ManualAssetValuation> _buildManualAssetValuations({
     if (asset.type == AssetType.cash) {
       final meta = ManualAssetMetadata.decode(asset.metadataJson);
       final accountId = meta?.accountId;
-      // Skip duplicate cash assets pointing to the same bank account to
-      // avoid double-counting. When accountId is null the metadata is
-      // missing — fall through to the price-row lookup instead.
+      // Each ledger account has at most one cash asset (double-entry
+      // invariant enforced by the create flow). Skip duplicates keyed by
+      // accountId to avoid double-counting. When accountId is null the
+      // metadata is missing — fall through to the price-row lookup.
       if (accountId != null && !seenCashAccounts.add(accountId)) continue;
+
+      // 1. Prefer posting-derived running balance (most accurate).
       if (accountId != null) {
-        final observations = cashHistory[accountId];
-        if (observations != null && observations.isNotEmpty) {
+        final historyObs = cashHistory[accountId];
+        if (historyObs != null && historyObs.isNotEmpty) {
           out.add(
-            ManualAssetValuation(asset: asset, observations: observations),
+            ManualAssetValuation(asset: asset, observations: historyObs),
           );
           continue;
         }
       }
-      // Fall through to price-row lookup when posting history is empty
-      // (e.g. opening balance not yet recorded or accountId mismatch).
+
+      // 2. Fall back to price-row observations (created by
+      //    _recordValuation when the cash asset was first set up).
+      final assetPriceRows =
+          (pricesByUnit[asset.id] ?? const <PriceRow>[])
+              .where((row) => row.quoteCurrency == asset.currency)
+              .toList(growable: false)
+            ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
+      if (assetPriceRows.isNotEmpty) {
+        out.add(
+          ManualAssetValuation(
+            asset: asset,
+            observations: [
+              for (final row in assetPriceRows)
+                ManualAssetValuePoint(
+                  observedOn: _floorToDay(row.observedOn),
+                  value: row.perUnit,
+                ),
+            ],
+          ),
+        );
+        continue;
+      }
+
+      // 3. Last resort: zero-value stub so the row appears in the
+      //    snapshot even before any balance has been recorded.
+      out.add(
+        ManualAssetValuation(
+          asset: asset,
+          observations: [
+            ManualAssetValuePoint(
+              observedOn: _floorToDay(asset.sync.updatedAt),
+              value: Decimal.zero,
+            ),
+          ],
+        ),
+      );
+      continue;
     }
+    // Non-cash manual assets: use price-row observations.
     final rows =
         (pricesByUnit[asset.id] ?? const <PriceRow>[])
             .where((row) => row.quoteCurrency == asset.currency)
@@ -368,26 +417,9 @@ List<ManualAssetValuation> _buildManualAssetValuations({
           observations: [
             for (final row in rows)
               ManualAssetValuePoint(
-                observedOn: row.observedOn,
+                observedOn: _floorToDay(row.observedOn),
                 value: row.perUnit,
               ),
-          ],
-        ),
-      );
-    } else if (asset.type == AssetType.cash) {
-      // Cash assets must always participate in the dashboard even when no
-      // posting history or price rows exist yet (e.g. synced from another
-      // device before the opening-balance journal entry arrives). Use a
-      // zero-value observation so the snapshot and trend include the row
-      // rather than silently dropping it.
-      out.add(
-        ManualAssetValuation(
-          asset: asset,
-          observations: [
-            ManualAssetValuePoint(
-              observedOn: DateTime.now().toUtc(),
-              value: Decimal.zero,
-            ),
           ],
         ),
       );
@@ -510,13 +542,17 @@ class DashboardHeaderMetrics {
   const DashboardHeaderMetrics({
     required this.baseCurrency,
     required this.dailyChange,
+    required this.monthlyChange,
     required this.monthlyChangePct,
+    required this.ytdChange,
     required this.ytdChangePct,
   });
 
   final String baseCurrency;
   final Money dailyChange;
+  final Money monthlyChange;
   final double? monthlyChangePct;
+  final Money ytdChange;
   final double? ytdChangePct;
 }
 
@@ -566,9 +602,12 @@ final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
   final nwToday = nwAt(today);
   final nwYesterday = nwAt(yesterday);
   final nwMonthStart = nwAt(monthStart);
+  final nwYearStart = nwAt(yearStart);
 
   double? pctChange(Money current, Money baseline) {
-    if (baseline.amount.sign == 0) return null;
+    if (baseline.amount.sign == 0) {
+      return current.amount.sign == 0 ? null : double.infinity;
+    }
     final ratio = (current.amount - baseline.amount) / baseline.amount;
     return ratio.toDecimal(scaleOnInfinitePrecision: 8).toDouble();
   }
@@ -578,7 +617,9 @@ final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
   return DashboardHeaderMetrics(
     baseCurrency: base,
     dailyChange: nwToday - nwYesterday,
+    monthlyChange: nwToday - nwMonthStart,
     monthlyChangePct: pctChange(nwToday, nwMonthStart),
+    ytdChange: nwToday - nwYearStart,
     ytdChangePct: ytdRatio,
   );
 });

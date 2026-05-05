@@ -23,6 +23,7 @@ export 'widgets/animated_money_text.dart';
 export 'widgets/app_button.dart';
 export 'widgets/app_choice_chip.dart';
 export 'widgets/app_dismissible_list_tile.dart';
+export 'widgets/app_dropdown.dart';
 export 'widgets/app_fab.dart';
 export 'widgets/app_form_controls.dart';
 export 'widgets/app_ink_well.dart';

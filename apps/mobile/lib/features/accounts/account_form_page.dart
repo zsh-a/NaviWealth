@@ -260,13 +260,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
-                  DropdownButtonFormField<AccountType>(
-                    // ignore: deprecated_member_use
+                  AppDropdown<AccountType>(
+                    label: l10n.accountFormTypeLabel,
                     value: _type,
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormTypeLabel,
-                      border: const OutlineInputBorder(),
-                    ),
                     items: [
                       for (final t in AccountType.values)
                         DropdownMenuItem(
@@ -285,14 +281,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     },
                   ),
                   const SizedBox(height: Spacing.s12),
-                  DropdownButtonFormField<AccountCategory>(
-                    // ignore: deprecated_member_use
+                  AppDropdown<AccountCategory>(
+                    label: l10n.accountFormCategoryLabel,
                     value: _category,
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormCategoryLabel,
-                      helperText: l10n.accountFormCategoryHelper,
-                      border: const OutlineInputBorder(),
-                    ),
+                    helperText: l10n.accountFormCategoryHelper,
                     items: [
                       for (final c in AccountCategory.values)
                         DropdownMenuItem(

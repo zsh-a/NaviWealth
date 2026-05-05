@@ -4320,6 +4320,30 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get cashFormSave;
 
+  /// No description provided for @cashFormDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash already exists'**
+  String get cashFormDuplicateTitle;
+
+  /// No description provided for @cashFormDuplicateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This account already has a cash balance recorded. Would you like to edit the existing one instead?'**
+  String get cashFormDuplicateMessage;
+
+  /// No description provided for @cashFormDuplicateCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cashFormDuplicateCancel;
+
+  /// No description provided for @cashFormDuplicateEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit existing'**
+  String get cashFormDuplicateEdit;
+
   /// No description provided for @manualAssetDeleteTitle.
   ///
   /// In en, this message translates to:
