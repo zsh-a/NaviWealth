@@ -2341,6 +2341,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedComingSoon => '动态流即将推出';
 
   @override
+  String get activityFeedEmpty => '暂无动态 — 记录一笔转账、支出或交易即可在此查看。';
+
+  @override
+  String get activityFeedToday => '今天';
+
+  @override
+  String get activityFeedYesterday => '昨天';
+
+  @override
+  String get activityFeedThisWeek => '本周';
+
+  @override
+  String get activityFeedEarlier => '更早';
+
+  @override
   String get accountsTransferAction => '转账';
 
   @override

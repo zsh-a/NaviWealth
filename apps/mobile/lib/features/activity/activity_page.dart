@@ -6,34 +6,7 @@ import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../accounts/accounts_page.dart';
 import '../expense/ui/expense_list_page.dart';
-
-// Temporary feed placeholder — will be replaced with real feed widget.
-class _ActivityFeedPlaceholder extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.timeline_outlined,
-            size: 48,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: Spacing.s16),
-          Text(
-            l10n.activityFeedComingSoon,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+import 'ui/activity_feed.dart';
 
 /// Activity tab — umbrella page with a segmented control toggling
 /// between Expenses, Accounts, and Activity Feed.
@@ -89,7 +62,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           ? const ExpenseListPage(embedded: true)
           : _tab == _ActivityTab.accounts
               ? const AccountsPage(embedded: true)
-              : _ActivityFeedPlaceholder(),
+              : const ActivityFeed(),
       floatingActionButton: _tab == _ActivityTab.expenses
           ? ScrollAwareFab(
               child: AppFab(

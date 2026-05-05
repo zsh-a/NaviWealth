@@ -4380,6 +4380,36 @@ abstract class AppLocalizations {
   /// **'Activity feed coming soon'**
   String get activityFeedComingSoon;
 
+  /// Activity feed empty state message
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet — record a transfer, expense, or trade and it will appear here.'**
+  String get activityFeedEmpty;
+
+  /// Activity feed date section: today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get activityFeedToday;
+
+  /// Activity feed date section: yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get activityFeedYesterday;
+
+  /// Activity feed date section: this week
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get activityFeedThisWeek;
+
+  /// Activity feed date section: earlier
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get activityFeedEarlier;
+
   /// Accounts page app bar: transfer action tooltip
   ///
   /// In en, this message translates to:
