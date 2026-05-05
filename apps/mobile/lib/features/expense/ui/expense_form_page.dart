@@ -69,10 +69,11 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final existing = await journalRepo.getById(widget.expenseId!);
     if (existing == null) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       AppMessenger.show(
         context,
         ToastKind.error,
-        "Couldn't load expense. Create a new entry instead.",
+        l10n.expenseFormLoadError,
       );
       unawaited(Navigator.of(context).maybePop());
       return;

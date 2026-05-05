@@ -78,7 +78,8 @@ void main() {
     await tester.pumpWidget(widget);
     await tester.pumpAndSettle();
     expect(find.byType(ExpenseReportPage), findsOneWidget);
-    expect(find.text('总支出'), findsOneWidget);
+    final l10n = AppLocalizations.of(tester.element(find.byType(ExpenseReportPage)));
+    expect(find.text(l10n.expenseReportTotalExpenses), findsOneWidget);
     // Pie + trend both fall back to the placeholder when there's no data.
     expect(find.byType(EmptyChartPlaceholder), findsAtLeastNWidgets(1));
   });
@@ -154,7 +155,8 @@ void main() {
       ExpenseReportRangePreset.m3,
     );
 
-    await tester.tap(find.text('本月'));
+    final l10n = AppLocalizations.of(tester.element(find.byType(ExpenseReportPage)));
+    await tester.tap(find.text(l10n.expenseReportRangeThisMonth));
     await tester.pumpAndSettle();
     expect(
       container.read(expenseReportRangePresetProvider),

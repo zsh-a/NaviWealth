@@ -8,6 +8,7 @@ import '../../../design_system/design_system.dart';
 import '../../../domain/entities/symbol_info.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'currency_picker.dart';
 import 'local_securities_picker.dart';
 
@@ -49,11 +50,11 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     AssetMarket.crypto,
   ];
 
-  static const _marketLabels = <AssetMarket, String>{
-    AssetMarket.cnA: 'A 股',
-    AssetMarket.hkStock: '港股',
-    AssetMarket.usStock: '美股',
-    AssetMarket.crypto: '加密',
+  Map<AssetMarket, String> _marketLabels(AppLocalizations l10n) => {
+    AssetMarket.cnA: l10n.manualSecurityMarketCnA,
+    AssetMarket.hkStock: l10n.manualSecurityMarketHk,
+    AssetMarket.usStock: l10n.manualSecurityMarketUs,
+    AssetMarket.crypto: l10n.manualSecurityMarketCrypto,
   };
 
   static const _supportedTypes = <AssetType>[
@@ -64,12 +65,12 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     AssetType.crypto,
   ];
 
-  static const _typeLabels = <AssetType, String>{
-    AssetType.stock: '股票',
-    AssetType.etf: 'ETF',
-    AssetType.mutualFund: '基金',
-    AssetType.bond: '债券',
-    AssetType.crypto: '加密货币',
+  Map<AssetType, String> _typeLabels(AppLocalizations l10n) => {
+    AssetType.stock: l10n.manualSecurityTypeStock,
+    AssetType.etf: l10n.manualSecurityTypeEtf,
+    AssetType.mutualFund: l10n.manualSecurityTypeMutualFund,
+    AssetType.bond: l10n.manualSecurityTypeBond,
+    AssetType.crypto: l10n.manualSecurityTypeCrypto,
   };
 
   @override
@@ -118,10 +119,11 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
   }
 
   Future<void> _importFromNetwork() async {
+    final l10n = AppLocalizations.of(context);
     final query = _symbolCtl.text.trim();
     if (query.isEmpty) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, '请先输入代码或名称');
+      AppMessenger.show(context, ToastKind.error, l10n.manualSecurityEnterCodeOrName);
       return;
     }
 
@@ -144,7 +146,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       // and let the user fall through to manual entry.
       if (!mounted) return;
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, '网络不可用，请使用手动输入');
+      AppMessenger.show(context, ToastKind.error, l10n.manualSecurityNetworkUnavailable);
       setState(() => _importing = false);
       return;
     }
@@ -158,7 +160,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
     if (hits.isEmpty) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, '未找到匹配项，请使用手动输入');
+      AppMessenger.show(context, ToastKind.error, l10n.manualSecurityNoMatch);
       return;
     }
     final picked = hits.length == 1
@@ -166,14 +168,15 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
         : await _pickFromCandidates(hits);
     if (picked == null || !mounted) return;
     _applyImported(picked);
-    AppMessenger.show(context, ToastKind.success, '已从网络导入元数据');
+    AppMessenger.show(context, ToastKind.success, l10n.manualSecurityImported);
   }
 
   Future<SymbolInfo?> _pickFromCandidates(List<SymbolInfo> hits) {
+    final l10n = AppLocalizations.of(context);
     return showDialog<SymbolInfo>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('选择匹配项'),
+        title: Text(l10n.manualSecuritySelectMatchTitle),
         children: [
           // Each row uses a self-contained `ListTile.onTap` rather than
           // wrapping in `SimpleDialogOption`. The ListTile's own gesture
@@ -250,7 +253,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final viewInsets = MediaQuery.viewInsetsOf(context);
+    final marketLabels = _marketLabels(l10n);
+    final typeLabels = _typeLabels(l10n);
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets.bottom),
       child: Form(
@@ -267,27 +273,27 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '手动添加证券',
+                l10n.manualSecuritySheetTitle,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: Spacing.s4),
               Text(
-                '本地保存。点击「从网络导入」可选择性地用 Yahoo / CoinGecko 元数据补全字段。',
+                l10n.manualSecuritySheetDescription,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: Spacing.s16),
               TextFormField(
                 key: const Key('manual-security-symbol'),
                 controller: _symbolCtl,
-                decoration: const InputDecoration(
-                  labelText: '代码',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.manualSecurityCodeLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.characters,
                 validator: (v) {
                   final t = v?.trim() ?? '';
-                  if (t.isEmpty) return '请输入代码';
-                  if (t.contains(':')) return '代码不能包含 “:”';
+                  if (t.isEmpty) return l10n.manualSecurityCodeRequired;
+                  if (t.contains(':')) return l10n.manualSecurityCodeNoColon;
                   return null;
                 },
               ),
@@ -296,7 +302,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 alignment: Alignment.centerLeft,
                 child: AppButton.tertiary(
                   key: const Key('manual-security-import'),
-                  label: _importing ? '导入中…' : '从网络导入',
+                  label: _importing ? l10n.manualSecurityImporting : l10n.manualSecurityImportAction,
                   icon: Icons.cloud_download_outlined,
                   onPressed: _importing ? null : _importFromNetwork,
                 ),
@@ -305,21 +311,21 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               TextFormField(
                 key: const Key('manual-security-name'),
                 controller: _nameCtl,
-                decoration: const InputDecoration(
-                  labelText: '名称（可选）',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.manualSecurityNameLabel,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: Spacing.s12),
               AppDropdown<AssetMarket>(
                 key: const Key('manual-security-market'),
-                label: '市场',
+                label: l10n.manualSecurityMarketLabel,
                 value: _market,
                 items: [
                   for (final m in _supportedMarkets)
                     DropdownMenuItem(
                       value: m,
-                      child: Text(_marketLabels[m] ?? m.wire),
+                      child: Text(marketLabels[m] ?? m.wire),
                     ),
                 ],
                 onChanged: (m) {
@@ -338,13 +344,13 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               const SizedBox(height: Spacing.s12),
               AppDropdown<AssetType>(
                 key: const Key('manual-security-type'),
-                label: '类型',
+                label: l10n.manualSecurityTypeLabel,
                 value: _type,
                 items: [
                   for (final t in _supportedTypes)
                     DropdownMenuItem(
                       value: t,
-                      child: Text(_typeLabels[t] ?? t.name),
+                      child: Text(typeLabels[t] ?? t.name),
                     ),
                 ],
                 onChanged: (t) {
@@ -363,9 +369,9 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               TextFormField(
                 key: const Key('manual-security-isin'),
                 controller: _isinCtl,
-                decoration: const InputDecoration(
-                  labelText: 'ISIN（可选）',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.manualSecurityIsinLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.characters,
               ),
@@ -374,7 +380,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 children: [
                   Expanded(
                     child: AppButton.secondary(
-                      label: '取消',
+                      label: l10n.commonCancel,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
@@ -382,7 +388,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   Expanded(
                     child: AppButton.primary(
                       key: const Key('manual-security-submit'),
-                      label: '添加',
+                      label: l10n.manualSecurityAddAction,
                       onPressed: _submit,
                     ),
                   ),

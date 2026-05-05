@@ -41,7 +41,7 @@ class MorePage extends StatelessWidget {
       ),
       _MoreItem(
         icon: Icons.balance_outlined,
-        title: 'Rebalance',
+        title: l10n.moreRebalanceTitle,
         subtitle: l10n.moreRebalanceSubtitle,
         onTap: () => context.push('/rebalance'),
       ),

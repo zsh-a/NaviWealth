@@ -2487,4 +2487,625 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupRestorePassphraseHint => '输入备份密码';
+
+  @override
+  String get moreRebalanceTitle => '再平衡';
+
+  @override
+  String get logViewerClearTooltip => '清除';
+
+  @override
+  String activityFeedLoadError(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get expenseFormLoadError => '无法加载支出，请新建一条记录。';
+
+  @override
+  String get accountsJournalTooltip => '日记账';
+
+  @override
+  String get accountsTransferTooltip => '新转账';
+
+  @override
+  String get accountFormParentLabel => '父账户（可选）';
+
+  @override
+  String get accountFormParentHelper => '将此账户归入另一个账户之下。';
+
+  @override
+  String get accountFormMakeTopLevelTooltip => '设为顶级';
+
+  @override
+  String get accountFormIconHeading => '图标';
+
+  @override
+  String get accountFormNoIconTooltip => '无图标';
+
+  @override
+  String get accountFormColorHeading => '颜色';
+
+  @override
+  String get accountFormNoColorTooltip => '无颜色';
+
+  @override
+  String get transferTitle => '新转账';
+
+  @override
+  String transferLoadError(String error) {
+    return '加载账户失败：$error';
+  }
+
+  @override
+  String get transferFromLabel => '转出账户';
+
+  @override
+  String get transferToLabel => '转入账户';
+
+  @override
+  String get transferValidationRequired => '必填';
+
+  @override
+  String get transferValidationDifferentAccount => '请选择不同账户';
+
+  @override
+  String get transferAmountLabel => '金额';
+
+  @override
+  String transferAmountWithCurrencyLabel(String currency) {
+    return '金额（$currency）';
+  }
+
+  @override
+  String transferToAmountLabel(String currency) {
+    return '转入金额（$currency）';
+  }
+
+  @override
+  String get transferFxRateHelper => '无汇率记录 — 请手动输入折算金额。';
+
+  @override
+  String get transferFxRateEditHelper => '可编辑以覆盖自动填充的汇率。';
+
+  @override
+  String get transferDateLabel => '日期';
+
+  @override
+  String get transferPreviewTitle => '转账';
+
+  @override
+  String get transferSubmitAction => '转账';
+
+  @override
+  String transferRateLabel(String from, String rate, String to) {
+    return '汇率：1 $from = $rate $to';
+  }
+
+  @override
+  String transferRejectedError(String message) {
+    return '转账被拒绝：$message';
+  }
+
+  @override
+  String transferFailedError(String error) {
+    return '转账失败：$error';
+  }
+
+  @override
+  String get transferRetryLabel => '重试';
+
+  @override
+  String get journalTitle => '日记账';
+
+  @override
+  String journalLoadError(String error) {
+    return '加载日记账失败：$error';
+  }
+
+  @override
+  String get journalEmptyHint => '暂无日记账记录 — 记录一笔转账、支出或交易即可在此查看。';
+
+  @override
+  String get entryKindTrade => '交易';
+
+  @override
+  String get entryKindTransfer => '转账';
+
+  @override
+  String get entryKindIncome => '收入';
+
+  @override
+  String get entryKindExpense => '支出';
+
+  @override
+  String get entryKindPayment => '还款';
+
+  @override
+  String get entryKindAdjustment => '调整';
+
+  @override
+  String get entryKindOpening => '期初';
+
+  @override
+  String get entryKindEntry => '记录';
+
+  @override
+  String entryKindSemanticLabel(String kind) {
+    return '日记账 · $kind';
+  }
+
+  @override
+  String get chatCancelled => '已取消';
+
+  @override
+  String get chatNewSession => '新对话';
+
+  @override
+  String chatContextTruncated(int count) {
+    return '已折叠 $count 条更早的历史以控制上下文长度。';
+  }
+
+  @override
+  String get expenseReportAppBarTitle => '支出报表';
+
+  @override
+  String expenseReportLoadError(String error) {
+    return '报表加载失败：$error';
+  }
+
+  @override
+  String get expenseReportRangeThisMonth => '本月';
+
+  @override
+  String get expenseReportRangeLast3Months => '近 3 月';
+
+  @override
+  String get expenseReportRangeLast6Months => '近 6 月';
+
+  @override
+  String get expenseReportRangeLast12Months => '近 12 月';
+
+  @override
+  String get expenseReportRangeCustom => '自定义';
+
+  @override
+  String get expenseReportTotalExpenses => '总支出';
+
+  @override
+  String get expenseReportMonthlyAverage => '月均';
+
+  @override
+  String get expenseReportEntryCount => '记账数';
+
+  @override
+  String get expenseReportCategoryCount => '类目数';
+
+  @override
+  String expenseReportSkippedFx(int count) {
+    return '$count 笔支出因汇率缺失未计入合计。';
+  }
+
+  @override
+  String expenseReportBaseCurrency(String currency, int months) {
+    return '基础货币 $currency · 月均按 $months 个月折算';
+  }
+
+  @override
+  String get expenseReportCategoryShare => '类目占比';
+
+  @override
+  String get expenseReportUncategorized => '未分类';
+
+  @override
+  String get expenseReportNoExpenses => '本期没有支出记录。';
+
+  @override
+  String expenseReportMonthLabel(int month) {
+    return '$month月';
+  }
+
+  @override
+  String get expenseReportMonthlyTrend => '月度趋势';
+
+  @override
+  String get expenseReportSeriesExpenses => '支出';
+
+  @override
+  String get expenseReportMonthlyTrendSemantic => '月度支出趋势';
+
+  @override
+  String get expenseReportCategoryDetail => '类目明细';
+
+  @override
+  String expenseReportItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get expenseListSearchHint => '按备注搜索';
+
+  @override
+  String get expenseListAllCategories => '全部类目';
+
+  @override
+  String get expenseListGroupMonth => '月';
+
+  @override
+  String get expenseListGroupWeek => '周';
+
+  @override
+  String expenseListTotal(String amount) {
+    return '合计 $amount';
+  }
+
+  @override
+  String get expenseListUncategorized => '未分类';
+
+  @override
+  String get expenseListEmptyFiltered => '没有匹配的支出。';
+
+  @override
+  String get expenseListEmptyDefault => '还没有记账。点底部加号按钮，开始追踪日常消费。';
+
+  @override
+  String expenseListMonthGroup(int year, int month) {
+    return '$year 年 $month 月';
+  }
+
+  @override
+  String expenseListWeekGroup(int year, int week) {
+    return '$year 年第 $week 周';
+  }
+
+  @override
+  String assetDetailLoadError(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get assetDetailNotFound => '资产不存在或已删除';
+
+  @override
+  String get assetDetailUnsupportedType => '该资产类型暂不支持手动编辑';
+
+  @override
+  String get assetDetailNoMetadataMatch => '未找到匹配的元数据';
+
+  @override
+  String get assetDetailMetadataSynced => '已补全元数据';
+
+  @override
+  String get assetDetailMetadataUpToDate => '元数据已是最新';
+
+  @override
+  String get assetDetailNetworkUnavailable => '网络不可用，无法同步元数据';
+
+  @override
+  String get assetDetailSyncMetadataTooltip => '同步元数据';
+
+  @override
+  String get assetDetailNewTradeLabel => '新交易';
+
+  @override
+  String get assetDetailUnknown => '未知';
+
+  @override
+  String assetDetailHoldingsLoadError(String error) {
+    return '持仓加载失败：$error';
+  }
+
+  @override
+  String get assetDetailHoldingsTitle => '持仓';
+
+  @override
+  String get assetDetailCurrentQuantity => '当前数量';
+
+  @override
+  String get assetDetailAverageCost => '平均成本';
+
+  @override
+  String get assetDetailCurrentMarketValue => '当前市值';
+
+  @override
+  String get assetDetailPriceUnavailable => '价格暂不可用，市值显示为零';
+
+  @override
+  String assetDetailPnLLoadError(String error) {
+    return '盈亏加载失败：$error';
+  }
+
+  @override
+  String get assetDetailPnLTitle => '盈亏';
+
+  @override
+  String get assetDetailUnrealizedPnL => '未实现盈亏';
+
+  @override
+  String assetDetailBaseCurrency(String currency) {
+    return '基础货币：$currency';
+  }
+
+  @override
+  String get assetDetailTodayChange => '今日变动';
+
+  @override
+  String get assetDetailQuoteStale => '行情滞后';
+
+  @override
+  String get assetDetailQuoteUnavailable => '行情不可用';
+
+  @override
+  String get assetDetailTrend30d => '近 30 日走势';
+
+  @override
+  String get assetDetailNoMarketLinked => '该资产暂未关联市场，无走势可显示';
+
+  @override
+  String assetDetailTrendLoadError(String error) {
+    return '无法获取行情：$error';
+  }
+
+  @override
+  String get assetDetailSeriesClosePrice => '收盘价';
+
+  @override
+  String get assetDetailSeriesCostBasis => '成本基准';
+
+  @override
+  String get assetDetailTrendSemanticLabel => '近 30 日收盘价走势';
+
+  @override
+  String get assetDetailStaleBadge => '行情滞后';
+
+  @override
+  String get assetDetailCategoryShareSemantic => '类目占比';
+
+  @override
+  String get depositMaturityRequired => '定期存款必须填写到期日';
+
+  @override
+  String get depositDeleteTitle => '删除存款';
+
+  @override
+  String get depositDeleteBody => '确认删除该存款记录？';
+
+  @override
+  String get depositCreateTitle => '录入存款';
+
+  @override
+  String get depositEditTitle => '编辑存款';
+
+  @override
+  String get depositDeleteTooltip => '删除';
+
+  @override
+  String get depositTypeTerm => '定期';
+
+  @override
+  String get depositTypeDemand => '活期';
+
+  @override
+  String get depositNameLabel => '名称';
+
+  @override
+  String get depositNameHelper => '例如：招行 1 年期定期、工行活期储蓄';
+
+  @override
+  String get depositNameRequired => '请输入名称';
+
+  @override
+  String get depositPrincipalLabel => '本金';
+
+  @override
+  String get depositRateLabel => '年化利率 (%)';
+
+  @override
+  String get depositRateHelper => '例如：3.25 表示 3.25%';
+
+  @override
+  String get depositRateRequired => '请输入利率';
+
+  @override
+  String get depositRateInvalid => '利率格式不正确';
+
+  @override
+  String get depositRateNegative => '利率不能为负';
+
+  @override
+  String get depositValueDateLabel => '起息日';
+
+  @override
+  String get depositMaturityDateLabel => '到期日';
+
+  @override
+  String get depositCurrentValuationLabel => '当前估值（可选）';
+
+  @override
+  String get depositCurrentValuationHelper => '不填则使用本金作为当前估值';
+
+  @override
+  String get depositAutoRenewTitle => '自动续存';
+
+  @override
+  String get depositAutoRenewSubtitle => '到期后系统提示重新登记，不会自动创建新存款';
+
+  @override
+  String get depositNoAccountHint => '请先创建一个银行账户。';
+
+  @override
+  String get depositCreateAccountAction => '新建账户';
+
+  @override
+  String get wealthProductDeleteTitle => '删除理财产品';
+
+  @override
+  String get wealthProductDeleteBody => '确认删除该理财产品记录？';
+
+  @override
+  String get wealthProductCreateTitle => '录入理财产品';
+
+  @override
+  String get wealthProductEditTitle => '编辑理财产品';
+
+  @override
+  String get wealthProductDeleteTooltip => '删除';
+
+  @override
+  String get wealthProductNoAccountHint => '请先创建银行 / 券商账户。';
+
+  @override
+  String get wealthProductCreateAccountAction => '新建账户';
+
+  @override
+  String get wealthProductNameLabel => '产品名称';
+
+  @override
+  String get wealthProductNameRequired => '请输入产品名称';
+
+  @override
+  String get wealthProductIssuerLabel => '发行机构（可选）';
+
+  @override
+  String get wealthProductCodeLabel => '产品代码（可选）';
+
+  @override
+  String get wealthProductAmountLabel => '认购金额';
+
+  @override
+  String get wealthProductExpectedReturnLabel => '预期年化收益率 (%)';
+
+  @override
+  String get wealthProductExpectedReturnHelper => '例如：4.5 表示 4.5%';
+
+  @override
+  String get wealthProductExpectedReturnRequired => '请输入预期年化';
+
+  @override
+  String get wealthProductInvalidFormat => '格式不正确';
+
+  @override
+  String get wealthProductValueDateLabel => '起息日';
+
+  @override
+  String get wealthProductMaturityDateLabel => '到期日（可选）';
+
+  @override
+  String get wealthProductValuationLabel => '当前估值（手动维护）';
+
+  @override
+  String get wealthProductValuationHelper => '不填则以认购金额作为当前估值';
+
+  @override
+  String get manualSecurityMarketCnA => 'A 股';
+
+  @override
+  String get manualSecurityMarketHk => '港股';
+
+  @override
+  String get manualSecurityMarketUs => '美股';
+
+  @override
+  String get manualSecurityMarketCrypto => '加密';
+
+  @override
+  String get manualSecurityTypeStock => '股票';
+
+  @override
+  String get manualSecurityTypeEtf => 'ETF';
+
+  @override
+  String get manualSecurityTypeMutualFund => '基金';
+
+  @override
+  String get manualSecurityTypeBond => '债券';
+
+  @override
+  String get manualSecurityTypeCrypto => '加密货币';
+
+  @override
+  String get manualSecurityEnterCodeOrName => '请先输入代码或名称';
+
+  @override
+  String get manualSecurityNetworkUnavailable => '网络不可用，请使用手动输入';
+
+  @override
+  String get manualSecurityNoMatch => '未找到匹配项，请使用手动输入';
+
+  @override
+  String get manualSecurityImported => '已从网络导入元数据';
+
+  @override
+  String get manualSecuritySelectMatchTitle => '选择匹配项';
+
+  @override
+  String get manualSecuritySheetTitle => '手动添加证券';
+
+  @override
+  String get manualSecuritySheetDescription =>
+      '本地保存。点击「从网络导入」可选择性地用 Yahoo / CoinGecko 元数据补全字段。';
+
+  @override
+  String get manualSecurityCodeLabel => '代码';
+
+  @override
+  String get manualSecurityCodeRequired => '请输入代码';
+
+  @override
+  String get manualSecurityCodeNoColon => '代码不能包含 \":\"';
+
+  @override
+  String get manualSecurityImportAction => '从网络导入';
+
+  @override
+  String get manualSecurityImporting => '导入中…';
+
+  @override
+  String get manualSecurityNameLabel => '名称（可选）';
+
+  @override
+  String get manualSecurityMarketLabel => '市场';
+
+  @override
+  String get manualSecurityTypeLabel => '类型';
+
+  @override
+  String get manualSecurityIsinLabel => 'ISIN（可选）';
+
+  @override
+  String get manualSecurityAddAction => '添加';
+
+  @override
+  String get localSecuritiesSearchLabel => '资产搜索';
+
+  @override
+  String get localSecuritiesSearchHint => '输入代码、名称或拼音';
+
+  @override
+  String get localSecuritiesValidationRequired => '请选择一个资产';
+
+  @override
+  String get localSecuritiesMyAssets => '我的资产';
+
+  @override
+  String get localSecuritiesCatalog => '本地目录';
+
+  @override
+  String get localSecuritiesManualAdd => '未找到？手动添加';
+
+  @override
+  String localSecuritiesUseQueryAsCode(String query) {
+    return '使用 \"$query\" 作为代码';
+  }
+
+  @override
+  String get formSaving => '保存中…';
+
+  @override
+  String get formSave => '保存';
 }

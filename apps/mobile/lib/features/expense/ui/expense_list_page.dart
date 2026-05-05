@@ -117,7 +117,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('加载失败：$e')),
+        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
       );
 
     if (widget.embedded) return body;
@@ -171,6 +171,7 @@ class _FiltersBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.s16,
@@ -184,7 +185,7 @@ class _FiltersBar extends StatelessWidget {
             controller: keywordController,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
-              hintText: '按备注搜索',
+              hintText: l10n.expenseListSearchHint,
               border: const OutlineInputBorder(),
               isDense: true,
               suffixIcon: keywordController.text.isEmpty
@@ -212,9 +213,9 @@ class _FiltersBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 _FilterChip<String?>(
                   label: filters.expenseAccountId == null
-                      ? '全部类目'
+                      ? l10n.expenseListAllCategories
                       : (expenseAccountById[filters.expenseAccountId]?.name ??
-                            '全部类目'),
+                            l10n.expenseListAllCategories),
                   active: filters.expenseAccountId != null,
                   onClear: () =>
                       onChanged(filters.copyWith(expenseAccountId: null)),
@@ -228,7 +229,7 @@ class _FiltersBar extends StatelessWidget {
                           children: [
                             ListTile(
                               leading: const Icon(Icons.clear),
-                              title: const Text('全部类目'),
+                              title: Text(l10n.expenseListAllCategories),
                               onTap: () =>
                                   Navigator.of(ctx).pop<String?>(null),
                             ),
@@ -265,6 +266,7 @@ class _GroupingChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return LiquidGlassCard(
       layer: GlassLayer.tertiary,
       borderRadius: Radii.lg.toDouble(),
@@ -274,7 +276,7 @@ class _GroupingChips extends StatelessWidget {
         children: [
           for (final g in ExpenseGrouping.values)
             _SegmentChip(
-              label: g == ExpenseGrouping.month ? '月' : '周',
+              label: g == ExpenseGrouping.month ? l10n.expenseListGroupMonth : l10n.expenseListGroupWeek,
               selected: g == selected,
               onTap: () {
                 Haptics.selection();
@@ -368,8 +370,9 @@ class _GroupedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    final groups = _groupExpenses(expenses, grouping);
+    final groups = _groupExpenses(expenses, grouping, l10n);
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
@@ -394,7 +397,7 @@ class _GroupedList extends StatelessWidget {
                 children: [
                   Text(g.label, style: Theme.of(context).textTheme.titleSmall),
                   Text(
-                    '合计 ${formatter.currency(total)}',
+                    l10n.expenseListTotal(formatter.currency(total)),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFeatures: TypographyTokens.tabularFigures,
                     ),
@@ -432,6 +435,7 @@ class _ExpenseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accent =
         account?.accentColor ?? Theme.of(context).colorScheme.primary;
     return ListTile(
@@ -440,7 +444,7 @@ class _ExpenseRow extends StatelessWidget {
         backgroundColor: accent.withValues(alpha: 0.15),
         child: Icon(account?.iconData ?? Icons.payment, color: accent),
       ),
-      title: Text(account?.name ?? '未分类'),
+      title: Text(account?.name ?? l10n.expenseListUncategorized),
       subtitle: Text(
         [
           formatter.date(expense.tradeDate),
@@ -466,6 +470,7 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: Spacing.pageMobile,
@@ -475,7 +480,7 @@ class _Empty extends StatelessWidget {
             const Icon(Icons.receipt_long_outlined, size: 48),
             const SizedBox(height: Spacing.s12),
             Text(
-              filtered ? '没有匹配的支出。' : '还没有记账。点底部加号按钮，开始追踪日常消费。',
+              filtered ? l10n.expenseListEmptyFiltered : l10n.expenseListEmptyDefault,
               textAlign: TextAlign.center,
             ),
           ],
@@ -492,7 +497,7 @@ class _Group {
   final List<Expense> expenses = [];
 }
 
-List<_Group> _groupExpenses(List<Expense> expenses, ExpenseGrouping grouping) {
+List<_Group> _groupExpenses(List<Expense> expenses, ExpenseGrouping grouping, AppLocalizations l10n) {
   final byKey = <String, _Group>{};
   for (final e in expenses) {
     final local = e.tradeDate.toLocal();
@@ -500,8 +505,8 @@ List<_Group> _groupExpenses(List<Expense> expenses, ExpenseGrouping grouping) {
         ? '${local.year}-${local.month.toString().padLeft(2, '0')}'
         : _isoWeekKey(local);
     final label = grouping == ExpenseGrouping.month
-        ? '${local.year} 年 ${local.month} 月'
-        : _isoWeekLabel(local);
+        ? l10n.expenseListMonthGroup(local.year, local.month)
+        : _isoWeekLabel(local, l10n);
     byKey.putIfAbsent(key, () => _Group(label)).expenses.add(e);
   }
   final keys = byKey.keys.toList()..sort((a, b) => b.compareTo(a));
@@ -513,9 +518,9 @@ String _isoWeekKey(DateTime d) {
   return '${d.year}-W${week.toString().padLeft(2, '0')}';
 }
 
-String _isoWeekLabel(DateTime d) {
+String _isoWeekLabel(DateTime d, AppLocalizations l10n) {
   final week = _isoWeekNumber(d);
-  return '${d.year} 年第 $week 周';
+  return l10n.expenseListWeekGroup(d.year, week);
 }
 
 int _isoWeekNumber(DateTime d) {

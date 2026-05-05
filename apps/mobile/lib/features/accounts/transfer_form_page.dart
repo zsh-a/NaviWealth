@@ -14,6 +14,7 @@ import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/journal_entry_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
 import '../shared/postings_preview.dart';
@@ -90,18 +91,20 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: const GlassAppBar(title: Text('New transfer')),
+      appBar: GlassAppBar(title: Text(l10n.transferTitle)),
       body: accountsAsync.when(
         data: (accounts) => _buildForm(context, accounts),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load accounts: $e')),
+        error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
       ),
     );
   }
 
   Widget _buildForm(BuildContext context, List<Account> accounts) {
+    final l10n = AppLocalizations.of(context);
     // Pre-compute the asset+liability subset once so the picker /
     // preview can resolve account names without re-walking per
     // keystroke.
@@ -191,10 +194,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 _refreshToAmountAutofill(accountsById);
               },
               category: null,
-              label: 'From account',
+              label: l10n.transferFromLabel,
               allowSystemAccounts: false,
               validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+                  (v == null || v.isEmpty) ? l10n.transferValidationRequired : null,
             ),
             const SizedBox(height: Spacing.s12),
             AccountTreePicker(
@@ -208,12 +211,12 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 _refreshToAmountAutofill(accountsById);
               },
               category: null,
-              label: 'To account',
+              label: l10n.transferToLabel,
               allowSystemAccounts: false,
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
+                if (v == null || v.isEmpty) return l10n.transferValidationRequired;
                 if (v == _fromAccountId) {
-                  return 'Pick a different account';
+                  return l10n.transferValidationDifferentAccount;
                 }
                 return null;
               },
@@ -221,8 +224,8 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             const SizedBox(height: Spacing.s12),
             AmountField(
               label: fromCurrency == null
-                  ? 'Amount'
-                  : 'Amount ($fromCurrency)',
+                  ? l10n.transferAmountLabel
+                  : l10n.transferAmountWithCurrencyLabel(fromCurrency),
               controller: _amountController,
               currencyCode: fromCurrency,
               focusNode: _amountFocus,
@@ -241,13 +244,13 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             if (isCrossCurrency) ...[
               const SizedBox(height: Spacing.s12),
               AmountField(
-                label: 'To amount ($toCurrency)',
+                label: l10n.transferToAmountLabel(toCurrency),
                 controller: _toAmountController,
                 currencyCode: toCurrency,
                 focusNode: _toAmountFocus,
                 helperText: defaultToAmount == null
-                    ? 'No FX rate on file — enter the converted amount.'
-                    : 'Edit to override the auto-filled rate.',
+                    ? l10n.transferFxRateHelper
+                    : l10n.transferFxRateEditHelper,
                 onChanged: (_) => setState(() {}),
                 onFieldSubmitted: (_) => _noteFocus.requestFocus(),
               ),
@@ -271,7 +274,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             ],
             const SizedBox(height: Spacing.s12),
             DateField(
-              label: 'Date',
+              label: l10n.transferDateLabel,
               initialValue: _date,
               required: true,
               onChanged: (d) {
@@ -289,13 +292,13 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 postings: preview,
                 accounts: accountsById,
                 title: _noteController.text.isEmpty
-                    ? 'Transfer'
+                    ? l10n.transferPreviewTitle
                     : _noteController.text,
               ),
             const SizedBox(height: Spacing.s16),
             FilledButton(
               onPressed: canSubmit ? _save : null,
-              child: const Text('Transfer'),
+              child: Text(l10n.transferSubmitAction),
             ),
           ],
         ),
@@ -364,9 +367,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     required String fromCcy,
     required String toCcy,
   }) {
+    final l10n = AppLocalizations.of(context);
     final rate =
         (toAmount / amount).toDecimal(scaleOnInfinitePrecision: 6);
-    return 'Rate: 1 $fromCcy = $rate $toCcy';
+    return l10n.transferRateLabel(fromCcy, rate.toString(), toCcy);
   }
 
   /// Live PostingsPreview source — produces a draft list mirroring
@@ -457,6 +461,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     }
 
     setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
     final repo = await ref.read(journalEntryRepositoryProvider.future);
     final note = _noteController.text.trim();
     final build = JournalEntryBuilders.transfer(
@@ -477,10 +482,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       ),
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>
-            'Transfer rejected: $message',
-        _ => 'Transfer failed: $e',
+            l10n.transferRejectedError(message),
+        _ => l10n.transferFailedError('$e'),
       },
-      retryLabel: 'Retry',
+      retryLabel: l10n.transferRetryLabel,
       tag: 'transfer-form',
     );
     if (mounted) setState(() => _busy = false);

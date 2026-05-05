@@ -418,6 +418,7 @@ class _ParentAccountPickerSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     final accounts = accountsAsync.value ?? const <Account>[];
     final filtered = _candidates(accounts);
@@ -430,15 +431,15 @@ class _ParentAccountPickerSection extends ConsumerWidget {
             value: parentId,
             onChanged: onChanged,
             category: category,
-            label: 'Parent account (optional)',
-            helperText: 'Group this account under another in the tree.',
+            label: l10n.accountFormParentLabel,
+            helperText: l10n.accountFormParentHelper,
             allowSystemAccounts: false,
           ),
         ),
         if (parentId != null)
           IconButton(
             icon: const Icon(Icons.clear),
-            tooltip: 'Make top-level',
+            tooltip: l10n.accountFormMakeTopLevelTooltip,
             onPressed: () => onChanged(null),
           ),
       ],
@@ -495,6 +496,7 @@ class _IconPickerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final tint = _parseHexColor(color) ?? scheme.primary;
 
@@ -502,7 +504,7 @@ class _IconPickerSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Icon',
+          l10n.accountFormIconHeading,
           style: Theme.of(context).textTheme.labelMedium,
         ),
         const SizedBox(height: Spacing.s4),
@@ -519,7 +521,7 @@ class _IconPickerSection extends StatelessWidget {
                   isSelected: isSelected,
                   selectionTint: tint,
                   onTap: () => onChanged(null),
-                  tooltip: 'No icon',
+                  tooltip: l10n.accountFormNoIconTooltip,
                   child: Icon(
                     Icons.do_not_disturb_on_outlined,
                     color: scheme.onSurfaceVariant,
@@ -603,13 +605,14 @@ class _ColorPickerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Color',
+          l10n.accountFormColorHeading,
           style: Theme.of(context).textTheme.labelMedium,
         ),
         const SizedBox(height: Spacing.s4),
@@ -620,7 +623,7 @@ class _ColorPickerSection extends StatelessWidget {
             _ColorSwatch(
               isSelected: selected == null,
               onTap: () => onChanged(null),
-              tooltip: 'No color',
+              tooltip: l10n.accountFormNoColorTooltip,
               fill: scheme.surfaceContainerLow,
               border: scheme.outlineVariant,
               child: Icon(
