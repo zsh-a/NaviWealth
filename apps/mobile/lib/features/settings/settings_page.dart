@@ -183,6 +183,19 @@ class SettingsPage extends ConsumerWidget {
             padding: EdgeInsets.zero,
             child: _RiskThresholdSettings(),
           ),
+          // ── Data ──
+          GlassSectionHeader(title: l10n.settingsDataSection),
+          LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: const Icon(Icons.backup_outlined),
+              title: Text(l10n.settingsDataTitle),
+              subtitle: Text(l10n.settingsDataSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.goNamed('backup'),
+            ),
+          ),
           // ── About ──
           const SizedBox(height: Spacing.s12),
           const LiquidGlassCard(

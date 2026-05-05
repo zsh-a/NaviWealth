@@ -26,6 +26,7 @@ class SyncScheduler with WidgetsBindingObserver {
   Timer? _timer;
   bool _started = false;
   bool _foreground = true;
+  bool _paused = false;
 
   /// Idempotent. Safe to call from `runApp` / `initState`.
   void start() {
@@ -51,7 +52,7 @@ class SyncScheduler with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         if (!_foreground) {
           _foreground = true;
-          unawaited(triggerNow());
+          if (!_paused) unawaited(triggerNow());
         }
         _restartTimer();
       case AppLifecycleState.inactive:
@@ -69,9 +70,21 @@ class SyncScheduler with WidgetsBindingObserver {
     _timer = Timer.periodic(_interval, (_) => unawaited(triggerNow()));
   }
 
+  /// Pause sync. Used during backup restore to prevent concurrent mutations.
+  void pause() => _paused = true;
+
+  /// Resume sync and trigger an immediate cycle.
+  void resume() {
+    if (_paused) {
+      _paused = false;
+      unawaited(triggerNow());
+    }
+  }
+
   /// Run a sync cycle now. Concurrent calls share the same in-flight
   /// future thanks to [SyncEngine.run]'s mutex.
   Future<void> triggerNow() async {
+    if (_paused) return;
     try {
       await _engine.run();
     } catch (_) {

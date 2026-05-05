@@ -2480,4 +2480,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planRebalanceSubtitle => 'Portfolio drift & rebalancing';
+
+  @override
+  String get settingsDataSection => 'Data';
+
+  @override
+  String get settingsDataTitle => 'Backup & Restore';
+
+  @override
+  String get settingsDataSubtitle => 'Export or import encrypted data backups';
+
+  @override
+  String get backupExportTitle => 'Export Backup';
+
+  @override
+  String get backupExportSubtitle =>
+      'Create an encrypted backup of all your data';
+
+  @override
+  String get backupImportTitle => 'Import Backup';
+
+  @override
+  String get backupImportSubtitle => 'Restore data from a backup file';
+
+  @override
+  String get backupPassphraseLabel => 'Passphrase';
+
+  @override
+  String get backupPassphraseHint => 'Enter a passphrase to encrypt the backup';
+
+  @override
+  String get backupPassphraseRequired => 'Passphrase is required';
+
+  @override
+  String get backupConfirmRestoreTitle => 'Restore Backup';
+
+  @override
+  String get backupConfirmRestoreMessage =>
+      'This will replace ALL local data with the contents of the backup. This cannot be undone. Continue?';
+
+  @override
+  String get backupConfirmRestoreAction => 'Restore';
+
+  @override
+  String get backupExportAction => 'Export';
+
+  @override
+  String get backupCancelAction => 'Cancel';
+
+  @override
+  String get backupExportProgress => 'Encrypting backup…';
+
+  @override
+  String get backupImportProgress => 'Restoring backup…';
+
+  @override
+  String get backupExportSuccess => 'Backup exported successfully';
+
+  @override
+  String backupImportSuccess(int count) {
+    return 'Backup restored successfully. $count rows imported.';
+  }
+
+  @override
+  String get backupWrongPassphrase => 'Wrong passphrase or corrupt backup file';
+
+  @override
+  String get backupSchemaTooNew =>
+      'This backup was created with a newer version of NaviWealth. Please update the app first.';
+
+  @override
+  String get backupInvalidFile => 'Invalid backup file';
+
+  @override
+  String get backupFilePickerError => 'Could not read the selected file';
+
+  @override
+  String get backupRestorePassphraseHint => 'Enter the backup passphrase';
 }

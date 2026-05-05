@@ -4481,6 +4481,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Portfolio drift & rebalancing'**
   String get planRebalanceSubtitle;
+
+  /// Settings section header for backup/restore
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsDataSection;
+
+  /// Settings tile that opens the backup page
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & Restore'**
+  String get settingsDataTitle;
+
+  /// Settings tile subtitle for backup
+  ///
+  /// In en, this message translates to:
+  /// **'Export or import encrypted data backups'**
+  String get settingsDataSubtitle;
+
+  /// Backup page: export tile title
+  ///
+  /// In en, this message translates to:
+  /// **'Export Backup'**
+  String get backupExportTitle;
+
+  /// Backup page: export tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Create an encrypted backup of all your data'**
+  String get backupExportSubtitle;
+
+  /// Backup page: import tile title
+  ///
+  /// In en, this message translates to:
+  /// **'Import Backup'**
+  String get backupImportTitle;
+
+  /// Backup page: import tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Restore data from a backup file'**
+  String get backupImportSubtitle;
+
+  /// Backup dialog: passphrase field label
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase'**
+  String get backupPassphraseLabel;
+
+  /// Backup dialog: passphrase field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a passphrase to encrypt the backup'**
+  String get backupPassphraseHint;
+
+  /// Backup dialog: empty passphrase error
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase is required'**
+  String get backupPassphraseRequired;
+
+  /// Backup dialog: restore confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Backup'**
+  String get backupConfirmRestoreTitle;
+
+  /// Backup dialog: restore confirmation message
+  ///
+  /// In en, this message translates to:
+  /// **'This will replace ALL local data with the contents of the backup. This cannot be undone. Continue?'**
+  String get backupConfirmRestoreMessage;
+
+  /// Backup dialog: restore button
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get backupConfirmRestoreAction;
+
+  /// Backup dialog: export button
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get backupExportAction;
+
+  /// Backup dialog: cancel button
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get backupCancelAction;
+
+  /// Backup progress: exporting
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypting backup…'**
+  String get backupExportProgress;
+
+  /// Backup progress: importing
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring backup…'**
+  String get backupImportProgress;
+
+  /// Backup toast: export success
+  ///
+  /// In en, this message translates to:
+  /// **'Backup exported successfully'**
+  String get backupExportSuccess;
+
+  /// Backup toast: import success with row count
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored successfully. {count} rows imported.'**
+  String backupImportSuccess(int count);
+
+  /// Backup error: wrong passphrase
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong passphrase or corrupt backup file'**
+  String get backupWrongPassphrase;
+
+  /// Backup error: schema too new
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was created with a newer version of NaviWealth. Please update the app first.'**
+  String get backupSchemaTooNew;
+
+  /// Backup error: invalid file format
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid backup file'**
+  String get backupInvalidFile;
+
+  /// Backup error: file picker failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the selected file'**
+  String get backupFilePickerError;
+
+  /// Backup dialog: restore passphrase hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the backup passphrase'**
+  String get backupRestorePassphraseHint;
 }
 
 class _AppLocalizationsDelegate
