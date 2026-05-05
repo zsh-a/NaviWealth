@@ -52,23 +52,39 @@ class SettingsPage extends ConsumerWidget {
                   onTap: () => context.goNamed('devices'),
                 ),
                 const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.currency_exchange),
-                  title: Text(l10n.settingsBaseCurrencyTitle),
-                  subtitle: Text(l10n.settingsBaseCurrencyHint),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s16,
+                    vertical: Spacing.s8,
+                  ),
+                  child: Row(
                     children: [
-                      Text(
-                        baseCurrency,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      const Icon(Icons.currency_exchange),
+                      const SizedBox(width: Spacing.s16),
+                      Expanded(
+                        child: AppDropdown<String>(
+                          value: baseCurrency,
+                          label: l10n.settingsBaseCurrencyTitle,
+                          displayBuilder: (_, v) =>
+                              Text(v ?? '', style: Theme.of(context).textTheme.bodyMedium),
+                          items: [
+                            for (final code in kCommonCurrencies)
+                              DropdownMenuItem(
+                                value: code,
+                                child: Text(currencyDisplayLabel(l10n, code)),
+                              ),
+                          ],
+                          onChanged: (picked) async {
+                            if (picked != null && picked != baseCurrency) {
+                              await ref
+                                  .read(baseCurrencyProvider.notifier)
+                                  .set(picked);
+                            }
+                          },
+                        ),
                       ),
-                      const SizedBox(width: Spacing.s4),
-                      const Icon(Icons.chevron_right),
                     ],
                   ),
-                  onTap: () =>
-                      _pickBaseCurrency(context, ref, baseCurrency),
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -89,60 +105,67 @@ class SettingsPage extends ConsumerWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.brightness_6_outlined),
-                  title: Text(l10n.settingsThemeModeTitle),
-                  subtitle: Text(_themeModeLabel(l10n, themeMode)),
-                  trailing: SegmentedButton<ThemeMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: ThemeMode.system,
-                        icon: const Icon(Icons.brightness_auto),
-                        tooltip: l10n.themeModeSystem,
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.light,
-                        icon: const Icon(Icons.light_mode_outlined),
-                        tooltip: l10n.themeModeLight,
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.dark,
-                        icon: const Icon(Icons.dark_mode_outlined),
-                        tooltip: l10n.themeModeDark,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s16,
+                    vertical: Spacing.s8,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.brightness_6_outlined),
+                      const SizedBox(width: Spacing.s16),
+                      Expanded(
+                        child: AppDropdown<ThemeMode>(
+                          value: themeMode,
+                          label: l10n.settingsThemeModeTitle,
+                          items: [
+                            for (final m in ThemeMode.values)
+                              DropdownMenuItem(
+                                value: m,
+                                child: Text(_themeModeLabel(l10n, m)),
+                              ),
+                          ],
+                          onChanged: (m) {
+                            if (m != null) {
+                              Haptics.selection();
+                              ref.read(themeModeProvider.notifier).set(m);
+                            }
+                          },
+                        ),
                       ),
                     ],
-                    selected: {themeMode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (s) {
-                      Haptics.selection();
-                      ref.read(themeModeProvider.notifier).set(s.first);
-                    },
                   ),
                 ),
                 const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.swap_vert),
-                  title: Text(l10n.settingsMarketColorTitle),
-                  subtitle: Text(_marketModeLabel(l10n, marketMode)),
-                  trailing: PopupMenuButton<MarketColorMode>(
-                    icon: const Icon(Icons.tune),
-                    onSelected: (m) =>
-                        ref.read(marketColorModeProvider.notifier).set(m),
-                    itemBuilder: (context) => [
-                      for (final m in MarketColorMode.values)
-                        PopupMenuItem(
-                          value: m,
-                          child: Row(
-                            children: [
-                              if (m == marketMode)
-                                const Icon(Icons.check, size: 18)
-                              else
-                                const SizedBox(width: 18),
-                              const SizedBox(width: 8),
-                              Text(_marketModeLabel(l10n, m)),
-                            ],
-                          ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s16,
+                    vertical: Spacing.s8,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.swap_vert),
+                      const SizedBox(width: Spacing.s16),
+                      Expanded(
+                        child: AppDropdown<MarketColorMode>(
+                          value: marketMode,
+                          label: l10n.settingsMarketColorTitle,
+                          items: [
+                            for (final m in MarketColorMode.values)
+                              DropdownMenuItem(
+                                value: m,
+                                child: Text(_marketModeLabel(l10n, m)),
+                              ),
+                          ],
+                          onChanged: (m) {
+                            if (m != null) {
+                              ref
+                                  .read(marketColorModeProvider.notifier)
+                                  .set(m);
+                            }
+                          },
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -170,58 +193,6 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _pickBaseCurrency(
-    BuildContext context,
-    WidgetRef ref,
-    String current,
-  ) async {
-    final l10n = AppLocalizations.of(context);
-    final picked = await showGlassModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s16,
-                  vertical: Spacing.s8,
-                ),
-                child: Text(
-                  l10n.settingsBaseCurrencySheetTitle,
-                  style: Theme.of(ctx).textTheme.titleMedium,
-                ),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final code in kCommonCurrencies)
-                      ListTile(
-                        title: Text(currencyDisplayLabel(l10n, code)),
-                        trailing: code == current
-                            ? const Icon(Icons.check)
-                            : null,
-                        onTap: () => Navigator.of(ctx).pop(code),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (picked != null && picked != current) {
-      await ref.read(baseCurrencyProvider.notifier).set(picked);
-    }
   }
 
   String _themeModeLabel(AppLocalizations l10n, ThemeMode mode) =>

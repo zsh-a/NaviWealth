@@ -245,24 +245,36 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         padding: Spacing.pageMobile,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
-          SegmentedButton<AssetType>(
-            segments: const [
-              ButtonSegment(
-                value: AssetType.bankDepositTerm,
-                icon: Icon(Icons.lock_clock),
-                label: Text('定期'),
-              ),
-              ButtonSegment(
-                value: AssetType.bankDepositDemand,
-                icon: Icon(Icons.savings_outlined),
-                label: Text('活期'),
-              ),
-            ],
-            selected: {_kind},
-            onSelectionChanged: (s) {
-              Haptics.selection();
-              setState(() => _kind = s.first);
-            },
+          LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            borderRadius: Radii.lg.toDouble(),
+            padding: const EdgeInsets.all(Spacing.s4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _DepositKindChip(
+                    icon: Icons.lock_clock,
+                    label: '定期',
+                    selected: _kind == AssetType.bankDepositTerm,
+                    onTap: () {
+                      Haptics.selection();
+                      setState(() => _kind = AssetType.bankDepositTerm);
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: _DepositKindChip(
+                    icon: Icons.savings_outlined,
+                    label: '活期',
+                    selected: _kind == AssetType.bankDepositDemand,
+                    onTap: () {
+                      Haptics.selection();
+                      setState(() => _kind = AssetType.bankDepositDemand);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: Spacing.s12),
           AccountPicker(
@@ -379,6 +391,63 @@ class _PromptCreateAccount extends StatelessWidget {
               icon: Icons.add,
               label: '新建账户',
               onPressed: onTap,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DepositKindChip extends StatelessWidget {
+  const _DepositKindChip({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s12,
+          vertical: Spacing.s8,
+        ),
+        decoration: selected
+            ? BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(Radii.md),
+              )
+            : null,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: Spacing.s4),
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ],
         ),

@@ -92,14 +92,14 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
               : _ActivityFeedPlaceholder(),
       floatingActionButton: _tab == _ActivityTab.expenses
           ? ScrollAwareFab(
-              child: FloatingActionButton(
+              child: AppFab(
                 onPressed: () => context.push('/activity/expenses/new'),
                 child: const Icon(Icons.add),
               ),
             )
           : _tab == _ActivityTab.accounts
               ? ScrollAwareFab(
-                  child: FloatingActionButton(
+                  child: AppFab(
                     onPressed: () => context.push('/activity/accounts/new'),
                     child: const Icon(Icons.add),
                   ),

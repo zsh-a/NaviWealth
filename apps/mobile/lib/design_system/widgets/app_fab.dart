@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../core/haptics/haptics.dart';
+import 'liquid_glass_card.dart';
 
-/// [FloatingActionButton] wrapper that fires [Haptics.primaryPress] before
-/// invoking the caller's `onPressed`. Use everywhere a FAB launches a primary
-/// action so the app's tactile feedback stays consistent.
+/// Glass-styled floating action button.
+///
+/// Uses [LiquidGlassCard] for a frosted-glass look consistent with the
+/// app's glass design language. Fires [Haptics.primaryPress] before
+/// invoking the caller's `onPressed`.
 class AppFab extends StatelessWidget {
-  /// Standard circular FAB.
+  /// Standard circular glass FAB.
   const AppFab({
     super.key,
     required this.onPressed,
@@ -16,7 +19,7 @@ class AppFab extends StatelessWidget {
         label = null,
         _isExtended = false;
 
-  /// Pill-shaped FAB with leading [icon] and a [label].
+  /// Pill-shaped glass FAB with leading [icon] and a [label].
   const AppFab.extended({
     super.key,
     required this.onPressed,
@@ -33,21 +36,47 @@ class AppFab extends StatelessWidget {
   final String? tooltip;
   final bool _isExtended;
 
+  static const double _size = 56;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final wrapped = Haptics.wrapPrimary(onPressed);
     if (_isExtended) {
-      return FloatingActionButton.extended(
-        onPressed: wrapped,
-        tooltip: tooltip,
-        icon: icon,
-        label: label!,
+      return LiquidGlassCard(
+        layer: GlassLayer.secondary,
+        onTap: wrapped,
+        borderRadius: 999,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconTheme(
+              data: IconThemeData(color: theme.colorScheme.primary),
+              child: icon!,
+            ),
+            const SizedBox(width: 8),
+            DefaultTextStyle(
+              style: theme.textTheme.labelLarge!.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+              child: label!,
+            ),
+          ],
+        ),
       );
     }
-    return FloatingActionButton(
-      onPressed: wrapped,
-      tooltip: tooltip,
-      child: child,
+    return LiquidGlassCard(
+      layer: GlassLayer.secondary,
+      onTap: wrapped,
+      borderRadius: _size / 2,
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        width: _size,
+        height: _size,
+        child: Center(child: child),
+      ),
     );
   }
 }

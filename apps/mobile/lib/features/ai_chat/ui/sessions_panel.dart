@@ -268,31 +268,70 @@ class _SessionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
+              IconButton(
                 tooltip: l10n.aiChatSessionMoreTooltip,
                 icon: Icon(
                   Icons.more_vert,
                   size: 18,
                   color: cs.onSurfaceVariant,
                 ),
-                onSelected: (v) {
-                  switch (v) {
-                    case 'rename':
-                      onRename();
-                    case 'delete':
-                      onDelete();
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'rename',
-                    child: Text(l10n.aiChatSessionRenameAction),
+                onPressed: () => showGlassModalBottomSheet<void>(
+                  context: context,
+                  builder: (ctx) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: Spacing.s12),
+                        AppInkWell(
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            onRename();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Spacing.s16,
+                              vertical: Spacing.s12,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit_outlined, size: 20),
+                                const SizedBox(width: Spacing.s12),
+                                Text(l10n.aiChatSessionRenameAction),
+                              ],
+                            ),
+                          ),
+                        ),
+                        AppInkWell(
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            onDelete();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Spacing.s16,
+                              vertical: Spacing.s12,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: cs.error,
+                                ),
+                                const SizedBox(width: Spacing.s12),
+                                Text(
+                                  l10n.commonDelete,
+                                  style: TextStyle(color: cs.error),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Spacing.s16),
+                      ],
+                    ),
                   ),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Text(l10n.commonDelete),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
