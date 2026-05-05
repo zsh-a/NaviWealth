@@ -164,6 +164,27 @@ class JournalEntryRepository {
     );
   }
 
+  /// Current balance for [accountId], computed as the algebraic sum of
+  /// all non-deleted posting units. Returns [Decimal.zero] when no
+  /// postings exist.
+  Future<Decimal> balanceByAccount(String accountId) async {
+    final rows = await (_db.select(_db.postings).join([
+      innerJoin(
+        _db.journalEntries,
+        _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+      ),
+    ])
+          ..where(_db.postings.accountId.equals(accountId))
+          ..where(_db.postings.deletedAt.isNull())
+          ..where(_db.journalEntries.deletedAt.isNull()))
+        .get();
+    var sum = Decimal.zero;
+    for (final row in rows) {
+      sum += row.readTable(_db.postings).units;
+    }
+    return sum;
+  }
+
   /// FIR-132 — live stream of expense entries materialised from the
   /// journal. Each row is a JE whose expense-leg posting sits on an
   /// `accounts.category = 'expense'` account. The result is shaped as

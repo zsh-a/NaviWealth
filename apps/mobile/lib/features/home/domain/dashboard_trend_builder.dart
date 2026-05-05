@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
 import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
@@ -205,7 +206,11 @@ class DashboardTrendBuilder {
     var total = Money.zero(baseCurrency);
     for (final ma in manualAssets) {
       final value = ma.valueAt(date);
-      if (value == null || value.sign <= 0) continue;
+      if (value == null) continue;
+      // Cash can go negative (trade overdraw); include it so the trend
+      // line matches the snapshot net worth.  Other manual assets with
+      // non-positive values are still excluded.
+      if (value.sign <= 0 && ma.asset.type != AssetType.cash) continue;
       final amount = Money(value, ma.asset.currency);
       total = _addInBase(total, amount, date, ma.asset.id, report);
     }

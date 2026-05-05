@@ -2344,6 +2344,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedEmpty => '暂无动态 — 记录一笔转账、支出或交易即可在此查看。';
 
   @override
+  String get tradeEntryCashOverdrawTitle => '现金余额将变为负数';
+
+  @override
+  String tradeEntryCashOverdrawMessage(Object amount) {
+    return '此次购买后，您的现金账户余额将为 $amount。是否继续？';
+  }
+
+  @override
+  String get tradeEntryCashOverdrawProceed => '继续';
+
+  @override
   String get activityFeedToday => '今天';
 
   @override

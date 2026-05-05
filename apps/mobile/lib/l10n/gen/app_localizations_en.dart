@@ -2432,6 +2432,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'No activity yet — record a transfer, expense, or trade and it will appear here.';
 
   @override
+  String get tradeEntryCashOverdrawTitle => 'Cash balance will go negative';
+
+  @override
+  String tradeEntryCashOverdrawMessage(Object amount) {
+    return 'After this purchase, your cash account balance will be $amount. Do you want to proceed?';
+  }
+
+  @override
+  String get tradeEntryCashOverdrawProceed => 'Proceed';
+
+  @override
   String get activityFeedToday => 'Today';
 
   @override

@@ -83,11 +83,12 @@ class _NwPieChartState extends State<NwPieChart> {
     final sections = <PieChartSectionData>[];
     for (var i = 0; i < widget.slices.length; i++) {
       final s = widget.slices[i];
-      final pct = (s.value / total) * 100;
+      final clampedValue = s.value < 0 ? 0.0 : s.value;
+      final pct = (clampedValue / total) * 100;
       final color = colors[i];
       final isHighlighted = _highlightedIndex == i;
       sections.add(PieChartSectionData(
-        value: s.value,
+        value: clampedValue,
         color: color,
         radius: isHighlighted ? 64 : 56,
         title: pct >= widget.minLabelPercent
@@ -220,10 +221,12 @@ class _NwPieChartState extends State<NwPieChart> {
   }
 
   String _formatCompact(double value) {
-    if (value >= 1e12) return '${(value / 1e12).toStringAsFixed(1)}T';
-    if (value >= 1e9) return '${(value / 1e9).toStringAsFixed(1)}B';
-    if (value >= 1e6) return '${(value / 1e6).toStringAsFixed(1)}M';
-    if (value >= 1e3) return '${(value / 1e3).toStringAsFixed(1)}K';
+    final sign = value < 0 ? '-' : '';
+    final abs = value.abs();
+    if (abs >= 1e12) return '$sign${(abs / 1e12).toStringAsFixed(1)}T';
+    if (abs >= 1e9) return '$sign${(abs / 1e9).toStringAsFixed(1)}B';
+    if (abs >= 1e6) return '$sign${(abs / 1e6).toStringAsFixed(1)}M';
+    if (abs >= 1e3) return '$sign${(abs / 1e3).toStringAsFixed(1)}K';
     return value.toStringAsFixed(0);
   }
 

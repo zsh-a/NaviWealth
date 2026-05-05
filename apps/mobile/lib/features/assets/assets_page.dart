@@ -285,7 +285,12 @@ class _ManualAssetsSection extends ConsumerWidget {
     for (final v
         in valuationsAsync.value ?? const <ManualAssetValuation>[]) {
       final value = v.currentValue();
-      if (value != null && value.sign > 0) valuationMap[v.asset.id] = value;
+      // Cash can go negative (trade overdraw); always include it.
+      // Other manual assets with non-positive values are excluded.
+      if (value != null &&
+          (value.sign > 0 || v.asset.type == AssetType.cash)) {
+        valuationMap[v.asset.id] = value;
+      }
     }
 
     final accountsAsync = ref.watch(accountsStreamProvider);

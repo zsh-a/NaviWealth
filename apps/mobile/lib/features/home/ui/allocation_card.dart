@@ -43,13 +43,19 @@ class AllocationCard extends StatelessWidget {
         .cast<CategoryAllocation?>()
         .firstWhere((a) => true, orElse: () => null);
 
+    // Pie chart only shows positive allocations; negative cash is
+    // reflected implicitly in the lower net worth total.
+    final positiveAllocs = [
+      for (final a in assetAllocs)
+        if (a.totalInBase.amount.toDouble() > 0) a,
+    ];
     final slices = [
-      for (var i = 0; i < assetAllocs.length; i++)
+      for (var i = 0; i < positiveAllocs.length; i++)
         Slice(
-          label: AssetCategoryVisuals.label(l10n, assetAllocs[i].category),
-          value: assetAllocs[i].totalInBase.amount.toDouble(),
+          label: AssetCategoryVisuals.label(l10n, positiveAllocs[i].category),
+          value: positiveAllocs[i].totalInBase.amount.toDouble(),
           colorOverride: ChartPalette.of(context).accentAt(i),
-          meta: assetAllocs[i],
+          meta: positiveAllocs[i],
         ),
     ];
 
@@ -160,7 +166,12 @@ class _Legend extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final palette = ChartPalette.of(context);
-    final assetTotal = snapshot.totalAssets.amount.toDouble();
+    // Percent denominator: sum of positive category totals only, so
+    // negative cash doesn't inflate other categories past 100%.
+    final positiveTotal = assetAllocs
+        .map((a) => a.totalInBase.amount.toDouble())
+        .where((v) => v > 0)
+        .fold<double>(0, (a, b) => a + b);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -173,9 +184,9 @@ class _Legend extends StatelessWidget {
             icon: AssetCategoryVisuals.icon(assetAllocs[i].category),
             valueInBase: assetAllocs[i].totalInBase.amount.toDouble(),
             currencyCode: snapshot.baseCurrency,
-            percent: assetTotal == 0
+            percent: positiveTotal == 0
                 ? 0
-                : assetAllocs[i].totalInBase.amount.toDouble() / assetTotal,
+                : assetAllocs[i].totalInBase.amount.toDouble() / positiveTotal,
             onTap: () => onTap(assetAllocs[i]),
           ),
         if (liabilityAlloc != null) ...[

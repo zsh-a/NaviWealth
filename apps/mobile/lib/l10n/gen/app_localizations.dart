@@ -4386,6 +4386,24 @@ abstract class AppLocalizations {
   /// **'No activity yet — record a transfer, expense, or trade and it will appear here.'**
   String get activityFeedEmpty;
 
+  /// Trade entry: warning dialog title when buy would overdraw cash
+  ///
+  /// In en, this message translates to:
+  /// **'Cash balance will go negative'**
+  String get tradeEntryCashOverdrawTitle;
+
+  /// Trade entry: warning dialog body when buy would overdraw cash. {amount} is the resulting balance.
+  ///
+  /// In en, this message translates to:
+  /// **'After this purchase, your cash account balance will be {amount}. Do you want to proceed?'**
+  String tradeEntryCashOverdrawMessage(Object amount);
+
+  /// Trade entry: warning dialog confirm button
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed'**
+  String get tradeEntryCashOverdrawProceed;
+
   /// Activity feed date section: today
   ///
   /// In en, this message translates to:
