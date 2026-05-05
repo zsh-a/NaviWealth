@@ -70,7 +70,8 @@ class BackupService {
     required String passphrase,
     int? overrideIterations,
   }) async {
-    _logger.i('backup: export starting');
+    final sw = Stopwatch()..start();
+    _logger.i('backup: export starting (schema=${_db.schemaVersion})');
     final schemaVersion = _db.schemaVersion;
     final tableCounts = <String, int>{};
     final data = <String, List<Map<String, Object?>>>{};
@@ -85,7 +86,12 @@ class BackupService {
       }
       data[tableName] = rowMaps;
       tableCounts[tableName] = rowMaps.length;
+      _logger.d('backup: exported $tableName (${rowMaps.length} rows)');
     }
+
+    final totalRows = tableCounts.values.fold(0, (s, c) => s + c);
+    _logger.d('backup: collected $totalRows rows across '
+        '${tableCounts.length} tables, encoding payload');
 
     final payload = {
       'header': {
@@ -98,6 +104,8 @@ class BackupService {
     };
 
     final plaintext = utf8.encode(jsonEncode(payload));
+    _logger.d('backup: plaintext size=${plaintext.length} bytes, encrypting '
+        '(iterations=${overrideIterations ?? backupPbkdf2Iterations})');
     final envelope = await _codec.encrypt(
       passphrase: passphrase,
       plaintext: Uint8List.fromList(plaintext),
@@ -105,7 +113,9 @@ class BackupService {
       iterations: overrideIterations ?? backupPbkdf2Iterations,
     );
     final bytes = envelope.encodeBytes();
-    _logger.i('backup: export complete (${bytes.length} bytes)');
+    sw.stop();
+    _logger.i('backup: export complete (${bytes.length} bytes, '
+        '$totalRows rows, ${sw.elapsedMilliseconds}ms)');
     return bytes;
   }
 
@@ -119,9 +129,15 @@ class BackupService {
     void Function()? pauseSync,
     void Function()? resumeSync,
   }) async {
-    _logger.i('backup: restore starting');
+    final sw = Stopwatch()..start();
+    _logger.i('backup: restore starting (file=${fileBytes.length} bytes)');
+
     // 1. Decode and validate envelope.
+    _logger.d('backup: decoding envelope');
     final envelope = BackupEnvelope.decodeBytes(fileBytes);
+    _logger.d('backup: envelope decoded — schema=${envelope.schemaVersion}, '
+        'iterations=${envelope.iterations}, '
+        'created=${envelope.createdAt.toIso8601String()}');
 
     // 2. Reject newer schema versions.
     if (envelope.schemaVersion > _db.schemaVersion) {
@@ -136,42 +152,71 @@ class BackupService {
     }
 
     // 3. Decrypt.
+    _logger.d('backup: decrypting (PBKDF2 ${envelope.iterations} iterations)');
+    final decryptSw = Stopwatch()..start();
     final plaintext = await _codec.decrypt(
       passphrase: passphrase,
       envelope: envelope,
     );
+    decryptSw.stop();
+    _logger.d('backup: decrypted ${plaintext.length} bytes '
+        '(${decryptSw.elapsedMilliseconds}ms)');
 
     // 4. Parse and validate JSON structure.
+    _logger.d('backup: parsing and validating JSON');
     final json = jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
     final header = json['header'] as Map<String, Object?>?;
     if (header == null || header['magic'] != _backupMagic) {
+      _logger.e('backup: invalid magic — '
+          'got=${header?['magic']}, expected=$_backupMagic');
       throw const BackupValidationException('Invalid backup magic');
     }
 
+    final backupSchema = header['schemaVersion'] as int?;
+    final createdAt = header['createdAt'] as String?;
+    final headerTables = header['tables'] as Map<String, Object?>?;
+    _logger.d('backup: header — schema=$backupSchema, created=$createdAt, '
+        'tables=${headerTables?.keys.toList()}');
+
     final data = json['data'] as Map<String, Object?>?;
     if (data == null) {
+      _logger.e('backup: missing data section');
       throw const BackupValidationException('Missing data section');
     }
 
     for (final key in data.keys) {
       if (!kSyncableTables.contains(key)) {
+        _logger.e('backup: unknown table "$key"');
         throw BackupValidationException('Unknown table: $key');
       }
     }
 
+    final restoreTableCounts = <String, int>{};
+    for (final entry in data.entries) {
+      restoreTableCounts[entry.key] = (entry.value as List<Object?>).length;
+    }
+    final totalIncoming = restoreTableCounts.values.fold(0, (s, c) => s + c);
+    _logger.d('backup: validation passed — $totalIncoming rows across '
+        '${restoreTableCounts.length} tables');
+
     // 5. Pause sync to prevent concurrent mutations.
+    _logger.d('backup: pausing sync');
     pauseSync?.call();
 
     try {
       final tableCounts = <String, int>{};
 
       // 6. Restore in a single transaction.
+      _logger.d('backup: starting restore transaction '
+          '(wipe + insert + outbox enqueue)');
+      final txSw = Stopwatch()..start();
       await _db.transaction(() async {
         // Clear all existing data.
         for (final tableName in kSyncableTables) {
           await _db.customStatement('DELETE FROM $tableName');
         }
         await _db.customStatement('DELETE FROM op_outbox');
+        _logger.d('backup: cleared all syncable tables + op_outbox');
 
         // Insert restored rows and enqueue ops.
         for (final entry in data.entries) {
@@ -187,13 +232,20 @@ class BackupService {
           }
 
           tableCounts[tableName] = count;
+          _logger.d('backup: restored $tableName ($count rows)');
         }
       });
+      txSw.stop();
+      _logger.d('backup: transaction committed '
+          '(${txSw.elapsedMilliseconds}ms)');
 
       final result = RestoreResult(tableCounts: tableCounts);
-      _logger.i('backup: restore complete (${result.totalRows} rows)');
+      sw.stop();
+      _logger.i('backup: restore complete (${result.totalRows} rows, '
+          '${sw.elapsedMilliseconds}ms total)');
       return result;
     } finally {
+      _logger.d('backup: resuming sync');
       resumeSync?.call();
     }
   }
@@ -222,10 +274,16 @@ class BackupService {
     final columnList = columns.join(', ');
     final values = columns.map((c) => row[c]).toList();
 
-    await _db.customStatement(
-      'INSERT INTO $tableName ($columnList) VALUES ($placeholders)',
-      values,
-    );
+    try {
+      await _db.customStatement(
+        'INSERT INTO $tableName ($columnList) VALUES ($placeholders)',
+        values,
+      );
+    } catch (e) {
+      _logger.e('backup: insert failed for $tableName — '
+          'columns=$columns, error=$e');
+      rethrow;
+    }
   }
 
   /// Enqueue an insert op into the outbox for a restored row.

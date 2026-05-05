@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as dev;
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/backup/backup_codec.dart';
 import '../../../core/backup/backup_service.dart';
 import '../../../core/backup/providers.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../core/sync/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -60,44 +60,59 @@ class BackupPage extends ConsumerWidget {
 
   Future<void> _exportBackup(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
+    final logger = AppLogger.instance;
+
+    logger.d('backup_ui: export flow started');
     final passphrase = await _showPassphraseSheet(
       context: context,
       title: l10n.backupExportTitle,
       hint: l10n.backupPassphraseHint,
       confirmLabel: l10n.backupExportAction,
     );
-    if (passphrase == null || passphrase.isEmpty) return;
+    if (passphrase == null || passphrase.isEmpty) {
+      logger.d('backup_ui: export cancelled (no passphrase)');
+      return;
+    }
     if (!context.mounted) return;
 
     final dismiss = _showProgressSheet(context, l10n.backupExportProgress);
 
     try {
+      final sw = Stopwatch()..start();
       final service = await ref.read(backupServiceProvider.future);
+      logger.d('backup_ui: service resolved, calling exportBackup');
       final bytes = await service.exportBackup(passphrase: passphrase);
-      dev.log('Export complete: ${bytes.length} bytes');
+      sw.stop();
+      logger.d('backup_ui: encryption done (${bytes.length} bytes, '
+          '${sw.elapsedMilliseconds}ms)');
 
-      dismiss();
+      await dismiss();
       if (!context.mounted) return;
 
       // Small delay to let the progress sheet fully close before showing
       // the system save dialog (needed on macOS).
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
 
       final date = DateTime.now().toIso8601String().substring(0, 10);
       final fileName = 'naviwealth-backup-$date.bak';
-      dev.log('Opening save dialog for: $fileName');
+      logger.d('backup_ui: opening save dialog for $fileName');
       final saved = await saveBackupFile(bytes, fileName);
-      dev.log('saveBackupFile returned: $saved');
+      logger.d('backup_ui: saveBackupFile returned $saved');
 
-      if (!context.mounted || !saved) return;
+      if (!context.mounted || !saved) {
+        logger.d('backup_ui: export cancelled (save dialog dismissed)');
+        return;
+      }
+      logger.i('backup_ui: export saved successfully ($fileName)');
       AppMessenger.show(context, ToastKind.success, l10n.backupExportSuccess);
     } on BackupAuthenticationException {
-      dismiss();
+      await dismiss();
       if (!context.mounted) return;
+      logger.w('backup_ui: export failed — authentication error');
       AppMessenger.show(context, ToastKind.error, l10n.backupWrongPassphrase);
     } catch (e, st) {
-      dev.log('Export failed', error: e, stackTrace: st);
-      dismiss();
+      logger.e('backup_ui: export failed', error: e, stackTrace: st);
+      await dismiss();
       if (!context.mounted) return;
       AppMessenger.show(context, ToastKind.error, e.toString());
     }
@@ -105,9 +120,10 @@ class BackupPage extends ConsumerWidget {
 
   Future<void> _importBackup(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
+    final logger = AppLogger.instance;
 
     // Pick backup file.
-    dev.log('Import: opening file picker');
+    logger.d('backup_ui: import flow started, opening file picker');
     FilePickerResult? result;
     try {
       result = await FilePicker.platform.pickFiles(
@@ -116,7 +132,7 @@ class BackupPage extends ConsumerWidget {
         withData: true,
       );
     } catch (e, st) {
-      dev.log('Import: file picker threw', error: e, stackTrace: st);
+      logger.e('backup_ui: file picker threw', error: e, stackTrace: st);
       if (!context.mounted) return;
       AppMessenger.show(
         context,
@@ -126,24 +142,28 @@ class BackupPage extends ConsumerWidget {
       return;
     }
     if (result == null || result.files.isEmpty) {
-      dev.log('Import: user cancelled or no files');
+      logger.d('backup_ui: import cancelled (no file selected)');
       return;
     }
 
     final pickedFile = result.files.first;
-    dev.log('Import: picked file name=${pickedFile.name} '
-        'path=${pickedFile.path} size=${pickedFile.size} '
-        'bytes=${pickedFile.bytes?.length}');
+    logger.d('backup_ui: picked file name=${pickedFile.name} '
+        'size=${pickedFile.size} hasBytes=${pickedFile.bytes != null}');
     var fileBytes = pickedFile.bytes;
 
     // On desktop, withData may not load bytes — fall back to reading from path.
     if (fileBytes == null && pickedFile.path != null) {
+      logger.d('backup_ui: reading bytes from path=${pickedFile.path}');
       try {
         fileBytes = await File(pickedFile.path!).readAsBytes();
-      } catch (_) {}
+      } catch (e, st) {
+        logger.e('backup_ui: failed to read file from path',
+            error: e, stackTrace: st);
+      }
     }
 
     if (fileBytes == null) {
+      logger.w('backup_ui: no bytes available after file pick');
       if (!context.mounted) return;
       AppMessenger.show(
         context,
@@ -153,18 +173,24 @@ class BackupPage extends ConsumerWidget {
       return;
     }
 
+    logger.d('backup_ui: file loaded (${fileBytes.length} bytes)');
     if (!context.mounted) return;
 
     // Show confirmation sheet with passphrase input.
     final passphrase = await _showRestoreConfirmSheet(context);
-    if (passphrase == null || passphrase.isEmpty) return;
+    if (passphrase == null || passphrase.isEmpty) {
+      logger.d('backup_ui: restore cancelled (no passphrase)');
+      return;
+    }
     if (!context.mounted) return;
 
     final dismiss = _showProgressSheet(context, l10n.backupImportProgress);
 
     try {
+      final sw = Stopwatch()..start();
       final service = await ref.read(backupServiceProvider.future);
       final scheduler = await ref.read(syncSchedulerProvider.future);
+      logger.d('backup_ui: service resolved, pausing sync and restoring');
 
       final restoreResult = await service.restoreBackup(
         passphrase: passphrase,
@@ -172,8 +198,11 @@ class BackupPage extends ConsumerWidget {
         pauseSync: scheduler.pause,
         resumeSync: scheduler.resume,
       );
+      sw.stop();
+      logger.i('backup_ui: restore complete '
+          '(${restoreResult.totalRows} rows, ${sw.elapsedMilliseconds}ms)');
 
-      dismiss();
+      await dismiss();
       if (!context.mounted) return;
 
       AppMessenger.show(
@@ -182,19 +211,25 @@ class BackupPage extends ConsumerWidget {
         l10n.backupImportSuccess(restoreResult.totalRows),
       );
     } on BackupAuthenticationException {
-      dismiss();
+      await dismiss();
       if (!context.mounted) return;
+      logger.w('backup_ui: restore failed — wrong passphrase or corrupt file');
       AppMessenger.show(context, ToastKind.error, l10n.backupWrongPassphrase);
-    } on BackupSchemaTooNewException {
-      dismiss();
+    } on BackupSchemaTooNewException catch (e) {
+      await dismiss();
       if (!context.mounted) return;
+      logger.w('backup_ui: restore failed — schema too new '
+          '(backup=${e.backupVersion}, current=${e.currentVersion})');
       AppMessenger.show(context, ToastKind.error, l10n.backupSchemaTooNew);
     } on BackupValidationException catch (e) {
-      dismiss();
+      await dismiss();
       if (!context.mounted) return;
+      logger.w('backup_ui: restore failed — validation: ${e.message}');
       AppMessenger.show(context, ToastKind.error, e.message);
-    } catch (e) {
-      dismiss();
+    } catch (e, st) {
+      logger.e('backup_ui: restore failed unexpectedly',
+          error: e, stackTrace: st);
+      await dismiss();
       if (!context.mounted) return;
       AppMessenger.show(context, ToastKind.error, e.toString());
     }
@@ -227,25 +262,33 @@ class BackupPage extends ConsumerWidget {
     );
   }
 
-  /// Shows a non-dismissable progress sheet and returns a callback that
-  /// dismisses it from the sheet's own navigator context (avoids the
-  /// root-navigator `_debugLocked` assertion).
-  VoidCallback _showProgressSheet(BuildContext context, String message) {
+  /// Shows a non-dismissable progress indicator and returns a callback
+  /// that dismisses it. Uses [showGeneralDialog] instead of
+  /// [showModalBottomSheet] because GoRouter's navigator takes over the
+  /// root navigator — popping a sheet from there removes the underlying
+  /// page. [showGeneralDialog] creates its own Navigator scope, so
+  /// `Navigator.of(context).pop()` only dismisses the dialog.
+  Future<void> Function() _showProgressSheet(
+    BuildContext context,
+    String message,
+  ) {
     final completer = Completer<VoidCallback>();
-    showGlassModalBottomSheet<void>(
+    showGeneralDialog<void>(
       context: context,
-      isDismissible: false,
-      enableDrag: false,
-      builder: (_) => _ProgressSheet(
+      barrierDismissible: false,
+      barrierLabel: 'backup-progress',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (ctx, _, _) => _ProgressSheet(
         message: message,
         onReady: (dismiss) {
           if (!completer.isCompleted) completer.complete(dismiss);
         },
       ),
     );
-    // The dismiss callback will be available once the sheet's State mounts.
-    return () {
-      completer.future.then((dismiss) => dismiss());
+    return () async {
+      final dismiss = await completer.future;
+      dismiss();
     };
   }
 }
@@ -474,25 +517,28 @@ class _ProgressSheetState extends State<_ProgressSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s16,
-          0,
-          Spacing.s16,
-          Spacing.s24,
-        ),
-        child: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: Spacing.s16),
-            Expanded(
-              child: Text(
-                widget.message,
-                style: Theme.of(context).textTheme.bodyLarge,
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.s16,
+            0,
+            Spacing.s16,
+            Spacing.s24,
+          ),
+          child: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: Spacing.s16),
+              Expanded(
+                child: Text(
+                  widget.message,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
