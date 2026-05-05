@@ -544,11 +544,9 @@ class _RootShell extends ConsumerWidget {
   final Widget child;
 
   // Breakpoints mirror docs/design/01-responsive-layout.md. 1240 keeps a
-  // ≥720dp content column next to a ~256dp permanent drawer; 900 is where
-  // the rail has room to show its labels inline.
+  // ≥720dp content column next to a ~256dp permanent drawer.
   static const double _tabletBreakpoint = 600;
   static const double _desktopBreakpoint = 1240;
-  static const double _railExtendedBreakpoint = 900;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -604,7 +602,6 @@ class _RootShell extends ConsumerWidget {
             destinations: destinations,
             selectedIndex: index,
             onDestinationSelected: onSelected,
-            extended: width >= _railExtendedBreakpoint,
             child: child,
           );
         }
@@ -695,21 +692,28 @@ class _MobileShell extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: sysBottom,
-          child: lgw.GlassBottomBar(
-            barHeight: barHeight,
-            verticalPadding: 0,
-            quality: lgw.GlassQuality.premium,
-            selectedIndex: selectedIndex,
-            onTabSelected: onDestinationSelected,
-            tabs: [
-              for (final d in destinations)
-                lgw.GlassBottomBarTab(
-                  label: d.label,
-                  icon: Icon(d.icon),
-                  activeIcon: Icon(d.selectedIcon),
-                  glowColor: glowColors.primary,
+          child: DefaultTextStyle(
+            style: DefaultTextStyle.of(context).style.copyWith(
+                  decoration: TextDecoration.none,
                 ),
-            ],
+            child: lgw.GlassBottomBar(
+              barHeight: barHeight,
+              verticalPadding: 0,
+              labelFontSize: 10,
+              iconLabelSpacing: 0,
+              quality: lgw.GlassQuality.premium,
+              selectedIndex: selectedIndex,
+              onTabSelected: onDestinationSelected,
+              tabs: [
+                for (final d in destinations)
+                  lgw.GlassBottomBarTab(
+                    label: d.label,
+                    icon: Icon(d.icon),
+                    activeIcon: Icon(d.selectedIcon),
+                    glowColor: glowColors.primary,
+                  ),
+              ],
+            ),
           ),
         ),
       ],
@@ -722,14 +726,12 @@ class _TabletShell extends StatelessWidget {
     required this.destinations,
     required this.selectedIndex,
     required this.onDestinationSelected,
-    required this.extended,
     required this.child,
   });
 
   final List<_NavDestination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
-  final bool extended;
   final Widget child;
 
   @override
@@ -738,23 +740,22 @@ class _TabletShell extends StatelessWidget {
       body: SafeArea(
         child: Row(
           children: [
-            NavigationRail(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-              extended: extended,
-              labelType: extended
-                  ? NavigationRailLabelType.none
-                  : NavigationRailLabelType.all,
-              destinations: [
-                for (final d in destinations)
-                  NavigationRailDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon),
-                    label: Text(d.label),
+            lgw.GlassSideBar(
+              width: 128,
+              children: [
+                for (var i = 0; i < destinations.length; i++)
+                  lgw.GlassSideBarItem(
+                    icon: Icon(
+                      i == selectedIndex
+                          ? destinations[i].selectedIcon
+                          : destinations[i].icon,
+                    ),
+                    label: destinations[i].label,
+                    isSelected: i == selectedIndex,
+                    onTap: () => onDestinationSelected(i),
                   ),
               ],
             ),
-            const VerticalDivider(width: 1, thickness: 1),
             Expanded(child: child),
           ],
         ),
