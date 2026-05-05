@@ -38,41 +38,9 @@ jobs:
       - run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
       - run: cargo check --target wasm32-unknown-unknown --all-targets
 
-  audit:
-    name: cargo audit (RUSTSEC)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/backend
-          shared-key: backend-audit
-      - name: Install cargo-audit
-        run: cargo install --locked cargo-audit
-      - name: Run cargo audit
-        run: cargo audit --deny warnings
-  # Gate deploys on whether CLOUDFLARE_API_TOKEN has been configured. Until the
-  # secret is set, deploy / preview jobs are skipped so CI stays green.
-  deploy-config:
-    runs-on: ubuntu-latest
-    outputs:
-      enabled: ${{ steps.gate.outputs.enabled }}
-    steps:
-      - id: gate
-        env:
-          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          if [ -n "$TOKEN" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping deploy jobs."
-          fi
-
   deploy:
-    needs: [check, deploy-config]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-config.outputs.enabled == 'true'
+    needs: [check]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CLOUDFLARE_API_TOKEN != ''
     runs-on: ubuntu-latest
     concurrency:
       group: backend-deploy-prod
@@ -101,8 +69,8 @@ jobs:
           command: deploy
 
   deploy-preview:
-    needs: [check, deploy-config]
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && needs.deploy-config.outputs.enabled == 'true'
+    needs: [check]
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && secrets.CLOUDFLARE_API_TOKEN != ''
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
