@@ -1175,6 +1175,10 @@
   "cashFormNicknameHelper": "e.g. CMB HKD demand, Yu’e Bao",
   "cashFormSaving": "Saving…",
   "cashFormSave": "Save",
+  "cashFormDuplicateTitle": "Cash already exists",
+  "cashFormDuplicateMessage": "This account already has a cash balance recorded. Would you like to edit the existing one instead?",
+  "cashFormDuplicateCancel": "Cancel",
+  "cashFormDuplicateEdit": "Edit existing",
 
   "manualAssetDeleteTitle": "Delete asset",
   "manualAssetDeleteContent": "Delete this asset record?",

@@ -89,6 +89,35 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       final balance = Decimal.parse(_balanceController.text.trim());
       if (_initial == null) {
+        // Check for existing cash on the same account — each account can
+        // have at most one cash asset (double-entry invariant).
+        final existing =
+            await repo.findCashByAccountId(_accountId!);
+        if (existing != null && mounted) {
+          final l10n = AppLocalizations.of(context);
+          final goEdit = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.cashFormDuplicateTitle),
+              content: Text(l10n.cashFormDuplicateMessage),
+              actions: [
+                AppButton.tertiary(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  label: l10n.cashFormDuplicateCancel,
+                ),
+                AppButton.secondary(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  label: l10n.cashFormDuplicateEdit,
+                ),
+              ],
+            ),
+          );
+          if (goEdit == true && mounted) {
+            context.go('/portfolio/${existing.id}');
+          }
+          setState(() => _busy = false);
+          return;
+        }
         await repo.createCash(
           accountId: _accountId!,
           currency: _currency!,
@@ -216,12 +245,20 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
           AccountPicker(
             accounts: eligible,
             value: _accountId,
-            onChanged: (v) => setState(() => _accountId = v),
+            onChanged: (v) => setState(() {
+              _accountId = v;
+              // Lock currency to the account's currency — double-entry
+              // bookkeeping requires each account to hold a single currency.
+              final account = eligible.where((a) => a.id == v).firstOrNull;
+              if (account != null) _currency = account.currency;
+            }),
           ),
           const SizedBox(height: Spacing.s12),
           CurrencyPicker(
             value: _currency,
-            onChanged: (v) => setState(() => _currency = v),
+            // Disabled — currency is derived from the selected account.
+            onChanged: (_) {},
+            enabled: false,
           ),
           const SizedBox(height: Spacing.s12),
           AmountField(

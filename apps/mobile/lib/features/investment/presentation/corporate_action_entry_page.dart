@@ -273,14 +273,11 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
             // Asset picker.
-            DropdownButtonFormField<CorporateActionAsset>(
+            AppDropdown<CorporateActionAsset>(
               key: const Key('corp-action-asset'),
-              initialValue: asset,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: l10n.corpActionSelectAsset,
-                helperText: l10n.corpActionSelectAssetHint,
-              ),
+              label: l10n.corpActionSelectAsset,
+              value: asset,
+              helperText: l10n.corpActionSelectAssetHint,
               items: [
                 for (final a in widget.assets)
                   DropdownMenuItem(value: a, child: Text(a.displayName)),

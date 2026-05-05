@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/master_detail_layout.dart';
 import '../../app/selection_query.dart';
 import '../../core/shortcuts/master_detail_shortcuts.dart';
+import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
@@ -278,6 +279,7 @@ class _ManualAssetsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final valuationsAsync = ref.watch(dashboardManualAssetValuationsProvider);
     final valuationMap = <String, Decimal>{};
     for (final v
@@ -285,6 +287,10 @@ class _ManualAssetsSection extends ConsumerWidget {
       final value = v.currentValue();
       if (value != null && value.sign > 0) valuationMap[v.asset.id] = value;
     }
+
+    final accountsAsync = ref.watch(accountsStreamProvider);
+    final accounts = accountsAsync.value ?? const [];
+    final accountById = {for (final a in accounts) a.id: a};
 
     final grouped = <AssetType, List<Asset>>{};
     for (final a in assets) {
@@ -308,26 +314,141 @@ class _ManualAssetsSection extends ConsumerWidget {
             ),
             child: Text(
               manualAssetTypeLabel(l10n, type),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.titleMedium,
             ),
           ),
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                for (final asset in grouped[type]!)
-                  _AssetTile(
-                    asset: asset,
-                    selected: asset.id == selectedAssetId,
-                    heroEnabled: !inMasterDetail,
-                    value: valuationMap[asset.id],
-                  ),
-              ],
+          if (type == AssetType.cash)
+            _CashAccountGroups(
+              cashAssets: grouped[type]!,
+              valuationMap: valuationMap,
+              accountById: accountById,
+              selectedAssetId: selectedAssetId,
+              inMasterDetail: inMasterDetail,
+            )
+          else
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (final asset in grouped[type]!)
+                    _AssetTile(
+                      asset: asset,
+                      selected: asset.id == selectedAssetId,
+                      heroEnabled: !inMasterDetail,
+                      value: valuationMap[asset.id],
+                    ),
+                ],
+              ),
             ),
-          ),
           const SizedBox(height: Spacing.s12),
         ],
       ],
+    );
+  }
+}
+
+/// Groups cash assets by their parent account for a clearer portfolio view.
+///
+/// Each account gets a sub-header showing the account name and institution,
+/// with individual currency balances listed beneath. This aligns with the
+/// double-entry bookkeeping model where each account holds a single currency
+/// and cash assets map 1:1 to ledger accounts.
+class _CashAccountGroups extends StatelessWidget {
+  const _CashAccountGroups({
+    required this.cashAssets,
+    required this.valuationMap,
+    required this.accountById,
+    required this.selectedAssetId,
+    required this.inMasterDetail,
+  });
+
+  final List<Asset> cashAssets;
+  final Map<String, Decimal> valuationMap;
+  final Map<String, Account> accountById;
+  final String? selectedAssetId;
+  final bool inMasterDetail;
+
+  @override
+  Widget build(BuildContext context) {
+    // Group cash assets by accountId.
+    final byAccount = <String, List<Asset>>{};
+    final orphanAssets = <Asset>[];
+    for (final asset in cashAssets) {
+      final meta = ManualAssetMetadata.decode(asset.metadataJson);
+      final accountId = meta?.accountId;
+      if (accountId != null) {
+        byAccount.putIfAbsent(accountId, () => []).add(asset);
+      } else {
+        orphanAssets.add(asset);
+      }
+    }
+
+    // Sort account groups: those with known accounts first (by name),
+    // orphan assets last.
+    final sortedAccountIds = byAccount.keys.toList()
+      ..sort((a, b) {
+        final aa = accountById[a];
+        final bb = accountById[b];
+        if (aa == null && bb == null) return 0;
+        if (aa == null) return 1;
+        if (bb == null) return -1;
+        return aa.name.compareTo(bb.name);
+      });
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final accountId in sortedAccountIds) ...[
+            _AccountGroupHeader(accountId: accountId, account: accountById[accountId]),
+            for (final asset in byAccount[accountId]!)
+              _AssetTile(
+                asset: asset,
+                selected: asset.id == selectedAssetId,
+                heroEnabled: !inMasterDetail,
+                value: valuationMap[asset.id],
+              ),
+          ],
+          for (final asset in orphanAssets)
+            _AssetTile(
+              asset: asset,
+              selected: asset.id == selectedAssetId,
+              heroEnabled: !inMasterDetail,
+              value: valuationMap[asset.id],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sub-header for a group of cash assets under one account.
+class _AccountGroupHeader extends StatelessWidget {
+  const _AccountGroupHeader({required this.accountId, this.account});
+
+  final String accountId;
+  final Account? account;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = account?.institution;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s16,
+        vertical: Spacing.s8,
+      ),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      child: Text(
+        subtitle != null && subtitle.isNotEmpty
+            ? '${account!.name} · $subtitle'
+            : account?.name ?? accountId,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

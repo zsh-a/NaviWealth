@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// ISO-4217 codes the app surfaces in the picker by default.
@@ -69,6 +70,7 @@ class CurrencyPicker extends StatelessWidget {
     required this.onChanged,
     this.label,
     this.options = kCommonCurrencies,
+    this.enabled = true,
   });
 
   final String? value;
@@ -79,20 +81,16 @@ class CurrencyPicker extends StatelessWidget {
   final String? label;
   final List<String> options;
 
+  /// When `false`, the picker is rendered in a disabled (read-only) state.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return DropdownButtonFormField<String>(
-      // `value` is deprecated for `initialValue` after Flutter 3.33, but the
-      // replacement is one-shot: it only honours the prop on first build.
-      // Our pickers re-render with a fresh selection on every state change,
-      // so the deprecated form-state-managed prop is still the right tool.
-      // ignore: deprecated_member_use
+    return AppDropdown<String>(
+      label: label ?? l10n.formCurrencyPickerLabelDefault,
       value: value,
-      decoration: InputDecoration(
-        labelText: label ?? l10n.formCurrencyPickerLabelDefault,
-        border: const OutlineInputBorder(),
-      ),
+      enabled: enabled,
       items: [
         for (final code in options)
           DropdownMenuItem(
@@ -100,7 +98,7 @@ class CurrencyPicker extends StatelessWidget {
             child: Text(currencyDisplayLabel(l10n, code)),
           ),
       ],
-      onChanged: onChanged,
+      onChanged: enabled ? onChanged : null,
       validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formCurrencyPickerRequired : null,
     );

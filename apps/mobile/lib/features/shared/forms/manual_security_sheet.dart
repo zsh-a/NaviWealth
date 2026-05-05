@@ -311,14 +311,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 ),
               ),
               const SizedBox(height: Spacing.s12),
-              DropdownButtonFormField<AssetMarket>(
+              AppDropdown<AssetMarket>(
                 key: const Key('manual-security-market'),
-                // ignore: deprecated_member_use
+                label: '市场',
                 value: _market,
-                decoration: const InputDecoration(
-                  labelText: '市场',
-                  border: OutlineInputBorder(),
-                ),
                 items: [
                   for (final m in _supportedMarkets)
                     DropdownMenuItem(
@@ -340,14 +336,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 },
               ),
               const SizedBox(height: Spacing.s12),
-              DropdownButtonFormField<AssetType>(
+              AppDropdown<AssetType>(
                 key: const Key('manual-security-type'),
-                // ignore: deprecated_member_use
+                label: '类型',
                 value: _type,
-                decoration: const InputDecoration(
-                  labelText: '类型',
-                  border: OutlineInputBorder(),
-                ),
                 items: [
                   for (final t in _supportedTypes)
                     DropdownMenuItem(

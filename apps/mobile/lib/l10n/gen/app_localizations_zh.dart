@@ -2311,6 +2311,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFormSave => '保存';
 
   @override
+  String get cashFormDuplicateTitle => '现金已存在';
+
+  @override
+  String get cashFormDuplicateMessage => '该账户已有现金记录，是否编辑现有记录？';
+
+  @override
+  String get cashFormDuplicateCancel => '取消';
+
+  @override
+  String get cashFormDuplicateEdit => '编辑现有';
+
+  @override
   String get manualAssetDeleteTitle => '删除资产';
 
   @override

@@ -69,13 +69,18 @@ final _ledgerRevisionProvider = StreamProvider.autoDispose<int>((ref) async* {
   yield* query.watch().map((_) => revision++);
 });
 
+DateTime _floorToDay(DateTime d) {
+  final u = d.toUtc();
+  return DateTime.utc(u.year, u.month, u.day);
+}
+
 final holdingPriceSourceProvider = Provider<HoldingPriceSource>((ref) {
   final rows = ref.watch(_priceRowsStreamProvider).value ?? const <PriceRow>[];
   return InMemoryHoldingPriceSource([
     for (final row in rows)
       HoldingPriceObservation(
         assetId: row.unit,
-        asOf: row.observedOn,
+        asOf: _floorToDay(row.observedOn),
         price: row.perUnit,
         currency: row.quoteCurrency,
       ),

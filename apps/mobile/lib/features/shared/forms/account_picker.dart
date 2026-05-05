@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Drop-down picker over the user's existing accounts.
@@ -42,13 +43,10 @@ class AccountPicker extends StatelessWidget {
     // DropdownButtonFormField assertion errors.
     final effectiveValue =
         filtered.any((a) => a.id == value) ? value : null;
-    return DropdownButtonFormField<String>(
-      // ignore: deprecated_member_use
+    return AppDropdown<String>(
+      label: label ?? l10n.formAccountPickerLabelDefault,
       value: effectiveValue,
-      decoration: InputDecoration(
-        labelText: label ?? l10n.formAccountPickerLabelDefault,
-        border: const OutlineInputBorder(),
-      ),
+      enabled: filtered.isNotEmpty,
       items: [
         for (final a in filtered)
           DropdownMenuItem(

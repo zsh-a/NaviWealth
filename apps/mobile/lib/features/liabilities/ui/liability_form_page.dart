@@ -102,12 +102,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           padding: Spacing.pageMobile,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
-            DropdownButtonFormField<LiabilityType>(
-              initialValue: _type,
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldType,
-                border: const OutlineInputBorder(),
-              ),
+            AppDropdown<LiabilityType>(
+              label: l10n.liabilityFieldType,
+              value: _type,
               items: [
                 for (final t in LiabilityType.values)
                   DropdownMenuItem(
@@ -171,12 +168,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
               },
             ),
             const SizedBox(height: Spacing.s12),
-            DropdownButtonFormField<LiabilityRateType>(
-              initialValue: _rateType,
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldRateType,
-                border: const OutlineInputBorder(),
-              ),
+            AppDropdown<LiabilityRateType>(
+              label: l10n.liabilityFieldRateType,
+              value: _rateType,
               items: [
                 for (final r in LiabilityRateType.values)
                   DropdownMenuItem(
@@ -232,12 +226,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 onChanged: (v) => setState(() => _startDate = v),
               ),
               const SizedBox(height: Spacing.s12),
-              DropdownButtonFormField<RepaymentMethod>(
-                initialValue: _method,
-                decoration: InputDecoration(
-                  labelText: l10n.liabilityFieldMethod,
-                  border: const OutlineInputBorder(),
-                ),
+              AppDropdown<RepaymentMethod>(
+                label: l10n.liabilityFieldMethod,
+                value: _method,
                 items: [
                   for (final m in RepaymentMethod.values)
                     DropdownMenuItem(
