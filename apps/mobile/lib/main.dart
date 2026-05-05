@@ -8,6 +8,8 @@ import 'app/bootstrap.dart';
 Future<void> main() async {
   await runGuarded(() async {
     final container = await bootstrap();
+    GlassPerformanceMonitor.rasterBudget = const Duration(microseconds: 8333); // 120 fps
+    GlassPerformanceMonitor.sustainedFrameThreshold = 120; // 120 fps
     await LiquidGlassWidgets.initialize();
     runApp(
       UncontrolledProviderScope(

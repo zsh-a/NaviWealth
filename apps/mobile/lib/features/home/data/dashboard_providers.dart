@@ -245,10 +245,6 @@ final dashboardSnapshotProvider = Provider<AsyncValue<DashboardSnapshot>>((
   final manualList = manualValuations.value ?? const <ManualAssetValuation>[];
   final physicalList = physical.value ?? const <PhysicalAsset>[];
   final liabList = liab.value ?? const <Liability>[];
-  // Holdings degrade to empty (rather than blocking the dashboard) while
-  // the holding pipeline is still hydrating or has errored — the totals
-  // then reflect manual + physical + liabilities, exactly as they did
-  // before the securities path was wired in.
   final securities = _buildSecurityHoldings(
     holdingsByAsset: holdings.value ?? const {},
     assets: assets.value ?? const [],

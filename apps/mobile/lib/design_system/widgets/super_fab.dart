@@ -134,7 +134,8 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
   }
 
   Widget _buildFabButton() {
-    return AnimatedBuilder(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
       animation: _pulseController,
       builder: (context, child) {
         final pulse = _isOpen ? 1.0 : 1.0 + 0.04 * _pulseController.value;
@@ -166,6 +167,7 @@ class _SuperFabState extends State<SuperFab> with TickerProviderStateMixin {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -190,7 +192,7 @@ class _SpeedDialOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomSafe = MediaQuery.of(context).padding.bottom;
+    final bottomSafe = MediaQuery.paddingOf(context).bottom;
 
     // Position above the floating nav bar's top edge.
     const barInset = FloatingPillNavigationBar.overlayBottomInset;

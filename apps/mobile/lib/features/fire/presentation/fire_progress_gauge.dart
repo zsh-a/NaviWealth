@@ -44,13 +44,15 @@ class FireProgressGauge extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CustomPaint(
-            size: Size(diameter, diameter),
-            painter: _GaugePainter(
-              progress: clamped,
-              strokeWidth: strokeWidth,
-              trackColor: theme.colorScheme.surfaceContainerHigh,
-              progressColor: theme.colorScheme.primary,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size(diameter, diameter),
+              painter: _GaugePainter(
+                progress: clamped,
+                strokeWidth: strokeWidth,
+                trackColor: theme.colorScheme.surfaceContainerHigh,
+                progressColor: theme.colorScheme.primary,
+              ),
             ),
           ),
           Padding(
@@ -105,11 +107,20 @@ class _GaugePainter extends CustomPainter {
   final Color trackColor;
   final Color progressColor;
 
-  // Sweep covers the bottom 270° — looks more like a "fuel gauge" than a
-  // full ring and leaves room for the percent / caption block centred at
-  // the bottom of the arc.
   static const double _startAngle = 0.75 * math.pi;
   static const double _sweepAngle = 1.5 * math.pi;
+
+  // Cached Paint objects — reused across frames.
+  late final _trackPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = strokeWidth
+    ..color = trackColor;
+  late final _fillPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = strokeWidth
+    ..color = progressColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -120,21 +131,9 @@ class _GaugePainter extends CustomPainter {
       size.height - strokeWidth,
     );
 
-    final track = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = strokeWidth
-      ..color = trackColor;
-
-    final fill = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = strokeWidth
-      ..color = progressColor;
-
-    canvas.drawArc(rect, _startAngle, _sweepAngle, false, track);
+    canvas.drawArc(rect, _startAngle, _sweepAngle, false, _trackPaint);
     if (progress > 0) {
-      canvas.drawArc(rect, _startAngle, _sweepAngle * progress, false, fill);
+      canvas.drawArc(rect, _startAngle, _sweepAngle * progress, false, _fillPaint);
     }
   }
 

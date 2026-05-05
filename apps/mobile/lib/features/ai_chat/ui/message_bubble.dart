@@ -117,7 +117,8 @@ class _AssistantBubble extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
-              child: Container(
+              child: RepaintBoundary(
+                child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: Spacing.s12,
                   vertical: Spacing.s8,
@@ -158,6 +159,7 @@ class _AssistantBubble extends StatelessWidget {
                     ],
                   ],
                 ),
+              ),
               ),
             ),
           ),
