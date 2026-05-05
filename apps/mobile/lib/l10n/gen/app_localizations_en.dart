@@ -739,6 +739,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get marketColorColorblind => 'Color-blind safe (blue / orange)';
 
   @override
+  String get settingsLanguageTitle => 'Language';
+
+  @override
+  String get langSystem => 'System default';
+
+  @override
+  String get langEnglish => 'English';
+
+  @override
+  String get langChinese => '中文';
+
+  @override
   String get commonRetry => 'Retry';
 
   @override

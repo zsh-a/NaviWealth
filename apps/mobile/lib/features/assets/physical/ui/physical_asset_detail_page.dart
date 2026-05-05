@@ -57,21 +57,35 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     String assetId,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showGlassModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.physicalAssetDeleteConfirmTitle),
-        content: Text(l10n.physicalAssetDeleteConfirmBody),
-        actions: [
-          AppButton.tertiary(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            label: l10n.commonCancel,
-          ),
-          AppButton.secondary(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            label: l10n.physicalAssetDeleteAction,
-          ),
-        ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.physicalAssetDeleteConfirmTitle, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: Spacing.s8),
+            Text(l10n.physicalAssetDeleteConfirmBody),
+            const SizedBox(height: Spacing.s16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.tertiary(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  label: l10n.commonCancel,
+                ),
+                const SizedBox(width: Spacing.s8),
+                AppButton.secondary(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  label: l10n.physicalAssetDeleteAction,
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+          ],
+        ),
       ),
     );
     if (confirmed != true) return;
@@ -101,96 +115,92 @@ class _DetailBody extends ConsumerWidget {
     return ListView(
       padding: Spacing.pageMobile,
       children: [
-        Card(
-          child: Padding(
-            padding: Spacing.cardHero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        LiquidGlassCard(
+          padding: Spacing.cardHero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.physicalAssetDetailValuationTitle,
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: Spacing.s8),
+              AnimatedMoneyText(
+                amount: asset.currentValuation.toDouble(),
+                currencyCode: asset.currency,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (asset.lastValuationAt != null) ...[
+                const SizedBox(height: Spacing.s4),
                 Text(
-                  l10n.physicalAssetDetailValuationTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: Spacing.s8),
-                AnimatedMoneyText(
-                  amount: asset.currentValuation.toDouble(),
-                  currencyCode: asset.currency,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
+                  dateFormat.format(asset.lastValuationAt!),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ),
-                if (asset.lastValuationAt != null) ...[
-                  const SizedBox(height: Spacing.s4),
-                  Text(
-                    dateFormat.format(asset.lastValuationAt!),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-                if (estimatedToday != null) ...[
-                  const SizedBox(height: Spacing.s8),
-                  Text(
-                    l10n.physicalAssetDetailEstimatedToday(estimatedToday),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.tertiary,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: Spacing.s16),
-                AppButton.primary(
-                  onPressed: () =>
-                      ValuationUpdateSheet.show(context, asset: asset),
-                  icon: Icons.edit_outlined,
-                  label: l10n.physicalAssetUpdateValuationAction,
                 ),
               ],
-            ),
+              if (estimatedToday != null) ...[
+                const SizedBox(height: Spacing.s8),
+                Text(
+                  l10n.physicalAssetDetailEstimatedToday(estimatedToday),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.tertiary,
+                  ),
+                ),
+              ],
+              const SizedBox(height: Spacing.s16),
+              AppButton.primary(
+                onPressed: () =>
+                    ValuationUpdateSheet.show(context, asset: asset),
+                icon: Icons.edit_outlined,
+                label: l10n.physicalAssetUpdateValuationAction,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: Spacing.s12),
         _FactsCard(asset: asset, dateFormat: dateFormat),
         const SizedBox(height: Spacing.s12),
-        Card(
-          child: Padding(
-            padding: Spacing.card,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.physicalAssetDetailHistoryTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: Spacing.s12),
-                historyAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, st) => Text('$e'),
-                  data: (history) {
-                    final projection = _projectionFor(asset, history);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ValuationTrendChart(
-                          points: history,
-                          projection: projection,
+        LiquidGlassCard(
+          padding: Spacing.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.physicalAssetDetailHistoryTitle,
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: Spacing.s12),
+              historyAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, st) => Text('$e'),
+                data: (history) {
+                  final projection = _projectionFor(asset, history);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ValuationTrendChart(
+                        points: history,
+                        projection: projection,
+                        currency: asset.currency,
+                      ),
+                      const SizedBox(height: Spacing.s8),
+                      ...history.reversed.map(
+                        (p) => _HistoryRow(
+                          point: p,
                           currency: asset.currency,
+                          dateFormat: dateFormat,
                         ),
-                        const SizedBox(height: Spacing.s8),
-                        ...history.reversed.map(
-                          (p) => _HistoryRow(
-                            point: p,
-                            currency: asset.currency,
-                            dateFormat: dateFormat,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ],
@@ -272,42 +282,40 @@ class _FactsCard extends StatelessWidget {
           asset.linkedLiabilityId!.isNotEmpty)
         (l10n.physicalAssetFieldLinkedLiability, asset.linkedLiabilityId!),
     ];
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final (label, value) in entries) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: Spacing.s4,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        value,
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.end,
-                      ),
-                    ),
-                  ],
-                ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (label, value) in entries) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: Spacing.s4,
               ),
-            ],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      value,
+                      style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

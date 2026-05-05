@@ -245,8 +245,7 @@ class _AccountsByType extends StatelessWidget {
                 style: theme.textTheme.titleMedium,
               ),
             ),
-            Card(
-              clipBehavior: Clip.antiAlias,
+            LiquidGlassCard(
               child: Column(
                 children: [
                   for (final a in group)

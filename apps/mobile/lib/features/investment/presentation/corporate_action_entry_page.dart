@@ -327,15 +327,12 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             ),
             if (_previewError != null) ...[
               const SizedBox(height: 16),
-              Card(
-                color: theme.colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    _previewError!,
-                    style: TextStyle(
-                      color: theme.colorScheme.onErrorContainer,
-                    ),
+              LiquidGlassCard(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  _previewError!,
+                  style: TextStyle(
+                    color: theme.colorScheme.onErrorContainer,
                   ),
                 ),
               ),
@@ -554,64 +551,62 @@ class _PreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dividend = preview.cashDividend;
-    return Card(
+    return LiquidGlassCard(
       key: const Key('corp-action-preview-card'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.corpActionPreviewHeading,
-              style: theme.textTheme.titleMedium,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.corpActionPreviewHeading,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          if (dividend != null) ...[
+            _kv(l10n.corpActionPreviewSharesOnRecord, '${dividend.shareCount}'),
+            _kv(
+              l10n.corpActionPreviewGross,
+              '${dividend.grossAmount} ${dividend.currency}',
             ),
-            const SizedBox(height: 12),
-            if (dividend != null) ...[
-              _kv(l10n.corpActionPreviewSharesOnRecord, '${dividend.shareCount}'),
-              _kv(
-                l10n.corpActionPreviewGross,
-                '${dividend.grossAmount} ${dividend.currency}',
-              ),
-              _kv(
-                l10n.corpActionPreviewTax,
-                '${dividend.withholdingTax} ${dividend.currency}',
-              ),
-              _kv(
-                l10n.corpActionPreviewNet,
-                '${dividend.netAmount} ${dividend.currency}',
-              ),
-            ] else if (preview.action is CashDividendAction)
-              Text(l10n.corpActionNoEligibleHolding),
-            if (preview.cashFlow != Decimal.zero)
-              _kv(
-                l10n.corpActionPreviewCashFlow,
-                '${preview.cashFlow} ${preview.cashFlowCurrency}',
-              ),
-            for (final delta in preview.lotDeltas)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  l10n.corpActionPreviewLotChange(
-                    delta.before.id,
-                    '${delta.before.remainingQuantity}',
-                    '${delta.after.remainingQuantity}',
-                    '${delta.before.costPerUnit}',
-                    '${delta.after.costPerUnit}',
-                  ),
+            _kv(
+              l10n.corpActionPreviewTax,
+              '${dividend.withholdingTax} ${dividend.currency}',
+            ),
+            _kv(
+              l10n.corpActionPreviewNet,
+              '${dividend.netAmount} ${dividend.currency}',
+            ),
+          ] else if (preview.action is CashDividendAction)
+            Text(l10n.corpActionNoEligibleHolding),
+          if (preview.cashFlow != Decimal.zero)
+            _kv(
+              l10n.corpActionPreviewCashFlow,
+              '${preview.cashFlow} ${preview.cashFlowCurrency}',
+            ),
+          for (final delta in preview.lotDeltas)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                l10n.corpActionPreviewLotChange(
+                  delta.before.id,
+                  '${delta.before.remainingQuantity}',
+                  '${delta.after.remainingQuantity}',
+                  '${delta.before.costPerUnit}',
+                  '${delta.after.costPerUnit}',
                 ),
               ),
-            for (final newLot in preview.newLots)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  l10n.corpActionPreviewNewLot(
-                    '${newLot.originalQuantity}',
-                    '${newLot.costPerUnit}',
-                  ),
+            ),
+          for (final newLot in preview.newLots)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                l10n.corpActionPreviewNewLot(
+                  '${newLot.originalQuantity}',
+                  '${newLot.costPerUnit}',
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

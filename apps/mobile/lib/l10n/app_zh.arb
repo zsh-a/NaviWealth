@@ -229,6 +229,10 @@
   "marketColorRedUpGreenDown": "红涨绿跌 (中国)",
   "marketColorGreenUpRedDown": "绿涨红跌 (国际)",
   "marketColorColorblind": "色盲友好 (蓝/橙)",
+  "settingsLanguageTitle": "语言",
+  "langSystem": "跟随系统",
+  "langEnglish": "英文",
+  "langChinese": "中文",
 
   "commonRetry": "重试",
   "commonCancel": "取消",

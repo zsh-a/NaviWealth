@@ -321,6 +321,10 @@
   "marketColorRedUpGreenDown": "Red up / green down (CN)",
   "marketColorGreenUpRedDown": "Green up / red down (Intl)",
   "marketColorColorblind": "Color-blind safe (blue / orange)",
+  "settingsLanguageTitle": "Language",
+  "langSystem": "System default",
+  "langEnglish": "English",
+  "langChinese": "中文",
 
   "commonRetry": "Retry",
   "commonCancel": "Cancel",

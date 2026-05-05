@@ -103,21 +103,35 @@ class SessionsPanel extends ConsumerWidget {
     ChatSession session,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
+    final ok = await showGlassModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.aiChatSessionDeleteTitle),
-        content: Text(l10n.aiChatSessionDeleteBody(session.title)),
-        actions: [
-          AppButton.tertiary(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            label: l10n.commonCancel,
-          ),
-          AppButton.secondary(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            label: l10n.commonDelete,
-          ),
-        ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.aiChatSessionDeleteTitle, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: Spacing.s8),
+            Text(l10n.aiChatSessionDeleteBody(session.title)),
+            const SizedBox(height: Spacing.s16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.tertiary(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  label: l10n.commonCancel,
+                ),
+                const SizedBox(width: Spacing.s8),
+                AppButton.secondary(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  label: l10n.commonDelete,
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+          ],
+        ),
       ),
     );
     if (ok != true) return;

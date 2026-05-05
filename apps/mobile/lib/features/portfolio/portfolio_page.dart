@@ -20,13 +20,11 @@ class PortfolioPage extends ConsumerWidget {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.navPortfolio),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: l10n.assetsAddAction,
-            onPressed: () => _showAddSheet(context),
-          ),
-        ],
+      ),
+      floatingActionButton: AppFab(
+        tooltip: l10n.assetsAddAction,
+        onPressed: () => _showAddSheet(context),
+        child: const Icon(Icons.add),
       ),
       body: const AssetsPage(),
     );

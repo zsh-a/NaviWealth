@@ -331,8 +331,7 @@ class _ManualAssetsSection extends ConsumerWidget {
               inMasterDetail: inMasterDetail,
             )
           else
-            Card(
-              clipBehavior: Clip.antiAlias,
+            LiquidGlassCard(
               child: Column(
                 children: [
                   for (final asset in grouped[type]!)
@@ -400,8 +399,7 @@ class _CashAccountGroups extends StatelessWidget {
         return aa.name.compareTo(bb.name);
       });
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return LiquidGlassCard(
       child: Column(
         children: [
           for (final accountId in sortedAccountIds) ...[
@@ -533,8 +531,7 @@ class _SecuritiesAssetsSection extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          Card(
-            clipBehavior: Clip.antiAlias,
+          LiquidGlassCard(
             child: Column(
               children: [
                 for (final asset in grouped[type]!)
@@ -580,9 +577,11 @@ class _SecurityTile extends StatelessWidget {
         : l10n.securitiesHoldingFlat;
 
     return MergeSemantics(
-      child: InkWell(
-        onTap: () => _onTap(context),
-        child: Container(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => _onTap(context),
+          child: Container(
           color: selected
               ? theme.colorScheme.primary.withValues(alpha: 0.10)
               : null,
@@ -638,6 +637,7 @@ class _SecurityTile extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       ),
     );
@@ -707,9 +707,11 @@ class _AssetTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final chips = _chipsFor(asset, l10n);
     return MergeSemantics(
-      child: InkWell(
-        onTap: () => _onTap(context),
-        child: Container(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => _onTap(context),
+          child: Container(
           color: selected
               ? theme.colorScheme.primary.withValues(alpha: 0.10)
               : null,
@@ -757,6 +759,7 @@ class _AssetTile extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

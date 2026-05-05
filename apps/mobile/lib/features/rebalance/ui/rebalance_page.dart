@@ -135,31 +135,29 @@ class _SchemeSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.rebalanceSchemeTitle, style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s8),
-            Wrap(
-              spacing: Spacing.s8,
-              children: [
-                for (final preset in AllocationSchemePreset.values)
-                  AppChoiceChip(
-                    label: Text(_schemeLabel(l10n, preset)),
-                    selected: current == preset,
-                    onSelected: (selected) {
-                      if (selected) {
-                        ref.read(selectedSchemeProvider.notifier).select(preset);
-                      }
-                    },
-                  ),
-              ],
-            ),
-          ],
-        ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.rebalanceSchemeTitle, style: theme.textTheme.titleSmall),
+          const SizedBox(height: Spacing.s8),
+          Wrap(
+            spacing: Spacing.s8,
+            children: [
+              for (final preset in AllocationSchemePreset.values)
+                AppChoiceChip(
+                  label: Text(_schemeLabel(l10n, preset)),
+                  selected: current == preset,
+                  onSelected: (selected) {
+                    if (selected) {
+                      ref.read(selectedSchemeProvider.notifier).select(preset);
+                    }
+                  },
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -188,60 +186,58 @@ class _DriftOverview extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.rebalanceDriftTitle,
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+              if (plan.isBalanced)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s8,
+                    vertical: Spacing.s2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(Radii.sm),
+                  ),
                   child: Text(
-                    l10n.rebalanceDriftTitle,
-                    style: theme.textTheme.titleSmall,
+                    l10n.rebalanceBalanced,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                if (plan.isBalanced)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.s8,
-                      vertical: Spacing.s2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(Radii.sm),
-                    ),
-                    child: Text(
-                      l10n.rebalanceBalanced,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
+            ],
+          ),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            l10n.rebalanceOverallDrift(
+              '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
             ),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              l10n.rebalanceOverallDrift(
-                '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
-              ),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: Spacing.s8),
-            for (final drift in plan.drifts)
-              DeviationBar(
-                label: AssetCategoryVisuals.label(l10n, drift.category),
-                actualWeight: drift.actualWeight,
-                targetWeight: drift.targetWeight,
-                deviation: drift.deviation,
-                severity: drift.severity,
-              ),
-          ],
-        ),
+          ),
+          const SizedBox(height: Spacing.s8),
+          for (final drift in plan.drifts)
+            DeviationBar(
+              label: AssetCategoryVisuals.label(l10n, drift.category),
+              actualWeight: drift.actualWeight,
+              targetWeight: drift.targetWeight,
+              deviation: drift.deviation,
+              severity: drift.severity,
+            ),
+        ],
       ),
     );
   }
@@ -258,86 +254,82 @@ class _TradeList extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (plan.isBalanced) {
-      return Card(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-            children: [
-              Icon(Icons.check_circle_outline, size: 40, color: theme.colorScheme.primary),
-              const SizedBox(height: Spacing.s8),
-              Text(l10n.rebalanceBalanced, style: theme.textTheme.titleSmall),
-            ],
-          ),
+      return LiquidGlassCard(
+        padding: Spacing.card,
+        child: Column(
+          children: [
+            Icon(Icons.check_circle_outline, size: 40, color: theme.colorScheme.primary),
+            const SizedBox(height: Spacing.s8),
+            Text(l10n.rebalanceBalanced, style: theme.textTheme.titleSmall),
+          ],
         ),
       );
     }
 
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.rebalanceTradeTitle, style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s8),
-            for (final trade in plan.trades) _TradeRow(trade: trade),
-            const Divider(height: Spacing.s24),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.rebalanceEstimatedFees,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.rebalanceTradeTitle, style: theme.textTheme.titleSmall),
+          const SizedBox(height: Spacing.s8),
+          for (final trade in plan.trades) _TradeRow(trade: trade),
+          const Divider(height: Spacing.s24),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.rebalanceEstimatedFees,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                MoneyText(
-                  amount: plan.estimatedFees.amount.toDouble(),
-                  currencyCode: plan.estimatedFees.currency,
-                  compact: true,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.s4),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.rebalanceEstimatedTaxes,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+              ),
+              MoneyText(
+                amount: plan.estimatedFees.amount.toDouble(),
+                currencyCode: plan.estimatedFees.currency,
+                compact: true,
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.s4),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.rebalanceEstimatedTaxes,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                MoneyText(
-                  amount: plan.estimatedTaxes.amount.toDouble(),
-                  currencyCode: plan.estimatedTaxes.currency,
-                  compact: true,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.s4),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.rebalanceDriftAfter,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+              ),
+              MoneyText(
+                amount: plan.estimatedTaxes.amount.toDouble(),
+                currencyCode: plan.estimatedTaxes.currency,
+                compact: true,
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.s4),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.rebalanceDriftAfter,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                Text(
-                  '${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',
-                  style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              Text(
+                '${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',
+                style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

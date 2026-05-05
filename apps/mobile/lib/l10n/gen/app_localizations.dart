@@ -1424,6 +1424,30 @@ abstract class AppLocalizations {
   /// **'Color-blind safe (blue / orange)'**
   String get marketColorColorblind;
 
+  /// No description provided for @settingsLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguageTitle;
+
+  /// No description provided for @langSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get langSystem;
+
+  /// No description provided for @langEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get langEnglish;
+
+  /// No description provided for @langChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'中文'**
+  String get langChinese;
+
   /// No description provided for @commonRetry.
   ///
   /// In en, this message translates to:
