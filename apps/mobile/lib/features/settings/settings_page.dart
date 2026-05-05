@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -196,6 +197,21 @@ class SettingsPage extends ConsumerWidget {
               onTap: () => context.goNamed('backup'),
             ),
           ),
+          // ── Developer (debug only) ──
+          if (kDebugMode) ...[
+            GlassSectionHeader(title: l10n.settingsDeveloperSection),
+            LiquidGlassCard(
+              layer: GlassLayer.tertiary,
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                leading: const Icon(Icons.bug_report_outlined),
+                title: Text(l10n.settingsLogsTitle),
+                subtitle: Text(l10n.settingsLogsSubtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.goNamed('logs'),
+              ),
+            ),
+          ],
           // ── About ──
           const SizedBox(height: Spacing.s12),
           const LiquidGlassCard(

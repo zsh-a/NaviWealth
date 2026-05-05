@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
+import '../../core/logging/providers.dart';
 import '../../domain/services/market_data_service.dart';
 import '../db/providers.dart';
 import 'cache/cache_policy.dart';
@@ -43,6 +45,10 @@ final marketCacheProvider = FutureProvider<MarketCache>((ref) async {
 });
 
 final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  dio.interceptors.add(
+    TalkerDioLogger(talker: ref.read(talkerProvider)),
+  );
   final http = MarketHttpClient(
     providerName: 'yfinance',
     rateLimiter: RateLimiter(
@@ -50,7 +56,7 @@ final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))),
+    dio: dio,
     retryPolicy: const RetryPolicy(),
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
@@ -59,6 +65,10 @@ final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
 });
 
 final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  dio.interceptors.add(
+    TalkerDioLogger(talker: ref.read(talkerProvider)),
+  );
   final http = MarketHttpClient(
     providerName: 'coingecko',
     // CoinGecko Demo API free tier ≈ 30 calls / minute.
@@ -67,7 +77,7 @@ final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))),
+    dio: dio,
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
   );
@@ -75,6 +85,10 @@ final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
 });
 
 final sinaProviderProvider = Provider<MarketProvider>((ref) {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  dio.interceptors.add(
+    TalkerDioLogger(talker: ref.read(talkerProvider)),
+  );
   final http = MarketHttpClient(
     providerName: 'sina',
     // Sina hq has no published quota; rate-limit conservatively.
@@ -83,7 +97,7 @@ final sinaProviderProvider = Provider<MarketProvider>((ref) {
       window: const Duration(minutes: 1),
       clock: ref.watch(clockProvider),
     ),
-    dio: Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))),
+    dio: dio,
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
   );

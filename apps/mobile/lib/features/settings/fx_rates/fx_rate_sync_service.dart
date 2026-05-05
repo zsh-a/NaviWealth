@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/foundation.dart';
+
+import '../../../core/logging/app_logger.dart';
 
 import '../../../data/repositories/fx_rate_repository.dart';
 import '../../../domain/services/market_data_service.dart';
@@ -47,7 +48,7 @@ class FxRateSyncService {
         await _fetchAndPersist(base, foreign);
         synced++;
       } catch (e) {
-        debugPrint('FX sync: failed to fetch $base→$foreign: $e');
+        AppLogger.instance.w('FX sync: failed to fetch $base→$foreign: $e');
       }
     }
     return synced;
@@ -69,7 +70,7 @@ class FxRateSyncService {
         source: 'yfinance',
       );
     } catch (e) {
-      debugPrint('FX sync: $symbol failed ($e), trying inverse');
+      AppLogger.instance.d('FX sync: $symbol failed ($e), trying inverse');
       // Try inverse: quoteBase=X and invert the rate.
       final inverseSymbol = '$quote$base=X';
       final resp =

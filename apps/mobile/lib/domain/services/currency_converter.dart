@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/foundation.dart';
+
+import '../../core/logging/app_logger.dart';
 
 import '../entities/fx_rate.dart';
 import '../values/money.dart';
@@ -77,7 +78,7 @@ class InMemoryFxRateLookup implements FxRateLookup {
     }
     final result = direct ?? inverse?.inverse();
     if (result == null && _byPair.isNotEmpty) {
-      debugPrint(
+      AppLogger.instance.w(
         'FX lookup: no rate for $b→$q (on=$on). '
         'Available pairs: ${_byPair.keys.map((k) => '${k.base}→${k.quote}').join(', ')}',
       );

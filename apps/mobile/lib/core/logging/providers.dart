@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 import '../config/app_config.dart';
 import 'app_logger.dart';
@@ -22,4 +23,10 @@ final loggerProvider = Provider<AppLogger>((ref) {
   );
   AppLogger.bootstrap(logger);
   return logger;
+});
+
+/// Exposes the underlying [Talker] instance for downstream consumers
+/// (Dio interceptors, TalkerScreen, route observer).
+final talkerProvider = Provider<Talker>((ref) {
+  return ref.watch(loggerProvider).talker;
 });

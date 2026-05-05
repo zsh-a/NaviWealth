@@ -2491,6 +2491,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSubtitle => 'Export or import encrypted data backups';
 
   @override
+  String get settingsDeveloperSection => 'Developer';
+
+  @override
+  String get settingsLogsTitle => 'App Logs';
+
+  @override
+  String get settingsLogsSubtitle => 'View real-time diagnostic logs';
+
+  @override
   String get backupExportTitle => 'Export Backup';
 
   @override

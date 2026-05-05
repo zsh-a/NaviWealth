@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../data/db/providers.dart';
 import '../logging/providers.dart';
@@ -27,7 +28,7 @@ final tokenStoreProvider = Provider<TokenStore>(
 /// can't recurse into a refresh while building login headers.
 final authDioProvider = Provider<Dio>((ref) {
   final config = ref.watch(appConfigProvider);
-  return Dio(
+  final dio = Dio(
     BaseOptions(
       baseUrl: config.apiBaseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -35,6 +36,10 @@ final authDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
+  dio.interceptors.add(
+    TalkerDioLogger(talker: ref.read(talkerProvider)),
+  );
+  return dio;
 });
 
 final authApiClientProvider = Provider<AuthApiClient>(
