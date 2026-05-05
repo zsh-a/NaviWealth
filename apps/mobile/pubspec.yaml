@@ -13,6 +13,7 @@ dependencies:
   decimal: ^3.0.2
   dio: ^5.7.0
   drift: ^2.32.1
+  file_picker: ^8.0.0
   fl_chart: ^1.2.0
   flutter:
     sdk: flutter
@@ -32,6 +33,7 @@ dependencies:
   package_info_plus: ^8.1.2
   path: ^1.9.0
   path_provider: ^2.1.4
+  share_plus: ^10.0.0
   shared_preferences: ^2.3.2
   sqlite3: ^3.3.1
   uuid: ^4.5.1

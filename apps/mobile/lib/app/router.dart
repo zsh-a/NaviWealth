@@ -40,6 +40,7 @@ import '../features/liabilities/ui/liability_form_page.dart';
 import '../features/plan/plan_page.dart';
 import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
+import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../l10n/gen/app_localizations.dart';
@@ -337,6 +338,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: 'fx-rates',
                 name: 'fx-rates',
                 builder: (context, state) => const FxRatesPage(),
+              ),
+              GoRoute(
+                path: 'backup',
+                name: 'backup',
+                builder: (context, state) => const BackupPage(),
               ),
             ],
           ),

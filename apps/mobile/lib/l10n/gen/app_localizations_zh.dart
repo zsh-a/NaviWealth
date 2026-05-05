@@ -2392,4 +2392,78 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planRebalanceSubtitle => '投资组合偏离与再平衡';
+
+  @override
+  String get settingsDataSection => '数据';
+
+  @override
+  String get settingsDataTitle => '备份与恢复';
+
+  @override
+  String get settingsDataSubtitle => '导出或导入加密数据备份';
+
+  @override
+  String get backupExportTitle => '导出备份';
+
+  @override
+  String get backupExportSubtitle => '创建所有数据的加密备份';
+
+  @override
+  String get backupImportTitle => '导入备份';
+
+  @override
+  String get backupImportSubtitle => '从备份文件恢复数据';
+
+  @override
+  String get backupPassphraseLabel => '密码';
+
+  @override
+  String get backupPassphraseHint => '输入密码以加密备份';
+
+  @override
+  String get backupPassphraseRequired => '请输入密码';
+
+  @override
+  String get backupConfirmRestoreTitle => '恢复备份';
+
+  @override
+  String get backupConfirmRestoreMessage => '此操作将替换所有本地数据为备份内容，且无法撤销。是否继续？';
+
+  @override
+  String get backupConfirmRestoreAction => '恢复';
+
+  @override
+  String get backupExportAction => '导出';
+
+  @override
+  String get backupCancelAction => '取消';
+
+  @override
+  String get backupExportProgress => '正在加密备份…';
+
+  @override
+  String get backupImportProgress => '正在恢复备份…';
+
+  @override
+  String get backupExportSuccess => '备份导出成功';
+
+  @override
+  String backupImportSuccess(int count) {
+    return '备份恢复成功，共导入 $count 条记录。';
+  }
+
+  @override
+  String get backupWrongPassphrase => '密码错误或备份文件损坏';
+
+  @override
+  String get backupSchemaTooNew => '此备份由更新版本的 NaviWealth 创建，请先更新应用。';
+
+  @override
+  String get backupInvalidFile => '无效的备份文件';
+
+  @override
+  String get backupFilePickerError => '无法读取所选文件';
+
+  @override
+  String get backupRestorePassphraseHint => '输入备份密码';
 }
