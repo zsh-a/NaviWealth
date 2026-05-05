@@ -158,21 +158,35 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
 
   Future<void> _delete() async {
     if (_initial == null) return;
-    final ok = await showDialog<bool>(
+    final ok = await showGlassModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除存款'),
-        content: const Text('确认删除该存款记录？'),
-        actions: [
-          AppButton.tertiary(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            label: '取消',
-          ),
-          AppButton.secondary(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            label: '删除',
-          ),
-        ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('删除存款', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: Spacing.s8),
+            const Text('确认删除该存款记录？'),
+            const SizedBox(height: Spacing.s16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.tertiary(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  label: '取消',
+                ),
+                const SizedBox(width: Spacing.s8),
+                AppButton.secondary(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  label: '删除',
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+          ],
+        ),
       ),
     );
     if (ok != true) return;

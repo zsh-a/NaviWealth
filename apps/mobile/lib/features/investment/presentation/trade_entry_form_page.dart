@@ -182,25 +182,42 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       if (!mounted) return;
       final resulting = currentBalance - cashOut;
       if (resulting < Decimal.zero) {
-        final confirmed = await showDialog<bool>(
+        final confirmed = await showGlassModalBottomSheet<bool>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.tradeEntryCashOverdrawTitle),
-            content: Text(
-              l10n.tradeEntryCashOverdrawMessage(
-                '${resulting.toStringAsFixed(2)} $currency',
-              ),
+          builder: (ctx) => Padding(
+            padding: const EdgeInsets.all(Spacing.s16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.tradeEntryCashOverdrawTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: Spacing.s8),
+                Text(
+                  l10n.tradeEntryCashOverdrawMessage(
+                    '${resulting.toStringAsFixed(2)} $currency',
+                  ),
+                ),
+                const SizedBox(height: Spacing.s16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    AppButton.tertiary(
+                      label: l10n.commonCancel,
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                    ),
+                    const SizedBox(width: Spacing.s8),
+                    AppButton.primary(
+                      label: l10n.tradeEntryCashOverdrawProceed,
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                    ),
+                  ],
+                ),
+                SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(l10n.commonCancel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(l10n.tradeEntryCashOverdrawProceed),
-              ),
-            ],
           ),
         );
         if (confirmed != true) {

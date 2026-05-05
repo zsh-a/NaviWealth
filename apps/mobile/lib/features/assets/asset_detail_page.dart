@@ -227,26 +227,24 @@ class _AssetSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(asset.symbol, style: theme.textTheme.titleMedium),
-            if (asset.name != null) ...[
-              const SizedBox(height: Spacing.s4),
-              Text(asset.name!, style: theme.textTheme.bodyMedium),
-            ],
-            const SizedBox(height: Spacing.s8),
-            Text(
-              '${asset.market ?? "未知"} · ${asset.currency}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(asset.symbol, style: theme.textTheme.titleMedium),
+          if (asset.name != null) ...[
+            const SizedBox(height: Spacing.s4),
+            Text(asset.name!, style: theme.textTheme.bodyMedium),
           ],
-        ),
+          const SizedBox(height: Spacing.s8),
+          Text(
+            '${asset.market ?? "未知"} · ${asset.currency}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -287,51 +285,49 @@ class _HoldingCard extends ConsumerWidget {
                 .toDecimal(scaleOnInfinitePrecision: 8)
             : null;
         final marketValueAsset = snap?.marketValueInAssetCurrency;
-        return Card(
-          child: Padding(
-            padding: Spacing.card,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('持仓', style: theme.textTheme.titleSmall),
-                const SizedBox(height: Spacing.s12),
-                _MetricRow(
-                  label: '当前数量',
-                  value: hasPosition ? _formatQuantity(qty) : '—',
+        return LiquidGlassCard(
+          padding: Spacing.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('持仓', style: theme.textTheme.titleSmall),
+              const SizedBox(height: Spacing.s12),
+              _MetricRow(
+                label: '当前数量',
+                value: hasPosition ? _formatQuantity(qty) : '—',
+              ),
+              const SizedBox(height: Spacing.s8),
+              _MetricRow(
+                label: '平均成本',
+                trailing: AnimatedMoneyText(
+                  amount: avgCost?.toDouble(),
+                  currencyCode: asset.currency,
+                  fractionDigits: _priceFractionDigits(asset.type),
                 ),
-                const SizedBox(height: Spacing.s8),
-                _MetricRow(
-                  label: '平均成本',
-                  trailing: AnimatedMoneyText(
-                    amount: avgCost?.toDouble(),
+              ),
+              const SizedBox(height: Spacing.s8),
+              _MetricRow(
+                label: '当前市值',
+                trailing: OptionalHero(
+                  tag: 'asset-${asset.id}-value',
+                  child: AnimatedMoneyText(
+                    amount: marketValueAsset?.toDouble(),
                     currencyCode: asset.currency,
-                    fractionDigits: _priceFractionDigits(asset.type),
+                    style: theme.textTheme.titleMedium,
                   ),
                 ),
-                const SizedBox(height: Spacing.s8),
-                _MetricRow(
-                  label: '当前市值',
-                  trailing: OptionalHero(
-                    tag: 'asset-${asset.id}-value',
-                    child: AnimatedMoneyText(
-                      amount: marketValueAsset?.toDouble(),
-                      currencyCode: asset.currency,
-                      style: theme.textTheme.titleMedium,
+              ),
+              if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: Spacing.s8),
+                  child: Text(
+                    '价格暂不可用，市值显示为零',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
-                if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: Spacing.s8),
-                    child: Text(
-                      '价格暂不可用，市值显示为零',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
         );
       },
@@ -393,66 +389,64 @@ class _PnLCard extends ConsumerWidget {
         ? null
         : _dailyChangeFromHistory(historyAsync, snap.quantity);
 
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('盈亏', style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '未实现盈亏',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('盈亏', style: theme.textTheme.titleSmall),
+          const SizedBox(height: Spacing.s12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '未实现盈亏',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(height: Spacing.s4),
-                      DeltaText(
-                        value: unrealizedAsset?.toDouble(),
-                        currencyCode: asset.currency,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                DeltaChip(
-                  value: unrealizedPct == null ? null : unrealizedPct * 100,
-                  fractionDigits: 2,
-                ),
-              ],
-            ),
-            if (snap != null) ...[
-              const SizedBox(height: Spacing.s8),
-              Text(
-                '基础货币：${snap.baseCurrency} '
-                '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: Spacing.s4),
+                    DeltaText(
+                      value: unrealizedAsset?.toDouble(),
+                      currencyCode: asset.currency,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
                 ),
               ),
+              DeltaChip(
+                value: unrealizedPct == null ? null : unrealizedPct * 100,
+                fractionDigits: 2,
+              ),
             ],
-            const Divider(height: Spacing.s24),
-            _MetricRow(
-              label: '今日变动',
-              trailing: _DailyChangeView(
-                value: dailyChange,
-                currency: asset.currency,
-                isLoading: historyAsync?.isLoading ?? false,
-                isStale: historyAsync?.value?.isStale ?? false,
-                hasHistory: marketKey != null,
-                hasPosition: hasPosition,
+          ),
+          if (snap != null) ...[
+            const SizedBox(height: Spacing.s8),
+            Text(
+              '基础货币：${snap.baseCurrency} '
+              '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
-        ),
+          const Divider(height: Spacing.s24),
+          _MetricRow(
+            label: '今日变动',
+            trailing: _DailyChangeView(
+              value: dailyChange,
+              currency: asset.currency,
+              isLoading: historyAsync?.isLoading ?? false,
+              isStale: historyAsync?.value?.isStale ?? false,
+              hasHistory: marketKey != null,
+              hasPosition: hasPosition,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -524,22 +518,20 @@ class _TrendMiniChartCard extends ConsumerWidget {
     final marketKey = _historyKey(asset);
     final theme = Theme.of(context);
     if (marketKey == null) {
-      return Card(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('近 30 日走势', style: theme.textTheme.titleSmall),
-              const SizedBox(height: Spacing.s8),
-              Text(
-                '该资产暂未关联市场，无走势可显示',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+      return LiquidGlassCard(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('近 30 日走势', style: theme.textTheme.titleSmall),
+            const SizedBox(height: Spacing.s8),
+            Text(
+              '该资产暂未关联市场，无走势可显示',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -547,29 +539,27 @@ class _TrendMiniChartCard extends ConsumerWidget {
     final historyAsync = ref.watch(assetPriceHistoryProvider(marketKey));
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
 
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text('近 30 日走势', style: theme.textTheme.titleSmall),
-                ),
-                if (historyAsync.value?.isStale == true)
-                  _StaleBadge(),
-              ],
-            ),
-            const SizedBox(height: Spacing.s12),
-            _ChartBody(
-              history: historyAsync,
-              snapshot: snapshotAsync.value,
-              currency: asset.currency,
-            ),
-          ],
-        ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('近 30 日走势', style: theme.textTheme.titleSmall),
+              ),
+              if (historyAsync.value?.isStale == true)
+                _StaleBadge(),
+            ],
+          ),
+          const SizedBox(height: Spacing.s12),
+          _ChartBody(
+            history: historyAsync,
+            snapshot: snapshotAsync.value,
+            currency: asset.currency,
+          ),
+        ],
       ),
     );
   }
@@ -722,14 +712,12 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Text(
-          message,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.error,
-          ),
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Text(
+        message,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.error,
         ),
       ),
     );

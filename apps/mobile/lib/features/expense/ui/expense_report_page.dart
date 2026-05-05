@@ -161,66 +161,64 @@ class _SummaryCard extends StatelessWidget {
     final avgDecimal = (report.total.amount / divisor).toDecimal(
       scaleOnInfinitePrecision: 2,
     );
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('总支出', style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              formatter.currency(report.total.amount, code: report.baseCurrency),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontFeatures: TypographyTokens.tabularFigures,
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('总支出', style: theme.textTheme.titleSmall),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            formatter.currency(report.total.amount, code: report.baseCurrency),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontFeatures: TypographyTokens.tabularFigures,
+            ),
+          ),
+          const SizedBox(height: Spacing.s8),
+          Row(
+            children: [
+              Expanded(
+                child: _Metric(
+                  label: '月均',
+                  value: formatter.compactCurrency(
+                    avgDecimal,
+                    code: report.baseCurrency,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: Spacing.s8),
-            Row(
-              children: [
-                Expanded(
-                  child: _Metric(
-                    label: '月均',
-                    value: formatter.compactCurrency(
-                      avgDecimal,
-                      code: report.baseCurrency,
-                    ),
-                  ),
+              Expanded(
+                child: _Metric(
+                  label: '记账数',
+                  value: report.byCategory
+                      .fold<int>(0, (a, c) => a + c.items.length)
+                      .toString(),
                 ),
-                Expanded(
-                  child: _Metric(
-                    label: '记账数',
-                    value: report.byCategory
-                        .fold<int>(0, (a, c) => a + c.items.length)
-                        .toString(),
-                  ),
-                ),
-                Expanded(
-                  child: _Metric(
-                    label: '类目数',
-                    value: report.byCategory.length.toString(),
-                  ),
-                ),
-              ],
-            ),
-            if (report.skippedFxCount > 0) ...[
-              const SizedBox(height: Spacing.s8),
-              Text(
-                '${report.skippedFxCount} 笔支出因汇率缺失未计入合计。',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
+              ),
+              Expanded(
+                child: _Metric(
+                  label: '类目数',
+                  value: report.byCategory.length.toString(),
                 ),
               ),
             ],
-            const SizedBox(height: Spacing.s4),
+          ),
+          if (report.skippedFxCount > 0) ...[
+            const SizedBox(height: Spacing.s8),
             Text(
-              '基础货币 ${report.baseCurrency} · 月均按 $monthSpan 个月折算',
+              '${report.skippedFxCount} 笔支出因汇率缺失未计入合计。',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: theme.colorScheme.error,
               ),
             ),
           ],
-        ),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            '基础货币 ${report.baseCurrency} · 月均按 $monthSpan 个月折算',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -267,55 +265,53 @@ class _CategoryPieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('类目占比', style: theme.textTheme.titleMedium),
-            const SizedBox(height: Spacing.s12),
-            if (report.byCategory.isEmpty)
-              LayoutBuilder(
-                builder: (context, c) => AspectRatio(
-                  aspectRatio: chartAspectFor(c.maxWidth),
-                  child: const EmptyChartPlaceholder(icon: Icons.donut_large),
-                ),
-              )
-            else
-              LayoutBuilder(
-                builder: (context, c) {
-                  final isWide = c.maxWidth >= Breakpoints.mobile;
-                  final pie = _Pie(
-                    report: report,
-                    categoryById: categoryById,
-                  );
-                  final legend = _PieLegend(
-                    report: report,
-                    categoryById: categoryById,
-                  );
-                  if (isWide) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: pie),
-                        const SizedBox(width: Spacing.s24),
-                        Expanded(child: legend),
-                      ],
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('类目占比', style: theme.textTheme.titleMedium),
+          const SizedBox(height: Spacing.s12),
+          if (report.byCategory.isEmpty)
+            LayoutBuilder(
+              builder: (context, c) => AspectRatio(
+                aspectRatio: chartAspectFor(c.maxWidth),
+                child: const EmptyChartPlaceholder(icon: Icons.donut_large),
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, c) {
+                final isWide = c.maxWidth >= Breakpoints.mobile;
+                final pie = _Pie(
+                  report: report,
+                  categoryById: categoryById,
+                );
+                final legend = _PieLegend(
+                  report: report,
+                  categoryById: categoryById,
+                );
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      pie,
-                      const SizedBox(height: Spacing.s12),
-                      legend,
+                      Expanded(child: pie),
+                      const SizedBox(width: Spacing.s24),
+                      Expanded(child: legend),
                     ],
                   );
-                },
-              ),
-          ],
-        ),
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    pie,
+                    const SizedBox(height: Spacing.s12),
+                    legend,
+                  ],
+                );
+              },
+            ),
+        ],
       ),
     );
   }
@@ -494,39 +490,37 @@ class _TrendCard extends StatelessWidget {
           colorOverride: palette.accentAt(0),
         ),
     ];
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('月度趋势', style: theme.textTheme.titleMedium),
-            const SizedBox(height: Spacing.s12),
-            LayoutBuilder(
-              builder: (context, c) {
-                final aspect = chartAspectFor(c.maxWidth);
-                if (data.isEmpty) {
-                  return AspectRatio(
-                    aspectRatio: aspect,
-                    child: const EmptyChartPlaceholder(),
-                  );
-                }
-                return SizedBox(
-                  height: 220,
-                  child: NwBarChart(
-                    series: [CategorySeries(name: '支出', data: data)],
-                    yAxis: ValueAxis.currency(
-                      currencyCode: report.baseCurrency,
-                      maxLabels: 4,
-                    ),
-                    aspectRatio: aspect,
-                    semanticLabel: '月度支出趋势',
-                  ),
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('月度趋势', style: theme.textTheme.titleMedium),
+          const SizedBox(height: Spacing.s12),
+          LayoutBuilder(
+            builder: (context, c) {
+              final aspect = chartAspectFor(c.maxWidth);
+              if (data.isEmpty) {
+                return AspectRatio(
+                  aspectRatio: aspect,
+                  child: const EmptyChartPlaceholder(),
                 );
-              },
-            ),
-          ],
-        ),
+              }
+              return SizedBox(
+                height: 220,
+                child: NwBarChart(
+                  series: [CategorySeries(name: '支出', data: data)],
+                  yAxis: ValueAxis.currency(
+                    currencyCode: report.baseCurrency,
+                    maxLabels: 4,
+                  ),
+                  aspectRatio: aspect,
+                  semanticLabel: '月度支出趋势',
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -549,36 +543,34 @@ class _CategoryListCard extends StatelessWidget {
     if (report.byCategory.isEmpty) {
       return const SizedBox.shrink();
     }
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s4,
-          vertical: Spacing.s8,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s12,
-                Spacing.s8,
-                Spacing.s12,
-                Spacing.s4,
-              ),
-              child: Text(
-                '类目明细',
-                style: theme.textTheme.titleMedium,
-              ),
+    return LiquidGlassCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s4,
+        vertical: Spacing.s8,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.s12,
+              Spacing.s8,
+              Spacing.s12,
+              Spacing.s4,
             ),
-            for (final breakdown in report.byCategory)
-              _CategoryTile(
-                breakdown: breakdown,
-                categoryById: categoryById,
-                accounts: accounts,
-                baseCurrency: report.baseCurrency,
-              ),
-          ],
-        ),
+            child: Text(
+              '类目明细',
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+          for (final breakdown in report.byCategory)
+            _CategoryTile(
+              breakdown: breakdown,
+              categoryById: categoryById,
+              accounts: accounts,
+              baseCurrency: report.baseCurrency,
+            ),
+        ],
       ),
     );
   }

@@ -74,11 +74,9 @@ class _LiabilityDetailBody extends ConsumerWidget {
           ),
           data: (schedule) {
             if (schedule.isEmpty) {
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(Spacing.s16),
-                  child: Text(l10n.liabilityRevolvingNoSchedule),
-                ),
+              return LiquidGlassCard(
+                padding: const EdgeInsets.all(Spacing.s16),
+                child: Text(l10n.liabilityRevolvingNoSchedule),
               );
             }
             return _AmortizationTable(
@@ -103,34 +101,32 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return Card(
-      child: Padding(
-        padding: Spacing.cardHero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.name, style: theme.textTheme.titleLarge),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              '${liabilityTypeLabel(l10n, l.type)} · '
-              '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
-              '${rateTypeLabel(l10n, l.rateType)}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+    return LiquidGlassCard(
+      padding: Spacing.cardHero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.name, style: theme.textTheme.titleLarge),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            '${liabilityTypeLabel(l10n, l.type)} · '
+            '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
+            '${rateTypeLabel(l10n, l.rateType)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: Spacing.s12),
-            Text(
-              formatters.currency(l.principal, code: l.currency),
-              style: theme.textTheme.headlineSmall,
-            ),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              formatters.percent(l.interestRate.toDouble()),
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: Spacing.s12),
+          Text(
+            formatters.currency(l.principal, code: l.currency),
+            style: theme.textTheme.headlineSmall,
+          ),
+          const SizedBox(height: Spacing.s4),
+          Text(
+            formatters.percent(l.interestRate.toDouble()),
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -147,55 +143,53 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return Card(
-      child: Padding(
-        padding: Spacing.card,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SummaryRow(
-              label: l10n.liabilitySummaryRemaining,
-              value: formatters.currency(
-                summary.remainingPrincipal,
-                code: l.currency,
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SummaryRow(
+            label: l10n.liabilitySummaryRemaining,
+            value: formatters.currency(
+              summary.remainingPrincipal,
+              code: l.currency,
+            ),
+          ),
+          _SummaryRow(
+            label: l10n.liabilitySummaryInterestPaid,
+            value: formatters.currency(
+              summary.interestPaid,
+              code: l.currency,
+            ),
+          ),
+          _SummaryRow(
+            label: l10n.liabilitySummaryInterestTotal,
+            value: formatters.currency(
+              summary.totalScheduledInterest,
+              code: l.currency,
+            ),
+          ),
+          _SummaryRow(
+            label: l10n.liabilitySummaryInterestRatio,
+            value: formatters.percent(
+              summary.interestRatio.toDouble(),
+            ),
+          ),
+          const SizedBox(height: Spacing.s8),
+          if (summary.totalPeriods > 0) ...[
+            LinearProgressIndicator(value: summary.progressFraction),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              l10n.liabilitySummaryProgress(
+                summary.paidPeriods,
+                summary.totalPeriods,
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            _SummaryRow(
-              label: l10n.liabilitySummaryInterestPaid,
-              value: formatters.currency(
-                summary.interestPaid,
-                code: l.currency,
-              ),
-            ),
-            _SummaryRow(
-              label: l10n.liabilitySummaryInterestTotal,
-              value: formatters.currency(
-                summary.totalScheduledInterest,
-                code: l.currency,
-              ),
-            ),
-            _SummaryRow(
-              label: l10n.liabilitySummaryInterestRatio,
-              value: formatters.percent(
-                summary.interestRatio.toDouble(),
-              ),
-            ),
-            const SizedBox(height: Spacing.s8),
-            if (summary.totalPeriods > 0) ...[
-              LinearProgressIndicator(value: summary.progressFraction),
-              const SizedBox(height: Spacing.s4),
-              Text(
-                l10n.liabilitySummaryProgress(
-                  summary.paidPeriods,
-                  summary.totalPeriods,
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -239,8 +233,7 @@ class _AmortizationTable extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return LiquidGlassCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -291,28 +284,41 @@ class _AmortizationTable extends ConsumerWidget {
       row.principalPayment + row.interestPayment,
       code: liability.currency,
     );
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showGlassModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(
-            l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex),
-          ),
-          content: Text(
-            l10n.liabilityScheduleMarkPaidConfirmBody(amount),
-          ),
-          actions: [
-            AppButton.tertiary(
-              label: l10n.commonCancel,
-              onPressed: () => Navigator.of(ctx).pop(false),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            AppButton.tertiary(
-              label: l10n.commonConfirm,
-              onPressed: () => Navigator.of(ctx).pop(true),
+            const SizedBox(height: Spacing.s8),
+            Text(
+              l10n.liabilityScheduleMarkPaidConfirmBody(amount),
             ),
+            const SizedBox(height: Spacing.s16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.tertiary(
+                  label: l10n.commonCancel,
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                ),
+                const SizedBox(width: Spacing.s8),
+                AppButton.tertiary(
+                  label: l10n.commonConfirm,
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
           ],
-        );
-      },
+        ),
+      ),
     );
     if (confirmed != true || !context.mounted) return;
     final repo = await ref.read(liabilityRepositoryProvider.future);

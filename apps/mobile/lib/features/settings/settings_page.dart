@@ -19,6 +19,7 @@ class SettingsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
     return Scaffold(
@@ -174,6 +175,45 @@ class SettingsPage extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
                   child: _MarketColorPreview(),
                 ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s16,
+                    vertical: Spacing.s8,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.translate_outlined),
+                      const SizedBox(width: Spacing.s16),
+                      Expanded(
+                        child: AppDropdown<Locale?>(
+                          value: locale,
+                          label: l10n.settingsLanguageTitle,
+                          displayBuilder: (_, v) =>
+                              Text(_localeLabel(l10n, v), style: Theme.of(context).textTheme.bodyMedium),
+                          items: [
+                            DropdownMenuItem(
+                              value: null,
+                              child: Text(l10n.langSystem),
+                            ),
+                            DropdownMenuItem(
+                              value: const Locale('en'),
+                              child: Text(l10n.langEnglish),
+                            ),
+                            DropdownMenuItem(
+                              value: const Locale('zh'),
+                              child: Text(l10n.langChinese),
+                            ),
+                          ],
+                          onChanged: (picked) {
+                            Haptics.selection();
+                            ref.read(localeProvider.notifier).set(picked);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -237,6 +277,15 @@ class SettingsPage extends ConsumerWidget {
         MarketColorMode.greenUpRedDown => l10n.marketColorGreenUpRedDown,
         MarketColorMode.colorblind => l10n.marketColorColorblind,
       };
+
+  String _localeLabel(AppLocalizations l10n, Locale? locale) {
+    if (locale == null) return l10n.langSystem;
+    return switch (locale.languageCode) {
+      'en' => l10n.langEnglish,
+      'zh' => l10n.langChinese,
+      _ => locale.languageCode,
+    };
+  }
 }
 
 /// "About NaviWealth" tile — version + build + commit SHA, sourced from

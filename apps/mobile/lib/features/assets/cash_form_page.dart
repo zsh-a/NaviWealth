@@ -95,21 +95,35 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             await repo.findCashByAccountId(_accountId!);
         if (existing != null && mounted) {
           final l10n = AppLocalizations.of(context);
-          final goEdit = await showDialog<bool>(
+          final goEdit = await showGlassModalBottomSheet<bool>(
             context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l10n.cashFormDuplicateTitle),
-              content: Text(l10n.cashFormDuplicateMessage),
-              actions: [
-                AppButton.tertiary(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  label: l10n.cashFormDuplicateCancel,
-                ),
-                AppButton.secondary(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  label: l10n.cashFormDuplicateEdit,
-                ),
-              ],
+            builder: (ctx) => Padding(
+              padding: const EdgeInsets.all(Spacing.s16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.cashFormDuplicateTitle, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: Spacing.s8),
+                  Text(l10n.cashFormDuplicateMessage),
+                  const SizedBox(height: Spacing.s16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AppButton.tertiary(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        label: l10n.cashFormDuplicateCancel,
+                      ),
+                      const SizedBox(width: Spacing.s8),
+                      AppButton.secondary(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        label: l10n.cashFormDuplicateEdit,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+                ],
+              ),
             ),
           );
           if (goEdit == true && mounted) {
@@ -296,21 +310,35 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
 /// The strings live in ARB so every "delete asset" surface stays in sync.
 Future<bool?> confirmManualAssetDelete(BuildContext context) {
   final l10n = AppLocalizations.of(context);
-  return showDialog<bool>(
+  return showGlassModalBottomSheet<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.manualAssetDeleteTitle),
-      content: Text(l10n.manualAssetDeleteContent),
-      actions: [
-        AppButton.tertiary(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          label: l10n.manualAssetDeleteCancel,
-        ),
-        AppButton.secondary(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          label: l10n.manualAssetDeleteConfirm,
-        ),
-      ],
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.all(Spacing.s16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.manualAssetDeleteTitle, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: Spacing.s8),
+          Text(l10n.manualAssetDeleteContent),
+          const SizedBox(height: Spacing.s16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AppButton.tertiary(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                label: l10n.manualAssetDeleteCancel,
+              ),
+              const SizedBox(width: Spacing.s8),
+              AppButton.secondary(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                label: l10n.manualAssetDeleteConfirm,
+              ),
+            ],
+          ),
+          SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+        ],
+      ),
     ),
   );
 }

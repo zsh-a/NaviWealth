@@ -77,57 +77,55 @@ class _LogTile extends StatelessWidget {
     final theme = Theme.of(context);
     final color = _colorForLevel(log.logLevel);
 
-    return Card(
+    return LiquidGlassCard(
       margin: const EdgeInsets.symmetric(vertical: 2),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    log.title ?? log.logLevel?.name ?? 'log',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  log.displayTime(),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  log.title ?? log.logLevel?.name ?? 'log',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: color,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              log.message ?? '',
-              style: theme.textTheme.bodySmall,
-            ),
-            if (log.error != null) ...[
-              const SizedBox(height: 4),
+              ),
+              const SizedBox(width: 8),
               Text(
-                '${log.error}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
+                log.displayTime(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            log.message ?? '',
+            style: theme.textTheme.bodySmall,
+          ),
+          if (log.error != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${log.error}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

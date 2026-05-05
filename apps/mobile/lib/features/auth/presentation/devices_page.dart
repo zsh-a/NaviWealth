@@ -89,21 +89,35 @@ class DevicesPage extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
+    final ok = await showGlassModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.authLogoutDialogTitle),
-        content: Text(l10n.authLogoutDialogBody),
-        actions: [
-          AppButton.tertiary(
-            label: l10n.commonCancel,
-            onPressed: () => Navigator.of(ctx).pop(false),
-          ),
-          AppButton.primary(
-            label: l10n.authLogoutDialogConfirm,
-            onPressed: () => Navigator.of(ctx).pop(true),
-          ),
-        ],
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.authLogoutDialogTitle, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: Spacing.s8),
+            Text(l10n.authLogoutDialogBody),
+            const SizedBox(height: Spacing.s16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.tertiary(
+                  label: l10n.commonCancel,
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                ),
+                const SizedBox(width: Spacing.s8),
+                AppButton.primary(
+                  label: l10n.authLogoutDialogConfirm,
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+          ],
+        ),
       ),
     );
     if (ok != true) return;
@@ -171,27 +185,41 @@ class _DevicesList extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final fallback = l10n.authDeviceRevokeError;
-    final ok = await showDialog<bool>(
+    final ok = await showGlassModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.authDeviceRevokeDialogTitle),
-        content: Text(
-          l10n.authDeviceRevokeDialogBody(
-            device.name?.isNotEmpty == true
-                ? device.name!
-                : l10n.authDeviceUnnamed,
-          ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.authDeviceRevokeDialogTitle, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: Spacing.s8),
+            Text(
+              l10n.authDeviceRevokeDialogBody(
+                device.name?.isNotEmpty == true
+                    ? device.name!
+                    : l10n.authDeviceUnnamed,
+              ),
+            ),
+            const SizedBox(height: Spacing.s16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppButton.tertiary(
+                  label: l10n.commonCancel,
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                ),
+                const SizedBox(width: Spacing.s8),
+                AppButton.primary(
+                  label: l10n.authDeviceRevokeConfirm,
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
+          ],
         ),
-        actions: [
-          AppButton.tertiary(
-            label: l10n.commonCancel,
-            onPressed: () => Navigator.of(ctx).pop(false),
-          ),
-          AppButton.primary(
-            label: l10n.authDeviceRevokeConfirm,
-            onPressed: () => Navigator.of(ctx).pop(true),
-          ),
-        ],
       ),
     );
     if (ok != true) return;

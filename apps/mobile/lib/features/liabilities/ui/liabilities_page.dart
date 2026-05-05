@@ -107,7 +107,7 @@ class _LiabilityListTile extends ConsumerWidget {
       orElse: () => null,
     );
 
-    return Card(
+    return LiquidGlassCard(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.s16,

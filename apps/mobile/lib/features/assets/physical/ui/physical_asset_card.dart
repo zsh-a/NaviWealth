@@ -15,50 +15,45 @@ class PhysicalAssetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.goNamed(
-          'physicalAssetDetail',
-          pathParameters: {'id': asset.id},
-        ),
-        child: Padding(
-          padding: Spacing.card,
-          child: Row(
-            children: [
-              Icon(_iconForType(asset.type), color: theme.colorScheme.primary),
-              const SizedBox(width: Spacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      asset.name,
-                      style: theme.textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: Spacing.s2),
-                    Text(
-                      _subtitleFor(asset, l10n),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+    return LiquidGlassCard(
+      padding: Spacing.card,
+      onTap: () => context.goNamed(
+        'physicalAssetDetail',
+        pathParameters: {'id': asset.id},
+      ),
+      child: Row(
+        children: [
+          Icon(_iconForType(asset.type), color: theme.colorScheme.primary),
+          const SizedBox(width: Spacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  asset.name,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: Spacing.s12),
-              MoneyText(
-                amount: asset.currentValuation.toDouble(),
-                currencyCode: asset.currency,
-                style: theme.textTheme.titleMedium,
-              ),
-            ],
+                const SizedBox(height: Spacing.s2),
+                Text(
+                  _subtitleFor(asset, l10n),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: Spacing.s12),
+          MoneyText(
+            amount: asset.currentValuation.toDouble(),
+            currencyCode: asset.currency,
+            style: theme.textTheme.titleMedium,
+          ),
+        ],
       ),
     );
   }

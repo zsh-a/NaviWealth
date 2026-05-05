@@ -710,6 +710,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get marketColorColorblind => '色盲友好 (蓝/橙)';
 
   @override
+  String get settingsLanguageTitle => '语言';
+
+  @override
+  String get langSystem => '跟随系统';
+
+  @override
+  String get langEnglish => '英文';
+
+  @override
+  String get langChinese => '中文';
+
+  @override
   String get commonRetry => '重试';
 
   @override
