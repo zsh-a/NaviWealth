@@ -24,7 +24,7 @@ console_error_panic_hook = "0.1"
 # backend; argon2 is pure-Rust and salt entropy comes from `getrandom` (js).
 argon2 = "0.5"
 hmac = "0.12"
-sha2 = "0.10"
+sha2 = "0.11"
 base64 = "0.22"
 getrandom = { version = "0.2", features = ["js"] }
 
