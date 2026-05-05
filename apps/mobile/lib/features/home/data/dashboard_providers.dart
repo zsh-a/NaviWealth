@@ -97,7 +97,7 @@ final dashboardTimeRangeProvider = Provider<DashboardTimeRange>((ref) {
   );
 });
 
-final _dashboardPriceRowsProvider = StreamProvider.autoDispose<List<PriceRow>>((
+final dashboardPriceRowsProvider = StreamProvider.autoDispose<List<PriceRow>>((
   ref,
 ) async* {
   final db = await ref.watch(appDatabaseProvider.future);
@@ -189,7 +189,7 @@ final dashboardManualAssetValuationsProvider =
       }
 
       final cashHistory = ref.watch(_cashPostingHistoryProvider);
-      final prices = ref.watch(_dashboardPriceRowsProvider);
+      final prices = ref.watch(dashboardPriceRowsProvider);
       if (cashHistory.isLoading || prices.isLoading) {
         return const AsyncValue.loading();
       }
@@ -442,7 +442,7 @@ Future<List<ManualAssetValuation>> _manualAssetValuationsForHeader(
   if (manualAssets.isEmpty) return const <ManualAssetValuation>[];
   final cashHistory =
       await ref.watch(_cashPostingHistoryProvider.future);
-  final priceRows = await ref.watch(_dashboardPriceRowsProvider.future);
+  final priceRows = await ref.watch(dashboardPriceRowsProvider.future);
   return _buildManualAssetValuations(
     manualAssets: manualAssets,
     priceRows: priceRows,
@@ -481,7 +481,7 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
   final holdings = ref.watch(holdingsSnapshotProvider);
   final assets = ref.watch(allAssetsStreamProvider);
-  final prices = ref.watch(_dashboardPriceRowsProvider);
+  final prices = ref.watch(dashboardPriceRowsProvider);
 
   if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
     return const AsyncValue.loading();
