@@ -39,6 +39,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navMe => 'Me';
 
   @override
+  String get navActivity => 'Activity';
+
+  @override
+  String get navPlan => 'Plan';
+
+  @override
   String get navAccounts => 'Accounts';
 
   @override
@@ -2401,4 +2407,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manualAssetDeleteConfirm => 'Delete';
+
+  @override
+  String get activityFeedTab => 'Activity';
+
+  @override
+  String get activityFeedComingSoon => 'Activity feed coming soon';
+
+  @override
+  String get accountsTransferAction => 'Transfer';
+
+  @override
+  String get accountsJournalAction => 'Journal';
+
+  @override
+  String get expenseReportTitle => 'Expense Report';
+
+  @override
+  String get planFireTitle => 'FIRE';
+
+  @override
+  String get planFireSubtitle => 'Financial independence calculator';
+
+  @override
+  String get planAnalyticsTitle => 'Analytics';
+
+  @override
+  String get planAnalyticsSubtitle => 'Portfolio allocation analysis';
+
+  @override
+  String get planRebalanceTitle => 'Rebalance';
+
+  @override
+  String get planRebalanceSubtitle => 'Portfolio drift & rebalancing';
 }

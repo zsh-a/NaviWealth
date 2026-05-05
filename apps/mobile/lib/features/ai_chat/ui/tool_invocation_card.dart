@@ -160,7 +160,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       case _JumpKind.asset:
         context.go('/portfolio/${Uri.encodeComponent(jump.id)}');
       case _JumpKind.account:
-        context.go('/portfolio/accounts/${Uri.encodeComponent(jump.id)}');
+        context.go('/activity/accounts/${Uri.encodeComponent(jump.id)}');
       case _JumpKind.liability:
         context.go('/portfolio/liabilities/${Uri.encodeComponent(jump.id)}');
     }

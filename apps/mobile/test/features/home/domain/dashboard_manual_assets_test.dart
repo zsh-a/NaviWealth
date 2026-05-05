@@ -11,6 +11,7 @@ import 'package:naviwealth/features/home/domain/dashboard_aggregator.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/domain/dashboard_time_range.dart';
 import 'package:naviwealth/features/home/domain/dashboard_trend_builder.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 
 class _MapConverter implements CurrencyConverter {
   const _MapConverter(this.rates);
@@ -113,6 +114,185 @@ void main() {
     expect(snapshot.totalAssets.amount, Decimal.zero);
     expect(snapshot.currencyMismatches.single.id, 'cash-usd');
     expect(snapshot.currencyMismatches.single.currency, 'USD');
+  });
+
+  test('securities use historical prices for trend when available', () {
+    final stockAsset = _asset(
+      id: 'AAPL',
+      type: AssetType.stock,
+      currency: 'USD',
+    );
+    final snapshot = HoldingSnapshot(
+      assetId: 'AAPL',
+      quantity: Decimal.fromInt(10),
+      costBasisInAssetCurrency: Decimal.parse('1000'),
+      marketValueInAssetCurrency: Decimal.parse('2000'),
+      assetCurrency: 'USD',
+      costBasisInBase: Decimal.parse('1000'),
+      marketValueInBase: Decimal.parse('2000'),
+      unrealizedPnlInBase: Decimal.parse('1000'),
+      weight: Decimal.one,
+      baseCurrency: 'USD',
+      asOf: DateTime.utc(2026, 5, 1),
+    );
+
+    // Prices: $100 on Jan 1, $150 on Jan 3, $200 on Jan 5
+    final securityPrices = <String, List<ManualAssetValuePoint>>{
+      'AAPL': [
+        ManualAssetValuePoint(
+          observedOn: DateTime.utc(2026, 1, 1),
+          value: Decimal.parse('100'),
+        ),
+        ManualAssetValuePoint(
+          observedOn: DateTime.utc(2026, 1, 3),
+          value: Decimal.parse('150'),
+        ),
+        ManualAssetValuePoint(
+          observedOn: DateTime.utc(2026, 1, 5),
+          value: Decimal.parse('200'),
+        ),
+      ],
+    };
+
+    final trend =
+        DashboardTrendBuilder(
+          converter: const _MapConverter({}),
+          baseCurrency: 'USD',
+        ).build(
+          range: DashboardTimeRange(
+            preset: DashboardRangePreset.custom,
+            from: DateTime.utc(2026, 1, 1),
+            to: DateTime.utc(2026, 1, 5),
+            granularity: NetWorthGranularity.day,
+          ),
+          manualAssets: const [],
+          physicalAssets: const [],
+          liabilities: const [],
+          liabilitySchedules: const {},
+          securitiesHoldings: [(asset: stockAsset, snapshot: snapshot)],
+          securityPrices: securityPrices,
+        );
+
+    // Jan 1: $100×10=$1000, Jan 2: $100×10=$1000, Jan 3: $150×10=$1500,
+    // Jan 4: $150×10=$1500, Jan 5: $200×10=$2000
+    expect(trend.points.map((p) => p.assets.amount), [
+      Decimal.parse('1000'),
+      Decimal.parse('1000'),
+      Decimal.parse('1500'),
+      Decimal.parse('1500'),
+      Decimal.parse('2000'),
+    ]);
+  });
+
+  test('securities fall back to snapshot value when no historical prices', () {
+    final stockAsset = _asset(
+      id: 'TSLA',
+      type: AssetType.stock,
+      currency: 'USD',
+    );
+    final snapshot = HoldingSnapshot(
+      assetId: 'TSLA',
+      quantity: Decimal.fromInt(5),
+      costBasisInAssetCurrency: Decimal.parse('500'),
+      marketValueInAssetCurrency: Decimal.parse('1000'),
+      assetCurrency: 'USD',
+      costBasisInBase: Decimal.parse('500'),
+      marketValueInBase: Decimal.parse('1000'),
+      unrealizedPnlInBase: Decimal.parse('500'),
+      weight: Decimal.one,
+      baseCurrency: 'USD',
+      asOf: DateTime.utc(2026, 5, 1),
+    );
+
+    final trend =
+        DashboardTrendBuilder(
+          converter: const _MapConverter({}),
+          baseCurrency: 'USD',
+        ).build(
+          range: DashboardTimeRange(
+            preset: DashboardRangePreset.custom,
+            from: DateTime.utc(2026, 1, 1),
+            to: DateTime.utc(2026, 1, 3),
+            granularity: NetWorthGranularity.day,
+          ),
+          manualAssets: const [],
+          physicalAssets: const [],
+          liabilities: const [],
+          liabilitySchedules: const {},
+          securitiesHoldings: [(asset: stockAsset, snapshot: snapshot)],
+          securityPrices: const {},
+        );
+
+    // Fallback: uses snapshot.marketValueInAssetCurrency ($1000) for all dates
+    expect(trend.points.map((p) => p.assets.amount), [
+      Decimal.parse('1000'),
+      Decimal.parse('1000'),
+      Decimal.parse('1000'),
+    ]);
+  });
+
+  test('securities with historical prices skip dates before first price', () {
+    final stockAsset = _asset(
+      id: 'NVDA',
+      type: AssetType.stock,
+      currency: 'USD',
+    );
+    final snapshot = HoldingSnapshot(
+      assetId: 'NVDA',
+      quantity: Decimal.fromInt(10),
+      costBasisInAssetCurrency: Decimal.parse('1000'),
+      marketValueInAssetCurrency: Decimal.parse('5000'),
+      assetCurrency: 'USD',
+      costBasisInBase: Decimal.parse('1000'),
+      marketValueInBase: Decimal.parse('5000'),
+      unrealizedPnlInBase: Decimal.parse('4000'),
+      weight: Decimal.one,
+      baseCurrency: 'USD',
+      asOf: DateTime.utc(2026, 5, 1),
+    );
+
+    // Price only available from Jan 3 onward
+    final securityPrices = <String, List<ManualAssetValuePoint>>{
+      'NVDA': [
+        ManualAssetValuePoint(
+          observedOn: DateTime.utc(2026, 1, 3),
+          value: Decimal.parse('200'),
+        ),
+        ManualAssetValuePoint(
+          observedOn: DateTime.utc(2026, 1, 5),
+          value: Decimal.parse('300'),
+        ),
+      ],
+    };
+
+    final trend =
+        DashboardTrendBuilder(
+          converter: const _MapConverter({}),
+          baseCurrency: 'USD',
+        ).build(
+          range: DashboardTimeRange(
+            preset: DashboardRangePreset.custom,
+            from: DateTime.utc(2026, 1, 1),
+            to: DateTime.utc(2026, 1, 5),
+            granularity: NetWorthGranularity.day,
+          ),
+          manualAssets: const [],
+          physicalAssets: const [],
+          liabilities: const [],
+          liabilitySchedules: const {},
+          securitiesHoldings: [(asset: stockAsset, snapshot: snapshot)],
+          securityPrices: securityPrices,
+        );
+
+    // Jan 1: no price yet → 0, Jan 2: 0,
+    // Jan 3: $200×10=$2000, Jan 4: $200×10=$2000, Jan 5: $300×10=$3000
+    expect(trend.points.map((p) => p.assets.amount), [
+      Decimal.zero,
+      Decimal.zero,
+      Decimal.parse('2000'),
+      Decimal.parse('2000'),
+      Decimal.parse('3000'),
+    ]);
   });
 }
 

@@ -39,6 +39,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navMe => '我的';
 
   @override
+  String get navActivity => '流水';
+
+  @override
+  String get navPlan => '规划';
+
+  @override
   String get navAccounts => '账户';
 
   @override
@@ -2315,4 +2321,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get manualAssetDeleteConfirm => '删除';
+
+  @override
+  String get activityFeedTab => '动态';
+
+  @override
+  String get activityFeedComingSoon => '动态流即将推出';
+
+  @override
+  String get accountsTransferAction => '转账';
+
+  @override
+  String get accountsJournalAction => '日记账';
+
+  @override
+  String get expenseReportTitle => '支出报表';
+
+  @override
+  String get planFireTitle => 'FIRE';
+
+  @override
+  String get planFireSubtitle => '财务自由计算器';
+
+  @override
+  String get planAnalyticsTitle => '分析';
+
+  @override
+  String get planAnalyticsSubtitle => '投资组合配置分析';
+
+  @override
+  String get planRebalanceTitle => '再平衡';
+
+  @override
+  String get planRebalanceSubtitle => '投资组合偏离与再平衡';
 }

@@ -115,18 +115,31 @@ final _cashPostingHistoryProvider =
     StreamProvider.autoDispose<Map<String, List<ManualAssetValuePoint>>>((
       ref,
     ) async* {
+      // Collect account IDs from cash assets' metadata. The link between a
+      // cash asset and its postings is through CashMetadata.accountId stored
+      // in assets.metadata_json — not through assets.id.
+      final cashAccountIds = <String>{};
+      final assets = await ref.watch(manualAssetsStreamProvider.future);
+      for (final a in assets) {
+        if (a.type == AssetType.cash) {
+          final meta = ManualAssetMetadata.decode(a.metadataJson);
+          if (meta?.accountId case final id?) cashAccountIds.add(id);
+        }
+      }
+      if (cashAccountIds.isEmpty) {
+        yield const {};
+        return;
+      }
+
       final db = await ref.watch(appDatabaseProvider.future);
       final je = db.journalEntries;
       final p = db.postings;
-      final a = db.assets;
       final query = db.select(p).join([
         innerJoin(je, je.id.equalsExp(p.journalEntryId)),
-        innerJoin(a, a.id.equalsExp(p.accountId)),
       ])
         ..where(p.deletedAt.isNull())
         ..where(je.deletedAt.isNull())
-        ..where(a.deletedAt.isNull())
-        ..where(a.type.equalsValue(AssetType.cash))
+        ..where(p.accountId.isIn(cashAccountIds))
         ..addColumns([je.date])
         ..orderBy([
           OrderingTerm.asc(p.accountId),
@@ -282,6 +295,34 @@ List<SecurityHolding> _buildSecurityHoldings({
   return out;
 }
 
+/// Build historical price series for securities so the trend builder can
+/// look up per-date prices instead of using the current snapshot value.
+Map<String, List<ManualAssetValuePoint>> _buildSecurityPriceHistory({
+  required List<Asset> assets,
+  required List<PriceRow> priceRows,
+}) {
+  if (priceRows.isEmpty || assets.isEmpty) return const {};
+  final pricesByUnit = <String, List<PriceRow>>{};
+  for (final row in priceRows) {
+    pricesByUnit.putIfAbsent(row.unit, () => <PriceRow>[]).add(row);
+  }
+  final out = <String, List<ManualAssetValuePoint>>{};
+  for (final asset in assets) {
+    if (!kSecuritiesAssetTypes.contains(asset.type)) continue;
+    final rows =
+        (pricesByUnit[asset.id] ?? const <PriceRow>[])
+            .where((row) => row.quoteCurrency == asset.currency)
+            .toList(growable: false)
+          ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
+    if (rows.isEmpty) continue;
+    out[asset.id] = [
+      for (final row in rows)
+        ManualAssetValuePoint(observedOn: row.observedOn, value: row.perUnit),
+    ];
+  }
+  return out;
+}
+
 List<ManualAssetValuation> _buildManualAssetValuations({
   required List<Asset> manualAssets,
   required List<PriceRow> priceRows,
@@ -294,35 +335,63 @@ List<ManualAssetValuation> _buildManualAssetValuations({
   }
 
   final out = <ManualAssetValuation>[];
+  final seenCashAccounts = <String>{};
   for (final asset in manualAssets) {
     if (asset.type == AssetType.cash) {
       final meta = ManualAssetMetadata.decode(asset.metadataJson);
-      final observations =
-          meta != null ? cashHistory[meta.accountId] : null;
-      if (observations == null || observations.isEmpty) continue;
-      out.add(
-        ManualAssetValuation(asset: asset, observations: observations),
-      );
-      continue;
+      final accountId = meta?.accountId;
+      // Skip duplicate cash assets pointing to the same bank account to
+      // avoid double-counting. When accountId is null the metadata is
+      // missing — fall through to the price-row lookup instead.
+      if (accountId != null && !seenCashAccounts.add(accountId)) continue;
+      if (accountId != null) {
+        final observations = cashHistory[accountId];
+        if (observations != null && observations.isNotEmpty) {
+          out.add(
+            ManualAssetValuation(asset: asset, observations: observations),
+          );
+          continue;
+        }
+      }
+      // Fall through to price-row lookup when posting history is empty
+      // (e.g. opening balance not yet recorded or accountId mismatch).
     }
     final rows =
         (pricesByUnit[asset.id] ?? const <PriceRow>[])
             .where((row) => row.quoteCurrency == asset.currency)
             .toList(growable: false)
           ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
-    if (rows.isEmpty) continue;
-    out.add(
-      ManualAssetValuation(
-        asset: asset,
-        observations: [
-          for (final row in rows)
+    if (rows.isNotEmpty) {
+      out.add(
+        ManualAssetValuation(
+          asset: asset,
+          observations: [
+            for (final row in rows)
+              ManualAssetValuePoint(
+                observedOn: row.observedOn,
+                value: row.perUnit,
+              ),
+          ],
+        ),
+      );
+    } else if (asset.type == AssetType.cash) {
+      // Cash assets must always participate in the dashboard even when no
+      // posting history or price rows exist yet (e.g. synced from another
+      // device before the opening-balance journal entry arrives). Use a
+      // zero-value observation so the snapshot and trend include the row
+      // rather than silently dropping it.
+      out.add(
+        ManualAssetValuation(
+          asset: asset,
+          observations: [
             ManualAssetValuePoint(
-              observedOn: row.observedOn,
-              value: row.perUnit,
+              observedOn: DateTime.now().toUtc(),
+              value: Decimal.zero,
             ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
   }
   return List.unmodifiable(out);
 }
@@ -384,6 +453,7 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
   final holdings = ref.watch(holdingsSnapshotProvider);
   final assets = ref.watch(allAssetsStreamProvider);
+  final prices = ref.watch(_dashboardPriceRowsProvider);
 
   if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
     return const AsyncValue.loading();
@@ -402,6 +472,10 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
     holdingsByAsset: holdings.value ?? const {},
     assets: assets.value ?? const [],
   );
+  final securityPrices = _buildSecurityPriceHistory(
+    assets: assets.value ?? const [],
+    priceRows: prices.value ?? const [],
+  );
   final builder = DashboardTrendBuilder(
     converter: converter,
     baseCurrency: base,
@@ -413,6 +487,7 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
     liabilities: liab.value ?? const <Liability>[],
     liabilitySchedules: schedules,
     securitiesHoldings: securities,
+    securityPrices: securityPrices,
   );
   return AsyncValue.data(trend);
 });

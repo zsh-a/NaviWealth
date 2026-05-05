@@ -94,6 +94,7 @@ class DashboardTrendBuilder {
     required Map<String, List<AmortizationEntry>> liabilitySchedules,
     Iterable<({Asset asset, HoldingSnapshot snapshot})> securitiesHoldings =
         const [],
+    Map<String, List<ManualAssetValuePoint>> securityPrices = const {},
   }) {
     final manualList = manualAssets.toList(growable: false);
     final physicalList = physicalAssets.toList(growable: false);
@@ -134,7 +135,14 @@ class DashboardTrendBuilder {
     }
 
     for (final date in sampleDates) {
-      final assets = _valueAssets(date, manualList, physicalList, secList, report);
+      final assets = _valueAssets(
+        date,
+        manualList,
+        physicalList,
+        secList,
+        securityPrices,
+        report,
+      );
       final liabilitiesValue = _valueLiabilities(date, liabSource, report);
       points.add(
         TrendPoint(
@@ -158,6 +166,7 @@ class DashboardTrendBuilder {
     List<ManualAssetValuation> manualAssets,
     List<PhysicalAsset> physicalAssets,
     List<({Asset asset, HoldingSnapshot snapshot})> securities,
+    Map<String, List<ManualAssetValuePoint>> securityPrices,
     void Function(String id, String currency) report,
   ) {
     var total = Money.zero(baseCurrency);
@@ -175,8 +184,26 @@ class DashboardTrendBuilder {
       total = _addInBase(total, amount, date, pa.id, report);
     }
     for (final sh in securities) {
-      final mv = sh.snapshot.marketValueInAssetCurrency;
-      if (mv.sign <= 0) continue;
+      final prices = securityPrices[sh.asset.id];
+      Decimal? mv;
+      if (prices != null && prices.isNotEmpty) {
+        // Historical prices exist — use them for accurate per-date trend.
+        // If the date is before the first observation, contribute 0 rather
+        // than falling back to the current snapshot value.
+        final priceVal = ManualAssetValuation(
+          asset: sh.asset,
+          observations: prices,
+        );
+        final price = priceVal.valueAt(date);
+        if (price != null && price.sign > 0) {
+          mv = price * sh.snapshot.quantity;
+        }
+      } else {
+        // No historical prices at all — fall back to the current snapshot
+        // value so the trend isn't left with a hole.
+        mv = sh.snapshot.marketValueInAssetCurrency;
+      }
+      if (mv == null || mv.sign <= 0) continue;
       final amount = Money(mv, sh.asset.currency);
       total = _addInBase(total, amount, date, sh.asset.id, report);
     }

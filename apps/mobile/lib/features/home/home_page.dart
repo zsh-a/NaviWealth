@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
 import 'ui/allocation_card.dart';
 import 'ui/currency_mismatch_banner.dart';
+import 'ui/insight_strip.dart';
+import 'ui/quick_actions_grid.dart';
 import 'ui/trend_card.dart';
 
 /// Dashboard surface (FIR-52).
@@ -23,7 +27,21 @@ class HomePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.homeAppBarTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.homeAppBarTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            tooltip: l10n.navAI,
+            onPressed: () => context.push('/ai'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l10n.navSettings,
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       body: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
         isLoading: snapshotAsync.isLoading,
@@ -43,13 +61,14 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({required this.snapshot});
 
   final DashboardSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final insights = ref.watch(dashboardInsightsProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -57,14 +76,20 @@ class _DashboardBody extends StatelessWidget {
         final padding =
             isWide ? Spacing.pageWide : Spacing.pageMobile;
         final header = _NetWorthHeader(snapshot: snapshot);
+        final insightStrip = InsightStrip(insights: insights);
         final allocation = AllocationCard(snapshot: snapshot);
         final trend = TrendCard(snapshot: snapshot);
+        const quickActions = QuickActionsGrid();
 
         if (isWide) {
           return ListView(
             padding: padding,
             children: [
               header,
+              if (insights.isNotEmpty) ...[
+                const SizedBox(height: Spacing.s12),
+                insightStrip,
+              ],
               const SizedBox(height: Spacing.s16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,10 +110,16 @@ class _DashboardBody extends StatelessWidget {
           ),
           children: [
             header,
+            if (insights.isNotEmpty) ...[
+              const SizedBox(height: Spacing.s12),
+              insightStrip,
+            ],
             const SizedBox(height: Spacing.s12),
             allocation,
             const SizedBox(height: Spacing.s12),
             trend,
+            const SizedBox(height: Spacing.s16),
+            quickActions,
           ],
         );
       },

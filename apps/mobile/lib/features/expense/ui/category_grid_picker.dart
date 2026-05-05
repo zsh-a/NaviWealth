@@ -106,20 +106,20 @@ class _AccountTile extends StatelessWidget {
     final accent = account.accentColor ?? theme.colorScheme.primary;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: Radii.brMd,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         decoration: BoxDecoration(
           color: selected
               ? accent.withValues(alpha: 0.12)
               : theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: Radii.brMd,
           border: Border.all(
             color: selected ? accent : Colors.transparent,
             width: 1.5,
           ),
         ),
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(Spacing.s8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -128,7 +128,7 @@ class _AccountTile extends StatelessWidget {
               backgroundColor: accent.withValues(alpha: 0.15),
               child: Icon(account.iconData, color: accent, size: 20),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.s6),
             Text(
               account.name,
               style: theme.textTheme.labelMedium,

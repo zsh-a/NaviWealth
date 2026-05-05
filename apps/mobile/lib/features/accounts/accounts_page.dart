@@ -23,7 +23,11 @@ import 'account_form_page.dart';
 /// (FIR-106): the list lives on the left, and the account edit form for
 /// the `?selected=<id>` row lives on the right.
 class AccountsPage extends ConsumerWidget {
-  const AccountsPage({super.key});
+  const AccountsPage({super.key, this.embedded = false});
+
+  /// When true, skips the Scaffold so the page can be embedded
+  /// inside another Scaffold (e.g., the Activity tab).
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +50,11 @@ class AccountsPage extends ConsumerWidget {
             ),
           );
         }
-        return const _AccountsMaster(selectedId: null, inMasterDetail: false);
+        return _AccountsMaster(
+          selectedId: null,
+          inMasterDetail: false,
+          embedded: embedded,
+        );
       },
     );
   }
@@ -56,10 +64,12 @@ class _AccountsMaster extends ConsumerWidget {
   const _AccountsMaster({
     required this.selectedId,
     required this.inMasterDetail,
+    this.embedded = false,
   });
 
   final String? selectedId;
   final bool inMasterDetail;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -68,6 +78,30 @@ class _AccountsMaster extends ConsumerWidget {
 
     // Flat ordered list of account IDs for j/k navigation.
     final allIds = accountsAsync.value?.map((a) => a.id).toList();
+
+    final body = accountsAsync.when(
+      data: (accounts) => accounts.isEmpty
+          ? const _EmptyAccounts()
+          : _AccountsByType(
+              accounts: accounts,
+              selectedId: selectedId,
+              inMasterDetail: inMasterDetail,
+            ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
+    );
+
+    if (embedded) {
+      return MasterDetailShortcuts(
+        onSelectNext: allIds == null || allIds.isEmpty
+            ? null
+            : () => _selectAdjacent(context, allIds, delta: 1),
+        onSelectPrevious: allIds == null || allIds.isEmpty
+            ? null
+            : () => _selectAdjacent(context, allIds, delta: -1),
+        child: body,
+      );
+    }
 
     return MasterDetailShortcuts(
       onSelectNext: allIds == null || allIds.isEmpty
@@ -79,36 +113,23 @@ class _AccountsMaster extends ConsumerWidget {
       child: Scaffold(
         appBar: GlassAppBar(
           title: Text(l10n.accountsAppBarTitle),
-          // Quick actions: `swap_horiz` opens the cross-currency
-          // transfer form; `history` opens the read-only journal
-          // list backed by `journal_entries` / `postings`.
           actions: [
             IconButton(
               tooltip: 'Journal',
               icon: const Icon(Icons.history),
-              onPressed: () => context.go('/portfolio/accounts/journal'),
+              onPressed: () => context.go('/activity/accounts/journal'),
             ),
             IconButton(
               tooltip: 'New transfer',
               icon: const Icon(Icons.swap_horiz),
-              onPressed: () => context.go('/portfolio/accounts/transfer'),
+              onPressed: () => context.go('/activity/accounts/transfer'),
             ),
           ],
         ),
-        body: accountsAsync.when(
-          data: (accounts) => accounts.isEmpty
-              ? const _EmptyAccounts()
-              : _AccountsByType(
-                  accounts: accounts,
-                  selectedId: selectedId,
-                  inMasterDetail: inMasterDetail,
-                ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
-        ),
+        body: body,
         floatingActionButton: ScrollAwareFab(
           child: AppFab.extended(
-            onPressed: () => context.go('/portfolio/accounts/new'),
+            onPressed: () => context.go('/activity/accounts/new'),
             icon: const Icon(Icons.add),
             label: Text(l10n.accountsCreateAction),
           ),
@@ -138,7 +159,7 @@ class _AccountsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: '/portfolio/accounts',
+      path: '/activity/accounts',
       selected: allIds[nextIndex],
     );
   }
@@ -279,9 +300,9 @@ class _AccountTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/portfolio/accounts', selected: account.id);
+      replaceSelectedQuery(context, path: '/activity/accounts', selected: account.id);
     } else {
-      context.go('/portfolio/accounts/${account.id}');
+      context.go('/activity/accounts/${account.id}');
     }
   }
 

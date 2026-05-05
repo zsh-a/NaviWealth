@@ -1,11 +1,7 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
-
-import '../design_system/design_system.dart';
 
 // Tabs other than home are split into their own dart2js part files; each part
 // is loaded the first time the user navigates to that route. Home ships in
@@ -15,6 +11,7 @@ import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
 import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
+import '../features/activity/activity_page.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
@@ -40,7 +37,7 @@ import '../features/liabilities/ui/liabilities_page.dart'
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
 import '../features/liabilities/ui/liability_form_page.dart';
-import '../features/me/me_page.dart';
+import '../features/plan/plan_page.dart';
 import '../features/portfolio/portfolio_page.dart' deferred as portfolio_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/fx_rates/fx_rates_page.dart';
@@ -61,8 +58,8 @@ import 'shell_preferences.dart';
 const List<String> kPrimaryTabPaths = <String>[
   '/',
   '/portfolio',
-  '/analytics',
-  '/me',
+  '/activity',
+  '/plan',
 ];
 
 /// Test-only: eagerly resolve every deferred-as library the router maps to
@@ -144,22 +141,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 ),
               ),
               GoRoute(
-                path: 'trade',
-                name: 'trade-entry',
-                pageBuilder: (context, state) {
-                  final assetId = state.uri.queryParameters['assetId'];
-                  final accountId = state.uri.queryParameters['accountId'];
-                  return buildHeroAwareTransitionPage<void>(
-                    context: context,
-                    state: state,
-                    child: TradeEntryFormPage(
-                      assetId: assetId,
-                      accountId: accountId,
-                    ),
-                  );
-                },
-              ),
-              GoRoute(
                 path: 'physical/:id',
                 name: 'physicalAssetDetail',
                 builder: (context, state) {
@@ -199,6 +180,25 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                 ],
               ),
+              GoRoute(
+                path: ':assetId',
+                name: 'asset-detail',
+                pageBuilder: (context, state) => buildHeroAwareTransitionPage<void>(
+                  context: context,
+                  state: state,
+                  child: AssetDetailPage(
+                    assetId: state.pathParameters['assetId']!,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // ── Activity tab (expenses, accounts, trades) ────────────────
+          GoRoute(
+            path: '/activity',
+            name: 'activity',
+            builder: (context, state) => const ActivityPage(),
+            routes: [
               GoRoute(
                 path: 'expenses',
                 name: 'expenses',
@@ -258,77 +258,37 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 ],
               ),
               GoRoute(
-                path: ':assetId',
-                name: 'asset-detail',
-                pageBuilder: (context, state) => buildHeroAwareTransitionPage<void>(
-                  context: context,
-                  state: state,
-                  child: AssetDetailPage(
-                    assetId: state.pathParameters['assetId']!,
-                  ),
+                path: 'trade',
+                name: 'trade-entry',
+                pageBuilder: (context, state) {
+                  final assetId = state.uri.queryParameters['assetId'];
+                  final accountId = state.uri.queryParameters['accountId'];
+                  return buildHeroAwareTransitionPage<void>(
+                    context: context,
+                    state: state,
+                    child: TradeEntryFormPage(
+                      assetId: assetId,
+                      accountId: accountId,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          // ── Plan tab (analytics, FIRE, rebalance) ────────────────────
+          GoRoute(
+            path: '/plan',
+            name: 'plan',
+            builder: (context, state) => const PlanPage(),
+            routes: [
+              GoRoute(
+                path: 'analytics',
+                name: 'analytics',
+                builder: (context, state) => DeferredRoute(
+                  load: analytics_lib.loadLibrary,
+                  builder: (_) => analytics_lib.AnalyticsPage(),
                 ),
               ),
-            ],
-          ),
-          // ── Legacy /assets redirect → /portfolio ─────────────────────
-          GoRoute(
-            path: '/assets',
-            redirect: (context, state) {
-              final uri = state.uri.toString();
-              return uri.replaceFirst('/assets', '/portfolio');
-            },
-            routes: [
-              GoRoute(
-                path: ':_(.*)',
-                redirect: (context, state) {
-                  final uri = state.uri.toString();
-                  return uri.replaceFirst('/assets', '/portfolio');
-                },
-              ),
-            ],
-          ),
-          // ── Legacy /accounts redirect → /portfolio/accounts ───────────
-          GoRoute(
-            path: '/accounts',
-            redirect: (context, state) {
-              final uri = state.uri.toString();
-              return uri.replaceFirst('/accounts', '/portfolio/accounts');
-            },
-            routes: [
-              GoRoute(
-                path: ':_(.*)',
-                redirect: (context, state) {
-                  final uri = state.uri.toString();
-                  return uri.replaceFirst('/accounts', '/portfolio/accounts');
-                },
-              ),
-            ],
-          ),
-          // ── Legacy /expenses redirect → /portfolio/expenses ───────────
-          GoRoute(
-            path: '/expenses',
-            redirect: (context, state) {
-              final uri = state.uri.toString();
-              return uri.replaceFirst('/expenses', '/portfolio/expenses');
-            },
-            routes: [
-              GoRoute(
-                path: ':_(.*)',
-                redirect: (context, state) {
-                  final uri = state.uri.toString();
-                  return uri.replaceFirst('/expenses', '/portfolio/expenses');
-                },
-              ),
-            ],
-          ),
-          GoRoute(
-            path: '/analytics',
-            name: 'analytics',
-            builder: (context, state) => DeferredRoute(
-              load: analytics_lib.loadLibrary,
-              builder: (_) => analytics_lib.AnalyticsPage(),
-            ),
-            routes: [
               GoRoute(
                 path: 'fire',
                 name: 'fire',
@@ -347,16 +307,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Legacy /fire redirect → /analytics/fire ─────────────────
-          GoRoute(
-            path: '/fire',
-            redirect: (context, state) => '/analytics/fire',
-          ),
-          // ── Legacy /rebalance redirect → /analytics/rebalance ───────
-          GoRoute(
-            path: '/rebalance',
-            redirect: (context, state) => '/analytics/rebalance',
-          ),
+          // ── AI Chat (global, no tab) ─────────────────────────────────
           GoRoute(
             path: '/ai',
             name: 'ai-chat',
@@ -365,88 +316,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               builder: (_) => ai_chat_lib.AiChatPage(),
             ),
           ),
-          // ── Me tab (hub: accounts, expenses, AI, settings) ─────────
-          GoRoute(
-            path: '/me',
-            name: 'me',
-            builder: (context, state) => const MePage(),
-            routes: [
-              GoRoute(
-                path: 'ai',
-                name: 'me-ai',
-                builder: (context, state) => DeferredRoute(
-                  load: ai_chat_lib.loadLibrary,
-                  builder: (_) => ai_chat_lib.AiChatPage(),
-                ),
-              ),
-              GoRoute(
-                path: 'accounts',
-                redirect: (context, state) {
-                  final rest = state.uri.toString().replaceFirst(
-                        '/me/accounts',
-                        '/portfolio/accounts',
-                      );
-                  return rest;
-                },
-                routes: [
-                  GoRoute(
-                    path: ':_(.*)',
-                    redirect: (context, state) {
-                      final rest = state.uri.toString().replaceFirst(
-                            '/me/accounts',
-                            '/portfolio/accounts',
-                          );
-                      return rest;
-                    },
-                  ),
-                ],
-              ),
-              GoRoute(
-                path: 'expenses',
-                redirect: (context, state) {
-                  final rest = state.uri.toString().replaceFirst(
-                        '/me/expenses',
-                        '/portfolio/expenses',
-                      );
-                  return rest;
-                },
-                routes: [
-                  GoRoute(
-                    path: ':_(.*)',
-                    redirect: (context, state) {
-                      final rest = state.uri.toString().replaceFirst(
-                            '/me/expenses',
-                            '/portfolio/expenses',
-                          );
-                      return rest;
-                    },
-                  ),
-                ],
-              ),
-              GoRoute(
-                path: 'settings',
-                redirect: (context, state) {
-                  final rest = state.uri.toString().replaceFirst(
-                        '/me/settings',
-                        '/settings',
-                      );
-                  return rest;
-                },
-                routes: [
-                  GoRoute(
-                    path: ':_(.*)',
-                    redirect: (context, state) {
-                      final rest = state.uri.toString().replaceFirst(
-                            '/me/settings',
-                            '/settings',
-                          );
-                      return rest;
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+          // ── Settings (global, no tab) ────────────────────────────────
           GoRoute(
             path: '/settings',
             name: 'settings',
@@ -470,7 +340,175 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Legacy /more redirect → / ────────────────────────────────
+          // ── Legacy redirects ─────────────────────────────────────────
+          // /assets/* → /portfolio/* (trade → /activity/trade)
+          GoRoute(
+            path: '/assets',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              if (uri == '/assets/trade') return '/activity/trade';
+              return uri.replaceFirst('/assets', '/portfolio');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  if (uri == '/assets/trade') return '/activity/trade';
+                  return uri.replaceFirst('/assets', '/portfolio');
+                },
+              ),
+            ],
+          ),
+          // /accounts/* → /activity/accounts/*
+          GoRoute(
+            path: '/accounts',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst('/accounts', '/activity/accounts');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst('/accounts', '/activity/accounts');
+                },
+              ),
+            ],
+          ),
+          // /expenses/* → /activity/expenses/*
+          GoRoute(
+            path: '/expenses',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst('/expenses', '/activity/expenses');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst('/expenses', '/activity/expenses');
+                },
+              ),
+            ],
+          ),
+          // /analytics/* → /plan/analytics/*
+          GoRoute(
+            path: '/analytics',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst('/analytics', '/plan/analytics');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst('/analytics', '/plan/analytics');
+                },
+              ),
+            ],
+          ),
+          // /fire → /plan/fire
+          GoRoute(
+            path: '/fire',
+            redirect: (context, state) => '/plan/fire',
+          ),
+          // /rebalance → /plan/rebalance
+          GoRoute(
+            path: '/rebalance',
+            redirect: (context, state) => '/plan/rebalance',
+          ),
+          // /me/* → / (overview)
+          GoRoute(
+            path: '/me',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              if (uri == '/me') return '/';
+              // /me/accounts/* → /activity/accounts/*
+              if (uri.startsWith('/me/accounts')) {
+                return uri.replaceFirst('/me/accounts', '/activity/accounts');
+              }
+              // /me/expenses/* → /activity/expenses/*
+              if (uri.startsWith('/me/expenses')) {
+                return uri.replaceFirst('/me/expenses', '/activity/expenses');
+              }
+              // /me/ai → /ai
+              if (uri.startsWith('/me/ai')) return '/ai';
+              // /me/settings/* → /settings/*
+              if (uri.startsWith('/me/settings')) {
+                return uri.replaceFirst('/me/settings', '/settings');
+              }
+              return '/';
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  if (uri.startsWith('/me/accounts')) {
+                    return uri.replaceFirst(
+                        '/me/accounts', '/activity/accounts');
+                  }
+                  if (uri.startsWith('/me/expenses')) {
+                    return uri.replaceFirst(
+                        '/me/expenses', '/activity/expenses');
+                  }
+                  if (uri.startsWith('/me/ai')) return '/ai';
+                  if (uri.startsWith('/me/settings')) {
+                    return uri.replaceFirst('/me/settings', '/settings');
+                  }
+                  return '/';
+                },
+              ),
+            ],
+          ),
+          // /portfolio/accounts/* → /activity/accounts/*
+          GoRoute(
+            path: '/portfolio/accounts',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst(
+                  '/portfolio/accounts', '/activity/accounts');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst(
+                      '/portfolio/accounts', '/activity/accounts');
+                },
+              ),
+            ],
+          ),
+          // /portfolio/expenses/* → /activity/expenses/*
+          GoRoute(
+            path: '/portfolio/expenses',
+            redirect: (context, state) {
+              final uri = state.uri.toString();
+              return uri.replaceFirst(
+                  '/portfolio/expenses', '/activity/expenses');
+            },
+            routes: [
+              GoRoute(
+                path: ':_(.*)',
+                redirect: (context, state) {
+                  final uri = state.uri.toString();
+                  return uri.replaceFirst(
+                      '/portfolio/expenses', '/activity/expenses');
+                },
+              ),
+            ],
+          ),
+          // /portfolio/trade → /activity/trade
+          GoRoute(
+            path: '/portfolio/trade',
+            redirect: (context, state) => '/activity/trade',
+          ),
+          // /more → /
           GoRoute(
             path: '/more',
             redirect: (context, state) => '/',
@@ -509,20 +547,18 @@ class _RootShell extends ConsumerWidget {
       );
     });
     // Tab index resolution for the 4-tab layout:
-    // Home(0) | Portfolio(1) | Analytics(2) | Me(3)
+    // Overview(0) | Portfolio(1) | Activity(2) | Plan(3)
     final int index;
-    if (location.startsWith('/portfolio') ||
-        location.startsWith('/assets') ||
+    if (location.startsWith('/portfolio') || location.startsWith('/assets')) {
+      index = 1;
+    } else if (location.startsWith('/activity') ||
         location.startsWith('/expenses') ||
         location.startsWith('/accounts')) {
-      index = 1;
-    } else if (location.startsWith('/analytics') ||
+      index = 2;
+    } else if (location.startsWith('/plan') ||
+        location.startsWith('/analytics') ||
         location.startsWith('/fire') ||
         location.startsWith('/rebalance')) {
-      index = 2;
-    } else if (location.startsWith('/me') ||
-        location.startsWith('/ai') ||
-        location.startsWith('/settings')) {
       index = 3;
     } else {
       index = 0;
@@ -591,19 +627,19 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
       label: l10n.navPortfolio,
     ),
     _NavDestination(
-      icon: Icons.pie_chart_outline,
-      selectedIcon: Icons.pie_chart,
-      label: l10n.navAnalytics,
+      icon: Icons.receipt_long_outlined,
+      selectedIcon: Icons.receipt_long,
+      label: l10n.navActivity,
     ),
     _NavDestination(
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-      label: l10n.navMe,
+      icon: Icons.flag_outlined,
+      selectedIcon: Icons.flag,
+      label: l10n.navPlan,
     ),
   ];
 }
 
-class _MobileShell extends StatefulWidget {
+class _MobileShell extends StatelessWidget {
   const _MobileShell({
     required this.destinations,
     required this.selectedIndex,
@@ -619,34 +655,7 @@ class _MobileShell extends StatefulWidget {
   static const double barHeight = 64;
 
   @override
-  State<_MobileShell> createState() => _MobileShellState();
-}
-
-class _MobileShellState extends State<_MobileShell>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _dialController = AnimationController(
-    duration: const Duration(milliseconds: 350),
-    vsync: this,
-  );
-
-  @override
-  void dispose() {
-    _dialController.dispose();
-    super.dispose();
-  }
-
-  void _toggleSpeedDial() {
-    if (_dialController.isAnimating) return;
-    if (_dialController.isCompleted) {
-      _dialController.reverse();
-    } else {
-      _dialController.forward();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final glowColors = lgw.GlassThemeData.of(context).glowColorsFor(context);
 
     // Android 3-button nav: push bar above opaque buttons.
@@ -655,46 +664,14 @@ class _MobileShellState extends State<_MobileShell>
     final isIOS =
         platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
-    const gap = 4.0;
 
     return Stack(
       children: [
-        Positioned.fill(child: widget.child),
-        // Speed-dial scrim — always in tree so it can listen to animation.
-        AnimatedBuilder(
-          animation: _dialController,
-          builder: (context, _) {
-            if (_dialController.value == 0) return const SizedBox.shrink();
-            final t = Curves.easeOut.transform(_dialController.value);
-            return Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _dialController.reverse(),
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
-                  child: ColoredBox(
-                    color: Colors.black.withValues(alpha: 0.25 * t),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        // Action list — always in tree, positioned above the bar.
-        AnimatedBuilder(
-          animation: _dialController,
-          builder: (context, _) {
-            if (_dialController.value == 0) return const SizedBox.shrink();
-            return Positioned(
-              left: 0,
-              right: 0,
-              bottom: sysBottom + _MobileShell.barHeight + gap,
-              child: _SpeedDialActions(
-                controller: _dialController,
-                onDismiss: () => _dialController.reverse(),
-              ),
-            );
-          },
+        Positioned.fill(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: barHeight + sysBottom),
+            child: child,
+          ),
         ),
         // Glass bottom bar — always at the screen bottom.
         Positioned(
@@ -702,13 +679,13 @@ class _MobileShellState extends State<_MobileShell>
           right: 0,
           bottom: sysBottom,
           child: lgw.GlassBottomBar(
-            barHeight: _MobileShell.barHeight,
+            barHeight: barHeight,
             verticalPadding: 0,
             quality: lgw.GlassQuality.premium,
-            selectedIndex: widget.selectedIndex,
-            onTabSelected: widget.onDestinationSelected,
+            selectedIndex: selectedIndex,
+            onTabSelected: onDestinationSelected,
             tabs: [
-              for (final d in widget.destinations)
+              for (final d in destinations)
                 lgw.GlassBottomBarTab(
                   label: d.label,
                   icon: Icon(d.icon),
@@ -716,173 +693,9 @@ class _MobileShellState extends State<_MobileShell>
                   glowColor: glowColors.primary,
                 ),
             ],
-            extraButton: lgw.GlassBottomBarExtraButton(
-              icon: const Icon(Icons.add, color: Colors.white, size: 24),
-              label: l10n.superFabTrade,
-              size: 56,
-              onTap: _toggleSpeedDial,
-            ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SpeedDialAction {
-  const _SpeedDialAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-}
-
-/// Animated list of speed-dial action chips.
-class _SpeedDialActions extends StatelessWidget {
-  const _SpeedDialActions({
-    required this.controller,
-    required this.onDismiss,
-  });
-
-  final AnimationController controller;
-  final VoidCallback onDismiss;
-
-  static const double _actionHeight = 52.0;
-  static const double _actionGap = 10.0;
-  static const double _actionHorizontalPadding = 16.0;
-  static const _staggerStep = 0.08;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final actions = <_SpeedDialAction>[
-      _SpeedDialAction(
-        icon: Icons.swap_horiz,
-        label: l10n.superFabTrade,
-        onTap: () => context.push('/portfolio/trade'),
-      ),
-      _SpeedDialAction(
-        icon: Icons.receipt_long_outlined,
-        label: l10n.superFabExpense,
-        onTap: () => context.push('/portfolio/expenses/new'),
-      ),
-      _SpeedDialAction(
-        icon: Icons.swap_vert,
-        label: l10n.superFabTransfer,
-        onTap: () => context.push('/portfolio/accounts/transfer'),
-      ),
-      _SpeedDialAction(
-        icon: Icons.account_balance_wallet_outlined,
-        label: l10n.superFabAsset,
-        onTap: () => context.push('/portfolio/new/cash'),
-      ),
-    ];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (int i = 0; i < actions.length; i++)
-          _buildItem(actions[i], i, actions.length),
-      ],
-    );
-  }
-
-  Widget _buildItem(_SpeedDialAction action, int index, int total) {
-    final reversedIndex = total - 1 - index;
-    final stagger = reversedIndex * _staggerStep;
-    final itemT = (controller.value - stagger).clamp(0.0, 1.0);
-    final curved = Curves.easeOutCubic.transform(itemT);
-    final slideOffset = (1 - curved) * 24.0;
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        return Opacity(
-          opacity: itemT.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, slideOffset),
-            child: child,
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: _actionGap),
-        child: _GlassActionChip(
-          action: action,
-          height: _actionHeight,
-          horizontalPadding: _actionHorizontalPadding,
-          onDismiss: onDismiss,
-        ),
-      ),
-    );
-  }
-}
-
-/// Glass-style action chip for the speed-dial overlay.
-class _GlassActionChip extends StatelessWidget {
-  const _GlassActionChip({
-    required this.action,
-    required this.height,
-    required this.horizontalPadding,
-    required this.onDismiss,
-  });
-
-  final _SpeedDialAction action;
-  final double height;
-  final double horizontalPadding;
-  final VoidCallback onDismiss;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        onDismiss();
-        action.onTap();
-      },
-      child: lgw.GlassContainer(
-        useOwnLayer: true,
-        quality: lgw.GlassQuality.minimal,
-        height: height,
-        margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-        shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.full),
-        clipBehavior: Clip.antiAlias,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: ColorPalette.brand500.withValues(alpha: 0.15),
-              ),
-              alignment: Alignment.center,
-              child: Icon(action.icon, size: 18, color: ColorPalette.brand500),
-            ),
-            const SizedBox(width: Spacing.s12),
-            Flexible(
-              child: Text(
-                action.label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

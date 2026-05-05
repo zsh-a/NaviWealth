@@ -13,6 +13,8 @@ import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../home/data/dashboard_providers.dart';
+import '../home/domain/dashboard_models.dart';
 import '../investment/data/providers.dart';
 import '../investment/domain/models/holding_snapshot.dart';
 import 'asset_detail_page.dart';
@@ -262,7 +264,7 @@ class _EmptyHint extends StatelessWidget {
   }
 }
 
-class _ManualAssetsSection extends StatelessWidget {
+class _ManualAssetsSection extends ConsumerWidget {
   const _ManualAssetsSection({
     required this.assets,
     required this.selectedAssetId,
@@ -274,8 +276,16 @@ class _ManualAssetsSection extends StatelessWidget {
   final bool inMasterDetail;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final valuationsAsync = ref.watch(dashboardManualAssetValuationsProvider);
+    final valuationMap = <String, Decimal>{};
+    for (final v
+        in valuationsAsync.value ?? const <ManualAssetValuation>[]) {
+      final value = v.currentValue();
+      if (value != null && value.sign > 0) valuationMap[v.asset.id] = value;
+    }
+
     final grouped = <AssetType, List<Asset>>{};
     for (final a in assets) {
       grouped.putIfAbsent(a.type, () => []).add(a);
@@ -310,6 +320,7 @@ class _ManualAssetsSection extends StatelessWidget {
                     asset: asset,
                     selected: asset.id == selectedAssetId,
                     heroEnabled: !inMasterDetail,
+                    value: valuationMap[asset.id],
                   ),
               ],
             ),
@@ -556,11 +567,13 @@ class _AssetTile extends StatelessWidget {
     required this.asset,
     required this.selected,
     required this.heroEnabled,
+    this.value,
   });
 
   final Asset asset;
   final bool selected;
   final bool heroEnabled;
+  final Decimal? value;
 
   @override
   Widget build(BuildContext context) {
@@ -609,6 +622,12 @@ class _AssetTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: Spacing.s12),
+                if (value != null)
+                  MoneyText(
+                    amount: value!.toDouble(),
+                    currencyCode: asset.currency,
+                    style: TypographyTokens.numericBody,
+                  ),
               ],
             ),
           ),
