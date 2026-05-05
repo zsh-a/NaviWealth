@@ -10,6 +10,7 @@ import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
@@ -63,6 +64,9 @@ void main() {
           ),
           holdingsSnapshotProvider.overrideWith(
             (ref) async => const <String, HoldingSnapshot>{},
+          ),
+          dashboardPriceRowsProvider.overrideWith(
+            (ref) => Stream.value(const []),
           ),
         ],
         child: const NaviWealthApp(),
