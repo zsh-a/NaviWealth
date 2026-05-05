@@ -40,7 +40,7 @@ class AccountPicker extends StatelessWidget {
         ? accounts
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
     // Null out value if it doesn't exist in the filtered list to avoid
-    // DropdownButtonFormField assertion errors.
+    // AppDropdown assertion errors.
     final effectiveValue =
         filtered.any((a) => a.id == value) ? value : null;
     return AppDropdown<String>(

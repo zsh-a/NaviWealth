@@ -61,7 +61,7 @@ String currencyDisplayLabel(AppLocalizations l10n, String code) {
 
 /// Form-friendly currency dropdown.
 ///
-/// Backed by [DropdownButtonFormField] so it composes with [Form] +
+/// Backed by [AppDropdown] so it composes with [Form] +
 /// [Form.validate] the same way the other shared widgets do.
 class CurrencyPicker extends StatelessWidget {
   const CurrencyPicker({

@@ -265,19 +265,66 @@ class _GroupingChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<ExpenseGrouping>(
-      style: const ButtonStyle(
-        visualDensity: VisualDensity(horizontal: -3, vertical: -3),
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
+      borderRadius: Radii.lg.toDouble(),
+      padding: const EdgeInsets.all(Spacing.s4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final g in ExpenseGrouping.values)
+            _SegmentChip(
+              label: g == ExpenseGrouping.month ? '月' : '周',
+              selected: g == selected,
+              onTap: () {
+                Haptics.selection();
+                onChanged(g);
+              },
+            ),
+        ],
       ),
-      segments: const [
-        ButtonSegment(value: ExpenseGrouping.month, label: Text('月')),
-        ButtonSegment(value: ExpenseGrouping.week, label: Text('周')),
-      ],
-      selected: {selected},
-      onSelectionChanged: (s) {
-        Haptics.selection();
-        onChanged(s.first);
-      },
+    );
+  }
+}
+
+class _SegmentChip extends StatelessWidget {
+  const _SegmentChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s12,
+          vertical: Spacing.s6,
+        ),
+        decoration: selected
+            ? BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(Radii.md),
+              )
+            : null,
+        child: Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 }
