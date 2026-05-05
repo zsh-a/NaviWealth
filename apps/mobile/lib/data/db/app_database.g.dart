@@ -1707,12 +1707,10 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   /// land before the parent has caught up.
   final String? parentId;
 
-  /// FIR-130 — Material icon name for the account avatar (replaces
-  /// `expense_categories.icon`).
+  /// Material icon name for the account avatar.
   final String? icon;
 
-  /// FIR-130 — color token (hex string or design-token id) for the
-  /// account avatar (replaces `expense_categories.color`).
+  /// Color token (hex string or design-token id) for the account avatar.
   final String? color;
   const AccountRow({
     required this.ownerUserId,
