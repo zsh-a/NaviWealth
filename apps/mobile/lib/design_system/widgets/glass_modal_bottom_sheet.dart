@@ -20,6 +20,7 @@ Future<T?> showGlassModalBottomSheet<T>({
   bool showDragHandle = false,
   bool isDismissible = true,
   bool enableDrag = true,
+  bool useRootNavigator = true,
   Color? barrierColor,
   RouteSettings? routeSettings,
 }) {
@@ -30,6 +31,7 @@ Future<T?> showGlassModalBottomSheet<T>({
     showDragHandle: showDragHandle,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
+    useRootNavigator: useRootNavigator,
     barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.5),
     backgroundColor: Colors.transparent,
     elevation: 0,

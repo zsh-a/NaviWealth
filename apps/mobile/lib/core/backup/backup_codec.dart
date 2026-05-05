@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 
+import '../logging/app_logger.dart';
+
 /// Wire format magic for NaviWealth encrypted backup files.
 const String backupMagic = 'naviwealth.bak.v1';
 
@@ -84,9 +86,12 @@ class BackupEnvelope {
 }
 
 class BackupCodec {
-  BackupCodec({Random? random}) : _random = random ?? Random.secure();
+  BackupCodec({Random? random, AppLogger? logger})
+      : _random = random ?? Random.secure(),
+        _logger = logger ?? AppLogger.instance;
 
   final Random _random;
+  final AppLogger _logger;
 
   Future<BackupEnvelope> encrypt({
     required String passphrase,
@@ -98,6 +103,9 @@ class BackupCodec {
     if (passphrase.isEmpty) {
       throw ArgumentError.value(passphrase, 'passphrase', 'must not be empty');
     }
+    _logger.d('backup_codec: encrypting ${plaintext.length} bytes '
+        '(iterations=$iterations)');
+    final sw = Stopwatch()..start();
     final salt = _randomBytes(16);
     final nonce = _randomBytes(12);
     final secretKey = await _deriveKey(
@@ -111,6 +119,10 @@ class BackupCodec {
       secretKey: secretKey,
       nonce: nonce,
     );
+    sw.stop();
+    _logger.d('backup_codec: encryption done '
+        '(ciphertext=${secretBox.cipherText.length} bytes, '
+        '${sw.elapsedMilliseconds}ms)');
     return BackupEnvelope(
       salt: salt,
       nonce: nonce,
@@ -126,6 +138,10 @@ class BackupCodec {
     required String passphrase,
     required BackupEnvelope envelope,
   }) async {
+    _logger.d('backup_codec: decrypting '
+        '(ciphertext=${envelope.ciphertext.length} bytes, '
+        'iterations=${envelope.iterations})');
+    final sw = Stopwatch()..start();
     final secretKey = await _deriveKey(
       passphrase: passphrase,
       salt: envelope.salt,
@@ -139,8 +155,14 @@ class BackupCodec {
     );
     try {
       final plain = await algo.decrypt(secretBox, secretKey: secretKey);
+      sw.stop();
+      _logger.d('backup_codec: decryption done '
+          '(${plain.length} bytes, ${sw.elapsedMilliseconds}ms)');
       return Uint8List.fromList(plain);
     } on SecretBoxAuthenticationError {
+      sw.stop();
+      _logger.w('backup_codec: decryption failed — MAC verification error '
+          '(${sw.elapsedMilliseconds}ms)');
       throw const BackupAuthenticationException();
     }
   }
@@ -150,15 +172,21 @@ class BackupCodec {
     required Uint8List salt,
     required int iterations,
   }) async {
+    _logger.d('backup_codec: deriving key (PBKDF2-SHA256, '
+        'iterations=$iterations)');
+    final sw = Stopwatch()..start();
     final pbkdf2 = Pbkdf2(
       macAlgorithm: Hmac.sha256(),
       iterations: iterations,
       bits: 256,
     );
-    return pbkdf2.deriveKey(
+    final key = await pbkdf2.deriveKey(
       secretKey: SecretKey(utf8.encode(passphrase)),
       nonce: salt,
     );
+    sw.stop();
+    _logger.d('backup_codec: key derived (${sw.elapsedMilliseconds}ms)');
+    return key;
   }
 
   Uint8List _randomBytes(int length) {
