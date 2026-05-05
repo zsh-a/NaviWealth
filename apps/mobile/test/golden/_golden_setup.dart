@@ -22,7 +22,6 @@ const Size kGoldenLogicalSize = Size(390, 844);
 const double kGoldenDpr = 2.0;
 
 enum GoldenTheme {
-  light,
   dark,
   colorblind,
 }
@@ -30,8 +29,6 @@ enum GoldenTheme {
 extension GoldenThemeData on GoldenTheme {
   String get filenameSuffix {
     switch (this) {
-      case GoldenTheme.light:
-        return 'light';
       case GoldenTheme.dark:
         return 'dark';
       case GoldenTheme.colorblind:
@@ -41,8 +38,6 @@ extension GoldenThemeData on GoldenTheme {
 
   ThemeData buildTheme() {
     switch (this) {
-      case GoldenTheme.light:
-        return AppTheme.light();
       case GoldenTheme.dark:
         return AppTheme.dark();
       case GoldenTheme.colorblind:
