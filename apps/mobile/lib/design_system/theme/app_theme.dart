@@ -192,11 +192,19 @@ class AppTheme {
         ),
         isDense: true,
       ),
-      navigationBarTheme: const NavigationBarThemeData(
+      navigationBarTheme: NavigationBarThemeData(
         // T11 item 2: transparent indicator — custom lines drawn by
         // GlassNavigationBar instead of M3 capsule.
         indicatorColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            decoration: TextDecoration.none,
+          );
+        }),
       ),
       // T11 item 8: surfaceTintColor zeroed on all elevated surfaces.
       dialogTheme: const DialogThemeData(
@@ -205,7 +213,16 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(
         surfaceTintColor: Colors.transparent,
       ),
-      navigationRailTheme: const NavigationRailThemeData(),
+      navigationRailTheme: const NavigationRailThemeData(
+        selectedLabelTextStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.none,
+        ),
+        unselectedLabelTextStyle: TextStyle(
+          fontWeight: FontWeight.w500,
+          decoration: TextDecoration.none,
+        ),
+      ),
       popupMenuTheme: const PopupMenuThemeData(
         surfaceTintColor: Colors.transparent,
       ),
