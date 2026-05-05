@@ -785,6 +785,11 @@
 
   "activityFeedTab": "动态",
   "activityFeedComingSoon": "动态流即将推出",
+  "activityFeedEmpty": "暂无动态 — 记录一笔转账、支出或交易即可在此查看。",
+  "activityFeedToday": "今天",
+  "activityFeedYesterday": "昨天",
+  "activityFeedThisWeek": "本周",
+  "activityFeedEarlier": "更早",
   "accountsTransferAction": "转账",
   "accountsJournalAction": "日记账",
   "expenseReportTitle": "支出报表",

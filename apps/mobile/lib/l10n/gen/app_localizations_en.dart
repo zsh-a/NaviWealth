@@ -2428,6 +2428,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityFeedComingSoon => 'Activity feed coming soon';
 
   @override
+  String get activityFeedEmpty =>
+      'No activity yet — record a transfer, expense, or trade and it will appear here.';
+
+  @override
+  String get activityFeedToday => 'Today';
+
+  @override
+  String get activityFeedYesterday => 'Yesterday';
+
+  @override
+  String get activityFeedThisWeek => 'This week';
+
+  @override
+  String get activityFeedEarlier => 'Earlier';
+
+  @override
   String get accountsTransferAction => 'Transfer';
 
   @override
