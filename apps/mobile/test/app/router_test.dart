@@ -327,41 +327,38 @@ void main() {
   });
 
   group('responsive shell switches by viewport width', () {
-    // FIR-84: < 600 → NavigationBar (bottom), 600..1240 → NavigationRail
-    // (extended above 900), ≥ 1240 → NavigationDrawer. Tabs and selectedIndex
+    // FIR-84: < 600 → GlassBottomBar (bottom), ≥ 600 & < 1240 →
+    // GlassSideBar, ≥ 1240 → DesktopSidebar. Tabs and selectedIndex
     // stay consistent across the three layouts.
 
     testWidgets('mobile width uses GlassBottomBar at the bottom', (tester) async {
       await _pumpAt(tester, viewportSize: _mobileSize);
       expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(lgw.GlassSideBar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
-    testWidgets('tablet width uses a collapsed NavigationRail', (tester) async {
-      // 800px is below the 900px extended-rail threshold.
+    testWidgets('tablet width uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: _tabletSize);
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(lgw.GlassSideBar), findsOneWidget);
       expect(find.byType(lgw.GlassBottomBar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
-      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(rail.extended, isFalse);
     });
 
-    testWidgets('tablet width ≥ 900 extends the NavigationRail', (tester) async {
+    testWidgets('tablet width ≥ 900 still uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: const Size(1100, 1000));
-      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(rail.extended, isTrue);
+      expect(find.byType(lgw.GlassSideBar), findsOneWidget);
+      expect(find.byType(DesktopSidebar), findsNothing);
     });
 
     testWidgets('desktop width uses the FIR-106 collapsible sidebar', (tester) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
       expect(find.byType(DesktopSidebar), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(lgw.GlassSideBar), findsNothing);
       expect(find.byType(lgw.GlassBottomBar), findsNothing);
     });
 
-    testWidgets('NavigationRail selectedIndex follows the current URL', (
+    testWidgets('GlassSideBar selectedIndex follows the current URL', (
       tester,
     ) async {
       final container = await _pumpAt(
@@ -369,15 +366,19 @@ void main() {
         initialLocation: '/plan',
         viewportSize: _tabletSize,
       );
-      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      // /plan is tab index 3
-      expect(rail.selectedIndex, 3);
+      // Verify the sidebar is rendered with the correct selected item.
+      var items = tester.widgetList<lgw.GlassSideBarItem>(
+        find.byType(lgw.GlassSideBarItem),
+      );
+      expect(items.elementAt(3).isSelected, isTrue);
 
       container.read(appRouterProvider).go('/portfolio');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      final updated = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(updated.selectedIndex, 1);
+      items = tester.widgetList<lgw.GlassSideBarItem>(
+        find.byType(lgw.GlassSideBarItem),
+      );
+      expect(items.elementAt(1).isSelected, isTrue);
       await _drainTimers(tester);
     });
 
@@ -409,7 +410,7 @@ void main() {
       final container = await _pumpAt(tester, viewportSize: _tabletSize);
       expect(_currentPath(container), '/');
 
-      // The rail shows label text for all items via NavigationRailLabelType.all.
+      // The sidebar shows label text for all items.
       // Tap the "Portfolio" label to navigate.
       await tester.tap(find.text('Portfolio'));
       await tester.pump();
