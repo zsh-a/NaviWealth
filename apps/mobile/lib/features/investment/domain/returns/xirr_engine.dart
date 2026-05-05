@@ -69,6 +69,12 @@ class XirrFallbackAbsolute extends XirrSolution {
       'XirrFallbackAbsolute(absReturn=$absoluteReturn, reason=$reason)';
 }
 
+/// Top-level entry point for running XIRR in a background isolate via
+/// [Isolate.run]. All inputs are plain Dart objects — safe to send across
+/// isolate boundaries.
+XirrSolution computeXirr(List<XirrCashFlow> flows) =>
+    const XirrEngine().compute(flows);
+
 /// Pure XIRR solver: Newton-Raphson with a bisection fallback that guarantees
 /// convergence whenever a solution exists in `(-1, ∞)`.
 ///

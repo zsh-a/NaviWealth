@@ -626,7 +626,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     _ensureFieldsInitialized(l10n);
-    final padding = MediaQuery.of(context).viewInsets.bottom;
+    final padding = MediaQuery.viewInsetsOf(context).bottom;
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(

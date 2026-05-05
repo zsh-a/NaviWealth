@@ -1,12 +1,42 @@
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
+import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../assets/physical/data/physical_asset.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/domain/liability_summary.dart';
 import 'dashboard_models.dart';
+
+/// Top-level entry point for running the aggregation in a background isolate
+/// via [Isolate.run]. All parameters are plain Dart objects — safe to send
+/// across isolate boundaries. The [fxRates] list is used to reconstruct a
+/// [CurrencyConverter] inside the isolate.
+DashboardSnapshot aggregateDashboard({
+  required String baseCurrency,
+  required DateTime asOf,
+  required List<FxRate> fxRates,
+  required Iterable<ManualAssetValuation> manualAssets,
+  required Iterable<PhysicalAsset> physicalAssets,
+  required Iterable<Liability> liabilities,
+  required Iterable<LiabilitySummary> liabilitySummaries,
+  Iterable<SecurityHolding> securitiesHoldings = const [],
+}) {
+  final converter = FxRateCurrencyConverter(InMemoryFxRateLookup(fxRates));
+  final aggregator = DashboardAggregator(
+    converter: converter,
+    baseCurrency: baseCurrency,
+    asOf: asOf,
+  );
+  return aggregator.aggregate(
+    manualAssets: manualAssets,
+    physicalAssets: physicalAssets,
+    liabilities: liabilities,
+    liabilitySummaries: liabilitySummaries,
+    securitiesHoldings: securitiesHoldings,
+  );
+}
 
 /// One row of the holdings pipeline as the dashboard sees it: the asset
 /// metadata for category / labelling, paired with the priced snapshot.

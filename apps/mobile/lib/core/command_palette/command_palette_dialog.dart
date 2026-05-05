@@ -165,10 +165,10 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final MediaQueryData media = MediaQuery.of(context);
+    final Size mediaSize = MediaQuery.sizeOf(context);
 
-    final double maxWidth = media.size.width < 560 ? media.size.width - 48 : 520;
-    final double maxHeight = media.size.height * 0.6;
+    final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
+    final double maxHeight = mediaSize.height * 0.6;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),

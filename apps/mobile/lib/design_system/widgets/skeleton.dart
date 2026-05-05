@@ -110,14 +110,16 @@ class _SkeletonBoxState extends State<SkeletonBox>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(widget.radius),
         child: _running
-            ? AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) => CustomPaint(
-                  size: Size.infinite,
-                  painter: _ShimmerPainter(
-                    progress: _controller.value,
-                    base: base,
-                    highlight: highlight,
+            ? RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => CustomPaint(
+                    size: Size.infinite,
+                    painter: _ShimmerPainter(
+                      progress: _controller.value,
+                      base: base,
+                      highlight: highlight,
+                    ),
                   ),
                 ),
               )
@@ -142,23 +144,28 @@ class _ShimmerPainter extends CustomPainter {
   final Color base;
   final Color highlight;
 
+  // Cached Paint objects — avoid per-frame allocation.
+  late final _basePaint = Paint()..color = base;
+  final _shaderPaint = Paint();
+
+  // Cached gradient — only the shader rect changes per frame.
+  late final _gradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [base.withValues(alpha: 0), highlight, base.withValues(alpha: 0)],
+    stops: const [0.0, 0.5, 1.0],
+  );
+
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    canvas.drawRect(rect, Paint()..color = base);
+    canvas.drawRect(rect, _basePaint);
 
-    // Highlight band sweeps from off-left to off-right as `progress`
-    // ∈ [0, 1]. Width is half the box so the band has clear leading and
-    // trailing fades.
     final bandWidth = size.width * 0.5;
     final dx = -bandWidth + (size.width + bandWidth) * progress;
-    final shader = LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [base.withValues(alpha: 0), highlight, base.withValues(alpha: 0)],
-      stops: const [0.0, 0.5, 1.0],
-    ).createShader(Rect.fromLTWH(dx, 0, bandWidth, size.height));
-    canvas.drawRect(rect, Paint()..shader = shader);
+    _shaderPaint.shader =
+        _gradient.createShader(Rect.fromLTWH(dx, 0, bandWidth, size.height));
+    canvas.drawRect(rect, _shaderPaint);
   }
 
   @override

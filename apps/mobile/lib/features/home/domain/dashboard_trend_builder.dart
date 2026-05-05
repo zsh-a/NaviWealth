@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/liability.dart';
+import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/services/liability_balance_source.dart';
 import '../../../domain/services/net_worth_service.dart';
@@ -11,6 +12,38 @@ import '../../assets/physical/data/physical_asset.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import 'dashboard_models.dart';
 import 'dashboard_time_range.dart';
+
+/// Top-level entry point for running the trend build in a background isolate
+/// via [Isolate.run]. All parameters are plain Dart objects — safe to send
+/// across isolate boundaries. The [fxRates] list is used to reconstruct a
+/// [CurrencyConverter] inside the isolate.
+DashboardTrend buildDashboardTrend({
+  required DashboardTimeRange range,
+  required String baseCurrency,
+  required List<FxRate> fxRates,
+  required Iterable<ManualAssetValuation> manualAssets,
+  required Iterable<PhysicalAsset> physicalAssets,
+  required Iterable<Liability> liabilities,
+  required Map<String, List<AmortizationEntry>> liabilitySchedules,
+  Iterable<({Asset asset, HoldingSnapshot snapshot})> securitiesHoldings =
+      const [],
+  Map<String, List<ManualAssetValuePoint>> securityPrices = const {},
+}) {
+  final converter = FxRateCurrencyConverter(InMemoryFxRateLookup(fxRates));
+  final builder = DashboardTrendBuilder(
+    converter: converter,
+    baseCurrency: baseCurrency,
+  );
+  return builder.build(
+    range: range,
+    manualAssets: manualAssets,
+    physicalAssets: physicalAssets,
+    liabilities: liabilities,
+    liabilitySchedules: liabilitySchedules,
+    securitiesHoldings: securitiesHoldings,
+    securityPrices: securityPrices,
+  );
+}
 
 /// One observation on the dashboard trend chart. Mirrors
 /// [NetWorthSample] but trimmed of fields the dashboard does not need

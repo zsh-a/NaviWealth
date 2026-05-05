@@ -60,7 +60,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final viewInsets = MediaQuery.of(context).viewInsets;
+    final viewInsets = MediaQuery.viewInsetsOf(context);
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(

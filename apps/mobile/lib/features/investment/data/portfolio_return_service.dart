@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 
@@ -66,12 +68,13 @@ class LedgerPortfolioReturnService implements PortfolioReturnService {
       flows.add(XirrCashFlow(date: end, amount: endValue.toDouble()));
     }
 
+    final solution = await Isolate.run(() => computeXirr(flows));
     return PortfolioReturnResult(
       from: start,
       to: end,
       baseCurrency: baseCurrency,
       cashFlows: List.unmodifiable(flows),
-      solution: _xirr.compute(flows),
+      solution: solution,
       missingCurrencies: Set.unmodifiable(missingCurrencies),
     );
   }

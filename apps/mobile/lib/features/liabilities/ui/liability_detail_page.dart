@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/amortization_entry.dart';
@@ -239,82 +240,36 @@ class _AmortizationTable extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return Card(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 36,
-          dataRowMinHeight: 40,
-          dataRowMaxHeight: 48,
-          columnSpacing: Spacing.s24,
-          columns: [
-            DataColumn(label: Text(l10n.liabilityScheduleColPeriod)),
-            DataColumn(label: Text(l10n.liabilityScheduleColDue)),
-            DataColumn(
-              label: Text(l10n.liabilityScheduleColPrincipal),
-              numeric: true,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header row
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: _AmortizationHeaderRow(l10n: l10n),
+          ),
+          const Divider(height: 1),
+          // Lazy body — only visible rows are built.
+          Flexible(
+            child: ListView.builder(
+              itemExtent: 44,
+              itemCount: schedule.length,
+              itemBuilder: (context, i) {
+                final row = schedule[i];
+                return _AmortizationDataRow(
+                  row: row,
+                  currency: liability.currency,
+                  formatters: formatters,
+                  l10n: l10n,
+                  theme: theme,
+                  onMarkPaid: () =>
+                      _confirmMarkPaid(context, ref, row, liability),
+                );
+              },
             ),
-            DataColumn(
-              label: Text(l10n.liabilityScheduleColInterest),
-              numeric: true,
-            ),
-            DataColumn(
-              label: Text(l10n.liabilityScheduleColRemaining),
-              numeric: true,
-            ),
-            DataColumn(label: Text(l10n.liabilityScheduleColStatus)),
-          ],
-          rows: [
-            for (final row in schedule)
-              DataRow(
-                cells: [
-                  DataCell(Text('${row.periodIndex}')),
-                  DataCell(Text(formatters.date(row.dueDate))),
-                  DataCell(
-                    Text(
-                      formatters.currency(
-                        row.principalPayment,
-                        code: liability.currency,
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      formatters.currency(
-                        row.interestPayment,
-                        code: liability.currency,
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      formatters.currency(
-                        row.remainingBalance,
-                        code: liability.currency,
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    row.paidAt != null
-                        ? Chip(
-                            visualDensity: VisualDensity.compact,
-                            label: Text(l10n.liabilityScheduleStatusPaid),
-                            backgroundColor:
-                                theme.colorScheme.secondaryContainer,
-                          )
-                        : AppButton.tertiary(
-                            label: l10n.liabilityScheduleMarkPaid,
-                            onPressed: () => _confirmMarkPaid(
-                              context,
-                              ref,
-                              row,
-                              liability,
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -364,6 +319,137 @@ class _AmortizationTable extends ConsumerWidget {
     await repo.registerPayment(
       liabilityId: liability.id,
       periodIndex: row.periodIndex,
+    );
+  }
+}
+
+class _AmortizationHeaderRow extends StatelessWidget {
+  const _AmortizationHeaderRow({required this.l10n});
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelSmall;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s16,
+        vertical: Spacing.s8,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            child: Text(l10n.liabilityScheduleColPeriod, style: style),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(l10n.liabilityScheduleColDue, style: style),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(
+              l10n.liabilityScheduleColPrincipal,
+              style: style,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(
+              l10n.liabilityScheduleColInterest,
+              style: style,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(
+              l10n.liabilityScheduleColRemaining,
+              style: style,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          const SizedBox(width: 120),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmortizationDataRow extends StatelessWidget {
+  const _AmortizationDataRow({
+    required this.row,
+    required this.currency,
+    required this.formatters,
+    required this.l10n,
+    required this.theme,
+    required this.onMarkPaid,
+  });
+
+  final AmortizationEntry row;
+  final String currency;
+  final AppFormatters formatters;
+  final AppLocalizations l10n;
+  final ThemeData theme;
+  final VoidCallback onMarkPaid;
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = theme.textTheme.bodySmall;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s16,
+        vertical: Spacing.s4,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            child: Text('${row.periodIndex}', style: textStyle),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(formatters.date(row.dueDate), style: textStyle),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(
+              formatters.currency(row.principalPayment, code: currency),
+              style: textStyle,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(
+              formatters.currency(row.interestPayment, code: currency),
+              style: textStyle,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text(
+              formatters.currency(row.remainingBalance, code: currency),
+              style: textStyle,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          SizedBox(
+            width: 120,
+            child: row.paidAt != null
+                ? Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text(l10n.liabilityScheduleStatusPaid),
+                    backgroundColor: theme.colorScheme.secondaryContainer,
+                  )
+                : AppButton.tertiary(
+                    label: l10n.liabilityScheduleMarkPaid,
+                    onPressed: onMarkPaid,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

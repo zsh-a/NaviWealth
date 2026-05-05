@@ -250,7 +250,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.of(context).viewInsets;
+    final viewInsets = MediaQuery.viewInsetsOf(context);
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets.bottom),
       child: Form(

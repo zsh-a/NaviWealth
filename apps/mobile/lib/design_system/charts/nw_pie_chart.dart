@@ -101,12 +101,14 @@ class _NwPieChartState extends State<NwPieChart> {
 
     final centerRadius = widget.hole * 80;
 
-    final pieChart = PieChart(
-      PieChartData(
-        sections: sections,
-        centerSpaceRadius: centerRadius,
-        sectionsSpace: 3,
-        pieTouchData: _buildTouchData(),
+    final pieChart = RepaintBoundary(
+      child: PieChart(
+        PieChartData(
+          sections: sections,
+          centerSpaceRadius: centerRadius,
+          sectionsSpace: 3,
+          pieTouchData: _buildTouchData(),
+        ),
       ),
     );
 

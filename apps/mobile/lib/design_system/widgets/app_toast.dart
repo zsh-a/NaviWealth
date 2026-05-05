@@ -207,8 +207,7 @@ class _ToastWidgetState extends State<_ToastWidget>
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final topPadding = mediaQuery.padding.top + Spacing.s16;
+    final topPadding = MediaQuery.paddingOf(context).top + Spacing.s16;
     final tokens = GlassTokens.of(context);
     final accent = _accentColor(context);
     final theme = Theme.of(context);

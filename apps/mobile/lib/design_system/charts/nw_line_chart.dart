@@ -151,14 +151,16 @@ class _NwLineChartState extends State<NwLineChart> {
         ),
         if (_touchLocalX != null) ...[
           IgnorePointer(
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: _CrosshairPainter(
-                touchX: _touchLocalX!,
-                lineBars: lineBars,
-                minX: minX,
-                maxX: maxX,
-                color: palette.axisLabel,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: _CrosshairPainter(
+                  touchX: _touchLocalX!,
+                  lineBars: lineBars,
+                  minX: minX,
+                  maxX: maxX,
+                  color: palette.axisLabel,
+                ),
               ),
             ),
           ),
@@ -442,7 +444,7 @@ class _NwLineChartState extends State<NwLineChart> {
 // ---------------------------------------------------------------------------
 
 class _CrosshairPainter extends CustomPainter {
-  const _CrosshairPainter({
+  _CrosshairPainter({
     required this.touchX,
     required this.lineBars,
     required this.minX,
@@ -455,6 +457,17 @@ class _CrosshairPainter extends CustomPainter {
   final double minX;
   final double maxX;
   final Color color;
+
+  // Cached Paint objects — reused across frames.
+  late final _hairlinePaint = Paint()
+    ..color = color.withValues(alpha: 0.35)
+    ..strokeWidth = 1
+    ..style = PaintingStyle.stroke;
+  late final _dotFillPaint = Paint()..style = PaintingStyle.fill;
+  static final _dotStrokePaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -478,31 +491,26 @@ class _CrosshairPainter extends CustomPainter {
     final pixelX =
         ((nearest.x - minX) / (maxX - minX)) * size.width;
     // Map Y: chart Y increases upward, pixel Y increases downward.
-    final yRange = lineBars.expand((b) => b.spots).fold<double>(
-          double.infinity,
-          (m, s) => math.min(m, s.y),
-        );
-    final yMax = lineBars.expand((b) => b.spots).fold<double>(
-          double.negativeInfinity,
-          (m, s) => math.max(m, s.y),
-        );
-    final yPad = (yMax - yRange).abs() * 0.1 + 1;
-    final chartMinY = yRange - yPad;
+    double yMin = double.infinity;
+    double yMax = double.negativeInfinity;
+    for (final bar in lineBars) {
+      for (final s in bar.spots) {
+        if (s.y < yMin) yMin = s.y;
+        if (s.y > yMax) yMax = s.y;
+      }
+    }
+    final yPad = (yMax - yMin).abs() * 0.1 + 1;
+    final chartMinY = yMin - yPad;
     final chartMaxY = yMax + yPad;
     final pixelY = size.height -
         ((nearest.y - chartMinY) / (chartMaxY - chartMinY)) * size.height;
-
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.35)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
 
     // Vertical dashed hairline.
     _drawDashedLine(
       canvas,
       Offset(pixelX, 0),
       Offset(pixelX, size.height),
-      paint,
+      _hairlinePaint,
       dashLength: 4,
       gapLength: 3,
     );
@@ -512,21 +520,15 @@ class _CrosshairPainter extends CustomPainter {
       canvas,
       Offset(0, pixelY),
       Offset(size.width, pixelY),
-      paint,
+      _hairlinePaint,
       dashLength: 4,
       gapLength: 3,
     );
 
     // Circle dot at the intersection.
-    final dotPaint = Paint()
-      ..color = lineBars.first.color ?? color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(pixelX, pixelY), 4, dotPaint);
-    final dotStroke = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(Offset(pixelX, pixelY), 4, dotStroke);
+    _dotFillPaint.color = lineBars.first.color ?? color;
+    canvas.drawCircle(Offset(pixelX, pixelY), 4, _dotFillPaint);
+    canvas.drawCircle(Offset(pixelX, pixelY), 4, _dotStrokePaint);
   }
 
   void _drawDashedLine(
