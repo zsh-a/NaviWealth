@@ -28,17 +28,13 @@ lib/features/ai_chat/domain/proposal_plan.dart
 lib/features/ai_chat/ui/tool_invocation_renderers.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
-# Default expense categories seeded at first launch. Names are CN by
-# design for the initial CN-only release; will be revisited when we
-# ship i18n-aware seeding.
-lib/data/repositories/expense_category_repository.dart
 # FIR-126: system account seed names ('系统收入账户', '系统支出账户',
 # '系统权益账户') are persisted into the synced `accounts` table at
 # first launch. The display label that users actually see is resolved
 # via `accountCategoryLabel` in AppLocalizations; this constant is the
 # fallback row name surfaced only when l10n isn't available (e.g. AI
 # assistant referring to the row in raw chat). Will be revisited
-# alongside expense_category_repository when i18n-aware seeding lands.
+# when i18n-aware seeding lands.
 lib/data/repositories/account_repository.dart
 
 # ─── command palette search keywords (intentional) ──────────────────
@@ -58,7 +54,6 @@ lib/core/command_palette/default_commands.dart
 lib/features/assets/asset_detail_page.dart
 lib/features/assets/deposit_form_page.dart
 lib/features/assets/wealth_product_form_page.dart
-lib/features/expense/ui/expense_categories_page.dart
 lib/features/expense/ui/expense_list_page.dart
 lib/features/expense/ui/expense_report_page.dart
 lib/features/shared/forms/local_securities_picker.dart

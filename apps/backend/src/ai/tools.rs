@@ -527,7 +527,7 @@ async fn get_journal_entries(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, 
         }
         filtered.push((date, row));
     }
-    filtered.sort_by(|a, b| b.0.cmp(&a.0));
+    filtered.sort_by_key(|b| std::cmp::Reverse(b.0));
     let truncated = filtered.len() > limit;
     filtered.truncate(limit);
     let items: Vec<Value> = filtered.into_iter().map(|(_, v)| v).collect();
@@ -797,7 +797,7 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         let amount = payload_num(p, "units").unwrap_or(0.0);
         events.push((date, amount, Some(unit.to_string())));
     }
-    events.sort_by(|a, b| a.0.cmp(&b.0));
+    events.sort_by_key(|a| a.0);
 
     let total_liabilities: f64 = liabilities
         .iter()
