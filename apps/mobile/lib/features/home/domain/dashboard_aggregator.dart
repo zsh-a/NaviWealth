@@ -173,7 +173,11 @@ class DashboardAggregator {
 
   CategoryItem? _itemForManualAsset(ManualAssetValuation valued) {
     final value = valued.valueAt(asOf);
-    if (value == null || value.sign <= 0) return null;
+    if (value == null) return null;
+    // Cash can go negative (e.g. trade overdraws); include it so net worth
+    // stays accurate. Other manual assets (deposits, wealth products) with
+    // non-positive values are still excluded.
+    if (value.sign <= 0 && valued.asset.type != AssetType.cash) return null;
     final asset = valued.asset;
     final converted = _tryConvert(asset.id, Money(value, asset.currency));
     if (converted == null) return null;

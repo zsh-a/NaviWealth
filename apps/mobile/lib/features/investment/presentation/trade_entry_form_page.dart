@@ -173,6 +173,43 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           ),
     );
 
+    // For buys with a known price, check whether the cash account would
+    // go negative and prompt the user to confirm.
+    if (type == TradeType.buy && price != null) {
+      final cashOut = quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
+      final cashAccountId = _cashAccountId ?? accountId;
+      final currentBalance = await jeRepo.balanceByAccount(cashAccountId);
+      if (!mounted) return;
+      final resulting = currentBalance - cashOut;
+      if (resulting < Decimal.zero) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l10n.tradeEntryCashOverdrawTitle),
+            content: Text(
+              l10n.tradeEntryCashOverdrawMessage(
+                '${resulting.toStringAsFixed(2)} $currency',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l10n.commonCancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(l10n.tradeEntryCashOverdrawProceed),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) {
+          setState(() => _busy = false);
+          return;
+        }
+      }
+    }
+
     await submitOptimistic(
       // Use the underlying Navigator (rather than `context.pop()`) so the
       // form is portable to test surfaces that mount it without a router.

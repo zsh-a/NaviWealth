@@ -64,7 +64,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byType(AppFab));
       expect(pressed, 1);
       expect(recorder.calls, ['HapticFeedbackType.lightImpact']);
     });
@@ -84,7 +84,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byType(AppFab));
       expect(pressed, 1);
       expect(recorder.calls, ['HapticFeedbackType.lightImpact']);
     });
@@ -102,7 +102,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byType(AppFab));
       expect(recorder.calls, isEmpty);
     });
   });
