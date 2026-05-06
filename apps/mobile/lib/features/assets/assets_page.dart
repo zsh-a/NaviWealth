@@ -84,8 +84,21 @@ class _AssetsMaster extends ConsumerWidget {
     final physicalAsync = ref.watch(physicalAssetsListProvider);
     final securitiesAsync = ref.watch(securitiesAssetsStreamProvider);
     final holdingsAsync = ref.watch(holdingsSnapshotProvider);
+    final valuationsAsync = ref.watch(dashboardManualAssetValuationsProvider);
+    final accountsAsync = ref.watch(accountsStreamProvider);
 
     final securitiesOrdered = _orderedSecurities(securitiesAsync.value);
+    final valuationMap = <String, Decimal>{};
+    for (final v in valuationsAsync.value ?? const <ManualAssetValuation>[]) {
+      final value = v.currentValue();
+      // Cash can go negative (trade overdraw); always include it.
+      // Other manual assets with non-positive values are excluded.
+      if (value != null && (value.sign > 0 || v.asset.type == AssetType.cash)) {
+        valuationMap[v.asset.id] = value;
+      }
+    }
+    final accounts = accountsAsync.value ?? const <Account>[];
+    final accountById = {for (final a in accounts) a.id: a};
 
     // Build a flat ordered list of all asset IDs for j/k navigation. Mirrors
     // the visual order of the body: manual assets, then securities, then
@@ -102,6 +115,8 @@ class _AssetsMaster extends ConsumerWidget {
       securitiesAsync: securitiesAsync,
       securities: securitiesOrdered,
       holdings: holdingsAsync.value ?? const <String, HoldingSnapshot>{},
+      valuationMap: valuationMap,
+      accountById: accountById,
       selectedAssetId: selectedAssetId,
       inMasterDetail: inMasterDetail,
     );
@@ -137,7 +152,11 @@ class _AssetsMaster extends ConsumerWidget {
         if (nextIndex < 0) nextIndex += allIds.length;
       }
     }
-    replaceSelectedQuery(context, path: '/portfolio', selected: allIds[nextIndex]);
+    replaceSelectedQuery(
+      context,
+      path: '/portfolio',
+      selected: allIds[nextIndex],
+    );
   }
 }
 
@@ -164,6 +183,8 @@ class _AssetsBody extends StatelessWidget {
     required this.securitiesAsync,
     required this.securities,
     required this.holdings,
+    required this.valuationMap,
+    required this.accountById,
     required this.selectedAssetId,
     required this.inMasterDetail,
   });
@@ -173,12 +194,15 @@ class _AssetsBody extends StatelessWidget {
   final AsyncValue<List<Asset>> securitiesAsync;
   final List<Asset> securities;
   final Map<String, HoldingSnapshot> holdings;
+  final Map<String, Decimal> valuationMap;
+  final Map<String, Account> accountById;
   final String? selectedAssetId;
   final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
-    final loading = manualAsync.isLoading ||
+    final loading =
+        manualAsync.isLoading ||
         physicalAsync.isLoading ||
         securitiesAsync.isLoading;
     return PageSkeletonShell<void>(
@@ -196,13 +220,12 @@ class _AssetsBody extends StatelessWidget {
     }
     final manualErr = manualAsync.hasError ? manualAsync.error : null;
     final physicalErr = physicalAsync.hasError ? physicalAsync.error : null;
-    final securitiesErr =
-        securitiesAsync.hasError ? securitiesAsync.error : null;
+    final securitiesErr = securitiesAsync.hasError
+        ? securitiesAsync.error
+        : null;
     if (manualErr != null && physicalErr != null && securitiesErr != null) {
       return Center(
-        child: Text(
-          AppLocalizations.of(context).assetsLoadError('$manualErr'),
-        ),
+        child: Text(AppLocalizations.of(context).assetsLoadError('$manualErr')),
       );
     }
     final manual = manualAsync.value ?? const <Asset>[];
@@ -210,37 +233,259 @@ class _AssetsBody extends StatelessWidget {
     if (manual.isEmpty && physical.isEmpty && securities.isEmpty) {
       return const _EmptyHint();
     }
-    // Build a flat list of section widgets for lazy construction.
-    final sections = <Widget>[
-      if (manual.isNotEmpty)
-        _ManualAssetsSection(
-          assets: manual,
-          selectedAssetId: selectedAssetId,
-          inMasterDetail: inMasterDetail,
-        ),
-      if (securities.isNotEmpty)
-        _SecuritiesAssetsSection(
-          assets: securities,
-          holdings: holdings,
-          selectedAssetId: selectedAssetId,
-          inMasterDetail: inMasterDetail,
-        ),
-      if (physical.isNotEmpty)
-        _PhysicalAssetsSection(
-          assets: physical,
-          selectedAssetId: selectedAssetId,
-        ),
-    ];
+    final rows = _buildAssetRows(
+      manual: manual,
+      securities: securities,
+      physical: physical,
+      holdings: holdings,
+      valuationMap: valuationMap,
+      accountById: accountById,
+    );
     return ScrollNotificationHandler(
       child: ListView.builder(
         padding: Spacing.pageMobile.copyWith(
-          bottom: Spacing.pageMobile.bottom +
+          bottom:
+              Spacing.pageMobile.bottom +
               Spacing.floatingBarClearance +
               MediaQuery.paddingOf(context).bottom,
         ),
-        itemCount: sections.length,
-        itemBuilder: (context, i) => sections[i],
+        itemCount: rows.length,
+        itemBuilder: (context, i) => _AssetListRowWidget(
+          row: rows[i],
+          selectedAssetId: selectedAssetId,
+          inMasterDetail: inMasterDetail,
+        ),
       ),
+    );
+  }
+}
+
+List<_AssetListRow> _buildAssetRows({
+  required List<Asset> manual,
+  required List<Asset> securities,
+  required List<PhysicalAsset> physical,
+  required Map<String, HoldingSnapshot> holdings,
+  required Map<String, Decimal> valuationMap,
+  required Map<String, Account> accountById,
+}) {
+  final rows = <_AssetListRow>[];
+
+  final manualGrouped = <AssetType, List<Asset>>{};
+  for (final a in manual) {
+    manualGrouped.putIfAbsent(a.type, () => []).add(a);
+  }
+  final manualOrder = [
+    AssetType.cash,
+    AssetType.bankDepositDemand,
+    AssetType.bankDepositTerm,
+    AssetType.wealthProduct,
+  ].where(manualGrouped.containsKey);
+
+  for (final type in manualOrder) {
+    rows.add(_ManualTypeHeaderRow(type));
+    if (type == AssetType.cash) {
+      rows.addAll(
+        _cashRows(
+          manualGrouped[type]!,
+          valuationMap: valuationMap,
+          accountById: accountById,
+        ),
+      );
+    } else {
+      for (final asset in manualGrouped[type]!) {
+        rows.add(_ManualAssetTileRow(asset, valuationMap[asset.id]));
+      }
+    }
+    rows.add(const _GapRow(Spacing.s12));
+  }
+
+  final securitiesGrouped = <AssetType, List<Asset>>{};
+  for (final a in securities) {
+    securitiesGrouped.putIfAbsent(a.type, () => []).add(a);
+  }
+  final securitiesOrder = _kSecuritiesTypeOrder
+      .where(securitiesGrouped.containsKey)
+      .toList(growable: false);
+  for (final type in securitiesOrder) {
+    rows.add(_SecurityTypeHeaderRow(type));
+    for (final asset in securitiesGrouped[type]!) {
+      rows.add(_SecurityAssetTileRow(asset, holdings[asset.id]));
+    }
+    rows.add(const _GapRow(Spacing.s12));
+  }
+
+  if (physical.isNotEmpty) {
+    rows.add(const _PhysicalHeaderRow());
+    for (final asset in physical) {
+      rows.add(_PhysicalAssetTileRow(asset));
+      rows.add(const _GapRow(Spacing.s8));
+    }
+    rows.add(const _GapRow(Spacing.s12));
+  }
+
+  return rows;
+}
+
+List<_AssetListRow> _cashRows(
+  List<Asset> cashAssets, {
+  required Map<String, Decimal> valuationMap,
+  required Map<String, Account> accountById,
+}) {
+  final rows = <_AssetListRow>[];
+  final byAccount = <String, List<Asset>>{};
+  final orphanAssets = <Asset>[];
+  for (final asset in cashAssets) {
+    final meta = ManualAssetMetadata.decode(asset.metadataJson);
+    final accountId = meta?.accountId;
+    if (accountId != null) {
+      byAccount.putIfAbsent(accountId, () => []).add(asset);
+    } else {
+      orphanAssets.add(asset);
+    }
+  }
+
+  final sortedAccountIds = byAccount.keys.toList()
+    ..sort((a, b) {
+      final aa = accountById[a];
+      final bb = accountById[b];
+      if (aa == null && bb == null) return 0;
+      if (aa == null) return 1;
+      if (bb == null) return -1;
+      return aa.name.compareTo(bb.name);
+    });
+
+  for (final accountId in sortedAccountIds) {
+    rows.add(_CashGroupHeaderRow(accountId, accountById[accountId]));
+    for (final asset in byAccount[accountId]!) {
+      rows.add(_ManualAssetTileRow(asset, valuationMap[asset.id]));
+    }
+  }
+  for (final asset in orphanAssets) {
+    rows.add(_ManualAssetTileRow(asset, valuationMap[asset.id]));
+  }
+  return rows;
+}
+
+sealed class _AssetListRow {
+  const _AssetListRow();
+}
+
+class _ManualTypeHeaderRow extends _AssetListRow {
+  const _ManualTypeHeaderRow(this.type);
+  final AssetType type;
+}
+
+class _SecurityTypeHeaderRow extends _AssetListRow {
+  const _SecurityTypeHeaderRow(this.type);
+  final AssetType type;
+}
+
+class _PhysicalHeaderRow extends _AssetListRow {
+  const _PhysicalHeaderRow();
+}
+
+class _CashGroupHeaderRow extends _AssetListRow {
+  const _CashGroupHeaderRow(this.accountId, this.account);
+  final String accountId;
+  final Account? account;
+}
+
+class _ManualAssetTileRow extends _AssetListRow {
+  const _ManualAssetTileRow(this.asset, this.value);
+  final Asset asset;
+  final Decimal? value;
+}
+
+class _SecurityAssetTileRow extends _AssetListRow {
+  const _SecurityAssetTileRow(this.asset, this.snapshot);
+  final Asset asset;
+  final HoldingSnapshot? snapshot;
+}
+
+class _PhysicalAssetTileRow extends _AssetListRow {
+  const _PhysicalAssetTileRow(this.asset);
+  final PhysicalAsset asset;
+}
+
+class _GapRow extends _AssetListRow {
+  const _GapRow(this.height);
+  final double height;
+}
+
+class _AssetListRowWidget extends StatelessWidget {
+  const _AssetListRowWidget({
+    required this.row,
+    required this.selectedAssetId,
+    required this.inMasterDetail,
+  });
+
+  final _AssetListRow row;
+  final String? selectedAssetId;
+  final bool inMasterDetail;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return switch (row) {
+      _ManualTypeHeaderRow(:final type) => _SectionHeader(
+        title: manualAssetTypeLabel(l10n, type),
+      ),
+      _SecurityTypeHeaderRow(:final type) => _SectionHeader(
+        title: securitiesAssetTypeLabel(l10n, type),
+      ),
+      _PhysicalHeaderRow() => _SectionHeader(
+        title: l10n.physicalAssetsSectionTitle,
+      ),
+      _CashGroupHeaderRow(:final accountId, :final account) =>
+        _AccountGroupHeader(accountId: accountId, account: account),
+      _ManualAssetTileRow(:final asset, :final value) => _TertiaryRowSurface(
+        child: _AssetTile(
+          asset: asset,
+          selected: asset.id == selectedAssetId,
+          heroEnabled: !inMasterDetail,
+          value: value,
+        ),
+      ),
+      _SecurityAssetTileRow(:final asset, :final snapshot) =>
+        _TertiaryRowSurface(
+          child: _SecurityTile(
+            asset: asset,
+            snapshot: snapshot,
+            selected: asset.id == selectedAssetId,
+            heroEnabled: !inMasterDetail,
+          ),
+        ),
+      _PhysicalAssetTileRow(:final asset) => PhysicalAssetCard(asset: asset),
+      _GapRow(:final height) => SizedBox(height: height),
+    };
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s8, bottom: Spacing.s8),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+}
+
+class _TertiaryRowSurface extends StatelessWidget {
+  const _TertiaryRowSurface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
+      padding: EdgeInsets.zero,
+      child: child,
     );
   }
 }
@@ -259,172 +504,9 @@ class _EmptyHint extends StatelessWidget {
           children: [
             const Icon(Icons.account_balance_wallet_outlined, size: 48),
             const SizedBox(height: Spacing.s12),
-            Text(
-              l10n.assetsEmptyHint,
-              textAlign: TextAlign.center,
-            ),
+            Text(l10n.assetsEmptyHint, textAlign: TextAlign.center),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ManualAssetsSection extends ConsumerWidget {
-  const _ManualAssetsSection({
-    required this.assets,
-    required this.selectedAssetId,
-    required this.inMasterDetail,
-  });
-
-  final List<Asset> assets;
-  final String? selectedAssetId;
-  final bool inMasterDetail;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final valuationsAsync = ref.watch(dashboardManualAssetValuationsProvider);
-    final valuationMap = <String, Decimal>{};
-    for (final v
-        in valuationsAsync.value ?? const <ManualAssetValuation>[]) {
-      final value = v.currentValue();
-      // Cash can go negative (trade overdraw); always include it.
-      // Other manual assets with non-positive values are excluded.
-      if (value != null &&
-          (value.sign > 0 || v.asset.type == AssetType.cash)) {
-        valuationMap[v.asset.id] = value;
-      }
-    }
-
-    final accountsAsync = ref.watch(accountsStreamProvider);
-    final accounts = accountsAsync.value ?? const [];
-    final accountById = {for (final a in accounts) a.id: a};
-
-    final grouped = <AssetType, List<Asset>>{};
-    for (final a in assets) {
-      grouped.putIfAbsent(a.type, () => []).add(a);
-    }
-    final order = [
-      AssetType.cash,
-      AssetType.bankDepositDemand,
-      AssetType.bankDepositTerm,
-      AssetType.wealthProduct,
-    ].where(grouped.containsKey).toList(growable: false);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final type in order) ...[
-          Padding(
-            padding: const EdgeInsets.only(
-              top: Spacing.s8,
-              bottom: Spacing.s8,
-            ),
-            child: Text(
-              manualAssetTypeLabel(l10n, type),
-              style: theme.textTheme.titleMedium,
-            ),
-          ),
-          if (type == AssetType.cash)
-            _CashAccountGroups(
-              cashAssets: grouped[type]!,
-              valuationMap: valuationMap,
-              accountById: accountById,
-              selectedAssetId: selectedAssetId,
-              inMasterDetail: inMasterDetail,
-            )
-          else
-            LiquidGlassCard(
-              child: Column(
-                children: [
-                  for (final asset in grouped[type]!)
-                    _AssetTile(
-                      asset: asset,
-                      selected: asset.id == selectedAssetId,
-                      heroEnabled: !inMasterDetail,
-                      value: valuationMap[asset.id],
-                    ),
-                ],
-              ),
-            ),
-          const SizedBox(height: Spacing.s12),
-        ],
-      ],
-    );
-  }
-}
-
-/// Groups cash assets by their parent account for a clearer portfolio view.
-///
-/// Each account gets a sub-header showing the account name and institution,
-/// with individual currency balances listed beneath. This aligns with the
-/// double-entry bookkeeping model where each account holds a single currency
-/// and cash assets map 1:1 to ledger accounts.
-class _CashAccountGroups extends StatelessWidget {
-  const _CashAccountGroups({
-    required this.cashAssets,
-    required this.valuationMap,
-    required this.accountById,
-    required this.selectedAssetId,
-    required this.inMasterDetail,
-  });
-
-  final List<Asset> cashAssets;
-  final Map<String, Decimal> valuationMap;
-  final Map<String, Account> accountById;
-  final String? selectedAssetId;
-  final bool inMasterDetail;
-
-  @override
-  Widget build(BuildContext context) {
-    // Group cash assets by accountId.
-    final byAccount = <String, List<Asset>>{};
-    final orphanAssets = <Asset>[];
-    for (final asset in cashAssets) {
-      final meta = ManualAssetMetadata.decode(asset.metadataJson);
-      final accountId = meta?.accountId;
-      if (accountId != null) {
-        byAccount.putIfAbsent(accountId, () => []).add(asset);
-      } else {
-        orphanAssets.add(asset);
-      }
-    }
-
-    // Sort account groups: those with known accounts first (by name),
-    // orphan assets last.
-    final sortedAccountIds = byAccount.keys.toList()
-      ..sort((a, b) {
-        final aa = accountById[a];
-        final bb = accountById[b];
-        if (aa == null && bb == null) return 0;
-        if (aa == null) return 1;
-        if (bb == null) return -1;
-        return aa.name.compareTo(bb.name);
-      });
-
-    return LiquidGlassCard(
-      child: Column(
-        children: [
-          for (final accountId in sortedAccountIds) ...[
-            _AccountGroupHeader(accountId: accountId, account: accountById[accountId]),
-            for (final asset in byAccount[accountId]!)
-              _AssetTile(
-                asset: asset,
-                selected: asset.id == selectedAssetId,
-                heroEnabled: !inMasterDetail,
-                value: valuationMap[asset.id],
-              ),
-          ],
-          for (final asset in orphanAssets)
-            _AssetTile(
-              asset: asset,
-              selected: asset.id == selectedAssetId,
-              heroEnabled: !inMasterDetail,
-              value: valuationMap[asset.id],
-            ),
-        ],
       ),
     );
   }
@@ -498,64 +580,6 @@ String securitiesAssetTypeLabel(AppLocalizations l10n, AssetType t) {
   };
 }
 
-class _SecuritiesAssetsSection extends StatelessWidget {
-  const _SecuritiesAssetsSection({
-    required this.assets,
-    required this.holdings,
-    required this.selectedAssetId,
-    required this.inMasterDetail,
-  });
-
-  final List<Asset> assets;
-  final Map<String, HoldingSnapshot> holdings;
-  final String? selectedAssetId;
-  final bool inMasterDetail;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final grouped = <AssetType, List<Asset>>{};
-    for (final a in assets) {
-      grouped.putIfAbsent(a.type, () => []).add(a);
-    }
-    final order = _kSecuritiesTypeOrder
-        .where(grouped.containsKey)
-        .toList(growable: false);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final type in order) ...[
-          Padding(
-            padding: const EdgeInsets.only(
-              top: Spacing.s8,
-              bottom: Spacing.s8,
-            ),
-            child: Text(
-              securitiesAssetTypeLabel(l10n, type),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          LiquidGlassCard(
-            child: Column(
-              children: [
-                for (final asset in grouped[type]!)
-                  _SecurityTile(
-                    asset: asset,
-                    snapshot: holdings[asset.id],
-                    selected: asset.id == selectedAssetId,
-                    heroEnabled: !inMasterDetail,
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: Spacing.s12),
-        ],
-      ],
-    );
-  }
-}
-
 class _SecurityTile extends StatelessWidget {
   const _SecurityTile({
     required this.asset,
@@ -587,62 +611,62 @@ class _SecurityTile extends StatelessWidget {
         child: InkWell(
           onTap: () => _onTap(context),
           child: Container(
-          color: selected
-              ? theme.colorScheme.primary.withValues(alpha: 0.10)
-              : null,
-          constraints: const BoxConstraints(minHeight: 56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s12,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      OptionalHero(
-                        tag: 'asset-${asset.id}-name',
-                        enabled: heroEnabled,
-                        child: Text(
-                          asset.name == null || asset.name!.isEmpty
-                              ? asset.symbol
-                              : '${asset.symbol} · ${asset.name}',
-                          style: theme.textTheme.bodyLarge,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            color: selected
+                ? theme.colorScheme.primary.withValues(alpha: 0.10)
+                : null,
+            constraints: const BoxConstraints(minHeight: 56),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.s16,
+                vertical: Spacing.s12,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        OptionalHero(
+                          tag: 'asset-${asset.id}-name',
+                          enabled: heroEnabled,
+                          child: Text(
+                            asset.name == null || asset.name!.isEmpty
+                                ? asset.symbol
+                                : '${asset.symbol} · ${asset.name}',
+                            style: theme.textTheme.bodyLarge,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: Spacing.s4),
-                      Text(
-                        qtyLabel,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontFeatures: hasQty
-                              ? TypographyTokens.tabularFigures
-                              : null,
+                        const SizedBox(height: Spacing.s4),
+                        Text(
+                          qtyLabel,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontFeatures: hasQty
+                                ? TypographyTokens.tabularFigures
+                                : null,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: Spacing.s12),
-                if (displayValue != null)
-                  OptionalHero(
-                    tag: 'asset-${asset.id}-value',
-                    enabled: heroEnabled,
-                    child: MoneyText(
-                      amount: displayValue.toDouble(),
-                      currencyCode: asset.currency,
-                      style: TypographyTokens.numericBody,
+                      ],
                     ),
                   ),
-              ],
+                  const SizedBox(width: Spacing.s12),
+                  if (displayValue != null)
+                    OptionalHero(
+                      tag: 'asset-${asset.id}-value',
+                      enabled: heroEnabled,
+                      child: MoneyText(
+                        amount: displayValue.toDouble(),
+                        currencyCode: asset.currency,
+                        style: TypographyTokens.numericBody,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );
@@ -655,41 +679,6 @@ class _SecurityTile extends StatelessWidget {
     } else {
       context.go('/portfolio/${asset.id}');
     }
-  }
-}
-
-class _PhysicalAssetsSection extends StatelessWidget {
-  const _PhysicalAssetsSection({
-    required this.assets,
-    required this.selectedAssetId,
-  });
-
-  final List<PhysicalAsset> assets;
-  final String? selectedAssetId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            top: Spacing.s8,
-            bottom: Spacing.s8,
-          ),
-          child: Text(
-            l10n.physicalAssetsSectionTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        for (final asset in assets) ...[
-          PhysicalAssetCard(asset: asset),
-          const SizedBox(height: Spacing.s8),
-        ],
-        const SizedBox(height: Spacing.s12),
-      ],
-    );
   }
 }
 
@@ -717,54 +706,54 @@ class _AssetTile extends StatelessWidget {
         child: InkWell(
           onTap: () => _onTap(context),
           child: Container(
-          color: selected
-              ? theme.colorScheme.primary.withValues(alpha: 0.10)
-              : null,
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s12,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      OptionalHero(
-                        tag: 'asset-${asset.id}-name',
-                        enabled: heroEnabled,
-                        child: Text(
-                          asset.name ?? asset.symbol,
-                          style: theme.textTheme.bodyLarge,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            color: selected
+                ? theme.colorScheme.primary.withValues(alpha: 0.10)
+                : null,
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.s16,
+                vertical: Spacing.s12,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        OptionalHero(
+                          tag: 'asset-${asset.id}-name',
+                          enabled: heroEnabled,
+                          child: Text(
+                            asset.name ?? asset.symbol,
+                            style: theme.textTheme.bodyLarge,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      if (chips.isNotEmpty) ...[
-                        const SizedBox(height: Spacing.s6),
-                        Wrap(
-                          spacing: Spacing.s6,
-                          runSpacing: Spacing.s4,
-                          children: chips,
-                        ),
+                        if (chips.isNotEmpty) ...[
+                          const SizedBox(height: Spacing.s6),
+                          Wrap(
+                            spacing: Spacing.s6,
+                            runSpacing: Spacing.s4,
+                            children: chips,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: Spacing.s12),
-                if (value != null)
-                  MoneyText(
-                    amount: value!.toDouble(),
-                    currencyCode: asset.currency,
-                    style: TypographyTokens.numericBody,
-                  ),
-              ],
+                  const SizedBox(width: Spacing.s12),
+                  if (value != null)
+                    MoneyText(
+                      amount: value!.toDouble(),
+                      currencyCode: asset.currency,
+                      style: TypographyTokens.numericBody,
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../core/async/isolate_runner.dart';
 import '../../../data/db/app_database.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/domain/amortization_entry.dart';
@@ -134,25 +135,25 @@ final _cashPostingHistoryProvider =
       final db = await ref.watch(appDatabaseProvider.future);
       final je = db.journalEntries;
       final p = db.postings;
-      final query = db.select(p).join([
-        innerJoin(je, je.id.equalsExp(p.journalEntryId)),
-      ])
-        ..where(p.deletedAt.isNull())
-        ..where(je.deletedAt.isNull())
-        ..where(p.accountId.isIn(cashAccountIds))
-        ..addColumns([je.date])
-        ..orderBy([
-          OrderingTerm.asc(p.accountId),
-          OrderingTerm.asc(je.date),
-        ]);
+      final query =
+          db.select(p).join([innerJoin(je, je.id.equalsExp(p.journalEntryId))])
+            ..where(p.deletedAt.isNull())
+            ..where(je.deletedAt.isNull())
+            ..where(p.accountId.isIn(cashAccountIds))
+            ..addColumns([je.date])
+            ..orderBy([
+              OrderingTerm.asc(p.accountId),
+              OrderingTerm.asc(je.date),
+            ]);
       yield* query.watch().map((rows) {
         final raw = <String, List<(DateTime, Decimal)>>{};
         for (final row in rows) {
           final posting = row.readTable(p);
           final date = row.read(je.date)!;
-          raw
-              .putIfAbsent(posting.accountId, () => [])
-              .add((date, posting.units));
+          raw.putIfAbsent(posting.accountId, () => []).add((
+            date,
+            posting.units,
+          ));
         }
         return {
           for (final entry in raw.entries)
@@ -168,7 +169,9 @@ List<ManualAssetValuePoint> _runningBalance(
   var cumulative = Decimal.zero;
   for (final (date, delta) in rows) {
     cumulative += delta;
-    out.add(ManualAssetValuePoint(observedOn: _floorToDay(date), value: cumulative));
+    out.add(
+      ManualAssetValuePoint(observedOn: _floorToDay(date), value: cumulative),
+    );
   }
   return out;
 }
@@ -218,33 +221,25 @@ final dashboardManualAssetValuationsProvider =
 /// category. Re-computes whenever any upstream stream emits — including
 /// the postings-derived [holdingsSnapshotProvider], so a newly recorded
 /// trade flows straight into the totals without manual invalidation.
-final dashboardSnapshotProvider = Provider<AsyncValue<DashboardSnapshot>>((
+final dashboardSnapshotProvider = FutureProvider<DashboardSnapshot>((
   ref,
-) {
-  final manualValuations = ref.watch(dashboardManualAssetValuationsProvider);
+) async {
+  final manualList = await _manualAssetValuationsForHeader(ref);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
   final assets = ref.watch(allAssetsStreamProvider);
   final holdings = ref.watch(holdingsSnapshotProvider);
-  final converter = ref.watch(dashboardCurrencyConverterProvider);
+  final rates = ref.watch(fxRatesStreamProvider);
   final base = ref.watch(dashboardBaseCurrencyProvider);
 
-  if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
-    return const AsyncValue.loading();
-  }
-  final err = manualValuations.error ?? physical.error ?? liab.error;
-  if (err != null) {
-    return AsyncValue.error(
-      err,
-      manualValuations.stackTrace ??
-          physical.stackTrace ??
-          liab.stackTrace ??
-          StackTrace.current,
-    );
-  }
-  final manualList = manualValuations.value ?? const <ManualAssetValuation>[];
-  final physicalList = physical.value ?? const <PhysicalAsset>[];
-  final liabList = liab.value ?? const <Liability>[];
+  final physicalList =
+      physical.value ??
+      await ref.watch(physicalAssetsListProvider.future) ??
+      const <PhysicalAsset>[];
+  final liabList =
+      liab.value ??
+      await ref.watch(liabilitiesStreamProvider.future) ??
+      const <Liability>[];
   final securities = _buildSecurityHoldings(
     holdingsByAsset: holdings.value ?? const {},
     assets: assets.value ?? const [],
@@ -256,19 +251,18 @@ final dashboardSnapshotProvider = Provider<AsyncValue<DashboardSnapshot>>((
     if (summary != null) summaries.add(summary);
   }
 
-  final aggregator = DashboardAggregator(
-    converter: converter,
-    baseCurrency: base,
-    asOf: DateTime.now(),
+  return runInIsolate(
+    () => aggregateDashboard(
+      baseCurrency: base,
+      asOf: DateTime.now(),
+      fxRates: rates.value ?? const [],
+      manualAssets: manualList,
+      physicalAssets: physicalList,
+      liabilities: liabList,
+      liabilitySummaries: summaries,
+      securitiesHoldings: securities,
+    ),
   );
-  final snapshot = aggregator.aggregate(
-    manualAssets: manualList,
-    physicalAssets: physicalList,
-    liabilities: liabList,
-    liabilitySummaries: summaries,
-    securitiesHoldings: securities,
-  );
-  return AsyncValue.data(snapshot);
 });
 
 /// Pair each priced holding with its asset row, dropping anything that
@@ -313,7 +307,10 @@ Map<String, List<ManualAssetValuePoint>> _buildSecurityPriceHistory({
     if (rows.isEmpty) continue;
     out[asset.id] = [
       for (final row in rows)
-        ManualAssetValuePoint(observedOn: _floorToDay(row.observedOn), value: row.perUnit),
+        ManualAssetValuePoint(
+          observedOn: _floorToDay(row.observedOn),
+          value: row.perUnit,
+        ),
     ];
   }
   return out;
@@ -355,9 +352,7 @@ List<ManualAssetValuation> _buildManualAssetValuations({
       if (accountId != null) {
         final historyObs = cashHistory[accountId];
         if (historyObs != null && historyObs.isNotEmpty) {
-          out.add(
-            ManualAssetValuation(asset: asset, observations: historyObs),
-          );
+          out.add(ManualAssetValuation(asset: asset, observations: historyObs));
           continue;
         }
       }
@@ -440,8 +435,7 @@ Future<List<ManualAssetValuation>> _manualAssetValuationsForHeader(
 
   final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
   if (manualAssets.isEmpty) return const <ManualAssetValuation>[];
-  final cashHistory =
-      await ref.watch(_cashPostingHistoryProvider.future);
+  final cashHistory = await ref.watch(_cashPostingHistoryProvider.future);
   final priceRows = await ref.watch(dashboardPriceRowsProvider.future);
   return _buildManualAssetValuations(
     manualAssets: manualAssets,
@@ -471,11 +465,11 @@ final dashboardLiabilitySchedulesProvider =
 /// Net-worth trend timeseries for the dashboard line chart, scoped to the
 /// selected [DashboardTimeRange]. Re-evaluates when the range changes or
 /// any upstream stream emits.
-final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
-  final manualValuations = ref.watch(dashboardManualAssetValuationsProvider);
+final dashboardTrendProvider = FutureProvider<DashboardTrend>((ref) async {
+  final manualList = await _manualAssetValuationsForHeader(ref);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
-  final converter = ref.watch(dashboardCurrencyConverterProvider);
+  final rates = ref.watch(fxRatesStreamProvider);
   final base = ref.watch(dashboardBaseCurrencyProvider);
   final range = ref.watch(dashboardTimeRangeProvider);
   final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
@@ -483,19 +477,14 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
   final assets = ref.watch(allAssetsStreamProvider);
   final prices = ref.watch(dashboardPriceRowsProvider);
 
-  if (manualValuations.isLoading || physical.isLoading || liab.isLoading) {
-    return const AsyncValue.loading();
-  }
-  final err = manualValuations.error ?? physical.error ?? liab.error;
-  if (err != null) {
-    return AsyncValue.error(
-      err,
-      manualValuations.stackTrace ??
-          physical.stackTrace ??
-          liab.stackTrace ??
-          StackTrace.current,
-    );
-  }
+  final physicalList =
+      physical.value ??
+      await ref.watch(physicalAssetsListProvider.future) ??
+      const <PhysicalAsset>[];
+  final liabList =
+      liab.value ??
+      await ref.watch(liabilitiesStreamProvider.future) ??
+      const <Liability>[];
   final securities = _buildSecurityHoldings(
     holdingsByAsset: holdings.value ?? const {},
     assets: assets.value ?? const [],
@@ -504,20 +493,20 @@ final dashboardTrendProvider = Provider<AsyncValue<DashboardTrend>>((ref) {
     assets: assets.value ?? const [],
     priceRows: prices.value ?? const [],
   );
-  final builder = DashboardTrendBuilder(
-    converter: converter,
-    baseCurrency: base,
+
+  return runInIsolate(
+    () => buildDashboardTrend(
+      range: range,
+      baseCurrency: base,
+      fxRates: rates.value ?? const [],
+      manualAssets: manualList,
+      physicalAssets: physicalList,
+      liabilities: liabList,
+      liabilitySchedules: schedules,
+      securitiesHoldings: securities,
+      securityPrices: securityPrices,
+    ),
   );
-  final trend = builder.build(
-    range: range,
-    manualAssets: manualValuations.value ?? const <ManualAssetValuation>[],
-    physicalAssets: physical.value ?? const <PhysicalAsset>[],
-    liabilities: liab.value ?? const <Liability>[],
-    liabilitySchedules: schedules,
-    securitiesHoldings: securities,
-    securityPrices: securityPrices,
-  );
-  return AsyncValue.data(trend);
 });
 
 /// Header-strip metrics that complement the hero net-worth number with
