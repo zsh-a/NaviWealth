@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 // Tabs other than home are split into their own dart2js part files; each part
 // is loaded the first time the user navigates to that route. Home ships in
@@ -9,13 +8,11 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 // docs/web-bundle.md for the resulting bundle layout.
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
-import '../design_system/design_system.dart';
 import '../features/accounts/account_form_page.dart';
 import '../features/accounts/accounts_page.dart';
 import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
 import '../features/activity/activity_page.dart';
-import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
@@ -47,27 +44,13 @@ import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
-import '../l10n/gen/app_localizations.dart';
+import 'app_shell.dart';
 import 'deferred_route.dart';
-import 'desktop_sidebar.dart';
-import 'global_action_panel.dart';
 import 'page_transitions.dart';
 import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
 import 'route_paths.dart';
-import 'shell_preferences.dart';
-
-/// Paths of the four primary tabs in the root shell, in display order.
-///
-/// The keyboard-shortcut layer (`core/shortcuts`) maps digits `1`-`4` to these
-/// indexes — keep order in sync with `_RootShell`'s NavigationBar.
-const List<String> kPrimaryTabPaths = <String>[
-  AppRoutes.home,
-  AppRoutes.portfolio,
-  AppRoutes.activity,
-  AppRoutes.plan,
-];
 
 /// Test-only: eagerly resolve every deferred-as library the router maps to
 /// a tab so subsequent [DeferredRoute] mounts see an already-completed
@@ -107,24 +90,24 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
     routes: [
       GoRoute(
         path: AppRoutes.login,
-        name: 'login',
+        name: AppRouteNames.login,
         builder: (context, state) => const LoginPage(),
       ),
       // ── Main shell: IndexedStack preserves tab state across switches ──
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => _RootShell(shell: shell),
+        builder: (context, state, shell) => AppRootShell(shell: shell),
         branches: [
           // ── Branch 0: Home (+ AI Chat, Settings — no dedicated tab) ──
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                name: 'home',
+                name: AppRouteNames.home,
                 builder: (context, state) => const HomePage(),
               ),
               GoRoute(
                 path: AppRoutes.ai,
-                name: 'ai-chat',
+                name: AppRouteNames.aiChat,
                 builder: (context, state) => DeferredRoute(
                   load: ai_chat_lib.loadLibrary,
                   builder: (_) => ai_chat_lib.AiChatPage(),
@@ -132,7 +115,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
               GoRoute(
                 path: AppRoutes.settings,
-                name: 'settings',
+                name: AppRouteNames.settings,
                 builder: (context, state) => DeferredRoute(
                   load: settings_lib.loadLibrary,
                   builder: (_) => settings_lib.SettingsPage(),
@@ -140,7 +123,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 routes: [
                   GoRoute(
                     path: 'devices',
-                    name: 'devices',
+                    name: AppRouteNames.devices,
                     builder: (context, state) => DeferredRoute(
                       load: devices_lib.loadLibrary,
                       builder: (_) => devices_lib.DevicesPage(),
@@ -148,17 +131,17 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'fx-rates',
-                    name: 'fx-rates',
+                    name: AppRouteNames.fxRates,
                     builder: (context, state) => const FxRatesPage(),
                   ),
                   GoRoute(
                     path: 'backup',
-                    name: 'backup',
+                    name: AppRouteNames.backup,
                     builder: (context, state) => const BackupPage(),
                   ),
                   GoRoute(
                     path: 'logs',
-                    name: 'logs',
+                    name: AppRouteNames.logs,
                     builder: (context, state) => const LogViewerPage(),
                   ),
                 ],
@@ -170,7 +153,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: AppRoutes.portfolio,
-                name: 'portfolio',
+                name: AppRouteNames.portfolio,
                 builder: (context, state) => DeferredRoute(
                   load: portfolio_lib.loadLibrary,
                   builder: (_) => portfolio_lib.PortfolioPage(),
@@ -178,22 +161,22 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 routes: [
                   GoRoute(
                     path: 'new/cash',
-                    name: 'asset-new-cash',
+                    name: AppRouteNames.assetNewCash,
                     builder: (context, state) => const CashFormPage(),
                   ),
                   GoRoute(
                     path: 'new/deposit',
-                    name: 'asset-new-deposit',
+                    name: AppRouteNames.assetNewDeposit,
                     builder: (context, state) => const DepositFormPage(),
                   ),
                   GoRoute(
                     path: 'new/wealth',
-                    name: 'asset-new-wealth',
+                    name: AppRouteNames.assetNewWealth,
                     builder: (context, state) => const WealthProductFormPage(),
                   ),
                   GoRoute(
                     path: 'corporate-action',
-                    name: 'corporate-action',
+                    name: AppRouteNames.corporateAction,
                     builder: (context, state) => DeferredRoute(
                       load: corp_action_lib.loadLibrary,
                       builder: (_) =>
@@ -202,7 +185,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'physical/:id',
-                    name: 'physicalAssetDetail',
+                    name: AppRouteNames.physicalAssetDetail,
                     builder: (context, state) {
                       final id = state.pathParameters['id']!;
                       return DeferredRoute(
@@ -214,7 +197,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'liabilities',
-                    name: 'liabilities',
+                    name: AppRouteNames.liabilities,
                     builder: (context, state) => DeferredRoute(
                       load: liabilities_lib.loadLibrary,
                       builder: (_) => liabilities_lib.LiabilitiesPage(),
@@ -222,12 +205,12 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     routes: [
                       GoRoute(
                         path: 'new',
-                        name: 'liability-new',
+                        name: AppRouteNames.liabilityNew,
                         builder: (context, state) => const LiabilityFormPage(),
                       ),
                       GoRoute(
                         path: ':id',
-                        name: 'liabilityDetail',
+                        name: AppRouteNames.liabilityDetail,
                         builder: (context, state) {
                           final id = state.pathParameters['id']!;
                           return DeferredRoute(
@@ -243,7 +226,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: ':assetId',
-                    name: 'asset-detail',
+                    name: AppRouteNames.assetDetail,
                     pageBuilder: (context, state) =>
                         buildHeroAwareTransitionPage<void>(
                           context: context,
@@ -262,27 +245,27 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: AppRoutes.activity,
-                name: 'activity',
+                name: AppRouteNames.activity,
                 builder: (context, state) => const ActivityPage(),
                 routes: [
                   GoRoute(
                     path: 'expenses',
-                    name: 'expenses',
+                    name: AppRouteNames.expenses,
                     builder: (context, state) => const ExpenseListPage(),
                     routes: [
                       GoRoute(
                         path: 'new',
-                        name: 'expense-new',
+                        name: AppRouteNames.expenseNew,
                         builder: (context, state) => const ExpenseFormPage(),
                       ),
                       GoRoute(
                         path: 'report',
-                        name: 'expense-report',
+                        name: AppRouteNames.expenseReport,
                         builder: (context, state) => const ExpenseReportPage(),
                       ),
                       GoRoute(
                         path: ':expenseId',
-                        name: 'expense-detail',
+                        name: AppRouteNames.expenseDetail,
                         builder: (context, state) => ExpenseFormPage(
                           expenseId: state.pathParameters['expenseId'],
                         ),
@@ -291,28 +274,28 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'accounts',
-                    name: 'accounts',
+                    name: AppRouteNames.accounts,
                     builder: (context, state) => const AccountsPage(),
                     routes: [
                       GoRoute(
                         path: 'new',
-                        name: 'account-new',
+                        name: AppRouteNames.accountNew,
                         builder: (context, state) => const AccountFormPage(),
                       ),
                       GoRoute(
                         path: 'transfer',
-                        name: 'account-transfer',
+                        name: AppRouteNames.accountTransfer,
                         builder: (context, state) => const TransferFormPage(),
                       ),
                       GoRoute(
                         path: 'journal',
-                        name: 'account-journal',
+                        name: AppRouteNames.accountJournal,
                         builder: (context, state) =>
                             const JournalEntryListPage(),
                       ),
                       GoRoute(
                         path: ':accountId',
-                        name: 'account-detail',
+                        name: AppRouteNames.accountDetail,
                         pageBuilder: (context, state) =>
                             buildHeroAwareTransitionPage<void>(
                               context: context,
@@ -326,7 +309,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'trade',
-                    name: 'trade-entry',
+                    name: AppRouteNames.tradeEntry,
                     pageBuilder: (context, state) {
                       final assetId = state.uri.queryParameters['assetId'];
                       final accountId = state.uri.queryParameters['accountId'];
@@ -349,12 +332,12 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: AppRoutes.plan,
-                name: 'plan',
+                name: AppRouteNames.plan,
                 builder: (context, state) => const PlanPage(),
                 routes: [
                   GoRoute(
                     path: 'analytics',
-                    name: 'analytics',
+                    name: AppRouteNames.analytics,
                     builder: (context, state) => DeferredRoute(
                       load: analytics_lib.loadLibrary,
                       builder: (_) => analytics_lib.AnalyticsPage(),
@@ -362,7 +345,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'fire',
-                    name: 'fire',
+                    name: AppRouteNames.fire,
                     builder: (context, state) => DeferredRoute(
                       load: fire_lib.loadLibrary,
                       builder: (_) => fire_lib.FirePage(),
@@ -370,7 +353,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'rebalance',
-                    name: 'rebalance',
+                    name: AppRouteNames.rebalance,
                     builder: (context, state) => DeferredRoute(
                       load: rebalance_lib.loadLibrary,
                       builder: (_) => rebalance_lib.RebalancePage(),
@@ -387,343 +370,3 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
-
-class _RootShell extends ConsumerStatefulWidget {
-  const _RootShell({required this.shell});
-
-  final StatefulNavigationShell shell;
-
-  // Breakpoints mirror docs/design/01-responsive-layout.md. 1240 keeps a
-  // ≥720dp content column next to a ~256dp permanent drawer.
-  static const double _tabletBreakpoint = 600;
-  static const double _desktopBreakpoint = 1240;
-
-  @override
-  ConsumerState<_RootShell> createState() => _RootShellState();
-}
-
-class _RootShellState extends ConsumerState<_RootShell>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fade;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: Motion.medium);
-    _fade = CurvedAnimation(
-      parent: _controller,
-      curve: Motion.emphasizedDecelerate,
-    );
-    // Start fully opaque — the fade only triggers on subsequent tab switches.
-    _controller.value = 1.0;
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(_RootShell old) {
-    super.didUpdateWidget(old);
-    if (widget.shell.currentIndex != old.shell.currentIndex) {
-      _controller.forward(from: 0);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final shell = widget.shell;
-
-    // Keep the route context provider in sync with navigation.
-    final location = GoRouter.of(
-      context,
-    ).routeInformationProvider.value.uri.path;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(aiRouteContextProvider.notifier).state = AiRouteContext(
-        path: location,
-      );
-    });
-
-    final destinations = _navDestinations(l10n);
-    final index = shell.currentIndex;
-    void onSelected(int i) {
-      shell.goBranch(i, initialLocation: i == shell.currentIndex);
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final isDesktop = width >= _RootShell._desktopBreakpoint;
-
-        // Fade-in the new branch content on tab switch. The IndexedStack
-        // inside the shell switches instantly; the fade softens the cut.
-        final animatedChild = FadeTransition(opacity: _fade, child: shell);
-
-        if (isDesktop) {
-          return _DesktopShell(
-            destinations: destinations,
-            selectedIndex: index,
-            onDestinationSelected: onSelected,
-            child: animatedChild,
-          );
-        }
-        if (width >= _RootShell._tabletBreakpoint) {
-          return _TabletShell(
-            destinations: destinations,
-            selectedIndex: index,
-            onDestinationSelected: onSelected,
-            child: animatedChild,
-          );
-        }
-        return _MobileShell(
-          destinations: destinations,
-          selectedIndex: index,
-          onDestinationSelected: onSelected,
-          child: animatedChild,
-        );
-      },
-    );
-  }
-}
-
-class _NavDestination {
-  const _NavDestination({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-}
-
-List<_NavDestination> _navDestinations(AppLocalizations l10n) {
-  return <_NavDestination>[
-    _NavDestination(
-      icon: Icons.dashboard_outlined,
-      selectedIcon: Icons.dashboard,
-      label: l10n.navHome,
-    ),
-    _NavDestination(
-      icon: Icons.account_balance_wallet_outlined,
-      selectedIcon: Icons.account_balance_wallet,
-      label: l10n.navPortfolio,
-    ),
-    _NavDestination(
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-      label: l10n.navActivity,
-    ),
-    _NavDestination(
-      icon: Icons.flag_outlined,
-      selectedIcon: Icons.flag,
-      label: l10n.navPlan,
-    ),
-  ];
-}
-
-class _MobileShell extends StatelessWidget {
-  const _MobileShell({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    required this.child,
-  });
-
-  final List<_NavDestination> destinations;
-  final int selectedIndex;
-  final ValueChanged<int> onDestinationSelected;
-  final Widget child;
-
-  static const double barHeight = 64;
-
-  @override
-  Widget build(BuildContext context) {
-    final glowColors = lgw.GlassThemeData.of(context).glowColorsFor(context);
-
-    // Android 3-button nav: push bar above opaque buttons.
-    // On iOS / gesture-nav Android, sysBottom is 0.
-    final platform = Theme.of(context).platform;
-    final isIOS =
-        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
-    final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
-
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: barHeight + sysBottom),
-            child: child,
-          ),
-        ),
-        // Glass bottom bar — always at the screen bottom.
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: sysBottom,
-          child: DefaultTextStyle(
-            style: DefaultTextStyle.of(
-              context,
-            ).style.copyWith(decoration: TextDecoration.none),
-            child: lgw.GlassBottomBar(
-              barHeight: barHeight,
-              verticalPadding: 0,
-              labelFontSize: 10,
-              iconLabelSpacing: 0,
-              quality: lgw.GlassQuality.premium,
-              selectedIndex: selectedIndex,
-              onTabSelected: onDestinationSelected,
-              tabs: [
-                for (final d in destinations)
-                  lgw.GlassBottomBarTab(
-                    label: d.label,
-                    icon: Icon(d.icon),
-                    activeIcon: Icon(d.selectedIcon),
-                    glowColor: glowColors.primary,
-                  ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          right: Spacing.s16,
-          bottom: sysBottom + barHeight + Spacing.s16,
-          child: Material(
-            type: MaterialType.transparency,
-            child: AppFab(
-              tooltip: AppLocalizations.of(context).assetsAddAction,
-              onPressed: () => showGlobalActionPanel(context),
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TabletShell extends StatelessWidget {
-  const _TabletShell({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    required this.child,
-  });
-
-  final List<_NavDestination> destinations;
-  final int selectedIndex;
-  final ValueChanged<int> onDestinationSelected;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            lgw.GlassSideBar(
-              width: 128,
-              children: [
-                for (var i = 0; i < destinations.length; i++)
-                  lgw.GlassSideBarItem(
-                    icon: Icon(
-                      i == selectedIndex
-                          ? destinations[i].selectedIcon
-                          : destinations[i].icon,
-                    ),
-                    label: destinations[i].label,
-                    isSelected: i == selectedIndex,
-                    onTap: () => onDestinationSelected(i),
-                  ),
-              ],
-            ),
-            Expanded(child: _GlobalActionHost(child: child)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DesktopShell extends ConsumerWidget {
-  const _DesktopShell({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    required this.child,
-  });
-
-  final List<_NavDestination> destinations;
-  final int selectedIndex;
-  final ValueChanged<int> onDestinationSelected;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final collapsed = ref.watch(sidebarCollapsedProvider);
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            DesktopSidebar(
-              destinations: [
-                for (final d in destinations)
-                  DesktopSidebarDestination(
-                    icon: d.icon,
-                    selectedIcon: d.selectedIcon,
-                    label: d.label,
-                  ),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-            ),
-            Expanded(
-              child: collapsed
-                  ? Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: kCollapsedContentMaxWidth,
-                        ),
-                        child: _GlobalActionHost(child: child),
-                      ),
-                    )
-                  : _GlobalActionHost(child: child),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GlobalActionHost extends StatelessWidget {
-  const _GlobalActionHost({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(child: child),
-        Positioned(
-          right: Spacing.s24,
-          bottom: Spacing.s24,
-          child: Material(
-            type: MaterialType.transparency,
-            child: AppFab(
-              tooltip: AppLocalizations.of(context).assetsAddAction,
-              onPressed: () => showGlobalActionPanel(context),
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

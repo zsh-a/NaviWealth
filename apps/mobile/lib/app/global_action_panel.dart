@@ -142,7 +142,7 @@ Future<void> _closeAndOpenPhysical(
   final created = await PhysicalAssetCreateSheet.show(routeContext, type: type);
   if (created != null && routeContext.mounted) {
     routeContext.goNamed(
-      'physicalAssetDetail',
+      AppRouteNames.physicalAssetDetail,
       pathParameters: {'id': created.id},
     );
   }

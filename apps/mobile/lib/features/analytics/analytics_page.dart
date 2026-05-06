@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
 import '../../core/haptics/haptics.dart';
@@ -52,9 +53,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             loading: () => const _LoadingState(),
             error: (e, _) => _ErrorState(
               message: l10n.analyticsLoadError,
-              onRetry: () => ref.invalidate(
-                equityAllocationViewProvider(_dimension),
-              ),
+              onRetry: () =>
+                  ref.invalidate(equityAllocationViewProvider(_dimension)),
             ),
           ),
         ),
@@ -79,7 +79,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           final basePadding = isWide ? Spacing.pageWide : Spacing.pageMobile;
           return ListView(
             padding: basePadding.copyWith(
-              bottom: basePadding.bottom +
+              bottom:
+                  basePadding.bottom +
                   Spacing.floatingBarClearance +
                   MediaQuery.paddingOf(context).bottom,
             ),
@@ -128,9 +129,7 @@ class DimensionSegment extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFF2C2C2E)
-            : theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.5,
-              ),
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(Radii.full),
       ),
       padding: const EdgeInsets.all(2),
@@ -242,12 +241,14 @@ class EquityAllocationContent extends ConsumerWidget {
           ? Theme.of(context).colorScheme.outlineVariant
           : palette.accentAt(i);
       colorByKey[bucket.key] = color;
-      slices.add(Slice(
-        label: localizeBucketLabel(l10n, bucket),
-        value: bucket.totalValueInBase.toDouble(),
-        colorOverride: color,
-        meta: bucket,
-      ));
+      slices.add(
+        Slice(
+          label: localizeBucketLabel(l10n, bucket),
+          value: bucket.totalValueInBase.toDouble(),
+          colorOverride: color,
+          meta: bucket,
+        ),
+      );
     }
 
     return Column(
@@ -270,8 +271,7 @@ class EquityAllocationContent extends ConsumerWidget {
         const SizedBox(height: Spacing.s16),
         if (view.unclassifiedCount > 0)
           _UnclassifiedBanner(count: view.unclassifiedCount),
-        if (view.unclassifiedCount > 0)
-          const SizedBox(height: Spacing.s12),
+        if (view.unclassifiedCount > 0) const SizedBox(height: Spacing.s12),
         LiquidGlassCard(
           layer: GlassLayer.tertiary,
           padding: EdgeInsets.zero,
@@ -283,11 +283,8 @@ class EquityAllocationContent extends ConsumerWidget {
                   color: colorByKey[bucket.key]!,
                   formatters: formatters,
                   baseCurrency: view.baseCurrency,
-                  onTap: () => _openBucketSheet(
-                    context,
-                    bucket,
-                    view.baseCurrency,
-                  ),
+                  onTap: () =>
+                      _openBucketSheet(context, bucket, view.baseCurrency),
                 ),
             ],
           ),
@@ -305,10 +302,8 @@ class EquityAllocationContent extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => EquityBucketHoldingsSheet(
-        bucket: bucket,
-        baseCurrency: baseCurrency,
-      ),
+      builder: (_) =>
+          EquityBucketHoldingsSheet(bucket: bucket, baseCurrency: baseCurrency),
     );
   }
 }
@@ -370,10 +365,7 @@ class _BucketRow extends StatelessWidget {
       leading: Container(
         width: 14,
         height: 14,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
       title: Text(
         localizeBucketLabel(l10n, bucket),
@@ -430,10 +422,7 @@ class _UnclassifiedBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.warning_amber_outlined,
-            color: theme.colorScheme.tertiary,
-          ),
+          Icon(Icons.warning_amber_outlined, color: theme.colorScheme.tertiary),
           const SizedBox(width: Spacing.s8),
           Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
         ],
@@ -518,11 +507,7 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: Spacing.s32),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline,
-            color: theme.colorScheme.error,
-            size: 32,
-          ),
+          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 32),
           const SizedBox(height: Spacing.s8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: Spacing.s8),
@@ -566,9 +551,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              l10n.analyticsBucketSheetTitle(
-                localizeBucketLabel(l10n, bucket),
-              ),
+              l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: Spacing.s4),
@@ -625,7 +608,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                     onTap: () {
                       Navigator.of(context).pop();
                       context.goNamed(
-                        'asset-detail',
+                        AppRouteNames.assetDetail,
                         pathParameters: {'assetId': h.assetId},
                       );
                     },

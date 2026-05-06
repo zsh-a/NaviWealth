@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/config/app_version.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
@@ -29,7 +30,8 @@ class SettingsPage extends ConsumerWidget {
       ),
       body: ListView(
         padding: Spacing.pageMobile.copyWith(
-          bottom: Spacing.pageMobile.bottom +
+          bottom:
+              Spacing.pageMobile.bottom +
               Spacing.floatingBarClearance +
               MediaQuery.paddingOf(context).bottom,
         ),
@@ -51,7 +53,7 @@ class SettingsPage extends ConsumerWidget {
                   title: Text(l10n.settingsDevicesTitle),
                   subtitle: Text(l10n.settingsDevicesSubtitle),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.goNamed('devices'),
+                  onTap: () => context.goNamed(AppRouteNames.devices),
                 ),
                 const Divider(height: 1),
                 Padding(
@@ -67,8 +69,10 @@ class SettingsPage extends ConsumerWidget {
                         child: AppDropdown<String>(
                           value: baseCurrency,
                           label: l10n.settingsBaseCurrencyTitle,
-                          displayBuilder: (_, v) =>
-                              Text(v ?? '', style: Theme.of(context).textTheme.bodyMedium),
+                          displayBuilder: (_, v) => Text(
+                            v ?? '',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                           items: [
                             for (final code in kCommonCurrencies)
                               DropdownMenuItem(
@@ -90,12 +94,11 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading:
-                      const Icon(Icons.published_with_changes_outlined),
+                  leading: const Icon(Icons.published_with_changes_outlined),
                   title: Text(l10n.settingsFxRatesTitle),
                   subtitle: Text(l10n.settingsFxRatesSubtitle),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.goNamed('fx-rates'),
+                  onTap: () => context.goNamed(AppRouteNames.fxRates),
                 ),
               ],
             ),
@@ -161,9 +164,7 @@ class SettingsPage extends ConsumerWidget {
                           ],
                           onChanged: (m) {
                             if (m != null) {
-                              ref
-                                  .read(marketColorModeProvider.notifier)
-                                  .set(m);
+                              ref.read(marketColorModeProvider.notifier).set(m);
                             }
                           },
                         ),
@@ -189,8 +190,10 @@ class SettingsPage extends ConsumerWidget {
                         child: AppDropdown<Locale?>(
                           value: locale,
                           label: l10n.settingsLanguageTitle,
-                          displayBuilder: (_, v) =>
-                              Text(_localeLabel(l10n, v), style: Theme.of(context).textTheme.bodyMedium),
+                          displayBuilder: (_, v) => Text(
+                            _localeLabel(l10n, v),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                           items: [
                             DropdownMenuItem(
                               value: null,
@@ -234,7 +237,7 @@ class SettingsPage extends ConsumerWidget {
               title: Text(l10n.settingsDataTitle),
               subtitle: Text(l10n.settingsDataSubtitle),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.goNamed('backup'),
+              onTap: () => context.goNamed(AppRouteNames.backup),
             ),
           ),
           // ── Developer (debug only) ──
@@ -248,7 +251,7 @@ class SettingsPage extends ConsumerWidget {
                 title: Text(l10n.settingsLogsTitle),
                 subtitle: Text(l10n.settingsLogsSubtitle),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.goNamed('logs'),
+                onTap: () => context.goNamed(AppRouteNames.logs),
               ),
             ),
           ],
@@ -302,7 +305,9 @@ class _AboutTile extends ConsumerWidget {
       loading: () => l10n.settingsAboutSubtitle('…'),
       error: (_, _) => l10n.settingsAboutSubtitle('?'),
       data: (info) {
-        final base = l10n.settingsAboutSubtitle('${info.version}+${info.buildNumber}');
+        final base = l10n.settingsAboutSubtitle(
+          '${info.version}+${info.buildNumber}',
+        );
         // Hide the SHA in dev builds so the line stays compact when the
         // define isn't passed (local `flutter run`).
         if (info.commitSha == 'dev' || info.commitSha.isEmpty) return base;

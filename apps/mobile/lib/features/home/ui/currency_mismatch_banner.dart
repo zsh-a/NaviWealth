@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_providers.dart';
@@ -45,10 +46,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
               const SizedBox(width: Spacing.s8),
               Expanded(
                 child: Text(
-                  l10n.dashboardCurrencyMismatchBanner(
-                    mismatches.length,
-                    base,
-                  ),
+                  l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onErrorContainer,
                   ),
@@ -103,7 +101,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.of(ctx).pop();
-                    context.goNamed('fx-rates');
+                    context.goNamed(AppRouteNames.fxRates);
                   },
                 ),
             ],

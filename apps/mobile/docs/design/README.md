@@ -1,4 +1,4 @@
-# NaviWealth · 设计文档（FIR-23）
+# NaviWealth · 设计文档
 
 > 关键页面线框图 + 高保真稿（Light / Dark） + 关键交互动效 + 设计走查。
 
@@ -24,11 +24,11 @@
 | 13 | [Web 字体子集化](./13-web-fonts.md) | Noto Sans SC 子集流水线、`@font-face` 加载、首屏 250 KB 预算 |
 | 14 | [图表库 / Charts](./14-charts.md) | fl_chart vs syncfusion 选型、统一封装、主题接入、降采样、钻取 |
 
-## 与依赖的关系
+## 与代码的关系
 
-- **FIR-22（设计 Token + 组件库）**：本文档以 Token 名（如 `color.fg.primary`、`type.body.md`、`space.4`）引用，FIR-22 落地后对应到具体值。当前回退到 Material 3 `ColorScheme` 名（`onSurface`、`primary` 等）。
-- **FIR-24（图表库选型与封装）**：已选 `fl_chart` 作为底层渲染器，统一封装在 `lib/design_system/charts/`；详见 [14-charts.md](./14-charts.md)。所有业务页面（分析、FIRE、再平衡）通过 `Nw*Chart` 系列消费，不直接 import `fl_chart`。
-- **FIR-2（基础架构）**：响应式策略与路由结构与现有 `app/router.dart` 对齐，并提出后续拆 ShellRoute 的建议（详见 `01-responsive-layout.md`）。
+- **设计 Token + 组件库**：本文档以 Token 名（如 `color.fg.primary`、`type.body.md`、`space.4`）引用；代码中对应到 `lib/design_system/`。
+- **图表封装**：已选 `fl_chart` 作为底层渲染器，统一封装在 `lib/design_system/charts/`；详见 [14-charts.md](./14-charts.md)。所有业务页面（分析、FIRE、再平衡）通过 `Nw*Chart` 系列消费，不直接 import `fl_chart`。
+- **路由与 Shell**：响应式策略与路由结构对齐 `lib/app/route_paths.dart`、`lib/app/router.dart` 与 `lib/app/app_shell.dart`。
 
 ## 标记约定
 
