@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -120,22 +121,16 @@ class _AlertRow extends ConsumerWidget {
     return ListTile(
       onTap: alert.assetIds.length == 1
           ? () => context.goNamed(
-                'asset-detail',
-                pathParameters: {'assetId': alert.assetIds.first},
-              )
+              AppRouteNames.assetDetail,
+              pathParameters: {'assetId': alert.assetIds.first},
+            )
           : null,
       leading: Container(
         width: 14,
         height: 14,
-        decoration: BoxDecoration(
-          color: severityColor,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: severityColor, shape: BoxShape.circle),
       ),
-      title: Text(
-        _alertTitle(l10n, alert),
-        style: theme.textTheme.titleSmall,
-      ),
+      title: Text(_alertTitle(l10n, alert), style: theme.textTheme.titleSmall),
       subtitle: Text(
         l10n.riskAlertThresholdBreached(
           dimensionLabel,

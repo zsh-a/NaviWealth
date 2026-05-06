@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/route_paths.dart';
 import '../../../../data/domain/enums.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -18,7 +19,7 @@ class PhysicalAssetCard extends StatelessWidget {
     return LiquidGlassCard(
       padding: Spacing.card,
       onTap: () => context.goNamed(
-        'physicalAssetDetail',
+        AppRouteNames.physicalAssetDetail,
         pathParameters: {'id': asset.id},
       ),
       child: Row(

@@ -54,3 +54,51 @@ abstract final class AppRoutes {
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
 }
+
+/// Canonical GoRouter route names.
+abstract final class AppRouteNames {
+  static const login = 'login';
+  static const home = 'home';
+  static const aiChat = 'ai-chat';
+  static const settings = 'settings';
+  static const devices = 'devices';
+  static const fxRates = 'fx-rates';
+  static const backup = 'backup';
+  static const logs = 'logs';
+
+  static const portfolio = 'portfolio';
+  static const assetNewCash = 'asset-new-cash';
+  static const assetNewDeposit = 'asset-new-deposit';
+  static const assetNewWealth = 'asset-new-wealth';
+  static const corporateAction = 'corporate-action';
+  static const physicalAssetDetail = 'physicalAssetDetail';
+  static const liabilities = 'liabilities';
+  static const liabilityNew = 'liability-new';
+  static const liabilityDetail = 'liabilityDetail';
+  static const assetDetail = 'asset-detail';
+
+  static const activity = 'activity';
+  static const expenses = 'expenses';
+  static const expenseNew = 'expense-new';
+  static const expenseReport = 'expense-report';
+  static const expenseDetail = 'expense-detail';
+  static const accounts = 'accounts';
+  static const accountNew = 'account-new';
+  static const accountTransfer = 'account-transfer';
+  static const accountJournal = 'account-journal';
+  static const accountDetail = 'account-detail';
+  static const tradeEntry = 'trade-entry';
+
+  static const plan = 'plan';
+  static const analytics = 'analytics';
+  static const fire = 'fire';
+  static const rebalance = 'rebalance';
+}
+
+/// Primary shell tab paths in display order.
+const List<String> kPrimaryTabPaths = <String>[
+  AppRoutes.home,
+  AppRoutes.portfolio,
+  AppRoutes.activity,
+  AppRoutes.plan,
+];

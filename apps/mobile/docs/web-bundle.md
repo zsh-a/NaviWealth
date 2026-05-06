@@ -1,11 +1,10 @@
 # Web bundle size baseline
 
 This is the regression baseline for `flutter build web --release` output.
-The v1 target from FIR-39 is **`main.dart.js` gzip ≤ 800 KB** on first paint.
+The first-paint target is **`main.dart.js` gzip <= 800 KB**.
 
 The numbers below are what we ship today; the deferred-imports infrastructure
-landed in FIR-39 lets future heavy routes (FIR-22 AI assistant, FIR-7/8
-analytics, FIR-8 rebalance) be split off without touching `main.dart.js`.
+keeps heavy secondary routes out of the initial `main.dart.js` payload.
 
 ## How to measure
 
@@ -27,7 +26,7 @@ done
 `--no-source-maps` is what production should use — see
 [Source maps](#source-maps) below for the rationale.
 
-## Baseline (FIR-39, 2026-04-28)
+## Baseline (2026-04-28)
 
 Build flags: `--release --tree-shake-icons --no-source-maps`
 Renderer: CanvasKit (default; loaded from canvaskit/ alongside `main.dart.js`).
@@ -41,9 +40,8 @@ Renderer: CanvasKit (default; loaded from canvaskit/ alongside `main.dart.js`).
 | `flutter_bootstrap.js` | 9,975  | 3,852      | Per-app bootstrap (canvaskit/skwasm probe)               |
 | **First-paint JS total** | **2,979,519** | **847,731** | ≈ 828 KB gzip                                            |
 
-`main.dart.js` alone is **~821 KB gzip**, vs. the ≤ 800 KB v1 target. That's
-~3 % over the target with placeholder feature pages still in the tree; the
-gap closes once placeholders shrink and we lazy-load the heavy routes. See
+`main.dart.js` alone is **~821 KB gzip**, vs. the <= 800 KB target. That's
+~3 % over the target. See
 [Where the bundle weight is](#where-the-bundle-weight-is) for the next levers.
 
 ### Deferred (per-route) parts
@@ -52,12 +50,14 @@ gap closes once placeholders shrink and we lazy-load the heavy routes. See
 Home is *not* deferred — it ships in `main.dart.js` so the first paint after
 the user authenticates needs no extra round-trip.
 
-| Route        | Part file                  | Raw (B) | Gzip-9 (B) | Trigger                                |
-| ------------ | -------------------------- | ------- | ---------- | -------------------------------------- |
-| `/analytics` | `main.dart.js_2.part.js`   | 734     | 502        | Tap "Analytics" tab                    |
-| `/assets`    | `main.dart.js_1.part.js`   | 8,550   | 3,480      | Tap "Assets" tab                       |
-| `/settings`  | `main.dart.js_3.part.js`   | 62,296  | 20,167     | Tap "Settings" tab                     |
-| **Sum**      |                            | 71,580  | 24,149     |                                        |
+| Current route     | Entry file / feature                         | Trigger                    |
+| ----------------- | -------------------------------------------- | -------------------------- |
+| `/portfolio`      | `features/portfolio/portfolio_page.dart`     | Open Investment Portfolio  |
+| `/plan/analytics` | `features/analytics/analytics_page.dart`     | Open Planning > Analytics  |
+| `/plan/fire`      | `features/fire/presentation/fire_page.dart`  | Open Planning > FIRE       |
+| `/plan/rebalance` | `features/rebalance/ui/rebalance_page.dart`  | Open Planning > Rebalance  |
+| `/ai`             | `features/ai_chat/ui/ai_chat_page.dart`      | Open AI assistant          |
+| `/settings`       | `features/settings/settings_page.dart`       | Open Settings              |
 
 > The numeric suffix dart2js assigns to part files is not stable across builds;
 > identify parts by content (or by the entry file in
@@ -99,17 +99,15 @@ pays for them on the cold first visit only.
 5. l10n delegates (en + zh-CN).
 6. The design system (theme, market colors, money/delta widgets).
 
-What's *not* a meaningful share today: the four feature pages. Splitting
-placeholder pages saved ~12 KB gzip. The big wins come later, when:
+What's *not* a meaningful share today: the lightweight route shell. The big
+wins come from keeping expensive feature dependencies deferred:
 
-- the AI assistant route lands (drag-and-drop, markdown rendering, streaming
-  client) — defer.
-- the analytics route lands (`fl_chart`, multi-series breakdowns) — defer.
-- the rebalance route lands (optimization, transaction preview) — defer.
+- the AI assistant route (streaming client, chat history, markdown rendering).
+- the analytics route (`fl_chart`, multi-series breakdowns).
+- the rebalance route (optimization and transaction preview).
 
 These are already wired through `DeferredRoute` in `lib/app/router.dart`, so
-adding them only requires writing the page; no router or build-config
-changes.
+route-level bundle boundaries should stay visible during future changes.
 
 ## Source maps
 

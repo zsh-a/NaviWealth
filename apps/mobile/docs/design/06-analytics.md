@@ -15,7 +15,7 @@ Analytics
 └── 流动性 / 期限 (Liquidity)
 ```
 
-URL 子路由：`/analytics/return`, `/analytics/allocation`, `/analytics/liquidity`。
+URL：规划中心下的 `/plan/analytics`。收益、配置、流动性作为页内视图切换，不再暴露旧的顶层分析路径。
 
 ## 3. Wireframe
 
@@ -109,9 +109,9 @@ URL 子路由：`/analytics/return`, `/analytics/allocation`, `/analytics/liquid
 │ Nav  │ Tab + 时间区间                │ 详情面板    │
 │      │ KPI 行                        │ (默认折叠) │
 │ 总览  │ ────────────────────────────  │            │
-│ 资产  │  曲线图  (760 × 360)          │  点击曲线   │
+│ 组合  │  曲线图  (760 × 360)          │  点击曲线   │
 │ 分析* │                              │  上某段后    │
-│ FIRE │                              │  显示该时段  │
+│ 规划 │                              │  显示该时段  │
 │      │ 归因表（行可点击 → 详情面板）   │  组合切片   │
 │      │                              │  + 主要持仓  │
 └──────┴──────────────────────────────┴────────────┘
@@ -127,7 +127,7 @@ URL 子路由：`/analytics/return`, `/analytics/allocation`, `/analytics/liquid
 | 最大回撤 | min((NAV_t - peak) / peak) | 滑窗 |
 | 归因（一阶） | 大类权重 × 大类回报 - 总回报 |  |
 
-> 计算属于 FIR-8 (XIRR & Benchmark) 的范畴；本文件只规范 UI 显示。
+> 计算由收益率与基准比较服务提供；本文件只规范 UI 显示。
 
 ## 5. 图表交互
 
