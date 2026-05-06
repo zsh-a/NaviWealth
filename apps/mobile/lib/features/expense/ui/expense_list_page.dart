@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
@@ -85,40 +86,40 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     final accountsAsync = ref.watch(allAccountsStreamProvider);
 
     final body = expensesAsync.when(
-        data: (all) {
-          final accounts = accountsAsync.value ?? const <Account>[];
-          final expenseAccountById = {
-            for (final a in accounts.where(
-              (a) => a.category == AccountCategory.expense,
-            ))
-              a.id: a,
-          };
-          final filtered = _applyFilters(all);
-          return Column(
-            children: [
-              _FiltersBar(
-                accounts: accounts,
-                expenseAccountById: expenseAccountById,
-                filters: _filters,
-                keywordController: _keywordController,
-                onChanged: (f) => setState(() => _filters = f),
-              ),
-              Expanded(
-                child: filtered.isEmpty
-                    ? _Empty(filtered: !_filters.isEmpty)
-                    : _GroupedList(
-                        expenses: filtered,
-                        expenseAccountById: expenseAccountById,
-                        grouping: _filters.grouping,
-                        onTap: (e) => context.go('/activity/expenses/${e.id}'),
-                      ),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-      );
+      data: (all) {
+        final accounts = accountsAsync.value ?? const <Account>[];
+        final expenseAccountById = {
+          for (final a in accounts.where(
+            (a) => a.category == AccountCategory.expense,
+          ))
+            a.id: a,
+        };
+        final filtered = _applyFilters(all);
+        return Column(
+          children: [
+            _FiltersBar(
+              accounts: accounts,
+              expenseAccountById: expenseAccountById,
+              filters: _filters,
+              keywordController: _keywordController,
+              onChanged: (f) => setState(() => _filters = f),
+            ),
+            Expanded(
+              child: filtered.isEmpty
+                  ? _Empty(filtered: !_filters.isEmpty)
+                  : _GroupedList(
+                      expenses: filtered,
+                      expenseAccountById: expenseAccountById,
+                      grouping: _filters.grouping,
+                      onTap: (e) => context.go(AppRoutes.expense(e.id)),
+                    ),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+    );
 
     if (widget.embedded) return body;
     return Scaffold(
@@ -128,7 +129,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           IconButton(
             tooltip: l10n.expensesReportTooltip,
             icon: const Icon(Icons.insights_outlined),
-            onPressed: () => context.go('/activity/expenses/report'),
+            onPressed: () => context.go(AppRoutes.expenseReport),
           ),
         ],
       ),
@@ -230,8 +231,7 @@ class _FiltersBar extends StatelessWidget {
                             ListTile(
                               leading: const Icon(Icons.clear),
                               title: Text(l10n.expenseListAllCategories),
-                              onTap: () =>
-                                  Navigator.of(ctx).pop<String?>(null),
+                              onTap: () => Navigator.of(ctx).pop<String?>(null),
                             ),
                             for (final a in expenseAccounts)
                               ListTile(
@@ -276,7 +276,9 @@ class _GroupingChips extends StatelessWidget {
         children: [
           for (final g in ExpenseGrouping.values)
             _SegmentChip(
-              label: g == ExpenseGrouping.month ? l10n.expenseListGroupMonth : l10n.expenseListGroupWeek,
+              label: g == ExpenseGrouping.month
+                  ? l10n.expenseListGroupMonth
+                  : l10n.expenseListGroupWeek,
               selected: g == selected,
               onTap: () {
                 Haptics.selection();
@@ -480,7 +482,9 @@ class _Empty extends StatelessWidget {
             const Icon(Icons.receipt_long_outlined, size: 48),
             const SizedBox(height: Spacing.s12),
             Text(
-              filtered ? l10n.expenseListEmptyFiltered : l10n.expenseListEmptyDefault,
+              filtered
+                  ? l10n.expenseListEmptyFiltered
+                  : l10n.expenseListEmptyDefault,
               textAlign: TextAlign.center,
             ),
           ],
@@ -497,7 +501,11 @@ class _Group {
   final List<Expense> expenses = [];
 }
 
-List<_Group> _groupExpenses(List<Expense> expenses, ExpenseGrouping grouping, AppLocalizations l10n) {
+List<_Group> _groupExpenses(
+  List<Expense> expenses,
+  ExpenseGrouping grouping,
+  AppLocalizations l10n,
+) {
   final byKey = <String, _Group>{};
   for (final e in expenses) {
     final local = e.tradeDate.toLocal();

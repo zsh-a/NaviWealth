@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -112,10 +113,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
   Offset _clampToScreen(Offset o, Size screenSize) {
     final maxDx = screenSize.width - _sheetW;
     final maxDy = screenSize.height - _sheetH;
-    return Offset(
-      o.dx.clamp(0.0, maxDx),
-      o.dy.clamp(0.0, maxDy),
-    );
+    return Offset(o.dx.clamp(0.0, maxDx), o.dy.clamp(0.0, maxDy));
   }
 
   @override
@@ -267,7 +265,7 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
               ? null
               : () {
                   Navigator.of(context).pop();
-                  context.go('/ai');
+                  context.go(AppRoutes.ai);
                 },
         ),
         const Divider(height: 1),
@@ -303,10 +301,7 @@ class _SheetHeader extends StatelessWidget {
           Icon(Icons.auto_awesome, size: 20, color: cs.primary),
           const SizedBox(width: Spacing.s8),
           Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
           ),
           IconButton(
             icon: const Icon(Icons.open_in_full, size: 20),
@@ -374,8 +369,8 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
               child: Text(
                 AppLocalizations.of(context).aiChatSheetEmpty,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -388,10 +383,8 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
             vertical: Spacing.s8,
           ),
           itemCount: messages.length,
-          itemBuilder: (_, i) => MessageBubble(
-            sessionId: widget.sessionId,
-            message: messages[i],
-          ),
+          itemBuilder: (_, i) =>
+              MessageBubble(sessionId: widget.sessionId, message: messages[i]),
         );
       },
     );
@@ -413,7 +406,9 @@ class _SheetComposer extends ConsumerWidget {
       isFlushing: turn.isFlushing,
       initialText: prefill,
       onSend: (text) {
-        ref.read(chatControllerProvider(sessionId).notifier).send(
+        ref
+            .read(chatControllerProvider(sessionId).notifier)
+            .send(
               text,
               staleSyncNotice: l10n.aiChatStaleSyncNotice,
               systemContext: routeCtx.toSystemContext(),

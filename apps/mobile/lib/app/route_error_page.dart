@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
+import 'route_paths.dart';
 
 /// Rendered by [GoRouter.errorBuilder] when routing fails — typically because
 /// no route matched the URL (404). `state.error` is `GoException?`; when it's
@@ -63,7 +64,7 @@ class RouteErrorPage extends StatelessWidget {
                 AppButton.primary(
                   label: l10n.routeGoHome,
                   icon: Icons.home_outlined,
-                  onPressed: () => context.go('/'),
+                  onPressed: () => context.go(AppRoutes.home),
                 ),
               ],
             ),

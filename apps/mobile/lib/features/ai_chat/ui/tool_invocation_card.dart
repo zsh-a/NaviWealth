@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
@@ -158,11 +159,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   void _navigate(BuildContext context, _Jump jump) {
     switch (jump.kind) {
       case _JumpKind.asset:
-        context.go('/portfolio/${Uri.encodeComponent(jump.id)}');
+        context.go(AppRoutes.portfolioAsset(jump.id));
       case _JumpKind.account:
-        context.go('/activity/accounts/${Uri.encodeComponent(jump.id)}');
+        context.go(AppRoutes.account(jump.id));
       case _JumpKind.liability:
-        context.go('/portfolio/liabilities/${Uri.encodeComponent(jump.id)}');
+        context.go(AppRoutes.liability(jump.id));
     }
   }
 

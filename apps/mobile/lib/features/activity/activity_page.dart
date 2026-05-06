@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../accounts/accounts_page.dart';
@@ -34,19 +35,19 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             IconButton(
               icon: const Icon(Icons.swap_horiz),
               tooltip: l10n.accountsTransferAction,
-              onPressed: () => context.push('/activity/accounts/transfer'),
+              onPressed: () => context.push(AppRoutes.accountTransfer),
             ),
           if (_tab == _ActivityTab.accounts)
             IconButton(
               icon: const Icon(Icons.receipt_long_outlined),
               tooltip: l10n.accountsJournalAction,
-              onPressed: () => context.push('/activity/accounts/journal'),
+              onPressed: () => context.push(AppRoutes.accountJournal),
             ),
           if (_tab == _ActivityTab.expenses)
             IconButton(
               icon: const Icon(Icons.bar_chart_outlined),
               tooltip: l10n.expenseReportTitle,
-              onPressed: () => context.push('/activity/expenses/report'),
+              onPressed: () => context.push(AppRoutes.expenseReport),
             ),
         ],
         bottom: PreferredSize(
@@ -61,23 +62,8 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       body: _tab == _ActivityTab.expenses
           ? const ExpenseListPage(embedded: true)
           : _tab == _ActivityTab.accounts
-              ? const AccountsPage(embedded: true)
-              : const ActivityFeed(),
-      floatingActionButton: _tab == _ActivityTab.expenses
-          ? ScrollAwareFab(
-              child: AppFab(
-                onPressed: () => context.push('/activity/expenses/new'),
-                child: const Icon(Icons.add),
-              ),
-            )
-          : _tab == _ActivityTab.accounts
-              ? ScrollAwareFab(
-                  child: AppFab(
-                    onPressed: () => context.push('/activity/accounts/new'),
-                    child: const Icon(Icons.add),
-                  ),
-                )
-              : null,
+          ? const AccountsPage(embedded: true)
+          : const ActivityFeed(),
     );
   }
 }
@@ -96,11 +82,7 @@ class _SegmentedControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final segments = [
-      l10n.navExpenses,
-      l10n.navAccounts,
-      l10n.activityFeedTab,
-    ];
+    final segments = [l10n.navExpenses, l10n.navAccounts, l10n.activityFeedTab];
 
     return Container(
       height: 48,
@@ -122,8 +104,7 @@ class _SegmentedControl extends StatelessWidget {
                       color: selected
                           ? theme.colorScheme.primary
                           : theme.colorScheme.onSurfaceVariant,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: Spacing.s4),

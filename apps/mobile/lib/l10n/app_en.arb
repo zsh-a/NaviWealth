@@ -7,22 +7,14 @@
 
   "navHome": "Overview",
   "@navHome": { "description": "Bottom nav: dashboard / overview tab" },
-  "navAssets": "Assets",
-  "@navAssets": { "description": "Bottom nav: assets tab" },
   "navExpenses": "Expenses",
-  "@navExpenses": { "description": "Bottom nav: day-to-day expense tab (FIR-69)" },
-  "navAnalytics": "Analytics",
-  "@navAnalytics": { "description": "Bottom nav: analytics tab" },
+  "@navExpenses": { "description": "Expense list label" },
   "navSettings": "Settings",
   "@navSettings": { "description": "Bottom nav: settings tab" },
   "navPortfolio": "Portfolio",
   "@navPortfolio": { "description": "Bottom nav: portfolio tab (assets + liabilities)" },
-  "navMore": "More",
-  "@navMore": { "description": "Bottom nav: more/overflow tab" },
   "navAI": "AI",
   "@navAI": { "description": "Bottom nav: AI assistant tab" },
-  "navMe": "Me",
-  "@navMe": { "description": "Bottom nav: me/profile tab" },
   "navActivity": "Activity",
   "@navActivity": { "description": "Bottom nav: activity tab (expenses, accounts, trades)" },
   "navPlan": "Plan",
@@ -33,13 +25,6 @@
   "@portfolioAssetsTab": { "description": "Portfolio segmented control: assets sub-tab" },
   "portfolioLiabilitiesTab": "Liabilities",
   "@portfolioLiabilitiesTab": { "description": "Portfolio segmented control: liabilities sub-tab" },
-  "moreAccountsSubtitle": "Bank, brokerage, and wallets",
-  "moreExpenseSubtitle": "Track daily spending and reports",
-  "moreAnalyticsSubtitle": "Allocation, risk, and benchmarks",
-  "moreFireSubtitle": "Financial independence tracker",
-  "moreAiSubtitle": "AI financial assistant",
-  "moreRebalanceSubtitle": "Target vs. actual allocation",
-  "moreSettingsSubtitle": "App preferences and devices",
   "superFabTrade": "Trade",
   "superFabExpense": "Expense",
   "superFabAsset": "Asset",
@@ -60,7 +45,7 @@
   },
   "assetsAppBarTitle": "Assets",
   "assetsDetailEmpty": "Select an asset on the left to see its details.",
-  "@assetsDetailEmpty": { "description": "Master-detail empty state for /assets at desktop width (FIR-106)" },
+  "@assetsDetailEmpty": { "description": "Master-detail empty state for portfolio at desktop width" },
   "assetsEmptyHint": "No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.",
   "assetsAddAction": "Add asset",
   "assetsCorporateActionAction": "Record corporate action",
@@ -271,7 +256,7 @@
 
   "settingsAppBarTitle": "Settings",
   "settingsAccountTitle": "Account",
-  "settingsAccountSubtitle": "Sign-in & multi-device sync (FIR-27 / FIR-28)",
+  "settingsAccountSubtitle": "Sign-in & multi-device sync",
   "settingsBaseCurrencyTitle": "Base currency",
   "settingsBaseCurrencySubtitle": "{currency} (default)",
   "@settingsBaseCurrencySubtitle": {
@@ -341,7 +326,7 @@
   },
   "commonSaveFailed": "Couldn't save your changes. Tap retry.",
   "@commonSaveFailed": {
-    "description": "Generic failure snackbar shown when an optimistic form submit (FIR-98) fails after the form has already popped."
+    "description": "Generic failure snackbar shown when an optimistic form submit fails after the form has already popped."
   },
 
   "deferredLoadFailedTitle": "Couldn't load this section",
@@ -370,7 +355,7 @@
   "shortcutShowHelp": "Show keyboard shortcut help",
   "shortcutDismissOverlay": "Close current dialog",
   "shortcutToggleSidebar": "Collapse / expand sidebar",
-  "@shortcutToggleSidebar": { "description": "Help-dialog label for the Cmd/Ctrl+B sidebar toggle (FIR-106)" },
+  "@shortcutToggleSidebar": { "description": "Help-dialog label for the Cmd/Ctrl+B sidebar toggle" },
   "shortcutSwitchTab": "Switch to tab {position} ({label})",
   "@shortcutSwitchTab": {
     "placeholders": {
@@ -379,40 +364,30 @@
     }
   },
   "shortcutOpenAiChat": "Open AI chat",
-  "@shortcutOpenAiChat": { "description": "Help-dialog label for the Cmd/Ctrl+/ AI chat shortcut (FIR-112)" },
+  "@shortcutOpenAiChat": { "description": "Help-dialog label for the Cmd/Ctrl+/ AI chat shortcut" },
   "shortcutVimGoto": "Vim-style go to {target}",
   "@shortcutVimGoto": {
-    "description": "Help-dialog label for vim-style g+key navigation (FIR-112)",
+    "description": "Help-dialog label for vim-style g+key navigation",
     "placeholders": { "target": { "type": "String", "example": "home" } }
   },
   "shortcutListSearch": "Focus list search",
-  "@shortcutListSearch": { "description": "Help-dialog label for / key to focus search in master-detail lists (FIR-112)" },
+  "@shortcutListSearch": { "description": "Help-dialog label for / key to focus search in master-detail lists" },
   "shortcutListNext": "Select next item",
-  "@shortcutListNext": { "description": "Help-dialog label for j key to select next list item in master-detail (FIR-112)" },
+  "@shortcutListNext": { "description": "Help-dialog label for j key to select next list item in master-detail" },
   "shortcutListPrevious": "Select previous item",
-  "@shortcutListPrevious": { "description": "Help-dialog label for k key to select previous list item in master-detail (FIR-112)" },
+  "@shortcutListPrevious": { "description": "Help-dialog label for k key to select previous list item in master-detail" },
 
   "commandPaletteSearchHint": "Search commands…",
-  "@commandPaletteSearchHint": { "description": "Placeholder for the command palette search box (FIR-87)" },
+  "@commandPaletteSearchHint": { "description": "Placeholder for the command palette search box" },
   "commandPaletteEmpty": "No commands match your search",
   "@commandPaletteEmpty": { "description": "Shown in the command palette when the query matches no commands" },
   "commandPaletteAskAi": "Ask AI: {query}",
   "@commandPaletteAskAi": {
-    "description": "Dynamic command palette entry that opens AI chat with the user's query prefilled (FIR-112)",
+    "description": "Dynamic command palette entry that opens AI chat with the user's query prefilled",
     "placeholders": { "query": { "type": "String", "example": "portfolio summary" } }
   },
   "commandPaletteGoOverview": "Go to Overview",
   "@commandPaletteGoOverview": { "description": "Command palette: navigate to the home/overview tab" },
-  "commandPaletteGoAssets": "Go to Assets",
-  "@commandPaletteGoAssets": { "description": "Command palette: navigate to the assets tab" },
-  "commandPaletteGoAccounts": "Go to Accounts",
-  "@commandPaletteGoAccounts": { "description": "Command palette: navigate to the accounts page (FIR-112)" },
-  "commandPaletteGoExpenses": "Go to Expenses",
-  "@commandPaletteGoExpenses": { "description": "Command palette: navigate to the expenses tab" },
-  "commandPaletteGoAnalytics": "Go to Analytics",
-  "@commandPaletteGoAnalytics": { "description": "Command palette: navigate to the analytics tab" },
-  "commandPaletteGoFire": "Go to FIRE",
-  "@commandPaletteGoFire": { "description": "Command palette: navigate to the FIRE dashboard" },
   "commandPaletteGoSettings": "Go to Settings",
   "@commandPaletteGoSettings": { "description": "Command palette: navigate to the settings tab" },
   "commandPaletteNewTrade": "New trade",
@@ -422,11 +397,11 @@
   "commandPaletteOpenAi": "Open AI assistant",
   "@commandPaletteOpenAi": { "description": "Command palette: open the AI chat page" },
   "commandPaletteToggleTheme": "Toggle theme (light / dark)",
-  "@commandPaletteToggleTheme": { "description": "Command palette: cycle between light and dark theme (FIR-112)" },
+  "@commandPaletteToggleTheme": { "description": "Command palette: cycle between light and dark theme" },
   "commandPaletteToggleColorMode": "Toggle market color mode",
-  "@commandPaletteToggleColorMode": { "description": "Command palette: cycle market direction colors (FIR-112)" },
+  "@commandPaletteToggleColorMode": { "description": "Command palette: cycle market direction colors" },
   "commandPaletteToggleLanguage": "Toggle language",
-  "@commandPaletteToggleLanguage": { "description": "Command palette: cycle between supported languages (FIR-112)" },
+  "@commandPaletteToggleLanguage": { "description": "Command palette: cycle between supported languages" },
   "commandPaletteShortcutHelp": "Show keyboard shortcuts",
   "@commandPaletteShortcutHelp": { "description": "Command palette: open the shortcut help dialog" },
 
@@ -538,7 +513,7 @@
   },
   "dashboardTrendFlatHint": "Trend line is flat — no historical valuation snapshots yet for the assets in this window.",
   "dashboardHeaderDeltaTodayLabel": "Today",
-  "@dashboardHeaderDeltaTodayLabel": { "description": "Label for the today's net-worth change cell on the dashboard header (FIR-85)." },
+  "@dashboardHeaderDeltaTodayLabel": { "description": "Label for the today's net-worth change cell on the dashboard header." },
   "dashboardHeaderDeltaMonthLabel": "MTD",
   "@dashboardHeaderDeltaMonthLabel": { "description": "Label for the month-to-date net-worth change cell on the dashboard header." },
   "dashboardHeaderDeltaYtdLabel": "YTD",
@@ -607,8 +582,6 @@
     }
   },
 
-  "navFire": "FIRE",
-  "@navFire": { "description": "Bottom-nav tab label for the FIRE dashboard." },
 
   "fireAppBarTitle": "FIRE",
   "fireLoadError": "Could not load FIRE dashboard. {detail}",
@@ -1119,7 +1092,7 @@
 
   "accountsAppBarTitle": "Accounts",
   "accountsDetailEmpty": "Select an account on the left to edit its details.",
-  "@accountsDetailEmpty": { "description": "Master-detail empty state for /accounts at desktop width (FIR-106)" },
+  "@accountsDetailEmpty": { "description": "Master-detail empty state for /accounts at desktop width" },
   "accountsCreateAction": "New account",
   "accountsLoadError": "Failed to load: {error}",
   "@accountsLoadError": {
@@ -1191,8 +1164,6 @@
 
   "activityFeedTab": "Activity",
   "@activityFeedTab": { "description": "Activity page segmented control: activity feed tab" },
-  "activityFeedComingSoon": "Activity feed coming soon",
-  "@activityFeedComingSoon": { "description": "Activity feed placeholder text" },
   "activityFeedEmpty": "No activity yet — record a transfer, expense, or trade and it will appear here.",
   "@activityFeedEmpty": { "description": "Activity feed empty state message" },
   "tradeEntryCashOverdrawTitle": "Cash balance will go negative",
@@ -1285,9 +1256,6 @@
   "@backupFilePickerError": { "description": "Backup error: file picker failure" },
   "backupRestorePassphraseHint": "Enter the backup passphrase",
   "@backupRestorePassphraseHint": { "description": "Backup dialog: restore passphrase hint" },
-
-  "moreRebalanceTitle": "Rebalance",
-  "@moreRebalanceTitle": { "description": "More hub: rebalance card title" },
 
   "logViewerClearTooltip": "Clear",
   "@logViewerClearTooltip": { "description": "Log viewer page: clear logs tooltip" },

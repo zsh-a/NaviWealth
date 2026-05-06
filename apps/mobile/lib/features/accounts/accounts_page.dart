@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/master_detail_layout.dart';
+import '../../app/route_paths.dart';
 import '../../app/selection_query.dart';
 import '../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../data/domain/account.dart';
@@ -117,23 +118,16 @@ class _AccountsMaster extends ConsumerWidget {
             IconButton(
               tooltip: l10n.accountsJournalTooltip,
               icon: const Icon(Icons.history),
-              onPressed: () => context.go('/activity/accounts/journal'),
+              onPressed: () => context.go(AppRoutes.accountJournal),
             ),
             IconButton(
               tooltip: l10n.accountsTransferTooltip,
               icon: const Icon(Icons.swap_horiz),
-              onPressed: () => context.go('/activity/accounts/transfer'),
+              onPressed: () => context.go(AppRoutes.accountTransfer),
             ),
           ],
         ),
         body: body,
-        floatingActionButton: ScrollAwareFab(
-          child: AppFab.extended(
-            onPressed: () => context.go('/activity/accounts/new'),
-            icon: const Icon(Icons.add),
-            label: Text(l10n.accountsCreateAction),
-          ),
-        ),
       ),
     );
   }
@@ -159,7 +153,7 @@ class _AccountsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: '/activity/accounts',
+      path: AppRoutes.activityAccounts,
       selected: allIds[nextIndex],
     );
   }
@@ -230,39 +224,39 @@ class _AccountsByType extends StatelessWidget {
       child: ListView.builder(
         padding: Spacing.pageMobile,
         itemCount: order.length,
-      itemBuilder: (context, i) {
-        final type = order[i];
-        final group = grouped[type]!;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                top: Spacing.s8,
-                bottom: Spacing.s8,
+        itemBuilder: (context, i) {
+          final type = order[i];
+          final group = grouped[type]!;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: Spacing.s8,
+                  bottom: Spacing.s8,
+                ),
+                child: Text(
+                  accountTypeLabel(l10n, type),
+                  style: theme.textTheme.titleMedium,
+                ),
               ),
-              child: Text(
-                accountTypeLabel(l10n, type),
-                style: theme.textTheme.titleMedium,
+              LiquidGlassCard(
+                child: Column(
+                  children: [
+                    for (final a in group)
+                      _AccountTile(
+                        account: a,
+                        selected: a.id == selectedId,
+                        heroEnabled: !inMasterDetail,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            LiquidGlassCard(
-              child: Column(
-                children: [
-                  for (final a in group)
-                    _AccountTile(
-                      account: a,
-                      selected: a.id == selectedId,
-                      heroEnabled: !inMasterDetail,
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: Spacing.s12),
-          ],
-        );
-      },
-    ),
+              const SizedBox(height: Spacing.s12),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -301,9 +295,13 @@ class _AccountTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/activity/accounts', selected: account.id);
+      replaceSelectedQuery(
+        context,
+        path: AppRoutes.activityAccounts,
+        selected: account.id,
+      );
     } else {
-      context.go('/activity/accounts/${account.id}');
+      context.go(AppRoutes.account(account.id));
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shortcuts/shortcut_help_dialog.dart';
 import 'command_palette_entry.dart';
@@ -26,63 +27,82 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.commandPaletteGoOverview,
       icon: Icons.dashboard_outlined,
       keywords: const <String>['/', 'overview', 'home', '总览'],
-      run: (BuildContext ctx) => ctx.go('/'),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.home),
     ),
     CommandPaletteEntry(
       id: 'nav.portfolio',
       label: l10n.navPortfolio,
       icon: Icons.account_balance_wallet_outlined,
-      keywords: const <String>['/portfolio', 'portfolio', 'assets', '资产', '投资组合'],
-      run: (BuildContext ctx) => ctx.go('/portfolio'),
+      keywords: const <String>[
+        '/portfolio',
+        'portfolio',
+        'assets',
+        '资产',
+        '投资组合',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.portfolio),
     ),
     CommandPaletteEntry(
       id: 'nav.activity',
       label: l10n.navActivity,
       icon: Icons.receipt_long_outlined,
-      keywords: const <String>['/activity', 'activity', 'expenses', 'accounts', '活动'],
-      run: (BuildContext ctx) => ctx.go('/activity'),
+      keywords: const <String>[
+        '/activity',
+        'activity',
+        'expenses',
+        'accounts',
+        '活动',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.activity),
     ),
     CommandPaletteEntry(
       id: 'nav.plan',
       label: l10n.navPlan,
       icon: Icons.flag_outlined,
-      keywords: const <String>['/plan', 'plan', 'fire', 'rebalance', 'analytics', '计划'],
-      run: (BuildContext ctx) => ctx.go('/plan'),
+      keywords: const <String>[
+        '/plan',
+        'plan',
+        'fire',
+        'rebalance',
+        'analytics',
+        '计划',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.plan),
     ),
     CommandPaletteEntry(
       id: 'nav.accounts',
-      label: l10n.commandPaletteGoAccounts,
+      label: l10n.navAccounts,
       icon: Icons.account_balance_outlined,
-      keywords: const <String>['/accounts', 'accounts', '账户'],
-      run: (BuildContext ctx) => ctx.go('/activity/accounts'),
+      keywords: const <String>['/activity/accounts', 'accounts', '账户'],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.activityAccounts),
     ),
     CommandPaletteEntry(
       id: 'nav.expenses',
-      label: l10n.commandPaletteGoExpenses,
+      label: l10n.navExpenses,
       icon: Icons.receipt_long_outlined,
-      keywords: const <String>['/expenses', 'expenses', '支出'],
-      run: (BuildContext ctx) => ctx.go('/activity/expenses'),
+      keywords: const <String>['/activity/expenses', 'expenses', '支出'],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.activityExpenses),
     ),
     CommandPaletteEntry(
       id: 'nav.analytics',
-      label: l10n.commandPaletteGoAnalytics,
+      label: l10n.planAnalyticsTitle,
       icon: Icons.pie_chart_outline,
       keywords: const <String>['/plan/analytics', 'analytics', '分析'],
-      run: (BuildContext ctx) => ctx.go('/plan/analytics'),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.planAnalytics),
     ),
     CommandPaletteEntry(
       id: 'nav.fire',
-      label: l10n.commandPaletteGoFire,
+      label: l10n.planFireTitle,
       icon: Icons.flag_outlined,
       keywords: const <String>['/plan/fire', 'fire'],
-      run: (BuildContext ctx) => ctx.go('/plan/fire'),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.planFire),
     ),
     CommandPaletteEntry(
       id: 'nav.settings',
       label: l10n.commandPaletteGoSettings,
       icon: Icons.settings_outlined,
       keywords: const <String>['/settings', 'settings', '设置'],
-      run: (BuildContext ctx) => ctx.go('/settings'),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.settings),
     ),
 
     // ── Actions ──
@@ -91,7 +111,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.commandPaletteNewTrade,
       icon: Icons.add_chart_outlined,
       keywords: const <String>['/activity/trade', 'trade', 'buy', 'sell', '交易'],
-      run: (BuildContext ctx) => ctx.push('/activity/trade'),
+      run: (BuildContext ctx) => ctx.push(AppRoutes.tradeEntry),
     ),
     CommandPaletteEntry(
       id: 'action.newExpense',
@@ -104,28 +124,21 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         '支出',
         '记一笔',
       ],
-      run: (BuildContext ctx) => ctx.push('/activity/expenses/new'),
+      run: (BuildContext ctx) => ctx.push(AppRoutes.expenseNew),
     ),
     CommandPaletteEntry(
       id: 'action.openAi',
       label: l10n.commandPaletteOpenAi,
       icon: Icons.smart_toy_outlined,
       keywords: const <String>['/ai', 'ai', 'assistant', '助手'],
-      run: (BuildContext ctx) => ctx.push('/ai'),
+      run: (BuildContext ctx) => ctx.push(AppRoutes.ai),
     ),
     if (onToggleTheme != null)
       CommandPaletteEntry(
         id: 'action.toggleTheme',
         label: l10n.commandPaletteToggleTheme,
         icon: Icons.brightness_6_outlined,
-        keywords: const <String>[
-          'theme',
-          'dark',
-          'light',
-          '主题',
-          '暗色',
-          '亮色',
-        ],
+        keywords: const <String>['theme', 'dark', 'light', '主题', '暗色', '亮色'],
         run: (_) => onToggleTheme(),
       ),
     if (onToggleColorMode != null)

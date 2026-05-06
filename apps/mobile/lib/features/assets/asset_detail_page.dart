@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../app/route_paths.dart';
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
 import '../../data/market/market_data_providers.dart';
@@ -37,7 +38,8 @@ class AssetDetailPage extends ConsumerWidget {
     final repoAsync = ref.watch(manualAssetRepositoryProvider);
     return repoAsync.when(
       loading: () => const Scaffold(body: AssetDetailSkeleton()),
-      error: (e, _) => Scaffold(body: Center(child: Text(l10n.assetDetailLoadError('$e')))),
+      error: (e, _) =>
+          Scaffold(body: Center(child: Text(l10n.assetDetailLoadError('$e')))),
       data: (repo) {
         return FutureBuilder<Asset?>(
           future: repo.findById(assetId),
@@ -47,7 +49,9 @@ class AssetDetailPage extends ConsumerWidget {
             }
             final asset = snap.data;
             if (asset == null) {
-              return Scaffold(body: Center(child: Text(l10n.assetDetailNotFound)));
+              return Scaffold(
+                body: Center(child: Text(l10n.assetDetailNotFound)),
+              );
             }
             return switch (asset.type) {
               AssetType.cash => CashFormPage(assetId: asset.id),
@@ -59,8 +63,7 @@ class AssetDetailPage extends ConsumerWidget {
               AssetType.stock ||
               AssetType.etf ||
               AssetType.crypto ||
-              AssetType.mutualFund =>
-                _EquityAssetDetailPage(assetId: asset.id),
+              AssetType.mutualFund => _EquityAssetDetailPage(assetId: asset.id),
               _ => Scaffold(
                 appBar: GlassAppBar(title: Text(asset.name ?? asset.symbol)),
                 body: Center(child: Text(l10n.assetDetailUnsupportedType)),
@@ -120,7 +123,11 @@ class _EquityAssetDetailPageState
       final SymbolInfo? best = _pickBest(response.data, asset);
       if (best == null) {
         if (!mounted) return;
-        AppMessenger.show(context, ToastKind.error, l10n.assetDetailNoMetadataMatch);
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.assetDetailNoMetadataMatch,
+        );
         return;
       }
 
@@ -133,11 +140,21 @@ class _EquityAssetDetailPageState
       if (!mounted) return;
 
       final filledName = before.name == null && best.name.isNotEmpty;
-      AppMessenger.show(context, ToastKind.success, filledName ? l10n.assetDetailMetadataSynced : l10n.assetDetailMetadataUpToDate);
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        filledName
+            ? l10n.assetDetailMetadataSynced
+            : l10n.assetDetailMetadataUpToDate,
+      );
       setState(_reload);
     } catch (_) {
       if (!mounted) return;
-      AppMessenger.show(context, ToastKind.error, l10n.assetDetailNetworkUnavailable);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.assetDetailNetworkUnavailable,
+      );
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
@@ -213,7 +230,7 @@ class _EquityAssetDetailPageState
                 icon: Icons.add,
                 label: l10n.assetDetailNewTradeLabel,
                 onPressed: () =>
-                    context.push('/activity/trade?assetId=${asset.id}'),
+                    context.push(AppRoutes.tradeForAsset(asset.id)),
               ),
             ],
           ),
@@ -282,13 +299,15 @@ class _HoldingCard extends ConsumerWidget {
           ],
         ),
       ),
-      error: (e, _) => _ErrorCard(message: l10n.assetDetailHoldingsLoadError('$e')),
+      error: (e, _) =>
+          _ErrorCard(message: l10n.assetDetailHoldingsLoadError('$e')),
       data: (snap) {
         final qty = snap?.quantity ?? Decimal.zero;
         final hasPosition = qty.sign > 0;
         final avgCost = hasPosition
-            ? (snap!.costBasisInAssetCurrency / qty)
-                .toDecimal(scaleOnInfinitePrecision: 8)
+            ? (snap!.costBasisInAssetCurrency / qty).toDecimal(
+                scaleOnInfinitePrecision: 8,
+              )
             : null;
         final marketValueAsset = snap?.marketValueInAssetCurrency;
         return LiquidGlassCard(
@@ -296,7 +315,10 @@ class _HoldingCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.assetDetailHoldingsTitle, style: theme.textTheme.titleSmall),
+              Text(
+                l10n.assetDetailHoldingsTitle,
+                style: theme.textTheme.titleSmall,
+              ),
               const SizedBox(height: Spacing.s12),
               _MetricRow(
                 label: l10n.assetDetailCurrentQuantity,
@@ -377,7 +399,9 @@ class _PnLCard extends ConsumerWidget {
       );
     }
     if (snapshotAsync.hasError) {
-      return _ErrorCard(message: l10n.assetDetailPnLLoadError('${snapshotAsync.error}'));
+      return _ErrorCard(
+        message: l10n.assetDetailPnLLoadError('${snapshotAsync.error}'),
+      );
     }
 
     final snap = snapshotAsync.value;
@@ -385,12 +409,12 @@ class _PnLCard extends ConsumerWidget {
     final unrealizedAsset = snap == null
         ? null
         : snap.marketValueInAssetCurrency - snap.costBasisInAssetCurrency;
-    final unrealizedPct = (snap == null ||
-            snap.costBasisInAssetCurrency.sign <= 0)
+    final unrealizedPct =
+        (snap == null || snap.costBasisInAssetCurrency.sign <= 0)
         ? null
         : (unrealizedAsset! / snap.costBasisInAssetCurrency)
-            .toDecimal(scaleOnInfinitePrecision: 6)
-            .toDouble();
+              .toDecimal(scaleOnInfinitePrecision: 6)
+              .toDouble();
 
     final dailyChange = (snap == null || !hasPosition)
         ? null
@@ -489,10 +513,7 @@ class _DailyChangeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (!hasPosition || !hasHistory) {
-      return Text(
-        '—',
-        style: Theme.of(context).textTheme.bodyMedium,
-      );
+      return Text('—', style: Theme.of(context).textTheme.bodyMedium);
     }
     if (isLoading && value == null) {
       return const SizedBox(
@@ -504,8 +525,8 @@ class _DailyChangeView extends StatelessWidget {
       return Text(
         isStale ? l10n.assetDetailQuoteStale : l10n.assetDetailQuoteUnavailable,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       );
     }
     return DeltaText(value: value!.toDouble(), currencyCode: currency);
@@ -556,10 +577,12 @@ class _TrendMiniChartCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
+                child: Text(
+                  l10n.assetDetailTrend30d,
+                  style: theme.textTheme.titleSmall,
+                ),
               ),
-              if (historyAsync.value?.isStale == true)
-                _StaleBadge(),
+              if (historyAsync.value?.isStale == true) _StaleBadge(),
             ],
           ),
           const SizedBox(height: Spacing.s12),
@@ -608,10 +631,7 @@ class _ChartBody extends StatelessWidget {
     }
     final bars = history.value?.data ?? const <HistoricalBar>[];
     if (bars.isEmpty) {
-      return const SizedBox(
-        height: 160,
-        child: EmptyChartPlaceholder(),
-      );
+      return const SizedBox(height: 160, child: EmptyChartPlaceholder());
     }
 
     final pricePoints = [
@@ -624,14 +644,11 @@ class _ChartBody extends StatelessWidget {
     final qty = snapshot?.quantity ?? Decimal.zero;
     final costBasisAvg = (qty.sign > 0)
         ? (snapshot!.costBasisInAssetCurrency / qty)
-            .toDecimal(scaleOnInfinitePrecision: 8)
-            .toDouble()
+              .toDecimal(scaleOnInfinitePrecision: 8)
+              .toDouble()
         : null;
     final series = <ChartSeries>[
-      ChartSeries(
-        name: l10n.assetDetailSeriesClosePrice,
-        points: pricePoints,
-      ),
+      ChartSeries(name: l10n.assetDetailSeriesClosePrice, points: pricePoints),
       if (costBasisAvg != null)
         ChartSeries(
           name: l10n.assetDetailSeriesCostBasis,
@@ -648,10 +665,7 @@ class _ChartBody extends StatelessWidget {
         height: 180,
         child: NwLineChart(
           series: series,
-          xAxis: const TimeAxis(
-            format: AxisDateFormat.dayMonth,
-            maxLabels: 4,
-          ),
+          xAxis: const TimeAxis(format: AxisDateFormat.dayMonth, maxLabels: 4),
           yAxis: ValueAxis.currency(currencyCode: currency, maxLabels: 4),
           aspectRatio: chartAspectFor(constraints.maxWidth),
           semanticLabel: l10n.assetDetailTrendSemanticLabel,
@@ -705,11 +719,7 @@ class _MetricRow extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        trailing ??
-            Text(
-              value ?? '—',
-              style: theme.textTheme.bodyMedium,
-            ),
+        trailing ?? Text(value ?? '—', style: theme.textTheme.bodyMedium),
       ],
     );
   }

@@ -1,6 +1,6 @@
 # NaviWealth Mobile (Flutter)
 
-跨端三平台 App（iOS / Android / Web）。本 README 记录工程基线决策（FIR-14）。
+跨端三平台 App（iOS / Android / Web）。本 README 记录工程基线与当前信息架构。
 
 ## 运行
 
@@ -17,7 +17,7 @@ flutter build apk --debug     # Android
 flutter build ios --debug --no-codesign  # iOS（需 macOS）
 ```
 
-> Web 字体子集化（FIR-38）的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中的中文字符并产出 ≤ 250 KB 首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
+> Web 字体子集化的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中的中文字符并产出 ≤ 250 KB 首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
 
 ## 目录结构
 
@@ -25,7 +25,7 @@ flutter build ios --debug --no-codesign  # iOS（需 macOS）
 lib/
 ├── app/        # MaterialApp、router、bootstrap
 ├── core/       # 配置、日志、错误处理等横切关注点
-├── features/   # 业务模块（feature-first）：home / assets / analytics / settings
+├── features/   # 业务模块（feature-first）：home / portfolio / activity / plan / ai / settings
 └── shared/     # 跨 feature 复用的 UI / 工具
 ```
 
@@ -45,11 +45,11 @@ lib/
 
 ## Web 路由策略
 
-使用 **Path URL strategy**（`/assets` 而非 `/#/assets`）。在 `bootstrap()` 中调用 `usePathUrlStrategy()`，部署时（Cloudflare Pages）需要把未匹配路径 fallback 到 `index.html`，否则刷新子路由会 404。
+使用 **Path URL strategy**（`/portfolio` 而非 `/#/portfolio`）。在 `bootstrap()` 中调用 `usePathUrlStrategy()`，部署时（Cloudflare Pages）需要把未匹配路径 fallback 到 `index.html`，否则刷新子路由会 404。
 
 `web/index.html` 的 `<base href="$FLUTTER_BASE_HREF">` 占位符由 `flutter build web --base-href=...` 在构建时替换；默认 `/` 即可。
 
-## Web PWA / 离线 Shell（FIR-37）
+## Web PWA / 离线 Shell
 
 `web/service_worker.js` 是手写的 Service Worker，替换 Flutter 默认的 `flutter_service_worker.js`。Build Web 时 **必须** 关闭 Flutter 自带 SW，否则两者会互相覆盖：
 

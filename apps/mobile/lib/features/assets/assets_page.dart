@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/master_detail_layout.dart';
+import '../../app/route_paths.dart';
 import '../../app/selection_query.dart';
 import '../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../data/domain/account.dart';
@@ -154,7 +155,7 @@ class _AssetsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: '/portfolio',
+      path: AppRoutes.portfolio,
       selected: allIds[nextIndex],
     );
   }
@@ -675,9 +676,13 @@ class _SecurityTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/portfolio', selected: asset.id);
+      replaceSelectedQuery(
+        context,
+        path: AppRoutes.portfolio,
+        selected: asset.id,
+      );
     } else {
-      context.go('/portfolio/${asset.id}');
+      context.go(AppRoutes.portfolioAsset(asset.id));
     }
   }
 }
@@ -762,9 +767,13 @@ class _AssetTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(context, path: '/portfolio', selected: asset.id);
+      replaceSelectedQuery(
+        context,
+        path: AppRoutes.portfolio,
+        selected: asset.id,
+      );
     } else {
-      context.go('/portfolio/${asset.id}');
+      context.go(AppRoutes.portfolioAsset(asset.id));
     }
   }
 

@@ -45,34 +45,18 @@ class _ShortcutHelpSheet extends StatelessWidget {
         keys: 'g p',
       ),
       _ManualShortcutEntry(
-        label: l10n.shortcutVimGoto(l10n.navAnalytics),
+        label: l10n.shortcutVimGoto(l10n.navActivity),
         keys: 'g a',
       ),
-      _ManualShortcutEntry(
-        label: l10n.shortcutVimGoto('AI'),
-        keys: 'g i',
-      ),
-      _ManualShortcutEntry(
-        label: l10n.shortcutVimGoto(l10n.navFire),
-        keys: 'g f',
-      ),
+      _ManualShortcutEntry(label: l10n.shortcutVimGoto('AI'), keys: 'g i'),
       _ManualShortcutEntry(
         label: l10n.shortcutVimGoto(l10n.navSettings),
         keys: 'g s',
       ),
       // Master-detail list navigation (only active in list panes).
-      _ManualShortcutEntry(
-        label: l10n.shortcutListSearch,
-        keys: '/',
-      ),
-      _ManualShortcutEntry(
-        label: l10n.shortcutListNext,
-        keys: 'j',
-      ),
-      _ManualShortcutEntry(
-        label: l10n.shortcutListPrevious,
-        keys: 'k',
-      ),
+      _ManualShortcutEntry(label: l10n.shortcutListSearch, keys: '/'),
+      _ManualShortcutEntry(label: l10n.shortcutListNext, keys: 'j'),
+      _ManualShortcutEntry(label: l10n.shortcutListPrevious, keys: 'k'),
     ];
 
     return SafeArea(
@@ -98,10 +82,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Text(
-              l10n.shortcutsHelpTitle,
-              style: theme.textTheme.titleLarge,
-            ),
+            Text(l10n.shortcutsHelpTitle, style: theme.textTheme.titleLarge),
             const SizedBox(height: Spacing.s16),
             Flexible(
               child: SingleChildScrollView(
@@ -159,9 +140,9 @@ class _ShortcutHelpSheet extends StatelessWidget {
       case 'shortcutSwitchTab1':
         return l10n.shortcutSwitchTab(2, l10n.navPortfolio);
       case 'shortcutSwitchTab2':
-        return l10n.shortcutSwitchTab(3, l10n.navAnalytics);
+        return l10n.shortcutSwitchTab(3, l10n.navActivity);
       case 'shortcutSwitchTab3':
-        return l10n.shortcutSwitchTab(4, l10n.navMe);
+        return l10n.shortcutSwitchTab(4, l10n.navPlan);
     }
     return key;
   }
