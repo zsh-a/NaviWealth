@@ -74,11 +74,14 @@ class _NwLineChartState extends State<NwLineChart> {
   double? _touchLocalX;
   ChartPoint? _touchStartPoint;
   int _lastSpotIndex = -1;
+  _PreparedLineData? _prepared;
+  List<ChartSeries>? _preparedSource;
+  bool? _preparedDownsample;
+  int? _preparedDownsampleTarget;
 
   @override
   Widget build(BuildContext context) {
-    final nonEmpty =
-        widget.series.where((s) => s.points.isNotEmpty).toList();
+    final nonEmpty = widget.series.where((s) => s.points.isNotEmpty).toList();
     if (nonEmpty.isEmpty) {
       final ratio = widget.aspectRatio;
       const placeholder = EmptyChartPlaceholder();
@@ -88,29 +91,13 @@ class _NwLineChartState extends State<NwLineChart> {
     }
 
     final palette = ChartPalette.of(context);
-    final processed = [
-      for (final s in nonEmpty)
-        ChartSeries(
-          name: s.name,
-          intent: s.intent,
-          emphasis: s.emphasis,
-          colorOverride: s.colorOverride,
-          fillOpacity: s.fillOpacity,
-          strokeWidth: s.strokeWidth,
-          points: maybeDownsample(
-            s.points,
-            target: widget.downsampleTarget,
-            enabled: widget.downsample,
-          ),
-        ),
-    ];
-
-    final allPoints = processed.expand((s) => s.points);
-    final minX = allPoints.map((p) => p.x).reduce((a, b) => a < b ? a : b);
-    final maxX = allPoints.map((p) => p.x).reduce((a, b) => a > b ? a : b);
-    final minY = allPoints.map((p) => p.y).reduce((a, b) => a < b ? a : b);
-    final maxY = allPoints.map((p) => p.y).reduce((a, b) => a > b ? a : b);
-    final yPad = (maxY - minY).abs() * 0.1 + 1;
+    final prepared = _prepare(nonEmpty);
+    final processed = prepared.processed;
+    final minX = prepared.minX;
+    final maxX = prepared.maxX;
+    final minY = prepared.minY;
+    final maxY = prepared.maxY;
+    final yPad = prepared.yPad;
 
     final lineBars = <LineChartBarData>[];
     for (var i = 0; i < processed.length; i++) {
@@ -122,7 +109,15 @@ class _NwLineChartState extends State<NwLineChart> {
         override: s.colorOverride,
       );
       lineBars.add(
-        _buildBarData(context, s, color, palette, i, processed.length),
+        _buildBarData(
+          context,
+          s,
+          prepared.spots[i],
+          color,
+          palette,
+          i,
+          processed.length,
+        ),
       );
     }
 
@@ -192,6 +187,7 @@ class _NwLineChartState extends State<NwLineChart> {
   LineChartBarData _buildBarData(
     BuildContext context,
     ChartSeries s,
+    List<FlSpot> spots,
     Color color,
     ChartPalette palette,
     int ordinal,
@@ -209,13 +205,13 @@ class _NwLineChartState extends State<NwLineChart> {
         ? 1.5
         : 2.5;
 
-    final effectiveColor =
-        isComparison ? color.withValues(alpha: 0.6) : color;
-    final effectiveDash =
-        isComparison ? (dashArray ?? const [6, 4]) : (dashArray ?? (isProjection ? const [4, 4] : null));
+    final effectiveColor = isComparison ? color.withValues(alpha: 0.6) : color;
+    final effectiveDash = isComparison
+        ? (dashArray ?? const [6, 4])
+        : (dashArray ?? (isProjection ? const [4, 4] : null));
 
     return LineChartBarData(
-      spots: [for (final p in s.points) FlSpot(p.x, p.y)],
+      spots: spots,
       isCurved: true,
       curveSmoothness: widget.curveSmoothness,
       color: effectiveColor,
@@ -226,10 +222,7 @@ class _NwLineChartState extends State<NwLineChart> {
         getDotPainter: widget.heroDots && ordinal == 0
             ? (spot, percent, barData, index) {
                 if (index != s.points.length - 1) {
-                  return FlDotCirclePainter(
-                    radius: 2.5,
-                    color: effectiveColor,
-                  );
+                  return FlDotCirclePainter(radius: 2.5, color: effectiveColor);
                 }
                 return FlDotCirclePainter(
                   radius: 5,
@@ -238,10 +231,8 @@ class _NwLineChartState extends State<NwLineChart> {
                   strokeWidth: 6,
                 );
               }
-            : (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 2.5,
-                color: effectiveColor,
-              ),
+            : (spot, percent, barData, index) =>
+                  FlDotCirclePainter(radius: 2.5, color: effectiveColor),
       ),
       belowBarData: widget.filled
           ? BarAreaData(
@@ -265,6 +256,64 @@ class _NwLineChartState extends State<NwLineChart> {
     return Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.12;
   }
 
+  _PreparedLineData _prepare(List<ChartSeries> nonEmpty) {
+    final cached = _prepared;
+    if (cached != null &&
+        identical(_preparedSource, widget.series) &&
+        _preparedDownsample == widget.downsample &&
+        _preparedDownsampleTarget == widget.downsampleTarget) {
+      return cached;
+    }
+
+    final processed = [
+      for (final s in nonEmpty)
+        ChartSeries(
+          name: s.name,
+          intent: s.intent,
+          emphasis: s.emphasis,
+          colorOverride: s.colorOverride,
+          fillOpacity: s.fillOpacity,
+          strokeWidth: s.strokeWidth,
+          points: maybeDownsample(
+            s.points,
+            target: widget.downsampleTarget,
+            enabled: widget.downsample,
+          ),
+        ),
+    ];
+
+    var minX = double.infinity;
+    var maxX = double.negativeInfinity;
+    var minY = double.infinity;
+    var maxY = double.negativeInfinity;
+    final spots = <List<FlSpot>>[];
+    for (final series in processed) {
+      final seriesSpots = <FlSpot>[];
+      for (final point in series.points) {
+        if (point.x < minX) minX = point.x;
+        if (point.x > maxX) maxX = point.x;
+        if (point.y < minY) minY = point.y;
+        if (point.y > maxY) maxY = point.y;
+        seriesSpots.add(FlSpot(point.x, point.y));
+      }
+      spots.add(List.unmodifiable(seriesSpots));
+    }
+    final prepared = _PreparedLineData(
+      processed: List.unmodifiable(processed),
+      spots: List.unmodifiable(spots),
+      minX: minX,
+      maxX: maxX,
+      minY: minY,
+      maxY: maxY,
+      yPad: (maxY - minY).abs() * 0.1 + 1,
+    );
+    _prepared = prepared;
+    _preparedSource = widget.series;
+    _preparedDownsample = widget.downsample;
+    _preparedDownsampleTarget = widget.downsampleTarget;
+    return prepared;
+  }
+
   FlTitlesData _buildTitles(
     ChartPalette palette,
     double minX,
@@ -284,10 +333,8 @@ class _NwLineChartState extends State<NwLineChart> {
         ? yRange / widget.yAxis.maxLabels
         : null;
     return FlTitlesData(
-      topTitles:
-          const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles:
-          const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
@@ -296,8 +343,10 @@ class _NwLineChartState extends State<NwLineChart> {
           getTitlesWidget: (value, meta) {
             return Padding(
               padding: const EdgeInsets.only(top: 4),
-              child:
-                  Text(widget.xAxis.formatTimestamp(value), style: labelStyle),
+              child: Text(
+                widget.xAxis.formatTimestamp(value),
+                style: labelStyle,
+              ),
             );
           },
         ),
@@ -335,14 +384,10 @@ class _NwLineChartState extends State<NwLineChart> {
       getTouchedSpotIndicator: (barData, spotIndexes) {
         return spotIndexes.map((index) {
           return TouchedSpotIndicatorData(
-            const FlLine(
-              color: Colors.transparent,
-              strokeWidth: 0,
-            ),
+            const FlLine(color: Colors.transparent, strokeWidth: 0),
             FlDotData(
               show: true,
-              getDotPainter: (spot, percent, bar, index) =>
-                  FlDotCirclePainter(
+              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
                 radius: 4,
                 color: bar.color ?? Colors.transparent,
                 strokeColor: Colors.white,
@@ -363,8 +408,7 @@ class _NwLineChartState extends State<NwLineChart> {
           HapticFeedback.selectionClick();
           return;
         }
-        if (event is FlLongPressMoveUpdate ||
-            event is FlPanUpdateEvent) {
+        if (event is FlLongPressMoveUpdate || event is FlPanUpdateEvent) {
           setState(() {
             _touchLocalX = localDx;
           });
@@ -374,12 +418,9 @@ class _NwLineChartState extends State<NwLineChart> {
         if (event is FlLongPressEnd || event is FlPanEndEvent) {
           final dd = widget.drillDown;
           final touched = response?.lineBarSpots;
-          if (touched != null &&
-              touched.isNotEmpty &&
-              dd is PointDrillDown) {
+          if (touched != null && touched.isNotEmpty && dd is PointDrillDown) {
             final s = processed[touched.first.barIndex];
-            final idx =
-                touched.first.spotIndex.clamp(0, s.points.length - 1);
+            final idx = touched.first.spotIndex.clamp(0, s.points.length - 1);
             dd.onTap(s.points[idx]);
           }
           setState(() {
@@ -394,8 +435,7 @@ class _NwLineChartState extends State<NwLineChart> {
           final touched = response?.lineBarSpots;
           if (touched != null && touched.isNotEmpty) {
             final s = processed[touched.first.barIndex];
-            final idx =
-                touched.first.spotIndex.clamp(0, s.points.length - 1);
+            final idx = touched.first.spotIndex.clamp(0, s.points.length - 1);
             final point = s.points[idx];
             if (dd is PointDrillDown) {
               if (dd.haptic) HapticFeedback.selectionClick();
@@ -437,6 +477,26 @@ class _NwLineChartState extends State<NwLineChart> {
   }
 
   int get _touchedSpotIndex => _lastSpotIndex;
+}
+
+class _PreparedLineData {
+  const _PreparedLineData({
+    required this.processed,
+    required this.spots,
+    required this.minX,
+    required this.maxX,
+    required this.minY,
+    required this.maxY,
+    required this.yPad,
+  });
+
+  final List<ChartSeries> processed;
+  final List<List<FlSpot>> spots;
+  final double minX;
+  final double maxX;
+  final double minY;
+  final double maxY;
+  final double yPad;
 }
 
 // ---------------------------------------------------------------------------
@@ -488,8 +548,7 @@ class _CrosshairPainter extends CustomPainter {
     }
 
     // Map nearest data X back to pixel X.
-    final pixelX =
-        ((nearest.x - minX) / (maxX - minX)) * size.width;
+    final pixelX = ((nearest.x - minX) / (maxX - minX)) * size.width;
     // Map Y: chart Y increases upward, pixel Y increases downward.
     double yMin = double.infinity;
     double yMax = double.negativeInfinity;
@@ -502,7 +561,8 @@ class _CrosshairPainter extends CustomPainter {
     final yPad = (yMax - yMin).abs() * 0.1 + 1;
     final chartMinY = yMin - yPad;
     final chartMaxY = yMax + yPad;
-    final pixelY = size.height -
+    final pixelY =
+        size.height -
         ((nearest.y - chartMinY) / (chartMaxY - chartMinY)) * size.height;
 
     // Vertical dashed hairline.
@@ -547,7 +607,9 @@ class _CrosshairPainter extends CustomPainter {
     var pos = 0.0;
     var drawing = true;
     while (pos < length) {
-      final end = drawing ? math.min(pos + dashLength, length) : pos + gapLength;
+      final end = drawing
+          ? math.min(pos + dashLength, length)
+          : pos + gapLength;
       if (drawing) {
         canvas.drawLine(
           Offset(from.dx + ux * pos, from.dy + uy * pos),
@@ -588,8 +650,7 @@ class _GlassTooltip extends StatelessWidget {
     if (processed.isEmpty || processed.first.points.isEmpty) {
       return const SizedBox.shrink();
     }
-    final safeIndex =
-        spotIndex.clamp(0, processed.first.points.length - 1);
+    final safeIndex = spotIndex.clamp(0, processed.first.points.length - 1);
     final point = processed.first.points[safeIndex];
     final glass = GlassTokens.of(context);
     final theme = Theme.of(context);
@@ -601,8 +662,7 @@ class _GlassTooltip extends StatelessWidget {
         child: Align(
           alignment: Alignment.topRight,
           child: ClipRRect(
-            borderRadius:
-                BorderRadius.circular(glass.borderRadius),
+            borderRadius: BorderRadius.circular(glass.borderRadius),
             child: BackdropFilter(
               filter: ui.ImageFilter.blur(
                 sigmaX: glass.blurSigma,
@@ -616,12 +676,8 @@ class _GlassTooltip extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: glass.surfaceColor,
-                  borderRadius:
-                      BorderRadius.circular(glass.borderRadius),
-                  border: Border.all(
-                    color: glass.hairlineColor,
-                    width: 1,
-                  ),
+                  borderRadius: BorderRadius.circular(glass.borderRadius),
+                  border: Border.all(color: glass.hairlineColor, width: 1),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -635,12 +691,7 @@ class _GlassTooltip extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     for (var i = 0; i < processed.length; i++)
-                      _buildSeriesRow(
-                        i,
-                        processed[i],
-                        safeIndex,
-                        onSurface,
-                      ),
+                      _buildSeriesRow(i, processed[i], safeIndex, onSurface),
                   ],
                 ),
               ),
@@ -669,9 +720,7 @@ class _GlassTooltip extends StatelessWidget {
           Expanded(
             child: Text(
               '${s.name}  $valueStr',
-              style: TypographyTokens.numericCaption.copyWith(
-                color: onSurface,
-              ),
+              style: TypographyTokens.numericCaption.copyWith(color: onSurface),
               overflow: TextOverflow.ellipsis,
             ),
           ),

@@ -44,7 +44,7 @@ class HomePage extends ConsumerWidget {
       ),
       body: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
-        isLoading: snapshotAsync.isLoading,
+        isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
         child: snapshotAsync.when(
           loading: () => const HomeSkeleton(),
           error: (e, st) => _ErrorBody(error: e),
@@ -73,8 +73,7 @@ class _DashboardBody extends ConsumerWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isWide = !Breakpoints.isMobile(width);
-        final padding =
-            isWide ? Spacing.pageWide : Spacing.pageMobile;
+        final padding = isWide ? Spacing.pageWide : Spacing.pageMobile;
         final header = _NetWorthHeader(snapshot: snapshot);
         final insightStrip = InsightStrip(insights: insights);
         final allocation = AllocationCard(snapshot: snapshot);
@@ -107,7 +106,8 @@ class _DashboardBody extends ConsumerWidget {
         return ScrollNotificationHandler(
           child: ListView(
             padding: padding.copyWith(
-              bottom: padding.bottom +
+              bottom:
+                  padding.bottom +
                   Spacing.floatingBarClearance +
                   MediaQuery.paddingOf(context).bottom,
             ),
@@ -148,10 +148,7 @@ class _NetWorthHeader extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.homeNetWorthTitle,
-            style: theme.textTheme.titleMedium,
-          ),
+          Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: Spacing.s8),
           // Cap dynamic-text scaling on the 32dp hero number so users on
           // 200% system font size don't blow the card out of its row.
@@ -242,15 +239,15 @@ class _DeltaMetricsRow extends StatelessWidget {
               child: m.monthlyChangePct == null
                   ? const DeltaChip(value: null)
                   : m.monthlyChangePct!.isFinite
-                      ? DeltaChip(
-                          value: m.monthlyChangePct! * 100,
-                          fractionDigits: 2,
-                        )
-                      : DeltaText(
-                          value: m.monthlyChange.amount.toDouble(),
-                          format: DeltaFormat.currency,
-                          currencyCode: m.baseCurrency,
-                        ),
+                  ? DeltaChip(
+                      value: m.monthlyChangePct! * 100,
+                      fractionDigits: 2,
+                    )
+                  : DeltaText(
+                      value: m.monthlyChange.amount.toDouble(),
+                      format: DeltaFormat.currency,
+                      currencyCode: m.baseCurrency,
+                    ),
             ),
             _MetricCell(
               label: l10n.dashboardHeaderDeltaYtdLabel,
@@ -260,12 +257,12 @@ class _DeltaMetricsRow extends StatelessWidget {
                       fractionDigits: 2,
                     )
                   : m.ytdChange.amount.sign != 0
-                      ? DeltaText(
-                          value: m.ytdChange.amount.toDouble(),
-                          format: DeltaFormat.currency,
-                          currencyCode: m.baseCurrency,
-                        )
-                      : DeltaText.percentFromRatio(ratio: null),
+                  ? DeltaText(
+                      value: m.ytdChange.amount.toDouble(),
+                      format: DeltaFormat.currency,
+                      currencyCode: m.baseCurrency,
+                    )
+                  : DeltaText.percentFromRatio(ratio: null),
             ),
           ],
         );
