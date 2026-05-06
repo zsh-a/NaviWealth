@@ -8,12 +8,10 @@ import 'ui/benchmark/benchmark_comparison_card.dart';
 import 'ui/equity_allocation_section.dart';
 import 'ui/risk_alert_panel.dart';
 
-export 'ui/equity_allocation_section.dart'
-    show
-        DimensionSegment,
-        EquityAllocationContent,
-        EquityBucketHoldingsSheet,
-        localizeBucketLabel;
+export 'ui/dimension_segment.dart' show DimensionSegment;
+export 'ui/equity_allocation_section.dart' show EquityAllocationContent;
+export 'ui/equity_bucket_sheet.dart'
+    show EquityBucketHoldingsSheet, localizeBucketLabel;
 
 /// Planning analytics surface. The page owns layout and active dimension
 /// selection; heavy equity, risk, and benchmark sections live in `ui/`.
