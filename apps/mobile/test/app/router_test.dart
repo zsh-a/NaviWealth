@@ -1,7 +1,7 @@
-// Behavior verification for the web routing surface set up in FIR-14:
-// path URL strategy + go_router + bottom-nav shell. These tests exercise the
-// three flows called out in FIR-43:
-//   1. deep-link arrival (someone hits /assets directly in the address bar)
+// Behavior verification for the web routing surface:
+// path URL strategy + go_router + shell navigation. These tests exercise the
+// core URL flows:
+//   1. deep-link arrival
 //   2. tab navigation (the URL stays in sync with the visible tab)
 //   3. back/forward + refresh (re-driving the router from a stored URL lands
 //      on the same page; Riverpod state is reset, URL is the source of truth)
@@ -19,6 +19,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/desktop_sidebar.dart';
+import 'package:naviwealth/app/route_error_page.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -54,7 +56,8 @@ class _OfflineBenchmarkSource implements BenchmarkHistorySource {
 
 class _EmptyHoldingService implements HoldingService {
   @override
-  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async => const {};
+  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async =>
+      const {};
   @override
   Future<List<Lot>> lotsAt(DateTime asOf) async => const [];
   @override
@@ -131,7 +134,9 @@ Future<ProviderContainer> _pumpAt(
       // FIR-89's holdings + returns pipeline reaches through the same
       // encrypted DB chain. Stub both providers so the analytics +
       // dashboard pages settle without hanging on the missing key store.
-      holdingServiceProvider.overrideWith((ref) async => _EmptyHoldingService()),
+      holdingServiceProvider.overrideWith(
+        (ref) async => _EmptyHoldingService(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -175,8 +180,8 @@ void main() {
     addTearDown(() => SuperFab.disablePulseGlobally = false);
   });
 
-  // Ignore rendering overflow errors from the floating pill bar and MorePage
-  // cards — the test viewport (400×800) is smaller than production.
+  // Ignore rendering overflow errors from compact navigation at the smallest
+  // test viewport.
   setUp(() {
     final originalHandler = FlutterError.onError;
     FlutterError.onError = (details) {
@@ -195,7 +200,6 @@ void main() {
     await binding.runAsync(preloadDeferredRoutesForTest);
   });
 
-
   group('deep-link arrival', () {
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);
@@ -203,30 +207,27 @@ void main() {
       expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
     });
 
-    testWidgets('/assets redirects to /portfolio and renders Portfolio', (
-      tester,
-    ) async {
-      final container = await _pumpAt(tester, initialLocation: '/assets');
-      expect(find.byType(PortfolioPage), findsOneWidget);
-      expect(_currentPath(container), '/portfolio');
-      expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
-    });
+    for (final legacy in <String>[
+      '/assets',
+      '/accounts',
+      '/expenses',
+      '/analytics',
+      '/fire',
+      '/rebalance',
+      '/me',
+      '/more',
+    ]) {
+      testWidgets('$legacy renders the route error page', (tester) async {
+        final container = await _pumpAt(tester, initialLocation: legacy);
+        expect(find.byType(RouteErrorPage), findsOneWidget);
+        expect(_currentPath(container), legacy);
+      });
+    }
 
     testWidgets('/portfolio renders Portfolio', (tester) async {
       final container = await _pumpAt(tester, initialLocation: '/portfolio');
       expect(find.byType(PortfolioPage), findsOneWidget);
       expect(_currentPath(container), '/portfolio');
-    });
-
-    testWidgets('/more redirects to /', (tester) async {
-      final container = await _pumpAt(tester, initialLocation: '/more');
-      expect(find.byType(HomePage), findsOneWidget);
-      expect(_currentPath(container), '/');
-    });
-
-    testWidgets('/assets/trade redirects to /activity/trade', (tester) async {
-      final container = await _pumpAt(tester, initialLocation: '/assets/trade');
-      expect(_currentPath(container), '/activity/trade');
     });
 
     testWidgets('/plan/analytics renders Analytics', (tester) async {
@@ -331,7 +332,9 @@ void main() {
     // GlassSideBar, ≥ 1240 → DesktopSidebar. Tabs and selectedIndex
     // stay consistent across the three layouts.
 
-    testWidgets('mobile width uses GlassBottomBar at the bottom', (tester) async {
+    testWidgets('mobile width uses GlassBottomBar at the bottom', (
+      tester,
+    ) async {
       await _pumpAt(tester, viewportSize: _mobileSize);
       expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
       expect(find.byType(lgw.GlassSideBar), findsNothing);
@@ -351,7 +354,9 @@ void main() {
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
-    testWidgets('desktop width uses the FIR-106 collapsible sidebar', (tester) async {
+    testWidgets('desktop width uses the FIR-106 collapsible sidebar', (
+      tester,
+    ) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
       expect(find.byType(DesktopSidebar), findsOneWidget);
       expect(find.byType(lgw.GlassSideBar), findsNothing);
@@ -387,13 +392,12 @@ void main() {
     ) async {
       final container = await _pumpAt(
         tester,
-        initialLocation: '/fire',
+        initialLocation: AppRoutes.planFire,
         viewportSize: _desktopSize,
       );
       final sidebar = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      // /fire → /plan/fire → Plan tab (index 3)
       expect(sidebar.selectedIndex, 3);
 
       container.read(appRouterProvider).go('/portfolio');
@@ -465,21 +469,22 @@ void main() {
     // We model that by disposing the first container and pumping a brand-new
     // app at the same location — Riverpod state is fresh, but the page still
     // matches the URL.
-    testWidgets('rebuilding at /portfolio lands on Portfolio with fresh state', (
-      tester,
-    ) async {
-      final first = await _pumpAt(tester, initialLocation: '/portfolio');
-      expect(find.byType(PortfolioPage), findsOneWidget);
-      first.dispose();
+    testWidgets(
+      'rebuilding at /portfolio lands on Portfolio with fresh state',
+      (tester) async {
+        final first = await _pumpAt(tester, initialLocation: '/portfolio');
+        expect(find.byType(PortfolioPage), findsOneWidget);
+        first.dispose();
 
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      final second = await _pumpAt(tester, initialLocation: '/portfolio');
-      expect(find.byType(PortfolioPage), findsOneWidget);
-      expect(_currentPath(second), '/portfolio');
-    });
+        final second = await _pumpAt(tester, initialLocation: '/portfolio');
+        expect(find.byType(PortfolioPage), findsOneWidget);
+        expect(_currentPath(second), '/portfolio');
+      },
+    );
 
     testWidgets('rebuilding at /settings lands on Settings', (tester) async {
       await _pumpAt(tester, initialLocation: '/settings');

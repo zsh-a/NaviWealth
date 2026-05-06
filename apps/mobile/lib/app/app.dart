@@ -9,18 +9,18 @@ import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ai_chat_sheet.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
+import 'route_paths.dart';
 import 'router.dart';
 import 'shell_preferences.dart';
 
 /// Vim-style `g`+key → route path mapping.
 const Map<String, String> _kVimGotoRoutes = <String, String>{
-  'home': '/',
-  'portfolio': '/portfolio',
-  'activity': '/activity',
-  'plan': '/plan',
-  'ai': '/ai',
-  'fire': '/plan/fire',
-  'settings': '/settings',
+  'home': AppRoutes.home,
+  'portfolio': AppRoutes.portfolio,
+  'activity': AppRoutes.activity,
+  'plan': AppRoutes.plan,
+  'ai': AppRoutes.ai,
+  'settings': AppRoutes.settings,
 };
 
 class NaviWealthApp extends ConsumerWidget {
@@ -65,50 +65,50 @@ class NaviWealthApp extends ConsumerWidget {
           // routes on web; on non-web builds it's a transparent passthrough.
           builder: (BuildContext ctx, Widget? child) {
             return AppMessenger.init(
-            child: GlobalShortcutsScope(
-              onSwitchPrimaryTab: (int index) {
-                if (index < 0 || index >= kPrimaryTabPaths.length) return;
-                router.go(kPrimaryTabPaths[index]);
-              },
-              onOpenCommandPalette: (BuildContext invokeCtx) {
-                showCommandPalette(
-                  invokeCtx,
-                  commands: defaultCommandPaletteEntries(
-                    AppLocalizations.of(invokeCtx),
-                    onToggleTheme: () {
-                      final current = ref.read(themeModeProvider);
-                      final next = current == ThemeMode.dark
-                          ? ThemeMode.light
-                          : ThemeMode.dark;
-                      ref.read(themeModeProvider.notifier).set(next);
-                    },
-                    onToggleColorMode: () {
-                      final current = ref.read(marketColorModeProvider);
-                      final next = MarketColorMode.values[
-                          (MarketColorMode.values.indexOf(current) + 1) %
-                              MarketColorMode.values.length];
-                      ref.read(marketColorModeProvider.notifier).set(next);
-                    },
-                    onToggleLanguage: () {
-                      ref.read(localeProvider.notifier).cycle();
-                    },
-                  ),
-                  onAskAi: (String query) => showAiChatSheet(
+              child: GlobalShortcutsScope(
+                onSwitchPrimaryTab: (int index) {
+                  if (index < 0 || index >= kPrimaryTabPaths.length) return;
+                  router.go(kPrimaryTabPaths[index]);
+                },
+                onOpenCommandPalette: (BuildContext invokeCtx) {
+                  showCommandPalette(
                     invokeCtx,
-                    prefill: query,
-                  ),
-                );
-              },
-              onToggleSidebar: () =>
-                  ref.read(sidebarCollapsedProvider.notifier).toggle(),
-              onOpenAiChat: (BuildContext invokeCtx) =>
-                  showAiChatSheet(invokeCtx),
-              onVimGoto: (String target) {
-                final path = _kVimGotoRoutes[target];
-                if (path != null) router.go(path);
-              },
-              child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
-            ),
+                    commands: defaultCommandPaletteEntries(
+                      AppLocalizations.of(invokeCtx),
+                      onToggleTheme: () {
+                        final current = ref.read(themeModeProvider);
+                        final next = current == ThemeMode.dark
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
+                        ref.read(themeModeProvider.notifier).set(next);
+                      },
+                      onToggleColorMode: () {
+                        final current = ref.read(marketColorModeProvider);
+                        final next =
+                            MarketColorMode.values[(MarketColorMode.values
+                                        .indexOf(current) +
+                                    1) %
+                                MarketColorMode.values.length];
+                        ref.read(marketColorModeProvider.notifier).set(next);
+                      },
+                      onToggleLanguage: () {
+                        ref.read(localeProvider.notifier).cycle();
+                      },
+                    ),
+                    onAskAi: (String query) =>
+                        showAiChatSheet(invokeCtx, prefill: query),
+                  );
+                },
+                onToggleSidebar: () =>
+                    ref.read(sidebarCollapsedProvider.notifier).toggle(),
+                onOpenAiChat: (BuildContext invokeCtx) =>
+                    showAiChatSheet(invokeCtx),
+                onVimGoto: (String target) {
+                  final path = _kVimGotoRoutes[target];
+                  if (path != null) router.go(path);
+                },
+                child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
+              ),
             );
           },
         ),

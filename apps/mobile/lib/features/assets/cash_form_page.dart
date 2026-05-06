@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -91,8 +92,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       if (_initial == null) {
         // Check for existing cash on the same account — each account can
         // have at most one cash asset (double-entry invariant).
-        final existing =
-            await repo.findCashByAccountId(_accountId!);
+        final existing = await repo.findCashByAccountId(_accountId!);
         if (existing != null && mounted) {
           final l10n = AppLocalizations.of(context);
           final goEdit = await showGlassModalBottomSheet<bool>(
@@ -103,7 +103,10 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.cashFormDuplicateTitle, style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    l10n.cashFormDuplicateTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: Spacing.s8),
                   Text(l10n.cashFormDuplicateMessage),
                   const SizedBox(height: Spacing.s16),
@@ -127,7 +130,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             ),
           );
           if (goEdit == true && mounted) {
-            context.go('/portfolio/${existing.id}');
+            context.go(AppRoutes.portfolioAsset(existing.id));
           }
           setState(() => _busy = false);
           return;
@@ -159,7 +162,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       );
       if (!mounted) return;
       Haptics.success();
-      context.go('/portfolio');
+      context.go(AppRoutes.portfolio);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -174,7 +177,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go('/portfolio');
+      context.go(AppRoutes.portfolio);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -231,7 +234,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
               AppButton.secondary(
                 icon: Icons.add,
                 label: l10n.cashFormCreateAccountAction,
-                onPressed: () => context.go('/activity/accounts/new'),
+                onPressed: () => context.go(AppRoutes.accountNew),
               ),
             ],
           ),
@@ -318,7 +321,10 @@ Future<bool?> confirmManualAssetDelete(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.manualAssetDeleteTitle, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            l10n.manualAssetDeleteTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: Spacing.s8),
           Text(l10n.manualAssetDeleteContent),
           const SizedBox(height: Spacing.s16),

@@ -12,7 +12,10 @@ import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/fire/data/fire_goal_preferences.dart';
+import 'package:naviwealth/features/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/fire/domain/fire_calculator.dart';
 import 'package:naviwealth/features/fire/domain/fire_goal.dart';
+import 'package:naviwealth/features/fire/domain/fire_projection.dart';
 import 'package:naviwealth/features/fire/presentation/fire_page.dart';
 import 'package:naviwealth/features/fire/presentation/fire_progress_gauge.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
@@ -41,10 +44,20 @@ Asset _cash(String id) => Asset(
 Future<Widget> _wrap({
   required SharedPreferences prefs,
   List<Asset> manualAssets = const [],
+  FireGoal? goal,
+  Decimal? currentNetWorth,
 }) async {
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      fireDashboardViewProvider.overrideWith(
+        (ref) => AsyncValue.data(
+          _view(
+            goal ?? FireGoal.unset(),
+            currentNetWorth: currentNetWorth ?? Decimal.zero,
+          ),
+        ),
+      ),
       manualAssetsStreamProvider.overrideWith(
         (ref) => Stream.value(manualAssets),
       ),
@@ -78,7 +91,7 @@ void main() {
   ) async {
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(await _wrap(prefs: prefs));
-    await tester.pumpAndSettle();
+    await _pumpFrames(tester);
 
     expect(find.text('Set your FIRE goal'), findsOneWidget);
     expect(find.text('Set goal'), findsOneWidget);
@@ -97,9 +110,19 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
-      await _wrap(prefs: prefs, manualAssets: [_cash('cash-1')]),
+      await _wrap(
+        prefs: prefs,
+        manualAssets: [_cash('cash-1')],
+        goal: FireGoal(
+          targetAmount: Decimal.parse('1000000'),
+          monthlyExpenses: Decimal.parse('4000'),
+          monthlySurplus: Decimal.parse('5000'),
+          inflationRate: 0.03,
+        ),
+        currentNetWorth: Decimal.parse('250000'),
+      ),
     );
-    await tester.pumpAndSettle();
+    await _pumpFrames(tester);
 
     expect(find.byType(FireProgressGauge), findsOneWidget);
     // Scenario tier labels appear in the chart legend ("Conservative (3.0%)")
@@ -128,6 +151,9 @@ void main() {
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
+          fireDashboardViewProvider.overrideWith(
+            (ref) => AsyncValue.data(_view(FireGoal.unset())),
+          ),
           manualAssetsStreamProvider.overrideWith(
             (ref) => Stream.value(const <Asset>[]),
           ),
@@ -161,21 +187,37 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _pumpFrames(tester);
 
     await tester.tap(find.text('Set goal'));
-    await tester.pumpAndSettle();
+    await _pumpFrames(tester);
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Target net worth'),
       '500000',
     );
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await _pumpFrames(tester);
 
     final saved = container.read(fireGoalProvider);
     expect(saved.isConfigured, isTrue);
     expect(saved.targetAmount, Decimal.parse('500000'));
     expect(saved, isNot(equals(FireGoal.unset())));
   });
+}
+
+FireDashboardView _view(FireGoal goal, {Decimal? currentNetWorth}) {
+  return const FireCalculator().buildView(
+    goal: goal,
+    currentNetWorth: currentNetWorth ?? Decimal.zero,
+    baseCurrency: 'CNY',
+    start: DateTime(2026, 5, 6),
+  );
+}
+
+Future<void> _pumpFrames(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  await tester.pump();
 }

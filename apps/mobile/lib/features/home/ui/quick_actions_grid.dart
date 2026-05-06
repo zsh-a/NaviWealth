@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -16,22 +17,22 @@ class QuickActionsGrid extends StatelessWidget {
       _QuickAction(
         icon: Icons.account_balance_outlined,
         label: l10n.navAccounts,
-        route: '/activity/accounts',
+        route: AppRoutes.activityAccounts,
       ),
       _QuickAction(
         icon: Icons.receipt_long_outlined,
         label: l10n.superFabExpense,
-        route: '/activity/expenses/new',
+        route: AppRoutes.expenseNew,
       ),
       _QuickAction(
         icon: Icons.swap_horiz,
         label: l10n.superFabTrade,
-        route: '/activity/trade',
+        route: AppRoutes.tradeEntry,
       ),
       _QuickAction(
         icon: Icons.swap_vert,
         label: l10n.superFabTransfer,
-        route: '/activity/accounts/transfer',
+        route: AppRoutes.accountTransfer,
       ),
     ];
 
@@ -88,7 +89,11 @@ class _QuickActionCard extends StatelessWidget {
               borderRadius: Radii.brSm,
             ),
             alignment: Alignment.center,
-            child: Icon(action.icon, size: 18, color: theme.colorScheme.primary),
+            child: Icon(
+              action.icon,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(width: Spacing.s8),
           Expanded(

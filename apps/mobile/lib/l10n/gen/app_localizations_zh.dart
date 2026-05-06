@@ -15,13 +15,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navHome => '总览';
 
   @override
-  String get navAssets => '资产';
-
-  @override
   String get navExpenses => '支出';
-
-  @override
-  String get navAnalytics => '分析';
 
   @override
   String get navSettings => '设置';
@@ -30,13 +24,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navPortfolio => '投资组合';
 
   @override
-  String get navMore => '更多';
-
-  @override
   String get navAI => 'AI';
-
-  @override
-  String get navMe => '我的';
 
   @override
   String get navActivity => '流水';
@@ -52,27 +40,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioLiabilitiesTab => '负债';
-
-  @override
-  String get moreAccountsSubtitle => '银行、券商与钱包';
-
-  @override
-  String get moreExpenseSubtitle => '日常支出追踪与报表';
-
-  @override
-  String get moreAnalyticsSubtitle => '配置、风险与基准';
-
-  @override
-  String get moreFireSubtitle => '财务自由追踪';
-
-  @override
-  String get moreAiSubtitle => 'AI 财务助手';
-
-  @override
-  String get moreRebalanceSubtitle => '目标与实际配置';
-
-  @override
-  String get moreSettingsSubtitle => '应用设置与设备';
 
   @override
   String get superFabTrade => '交易';
@@ -600,7 +567,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountTitle => '账户';
 
   @override
-  String get settingsAccountSubtitle => '登录与多端同步 (FIR-27 / FIR-28)';
+  String get settingsAccountSubtitle => '登录与多端同步';
 
   @override
   String get settingsBaseCurrencyTitle => '基础货币';
@@ -826,21 +793,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commandPaletteGoOverview => '前往 总览';
-
-  @override
-  String get commandPaletteGoAssets => '前往 资产';
-
-  @override
-  String get commandPaletteGoAccounts => '前往 账户';
-
-  @override
-  String get commandPaletteGoExpenses => '前往 支出';
-
-  @override
-  String get commandPaletteGoAnalytics => '前往 分析';
-
-  @override
-  String get commandPaletteGoFire => '前往 FIRE';
 
   @override
   String get commandPaletteGoSettings => '前往 设置';
@@ -1164,9 +1116,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String analyticsHoldingTooltip(String symbol, String value, String weight) {
     return '$symbol · $value · $weight';
   }
-
-  @override
-  String get navFire => 'FIRE';
 
   @override
   String get fireAppBarTitle => 'FIRE 仪表盘';
@@ -2350,9 +2299,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedTab => '动态';
 
   @override
-  String get activityFeedComingSoon => '动态流即将推出';
-
-  @override
   String get activityFeedEmpty => '暂无动态 — 记录一笔转账、支出或交易即可在此查看。';
 
   @override
@@ -2487,9 +2433,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupRestorePassphraseHint => '输入备份密码';
-
-  @override
-  String get moreRebalanceTitle => '再平衡';
 
   @override
   String get logViewerClearTooltip => '清除';

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
@@ -70,11 +71,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     if (existing == null) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.expenseFormLoadError,
-      );
+      AppMessenger.show(context, ToastKind.error, l10n.expenseFormLoadError);
       unawaited(Navigator.of(context).maybePop());
       return;
     }
@@ -116,7 +113,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       );
       return;
     }
-    if (_expenseAccountId == null || _fromAccountId == null || _currency == null) {
+    if (_expenseAccountId == null ||
+        _fromAccountId == null ||
+        _currency == null) {
       Haptics.error();
       AppMessenger.show(
         context,
@@ -147,7 +146,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     await submitOptimistic(
       pop: () {
         Haptics.success();
-        context.go('/activity/expenses');
+        context.go(AppRoutes.activityExpenses);
       },
       tag: 'expense',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -191,7 +190,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.expenseFormDeleteDialogTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.expenseFormDeleteDialogTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.expenseFormDeleteDialogBody),
             const SizedBox(height: Spacing.s16),
@@ -220,7 +222,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
       await journalRepo.softDelete(_initial!.entry.id);
       if (!mounted) return;
-      context.go('/activity/expenses');
+      context.go(AppRoutes.activityExpenses);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -381,7 +383,7 @@ class _NoAccountsHint extends StatelessWidget {
         title: Text(l10n.expenseFormNoAccountsTitle),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
         trailing: AppButton.tertiary(
-          onPressed: () => GoRouter.of(context).go('/activity/accounts/new'),
+          onPressed: () => GoRouter.of(context).go(AppRoutes.accountNew),
           label: l10n.expenseFormNoAccountsCta,
         ),
       ),

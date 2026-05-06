@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -19,27 +20,26 @@ class PlanPage extends ConsumerWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-          final padding =
-              isWide ? Spacing.pageWide : Spacing.pageMobile;
+          final padding = isWide ? Spacing.pageWide : Spacing.pageMobile;
 
           final cards = <Widget>[
             _PlanCard(
               icon: Icons.flag_outlined,
               title: l10n.planFireTitle,
               subtitle: l10n.planFireSubtitle,
-              onTap: () => context.push('/plan/fire'),
+              onTap: () => context.push(AppRoutes.planFire),
             ),
             _PlanCard(
               icon: Icons.pie_chart_outline,
               title: l10n.planAnalyticsTitle,
               subtitle: l10n.planAnalyticsSubtitle,
-              onTap: () => context.push('/plan/analytics'),
+              onTap: () => context.push(AppRoutes.planAnalytics),
             ),
             _PlanCard(
               icon: Icons.balance_outlined,
               title: l10n.planRebalanceTitle,
               subtitle: l10n.planRebalanceSubtitle,
-              onTap: () => context.push('/plan/rebalance'),
+              onTap: () => context.push(AppRoutes.planRebalance),
             ),
           ];
 
@@ -63,7 +63,8 @@ class PlanPage extends ConsumerWidget {
 
           return ListView(
             padding: padding.copyWith(
-              bottom: padding.bottom +
+              bottom:
+                  padding.bottom +
                   Spacing.floatingBarClearance +
                   MediaQuery.paddingOf(context).bottom,
             ),

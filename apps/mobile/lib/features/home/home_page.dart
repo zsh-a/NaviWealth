@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/dashboard_insights_provider.dart';
@@ -33,12 +34,12 @@ class HomePage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.auto_awesome_outlined),
             tooltip: l10n.navAI,
-            onPressed: () => context.push('/ai'),
+            onPressed: () => context.push(AppRoutes.ai),
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.navSettings,
-            onPressed: () => context.push('/settings'),
+            onPressed: () => context.push(AppRoutes.settings),
           ),
         ],
       ),

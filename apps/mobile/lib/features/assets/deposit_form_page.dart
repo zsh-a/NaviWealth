@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -63,7 +64,8 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     } else {
       final defaults = ref.read(formDefaultsProvider);
       _accountId = defaults.assetAccountId;
-      if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+      if (defaults.assetCurrency != null &&
+          defaults.assetCurrency!.isNotEmpty) {
         _currency = defaults.assetCurrency;
       }
     }
@@ -95,7 +97,11 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, AppLocalizations.of(context).depositMaturityRequired);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).depositMaturityRequired,
+      );
       return;
     }
     setState(() => _busy = true);
@@ -145,13 +151,14 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           );
         }
       }
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
-            accountId: _accountId,
-            currency: _currency,
-          ));
+      unawaited(
+        ref
+            .read(formDefaultsProvider.notifier)
+            .rememberAsset(accountId: _accountId, currency: _currency),
+      );
       if (!mounted) return;
       Haptics.success();
-      context.go('/portfolio');
+      context.go(AppRoutes.portfolio);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -168,7 +175,10 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.depositDeleteTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(
+              l10n.depositDeleteTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.depositDeleteBody),
             const SizedBox(height: Spacing.s16),
@@ -197,7 +207,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go('/portfolio');
+      context.go(AppRoutes.portfolio);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -222,7 +232,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
       appBar: GlassAppBar(
-        title: Text(widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle),
+        title: Text(
+          widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle,
+        ),
         actions: [
           if (widget.isEdit)
             IconButton(
@@ -246,11 +258,13 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         .where((a) => _eligibleAccountTypes.contains(a.type))
         .toList(growable: false);
     if (eligible.isEmpty) {
-      return _PromptCreateAccount(onTap: () => context.go('/activity/accounts/new'));
+      return _PromptCreateAccount(
+        onTap: () => context.go(AppRoutes.accountNew),
+      );
     }
     if (!_hydratedFromList && !widget.isEdit) {
-      final hasCurrent = _accountId != null &&
-          eligible.any((a) => a.id == _accountId);
+      final hasCurrent =
+          _accountId != null && eligible.any((a) => a.id == _accountId);
       if (!hasCurrent) {
         _accountId = eligible.first.id;
       }
@@ -311,7 +325,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               helperText: l10n.depositNameHelper,
               border: const OutlineInputBorder(),
             ),
-            validator: (v) => (v == null || v.trim().isEmpty) ? l10n.depositNameRequired : null,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? l10n.depositNameRequired
+                : null,
           ),
           const SizedBox(height: Spacing.s12),
           CurrencyPicker(

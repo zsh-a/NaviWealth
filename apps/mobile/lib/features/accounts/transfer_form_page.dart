@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -114,16 +115,12 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             a.category == AccountCategory.liability)
           a,
     ];
-    final accountsById = <String, Account>{
-      for (final a in accounts) a.id: a,
-    };
+    final accountsById = <String, Account>{for (final a in accounts) a.id: a};
 
     final fromAccount = _fromAccountId == null
         ? null
         : accountsById[_fromAccountId!];
-    final toAccount = _toAccountId == null
-        ? null
-        : accountsById[_toAccountId!];
+    final toAccount = _toAccountId == null ? null : accountsById[_toAccountId!];
 
     final fromCurrency = fromAccount?.currency;
     final toCurrency = toAccount?.currency;
@@ -142,11 +139,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     // post-frame timers (which fakeAsync surfaces as a hard test
     // failure).
     final defaultToAmount = (isCrossCurrency && amount != null)
-        ? _suggestToAmount(
-            amount: amount,
-            from: fromCurrency,
-            to: toCurrency,
-          )
+        ? _suggestToAmount(amount: amount, from: fromCurrency, to: toCurrency)
         : null;
 
     final toAmount = isCrossCurrency
@@ -169,8 +162,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         _fromAccountId != _toAccountId &&
         amount != null &&
         amount > Decimal.zero &&
-        (!isCrossCurrency ||
-            (toAmount != null && toAmount > Decimal.zero));
+        (!isCrossCurrency || (toAmount != null && toAmount > Decimal.zero));
 
     return SingleChildScrollView(
       padding: Spacing.pageMobile,
@@ -196,8 +188,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               category: null,
               label: l10n.transferFromLabel,
               allowSystemAccounts: false,
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? l10n.transferValidationRequired : null,
+              validator: (v) => (v == null || v.isEmpty)
+                  ? l10n.transferValidationRequired
+                  : null,
             ),
             const SizedBox(height: Spacing.s12),
             AccountTreePicker(
@@ -214,7 +207,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               label: l10n.transferToLabel,
               allowSystemAccounts: false,
               validator: (v) {
-                if (v == null || v.isEmpty) return l10n.transferValidationRequired;
+                if (v == null || v.isEmpty) {
+                  return l10n.transferValidationRequired;
+                }
                 if (v == _fromAccountId) {
                   return l10n.transferValidationDifferentAccount;
                 }
@@ -254,9 +249,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 onChanged: (_) => setState(() {}),
                 onFieldSubmitted: (_) => _noteFocus.requestFocus(),
               ),
-              if (amount != null &&
-                  toAmount != null &&
-                  amount > Decimal.zero)
+              if (amount != null && toAmount != null && amount > Decimal.zero)
                 Padding(
                   padding: const EdgeInsets.only(top: Spacing.s4),
                   child: Text(
@@ -282,10 +275,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               },
             ),
             const SizedBox(height: Spacing.s12),
-            NoteField(
-              controller: _noteController,
-              focusNode: _noteFocus,
-            ),
+            NoteField(controller: _noteController, focusNode: _noteFocus),
             const SizedBox(height: Spacing.s16),
             if (preview != null)
               PostingsPreview(
@@ -368,8 +358,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     required String toCcy,
   }) {
     final l10n = AppLocalizations.of(context);
-    final rate =
-        (toAmount / amount).toDecimal(scaleOnInfinitePrecision: 6);
+    final rate = (toAmount / amount).toDecimal(scaleOnInfinitePrecision: 6);
     return l10n.transferRateLabel(fromCcy, rate.toString(), toCcy);
   }
 
@@ -475,14 +464,11 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       narration: note.isEmpty ? null : note,
     );
     await submitOptimistic(
-      pop: () => context.go('/activity/accounts'),
-      write: () => repo.create(
-        entry: build.entry,
-        postings: build.postings,
-      ),
+      pop: () => context.go(AppRoutes.activityAccounts),
+      write: () => repo.create(entry: build.entry, postings: build.postings),
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>
-            l10n.transferRejectedError(message),
+          l10n.transferRejectedError(message),
         _ => l10n.transferFailedError('$e'),
       },
       retryLabel: l10n.transferRetryLabel,

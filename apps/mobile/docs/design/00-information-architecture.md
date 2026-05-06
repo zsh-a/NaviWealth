@@ -2,151 +2,88 @@
 
 ## 1. 顶层导航
 
+当前产品只保留一套清晰 IA。旧 URL 不再重定向；访问旧路径会进入路由错误页。
+
 ```
 NaviWealth
-├── /                    总览 (Dashboard)
-├── /assets              资产
-│   ├── /assets/:id      资产详情
-│   └── /assets/new      添加资产
-├── /transactions/new    添加交易（也可从资产详情进入）
-├── /analytics           组合分析
-│   ├── /analytics/return         收益率 / Benchmark
-│   ├── /analytics/allocation     大类 / 行业 / 地域
-│   └── /analytics/liquidity      流动性 / 期限
-├── /fire                FIRE 追踪
-├── /rebalance           再平衡
-├── /chat                AI 助手
-└── /settings            设置
-    ├── /settings/account
-    ├── /settings/currency
-    ├── /settings/appearance
-    ├── /settings/privacy
-    └── /settings/about
+├── /                         总览
+├── /portfolio                投资组合
+│   ├── /portfolio/:assetId   资产详情
+│   ├── /portfolio/new/cash   现金资产
+│   ├── /portfolio/new/deposit
+│   ├── /portfolio/new/wealth
+│   ├── /portfolio/physical/:id
+│   ├── /portfolio/liabilities
+│   └── /portfolio/liabilities/:id
+├── /activity                 流水
+│   ├── /activity/expenses
+│   ├── /activity/expenses/new
+│   ├── /activity/expenses/report
+│   ├── /activity/accounts
+│   ├── /activity/accounts/new
+│   ├── /activity/accounts/transfer
+│   ├── /activity/accounts/journal
+│   └── /activity/trade
+├── /plan                     规划
+│   ├── /plan/analytics
+│   ├── /plan/fire
+│   └── /plan/rebalance
+├── /ai                       AI 财务助手
+└── /settings                 设置
+    ├── /settings/devices
+    ├── /settings/fx-rates
+    ├── /settings/backup
+    └── /settings/logs
 ```
 
-> 资产详情下可深入 `/assets/:id/lots`（批次）、`/assets/:id/history`（流水），但默认作为 Tabs 在详情页内切换，不单独占路由层级（避免 Web URL 噪音）。
+## 2. 主导航
 
-## 2. 主导航（按断点）
+所有断点共享四个一级目的地：
+
+```
+总览        /
+投资组合    /portfolio
+流水        /activity
+规划        /plan
+```
+
+AI 与设置作为全局入口出现在总览 AppBar、命令面板和快捷键中，不占用底部主导航。新增动作由统一的全局 `+` 面板承载：记账、交易、资产、转账、负债。
 
 ### 移动端 (<600)
-**底部 Tab Bar，5 项**：
 
-```
-┌────────────────────────────────────────────┐
-│  [总览]   [资产]   [+]   [分析]   [我]    │
-└────────────────────────────────────────────┘
-   /        /assets  ⮕   /analytics  /settings
-```
-
-中间的 `[+]` 是 **FAB-as-Tab**：点开 ActionSheet → 添加资产 / 添加交易 / AI 提问。FIRE 与 Rebalance 入口位于"分析"中，避免底栏过窄。
+底部玻璃导航栏展示四个主入口，右下角全局 `+` 打开动作面板。内容区为单列布局，列表与详情通过路由切换。
 
 ### 平板 (600–1240)
-**左侧 NavigationRail（图标 + 文字）**，主内容右侧。AI 与 FIRE 提升为一级。
 
-```
-┌────┬───────────────────────────────────────┐
-│ 总览│                                       │
-│ 资产│             主内容区                  │
-│ 分析│                                       │
-│FIRE │                                       │
-│再平衡│                                       │
-│ AI  │                                       │
-│─────│                                       │
-│ [+] │                                       │
-│ 设置 │                                       │
-└────┴───────────────────────────────────────┘
-```
+左侧 Rail 展示四个主入口，右侧为主内容区。全局 `+` 固定在内容区右下角。
 
 ### 桌面 (≥1240)
-**三栏**：左 NavigationDrawer（永久展开）/ 中主内容 / 右详情或上下文面板（资产详情、AI 抽屉、对账详情）。
 
-```
-┌──────┬───────────────────────────┬────────────┐
-│Logo  │                           │            │
-│总览   │       主内容              │  详情面板   │
-│资产   │                           │ (可折叠)    │
-│分析   │                           │            │
-│FIRE  │                           │            │
-│再平衡 │                           │            │
-│AI    │                           │            │
-│设置   │                           │            │
-└──────┴───────────────────────────┴────────────┘
-```
+左侧可折叠 Sidebar 展示四个主入口。投资组合与账户等高信息密度页面使用 master-detail；全局 `+` 固定在内容区右下角。
 
-## 3. 主要用户流（User Flows）
+## 3. 页面职责
 
-### 3.1 录入第一笔交易（首次使用）
-```
-启动 → 引导（暂略） → / (空态 Dashboard)
-                        │
-                        └─ "添加第一项资产" CTA
-                            ↓
-                          /assets/new
-                            ↓
-                     选择资产类型（股票/基金/现金/...）
-                            ↓
-                  /transactions/new?asset=<id>&kind=buy
-                            ↓
-                         保存 → /assets/:id
-```
+- `总览 /`：净资产主视觉、关键变化、资产分布、趋势、3-5 个可执行洞察。
+- `投资组合 /portfolio`：资产、负债、持仓详情；移动端单列，桌面端 master-detail。
+- `流水 /activity`：支出、账户、交易、转账与统一时间线。
+- `规划 /plan`：分析、FIRE、再平衡的规划中心，二级页面展示真实摘要与明细。
+- `AI /ai`：财务助手，可从全局入口或命令面板进入。
+- `设置 /settings`：账户、同步、偏好、数据、安全与诊断。
 
-### 3.2 日常查询（最高频）
-```
-/ (Dashboard) 看净值 → 看今日 P/L
-   │
-   ├─ 点 "资产分布" 卡 → /analytics/allocation
-   ├─ 点 "持仓 Top" 卡 → /assets/:id
-   └─ 下拉刷新 → 拉行情 → 数字滚动到位
-```
+## 4. 路由原则
 
-### 3.3 月度复盘
-```
-/analytics → 切到 "收益率" Tab
-   ├─ 时间区间 1M / 3M / YTD / 1Y / ALL
-   ├─ 切大类（股票 / 基金 / 现金 / 加密 / ...）
-   └─ Benchmark 叠加（沪深 300 / S&P 500）
-```
-
-### 3.4 再平衡
-```
-/rebalance
-   ├─ 选目标方案（保守 / 平衡 / 激进 / 自定义）
-   ├─ 看偏离条
-   └─ 点 "生成调整方案" → 弹出建议交易列表 → 一键填入 /transactions/new
-```
-
-### 3.5 与 AI 对话
-```
-/ (Dashboard) → 长按某卡 → "问 AI" 上下文菜单
-   ↓
-/chat?ctx=<asset-id>|<analytics-snapshot>
-   ↓
-AI 回复（带引用的本地资产数据 / 公开市场数据）
-```
-
-## 4. 路由稳定性 / Web URL 设计原则
-
-- 全部路由可深链（移动端使用 `flutter_web_plugins.urlStrategy = PathUrlStrategy()`，已在 FIR-14 启用）。
-- 列表筛选用 query string：`/assets?type=stock&account=hsbc-港股`，便于 Web 上书签 / 分享。
-- ID 用 ULID/UUID 字符串，禁止递增数字（隐私 + 防遍历）。
-- 详情页 Tab 用 fragment：`/assets/:id#lots`，避免 path 层级膨胀。
+- 所有业务导航使用 `lib/app/route_paths.dart` 中的常量或 helper。
+- 不保留旧路径兼容；旧路径应 404 或展示错误页。
+- 列表选择状态使用 query string，例如 `/portfolio?selected=<id>`。
+- 详情 ID 使用不透明字符串；展示前按路由 helper 编码。
 
 ## 5. 全局元素
 
 | 元素 | 位置 | 说明 |
 |------|------|------|
-| 顶部 AppBar | 所有页面 | 标题 + 页面操作（搜索/筛选/导出） |
-| 全局搜索 | AppBar 右上（mobile 折叠到图标，desktop 永久展开） | 搜索资产、交易、设置项 |
-| 主题切换 | 设置 + 桌面端 AppBar 右上 | system / light / dark |
-| 同步状态指示 | AppBar 右上小点 | ●online · ◐syncing · ○offline |
+| AppBar | 页面顶部 | 页面标题与局部操作 |
+| 命令面板 | 全局快捷键 | 导航、主题、语言、AI |
+| `+` 动作面板 | Shell 右下角 | 记账、交易、资产、转账、负债 |
 | Snackbar | 屏幕底部 | 写操作反馈、错误重试 |
-| FAB | mobile / tablet | 仅在能新增的页面出现（资产、交易、再平衡） |
+| AI 入口 | 总览 AppBar / 快捷键 / 命令面板 | 打开助手页或助手浮层 |
 
-## 6. 与现有路由的差异
-
-当前 `app/router.dart` 仅 4 个 Tab（home / assets / analytics / settings）。本设计在不破坏现有路由的前提下：
-
-- 新增：`/assets/:id`、`/assets/new`、`/transactions/new`、`/fire`、`/rebalance`、`/chat`、`/settings/*` 子路由。
-- 重构 `_RootShell`：依据 `MediaQuery` 的宽度切换底部 Tab / NavigationRail / NavigationDrawer 三种 shell（详见 [01-responsive-layout.md](./01-responsive-layout.md)）。
-
-> 实施由后续 `FIR-15`（路由基础设施）落地，本文件锁定 IA。

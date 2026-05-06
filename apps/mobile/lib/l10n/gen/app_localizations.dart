@@ -110,23 +110,11 @@ abstract class AppLocalizations {
   /// **'Overview'**
   String get navHome;
 
-  /// Bottom nav: assets tab
-  ///
-  /// In en, this message translates to:
-  /// **'Assets'**
-  String get navAssets;
-
-  /// Bottom nav: day-to-day expense tab (FIR-69)
+  /// Expense list label
   ///
   /// In en, this message translates to:
   /// **'Expenses'**
   String get navExpenses;
-
-  /// Bottom nav: analytics tab
-  ///
-  /// In en, this message translates to:
-  /// **'Analytics'**
-  String get navAnalytics;
 
   /// Bottom nav: settings tab
   ///
@@ -140,23 +128,11 @@ abstract class AppLocalizations {
   /// **'Portfolio'**
   String get navPortfolio;
 
-  /// Bottom nav: more/overflow tab
-  ///
-  /// In en, this message translates to:
-  /// **'More'**
-  String get navMore;
-
   /// Bottom nav: AI assistant tab
   ///
   /// In en, this message translates to:
   /// **'AI'**
   String get navAI;
-
-  /// Bottom nav: me/profile tab
-  ///
-  /// In en, this message translates to:
-  /// **'Me'**
-  String get navMe;
 
   /// Bottom nav: activity tab (expenses, accounts, trades)
   ///
@@ -187,48 +163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Liabilities'**
   String get portfolioLiabilitiesTab;
-
-  /// No description provided for @moreAccountsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Bank, brokerage, and wallets'**
-  String get moreAccountsSubtitle;
-
-  /// No description provided for @moreExpenseSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Track daily spending and reports'**
-  String get moreExpenseSubtitle;
-
-  /// No description provided for @moreAnalyticsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Allocation, risk, and benchmarks'**
-  String get moreAnalyticsSubtitle;
-
-  /// No description provided for @moreFireSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Financial independence tracker'**
-  String get moreFireSubtitle;
-
-  /// No description provided for @moreAiSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI financial assistant'**
-  String get moreAiSubtitle;
-
-  /// No description provided for @moreRebalanceSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Target vs. actual allocation'**
-  String get moreRebalanceSubtitle;
-
-  /// No description provided for @moreSettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'App preferences and devices'**
-  String get moreSettingsSubtitle;
 
   /// No description provided for @superFabTrade.
   ///
@@ -296,7 +230,7 @@ abstract class AppLocalizations {
   /// **'Assets'**
   String get assetsAppBarTitle;
 
-  /// Master-detail empty state for /assets at desktop width (FIR-106)
+  /// Master-detail empty state for portfolio at desktop width
   ///
   /// In en, this message translates to:
   /// **'Select an asset on the left to see its details.'**
@@ -1229,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAccountSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign-in & multi-device sync (FIR-27 / FIR-28)'**
+  /// **'Sign-in & multi-device sync'**
   String get settingsAccountSubtitle;
 
   /// No description provided for @settingsBaseCurrencyTitle.
@@ -1508,7 +1442,7 @@ abstract class AppLocalizations {
   /// **'Failed to load: {error}'**
   String commonLoadError(String error);
 
-  /// Generic failure snackbar shown when an optimistic form submit (FIR-98) fails after the form has already popped.
+  /// Generic failure snackbar shown when an optimistic form submit fails after the form has already popped.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t save your changes. Tap retry.'**
@@ -1574,7 +1508,7 @@ abstract class AppLocalizations {
   /// **'Close current dialog'**
   String get shortcutDismissOverlay;
 
-  /// Help-dialog label for the Cmd/Ctrl+B sidebar toggle (FIR-106)
+  /// Help-dialog label for the Cmd/Ctrl+B sidebar toggle
   ///
   /// In en, this message translates to:
   /// **'Collapse / expand sidebar'**
@@ -1586,37 +1520,37 @@ abstract class AppLocalizations {
   /// **'Switch to tab {position} ({label})'**
   String shortcutSwitchTab(int position, String label);
 
-  /// Help-dialog label for the Cmd/Ctrl+/ AI chat shortcut (FIR-112)
+  /// Help-dialog label for the Cmd/Ctrl+/ AI chat shortcut
   ///
   /// In en, this message translates to:
   /// **'Open AI chat'**
   String get shortcutOpenAiChat;
 
-  /// Help-dialog label for vim-style g+key navigation (FIR-112)
+  /// Help-dialog label for vim-style g+key navigation
   ///
   /// In en, this message translates to:
   /// **'Vim-style go to {target}'**
   String shortcutVimGoto(String target);
 
-  /// Help-dialog label for / key to focus search in master-detail lists (FIR-112)
+  /// Help-dialog label for / key to focus search in master-detail lists
   ///
   /// In en, this message translates to:
   /// **'Focus list search'**
   String get shortcutListSearch;
 
-  /// Help-dialog label for j key to select next list item in master-detail (FIR-112)
+  /// Help-dialog label for j key to select next list item in master-detail
   ///
   /// In en, this message translates to:
   /// **'Select next item'**
   String get shortcutListNext;
 
-  /// Help-dialog label for k key to select previous list item in master-detail (FIR-112)
+  /// Help-dialog label for k key to select previous list item in master-detail
   ///
   /// In en, this message translates to:
   /// **'Select previous item'**
   String get shortcutListPrevious;
 
-  /// Placeholder for the command palette search box (FIR-87)
+  /// Placeholder for the command palette search box
   ///
   /// In en, this message translates to:
   /// **'Search commands…'**
@@ -1628,7 +1562,7 @@ abstract class AppLocalizations {
   /// **'No commands match your search'**
   String get commandPaletteEmpty;
 
-  /// Dynamic command palette entry that opens AI chat with the user's query prefilled (FIR-112)
+  /// Dynamic command palette entry that opens AI chat with the user's query prefilled
   ///
   /// In en, this message translates to:
   /// **'Ask AI: {query}'**
@@ -1639,36 +1573,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to Overview'**
   String get commandPaletteGoOverview;
-
-  /// Command palette: navigate to the assets tab
-  ///
-  /// In en, this message translates to:
-  /// **'Go to Assets'**
-  String get commandPaletteGoAssets;
-
-  /// Command palette: navigate to the accounts page (FIR-112)
-  ///
-  /// In en, this message translates to:
-  /// **'Go to Accounts'**
-  String get commandPaletteGoAccounts;
-
-  /// Command palette: navigate to the expenses tab
-  ///
-  /// In en, this message translates to:
-  /// **'Go to Expenses'**
-  String get commandPaletteGoExpenses;
-
-  /// Command palette: navigate to the analytics tab
-  ///
-  /// In en, this message translates to:
-  /// **'Go to Analytics'**
-  String get commandPaletteGoAnalytics;
-
-  /// Command palette: navigate to the FIRE dashboard
-  ///
-  /// In en, this message translates to:
-  /// **'Go to FIRE'**
-  String get commandPaletteGoFire;
 
   /// Command palette: navigate to the settings tab
   ///
@@ -1694,19 +1598,19 @@ abstract class AppLocalizations {
   /// **'Open AI assistant'**
   String get commandPaletteOpenAi;
 
-  /// Command palette: cycle between light and dark theme (FIR-112)
+  /// Command palette: cycle between light and dark theme
   ///
   /// In en, this message translates to:
   /// **'Toggle theme (light / dark)'**
   String get commandPaletteToggleTheme;
 
-  /// Command palette: cycle market direction colors (FIR-112)
+  /// Command palette: cycle market direction colors
   ///
   /// In en, this message translates to:
   /// **'Toggle market color mode'**
   String get commandPaletteToggleColorMode;
 
-  /// Command palette: cycle between supported languages (FIR-112)
+  /// Command palette: cycle between supported languages
   ///
   /// In en, this message translates to:
   /// **'Toggle language'**
@@ -2058,7 +1962,7 @@ abstract class AppLocalizations {
   /// **'Trend line is flat — no historical valuation snapshots yet for the assets in this window.'**
   String get dashboardTrendFlatHint;
 
-  /// Label for the today's net-worth change cell on the dashboard header (FIR-85).
+  /// Label for the today's net-worth change cell on the dashboard header.
   ///
   /// In en, this message translates to:
   /// **'Today'**
@@ -2237,12 +2141,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{symbol} · {value} · {weight}'**
   String analyticsHoldingTooltip(String symbol, String value, String weight);
-
-  /// Bottom-nav tab label for the FIRE dashboard.
-  ///
-  /// In en, this message translates to:
-  /// **'FIRE'**
-  String get navFire;
 
   /// No description provided for @fireAppBarTitle.
   ///
@@ -4062,7 +3960,7 @@ abstract class AppLocalizations {
   /// **'Accounts'**
   String get accountsAppBarTitle;
 
-  /// Master-detail empty state for /accounts at desktop width (FIR-106)
+  /// Master-detail empty state for /accounts at desktop width
   ///
   /// In en, this message translates to:
   /// **'Select an account on the left to edit its details.'**
@@ -4398,12 +4296,6 @@ abstract class AppLocalizations {
   /// **'Activity'**
   String get activityFeedTab;
 
-  /// Activity feed placeholder text
-  ///
-  /// In en, this message translates to:
-  /// **'Activity feed coming soon'**
-  String get activityFeedComingSoon;
-
   /// Activity feed empty state message
   ///
   /// In en, this message translates to:
@@ -4667,12 +4559,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter the backup passphrase'**
   String get backupRestorePassphraseHint;
-
-  /// More hub: rebalance card title
-  ///
-  /// In en, this message translates to:
-  /// **'Rebalance'**
-  String get moreRebalanceTitle;
 
   /// Log viewer page: clear logs tooltip
   ///

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -68,7 +69,8 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     } else {
       final defaults = ref.read(formDefaultsProvider);
       _accountId = defaults.assetAccountId;
-      if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
+      if (defaults.assetCurrency != null &&
+          defaults.assetCurrency!.isNotEmpty) {
         _currency = defaults.assetCurrency;
       }
     }
@@ -146,13 +148,14 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           );
         }
       }
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
-            accountId: _accountId,
-            currency: _currency,
-          ));
+      unawaited(
+        ref
+            .read(formDefaultsProvider.notifier)
+            .rememberAsset(accountId: _accountId, currency: _currency),
+      );
       if (!mounted) return;
       Haptics.success();
-      context.go('/portfolio');
+      context.go(AppRoutes.portfolio);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -169,7 +172,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.wealthProductDeleteTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(
+              l10n.wealthProductDeleteTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.wealthProductDeleteBody),
             const SizedBox(height: Spacing.s16),
@@ -198,7 +204,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go('/portfolio');
+      context.go(AppRoutes.portfolio);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -232,7 +238,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
       appBar: GlassAppBar(
-        title: Text(widget.isEdit ? l10n.wealthProductEditTitle : l10n.wealthProductCreateTitle),
+        title: Text(
+          widget.isEdit
+              ? l10n.wealthProductEditTitle
+              : l10n.wealthProductCreateTitle,
+        ),
         actions: [
           if (widget.isEdit)
             IconButton(
@@ -262,12 +272,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.wealthProductNoAccountHint, textAlign: TextAlign.center),
+              Text(
+                l10n.wealthProductNoAccountHint,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: Spacing.s12),
               AppButton.secondary(
                 icon: Icons.add,
                 label: l10n.wealthProductCreateAccountAction,
-                onPressed: () => context.go('/activity/accounts/new'),
+                onPressed: () => context.go(AppRoutes.accountNew),
               ),
             ],
           ),
@@ -275,8 +288,8 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       );
     }
     if (!_hydratedFromList && !widget.isEdit) {
-      final hasCurrent = _accountId != null &&
-          eligible.any((a) => a.id == _accountId);
+      final hasCurrent =
+          _accountId != null && eligible.any((a) => a.id == _accountId);
       if (!hasCurrent) {
         _accountId = eligible.first.id;
       }
@@ -304,8 +317,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
               labelText: l10n.wealthProductNameLabel,
               border: const OutlineInputBorder(),
             ),
-            validator: (v) =>
-                (v == null || v.trim().isEmpty) ? l10n.wealthProductNameRequired : null,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? l10n.wealthProductNameRequired
+                : null,
           ),
           const SizedBox(height: Spacing.s12),
           TextFormField(
@@ -356,7 +370,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             ),
             validator: (v) {
               final trimmed = v?.trim() ?? '';
-              if (trimmed.isEmpty) return l10n.wealthProductExpectedReturnRequired;
+              if (trimmed.isEmpty) {
+                return l10n.wealthProductExpectedReturnRequired;
+              }
               final parsed = Decimal.tryParse(trimmed);
               if (parsed == null) return l10n.wealthProductInvalidFormat;
               return null;

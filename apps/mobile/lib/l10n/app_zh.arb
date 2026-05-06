@@ -3,26 +3,15 @@
   "appTitle": "NaviWealth",
 
   "navHome": "总览",
-  "navAssets": "资产",
   "navExpenses": "支出",
-  "navAnalytics": "分析",
   "navSettings": "设置",
   "navPortfolio": "投资组合",
-  "navMore": "更多",
   "navAI": "AI",
-  "navMe": "我的",
   "navActivity": "流水",
   "navPlan": "规划",
   "navAccounts": "账户",
   "portfolioAssetsTab": "资产",
   "portfolioLiabilitiesTab": "负债",
-  "moreAccountsSubtitle": "银行、券商与钱包",
-  "moreExpenseSubtitle": "日常支出追踪与报表",
-  "moreAnalyticsSubtitle": "配置、风险与基准",
-  "moreFireSubtitle": "财务自由追踪",
-  "moreAiSubtitle": "AI 财务助手",
-  "moreRebalanceSubtitle": "目标与实际配置",
-  "moreSettingsSubtitle": "应用设置与设备",
   "superFabTrade": "交易",
   "superFabExpense": "记账",
   "superFabAsset": "资产",
@@ -195,7 +184,7 @@
 
   "settingsAppBarTitle": "设置",
   "settingsAccountTitle": "账户",
-  "settingsAccountSubtitle": "登录与多端同步 (FIR-27 / FIR-28)",
+  "settingsAccountSubtitle": "登录与多端同步",
   "settingsBaseCurrencyTitle": "基础货币",
   "settingsBaseCurrencySubtitle": "{currency} (默认)",
   "settingsBaseCurrencyHint": "总览、资产分布、净资产趋势的汇总数字均以此币种展示。",
@@ -270,11 +259,6 @@
   "commandPaletteEmpty": "没有匹配的命令",
   "commandPaletteAskAi": "问 AI：{query}",
   "commandPaletteGoOverview": "前往 总览",
-  "commandPaletteGoAssets": "前往 资产",
-  "commandPaletteGoAccounts": "前往 账户",
-  "commandPaletteGoExpenses": "前往 支出",
-  "commandPaletteGoAnalytics": "前往 分析",
-  "commandPaletteGoFire": "前往 FIRE",
   "commandPaletteGoSettings": "前往 设置",
   "commandPaletteNewTrade": "新增交易",
   "commandPaletteNewExpense": "新增支出",
@@ -387,7 +371,6 @@
   "analyticsBucketSheetTitle": "「{label}」持仓",
   "analyticsHoldingTooltip": "{symbol} · {value} · {weight}",
 
-  "navFire": "FIRE",
 
   "fireAppBarTitle": "FIRE 仪表盘",
   "fireLoadError": "FIRE 仪表盘加载失败。{detail}",
@@ -788,7 +771,6 @@
   "manualAssetDeleteConfirm": "删除",
 
   "activityFeedTab": "动态",
-  "activityFeedComingSoon": "动态流即将推出",
   "activityFeedEmpty": "暂无动态 — 记录一笔转账、支出或交易即可在此查看。",
   "tradeEntryCashOverdrawTitle": "现金余额将变为负数",
   "tradeEntryCashOverdrawMessage": "此次购买后，您的现金账户余额将为 {amount}。是否继续？",
@@ -834,8 +816,6 @@
   "backupInvalidFile": "无效的备份文件",
   "backupFilePickerError": "无法读取所选文件",
   "backupRestorePassphraseHint": "输入备份密码",
-
-  "moreRebalanceTitle": "再平衡",
 
   "logViewerClearTooltip": "清除",
 

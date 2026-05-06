@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -65,9 +66,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   /// Constrained on save to a same-category account (asset under
   /// asset, etc.) so the tree never crosses categories.
   String? _parentId;
+
   /// Icon name; `null` falls back to the bullet glyph in the picker /
   /// list rows. See [account_icon_catalog.dart] for the canonical set.
   String? _icon;
+
   /// Hex colour (`#RRGGBB`) from [kAccountColorPalette], or `null`.
   String? _color;
 
@@ -131,7 +134,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     await submitOptimistic(
       pop: () {
         Haptics.success();
-        context.go('/activity/accounts');
+        context.go(AppRoutes.activityAccounts);
       },
       tag: 'account',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -186,7 +189,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.accountFormDeleteTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.accountFormDeleteTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.accountFormDeleteContent(_initial!.name)),
             const SizedBox(height: Spacing.s16),
@@ -215,7 +221,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       final repo = await ref.read(accountRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go('/activity/accounts');
+      context.go(AppRoutes.activityAccounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -454,10 +460,12 @@ class _ParentAccountPickerSection extends ConsumerWidget {
     }
     final descendants = _descendantIds(selfId, all);
     return all
-        .where((a) =>
-            a.id != selfId &&
-            !descendants.contains(a.id) &&
-            a.category == category)
+        .where(
+          (a) =>
+              a.id != selfId &&
+              !descendants.contains(a.id) &&
+              a.category == category,
+        )
         .toList();
   }
 
@@ -595,10 +603,7 @@ class _IconChip extends StatelessWidget {
 /// [kAccountColorPalette]. Tapping a swatch snaps `_color`; the
 /// leading "None" tile clears it.
 class _ColorPickerSection extends StatelessWidget {
-  const _ColorPickerSection({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _ColorPickerSection({required this.selected, required this.onChanged});
 
   final String? selected;
   final ValueChanged<String?> onChanged;
@@ -638,7 +643,9 @@ class _ColorPickerSection extends StatelessWidget {
                 onTap: () => onChanged(hex),
                 fill: _parseHexColor(hex) ?? scheme.surfaceContainerHighest,
                 tooltip: hex,
-                border: selected == hex ? scheme.primary : scheme.outlineVariant,
+                border: selected == hex
+                    ? scheme.primary
+                    : scheme.outlineVariant,
               ),
           ],
         ),
@@ -677,10 +684,7 @@ class _ColorSwatch extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: fill,
-            border: Border.all(
-              color: border,
-              width: isSelected ? 3 : 1,
-            ),
+            border: Border.all(color: border, width: isSelected ? 3 : 1),
           ),
           child: child == null ? null : Center(child: child),
         ),

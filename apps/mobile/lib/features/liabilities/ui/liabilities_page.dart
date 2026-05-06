@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/enums.dart';
@@ -42,7 +43,8 @@ class LiabilitiesPage extends ConsumerWidget {
         return ScrollNotificationHandler(
           child: ListView.builder(
             padding: Spacing.pageMobile.copyWith(
-              bottom: Spacing.pageMobile.bottom +
+              bottom:
+                  Spacing.pageMobile.bottom +
                   Spacing.floatingBarClearance +
                   MediaQuery.paddingOf(context).bottom,
             ),
@@ -151,8 +153,7 @@ class _LiabilityListTile extends StatelessWidget {
                 ),
                 style: theme.textTheme.titleMedium,
               ),
-        onTap: () =>
-            context.push('/portfolio/liabilities/${liability.id}'),
+        onTap: () => context.push(AppRoutes.liability(liability.id)),
       ),
     );
   }

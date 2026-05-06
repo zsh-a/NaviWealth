@@ -15,13 +15,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navHome => 'Overview';
 
   @override
-  String get navAssets => 'Assets';
-
-  @override
   String get navExpenses => 'Expenses';
-
-  @override
-  String get navAnalytics => 'Analytics';
 
   @override
   String get navSettings => 'Settings';
@@ -30,13 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navPortfolio => 'Portfolio';
 
   @override
-  String get navMore => 'More';
-
-  @override
   String get navAI => 'AI';
-
-  @override
-  String get navMe => 'Me';
 
   @override
   String get navActivity => 'Activity';
@@ -52,27 +40,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioLiabilitiesTab => 'Liabilities';
-
-  @override
-  String get moreAccountsSubtitle => 'Bank, brokerage, and wallets';
-
-  @override
-  String get moreExpenseSubtitle => 'Track daily spending and reports';
-
-  @override
-  String get moreAnalyticsSubtitle => 'Allocation, risk, and benchmarks';
-
-  @override
-  String get moreFireSubtitle => 'Financial independence tracker';
-
-  @override
-  String get moreAiSubtitle => 'AI financial assistant';
-
-  @override
-  String get moreRebalanceSubtitle => 'Target vs. actual allocation';
-
-  @override
-  String get moreSettingsSubtitle => 'App preferences and devices';
 
   @override
   String get superFabTrade => 'Trade';
@@ -622,8 +589,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccountTitle => 'Account';
 
   @override
-  String get settingsAccountSubtitle =>
-      'Sign-in & multi-device sync (FIR-27 / FIR-28)';
+  String get settingsAccountSubtitle => 'Sign-in & multi-device sync';
 
   @override
   String get settingsBaseCurrencyTitle => 'Base currency';
@@ -855,21 +821,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commandPaletteGoOverview => 'Go to Overview';
-
-  @override
-  String get commandPaletteGoAssets => 'Go to Assets';
-
-  @override
-  String get commandPaletteGoAccounts => 'Go to Accounts';
-
-  @override
-  String get commandPaletteGoExpenses => 'Go to Expenses';
-
-  @override
-  String get commandPaletteGoAnalytics => 'Go to Analytics';
-
-  @override
-  String get commandPaletteGoFire => 'Go to FIRE';
 
   @override
   String get commandPaletteGoSettings => 'Go to Settings';
@@ -1213,9 +1164,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String analyticsHoldingTooltip(String symbol, String value, String weight) {
     return '$symbol · $value · $weight';
   }
-
-  @override
-  String get navFire => 'FIRE';
 
   @override
   String get fireAppBarTitle => 'FIRE';
@@ -2437,9 +2385,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityFeedTab => 'Activity';
 
   @override
-  String get activityFeedComingSoon => 'Activity feed coming soon';
-
-  @override
   String get activityFeedEmpty =>
       'No activity yet — record a transfer, expense, or trade and it will appear here.';
 
@@ -2578,9 +2523,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupRestorePassphraseHint => 'Enter the backup passphrase';
-
-  @override
-  String get moreRebalanceTitle => 'Rebalance';
 
   @override
   String get logViewerClearTooltip => 'Clear';
