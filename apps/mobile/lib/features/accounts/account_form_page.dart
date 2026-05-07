@@ -13,7 +13,7 @@ import '../settings/data/base_currency_preference.dart';
 import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
 import 'account_icon_catalog.dart';
-import 'accounts_page.dart' show accountCategoryLabel, accountTypeLabel;
+import 'ui/account_labels.dart';
 
 /// Create / edit page for a single [Account].
 ///
