@@ -232,19 +232,23 @@ class ExpenseGroupedList extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     final groups = _groupExpenses(expenses, grouping, l10n);
+    final items = <_ExpenseListItem>[];
+    for (final group in groups) {
+      items.add(_ExpenseGroupHeader(group));
+      for (final expense in group.expenses) {
+        items.add(_ExpenseListRow(expense));
+      }
+      items.add(const _ExpenseListDivider());
+    }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
-      itemCount: groups.length,
-      itemBuilder: (context, i) {
-        final g = groups[i];
-        final total = g.expenses
-            .map((e) => e.amount)
-            .fold<Decimal>(Decimal.zero, (a, b) => a + b);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
+    return ScrollNotificationHandler(
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final item = items[i];
+          return switch (item) {
+            _ExpenseGroupHeader(:final group) => Padding(
               padding: const EdgeInsets.fromLTRB(
                 Spacing.s16,
                 Spacing.s12,
@@ -254,9 +258,12 @@ class ExpenseGroupedList extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(g.label, style: Theme.of(context).textTheme.titleSmall),
                   Text(
-                    l10n.expenseListTotal(formatter.currency(total)),
+                    group.label,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    l10n.expenseListTotal(formatter.currency(group.total)),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFeatures: TypographyTokens.tabularFigures,
                     ),
@@ -264,19 +271,38 @@ class ExpenseGroupedList extends StatelessWidget {
                 ],
               ),
             ),
-            for (final e in g.expenses)
-              _ExpenseRow(
-                expense: e,
-                account: expenseAccountById[e.expenseAccountId],
-                formatter: formatter,
-                onTap: () => onTap(e),
-              ),
-            const Divider(height: 0),
-          ],
-        );
-      },
+            _ExpenseListRow(:final expense) => _ExpenseRow(
+              expense: expense,
+              account: expenseAccountById[expense.expenseAccountId],
+              formatter: formatter,
+              onTap: () => onTap(expense),
+            ),
+            _ExpenseListDivider() => const Divider(height: 0),
+          };
+        },
+      ),
     );
   }
+}
+
+sealed class _ExpenseListItem {
+  const _ExpenseListItem();
+}
+
+class _ExpenseGroupHeader extends _ExpenseListItem {
+  const _ExpenseGroupHeader(this.group);
+
+  final _Group group;
+}
+
+class _ExpenseListRow extends _ExpenseListItem {
+  const _ExpenseListRow(this.expense);
+
+  final Expense expense;
+}
+
+class _ExpenseListDivider extends _ExpenseListItem {
+  const _ExpenseListDivider();
 }
 
 class _ExpenseRow extends StatelessWidget {
@@ -356,6 +382,9 @@ class _Group {
 
   final String label;
   final List<Expense> expenses = [];
+
+  Decimal get total =>
+      expenses.fold<Decimal>(Decimal.zero, (total, e) => total + e.amount);
 }
 
 List<_Group> _groupExpenses(

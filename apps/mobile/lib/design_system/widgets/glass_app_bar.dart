@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
+import 'scroll_state.dart';
+
 /// Drop-in [AppBar] replacement with iOS 26 Liquid Glass rendering.
 ///
 /// Delegates to the package's `GlassAppBar` (from `liquid_glass_widgets`)
@@ -39,29 +41,37 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveLeading = leading ??
-        (automaticallyImplyLeading && Navigator.canPop(context)
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null);
+    return ValueListenableBuilder<bool>(
+      valueListenable: isScrollingNotifier,
+      builder: (context, isScrolling, _) {
+        final effectiveLeading =
+            leading ??
+            (automaticallyImplyLeading && Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null);
+        final effectiveQuality =
+            quality ?? (isScrolling ? lgw.GlassQuality.minimal : null);
 
-    final appBar = lgw.GlassAppBar(
-      title: title,
-      leading: effectiveLeading,
-      actions: actions,
-      centerTitle: centerTitle ?? true,
-      preferredSize: const Size.fromHeight(kToolbarHeight),
-      useOwnLayer: useOwnLayer,
-      quality: quality,
-    );
+        final appBar = lgw.GlassAppBar(
+          title: title,
+          leading: effectiveLeading,
+          actions: actions,
+          centerTitle: centerTitle ?? true,
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          useOwnLayer: useOwnLayer,
+          quality: effectiveQuality,
+        );
 
-    if (bottom == null) return appBar;
+        if (bottom == null) return appBar;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [appBar, bottom!],
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [appBar, bottom!],
+        );
+      },
     );
   }
 }

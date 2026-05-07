@@ -19,56 +19,112 @@ class SettingsOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    return ListView(
-      padding: Spacing.pageMobile.copyWith(
-        bottom:
-            Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
-            MediaQuery.paddingOf(context).bottom,
-      ),
-      children: [
-        const _AccountSection(),
-        GlassSectionHeader(title: l10n.settingsAppearanceSection),
-        const _AppearanceSection(),
-        GlassSectionHeader(title: l10n.settingsRiskSection),
-        const LiquidGlassCard(
-          layer: GlassLayer.tertiary,
-          padding: EdgeInsets.zero,
-          child: _RiskThresholdSettings(),
+    return ScrollNotificationHandler(
+      child: ListView(
+        padding: Spacing.pageMobile.copyWith(
+          bottom:
+              Spacing.pageMobile.bottom +
+              Spacing.floatingBarClearance +
+              MediaQuery.paddingOf(context).bottom,
         ),
-        GlassSectionHeader(title: l10n.settingsDataSection),
-        LiquidGlassCard(
-          layer: GlassLayer.tertiary,
-          padding: EdgeInsets.zero,
-          child: ListTile(
-            leading: const Icon(Icons.backup_outlined),
-            title: Text(l10n.settingsDataTitle),
-            subtitle: Text(l10n.settingsDataSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.goNamed(AppRouteNames.backup),
+        children: [
+          const _AccountHeader(),
+          const SizedBox(height: Spacing.s12),
+          const _AccountSection(),
+          GlassSectionHeader(title: l10n.settingsAppearanceSection),
+          const _AppearanceSection(),
+          GlassSectionHeader(title: l10n.settingsRiskSection),
+          const LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: _RiskThresholdSettings(),
           ),
-        ),
-        if (kDebugMode) ...[
-          GlassSectionHeader(title: l10n.settingsDeveloperSection),
+          GlassSectionHeader(title: l10n.settingsDataSection),
           LiquidGlassCard(
             layer: GlassLayer.tertiary,
             padding: EdgeInsets.zero,
             child: ListTile(
-              leading: const Icon(Icons.bug_report_outlined),
-              title: Text(l10n.settingsLogsTitle),
-              subtitle: Text(l10n.settingsLogsSubtitle),
+              leading: const Icon(Icons.backup_outlined),
+              title: Text(l10n.settingsDataTitle),
+              subtitle: Text(l10n.settingsDataSubtitle),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.goNamed(AppRouteNames.logs),
+              onTap: () => context.goNamed(AppRouteNames.backup),
+            ),
+          ),
+          if (kDebugMode) ...[
+            GlassSectionHeader(title: l10n.settingsDeveloperSection),
+            LiquidGlassCard(
+              layer: GlassLayer.tertiary,
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                leading: const Icon(Icons.bug_report_outlined),
+                title: Text(l10n.settingsLogsTitle),
+                subtitle: Text(l10n.settingsLogsSubtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.goNamed(AppRouteNames.logs),
+              ),
+            ),
+          ],
+          const SizedBox(height: Spacing.s12),
+          const LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            padding: EdgeInsets.zero,
+            child: _AboutTile(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountHeader extends StatelessWidget {
+  const _AccountHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s8),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: Radii.brLg,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.account_circle_outlined,
+              color: scheme.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: Spacing.s16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.settingsAccountTitle,
+                  style: theme.textTheme.headlineSmall,
+                ),
+                const SizedBox(height: Spacing.s2),
+                Text(
+                  l10n.settingsAccountSubtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-        const SizedBox(height: Spacing.s12),
-        const LiquidGlassCard(
-          layer: GlassLayer.tertiary,
-          padding: EdgeInsets.zero,
-          child: _AboutTile(),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -86,12 +142,6 @@ class _AccountSection extends ConsumerWidget {
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: Text(l10n.settingsAccountTitle),
-            subtitle: Text(l10n.settingsAccountSubtitle),
-          ),
-          const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.devices_outlined),
             title: Text(l10n.settingsDevicesTitle),
