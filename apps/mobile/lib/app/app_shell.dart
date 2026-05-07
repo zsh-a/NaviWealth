@@ -64,9 +64,12 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
       context,
     ).routeInformationProvider.value.uri.path;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(aiRouteContextProvider.notifier).state = AiRouteContext(
-        path: location,
-      );
+      final current = ref.read(aiRouteContextProvider);
+      if (current.path != location) {
+        ref.read(aiRouteContextProvider.notifier).state = AiRouteContext(
+          path: location,
+        );
+      }
     });
 
     final destinations = _navDestinations(l10n);
@@ -184,23 +187,30 @@ class _MobileShell extends StatelessWidget {
             style: DefaultTextStyle.of(
               context,
             ).style.copyWith(decoration: TextDecoration.none),
-            child: lgw.GlassBottomBar(
-              barHeight: barHeight,
-              verticalPadding: 0,
-              labelFontSize: 10,
-              iconLabelSpacing: 0,
-              quality: lgw.GlassQuality.premium,
-              selectedIndex: selectedIndex,
-              onTabSelected: onDestinationSelected,
-              tabs: [
-                for (final d in destinations)
-                  lgw.GlassBottomBarTab(
-                    label: d.label,
-                    icon: Icon(d.icon),
-                    activeIcon: Icon(d.selectedIcon),
-                    glowColor: glowColors.primary,
-                  ),
-              ],
+            child: ValueListenableBuilder<bool>(
+              valueListenable: isScrollingNotifier,
+              builder: (context, isScrolling, _) {
+                return lgw.GlassBottomBar(
+                  barHeight: barHeight,
+                  verticalPadding: 0,
+                  labelFontSize: 10,
+                  iconLabelSpacing: 0,
+                  quality: isScrolling
+                      ? lgw.GlassQuality.minimal
+                      : lgw.GlassQuality.premium,
+                  selectedIndex: selectedIndex,
+                  onTabSelected: onDestinationSelected,
+                  tabs: [
+                    for (final d in destinations)
+                      lgw.GlassBottomBarTab(
+                        label: d.label,
+                        icon: Icon(d.icon),
+                        activeIcon: Icon(d.selectedIcon),
+                        glowColor: glowColors.primary,
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ),

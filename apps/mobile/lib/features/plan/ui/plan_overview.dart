@@ -83,36 +83,40 @@ class PlanOverview extends ConsumerWidget {
         ];
 
         if (isWide) {
-          return ListView(
-            padding: padding,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: cards[0]),
-                  const SizedBox(width: Spacing.s16),
-                  Expanded(child: cards[1]),
-                ],
-              ),
-              const SizedBox(height: Spacing.s16),
-              cards[2],
-            ],
+          return ScrollNotificationHandler(
+            child: ListView(
+              padding: padding,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: Spacing.s16),
+                    Expanded(child: cards[1]),
+                  ],
+                ),
+                const SizedBox(height: Spacing.s16),
+                cards[2],
+              ],
+            ),
           );
         }
 
-        return ListView(
-          padding: padding.copyWith(
-            bottom:
-                padding.bottom +
-                Spacing.floatingBarClearance +
-                MediaQuery.paddingOf(context).bottom,
-          ),
-          children: [
-            for (int i = 0; i < cards.length; i++) ...[
-              cards[i],
-              if (i < cards.length - 1) const SizedBox(height: Spacing.s12),
+        return ScrollNotificationHandler(
+          child: ListView(
+            padding: padding.copyWith(
+              bottom:
+                  padding.bottom +
+                  Spacing.floatingBarClearance +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
+            children: [
+              for (int i = 0; i < cards.length; i++) ...[
+                cards[i],
+                if (i < cards.length - 1) const SizedBox(height: Spacing.s12),
+              ],
             ],
-          ],
+          ),
         );
       },
     );
