@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 /// User-supplied inputs that drive the FIRE dashboard.
 ///
-/// All amounts are denominated in the dashboard's base currency (FIR-21);
+/// All amounts are denominated in the dashboard's base currency;
 /// converting per-asset values into base happens upstream in the dashboard
 /// snapshot. The goal itself is currency-agnostic — UI labels the figures
 /// using the active base currency.
@@ -71,12 +71,8 @@ class FireGoal {
       other.inflationRate == inflationRate;
 
   @override
-  int get hashCode => Object.hash(
-        targetAmount,
-        monthlyExpenses,
-        monthlySurplus,
-        inflationRate,
-      );
+  int get hashCode =>
+      Object.hash(targetAmount, monthlyExpenses, monthlySurplus, inflationRate);
 
   @override
   String toString() =>

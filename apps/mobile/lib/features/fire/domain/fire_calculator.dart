@@ -57,7 +57,7 @@ class FireCalculator {
 
   /// Build the full dashboard view in one pass.
   ///
-  /// [liveAnnualReturn] is the user's actual XIRR-derived rate (FIR-55).
+  /// [liveAnnualReturn] is the user's actual XIRR-derived rate.
   /// When non-null it adds a fourth `live` scenario *and* anchors the
   /// sensitivity readout to the live rate; when null the sensitivity uses
   /// [neutralRate] so the user still gets a meaningful "what if I save 20%
@@ -73,8 +73,7 @@ class FireCalculator {
       (FireScenarioTier.conservative, conservativeRate),
       (FireScenarioTier.neutral, neutralRate),
       (FireScenarioTier.aggressive, aggressiveRate),
-      if (liveAnnualReturn != null)
-        (FireScenarioTier.live, liveAnnualReturn),
+      if (liveAnnualReturn != null) (FireScenarioTier.live, liveAnnualReturn),
     ];
 
     // Pre-compute crossings so every scenario shares one chart horizon —
@@ -92,15 +91,17 @@ class FireCalculator {
     final commonHorizon = _pickHorizon(crossings.values);
     final scenarios = <FireScenario>[];
     for (final (tier, rate) in tiers) {
-      scenarios.add(_projectScenario(
-        tier: tier,
-        annualReturn: rate,
-        goal: goal,
-        currentNetWorth: currentNetWorth,
-        start: start,
-        horizonMonths: commonHorizon,
-        crossingMonth: crossings[tier],
-      ));
+      scenarios.add(
+        _projectScenario(
+          tier: tier,
+          annualReturn: rate,
+          goal: goal,
+          currentNetWorth: currentNetWorth,
+          start: start,
+          horizonMonths: commonHorizon,
+          crossingMonth: crossings[tier],
+        ),
+      );
     }
 
     final baseRate = liveAnnualReturn ?? neutralRate;
@@ -186,8 +187,7 @@ class FireCalculator {
     final monthIndices = <int>{
       for (var t = 0; t <= horizonMonths; t += step) t,
       ...pinned,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
 
     final points = <FireProjectionPoint>[
       for (final t in monthIndices)

@@ -6,8 +6,8 @@ import '../domain/fire_calculator.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_preferences.dart';
 
-/// User's actual annualized return, sourced from FIR-55's XIRR engine when
-/// the production wiring lands. Keeping it as a stand-alone provider lets
+/// User's actual annualized return, sourced from the portfolio XIRR engine
+/// when the production wiring lands. Keeping it as a stand-alone provider lets
 /// the dashboard add a "Live (XIRR)" scenario as soon as the value is
 /// non-null — and it stays out of the way (no dotted line, neutral becomes
 /// the sensitivity baseline) until then.
@@ -30,8 +30,9 @@ final fireCalculatorProvider = Provider<FireCalculator>(
 /// Returns [AsyncValue] so the dashboard can render the dashboard
 /// snapshot's loading / error state alongside the FIRE-specific empty
 /// state (no goal yet → [FireDashboardView.progressRatio] is null).
-final fireDashboardViewProvider =
-    Provider<AsyncValue<FireDashboardView>>((ref) {
+final fireDashboardViewProvider = Provider<AsyncValue<FireDashboardView>>((
+  ref,
+) {
   final goal = ref.watch(fireGoalProvider);
   final snapshotAsync = ref.watch(dashboardSnapshotProvider);
   final liveRate = ref.watch(fireLiveAnnualReturnProvider);
@@ -42,8 +43,9 @@ final fireDashboardViewProvider =
     loading: () => const AsyncValue.loading(),
     error: (e, st) => AsyncValue.error(e, st),
     data: (snapshot) {
-      final currentNetWorth =
-          snapshot.isEmpty ? Decimal.zero : snapshot.netWorth.amount;
+      final currentNetWorth = snapshot.isEmpty
+          ? Decimal.zero
+          : snapshot.netWorth.amount;
       final view = calculator.buildView(
         goal: goal,
         currentNetWorth: currentNetWorth,
@@ -55,4 +57,3 @@ final fireDashboardViewProvider =
     },
   );
 });
-
