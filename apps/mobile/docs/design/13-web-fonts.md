@@ -1,4 +1,4 @@
-# 13 · Web 字体子集化（FIR-38）
+# 13 · Web 字体子集化
 
 > 中文字体若全量打包会膨胀首屏几十 MB；本文档记录 NaviWealth Web 端字体子集化的实现与运维。
 
@@ -130,6 +130,6 @@ static const List<String> fontFamilyFallback = <String>[
 
 ## 后续可选优化
 
-- **Service Worker 缓存**：FIR-36（PWA）落地后让 SW 把两个 woff2 加入 precache，重访 0 延迟。
+- **Service Worker 缓存**：让 SW 把两个 woff2 加入 precache，重访 0 延迟。
 - **路由级懒加载**：`AI 对话` / `资产详情备注` 等富文本场景如果触发 ext 频繁，可在路由进入时主动 `document.fonts.load('1em AppCnSans')` 预热。
 - **Variable 轴裁剪**：如确认 100/200/300/800/900 永远不用，可加 `--variations='wght=400,500,600,700'` 进一步压 base。
