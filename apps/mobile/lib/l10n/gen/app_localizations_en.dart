@@ -2439,6 +2439,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planRebalanceSubtitle => 'Portfolio drift & rebalancing';
 
   @override
+  String get planSummaryLoadError => 'Needs attention';
+
+  @override
+  String get planSummaryConfigureGoal => 'Set a target';
+
+  @override
+  String planSummaryProgress(String value) {
+    return 'Progress $value';
+  }
+
+  @override
+  String planSummaryEta(String value) {
+    return 'ETA $value';
+  }
+
+  @override
+  String get planSummaryNoRiskAlerts => 'No concentration alerts';
+
+  @override
+  String planSummaryRiskAlerts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count alerts',
+      one: '1 alert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planSummaryCriticalAlerts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count critical',
+      one: '1 critical',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planSummaryNoPortfolio => 'No portfolio data';
+
+  @override
+  String get planSummaryBalanced => 'Balanced';
+
+  @override
+  String planSummaryDrift(String value) {
+    return 'Drift $value';
+  }
+
+  @override
+  String planSummaryTrades(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count trades',
+      one: '1 trade',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsDataSection => 'Data';
 
   @override
