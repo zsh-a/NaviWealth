@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
+import 'package:naviwealth/core/auth/device_identity_store.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
 
@@ -46,6 +47,40 @@ void main() {
       expect(await store.read(), isNull);
       // Corrupt entry should have been wiped so the next launch is clean.
       expect(await keyStore.contains(TokenStore.storageKey), isFalse);
+    });
+  });
+
+  group('DeviceIdentityStore', () {
+    test('creates and persists a stable install device id', () async {
+      final keyStore = InMemoryKeyStore();
+      final store = DeviceIdentityStore(keyStore);
+
+      final first = await store.getOrCreate();
+      final second = await store.getOrCreate();
+
+      expect(first, isNotEmpty);
+      expect(second, first);
+      expect(await keyStore.read(DeviceIdentityStore.storageKey), first);
+    });
+
+    test('reuses an existing install device id', () async {
+      final keyStore = InMemoryKeyStore({
+        DeviceIdentityStore.storageKey: '0711901b-f1a4-4090-b490-117a23d24652',
+      });
+      final store = DeviceIdentityStore(keyStore);
+
+      expect(await store.getOrCreate(), '0711901b-f1a4-4090-b490-117a23d24652');
+    });
+
+    test('remember replaces the stored server-approved device id', () async {
+      final keyStore = InMemoryKeyStore({
+        DeviceIdentityStore.storageKey: '0711901b-f1a4-4090-b490-117a23d24652',
+      });
+      final store = DeviceIdentityStore(keyStore);
+
+      await store.remember('98fa5788-438f-4fa7-b2b8-80cc76d3cd45');
+
+      expect(await store.getOrCreate(), '98fa5788-438f-4fa7-b2b8-80cc76d3cd45');
     });
   });
 

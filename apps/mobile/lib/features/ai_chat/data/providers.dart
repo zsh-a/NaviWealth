@@ -123,8 +123,9 @@ final chatMessagesStreamProvider =
 /// this gate, a user who records a transaction and immediately asks the
 /// model "what's my position?" can race the 30-s polling cycle and get
 /// a stale answer.
-final chatSyncGateProvider = FutureProvider<ChatSyncGate>((ref) async {
+final chatSyncGateProvider = FutureProvider<ChatSyncGate?>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);
+  if (engine == null) return null;
   return ChatSyncGate(engine: engine);
 });
 

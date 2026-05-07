@@ -230,7 +230,7 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
-    final session = ref.watch(authSessionReaderProvider)();
+    final session = ref.watch(authSessionProvider);
 
     if (session == null) {
       return Center(

@@ -71,6 +71,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).currentSession(),
       ),
+      core_auth.authSessionProvider.overrideWith((ref) {
+        final state = ref.watch(authControllerProvider).value;
+        return state is AuthLoggedIn ? state.session : null;
+      }),
       core_auth.authOnUnauthorizedProvider.overrideWith(
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
@@ -122,6 +126,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // Fire-and-forget FX rate sync on app launch. Errors are logged but
   // don't block startup — the dashboard degrades gracefully with a
   // "currency mismatch" banner when rates are missing.
+  container.read(syncSchedulerBootstrapProvider);
   unawaited(_syncFxRates(container, logger));
 
   return container;

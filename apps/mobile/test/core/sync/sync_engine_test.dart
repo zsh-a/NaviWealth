@@ -1,14 +1,21 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/auth/auth_session.dart';
+import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/errors.dart';
 import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/core/sync/op_applier.dart';
+import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
+import 'package:naviwealth/data/db/providers.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
+import '../../data/db/test_database.dart';
 import '_fake_api.dart';
 
 class _RecordingApplier implements OpApplier {
@@ -66,6 +73,34 @@ void main() {
     );
   });
 
+  test('provider rebuilds the engine when auth session appears', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final sessionState = StateProvider<AuthSession?>((_) => null);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
+        authSessionProvider.overrideWith((ref) => ref.watch(sessionState)),
+        syncApiClientProvider.overrideWithValue(FakeSyncApiClient()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(await container.read(syncEngineProvider.future), isNull);
+
+    container.read(sessionState.notifier).state = AuthSession(
+      accessToken: 'token',
+      expiresAt: DateTime.utc(2099),
+      userId: 'user-1',
+      deviceId: dev,
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    final rebuilt = await container.read(syncEngineProvider.future);
+    expect(rebuilt, isNotNull);
+    expect(rebuilt!.deviceId, dev);
+  });
+
   // SP-F-1 / SP-C-1
   test('happy path: push + pull cycle', () async {
     await outbox.enqueue(_localOp(id: '1', wall: 1_500_000_000_000, dev: dev));
@@ -89,6 +124,24 @@ void main() {
     final result = await engine.run();
     expect(result.pulled, 1);
     expect(applier.applied.single.opId, 'r1');
+  });
+
+  test('drops outbox ops from inactive devices before push', () async {
+    const oldDev = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    await outbox.enqueue(
+      _localOp(id: 'old', wall: 1_500_000_000_000, dev: oldDev),
+    );
+    await outbox.enqueue(
+      _localOp(id: 'active', wall: 1_500_000_000_001, dev: dev),
+    );
+
+    final result = await engine.run();
+
+    expect(result.success, isTrue);
+    expect(api.pushedBatches.single.map((o) => o.opId), ['active']);
+    expect(outbox.failures.single.opId, 'old');
+    expect(outbox.failures.single.code, 'device_mismatch');
+    expect(await outbox.depth(), 0);
   });
 
   // SP-D-5: empty page still advances cursor

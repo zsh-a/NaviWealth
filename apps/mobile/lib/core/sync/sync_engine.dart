@@ -195,12 +195,33 @@ class SyncEngine {
   Future<int> _pushAll(List<SyncException> errors) async {
     var totalAccepted = 0;
     while (true) {
-      final batch = await outbox.peekBatch(
+      var batch = await outbox.peekBatch(
         maxOps: batchMaxOps,
         maxBytes: batchMaxBytes,
       );
       if (batch.isEmpty) return totalAccepted;
       _state = EngineState.pushing;
+
+      final mismatched = batch
+          .where((op) => op.deviceId != deviceId)
+          .toList(growable: false);
+      if (mismatched.isNotEmpty) {
+        for (final op in mismatched) {
+          await outbox.recordFailure(
+            opId: op.opId,
+            code: 'device_mismatch',
+            message: 'op device_id does not match active session device_id',
+            payload: op.encode(),
+          );
+        }
+        _logger.w(
+          'sync: dropped ${mismatched.length} outbox ops for inactive device',
+        );
+        batch = batch
+            .where((op) => op.deviceId == deviceId)
+            .toList(growable: false);
+        if (batch.isEmpty) continue;
+      }
 
       try {
         final res = await api.push(deviceId: deviceId, ops: batch);

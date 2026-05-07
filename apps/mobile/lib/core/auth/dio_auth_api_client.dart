@@ -30,11 +30,14 @@ class DioAuthApiClient implements AuthApiClient {
     required String email,
     required String password,
     String? deviceName,
+    String? deviceId,
   }) async {
     final body = <String, Object?>{
       'email': email.trim(),
       'password': password,
-      if (deviceName != null && deviceName.isNotEmpty) 'device_name': deviceName,
+      if (deviceName != null && deviceName.isNotEmpty)
+        'device_name': deviceName,
+      if (deviceId != null && deviceId.isNotEmpty) 'device_id': deviceId,
     };
     final res = await _post('/auth/login', body: body, isLogin: true);
     return AuthSession.fromJson(res);
@@ -55,8 +58,7 @@ class DioAuthApiClient implements AuthApiClient {
     final raw = (res['devices'] as List).cast<Map<Object?, Object?>>();
     final devices = raw
         .map(
-          (m) =>
-              AuthDevice.fromJson(m.map((k, v) => MapEntry(k as String, v))),
+          (m) => AuthDevice.fromJson(m.map((k, v) => MapEntry(k as String, v))),
         )
         .toList(growable: false);
     return DevicesResponse(
@@ -99,7 +101,8 @@ class DioAuthApiClient implements AuthApiClient {
     final headers = <String, Object>{
       'Content-Type': 'application/json; charset=utf-8',
       'Accept': 'application/json',
-      if (bearer != null && bearer.isNotEmpty) 'Authorization': 'Bearer $bearer',
+      if (bearer != null && bearer.isNotEmpty)
+        'Authorization': 'Bearer $bearer',
     };
     try {
       final res = await _dio.request<dynamic>(
@@ -152,11 +155,7 @@ class DioAuthApiClient implements AuthApiClient {
         final status = e.response!.statusCode ?? 0;
         throw _mapStatus(status, e.response!, path, isLogin: isLogin);
       }
-      throw AuthException(
-        AuthErrorKind.unknown,
-        message: e.message,
-        cause: e,
-      );
+      throw AuthException(AuthErrorKind.unknown, message: e.message, cause: e);
     }
   }
 

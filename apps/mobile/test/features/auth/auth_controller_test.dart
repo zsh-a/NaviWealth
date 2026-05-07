@@ -18,8 +18,10 @@ class _FakeAuthApi implements AuthApiClient {
   DevicesResponse? devicesResponse;
   Object? logoutError;
 
-  final List<({String email, String password, String? deviceName})> loginCalls =
-      [];
+  final List<
+    ({String email, String password, String? deviceName, String? deviceId})
+  >
+  loginCalls = [];
   final List<AuthSession> refreshCalls = [];
   final List<({AuthSession session, String deviceId})> logoutCalls = [];
 
@@ -28,8 +30,14 @@ class _FakeAuthApi implements AuthApiClient {
     required String email,
     required String password,
     String? deviceName,
+    String? deviceId,
   }) async {
-    loginCalls.add((email: email, password: password, deviceName: deviceName));
+    loginCalls.add((
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    ));
     if (loginError != null) throw loginError!;
     return loginResponse!;
   }
@@ -66,10 +74,7 @@ AuthSession _session({
   deviceId: deviceId,
 );
 
-ProviderContainer _container({
-  Map<String, String>? seed,
-  AuthApiClient? api,
-}) {
+ProviderContainer _container({Map<String, String>? seed, AuthApiClient? api}) {
   final keyStore = InMemoryKeyStore(seed);
   return ProviderContainer(
     overrides: [
@@ -85,8 +90,7 @@ void main() {
       final container = _container();
       addTearDown(container.dispose);
 
-      final state =
-          await container.read(authControllerProvider.future);
+      final state = await container.read(authControllerProvider.future);
       expect(state, isA<AuthLoggedOut>());
       expect((state as AuthLoggedOut).reason, isNull);
     });
@@ -100,67 +104,111 @@ void main() {
       final state = await container.read(authControllerProvider.future);
       expect(state, isA<AuthLoggedIn>());
       expect((state as AuthLoggedIn).session.userId, 'u-1');
+      expect(
+        await container.read(deviceIdentityStoreProvider).getOrCreate(),
+        'd-1',
+      );
     });
 
     test(
       'emits AuthLoggedOut(sessionExpired) and clears storage when token expired',
       () async {
         final keyStore = InMemoryKeyStore({
-          TokenStore.storageKey:
-              _session(expiresAt: DateTime.utc(2020, 1, 1)).encode(),
+          TokenStore.storageKey: _session(
+            expiresAt: DateTime.utc(2020, 1, 1),
+          ).encode(),
         });
         final container = ProviderContainer(
-          overrides: [
-            secureKeyStoreProvider.overrideWithValue(keyStore),
-          ],
+          overrides: [secureKeyStoreProvider.overrideWithValue(keyStore)],
         );
         addTearDown(container.dispose);
 
-        final state =
-            await container.read(authControllerProvider.future);
+        final state = await container.read(authControllerProvider.future);
         expect(state, isA<AuthLoggedOut>());
-        expect((state as AuthLoggedOut).reason,
-            LoggedOutReason.sessionExpired);
+        expect((state as AuthLoggedOut).reason, LoggedOutReason.sessionExpired);
         expect(await keyStore.read(TokenStore.storageKey), isNull);
       },
     );
   });
 
   group('AuthController.login', () {
-    test('persists session, emits AuthLoggedIn, bumps router version',
-        () async {
-      final api = _FakeAuthApi()..loginResponse = _session(token: 'fresh');
-      final container = _container(api: api);
+    test(
+      'persists session, emits AuthLoggedIn, bumps router version',
+      () async {
+        final api = _FakeAuthApi()..loginResponse = _session(token: 'fresh');
+        final container = _container(api: api);
+        addTearDown(container.dispose);
+
+        // Force build to settle on AuthLoggedOut first; pump microtasks so
+        // the deferred router-version bump from `listenSelf` lands.
+        await container.read(authControllerProvider.future);
+        await Future<void>.delayed(Duration.zero);
+        final versionBefore = container.read(routeRedirectVersionProvider);
+
+        await container
+            .read(authControllerProvider.notifier)
+            .login(email: 'a@b.com', password: 'hunter22', deviceName: 'iOS');
+        await Future<void>.delayed(Duration.zero);
+
+        final state = container.read(authControllerProvider).value;
+        expect(state, isA<AuthLoggedIn>());
+        expect((state as AuthLoggedIn).session.accessToken, 'fresh');
+        expect(api.loginCalls, hasLength(1));
+        expect(api.loginCalls.single.deviceName, 'iOS');
+        expect(api.loginCalls.single.deviceId, isNotEmpty);
+
+        final versionAfter = container.read(routeRedirectVersionProvider);
+        expect(versionAfter, greaterThan(versionBefore));
+
+        // Persisted to the secure store.
+        final stored = await container.read(tokenStoreProvider).read();
+        expect(stored?.accessToken, 'fresh');
+      },
+    );
+
+    test('reuses persisted install device id on login', () async {
+      const installDeviceId = '0711901b-f1a4-4090-b490-117a23d24652';
+      final api = _FakeAuthApi()
+        ..loginResponse = _session(token: 'fresh', deviceId: installDeviceId);
+      final container = _container(
+        api: api,
+        seed: {'naviwealth.install_device_id': installDeviceId},
+      );
       addTearDown(container.dispose);
-
-      // Force build to settle on AuthLoggedOut first; pump microtasks so
-      // the deferred router-version bump from `listenSelf` lands.
       await container.read(authControllerProvider.future);
-      await Future<void>.delayed(Duration.zero);
-      final versionBefore = container.read(routeRedirectVersionProvider);
 
-      await container.read(authControllerProvider.notifier).login(
-            email: 'a@b.com',
-            password: 'hunter22',
-            deviceName: 'iOS',
-          );
-      await Future<void>.delayed(Duration.zero);
+      await container
+          .read(authControllerProvider.notifier)
+          .login(email: 'a@b.com', password: 'hunter22');
 
-      final state = container.read(authControllerProvider).value;
-      expect(state, isA<AuthLoggedIn>());
-      expect((state as AuthLoggedIn).session.accessToken, 'fresh');
-      expect(api.loginCalls, hasLength(1));
-      expect(api.loginCalls.single.deviceName, 'iOS');
-
-      final versionAfter = container.read(routeRedirectVersionProvider);
-      expect(versionAfter, greaterThan(versionBefore));
-
-      // Persisted to the secure store.
-      final stored = await container
-          .read(tokenStoreProvider)
-          .read();
-      expect(stored?.accessToken, 'fresh');
+      expect(api.loginCalls.single.deviceId, installDeviceId);
     });
+
+    test(
+      'aligns install device id when server returns a different one',
+      () async {
+        const requestedDeviceId = '0711901b-f1a4-4090-b490-117a23d24652';
+        const serverDeviceId = '98fa5788-438f-4fa7-b2b8-80cc76d3cd45';
+        final api = _FakeAuthApi()
+          ..loginResponse = _session(token: 'fresh', deviceId: serverDeviceId);
+        final container = _container(
+          api: api,
+          seed: {'naviwealth.install_device_id': requestedDeviceId},
+        );
+        addTearDown(container.dispose);
+        await container.read(authControllerProvider.future);
+
+        await container
+            .read(authControllerProvider.notifier)
+            .login(email: 'a@b.com', password: 'hunter22');
+
+        expect(api.loginCalls.single.deviceId, requestedDeviceId);
+        expect(
+          await container.read(deviceIdentityStoreProvider).getOrCreate(),
+          serverDeviceId,
+        );
+      },
+    );
 
     test('propagates AuthException without changing state', () async {
       final api = _FakeAuthApi()
@@ -192,9 +240,7 @@ void main() {
       addTearDown(container.dispose);
       await container.read(authControllerProvider.future);
 
-      await container
-          .read(authControllerProvider.notifier)
-          .logoutCurrent();
+      await container.read(authControllerProvider.notifier).logoutCurrent();
 
       expect(api.logoutCalls, hasLength(1));
       expect(api.logoutCalls.single.deviceId, 'd-1');
@@ -205,10 +251,7 @@ void main() {
         (state as AuthLoggedOut).reason,
         LoggedOutReason.manuallyLoggedOut,
       );
-      expect(
-        await container.read(tokenStoreProvider).read(),
-        isNull,
-      );
+      expect(await container.read(tokenStoreProvider).read(), isNull);
     });
 
     test('still clears local state when remote logout fails', () async {
@@ -221,18 +264,13 @@ void main() {
       addTearDown(container.dispose);
       await container.read(authControllerProvider.future);
 
-      await container
-          .read(authControllerProvider.notifier)
-          .logoutCurrent();
+      await container.read(authControllerProvider.notifier).logoutCurrent();
 
       expect(
         container.read(authControllerProvider).value,
         isA<AuthLoggedOut>(),
       );
-      expect(
-        await container.read(tokenStoreProvider).read(),
-        isNull,
-      );
+      expect(await container.read(tokenStoreProvider).read(), isNull);
     });
   });
 
@@ -256,10 +294,7 @@ void main() {
 
       expect(ok, isTrue);
       final state = container.read(authControllerProvider).value;
-      expect(
-        (state as AuthLoggedIn).session.accessToken,
-        'rotated',
-      );
+      expect((state as AuthLoggedIn).session.accessToken, 'rotated');
       expect(
         (await container.read(tokenStoreProvider).read())!.accessToken,
         'rotated',
@@ -286,14 +321,8 @@ void main() {
         expect(ok, isFalse);
         final state = container.read(authControllerProvider).value;
         expect(state, isA<AuthLoggedOut>());
-        expect(
-          (state as AuthLoggedOut).reason,
-          LoggedOutReason.sessionExpired,
-        );
-        expect(
-          await container.read(tokenStoreProvider).read(),
-          isNull,
-        );
+        expect((state as AuthLoggedOut).reason, LoggedOutReason.sessionExpired);
+        expect(await container.read(tokenStoreProvider).read(), isNull);
       },
     );
 

@@ -15,16 +15,24 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 class _StubAuthApi implements AuthApiClient {
   AuthSession? loginResponse;
   Object? loginError;
-  final List<({String email, String password, String? deviceName})> loginCalls =
-      [];
+  final List<
+    ({String email, String password, String? deviceName, String? deviceId})
+  >
+  loginCalls = [];
 
   @override
   Future<AuthSession> login({
     required String email,
     required String password,
     String? deviceName,
+    String? deviceId,
   }) async {
-    loginCalls.add((email: email, password: password, deviceName: deviceName));
+    loginCalls.add((
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    ));
     if (loginError != null) throw loginError!;
     return loginResponse!;
   }
@@ -49,10 +57,7 @@ AuthSession _session() => AuthSession(
   deviceId: 'd-1',
 );
 
-ProviderContainer _container({
-  AuthApiClient? api,
-  Map<String, String>? seed,
-}) {
+ProviderContainer _container({AuthApiClient? api, Map<String, String>? seed}) {
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(InMemoryKeyStore(seed)),
@@ -61,10 +66,7 @@ ProviderContainer _container({
   );
 }
 
-Future<void> _pump(
-  WidgetTester tester,
-  ProviderContainer container,
-) async {
+Future<void> _pump(WidgetTester tester, ProviderContainer container) async {
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
@@ -81,9 +83,7 @@ Future<void> _pump(
 
 Future<AppLocalizations> _l10n(WidgetTester tester) async {
   // Find the rendered LoginPage's BuildContext to resolve localizations.
-  return AppLocalizations.of(
-    tester.element(find.byType(LoginPage)),
-  );
+  return AppLocalizations.of(tester.element(find.byType(LoginPage)));
 }
 
 void main() {
@@ -192,14 +192,8 @@ void main() {
     expect(api.loginCalls, hasLength(1));
     expect(api.loginCalls.single.email, 'a@b.com');
     expect(api.loginCalls.single.password, 'hunter22');
-    expect(
-      container.read(authControllerProvider).value,
-      isA<AuthLoggedIn>(),
-    );
-    expect(
-      (await container.read(tokenStoreProvider).read())!.userId,
-      'u-1',
-    );
+    expect(container.read(authControllerProvider).value, isA<AuthLoggedIn>());
+    expect((await container.read(tokenStoreProvider).read())!.userId, 'u-1');
   });
 
   testWidgets('invalid credentials → inline error banner', (tester) async {
@@ -222,14 +216,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('login.submit')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text(l10n.authLoginErrorInvalidCredentials),
-      findsOneWidget,
-    );
-    expect(
-      container.read(authControllerProvider).value,
-      isA<AuthLoggedOut>(),
-    );
+    expect(find.text(l10n.authLoginErrorInvalidCredentials), findsOneWidget);
+    expect(container.read(authControllerProvider).value, isA<AuthLoggedOut>());
   });
 
   testWidgets('network failure → "couldn\'t reach server" banner', (
@@ -264,17 +252,15 @@ void main() {
     addTearDown(container.dispose);
     // Manually set the controller's state to AuthLoggedOut(expired).
     await container.read(authControllerProvider.future);
-    container.read(authControllerProvider.notifier).state =
-        const AsyncData<AuthState>(
-          AuthLoggedOut(reason: LoggedOutReason.sessionExpired),
-        );
+    container
+        .read(authControllerProvider.notifier)
+        .state = const AsyncData<AuthState>(
+      AuthLoggedOut(reason: LoggedOutReason.sessionExpired),
+    );
 
     await _pump(tester, container);
     final l10n = await _l10n(tester);
 
-    expect(
-      find.text(l10n.authLoginNoticeSessionExpired),
-      findsOneWidget,
-    );
+    expect(find.text(l10n.authLoginNoticeSessionExpired), findsOneWidget);
   });
 }

@@ -141,10 +141,11 @@ class ChatRepository {
 
     final ctx = buildContextWindow(history: history, pending: content);
 
-    // Prepend route context so the AI knows where the user is.
+    // Prepend route context without using a system role; the backend owns the
+    // system prompt and accepts only user / assistant turns on this endpoint.
     final wireMessages = <WireMessage>[
       if (systemContext != null && systemContext.isNotEmpty)
-        WireMessage(role: 'system', content: systemContext),
+        WireMessage(role: 'user', content: 'Context:\n$systemContext'),
       ...ctx.wire,
     ];
     if (ctx.droppedTurns > 0) {

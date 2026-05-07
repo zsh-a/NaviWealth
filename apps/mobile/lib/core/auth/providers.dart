@@ -7,6 +7,7 @@ import '../logging/providers.dart';
 import 'auth_api_client.dart';
 import 'auth_interceptor.dart';
 import 'auth_session.dart';
+import 'device_identity_store.dart';
 import 'dio_auth_api_client.dart';
 import 'token_store.dart';
 
@@ -23,6 +24,10 @@ final tokenStoreProvider = Provider<TokenStore>(
   (ref) => TokenStore(ref.watch(secureKeyStoreProvider)),
 );
 
+final deviceIdentityStoreProvider = Provider<DeviceIdentityStore>(
+  (ref) => DeviceIdentityStore(ref.watch(secureKeyStoreProvider)),
+);
+
 /// Dio used for the auth endpoints themselves (login / refresh / devices /
 /// logout). Kept separate from any feature Dio so the AuthInterceptor
 /// can't recurse into a refresh while building login headers.
@@ -36,9 +41,7 @@ final authDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
-  dio.interceptors.add(
-    TalkerDioLogger(talker: ref.read(talkerProvider)),
-  );
+  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
   return dio;
 });
 
@@ -56,8 +59,9 @@ final authApiClientProvider = Provider<AuthApiClient>(
 /// `authControllerSessionReaderProvider` /
 /// `authControllerOnUnauthorizedProvider` in tests to drive the
 /// interceptor without touching the full controller.
-final authInterceptorFactoryProvider =
-    Provider<AuthInterceptor Function(Dio)>((ref) {
+final authInterceptorFactoryProvider = Provider<AuthInterceptor Function(Dio)>((
+  ref,
+) {
   final reader = ref.watch(authSessionReaderProvider);
   final onUnauthorized = ref.watch(authOnUnauthorizedProvider);
   return (Dio host) {
@@ -74,11 +78,24 @@ final authInterceptorFactoryProvider =
 /// (see `bootstrap.dart`) overrides this with `AuthController.currentSession`
 /// once login wiring is live. The default is "no session" so unrelated
 /// tests / wiring don't have to mount the controller.
-final authSessionReaderProvider =
-    Provider<AuthSessionReader>((ref) => () => null);
+final authSessionReaderProvider = Provider<AuthSessionReader>(
+  (ref) =>
+      () => null,
+);
+
+/// Reactive active-session snapshot. Consumers that need to rebuild when
+/// login/logout changes should watch this instead of [authSessionReaderProvider].
+///
+/// The auth feature overrides this in `bootstrap.dart` with
+/// `authControllerProvider`; the default delegates to the reader so tests that
+/// only override [authSessionReaderProvider] keep working.
+final authSessionProvider = Provider<AuthSession?>((ref) {
+  return ref.watch(authSessionReaderProvider)();
+});
 
 /// Override-target for the refresh hook. Overridden in `bootstrap.dart`
 /// with `AuthController.refreshIfPossible`. Defaults to "can't recover".
-final authOnUnauthorizedProvider =
-    Provider<AuthOnUnauthorized>((ref) => () async => false);
-
+final authOnUnauthorizedProvider = Provider<AuthOnUnauthorized>(
+  (ref) =>
+      () async => false,
+);
