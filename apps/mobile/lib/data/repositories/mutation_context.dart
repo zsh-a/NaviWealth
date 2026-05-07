@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/providers.dart';
 import '../../core/sync/providers.dart';
 import '../../core/sync/sync_engine.dart';
 import '../domain/hlc.dart';
@@ -35,15 +36,10 @@ class MutationStamper {
     required this.stampHlc,
   });
 
-  /// Resolves the user id for the active session. Until FIR-30 wires a
-  /// real auth identity, the production binding returns the
-  /// [kLocalUserId] stub — every install operates as a single local
-  /// user. We still thread it through every write so the partition
-  /// column is populated correctly, which matters as soon as
-  /// multi-account installs are supported.
+  /// Resolves the user id for the active session.
   final Future<String> Function() currentUserId;
 
-  /// Resolves the persistent device id (`docs/sync-protocol.md` §2).
+  /// Resolves the backend-issued device id bound to the active session.
   final Future<String> Function() deviceId;
 
   /// Generates a fresh HLC tick. Production binding delegates to
@@ -67,21 +63,32 @@ class MutationStamper {
   }
 }
 
-/// Single-user stub. Replace once FIR-30 ships the auth flow.
-const String kLocalUserId = 'local-user';
-
 /// Override in tests to inject a fixed user id.
 final currentUserIdProvider = Provider<Future<String> Function()>((ref) {
-  return () async => kLocalUserId;
+  final session = ref.watch(authSessionProvider);
+  return () async {
+    if (session == null) {
+      throw StateError('MutationStamper requires an authenticated session.');
+    }
+    return session.userId;
+  };
 });
 
 final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);
-  final deviceId = ref.watch(deviceIdProviderProvider);
+  if (engine == null) {
+    throw StateError('MutationStamper requires an authenticated session.');
+  }
+  final session = ref.watch(authSessionProvider);
   final user = ref.watch(currentUserIdProvider);
   return MutationStamper(
     currentUserId: user,
-    deviceId: deviceId.getOrCreate,
+    deviceId: () async {
+      if (session == null) {
+        throw StateError('MutationStamper requires an authenticated session.');
+      }
+      return session.deviceId;
+    },
     stampHlc: engine.stampHlc,
   );
 });

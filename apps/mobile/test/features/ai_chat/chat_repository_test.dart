@@ -178,6 +178,23 @@ void main() {
       expect(session!.title, '我的总资产是多少？');
     });
 
+    test('sends route context as a user turn, not a system role', () async {
+      api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '你好',
+        systemContext: 'User is currently on: /ai',
+      );
+
+      expect(api.lastMessages!.map((m) => m.role), ['user', 'user']);
+      expect(
+        api.lastMessages!.first.content,
+        'Context:\nUser is currently on: /ai',
+      );
+    });
+
     test('replays prior turns to the API for follow-up questions', () async {
       api.script.addAll(const [
         TextEvent('A1'),

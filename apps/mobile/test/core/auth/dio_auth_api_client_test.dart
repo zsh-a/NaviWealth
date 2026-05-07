@@ -118,6 +118,7 @@ void main() {
         email: 'a@b.com',
         password: 'hunter22',
         deviceName: 'iOS',
+        deviceId: 'install-device-1',
       );
 
       expect(session.accessToken, 'jwt');
@@ -130,6 +131,7 @@ void main() {
       expect(body['email'], 'a@b.com');
       expect(body['password'], 'hunter22');
       expect(body['device_name'], 'iOS');
+      expect(body['device_id'], 'install-device-1');
       expect(call.options.headers['Authorization'], isNull);
     });
 

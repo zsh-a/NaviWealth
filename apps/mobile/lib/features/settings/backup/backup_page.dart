@@ -86,6 +86,9 @@ class BackupPage extends ConsumerWidget {
     try {
       final sw = Stopwatch()..start();
       final service = await ref.read(backupServiceProvider.future);
+      if (service == null) {
+        throw StateError('Backup requires an authenticated session.');
+      }
       logger.d('backup_ui: service resolved, calling exportBackup');
       final bytes = await service.exportBackup(passphrase: passphrase);
       sw.stop();
@@ -194,14 +197,17 @@ class BackupPage extends ConsumerWidget {
     try {
       final sw = Stopwatch()..start();
       final service = await ref.read(backupServiceProvider.future);
+      if (service == null) {
+        throw StateError('Backup requires an authenticated session.');
+      }
       final scheduler = await ref.read(syncSchedulerProvider.future);
       logger.d('backup_ui: service resolved, pausing sync and restoring');
 
       final restoreResult = await service.restoreBackup(
         passphrase: passphrase,
         fileBytes: fileBytes,
-        pauseSync: scheduler.pause,
-        resumeSync: scheduler.resume,
+        pauseSync: scheduler?.pause,
+        resumeSync: scheduler?.resume,
       );
       sw.stop();
       logger.i(

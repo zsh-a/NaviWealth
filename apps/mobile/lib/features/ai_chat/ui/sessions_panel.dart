@@ -30,7 +30,7 @@ class SessionsPanel extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    final session = ref.watch(authSessionReaderProvider)();
+    final session = ref.watch(authSessionProvider);
 
     if (session == null) {
       return _PanelShell(
@@ -78,8 +78,10 @@ class SessionsPanel extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
             itemCount: sessions.length,
-            separatorBuilder: (_, _) =>
-                Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.4)),
+            separatorBuilder: (_, _) => Divider(
+              height: 1,
+              color: cs.outlineVariant.withValues(alpha: 0.4),
+            ),
             itemBuilder: (context, i) {
               final s = sessions[i];
               final selected = s.id == activeSessionId;
@@ -111,7 +113,10 @@ class SessionsPanel extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.aiChatSessionDeleteTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.aiChatSessionDeleteTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.aiChatSessionDeleteBody(session.title)),
             const SizedBox(height: Spacing.s16),
@@ -175,7 +180,11 @@ class SessionsPanel extends ConsumerWidget {
 }
 
 class _PanelShell extends StatelessWidget {
-  const _PanelShell({required this.cs, required this.onNew, required this.child});
+  const _PanelShell({
+    required this.cs,
+    required this.onNew,
+    required this.child,
+  });
 
   final ColorScheme cs;
   final VoidCallback? onNew;
@@ -270,7 +279,9 @@ class _SessionTile extends StatelessWidget {
                         color: selected
                             ? cs.onSecondaryContainer
                             : cs.onSurface,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
                     Text(

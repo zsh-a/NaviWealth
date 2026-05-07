@@ -74,6 +74,7 @@ class AuthController extends AsyncNotifier<AuthState> {
       await store.clear();
       return const AuthLoggedOut(reason: LoggedOutReason.sessionExpired);
     }
+    await ref.read(deviceIdentityStoreProvider).remember(session.deviceId);
     return AuthLoggedIn(session);
   }
 
@@ -94,13 +95,19 @@ class AuthController extends AsyncNotifier<AuthState> {
   }) async {
     final api = ref.read(authApiClientProvider);
     final store = ref.read(tokenStoreProvider);
+    final deviceIdentity = ref.read(deviceIdentityStoreProvider);
     final logger = ref.read(loggerProvider);
+    final deviceId = await deviceIdentity.getOrCreate();
 
     final session = await api.login(
       email: email,
       password: password,
       deviceName: deviceName,
+      deviceId: deviceId,
     );
+    if (session.deviceId != deviceId) {
+      await deviceIdentity.remember(session.deviceId);
+    }
     await store.write(session);
     state = AsyncData(AuthLoggedIn(session));
     logger.i('auth_login_success user=${session.userId}');
@@ -190,5 +197,6 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 }
 
-final authControllerProvider =
-    AsyncNotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = AsyncNotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);

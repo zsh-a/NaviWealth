@@ -21,7 +21,8 @@ import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/manual_asset_repository.dart';
 import '../../../data/repositories/price_repository.dart';
 import '../../investment/domain/models/lot.dart';
-import '../../investment/domain/trade_entry/trade_draft.dart' show TradeDraft, TradeType;
+import '../../investment/domain/trade_entry/trade_draft.dart'
+    show TradeDraft, TradeType;
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
 import '../../liabilities/data/liability_repository.dart';
 import '../domain/proposal_apply_state.dart';
@@ -507,7 +508,7 @@ class ProposalApplier {
   /// `type`. The placeholder here is never written to disk; the assets
   /// table row was already created by an earlier sync pull.
   SyncMeta _placeholderSync() => SyncMeta(
-    ownerUserId: 'local-user',
+    ownerUserId: '',
     updatedAt: DateTime.now().toUtc(),
     updatedByDevice: '',
     hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),

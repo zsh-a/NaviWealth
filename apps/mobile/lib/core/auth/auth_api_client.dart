@@ -17,6 +17,7 @@ class AuthDevice {
   );
 
   final String id;
+
   /// Optional human label set at login time. May be null for older sessions.
   final String? name;
   final DateTime createdAt;
@@ -46,7 +47,7 @@ class RefreshedToken {
 /// [AuthException]. Concrete implementations live in
 /// `dio_auth_api_client.dart`; tests double the abstract type.
 abstract class AuthApiClient {
-  /// `POST /auth/login` — body `{email, password, device_name?}`.
+  /// `POST /auth/login` — body `{email, password, device_name?, device_id?}`.
   ///
   /// Backend deliberately burns the argon2 cost on email misses, so a
   /// `401` here always maps to [AuthErrorKind.invalidCredentials].
@@ -54,6 +55,7 @@ abstract class AuthApiClient {
     required String email,
     required String password,
     String? deviceName,
+    String? deviceId,
   });
 
   /// `POST /auth/refresh` (Bearer). Rotates the JWT for the current device.

@@ -21,10 +21,7 @@ enum ChatTurnPhase { idle, flushing, streaming }
 /// `chatMessagesStreamProvider`. This controller only models ephemeral
 /// UI signals.
 class ChatTurnState {
-  const ChatTurnState({
-    this.phase = ChatTurnPhase.idle,
-    this.cancelToken,
-  });
+  const ChatTurnState({this.phase = ChatTurnPhase.idle, this.cancelToken});
 
   final ChatTurnPhase phase;
   final CancelToken? cancelToken;
@@ -113,6 +110,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
   Future<ChatGateOutcome> _runSyncGate() async {
     try {
       final gate = await ref.read(chatSyncGateProvider.future);
+      if (gate == null) return ChatGateOutcome.clean;
       return await gate.awaitFlush();
     } catch (_) {
       // Sync infra not wired (early dev) or transient init failure: skip
@@ -138,5 +136,5 @@ class ChatController extends StateNotifier<ChatTurnState> {
 /// pops, which also cancels any in-flight turn via the `mounted` check.
 final chatControllerProvider = StateNotifierProvider.autoDispose
     .family<ChatController, ChatTurnState, String>(
-  (ref, sessionId) => ChatController(ref: ref, sessionId: sessionId),
-);
+      (ref, sessionId) => ChatController(ref: ref, sessionId: sessionId),
+    );

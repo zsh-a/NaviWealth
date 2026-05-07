@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../data/db/providers.dart';
+import '../auth/providers.dart';
 import '../logging/providers.dart';
-import '../security/secure_key_store.dart';
-import 'device_id.dart';
 import 'dio_sync_api_client.dart';
 import 'drift_sync_storage.dart';
 import 'op_applier.dart';
@@ -36,9 +35,7 @@ final syncDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
-  dio.interceptors.add(
-    TalkerDioLogger(talker: ref.read(talkerProvider)),
-  );
+  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
   return dio;
 });
 
@@ -46,17 +43,6 @@ final syncApiClientProvider = Provider<SyncApiClient>((ref) {
   final dio = ref.watch(syncDioProvider);
   final tokenFn = ref.watch(syncAuthTokenProvider);
   return DioSyncApiClient(dio: dio, tokenProvider: tokenFn);
-});
-
-final deviceIdProviderProvider = Provider<DeviceIdProvider>((ref) {
-  final store = ref.watch(_secureStoreProvider);
-  return DeviceIdProvider(store: store);
-});
-
-/// Re-export of the existing secure-key-store provider so this module
-/// doesn't reach into `core/db/providers.dart` for it.
-final _secureStoreProvider = Provider<SecureKeyStore>((ref) {
-  return ref.watch(secureKeyStoreProvider);
 });
 
 /// Default applier registry — empty until each feature ticket registers
@@ -73,31 +59,46 @@ final syncStatusBusProvider = Provider<SyncStatusBus>((ref) {
   return bus;
 });
 
-final syncEngineProvider = FutureProvider<SyncEngine>((ref) async {
+final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = DriftOutboxStore(db);
   final cursors = DriftCursorStore(db);
   final api = ref.watch(syncApiClientProvider);
   final applier = ref.watch(syncOpApplierProvider);
-  final deviceId = await ref.watch(deviceIdProviderProvider).getOrCreate();
+  final session = ref.watch(authSessionProvider);
+  if (session == null) {
+    return null;
+  }
   final bus = ref.watch(syncStatusBusProvider);
   return SyncEngine(
     api: api,
     outbox: outbox,
     cursors: cursors,
     applier: applier,
-    deviceId: deviceId,
+    deviceId: session.deviceId,
     statusBus: bus,
     logger: ref.read(loggerProvider),
   );
 });
 
-final syncSchedulerProvider = FutureProvider<SyncScheduler>((ref) async {
+final syncSchedulerProvider = FutureProvider<SyncScheduler?>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);
+  if (engine == null) return null;
   final scheduler = SyncScheduler(
     engine: engine,
     logger: ref.read(loggerProvider),
   );
   ref.onDispose(scheduler.stop);
   return scheduler;
+});
+
+/// Eager bootstrap hook for foreground sync.
+///
+/// Read this once from app bootstrap. It keeps a listener alive so login /
+/// logout transitions create or dispose the scheduler, and starts each
+/// authenticated scheduler as soon as it resolves.
+final syncSchedulerBootstrapProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<SyncScheduler?>>(syncSchedulerProvider, (_, next) {
+    next.whenData((scheduler) => scheduler?.start());
+  }, fireImmediately: true);
 });

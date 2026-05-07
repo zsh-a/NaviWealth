@@ -16,6 +16,8 @@ struct LoginRequest {
     password: String,
     #[serde(default)]
     device_name: Option<String>,
+    #[serde(default)]
+    device_id: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -133,7 +135,12 @@ async fn login_inner(
 
     let secret = jwt_secret(ctx)?;
     let now = Utc::now();
-    let device_id = Uuid::new_v4().to_string();
+    let device_id = match body.device_id.as_deref().map(str::trim) {
+        Some(raw) if !raw.is_empty() => Uuid::parse_str(raw)
+            .map_err(|_| AppError::BadRequest("device_id must be a UUID".into()))?
+            .to_string(),
+        _ => Uuid::new_v4().to_string(),
+    };
     let (token, jti, exp) = issue_token(&user_id, &device_id, secret.as_bytes(), now)?;
 
     let now_iso = now.to_rfc3339();
@@ -142,8 +149,14 @@ async fn login_inner(
         _ => D1Type::Null,
     };
     db.prepare(
-        "INSERT INTO devices (id, user_id, name, jti, created_at, last_seen_at) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+        "INSERT INTO devices (id, user_id, name, jti, created_at, last_seen_at, revoked_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?5, NULL) \
+         ON CONFLICT(id) DO UPDATE SET \
+             user_id = excluded.user_id, \
+             name = excluded.name, \
+             jti = excluded.jti, \
+             last_seen_at = excluded.last_seen_at, \
+             revoked_at = NULL",
     )
     .bind_refs([
         &D1Type::Text(&device_id),

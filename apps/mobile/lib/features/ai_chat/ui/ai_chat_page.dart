@@ -82,7 +82,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final session = ref.watch(authSessionReaderProvider)();
+    final session = ref.watch(authSessionProvider);
     if (session == null) {
       return Scaffold(
         appBar: GlassAppBar(title: Text(l10n.aiChatAppBarTitle)),
