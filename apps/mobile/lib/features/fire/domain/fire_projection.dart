@@ -15,7 +15,7 @@ enum FireScenarioTier {
   neutral,
   aggressive,
 
-  /// Annualized return computed from the user's actual cash flows (FIR-55).
+  /// Annualized return computed from the user's actual cash flows.
   /// Only present in the result when a live rate is supplied.
   live,
 }
