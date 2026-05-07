@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('design docs describe the current IA without historical issue tags', () {
-    final docsDir = Directory('docs/design');
-    final markdownFiles = docsDir
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.md'));
+  test('project docs describe the current IA without historical issue tags', () {
+    final markdownFiles = <File>[
+      File('README.md'),
+      ...Directory('docs')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.md')),
+    ];
 
     final legacyTopLevelRoute = RegExp(
       r'''(^|[\s`'"(\[{>])/(assets|accounts|expenses|analytics|fire|rebalance|me|more|transactions)(?=$|[\s`'"),\].<])''',

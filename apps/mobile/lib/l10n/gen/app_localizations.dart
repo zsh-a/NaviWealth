@@ -3960,7 +3960,7 @@ abstract class AppLocalizations {
   /// **'Accounts'**
   String get accountsAppBarTitle;
 
-  /// Master-detail empty state for /accounts at desktop width
+  /// Master-detail empty state for /activity/accounts at desktop width
   ///
   /// In en, this message translates to:
   /// **'Select an account on the left to edit its details.'**

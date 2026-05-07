@@ -32,7 +32,8 @@ import 'route_guard.dart';
 /// `UncontrolledProviderScope`.
 Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Clean URLs on web (e.g. /assets instead of /#/assets). No-op elsewhere.
+  // Clean URLs on web (e.g. /portfolio instead of /#/portfolio).
+  // No-op elsewhere.
   usePathUrlStrategy();
   await AppFormatters.ensureInitialized();
 
@@ -57,17 +58,18 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // closes over Riverpod's container, so token rotation is picked up
       // on every request without re-creating the SyncEngine.
       syncAuthTokenProvider.overrideWith(
-        (ref) => () async => ref
-            .read(authControllerProvider.notifier)
-            .currentSession()
-            ?.accessToken,
+        (ref) =>
+            () async => ref
+                .read(authControllerProvider.notifier)
+                .currentSession()
+                ?.accessToken,
       ),
       // Wire the AuthInterceptor's hooks to the live controller so any
       // future `authedDioProvider` consumer (feature endpoints that need
       // refresh-on-401) gets the correct session + recovery behaviour.
       core_auth.authSessionReaderProvider.overrideWith(
-        (ref) => () =>
-            ref.read(authControllerProvider.notifier).currentSession(),
+        (ref) =>
+            () => ref.read(authControllerProvider.notifier).currentSession(),
       ),
       core_auth.authOnUnauthorizedProvider.overrideWith(
         (ref) =>
@@ -96,10 +98,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     logger.i('API_BASE_URL: ${effectiveConfig.apiBaseUrl}');
 
     // Network connectivity diagnostic
-    final testDio = Dio(BaseOptions(
-      baseUrl: effectiveConfig.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 5),
-    ));
+    final testDio = Dio(
+      BaseOptions(
+        baseUrl: effectiveConfig.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 5),
+      ),
+    );
     try {
       final resp = await testDio.get<dynamic>('/health');
       logger.i('Backend health check: ${resp.statusCode} ${resp.data}');

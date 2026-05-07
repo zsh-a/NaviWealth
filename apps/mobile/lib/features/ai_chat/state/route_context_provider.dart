@@ -14,7 +14,7 @@ class AiRouteContext {
     this.entityId,
   });
 
-  /// Current route path, e.g. `/assets/AAPL`.
+  /// Current route path, e.g. `/portfolio/AAPL`.
   final String path;
 
   /// Human-readable label, e.g. "Assets > AAPL".
