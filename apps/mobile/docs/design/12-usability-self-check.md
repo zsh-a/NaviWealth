@@ -153,6 +153,6 @@
 
 ## 7. 后续改进 / TODO
 
-- 在 Figma 落地 (FIR-22) 后，把每张 ASCII wireframe 替换成嵌入图片或链接。
-- 将上述清单沉淀为 `flutter_test` 中的 golden 测试 + 可访问性测试用例（FIR-18 CI）。
+- 把每张 ASCII wireframe 替换成嵌入图片或链接，减少设计与实现偏差。
+- 将上述清单沉淀为 `flutter_test` 中的 golden 测试 + 可访问性测试用例。
 - 引入 `dart_a11y` 或自封 widget 检查器自动校验 Semantics 标签。

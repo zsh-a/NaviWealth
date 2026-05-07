@@ -23,7 +23,7 @@ Settings
 ├── 隐私与安全
 │   ├── 应用锁（Face ID / 数字密码）
 │   ├── AI 隐私模式
-│   ├── 数据加密说明（已启用 SQLCipher，FIR-16）
+│   ├── 数据加密说明（已启用 SQLCipher）
 │   └── 清空所有数据
 ├── 提醒
 │   ├── 再平衡偏离阈值
@@ -95,7 +95,7 @@ Settings
 
 ## 3. 数字与货币展示规范
 
-> 这是 FIR-22 中"涨跌色 + 数字展示"的延伸约定，所有页面遵守。
+> 数字、货币和涨跌色是跨页面约定，所有页面遵守同一套格式。
 
 ### 3.1 千分位
 
@@ -153,12 +153,12 @@ Settings
 - 启用后，应用进入前台需 Face ID / Touch ID / 数字密码。
 - 失败 5 次 30 分钟锁定。
 - 平台兼容：iOS / Android `local_auth`；Web 用一次性 PIN（无生物识别）。
-- 与 SQLCipher 解锁绑定（FIR-16）：应用锁通过后才解出 DB key。
+- 与 SQLCipher 解锁绑定：应用锁通过后才解出 DB key。
 
 ## 6. 数据导入 / 导出
 
-- **导出**：JSON / CSV（每个表一个文件）/ 加密 backup（`.nwbak`，AES-256，详见 FIR-16 backup）。
-- **导入**：CSV 批量交易、富途 / 老虎 / Snowball / Sina 模板（按 FIR-5 落地后扩展）。
+- **导出**：JSON / CSV（每个表一个文件）/ 加密 backup（`.nwbak`，AES-256）。
+- **导入**：CSV 批量交易、富途 / 老虎 / Snowball / Sina 模板。
 
 ## 7. Hi-Fi 规格（增量）
 

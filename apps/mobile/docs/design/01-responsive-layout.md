@@ -121,7 +121,7 @@ mobile                tablet                  desktop
 - Android：`SystemUiOverlayStyle` 跟随主题；底栏取消透明导航栏的 inset。
 - Web：`max-width` 不限制（任由内容铺满）；但卡片内容用 `ConstrainedBox(maxWidth: 1200)` 居中。
 
-## 7. 实施备忘 → FIR-15
+## 7. 实施备忘
 
 - 拆 `_RootShell` 成 `MobileShell` / `TabletShell` / `DesktopShell`，由 `LayoutBuilder` 选择。
 - 引入 `ResponsiveValue<T>` 工具或 `flutter_adaptive_scaffold`（评估）。
