@@ -63,9 +63,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeAiAssistantTooltip => 'AI 助手';
 
   @override
-  String get homeRecordTradeTooltip => '录入交易';
-
-  @override
   String get homeNetWorthTitle => '净资产';
 
   @override
@@ -84,15 +81,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetsAddAction => '录入资产';
-
-  @override
-  String get assetsCorporateActionAction => '录入公司行动';
-
-  @override
-  String get assetsAccountsTooltip => '账户管理';
-
-  @override
-  String get assetsLiabilitiesTooltip => '负债与还款计划';
 
   @override
   String assetsLoadError(String error) {
@@ -122,21 +110,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get assetsAddVehicleSubtitle => '购入价、年度残值率、自动折旧';
-
-  @override
-  String get assetsAddLiabilityTitle => '负债（房贷 / 车贷 / 信用卡 / 消费贷）';
-
-  @override
-  String get assetsAddLiabilitySubtitle => '录入并跟踪还款计划';
-
-  @override
-  String get assetsAddCorporateActionSubtitle => '分红 / 拆股 / 配股 / 红股 / DRIP';
-
-  @override
-  String get assetsAddTradeTitle => '证券交易';
-
-  @override
-  String get assetsAddTradeSubtitle => '买入 / 卖出股票、ETF、加密货币';
 
   @override
   String assetsChipInterestRate(String rate) {

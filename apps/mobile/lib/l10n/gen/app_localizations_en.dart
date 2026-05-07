@@ -63,9 +63,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeAiAssistantTooltip => 'AI assistant';
 
   @override
-  String get homeRecordTradeTooltip => 'Record trade';
-
-  @override
   String get homeNetWorthTitle => 'Net Worth';
 
   @override
@@ -86,15 +83,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assetsAddAction => 'Add asset';
-
-  @override
-  String get assetsCorporateActionAction => 'Record corporate action';
-
-  @override
-  String get assetsAccountsTooltip => 'Accounts';
-
-  @override
-  String get assetsLiabilitiesTooltip => 'Liabilities & repayment plans';
 
   @override
   String assetsLoadError(String error) {
@@ -129,23 +117,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assetsAddVehicleSubtitle =>
       'Purchase price, annual residual rate, automatic depreciation';
-
-  @override
-  String get assetsAddLiabilityTitle =>
-      'Liability (mortgage / car loan / credit card / consumer loan)';
-
-  @override
-  String get assetsAddLiabilitySubtitle => 'Record and track repayment plans';
-
-  @override
-  String get assetsAddCorporateActionSubtitle =>
-      'Dividend / split / rights issue / bonus shares / DRIP';
-
-  @override
-  String get assetsAddTradeTitle => 'Securities trade';
-
-  @override
-  String get assetsAddTradeSubtitle => 'Buy / sell stocks, ETFs, crypto';
 
   @override
   String assetsChipInterestRate(String rate) {

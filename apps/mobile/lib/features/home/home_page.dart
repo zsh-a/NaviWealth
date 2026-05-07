@@ -11,7 +11,6 @@ import 'domain/dashboard_models.dart';
 import 'ui/allocation_card.dart';
 import 'ui/currency_mismatch_banner.dart';
 import 'ui/insight_strip.dart';
-import 'ui/quick_actions_grid.dart';
 import 'ui/trend_card.dart';
 
 /// Dashboard surface (FIR-52).
@@ -79,7 +78,6 @@ class _DashboardBody extends ConsumerWidget {
         final insightStrip = InsightStrip(insights: insights);
         final allocation = AllocationCard(snapshot: snapshot);
         const trend = TrendCard();
-        const quickActions = QuickActionsGrid();
 
         if (isWide) {
           return ScrollNotificationHandler(
@@ -122,8 +120,6 @@ class _DashboardBody extends ConsumerWidget {
               allocation,
               const SizedBox(height: Spacing.s12),
               trend,
-              const SizedBox(height: Spacing.s16),
-              quickActions,
             ],
           ),
         );
