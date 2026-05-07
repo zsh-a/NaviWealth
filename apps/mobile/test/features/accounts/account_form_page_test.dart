@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/db/providers.dart';
@@ -48,22 +49,24 @@ class _Harness {
 
   Future<void> seedAccounts(List<Account> accounts) async {
     for (final a in accounts) {
-      await db.into(db.accounts).insert(
-        AccountsCompanion.insert(
-          id: a.id,
-          type: a.type,
-          name: a.name,
-          currency: a.currency,
-          category: Value(a.category),
-          parentId: Value(a.parentId),
-          icon: Value(a.icon),
-          color: Value(a.color),
-          ownerUserId: a.sync.ownerUserId,
-          updatedAt: a.sync.updatedAt,
-          updatedByDevice: a.sync.updatedByDevice,
-          hlc: a.sync.hlc,
-        ),
-      );
+      await db
+          .into(db.accounts)
+          .insert(
+            AccountsCompanion.insert(
+              id: a.id,
+              type: a.type,
+              name: a.name,
+              currency: a.currency,
+              category: Value(a.category),
+              parentId: Value(a.parentId),
+              icon: Value(a.icon),
+              color: Value(a.color),
+              ownerUserId: a.sync.ownerUserId,
+              updatedAt: a.sync.updatedAt,
+              updatedByDevice: a.sync.updatedByDevice,
+              hlc: a.sync.hlc,
+            ),
+          );
     }
   }
 }
@@ -77,23 +80,22 @@ Account _account({
   String? parentId,
   String? icon,
   String? color,
-}) =>
-    Account(
-      id: id,
-      type: type,
-      name: name,
-      currency: currency,
-      category: category,
-      parentId: parentId,
-      icon: icon,
-      color: color,
-      sync: SyncMeta(
-        ownerUserId: 'u-test',
-        updatedAt: DateTime.utc(2026, 1, 1),
-        updatedByDevice: 'dev-test',
-        hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
-      ),
-    );
+}) => Account(
+  id: id,
+  type: type,
+  name: name,
+  currency: currency,
+  category: category,
+  parentId: parentId,
+  icon: icon,
+  color: color,
+  sync: SyncMeta(
+    ownerUserId: 'u-test',
+    updatedAt: DateTime.utc(2026, 1, 1),
+    updatedByDevice: 'dev-test',
+    hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
+  ),
+);
 
 ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
   return ProviderScope(
@@ -114,15 +116,15 @@ ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
       routerConfig: GoRouter(
         initialLocation: editingId == null ? '/new' : '/edit',
         routes: [
-          GoRoute(
-            path: '/new',
-            builder: (_, _) => const AccountFormPage(),
-          ),
+          GoRoute(path: '/new', builder: (_, _) => const AccountFormPage()),
           GoRoute(
             path: '/edit',
             builder: (_, _) => AccountFormPage(accountId: editingId),
           ),
-          GoRoute(path: '/accounts', builder: (_, _) => const SizedBox()),
+          GoRoute(
+            path: AppRoutes.activityAccounts,
+            builder: (_, _) => const SizedBox(),
+          ),
         ],
       ),
     ),
@@ -201,9 +203,7 @@ void main() {
     expect(find.byIcon(Icons.savings), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('color swatch selection persists through save', (
-    tester,
-  ) async {
+  testWidgets('color swatch selection persists through save', (tester) async {
     await _enlarge(tester);
     await tester.pumpWidget(_wrap(h, accounts: const []));
     await tester.pumpAndSettle();
@@ -254,9 +254,7 @@ void main() {
 
     final batch = await h.outbox.peekBatch();
     final insertOp = batch.firstWhere(
-      (op) =>
-          op.tableName == 'accounts' &&
-          op.fieldsDiff?['name'] == 'My Bank',
+      (op) => op.tableName == 'accounts' && op.fieldsDiff?['name'] == 'My Bank',
     );
     expect(insertOp.fieldsDiff!['icon'], 'savings');
     expect(insertOp.fieldsDiff!['color'], '#3B82F6');

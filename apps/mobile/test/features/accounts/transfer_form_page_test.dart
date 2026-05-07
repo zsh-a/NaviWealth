@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/db/providers.dart';
@@ -52,19 +53,21 @@ class _Harness {
 
   Future<void> seedAccounts(List<Account> accounts) async {
     for (final a in accounts) {
-      await db.into(db.accounts).insert(
-        AccountsCompanion.insert(
-          id: a.id,
-          type: a.type,
-          name: a.name,
-          currency: a.currency,
-          category: Value(a.category),
-          ownerUserId: a.sync.ownerUserId,
-          updatedAt: a.sync.updatedAt,
-          updatedByDevice: a.sync.updatedByDevice,
-          hlc: a.sync.hlc,
-        ),
-      );
+      await db
+          .into(db.accounts)
+          .insert(
+            AccountsCompanion.insert(
+              id: a.id,
+              type: a.type,
+              name: a.name,
+              currency: a.currency,
+              category: Value(a.category),
+              ownerUserId: a.sync.ownerUserId,
+              updatedAt: a.sync.updatedAt,
+              updatedByDevice: a.sync.updatedByDevice,
+              hlc: a.sync.hlc,
+            ),
+          );
     }
   }
 }
@@ -76,21 +79,20 @@ Account _account({
   String currency = 'CNY',
   AccountType type = AccountType.bank,
   String? parentId,
-}) =>
-    Account(
-      id: id,
-      type: type,
-      name: name,
-      currency: currency,
-      category: category,
-      parentId: parentId,
-      sync: SyncMeta(
-        ownerUserId: 'u-test',
-        updatedAt: DateTime.utc(2026, 1, 1),
-        updatedByDevice: 'dev-test',
-        hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
-      ),
-    );
+}) => Account(
+  id: id,
+  type: type,
+  name: name,
+  currency: currency,
+  category: category,
+  parentId: parentId,
+  sync: SyncMeta(
+    ownerUserId: 'u-test',
+    updatedAt: DateTime.utc(2026, 1, 1),
+    updatedByDevice: 'dev-test',
+    hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
+  ),
+);
 
 Widget _wrap(
   _Harness h, {
@@ -113,10 +115,10 @@ Widget _wrap(
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Minimal router so the form's `context.go('/accounts')` on
-      // submit lands on a valid stub instead of silently failing —
-      // which matters for the cross-currency submit test that
-      // inspects DB state *after* the optimistic pop.
+      // Minimal router so the form's submit navigation lands on a valid
+      // stub instead of silently failing, which matters for the
+      // cross-currency submit test that inspects DB state after the
+      // optimistic pop.
       routerConfig: GoRouter(
         initialLocation: '/transfer',
         routes: [
@@ -125,7 +127,7 @@ Widget _wrap(
             builder: (_, _) => const TransferFormPage(),
           ),
           GoRoute(
-            path: '/accounts',
+            path: AppRoutes.activityAccounts,
             builder: (_, _) => const SizedBox(),
           ),
         ],
@@ -281,77 +283,76 @@ void main() {
     expect(submit.onPressed, isNull);
   });
 
-  testWidgets(
-    'cross-currency picks reveal the To-amount field + rate hint',
-    (tester) async {
-      await _enlarge(tester);
-      await tester.pumpWidget(
-        _wrap(
-          h,
-          accounts: [
-            _account(
-              id: 'a-usd',
-              name: 'USD Bank',
-              category: AccountCategory.asset,
-              currency: 'USD',
-            ),
-            _account(
-              id: 'a-cny',
-              name: 'CNY Bank',
-              category: AccountCategory.asset,
-              currency: 'CNY',
-            ),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
+  testWidgets('cross-currency picks reveal the To-amount field + rate hint', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    await tester.pumpWidget(
+      _wrap(
+        h,
+        accounts: [
+          _account(
+            id: 'a-usd',
+            name: 'USD Bank',
+            category: AccountCategory.asset,
+            currency: 'USD',
+          ),
+          _account(
+            id: 'a-cny',
+            name: 'CNY Bank',
+            category: AccountCategory.asset,
+            currency: 'CNY',
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('From account'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('• USD Bank').last);
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('From account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('• USD Bank').last);
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('To account'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('• CNY Bank').last);
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('To account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('• CNY Bank').last);
+    await tester.pumpAndSettle();
 
-      // The To-amount field appears once both accounts disagree on
-      // currency. Its label includes the destination currency.
-      expect(find.widgetWithText(TextFormField, 'To amount (CNY)'), findsOneWidget);
+    // The To-amount field appears once both accounts disagree on
+    // currency. Its label includes the destination currency.
+    expect(
+      find.widgetWithText(TextFormField, 'To amount (CNY)'),
+      findsOneWidget,
+    );
 
-      // No FX rate on file → helper prompts the user to enter the
-      // converted amount manually.
-      expect(
-        find.textContaining('No FX rate on file'),
-        findsOneWidget,
-      );
+    // No FX rate on file → helper prompts the user to enter the
+    // converted amount manually.
+    expect(find.textContaining('No FX rate on file'), findsOneWidget);
 
-      // Enter both sides of the exchange.
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Amount (USD)'),
-        '1000',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'To amount (CNY)'),
-        '7100',
-      );
-      await tester.pumpAndSettle();
+    // Enter both sides of the exchange.
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Amount (USD)'),
+      '1000',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'To amount (CNY)'),
+      '7100',
+    );
+    await tester.pumpAndSettle();
 
-      // Rate label surfaces underneath the to-amount input.
-      expect(find.textContaining('1 USD = 7.1 CNY'), findsOneWidget);
+    // Rate label surfaces underneath the to-amount input.
+    expect(find.textContaining('1 USD = 7.1 CNY'), findsOneWidget);
 
-      // PostingsPreview shows both legs in their respective currencies.
-      expect(find.text('-1000 USD'), findsOneWidget);
-      expect(find.text('7100 CNY'), findsOneWidget);
+    // PostingsPreview shows both legs in their respective currencies.
+    expect(find.text('-1000 USD'), findsOneWidget);
+    expect(find.text('7100 CNY'), findsOneWidget);
 
-      // Submit is enabled.
-      final submit = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Transfer'),
-      );
-      expect(submit.onPressed, isNotNull);
-    },
-  );
+    // Submit is enabled.
+    final submit = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Transfer'),
+    );
+    expect(submit.onPressed, isNotNull);
+  });
 
   testWidgets(
     'cross-currency submit attaches a Price annotation pinning the user rate',
@@ -413,10 +414,7 @@ void main() {
       expect(destLeg.priceCurrency, 'USD');
       // 1000 / 7100 ≈ 0.140845070422
       expect(destLeg.pricePerUnit, isNotNull);
-      expect(
-        destLeg.pricePerUnit.toString(),
-        '0.140845070422',
-      );
+      expect(destLeg.pricePerUnit.toString(), '0.140845070422');
 
       // Source leg has no price annotation; same-currency invariant
       // (the price annotation is only on the dest leg).

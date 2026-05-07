@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_guard.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
@@ -44,11 +45,13 @@ GoRouter _buildRouter(ProviderContainer container, String initial) {
   return GoRouter(
     initialLocation: initial,
     refreshListenable: container.read(routeRefreshListenableProvider),
-    redirect: (context, state) =>
-        routerRedirect(container, context, state),
+    redirect: (context, state) => routerRedirect(container, context, state),
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
-      GoRoute(path: '/assets', builder: (_, _) => const _Marker('assets')),
+      GoRoute(
+        path: AppRoutes.portfolio,
+        builder: (_, _) => const _Marker('portfolio'),
+      ),
       GoRoute(path: '/login', builder: (_, _) => const _Marker('login')),
     ],
   );
@@ -77,7 +80,7 @@ String _path(GoRouter router) =>
     router.routeInformationProvider.value.uri.toString();
 
 void main() {
-  testWidgets('logged-out user requesting /assets is bounced to /login', (
+  testWidgets('logged-out user requesting portfolio is bounced to /login', (
     tester,
   ) async {
     final container = _container();
@@ -85,9 +88,9 @@ void main() {
     // Force AuthController build to settle on AuthLoggedOut.
     await container.read(authControllerProvider.future);
 
-    final router = await _pump(tester, container, initial: '/assets');
+    final router = await _pump(tester, container, initial: AppRoutes.portfolio);
 
-    expect(_path(router), '/login?next=%2Fassets');
+    expect(_path(router), '/login?next=%2Fportfolio');
     expect(find.text('login'), findsOneWidget);
   });
 
@@ -118,7 +121,7 @@ void main() {
   });
 
   testWidgets(
-    'logged-in user on /login?next=/assets bounces back to /assets',
+    'logged-in user on /login?next=/portfolio bounces back to portfolio',
     (tester) async {
       final container = _container(
         seed: {TokenStore.storageKey: _session().encode()},
@@ -129,11 +132,11 @@ void main() {
       final router = await _pump(
         tester,
         container,
-        initial: '/login?next=/assets',
+        initial: '/login?next=${AppRoutes.portfolio}',
       );
 
-      expect(_path(router), '/assets');
-      expect(find.text('assets'), findsOneWidget);
+      expect(_path(router), AppRoutes.portfolio);
+      expect(find.text('portfolio'), findsOneWidget);
     },
   );
 
@@ -144,10 +147,10 @@ void main() {
     addTearDown(container.dispose);
     await container.read(authControllerProvider.future);
 
-    final router = await _pump(tester, container, initial: '/assets');
+    final router = await _pump(tester, container, initial: AppRoutes.portfolio);
 
-    expect(_path(router), '/assets');
-    expect(find.text('assets'), findsOneWidget);
+    expect(_path(router), AppRoutes.portfolio);
+    expect(find.text('portfolio'), findsOneWidget);
   });
 
   testWidgets('logging in from /login bounces to home (no `next`)', (
@@ -164,9 +167,9 @@ void main() {
     // controller. The guard's `ref.listen` (via listenSelf) bumps the
     // router-version provider, prompting redirect re-evaluation.
     await container.read(tokenStoreProvider).write(_session());
-    container
-        .read(authControllerProvider.notifier)
-        .state = AsyncData(AuthLoggedIn(_session()));
+    container.read(authControllerProvider.notifier).state = AsyncData(
+      AuthLoggedIn(_session()),
+    );
     await tester.pumpAndSettle();
 
     expect(_path(router), '/');

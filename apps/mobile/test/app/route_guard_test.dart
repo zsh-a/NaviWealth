@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_guard.dart';
+import 'package:naviwealth/app/route_paths.dart';
 
 class _StubGuard implements RouteGuard {
   _StubGuard(this._target);
@@ -59,7 +60,10 @@ final _testRouterProvider = Provider.family<GoRouter, String>((ref, initial) {
     redirect: (context, state) => routerRedirect(ref.container, context, state),
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
-      GoRoute(path: '/assets', builder: (_, _) => const _Marker('assets')),
+      GoRoute(
+        path: AppRoutes.portfolio,
+        builder: (_, _) => const _Marker('portfolio'),
+      ),
       GoRoute(path: '/login', builder: (_, _) => const _Marker('login')),
     ],
   );
@@ -94,10 +98,10 @@ void main() {
     final router = await _pumpRouter(
       tester,
       container,
-      initialLocation: '/assets',
+      initialLocation: AppRoutes.portfolio,
     );
-    expect(_path(router), '/assets');
-    expect(find.text('assets'), findsOneWidget);
+    expect(_path(router), AppRoutes.portfolio);
+    expect(find.text('portfolio'), findsOneWidget);
   });
 
   testWidgets('a guard that redirects sends the user to its target', (
@@ -114,7 +118,7 @@ void main() {
     final router = await _pumpRouter(
       tester,
       container,
-      initialLocation: '/assets',
+      initialLocation: AppRoutes.portfolio,
     );
 
     expect(_path(router), '/login');
@@ -148,9 +152,12 @@ void main() {
     // We need a real GoRouterState; the cheapest way to get one is to spin up
     // a throwaway router and grab `configuration` for the constructor.
     final probeRouter = GoRouter(
-      initialLocation: '/assets',
+      initialLocation: AppRoutes.portfolio,
       routes: <RouteBase>[
-        GoRoute(path: '/assets', builder: (_, _) => const _Marker('a')),
+        GoRoute(
+          path: AppRoutes.portfolio,
+          builder: (_, _) => const _Marker('a'),
+        ),
       ],
     );
     addTearDown(probeRouter.dispose);
@@ -159,11 +166,11 @@ void main() {
       Provider<String?>((ref) {
         final state = GoRouterState(
           probeRouter.configuration,
-          uri: Uri.parse('/assets'),
-          matchedLocation: '/assets',
-          fullPath: '/assets',
+          uri: Uri.parse(AppRoutes.portfolio),
+          matchedLocation: AppRoutes.portfolio,
+          fullPath: AppRoutes.portfolio,
           pathParameters: const {},
-          pageKey: const ValueKey('/assets'),
+          pageKey: const ValueKey(AppRoutes.portfolio),
         );
         return routerRedirect(ref.container, _NoopBuildContext(), state);
       }),
@@ -208,9 +215,9 @@ void main() {
     final router = await _pumpRouter(
       tester,
       container,
-      initialLocation: '/assets',
+      initialLocation: AppRoutes.portfolio,
     );
-    expect(_path(router), '/assets');
+    expect(_path(router), AppRoutes.portfolio);
 
     // Flip the guard to redirect, then bump the version. go_router should
     // re-run redirects for the current location.
