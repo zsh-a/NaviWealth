@@ -5,8 +5,8 @@ import '../../../data/domain/expense.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 
-/// FIR-70 — auto-derived monthly expense average that the FIRE dashboard
-/// (FIR-57) consumes for its "月支出" field.
+/// Auto-derived monthly expense average that the FIRE dashboard consumes for
+/// its "月支出" field.
 ///
 /// The derivation is deliberately simple: average the last [windowMonths]
 /// *complete* calendar months ending the month before [asOf]. The current

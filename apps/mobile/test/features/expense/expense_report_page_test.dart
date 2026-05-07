@@ -72,7 +72,7 @@ Future<ProviderScope> _wrap({
 }
 
 void main() {
-  testWidgets('expense report renders empty placeholder with no data',
+  testWidgets('expense report renders empty chart states with no data',
       (tester) async {
     final widget = await _wrap(child: const ExpenseReportPage());
     await tester.pumpWidget(widget);
@@ -80,7 +80,7 @@ void main() {
     expect(find.byType(ExpenseReportPage), findsOneWidget);
     final l10n = AppLocalizations.of(tester.element(find.byType(ExpenseReportPage)));
     expect(find.text(l10n.expenseReportTotalExpenses), findsOneWidget);
-    // Pie + trend both fall back to the placeholder when there's no data.
+    // Pie + trend both fall back to empty chart states when there's no data.
     expect(find.byType(EmptyChartPlaceholder), findsAtLeastNWidgets(1));
   });
 

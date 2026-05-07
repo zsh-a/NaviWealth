@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// FIR-70 — preset windows surfaced by the monthly expense report.
+/// Preset windows surfaced by the monthly expense report.
 ///
 /// `monthToDate` is the "本月" chip (1st of the current month → today).
 /// `m3` / `m6` are rolling windows ending today (used by both the report
