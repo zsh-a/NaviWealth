@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/master_detail_layout.dart';
+import '../../../app/route_paths.dart';
 import '../../../app/selection_query.dart';
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -119,7 +120,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   setState(() => _activeSessionId = id);
                   replaceSelectedQuery(
                     context,
-                    path: '/ai',
+                    path: AppRoutes.ai,
                     selected: id,
                   );
                 },
@@ -309,10 +310,8 @@ class _MessagesList extends StatelessWidget {
         vertical: Spacing.s12,
       ),
       itemCount: messages.length,
-      itemBuilder: (_, i) => MessageBubble(
-        sessionId: sessionId,
-        message: messages[i],
-      ),
+      itemBuilder: (_, i) =>
+          MessageBubble(sessionId: sessionId, message: messages[i]),
     );
   }
 }
@@ -361,10 +360,7 @@ class _EmptyConversation extends StatelessWidget {
                 alignment: WrapAlignment.center,
                 children: [
                   for (final q in suggestions)
-                    ActionChip(
-                      label: Text(q),
-                      onPressed: () => onSuggest(q),
-                    ),
+                    ActionChip(label: Text(q), onPressed: () => onSuggest(q)),
                 ],
               ),
             ],

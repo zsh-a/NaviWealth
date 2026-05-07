@@ -1,3 +1,4 @@
+import '../../../app/route_paths.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
@@ -120,7 +121,7 @@ class DashboardAggregator {
           valueInBase: converted,
           nativeAmount: outstanding,
           nativeCurrency: liability.currency,
-          routeHint: '/portfolio/liabilities/${liability.id}',
+          routeHint: AppRoutes.liability(liability.id),
         ),
       );
     }
@@ -188,7 +189,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: '/portfolio/${asset.id}',
+      routeHint: AppRoutes.portfolioAsset(asset.id),
     );
   }
 
@@ -208,7 +209,7 @@ class DashboardAggregator {
       valueInBase: Money(snap.marketValueInBase, baseCurrency),
       nativeAmount: snap.marketValueInAssetCurrency,
       nativeCurrency: snap.assetCurrency,
-      routeHint: '/portfolio/${asset.id}',
+      routeHint: AppRoutes.portfolioAsset(asset.id),
     );
   }
 
@@ -224,7 +225,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: '/portfolio/physical/${asset.id}',
+      routeHint: AppRoutes.physicalAsset(asset.id),
     );
   }
 
