@@ -64,8 +64,8 @@ class CategoryItem {
   final Decimal nativeAmount;
   final String nativeCurrency;
 
-  /// Optional opaque hint the UI uses to deep-link the row (e.g. an
-  /// `/assets/<id>` path or a tab name). Keeping it as a string lets
+  /// Optional opaque hint the UI uses to deep-link the row (e.g. a
+  /// `/portfolio/<id>` path or a tab name). Keeping it as a string lets
   /// the dashboard build above multiple feature routers.
   final String? routeHint;
 

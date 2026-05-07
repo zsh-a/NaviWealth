@@ -71,7 +71,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   // transferIn / transferOut are deliberately absent from this form —
   // they can never be created as a single user-entered leg.
-  // `TransferFormPage` (under `/accounts/transfer`) writes the two
+  // `TransferFormPage` (under `/activity/accounts/transfer`) writes the two
   // legs atomically via `JournalEntryRepository`.
   static const _tradeTypes = [
     TradeType.buy,
@@ -176,7 +176,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     // For buys with a known price, check whether the cash account would
     // go negative and prompt the user to confirm.
     if (type == TradeType.buy && price != null) {
-      final cashOut = quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
+      final cashOut =
+          quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
       final cashAccountId = _cashAccountId ?? accountId;
       final currentBalance = await jeRepo.balanceByAccount(cashAccountId);
       if (!mounted) return;
@@ -450,8 +451,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             value: _accountId,
             onChanged: (v) => setState(() => _accountId = v),
           ),
-          if (_type == TradeType.buy ||
-              _type == TradeType.sell) ...[
+          if (_type == TradeType.buy || _type == TradeType.sell) ...[
             const SizedBox(height: Spacing.s12),
             AccountPicker(
               key: const Key('trade-entry-cash-account'),
