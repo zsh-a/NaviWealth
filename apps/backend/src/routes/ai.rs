@@ -41,6 +41,13 @@ struct ChatRequest {
     portfolio_snapshot: Option<Value>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+struct ToolUse {
+    id: String,
+    name: String,
+    input: Value,
+}
+
 pub async fn chat(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
     match chat_inner(req, ctx).await {
         Ok(r) => Ok(r),
@@ -200,31 +207,10 @@ async fn run_tool_loop(
 
         // Emit text blocks immediately; collect tool_use blocks so we can
         // dispatch them after we've replayed the assistant turn.
-        let mut tool_uses: Vec<(String, String, Value)> = Vec::new();
-        for block in &response.content {
-            match block.get("type").and_then(|v| v.as_str()) {
-                Some("text") => {
-                    if let Some(text) = block.get("text").and_then(|v| v.as_str()) {
-                        if !text.is_empty() {
-                            send_event(tx, "text", &json!({"text": text})).await;
-                        }
-                    }
-                }
-                Some("tool_use") => {
-                    let id = block
-                        .get("id")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("")
-                        .to_string();
-                    let name = block
-                        .get("name")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("")
-                        .to_string();
-                    let input = block.get("input").cloned().unwrap_or(Value::Null);
-                    tool_uses.push((id, name, input));
-                }
-                _ => { /* ignore other block types */ }
+        let (text_blocks, tool_uses) = split_model_content(&response.content);
+        for text in text_blocks {
+            if !text.is_empty() {
+                send_event(tx, "text", &json!({"text": text})).await;
             }
         }
 
@@ -254,14 +240,14 @@ async fn run_tool_loop(
         };
         let mut tool_results: Vec<Value> = Vec::with_capacity(tool_uses.len());
         let mut proposals_this_turn: u8 = 0;
-        for (id, name, input) in &tool_uses {
+        for tool_use in &tool_uses {
             send_event(
                 tx,
                 "tool_call",
-                &json!({"id": id, "name": name, "input": input}),
+                &json!({"id": tool_use.id, "name": tool_use.name, "input": tool_use.input}),
             )
             .await;
-            let is_propose = name.starts_with("propose_");
+            let is_propose = tool_use.name.starts_with("propose_");
             let output = if is_propose
                 && proposals_before.saturating_add(proposals_this_turn)
                     >= MAX_PROPOSALS_PER_CONVERSATION
@@ -284,23 +270,18 @@ async fn run_tool_loop(
                 if is_propose {
                     proposals_this_turn = proposals_this_turn.saturating_add(1);
                 }
-                tools::dispatch(&ctx, name, input).await
+                tools::dispatch(&ctx, &tool_use.name, &tool_use.input).await
             };
             send_event(
                 tx,
                 "tool_result",
-                &json!({"id": id, "name": name, "output": output}),
+                &json!({"id": tool_use.id, "name": tool_use.name, "output": output}),
             )
             .await;
             // Anthropic accepts either a string or an array of content blocks
             // for tool_result.content. Strings are simpler and round-trip
             // exactly through serde_json.
-            let serialized = serde_json::to_string(&output).unwrap_or_else(|_| "null".into());
-            tool_results.push(json!({
-                "type": "tool_result",
-                "tool_use_id": id,
-                "content": serialized,
-            }));
+            tool_results.push(tool_result_block(&tool_use.id, &output));
         }
         messages.push(ChatMessage {
             role: "user".into(),
@@ -341,4 +322,137 @@ async fn send_event(
     // about it from here; let the spawned task exit naturally on the next
     // iteration.
     let _ = tx.unbounded_send(Ok(frame));
+}
+
+fn split_model_content(content: &[Value]) -> (Vec<String>, Vec<ToolUse>) {
+    let mut text_blocks = Vec::new();
+    let mut tool_uses = Vec::new();
+    for block in content {
+        match block.get("type").and_then(|v| v.as_str()) {
+            Some("text") => {
+                if let Some(text) = block.get("text").and_then(|v| v.as_str()) {
+                    if !text.is_empty() {
+                        text_blocks.push(text.to_string());
+                    }
+                }
+            }
+            Some("tool_use") => {
+                let id = block
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let name = block
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let input = block.get("input").cloned().unwrap_or(Value::Null);
+                tool_uses.push(ToolUse { id, name, input });
+            }
+            _ => { /* ignore other block types */ }
+        }
+    }
+    (text_blocks, tool_uses)
+}
+
+fn tool_result_block(tool_use_id: &str, output: &Value) -> Value {
+    let serialized = serde_json::to_string(output).unwrap_or_else(|_| "null".into());
+    json!({
+        "type": "tool_result",
+        "tool_use_id": tool_use_id,
+        "content": serialized,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn split_model_content_extracts_text_and_tool_use_blocks() {
+        let content = vec![
+            json!({"type": "text", "text": "我先查看持仓。"}),
+            json!({
+                "type": "tool_use",
+                "id": "toolu_1",
+                "name": "get_risk_alerts",
+                "input": {"as_of": "2026-05-07"}
+            }),
+            json!({"type": "image", "source": "ignored"}),
+            json!({"type": "text", "text": ""}),
+        ];
+
+        let (texts, tools) = split_model_content(&content);
+
+        assert_eq!(texts, vec!["我先查看持仓。"]);
+        assert_eq!(
+            tools,
+            vec![ToolUse {
+                id: "toolu_1".into(),
+                name: "get_risk_alerts".into(),
+                input: json!({"as_of": "2026-05-07"}),
+            }]
+        );
+    }
+
+    #[test]
+    fn tool_result_block_serializes_output_for_next_llm_round() {
+        let output = json!({
+            "alerts": [
+                {"kind": "asset_concentration", "severity": "high"}
+            ],
+            "base_currency": "CNY"
+        });
+
+        let block = tool_result_block("toolu_1", &output);
+
+        assert_eq!(block["type"], "tool_result");
+        assert_eq!(block["tool_use_id"], "toolu_1");
+        let content = block["content"].as_str().unwrap();
+        let decoded: Value = serde_json::from_str(content).unwrap();
+        assert_eq!(decoded, output);
+    }
+
+    #[test]
+    fn llm_tool_round_replays_assistant_tool_use_then_user_tool_result() {
+        let mut messages = vec![ChatMessage {
+            role: "user".into(),
+            content: json!("帮我看看持仓里风险最高的资产。"),
+        }];
+        let response_content = vec![
+            json!({"type": "text", "text": "我先检查风险提示。"}),
+            json!({
+                "type": "tool_use",
+                "id": "toolu_1",
+                "name": "get_risk_alerts",
+                "input": {}
+            }),
+        ];
+        let (_, tools) = split_model_content(&response_content);
+
+        messages.push(ChatMessage {
+            role: "assistant".into(),
+            content: Value::Array(response_content.clone()),
+        });
+        messages.push(ChatMessage {
+            role: "user".into(),
+            content: Value::Array(vec![tool_result_block(
+                &tools[0].id,
+                &json!({"alerts": [], "approximation": true}),
+            )]),
+        });
+
+        assert_eq!(messages.len(), 3);
+        assert_eq!(messages[1].role, "assistant");
+        assert_eq!(messages[1].content[1]["type"], "tool_use");
+        assert_eq!(messages[1].content[1]["name"], "get_risk_alerts");
+        assert_eq!(messages[2].role, "user");
+        assert_eq!(messages[2].content[0]["type"], "tool_result");
+        assert_eq!(messages[2].content[0]["tool_use_id"], "toolu_1");
+        let tool_output: Value =
+            serde_json::from_str(messages[2].content[0]["content"].as_str().unwrap()).unwrap();
+        assert_eq!(tool_output["alerts"], json!([]));
+    }
 }
