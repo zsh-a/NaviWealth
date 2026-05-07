@@ -15,6 +15,7 @@ class _NoopApi implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    Map<String, Object?>? portfolioSnapshot,
     String? model,
     CancelToken? cancelToken,
   }) async* {

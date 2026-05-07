@@ -8,6 +8,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../accounts/accounts_page.dart';
 import '../expense/ui/expense_list_page.dart';
 import 'ui/activity_feed.dart';
+import 'ui/activity_feed_filter_sheet.dart';
 
 /// Activity tab — umbrella page with a segmented control toggling
 /// between Expenses, Accounts, and Activity Feed.
@@ -48,6 +49,12 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
               icon: const Icon(Icons.bar_chart_outlined),
               tooltip: l10n.expenseReportTitle,
               onPressed: () => context.push(AppRoutes.expenseReport),
+            ),
+          if (_tab == _ActivityTab.feed)
+            IconButton(
+              icon: const Icon(Icons.filter_list_outlined),
+              tooltip: l10n.activityFeedFilterTitle,
+              onPressed: () => ActivityFeedFilterSheet.show(context),
             ),
         ],
         bottom: PreferredSize(

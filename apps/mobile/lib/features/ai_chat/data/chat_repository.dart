@@ -32,15 +32,18 @@ class ChatRepository {
     required ChatHistoryStore store,
     required AiChatApiClient api,
     required AuthSessionReader sessionReader,
+    Future<Map<String, Object?>?> Function()? portfolioSnapshotReader,
     Uuid? uuid,
   }) : _store = store,
        _api = api,
        _sessionReader = sessionReader,
+       _portfolioSnapshotReader = portfolioSnapshotReader,
        _uuid = uuid ?? const Uuid();
 
   final ChatHistoryStore _store;
   final AiChatApiClient _api;
   final AuthSessionReader _sessionReader;
+  final Future<Map<String, Object?>?> Function()? _portfolioSnapshotReader;
   final Uuid _uuid;
 
   Stream<List<ChatSession>> watchSessions(String ownerUserId) =>
@@ -151,6 +154,7 @@ class ChatRepository {
         content: ChatRepository.contextTruncatedNotice(ctx.droppedTurns),
       );
     }
+    final portfolioSnapshot = await _portfolioSnapshotReader?.call();
 
     final buffer = StringBuffer();
     final invocations = <String, ToolInvocation>{};
@@ -162,6 +166,7 @@ class ChatRepository {
       final stream = _api.chat(
         session: session,
         messages: wireMessages,
+        portfolioSnapshot: portfolioSnapshot,
         model: model,
         cancelToken: localCancel,
       );
@@ -176,9 +181,7 @@ class ChatRepository {
             invocations[id] = ToolInvocation(id: id, name: name, input: input);
             if (!invocationOrder.contains(id)) invocationOrder.add(id);
             assistant = assistant.copyWith(
-              toolCalls: [
-                for (final k in invocationOrder) invocations[k]!,
-              ],
+              toolCalls: [for (final k in invocationOrder) invocations[k]!],
             );
             await _store.updateMessage(assistant);
           case ToolResultEvent(:final id, :final output):
@@ -188,9 +191,7 @@ class ChatRepository {
                 : existing.copyWith(output: output);
             if (!invocationOrder.contains(id)) invocationOrder.add(id);
             assistant = assistant.copyWith(
-              toolCalls: [
-                for (final k in invocationOrder) invocations[k]!,
-              ],
+              toolCalls: [for (final k in invocationOrder) invocations[k]!],
             );
             await _store.updateMessage(assistant);
           case ErrorEvent(:final message):
@@ -204,7 +205,9 @@ class ChatRepository {
             // Only flip to complete if no error frame already promoted
             // the message to errored.
             if (assistant.status != ChatMessageStatus.errored) {
-              assistant = assistant.copyWith(status: ChatMessageStatus.complete);
+              assistant = assistant.copyWith(
+                status: ChatMessageStatus.complete,
+              );
               await _store.updateMessage(assistant);
             }
         }
@@ -281,7 +284,10 @@ class ChatRepository {
     await _store.insertMessage(notice);
   }
 
-  Future<void> _autotitleIfNeeded(String sessionId, String firstUserText) async {
+  Future<void> _autotitleIfNeeded(
+    String sessionId,
+    String firstUserText,
+  ) async {
     final session = await _store.findSession(sessionId);
     if (session == null) return;
     if (session.title != kNewSessionTitle) return;
@@ -290,7 +296,9 @@ class ChatRepository {
     // Approximate "two dozen visible glyphs" by character count. CJK
     // sequences with combining marks may be slightly under; close
     // enough for a thread title shown in a sidebar.
-    final title = trimmed.length <= 24 ? trimmed : '${trimmed.substring(0, 24)}…';
+    final title = trimmed.length <= 24
+        ? trimmed
+        : '${trimmed.substring(0, 24)}…';
     await _store.renameSession(sessionId, title);
   }
 

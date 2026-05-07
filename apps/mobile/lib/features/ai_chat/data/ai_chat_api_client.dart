@@ -27,6 +27,7 @@ abstract class AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    Map<String, Object?>? portfolioSnapshot,
     String? model,
     CancelToken? cancelToken,
   });
@@ -67,6 +68,7 @@ class DioAiChatApiClient implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    Map<String, Object?>? portfolioSnapshot,
     String? model,
     CancelToken? cancelToken,
   }) {
@@ -76,6 +78,7 @@ class DioAiChatApiClient implements AiChatApiClient {
     Future<void> run() async {
       final body = <String, Object?>{
         'messages': messages.map((m) => m.toJson()).toList(),
+        'portfolio_snapshot': ?portfolioSnapshot,
         if (model != null && model.isNotEmpty) 'model': model,
       };
       final Response<ResponseBody> res;

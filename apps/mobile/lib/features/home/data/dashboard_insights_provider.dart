@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/route_paths.dart';
+import '../../assets/data/deposit_maturity_insight_provider.dart';
+import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
+import '../../rebalance/data/rebalance_drift_insight_provider.dart';
 import '../ui/insight_strip.dart';
 
 /// Computes actionable insights for the dashboard [InsightStrip].
@@ -18,30 +22,65 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     final baseline = view.scenarios.isNotEmpty ? view.scenarios.first : null;
     final months = baseline?.monthsToTarget;
     if (months != null && months > 0) {
-      final years = months ~/ 12;
-      final remainingMonths = months % 12;
-      final label =
-          years > 0 ? '${years}y ${remainingMonths}m' : '${remainingMonths}m';
-      insights.add(InsightItem(
-        icon: Icons.flag_outlined,
-        label: 'FIRE',
-        value: '$label to go',
-      ));
-
+      insights.add(
+        InsightItem(
+          icon: Icons.flag_outlined,
+          kind: InsightKind.fireProgress,
+          monthsToTarget: months,
+          route: AppRoutes.planFire,
+        ),
+      );
     } else if (months == 0) {
-      insights.add(const InsightItem(
-        icon: Icons.celebration_outlined,
-        label: 'FIRE',
-        value: 'Goal reached!',
-        iconColor: Colors.green,
-      ));
+      insights.add(
+        const InsightItem(
+          icon: Icons.celebration_outlined,
+          kind: InsightKind.fireReached,
+          iconColor: Colors.green,
+          route: AppRoutes.planFire,
+        ),
+      );
     }
   });
 
-  // TODO: Add more insights when providers are available:
-  // - Portfolio drift (from rebalance engine)
-  // - Upcoming deposit maturities
-  // - Expense trend anomalies
+  final drift = ref.watch(rebalanceDriftInsightProvider);
+  if (drift != null) {
+    insights.add(
+      InsightItem(
+        icon: Icons.tune_outlined,
+        kind: InsightKind.portfolioDrift,
+        category: drift.category,
+        driftPct: drift.deviation,
+        iconColor: Colors.amber,
+        route: AppRoutes.planRebalance,
+      ),
+    );
+  }
+
+  final maturity = ref.watch(depositMaturityInsightProvider);
+  if (maturity != null) {
+    insights.add(
+      InsightItem(
+        icon: Icons.event_available_outlined,
+        kind: InsightKind.maturity,
+        maturityCount: maturity.count,
+        maturityDays: maturity.days,
+        route: AppRoutes.portfolio,
+      ),
+    );
+  }
+
+  final anomaly = ref.watch(expenseAnomalyInsightProvider);
+  if (anomaly != null) {
+    insights.add(
+      InsightItem(
+        icon: Icons.trending_up_outlined,
+        kind: InsightKind.anomaly,
+        anomalyPct: anomaly.deltaRatio,
+        iconColor: anomaly.deltaRatio > 0 ? Colors.orange : null,
+        route: AppRoutes.expenseReport,
+      ),
+    );
+  }
 
   return insights;
 });

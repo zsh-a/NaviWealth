@@ -5688,6 +5688,178 @@ abstract class AppLocalizations {
   /// **'Use \"{query}\" as code'**
   String localSecuritiesUseQueryAsCode(String query);
 
+  /// Dashboard insight label: FIRE plan
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE'**
+  String get dashboardInsightFireLabel;
+
+  /// Dashboard FIRE insight value when at least one year remains
+  ///
+  /// In en, this message translates to:
+  /// **'{years}y {months}m to go'**
+  String dashboardInsightFireToGoYears(int years, int months);
+
+  /// Dashboard FIRE insight value when less than one year remains
+  ///
+  /// In en, this message translates to:
+  /// **'{months}m to go'**
+  String dashboardInsightFireToGoMonths(int months);
+
+  /// Dashboard FIRE insight value when goal is reached
+  ///
+  /// In en, this message translates to:
+  /// **'Goal reached'**
+  String get dashboardInsightFireReached;
+
+  /// Dashboard insight label: rebalance drift
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio drift'**
+  String get dashboardInsightDriftLabel;
+
+  /// Dashboard drift direction: overweight
+  ///
+  /// In en, this message translates to:
+  /// **'over'**
+  String get dashboardInsightDriftOver;
+
+  /// Dashboard drift direction: underweight
+  ///
+  /// In en, this message translates to:
+  /// **'under'**
+  String get dashboardInsightDriftUnder;
+
+  /// Dashboard drift insight value
+  ///
+  /// In en, this message translates to:
+  /// **'{category} {direction} {points}pp'**
+  String dashboardInsightDriftValue(
+    String category,
+    String direction,
+    int points,
+  );
+
+  /// Dashboard insight label: upcoming deposit maturities
+  ///
+  /// In en, this message translates to:
+  /// **'Maturities'**
+  String get dashboardInsightMaturityLabel;
+
+  /// Dashboard deposit maturity insight value
+  ///
+  /// In en, this message translates to:
+  /// **'{count} deposits due in {days}d'**
+  String dashboardInsightMaturityValue(int count, int days);
+
+  /// Dashboard insight label: expense anomaly
+  ///
+  /// In en, this message translates to:
+  /// **'Expense trend'**
+  String get dashboardInsightAnomalyLabel;
+
+  /// Dashboard expense anomaly insight value
+  ///
+  /// In en, this message translates to:
+  /// **'Projected {percent}'**
+  String dashboardInsightAnomalyValue(String percent);
+
+  /// Portfolio view switcher: assets list
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get portfolioViewAssets;
+
+  /// Portfolio view switcher: by account
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get portfolioViewAccount;
+
+  /// Portfolio view switcher: by currency
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get portfolioViewCurrency;
+
+  /// Portfolio view switcher: by asset class
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get portfolioViewClass;
+
+  /// Portfolio aggregate row item count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String portfolioAggregateItems(int count);
+
+  /// Portfolio by-currency row native currency total
+  ///
+  /// In en, this message translates to:
+  /// **'Native {amount}'**
+  String portfolioCurrencyNative(String amount);
+
+  /// Portfolio by-account fallback group
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get portfolioUnassignedAccount;
+
+  /// Activity feed filter action title
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get activityFeedFilterTitle;
+
+  /// Activity feed filter clear action
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get activityFeedFilterClear;
+
+  /// Activity feed filter kind section
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get activityFeedFilterKind;
+
+  /// Activity feed filter account section
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get activityFeedFilterAccount;
+
+  /// Activity feed filter date shortcut
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get activityFeedFilterThisMonth;
+
+  /// Activity feed empty state when filters are active
+  ///
+  /// In en, this message translates to:
+  /// **'No activity matches these filters.'**
+  String get activityFeedFilteredEmpty;
+
+  /// Activity feed pagination button
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get activityFeedLoadMore;
+
+  /// Activity feed pagination complete text
+  ///
+  /// In en, this message translates to:
+  /// **'All activity loaded'**
+  String get activityFeedAllLoaded;
+
+  /// Web-only backup and restore security warning banner
+  ///
+  /// In en, this message translates to:
+  /// **'Web local storage is not SQLCipher-encrypted. Backup files are encrypted with your password; avoid long-term storage of sensitive accounts in the web app.'**
+  String get backupWebSecurityWarning;
+
   /// Shared form: saving button label
   ///
   /// In en, this message translates to:

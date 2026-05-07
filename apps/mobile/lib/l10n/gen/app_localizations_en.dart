@@ -3187,6 +3187,109 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightFireLabel => 'FIRE';
+
+  @override
+  String dashboardInsightFireToGoYears(int years, int months) {
+    return '${years}y ${months}m to go';
+  }
+
+  @override
+  String dashboardInsightFireToGoMonths(int months) {
+    return '${months}m to go';
+  }
+
+  @override
+  String get dashboardInsightFireReached => 'Goal reached';
+
+  @override
+  String get dashboardInsightDriftLabel => 'Portfolio drift';
+
+  @override
+  String get dashboardInsightDriftOver => 'over';
+
+  @override
+  String get dashboardInsightDriftUnder => 'under';
+
+  @override
+  String dashboardInsightDriftValue(
+    String category,
+    String direction,
+    int points,
+  ) {
+    return '$category $direction ${points}pp';
+  }
+
+  @override
+  String get dashboardInsightMaturityLabel => 'Maturities';
+
+  @override
+  String dashboardInsightMaturityValue(int count, int days) {
+    return '$count deposits due in ${days}d';
+  }
+
+  @override
+  String get dashboardInsightAnomalyLabel => 'Expense trend';
+
+  @override
+  String dashboardInsightAnomalyValue(String percent) {
+    return 'Projected $percent';
+  }
+
+  @override
+  String get portfolioViewAssets => 'Assets';
+
+  @override
+  String get portfolioViewAccount => 'Account';
+
+  @override
+  String get portfolioViewCurrency => 'Currency';
+
+  @override
+  String get portfolioViewClass => 'Class';
+
+  @override
+  String portfolioAggregateItems(int count) {
+    return '$count items';
+  }
+
+  @override
+  String portfolioCurrencyNative(String amount) {
+    return 'Native $amount';
+  }
+
+  @override
+  String get portfolioUnassignedAccount => 'Unassigned';
+
+  @override
+  String get activityFeedFilterTitle => 'Filter';
+
+  @override
+  String get activityFeedFilterClear => 'Clear';
+
+  @override
+  String get activityFeedFilterKind => 'Kind';
+
+  @override
+  String get activityFeedFilterAccount => 'Account';
+
+  @override
+  String get activityFeedFilterThisMonth => 'This month';
+
+  @override
+  String get activityFeedFilteredEmpty => 'No activity matches these filters.';
+
+  @override
+  String get activityFeedLoadMore => 'Load more';
+
+  @override
+  String get activityFeedAllLoaded => 'All activity loaded';
+
+  @override
+  String get backupWebSecurityWarning =>
+      'Web local storage is not SQLCipher-encrypted. Backup files are encrypted with your password; avoid long-term storage of sensitive accounts in the web app.';
+
+  @override
   String get formSaving => 'Saving…';
 
   @override

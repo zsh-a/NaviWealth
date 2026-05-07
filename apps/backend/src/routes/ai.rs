@@ -35,6 +35,8 @@ struct ChatRequest {
     messages: Vec<ChatMessage>,
     #[serde(default)]
     model: Option<String>,
+    #[serde(default)]
+    portfolio_snapshot: Option<Value>,
 }
 
 pub async fn chat(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -98,8 +100,18 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
     // D1Database, String, and Vec are all 'static + safe to move.
     let user_id = auth.user_id.clone();
     let initial_messages = body.messages;
+    let portfolio_snapshot = body.portfolio_snapshot;
     wasm_bindgen_futures::spawn_local(async move {
-        run_tool_loop(&tx, &api_key, &model, db, &user_id, initial_messages).await;
+        run_tool_loop(
+            &tx,
+            &api_key,
+            &model,
+            db,
+            &user_id,
+            initial_messages,
+            portfolio_snapshot,
+        )
+        .await;
     });
 
     let headers = Headers::new();
@@ -134,6 +146,7 @@ async fn run_tool_loop(
     db: worker::D1Database,
     user_id: &str,
     initial_messages: Vec<ChatMessage>,
+    portfolio_snapshot: Option<Value>,
 ) {
     // Inject "current time" as a synthetic system suffix; the model is told
     // to rely on this rather than guess.
@@ -223,7 +236,11 @@ async fn run_tool_loop(
             content: Value::Array(response.content.clone()),
         });
 
-        let ctx = ToolCtx { user_id, db: &db };
+        let ctx = ToolCtx {
+            user_id,
+            db: &db,
+            portfolio_snapshot: portfolio_snapshot.as_ref(),
+        };
         let mut tool_results: Vec<Value> = Vec::with_capacity(tool_uses.len());
         let mut proposals_this_turn: u8 = 0;
         for (id, name, input) in &tool_uses {

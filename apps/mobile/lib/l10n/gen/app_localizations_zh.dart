@@ -3080,6 +3080,109 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightFireLabel => 'FIRE';
+
+  @override
+  String dashboardInsightFireToGoYears(int years, int months) {
+    return '还需 $years 年 $months 个月';
+  }
+
+  @override
+  String dashboardInsightFireToGoMonths(int months) {
+    return '还需 $months 个月';
+  }
+
+  @override
+  String get dashboardInsightFireReached => '已达成目标';
+
+  @override
+  String get dashboardInsightDriftLabel => '组合偏离';
+
+  @override
+  String get dashboardInsightDriftOver => '超配';
+
+  @override
+  String get dashboardInsightDriftUnder => '低配';
+
+  @override
+  String dashboardInsightDriftValue(
+    String category,
+    String direction,
+    int points,
+  ) {
+    return '$category $direction ${points}pp';
+  }
+
+  @override
+  String get dashboardInsightMaturityLabel => '到期提醒';
+
+  @override
+  String dashboardInsightMaturityValue(int count, int days) {
+    return '$count 笔定期 ${days}d 内到期';
+  }
+
+  @override
+  String get dashboardInsightAnomalyLabel => '支出趋势';
+
+  @override
+  String dashboardInsightAnomalyValue(String percent) {
+    return '预计 $percent';
+  }
+
+  @override
+  String get portfolioViewAssets => '资产';
+
+  @override
+  String get portfolioViewAccount => '账户';
+
+  @override
+  String get portfolioViewCurrency => '币种';
+
+  @override
+  String get portfolioViewClass => '类别';
+
+  @override
+  String portfolioAggregateItems(int count) {
+    return '$count 项';
+  }
+
+  @override
+  String portfolioCurrencyNative(String amount) {
+    return '原币 $amount';
+  }
+
+  @override
+  String get portfolioUnassignedAccount => '未分配';
+
+  @override
+  String get activityFeedFilterTitle => '筛选';
+
+  @override
+  String get activityFeedFilterClear => '清除';
+
+  @override
+  String get activityFeedFilterKind => '类型';
+
+  @override
+  String get activityFeedFilterAccount => '账户';
+
+  @override
+  String get activityFeedFilterThisMonth => '本月';
+
+  @override
+  String get activityFeedFilteredEmpty => '没有符合筛选条件的动态。';
+
+  @override
+  String get activityFeedLoadMore => '加载更多';
+
+  @override
+  String get activityFeedAllLoaded => '已加载全部动态';
+
+  @override
+  String get backupWebSecurityWarning =>
+      'Web 端本地数据库未启用 SQLCipher。备份文件会使用你的密码加密；不建议在 Web 端长期保存敏感账户。';
+
+  @override
   String get formSaving => '保存中…';
 
   @override
