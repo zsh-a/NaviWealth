@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/command_palette/command_palette.dart';
 import 'package:naviwealth/core/command_palette/command_palette_dialog.dart'
     show resetCommandPaletteForTest;
@@ -43,10 +44,10 @@ void main() {
         id: 'x',
         label: 'Go to Assets',
         icon: Icons.dashboard,
-        keywords: const ['/assets', '资产'],
+        keywords: const [AppRoutes.portfolio, '资产'],
         run: (_) {},
       );
-      expect(entry.matches('/asset'), isTrue);
+      expect(entry.matches(AppRoutes.portfolio), isTrue);
       expect(entry.matches('资产'), isTrue);
     });
   });
@@ -346,26 +347,25 @@ void main() {
       );
 
       final ids = entries.map((e) => e.id).toSet();
-      expect(ids, containsAll(<String>[
-        'nav.home',
-        'nav.portfolio',
-        'nav.activity',
-        'nav.plan',
-        'nav.accounts',
-        'nav.expenses',
-        'nav.analytics',
-        'nav.fire',
-        'nav.settings',
-        'action.newTrade',
-        'action.newExpense',
-        'action.openAi',
-        'action.shortcutHelp',
-      ]));
       expect(
-        entries.length,
-        ids.length,
-        reason: 'command ids must be unique',
+        ids,
+        containsAll(<String>[
+          'nav.home',
+          'nav.portfolio',
+          'nav.activity',
+          'nav.plan',
+          'nav.accounts',
+          'nav.expenses',
+          'nav.analytics',
+          'nav.fire',
+          'nav.settings',
+          'action.newTrade',
+          'action.newExpense',
+          'action.openAi',
+          'action.shortcutHelp',
+        ]),
       );
+      expect(entries.length, ids.length, reason: 'command ids must be unique');
     });
   });
 }
