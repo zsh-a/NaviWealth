@@ -5,12 +5,12 @@
 //! 1. Auth + protocol-version check (shared with the rest of the API).
 //! 2. Body-size cap, then JSON parse into [`ChatRequest`].
 //! 3. Per-user rate limit (60/h) — check happens *before* we spend money on
-//!    Anthropic.
+//!    the LLM provider.
 //! 4. Hand the conversation off to a [`spawn_local`] task that runs the tool
 //!    loop and writes SSE frames to a channel; the response body is just the
 //!    receiving end of that channel.
 //!
-//! We deliberately do not pass the user's bearer token to Anthropic; the
+//! We deliberately do not pass the user's bearer token to the LLM provider; the
 //! Worker authenticates with its own API key out of `wrangler secret`.
 
 use chrono::Utc;
@@ -19,7 +19,9 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use worker::{Headers, Request, Response, Result as WorkerResult, RouteContext};
 
-use crate::ai::anthropic::{self, AnthropicMessage, AnthropicRequest, ChatMessage, DEFAULT_MODEL};
+use crate::ai::anthropic::{
+    self, AnthropicMessage, AnthropicRequest, ChatMessage, LlmConfig, DEFAULT_MODEL,
+};
 use crate::ai::guardrails::{
     self, ANTHROPIC_MAX_OUTPUT_TOKENS, MAX_PROPOSALS_PER_CONVERSATION, MAX_REQUEST_BODY_BYTES,
     MAX_TOOL_ROUNDS, SYSTEM_PROMPT,
@@ -81,14 +83,22 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
 
     let api_key = ctx
         .env
-        .secret("ANTHROPIC_API_KEY")
+        .secret("LLM_API_KEY")
+        .or_else(|_| ctx.env.secret("ANTHROPIC_API_KEY"))
         .map(|s| s.to_string())
-        .map_err(|_| AppError::Internal("ANTHROPIC_API_KEY unbound".into()))?;
+        .map_err(|_| AppError::Internal("LLM_API_KEY unbound".into()))?;
+    let base_url = ctx.env.var("LLM_BASE_URL").map(|v| v.to_string()).ok();
+    let llm_config = LlmConfig::new(api_key, base_url);
+    let default_model = ctx
+        .env
+        .var("LLM_MODEL")
+        .map(|v| v.to_string())
+        .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
 
     let model = body
         .model
         .filter(|m| !m.is_empty())
-        .unwrap_or_else(|| DEFAULT_MODEL.to_string());
+        .unwrap_or(default_model);
 
     // Channel that backs Response::from_stream. Unbounded is fine: emissions
     // are bounded by MAX_TOOL_ROUNDS and the model's max_tokens, so backpressure
@@ -104,7 +114,7 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
     wasm_bindgen_futures::spawn_local(async move {
         run_tool_loop(
             &tx,
-            &api_key,
+            llm_config,
             &model,
             db,
             &user_id,
@@ -141,7 +151,7 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
 /// The task must close `tx` (drop) when done so the client connection ends.
 async fn run_tool_loop(
     tx: &mpsc::UnboundedSender<Result<Vec<u8>, worker::Error>>,
-    api_key: &str,
+    llm_config: LlmConfig,
     model: &str,
     db: worker::D1Database,
     user_id: &str,
@@ -169,7 +179,8 @@ async fn run_tool_loop(
             tools: &tool_schemas,
             stream: false,
         };
-        let response: AnthropicMessage = match anthropic::call_blocking(api_key, &payload).await {
+        let response: AnthropicMessage = match anthropic::call_blocking(&llm_config, &payload).await
+        {
             Ok(m) => m,
             Err(e) => {
                 send_event(tx, "error", &json!({"message": e.to_string()})).await;
@@ -297,7 +308,7 @@ async fn run_tool_loop(
         });
 
         // Loop. The next iteration sends the augmented conversation back to
-        // Anthropic so it can compose the user-facing reply.
+        // the LLM so it can compose the user-facing reply.
     }
 
     if rounds_used >= MAX_TOOL_ROUNDS && last_stop == "tool_use" {

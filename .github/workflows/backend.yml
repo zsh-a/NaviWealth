@@ -42,6 +42,8 @@ jobs:
     needs: [check]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CLOUDFLARE_API_TOKEN != ''
     runs-on: ubuntu-latest
+    env:
+      HAS_LLM_API_KEY: ${{ secrets.LLM_API_KEY != '' }}
     concurrency:
       group: backend-deploy-prod
       cancel-in-progress: false
@@ -54,6 +56,9 @@ jobs:
         with:
           workspaces: apps/backend
       - run: cargo install -q worker-build
+      - name: Skip LLM API key sync
+        if: env.HAS_LLM_API_KEY != 'true'
+        run: echo "::notice::LLM_API_KEY not set in GitHub Secrets — keeping existing Cloudflare Worker secret."
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
@@ -61,12 +66,26 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
           command: d1 migrations apply naviwealth
-      - uses: cloudflare/wrangler-action@v3
+      - name: Deploy to Cloudflare Workers
+        if: env.HAS_LLM_API_KEY != 'true'
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
           command: deploy
+      - name: Deploy to Cloudflare Workers with LLM secret
+        if: env.HAS_LLM_API_KEY == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/backend
+          command: deploy
+          secrets: |
+            LLM_API_KEY
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
 
   deploy-preview:
     needs: [check]

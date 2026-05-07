@@ -8,6 +8,8 @@ command = "cargo install -q worker-build && worker-build --release"
 
 [vars]
 ENVIRONMENT = "dev"
+LLM_BASE_URL = "https://api-inference.modelscope.cn"
+LLM_MODEL = "deepseek-ai/DeepSeek-V4-Flash"
 
 # D1 database. Migrations under ./migrations/ are applied via:
 #   wrangler d1 migrations apply naviwealth
@@ -21,4 +23,5 @@ migrations_dir = "migrations"
 
 # Secrets (set via `wrangler secret put`):
 # - JWT_SECRET           # HS256 signing key for the single-user JWT
-# - ANTHROPIC_API_KEY    # Anthropic Claude API key used by /ai/chat (FIR-59)
+# - LLM_API_KEY          # ModelScope/Anthropic-compatible API key used by /ai/chat
+# - ANTHROPIC_API_KEY    # Legacy fallback name, still supported
