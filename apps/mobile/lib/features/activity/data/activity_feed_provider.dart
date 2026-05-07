@@ -13,51 +13,55 @@ final activityFeedQueryProvider =
       (ref) => ActivityFeedQueryController(),
     );
 
-final activityFeedProvider = Provider<AsyncValue<ActivityFeedPage>>((ref) {
+final activityFeedProvider = StreamProvider.autoDispose<ActivityFeedPage>((
+  ref,
+) {
   final query = ref.watch(activityFeedQueryProvider);
-  final entriesAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
   final accountsAsync = ref.watch(accountsStreamProvider);
 
-  if (entriesAsync.isLoading || accountsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
-  if (entriesAsync.hasError) {
-    return AsyncValue.error(
-      entriesAsync.error!,
-      entriesAsync.stackTrace ?? StackTrace.current,
-    );
-  }
   if (accountsAsync.hasError) {
-    return AsyncValue.error(
+    return Stream.error(
       accountsAsync.error!,
       accountsAsync.stackTrace ?? StackTrace.current,
     );
   }
+  final accounts = accountsAsync.value;
+  if (accounts == null) return const Stream<ActivityFeedPage>.empty();
 
   final accountsById = <String, Account>{
-    for (final account in accountsAsync.value ?? const <Account>[])
-      account.id: account,
+    for (final account in accounts) account.id: account,
   };
-  final filtered = filterActivityEntries(
-    entries: entriesAsync.value ?? const [],
-    query: query,
-    accountsById: accountsById,
-  );
-  final visibleCount = filtered.length < query.pageSize
-      ? filtered.length
-      : query.pageSize;
-  return AsyncValue.data(
-    ActivityFeedPage(
-      entries: filtered.take(visibleCount).toList(growable: false),
-      totalCount: filtered.length,
-      hasMore: visibleCount < filtered.length,
-      isFiltered: query.hasFilters,
-    ),
-  );
+  final accountCategories = {
+    for (final account in accounts) account.id: account.category,
+  };
+  return Stream.fromFuture(ref.watch(journalEntryRepositoryProvider.future))
+      .asyncExpand(
+        (repo) => repo.watchActivityFeed(
+          from: query.dateRange?.start,
+          to: query.dateRange?.end,
+          accountIds: query.accountIds,
+          kinds: query.kinds.map(entryKindFromActivityKind).toSet(),
+          accountCategories: accountCategories,
+          pageSize: query.pageSize,
+        ),
+      )
+      .map(
+        (page) => ActivityFeedPage(
+          entries: page.entries,
+          totalCount: page.entries.length,
+          hasMore: page.hasMore,
+          isFiltered: query.hasFilters,
+          accountsById: accountsById,
+        ),
+      );
 });
 
 class ActivityFeedQueryController extends StateNotifier<ActivityFeedQuery> {
   ActivityFeedQueryController() : super(const ActivityFeedQuery());
+
+  void setQuery(ActivityFeedQuery query) {
+    state = query.copyWith(pageSize: kActivityFeedPageSize);
+  }
 
   void mutateQuery(ActivityFeedQuery Function(ActivityFeedQuery query) mutate) {
     state = mutate(state).copyWith(pageSize: kActivityFeedPageSize);

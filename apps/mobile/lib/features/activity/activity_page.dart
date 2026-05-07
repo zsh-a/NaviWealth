@@ -7,6 +7,8 @@ import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../accounts/accounts_page.dart';
 import '../expense/ui/expense_list_page.dart';
+import 'data/activity_feed_provider.dart';
+import 'data/activity_feed_query.dart';
 import 'ui/activity_feed.dart';
 import 'ui/activity_feed_filter_sheet.dart';
 
@@ -23,10 +25,33 @@ enum _ActivityTab { expenses, accounts, feed }
 
 class _ActivityPageState extends ConsumerState<ActivityPage> {
   _ActivityTab _tab = _ActivityTab.expenses;
+  bool _hydratedFromUrl = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hydratedFromUrl) return;
+    _hydratedFromUrl = true;
+    final uri = GoRouter.of(context).routeInformationProvider.value.uri;
+    if (uri.queryParameters['tab'] == 'feed') {
+      _tab = _ActivityTab.feed;
+    }
+    final query = ActivityFeedQuery.fromUri(uri);
+    if (query.hasFilters) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(activityFeedQueryProvider.notifier).setQuery(query);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    ref.listen<ActivityFeedQuery>(activityFeedQueryProvider, (_, next) {
+      if (!mounted || _tab != _ActivityTab.feed) return;
+      _replaceActivityUrl(query: next);
+    });
 
     return Scaffold(
       appBar: GlassAppBar(
@@ -61,7 +86,10 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           preferredSize: const Size.fromHeight(48),
           child: _SegmentedControl(
             current: _tab,
-            onChanged: (_ActivityTab t) => setState(() => _tab = t),
+            onChanged: (_ActivityTab t) {
+              setState(() => _tab = t);
+              _replaceActivityUrl(query: ref.read(activityFeedQueryProvider));
+            },
             l10n: l10n,
           ),
         ),
@@ -72,6 +100,28 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           ? const AccountsPage(embedded: true)
           : const ActivityFeed(),
     );
+  }
+
+  void _replaceActivityUrl({required ActivityFeedQuery query}) {
+    final router = GoRouter.of(context);
+    final current = router.routeInformationProvider.value.uri;
+    final params = <String, String>{...current.queryParameters};
+    params.remove('accounts');
+    params.remove('kinds');
+    params.remove('from');
+    params.remove('to');
+    params.remove('tab');
+    if (_tab == _ActivityTab.feed) {
+      params['tab'] = 'feed';
+      params.addAll(query.toQueryParameters());
+    }
+    final next = current.replace(
+      path: AppRoutes.activity,
+      queryParameters: params.isEmpty ? null : params,
+    );
+    if (next.toString() != current.toString()) {
+      router.replace<void>(next.toString());
+    }
   }
 }
 

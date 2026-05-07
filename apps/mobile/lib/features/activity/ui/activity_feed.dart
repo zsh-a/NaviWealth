@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/activity_feed_provider.dart';
@@ -20,7 +19,6 @@ class ActivityFeed extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final feedAsync = ref.watch(activityFeedProvider);
-    final accountsAsync = ref.watch(accountsStreamProvider);
 
     return feedAsync.when(
       data: (page) {
@@ -31,16 +29,13 @@ class ActivityFeed extends ConsumerWidget {
                 : l10n.activityFeedEmpty,
           );
         }
-        final accountsById = <String, Account>{
-          for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
-        };
         final groups = groupActivityEntriesByDate(page.entries);
         final formatter = AppFormatters(
           locale: Localizations.localeOf(context),
         );
         return _FeedList(
           groups: groups,
-          accountsById: accountsById,
+          accountsById: page.accountsById,
           formatter: formatter,
           l10n: l10n,
           hasMore: page.hasMore,

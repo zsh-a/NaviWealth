@@ -26,10 +26,10 @@
 //!   serde_json::Value. The mobile client owns the canonical types; we keep
 //!   the server side schema-light so a payload field added on mobile shows
 //!   up here without a backend deploy.
-//! - Money is reported in the user's recorded currency on each row. We do
-//!   *not* fabricate cross-currency totals — multi-currency consolidation
-//!   needs FX rates and is an explicit follow-up. The system prompt warns the
-//!   model accordingly.
+//! - Money is reported with explicit currency metadata. Cross-currency totals
+//!   are only returned when a client `portfolio_snapshot` supplies base-currency
+//!   values; otherwise the tool returns conversion gaps instead of fabricating
+//!   FX.
 //!
 //! When the model asks for analytics that genuinely need the FIR-48 holding
 //! engine (cost basis with FIFO/LIFO/AvgCost, corporate actions, lot
@@ -58,14 +58,18 @@ pub fn schemas() -> Vec<ToolSchema> {
     vec![
         ToolSchema {
             name: "get_holdings".into(),
-            description: "返回当前持仓快照：从 journal_entries / postings 推导每个资产的净持仓、记账成本与币种。\
-                          当前为 postings 近似读模型，结果带 approximation=true。".into(),
+            description: "返回当前持仓快照。优先使用客户端 portfolio_snapshot 中的持仓引擎结果；\
+                          缺失时从 journal_entries / postings 推导近似值。".into(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
                     "as_of": {
                         "type": "string",
                         "description": "ISO-8601 截止时刻（含），不传则到当前时间。"
+                    },
+                    "base_currency": {
+                        "type": "string",
+                        "description": "希望返回的折算基准币种；snapshot 已带 base 值时会使用。"
                     }
                 }
             }),
@@ -102,7 +106,11 @@ pub fn schemas() -> Vec<ToolSchema> {
                         "description": "scope=asset 时必填"
                     },
                     "from": { "type": "string", "description": "ISO-8601 lower bound" },
-                    "to":   { "type": "string", "description": "ISO-8601 upper bound" }
+                    "to":   { "type": "string", "description": "ISO-8601 upper bound" },
+                    "base_currency": {
+                        "type": "string",
+                        "description": "需要跨币种汇总时的目标币种；优先使用 portfolio_snapshot 中的 base 折算。"
+                    }
                 }
             }),
         },
@@ -115,7 +123,11 @@ pub fn schemas() -> Vec<ToolSchema> {
                 "properties": {
                     "from":        { "type": "string", "description": "ISO-8601 起始（含）" },
                     "to":          { "type": "string", "description": "ISO-8601 结束（含）" },
-                    "granularity": { "type": "string", "enum": ["day", "week", "month"], "default": "month" }
+                    "granularity": { "type": "string", "enum": ["day", "week", "month"], "default": "month" },
+                    "base_currency": {
+                        "type": "string",
+                        "description": "需要跨币种汇总时的目标币种；优先使用 portfolio_snapshot 中的当前 base 市值。"
+                    }
                 }
             }),
         },
@@ -345,6 +357,59 @@ fn payload_num(p: &Value, key: &str) -> Option<f64> {
     }
 }
 
+fn value_num(v: &Value) -> Option<f64> {
+    match v {
+        Value::Number(n) => n.as_f64(),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
+}
+
+fn requested_base_currency(input: &Value, snapshot: Option<&Value>) -> Option<String> {
+    input
+        .get("base_currency")
+        .and_then(|v| v.as_str())
+        .or_else(|| {
+            snapshot
+                .and_then(|s| s.get("base_currency"))
+                .and_then(|v| v.as_str())
+        })
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty())
+}
+
+fn snapshot_holdings(snapshot: Option<&Value>) -> Option<&Map<String, Value>> {
+    snapshot?.get("holdings").and_then(|v| v.as_object())
+}
+
+fn snapshot_base_currency(snapshot: Option<&Value>) -> Option<&str> {
+    snapshot?.get("base_currency").and_then(|v| v.as_str())
+}
+
+fn holding_value_base(h: &Value, key: &str, base_currency: &str) -> Option<f64> {
+    let holding_base = h
+        .get("base_currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_uppercase())?;
+    if holding_base != base_currency.to_uppercase() {
+        return None;
+    }
+    h.get(key).and_then(value_num)
+}
+
+fn snapshot_total_base(snapshot: Option<&Value>, key: &str, base_currency: &str) -> Option<f64> {
+    let holdings = snapshot_holdings(snapshot)?;
+    let mut total = 0.0;
+    let mut saw = false;
+    for h in holdings.values() {
+        if let Some(value) = holding_value_base(h, key, base_currency) {
+            total += value;
+            saw = true;
+        }
+    }
+    saw.then_some(total)
+}
+
 // ---------------------------------------------------------------------------
 // get_holdings — derive open positions from postings.
 // ---------------------------------------------------------------------------
@@ -358,8 +423,10 @@ struct HoldingAcc {
 }
 
 async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    let requested_base = requested_base_currency(input, ctx.portfolio_snapshot);
     if let Some(snapshot) = ctx.portfolio_snapshot {
         if let Some(holdings) = snapshot.get("holdings").and_then(|v| v.as_object()) {
+            let snapshot_base = snapshot_base_currency(Some(snapshot)).map(|s| s.to_string());
             return Ok(json!({
                 "as_of": input
                     .get("as_of")
@@ -367,10 +434,12 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
                     .or_else(|| snapshot.get("as_of").and_then(|v| v.as_str()))
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| Utc::now().to_rfc3339()),
-                "base_currency": snapshot.get("base_currency").and_then(|v| v.as_str()),
+                "base_currency": requested_base.as_deref().or(snapshot_base.as_deref()),
+                "snapshot_base_currency": snapshot_base,
                 "holdings": Value::Object(holdings.clone()),
                 "approximation": false,
                 "source": "client_portfolio_snapshot",
+                "conversion_source": "client_portfolio_snapshot",
             }));
         }
     }
@@ -462,6 +531,7 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
 
     Ok(json!({
         "as_of":         as_of.map(|d| d.to_rfc3339()).unwrap_or_else(|| Utc::now().to_rfc3339()),
+        "base_currency": requested_base,
         "holdings":      Value::Object(accs),
         "approximation": true,
         "note":          "数量与成本来自 postings 的资产腿和 cost/price 注解；精确 lot/FIFO 收益需客户端 read model。"
@@ -633,6 +703,8 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         .and_then(|v| v.as_str())
         .and_then(parse_iso);
     let to = input.get("to").and_then(|v| v.as_str()).and_then(parse_iso);
+    let base_currency = requested_base_currency(input, ctx.portfolio_snapshot);
+    let snapshot_base = snapshot_base_currency(ctx.portfolio_snapshot).map(|s| s.to_uppercase());
 
     let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
     let asset_ids: std::collections::HashSet<String> =
@@ -651,6 +723,7 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
     }
     let mut flows: Vec<CashFlow> = Vec::new();
     let mut currency: Option<String> = None;
+    let mut conversion_gaps: Vec<Value> = Vec::new();
     let mut residual_qty: f64 = 0.0;
     let mut last_price: f64 = 0.0;
     for (entry_id, entry) in &entries {
@@ -679,17 +752,30 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
                 continue;
             }
         }
-        let cash_flow: f64 = legs
-            .iter()
-            .filter_map(|p| {
-                let unit = payload_str(p, "unit")?;
-                if asset_ids.contains(unit) {
-                    None
+        let mut cash_flow = 0.0;
+        for p in legs.iter() {
+            let Some(unit) = payload_str(p, "unit") else {
+                continue;
+            };
+            if asset_ids.contains(unit) {
+                continue;
+            }
+            let amount = payload_num(p, "units").unwrap_or(0.0);
+            if let Some(base) = &base_currency {
+                if unit.eq_ignore_ascii_case(base) {
+                    cash_flow += amount;
                 } else {
-                    payload_num(p, "units")
+                    conversion_gaps.push(json!({
+                        "date": date.to_rfc3339(),
+                        "unit": unit,
+                        "amount": amount,
+                        "reason": "missing_fx_rate_or_snapshot_cash_conversion",
+                    }));
                 }
-            })
-            .sum();
+            } else {
+                cash_flow += amount;
+            }
+        }
         if cash_flow.abs() > 1e-12 {
             flows.push(CashFlow {
                 when: date,
@@ -697,10 +783,14 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
             });
         }
         if currency.is_none() {
-            currency = legs.iter().find_map(|p| {
-                let unit = payload_str(p, "unit")?;
-                (!asset_ids.contains(unit)).then(|| unit.to_string())
-            });
+            currency = if let Some(base) = &base_currency {
+                Some(base.clone())
+            } else {
+                legs.iter().find_map(|p| {
+                    let unit = payload_str(p, "unit")?;
+                    (!asset_ids.contains(unit)).then(|| unit.to_string())
+                })
+            };
         }
         if scope == "asset" {
             let asset_id = asset_filter.unwrap();
@@ -719,12 +809,25 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         }
     }
 
-    if scope == "asset" && residual_qty > 0.0 && last_price > 0.0 {
+    if scope == "asset" && residual_qty > 0.0 {
         let terminal = to.unwrap_or_else(Utc::now);
-        flows.push(CashFlow {
-            when: terminal,
-            amount: residual_qty * last_price,
+        let snapshot_terminal = base_currency.as_deref().and_then(|base| {
+            if snapshot_base.as_deref() != Some(base) {
+                return None;
+            }
+            let asset_id = asset_filter?;
+            snapshot_holdings(ctx.portfolio_snapshot)?
+                .get(asset_id)
+                .and_then(|h| holding_value_base(h, "market_value_base", base))
         });
+        let terminal_amount =
+            snapshot_terminal.or_else(|| (last_price > 0.0).then_some(residual_qty * last_price));
+        if let Some(amount) = terminal_amount {
+            flows.push(CashFlow {
+                when: terminal,
+                amount,
+            });
+        }
     }
 
     let rate = xirr(&flows);
@@ -736,8 +839,11 @@ async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         "rate":          rate,
         "flows":         flows.iter().map(|f| json!({"date": f.when.to_rfc3339(), "amount": f.amount})).collect::<Vec<_>>(),
         "currency":      currency,
+        "base_currency": base_currency,
+        "conversion_source": if conversion_gaps.is_empty() { "native_or_snapshot_base" } else { "partial" },
+        "conversion_gaps": conversion_gaps,
         "approximation": true,
-        "note":          "单币种 Newton 法近似；现金流来自 postings 的非资产腿，未平仓持仓使用 postings 注解中的最高价作为期末估值。",
+        "note":          "Newton 法近似；指定 base_currency 时仅汇总同币种现金流，并优先使用客户端 snapshot 的期末 base 市值。conversion_gaps 列出缺少 FX 的现金流。",
     }))
 }
 
@@ -780,6 +886,7 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         .get("granularity")
         .and_then(|v| v.as_str())
         .unwrap_or("month");
+    let base_currency = requested_base_currency(input, ctx.portfolio_snapshot);
 
     let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
     let asset_ids: std::collections::HashSet<String> =
@@ -799,6 +906,7 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
 
     // Cash position ≈ cumulative fiat postings up to t.
     let mut events: Vec<(DateTime<Utc>, f64, Option<String>)> = Vec::new();
+    let mut conversion_gaps: Vec<Value> = Vec::new();
     for (_, p) in &postings {
         let Some(unit) = payload_str(p, "unit") else {
             continue;
@@ -813,6 +921,17 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
             continue;
         };
         let amount = payload_num(p, "units").unwrap_or(0.0);
+        if let Some(base) = &base_currency {
+            if !unit.eq_ignore_ascii_case(base) {
+                conversion_gaps.push(json!({
+                    "date": date.to_rfc3339(),
+                    "unit": unit,
+                    "amount": amount,
+                    "reason": "missing_fx_rate_or_snapshot_cash_conversion",
+                }));
+                continue;
+            }
+        }
         events.push((date, amount, Some(unit.to_string())));
     }
     events.sort_by_key(|a| a.0);
@@ -821,6 +940,9 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         .iter()
         .map(|(_, p)| payload_num(p, "principal").unwrap_or(0.0))
         .sum();
+    let current_holdings_base = base_currency
+        .as_deref()
+        .and_then(|base| snapshot_total_base(ctx.portfolio_snapshot, "market_value_base", base));
 
     let mut series = Vec::new();
     let mut cursor = from;
@@ -840,6 +962,7 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
             "date":     cursor.to_rfc3339(),
             "value":    value,
             "currency": currency,
+            "base_currency": base_currency.as_deref(),
         }));
         let next = next_step(cursor, granularity);
         if next == cursor {
@@ -853,8 +976,17 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         "to":            to.to_rfc3339(),
         "granularity":   granularity,
         "series":        series,
+        "base_currency": base_currency.as_deref(),
+        "current_snapshot": current_holdings_base.map(|holdings| json!({
+            "as_of": ctx.portfolio_snapshot.and_then(|s| s.get("as_of")).and_then(|v| v.as_str()),
+            "holdings_market_value_base": holdings,
+            "base_currency": base_currency.as_deref(),
+            "source": "client_portfolio_snapshot",
+        })),
+        "conversion_source": if conversion_gaps.is_empty() { "native_or_snapshot_base" } else { "partial" },
+        "conversion_gaps": conversion_gaps,
         "approximation": true,
-        "note":          "使用累计现金流 - 当前负债余额近似净资产；未做市值重估、跨币种折算或汇率调整。",
+        "note":          "使用累计现金流 - 当前负债余额近似净资产；指定 base_currency 时只汇总同币种现金流，并附带客户端 snapshot 的当前持仓 base 市值。conversion_gaps 列出缺少 FX 的现金流。",
     }))
 }
 
@@ -907,15 +1039,26 @@ async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, Ap
     let mut buckets: std::collections::HashMap<String, (f64, Option<String>)> =
         std::collections::HashMap::new();
     let mut total = 0.0f64;
+    let base_currency = holdings
+        .get("base_currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_uppercase());
     for (asset_id, h) in holdings_obj {
         let Some(asset) = asset_lookup.get(asset_id) else {
             continue;
         };
-        let cost = h.get("cost_basis").and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let currency = h
-            .get("currency")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
+        let cost = base_currency
+            .as_deref()
+            .and_then(|base| holding_value_base(h, "cost_basis_base", base))
+            .or_else(|| h.get("cost_basis").and_then(|v| v.as_f64()))
+            .or_else(|| h.get("cost_basis_asset_currency").and_then(value_num))
+            .unwrap_or(0.0);
+        let currency = base_currency.clone().or_else(|| {
+            h.get("currency")
+                .or_else(|| h.get("asset_currency"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+        });
         let label = dim_label(asset, dim);
         let entry = buckets.entry(label).or_insert((0.0, None));
         entry.0 += cost;
@@ -944,9 +1087,10 @@ async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, Ap
     });
     Ok(json!({
         "total":         total,
+        "base_currency": base_currency,
         "buckets":       items,
         "approximation": true,
-        "note":          "占比基于记账成本，未做币种折算。",
+        "note":          "占比基于记账成本；有客户端 snapshot base 成本时使用 base 折算，否则使用原币近似。",
     }))
 }
 
@@ -963,13 +1107,26 @@ async fn get_risk_alerts(ctx: &ToolCtx<'_>) -> Result<Value, AppError> {
         .and_then(|v| v.as_object())
         .map(|m| {
             m.values()
-                .filter_map(|h| h.get("cost_basis").and_then(|x| x.as_f64()))
+                .filter_map(|h| {
+                    holdings
+                        .get("base_currency")
+                        .and_then(|v| v.as_str())
+                        .and_then(|base| holding_value_base(h, "cost_basis_base", base))
+                        .or_else(|| h.get("cost_basis").and_then(|x| x.as_f64()))
+                        .or_else(|| h.get("cost_basis_asset_currency").and_then(value_num))
+                })
                 .sum()
         })
         .unwrap_or(0.0);
     if let Some(map) = holdings.get("holdings").and_then(|v| v.as_object()) {
         for (asset_id, h) in map {
-            let cost = h.get("cost_basis").and_then(|v| v.as_f64()).unwrap_or(0.0);
+            let cost = holdings
+                .get("base_currency")
+                .and_then(|v| v.as_str())
+                .and_then(|base| holding_value_base(h, "cost_basis_base", base))
+                .or_else(|| h.get("cost_basis").and_then(|v| v.as_f64()))
+                .or_else(|| h.get("cost_basis_asset_currency").and_then(value_num))
+                .unwrap_or(0.0);
             let share = if total > 0.0 { cost / total } else { 0.0 };
             if share > 0.20 {
                 alerts.push(json!({
@@ -1046,6 +1203,35 @@ mod tests {
             },
         ]);
         assert!(rate.is_none());
+    }
+
+    #[test]
+    fn snapshot_total_base_sums_string_base_values() {
+        let snapshot = json!({
+            "base_currency": "CNY",
+            "holdings": {
+                "a": {"base_currency": "CNY", "market_value_base": "12.5"},
+                "b": {"base_currency": "CNY", "market_value_base": 7.5}
+            }
+        });
+        assert_eq!(
+            snapshot_total_base(Some(&snapshot), "market_value_base", "CNY"),
+            Some(20.0)
+        );
+    }
+
+    #[test]
+    fn snapshot_total_base_rejects_wrong_base_currency() {
+        let snapshot = json!({
+            "base_currency": "USD",
+            "holdings": {
+                "a": {"base_currency": "USD", "market_value_base": "12.5"}
+            }
+        });
+        assert_eq!(
+            snapshot_total_base(Some(&snapshot), "market_value_base", "CNY"),
+            None
+        );
     }
 
     #[test]
