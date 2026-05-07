@@ -17,6 +17,7 @@ class _FakeApi implements AiChatApiClient {
   final List<AiChatEvent> script = <AiChatEvent>[];
   List<WireMessage>? lastMessages;
   Object? errorToThrow;
+  Object? cancelBeforeThrow;
 
   @override
   Stream<AiChatEvent> chat({
@@ -27,7 +28,13 @@ class _FakeApi implements AiChatApiClient {
     CancelToken? cancelToken,
   }) async* {
     lastMessages = messages;
-    if (errorToThrow != null) throw errorToThrow!;
+    if (errorToThrow != null) {
+      final reason = cancelBeforeThrow;
+      if (reason != null) {
+        cancelToken?.cancel(reason);
+      }
+      throw errorToThrow!;
+    }
     for (final e in script) {
       // Mimic real network latency so the controller's "isStreaming"
       // window has a chance to be observed.
@@ -97,6 +104,57 @@ void main() {
       expect(api.lastMessages!.single.role, 'user');
     });
 
+    test('creates a missing session before inserting messages', () async {
+      api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+      const missingSessionId = '5be4c844-2c5f-4f42-8a56-b3056ca44b8e';
+
+      final outcome = await repo.sendMessage(
+        sessionId: missingSessionId,
+        ownerUserId: 'user-1',
+        content: '我最近三个月赚了多少？',
+      );
+
+      expect(outcome, SendOutcome.completed);
+      final session = await store.findSession(missingSessionId);
+      expect(session, isNotNull);
+      expect(session!.ownerUserId, 'user-1');
+      expect(session.title, '我最近三个月赚了多少？');
+      final messages = await store.listMessages(missingSessionId);
+      expect(messages.where((m) => m.role == ChatRole.user), hasLength(1));
+      expect(messages.where((m) => m.role == ChatRole.assistant), hasLength(1));
+    });
+
+    test(
+      'creates a missing session before inserting a system notice',
+      () async {
+        const missingSessionId = '5be4c844-2c5f-4f42-8a56-b3056ca44b8e';
+
+        await repo.insertSystemNotice(
+          sessionId: missingSessionId,
+          ownerUserId: 'user-1',
+          content: '同步稍后会继续。',
+        );
+
+        expect(await store.findSession(missingSessionId), isNotNull);
+        final messages = await store.listMessages(missingSessionId);
+        expect(messages.single.role, ChatRole.system);
+        expect(messages.single.content, '同步稍后会继续。');
+      },
+    );
+
+    test('rejects writes to a session owned by another user', () async {
+      final session = await repo.createSession(ownerUserId: 'other-user');
+
+      await expectLater(
+        repo.sendMessage(
+          sessionId: session.id,
+          ownerUserId: 'user-1',
+          content: 'hello',
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
     test(
       'records tool invocations on the assistant turn in arrival order',
       () async {
@@ -164,6 +222,55 @@ void main() {
       )).firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.errored);
       expect(assistant.errorMessage, 'boom');
+    });
+
+    test(
+      'does not show cancelled for internal stream cleanup errors',
+      () async {
+        api
+          ..errorToThrow = const AiChatRequestException(
+            statusCode: 0,
+            message: 'stream closed',
+          )
+          ..cancelBeforeThrow = 'listener cancelled';
+
+        final id = await activeSessionId();
+        final outcome = await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: 'hi',
+        );
+
+        expect(outcome, SendOutcome.errored);
+        final assistant = (await store.listMessages(
+          id,
+        )).firstWhere((m) => m.role == ChatRole.assistant);
+        expect(assistant.status, ChatMessageStatus.errored);
+        expect(assistant.errorMessage, 'stream closed');
+      },
+    );
+
+    test('shows cancelled only for user-triggered cancellation', () async {
+      api
+        ..errorToThrow = const AiChatRequestException(
+          statusCode: 0,
+          message: 'request cancelled',
+        )
+        ..cancelBeforeThrow = 'user cancelled';
+
+      final id = await activeSessionId();
+      final outcome = await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'hi',
+      );
+
+      expect(outcome, SendOutcome.cancelled);
+      final assistant = (await store.listMessages(
+        id,
+      )).firstWhere((m) => m.role == ChatRole.assistant);
+      expect(assistant.status, ChatMessageStatus.errored);
+      expect(assistant.errorMessage, kCancelledError);
     });
 
     test('autotitles the session from the first user prompt', () async {

@@ -47,10 +47,19 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   }
 
   Future<void> _ensureSession(String ownerUserId) async {
-    if (_activeSessionId != null) return;
     if (_lastBootstrappedUserId == ownerUserId) return;
     _lastBootstrappedUserId = ownerUserId;
     final repo = await ref.read(chatRepositoryProvider.future);
+    final activeSessionId = _activeSessionId;
+    if (activeSessionId != null) {
+      final active = await repo.findSession(activeSessionId);
+      if (!mounted) return;
+      if (active != null && active.ownerUserId == ownerUserId) {
+        setState(() => _bootstrapped = true);
+        return;
+      }
+      setState(() => _activeSessionId = null);
+    }
     final existing = await ref.read(
       chatSessionsStreamProvider(ownerUserId).future,
     );

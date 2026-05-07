@@ -18,3 +18,17 @@ pub fn encode_event(event: &str, payload: &str) -> Vec<u8> {
     buf.push_str("\n\n");
     buf.into_bytes()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encode_event_writes_sse_frame() {
+        let frame = encode_event("text", r#"{"text":"你好"}"#);
+        assert_eq!(
+            String::from_utf8(frame).unwrap(),
+            "event: text\ndata: {\"text\":\"你好\"}\n\n"
+        );
+    }
+}

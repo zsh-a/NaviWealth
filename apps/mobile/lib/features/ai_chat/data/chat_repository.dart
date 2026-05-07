@@ -18,6 +18,7 @@ const kNewSessionTitle = '新对话';
 /// Sentinel error message for cancelled requests. UI layer should
 /// resolve to localized string when displaying.
 const kCancelledError = '已取消';
+const _userCancelledReason = 'user cancelled';
 
 /// Outcome of a `sendMessage` turn — surfaced to the controller so the
 /// UI can flip from "streaming" back to "idle" deterministically.
@@ -51,6 +52,8 @@ class ChatRepository {
 
   Stream<List<ChatMessage>> watchMessages(String sessionId) =>
       _store.watchMessages(sessionId);
+
+  Future<ChatSession?> findSession(String id) => _store.findSession(id);
 
   /// Create a new empty thread. Used by the "+" button.
   Future<ChatSession> createSession({
@@ -106,6 +109,11 @@ class ChatRepository {
         message: 'not authenticated',
       );
     }
+    await _ensureSessionExists(
+      sessionId: sessionId,
+      ownerUserId: ownerUserId,
+      model: model,
+    );
 
     final history = await _store.listMessages(sessionId);
 
@@ -214,7 +222,7 @@ class ChatRepository {
         }
       }
     } catch (e) {
-      if (localCancel.isCancelled) {
+      if (_isUserCancelled(localCancel)) {
         outcome = SendOutcome.cancelled;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
@@ -273,6 +281,7 @@ class ChatRepository {
     required String ownerUserId,
     required String content,
   }) async {
+    await _ensureSessionExists(sessionId: sessionId, ownerUserId: ownerUserId);
     final notice = ChatMessage(
       id: _uuid.v4(),
       sessionId: sessionId,
@@ -283,6 +292,32 @@ class ChatRepository {
       createdAt: DateTime.now().toUtc(),
     );
     await _store.insertMessage(notice);
+  }
+
+  Future<void> _ensureSessionExists({
+    required String sessionId,
+    required String ownerUserId,
+    String? model,
+  }) async {
+    final existing = await _store.findSession(sessionId);
+    if (existing != null) {
+      if (existing.ownerUserId != ownerUserId) {
+        throw StateError('chat session $sessionId belongs to another user');
+      }
+      return;
+    }
+    final now = DateTime.now().toUtc();
+    await _store.insertSession(
+      ChatSession(
+        id: sessionId,
+        ownerUserId: ownerUserId,
+        title: kNewSessionTitle,
+        createdAt: now,
+        updatedAt: now,
+        lastMessageAt: null,
+        model: model,
+      ),
+    );
   }
 
   Future<void> _autotitleIfNeeded(
@@ -315,5 +350,9 @@ class ChatRepository {
       return e.message;
     }
     return e.toString();
+  }
+
+  bool _isUserCancelled(CancelToken token) {
+    return token.cancelError?.error == _userCancelledReason;
   }
 }

@@ -16,7 +16,8 @@
 //! code changes.
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use worker::wasm_bindgen::JsValue;
 use worker::{Fetch, Headers, Method, Request, RequestInit};
 
@@ -117,13 +118,24 @@ fn build_request(config: &LlmConfig, body: &str) -> Result<Request, AppError> {
         .map_err(|e| AppError::Internal(format!("req: {e}")))
 }
 
+#[cfg(test)]
+fn serialize_payload(payload: &AnthropicRequest<'_>) -> Result<String, AppError> {
+    serde_json::to_string(payload).map_err(|e| AppError::Internal(format!("ser: {e}")))
+}
+
+fn serialize_streaming_payload(payload: &AnthropicRequest<'_>) -> Result<String, AppError> {
+    let mut body =
+        serde_json::to_value(payload).map_err(|e| AppError::Internal(format!("ser: {e}")))?;
+    body["stream"] = Value::Bool(true);
+    serde_json::to_string(&body).map_err(|e| AppError::Internal(format!("ser: {e}")))
+}
+
 /// Non-streaming call. Returns the parsed message.
 pub async fn call_blocking(
     config: &LlmConfig,
     payload: &AnthropicRequest<'_>,
 ) -> Result<AnthropicMessage, AppError> {
-    let body =
-        serde_json::to_string(payload).map_err(|e| AppError::Internal(format!("ser: {e}")))?;
+    let body = serialize_streaming_payload(payload)?;
     let req = build_request(config, &body)?;
     let mut resp = Fetch::Request(req)
         .send()
@@ -137,9 +149,261 @@ pub async fn call_blocking(
             text
         )));
     }
-    let msg: AnthropicMessage = resp
-        .json()
+    let text = resp
+        .text()
         .await
-        .map_err(|e| AppError::Internal(format!("llm json: {e}")))?;
-    Ok(msg)
+        .map_err(|e| AppError::Internal(format!("llm body: {e}")))?;
+    if text.trim_start().starts_with("event:") {
+        parse_streaming_message(&text)
+    } else {
+        serde_json::from_str(&text).map_err(|e| AppError::Internal(format!("llm json: {e}")))
+    }
+}
+
+#[derive(Default)]
+struct StreamingBlock {
+    ty: String,
+    id: Option<String>,
+    name: Option<String>,
+    text: String,
+    input_json: String,
+    input: Option<Value>,
+}
+
+fn parse_streaming_message(sse: &str) -> Result<AnthropicMessage, AppError> {
+    let mut blocks: BTreeMap<usize, StreamingBlock> = BTreeMap::new();
+    let mut stop_reason: Option<String> = None;
+
+    for frame in sse.split("\n\n") {
+        let data = frame
+            .lines()
+            .filter_map(|line| line.strip_prefix("data: "))
+            .collect::<Vec<_>>()
+            .join("\n");
+        if data.trim().is_empty() {
+            continue;
+        }
+        let event: Value = serde_json::from_str(&data)
+            .map_err(|e| AppError::Internal(format!("llm stream json: {e}")))?;
+        match event.get("type").and_then(|v| v.as_str()) {
+            Some("content_block_start") => {
+                let index = event.get("index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                let content_block = event.get("content_block").unwrap_or(&Value::Null);
+                let ty = content_block
+                    .get("type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let block = blocks.entry(index).or_default();
+                block.ty = ty;
+                block.id = content_block
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .map(ToString::to_string);
+                block.name = content_block
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .map(ToString::to_string);
+                if let Some(text) = content_block.get("text").and_then(|v| v.as_str()) {
+                    block.text.push_str(text);
+                }
+                block.input = content_block.get("input").cloned();
+            }
+            Some("content_block_delta") => {
+                let index = event.get("index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                let delta = event.get("delta").unwrap_or(&Value::Null);
+                let block = blocks.entry(index).or_default();
+                match delta.get("type").and_then(|v| v.as_str()) {
+                    Some("text_delta") => {
+                        if let Some(text) = delta.get("text").and_then(|v| v.as_str()) {
+                            block.text.push_str(text);
+                        }
+                    }
+                    Some("input_json_delta") => {
+                        if let Some(partial) = delta.get("partial_json").and_then(|v| v.as_str()) {
+                            block.input_json.push_str(partial);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            Some("message_delta") => {
+                stop_reason = event
+                    .get("delta")
+                    .and_then(|v| v.get("stop_reason"))
+                    .and_then(|v| v.as_str())
+                    .map(ToString::to_string);
+            }
+            Some("error") => {
+                return Err(AppError::Internal(format!("llm stream error: {data}")));
+            }
+            _ => {}
+        }
+    }
+
+    let content = blocks
+        .into_values()
+        .filter_map(|block| match block.ty.as_str() {
+            "text" => Some(json!({"type": "text", "text": block.text})),
+            "tool_use" => {
+                let input = if block.input_json.trim().is_empty() {
+                    block.input.unwrap_or_else(|| json!({}))
+                } else {
+                    serde_json::from_str(&block.input_json).unwrap_or(Value::Null)
+                };
+                Some(json!({
+                    "type": "tool_use",
+                    "id": block.id.unwrap_or_default(),
+                    "name": block.name.unwrap_or_default(),
+                    "input": input,
+                }))
+            }
+            _ => None,
+        })
+        .collect();
+
+    Ok(AnthropicMessage {
+        content,
+        stop_reason,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn messages_url_matches_modelscope_anthropic_compat_shape() {
+        let default = LlmConfig::new("key".into(), None);
+        assert_eq!(
+            default.messages_url(),
+            "https://api-inference.modelscope.cn/v1/messages"
+        );
+
+        let v1 = LlmConfig::new("key".into(), Some("https://example.test/v1".into()));
+        assert_eq!(v1.messages_url(), "https://example.test/v1/messages");
+
+        let exact = LlmConfig::new(
+            "key".into(),
+            Some("https://example.test/custom/messages".into()),
+        );
+        assert_eq!(exact.messages_url(), "https://example.test/custom/messages");
+    }
+
+    #[test]
+    fn serializes_anthropic_messages_payload_for_llm_provider() {
+        let messages = vec![
+            ChatMessage {
+                role: "user".into(),
+                content: json!("你好"),
+            },
+            ChatMessage {
+                role: "assistant".into(),
+                content: json!([{"type": "text", "text": "你好，有什么可以帮你？"}]),
+            },
+        ];
+        let tools = vec![ToolSchema {
+            name: "get_holdings".into(),
+            description: "Read holdings".into(),
+            input_schema: json!({"type": "object", "properties": {}}),
+        }];
+        let payload = AnthropicRequest {
+            model: DEFAULT_MODEL,
+            max_tokens: 1024,
+            system: "system prompt",
+            messages: &messages,
+            tools: &tools,
+            stream: false,
+        };
+
+        let body = serialize_payload(&payload).unwrap();
+        let decoded: Value = serde_json::from_str(&body).unwrap();
+
+        assert_eq!(decoded["model"], DEFAULT_MODEL);
+        assert_eq!(decoded["max_tokens"], 1024);
+        assert_eq!(decoded["system"], "system prompt");
+        assert_eq!(decoded["stream"], false);
+        assert_eq!(decoded["messages"][0]["role"], "user");
+        assert_eq!(decoded["messages"][0]["content"], "你好");
+        assert_eq!(decoded["messages"][1]["role"], "assistant");
+        assert_eq!(decoded["messages"][1]["content"][0]["type"], "text");
+        assert_eq!(decoded["tools"][0]["name"], "get_holdings");
+        assert!(decoded.get("api_key").is_none());
+    }
+
+    #[test]
+    fn provider_payload_forces_streaming_for_modelscope_compat() {
+        let messages = vec![ChatMessage {
+            role: "user".into(),
+            content: json!("你好"),
+        }];
+        let payload = AnthropicRequest {
+            model: DEFAULT_MODEL,
+            max_tokens: 128,
+            system: "system prompt",
+            messages: &messages,
+            tools: &[],
+            stream: false,
+        };
+
+        let body = serialize_streaming_payload(&payload).unwrap();
+        let decoded: Value = serde_json::from_str(&body).unwrap();
+
+        assert_eq!(decoded["stream"], true);
+        assert_eq!(decoded["messages"][0]["content"], "你好");
+    }
+
+    #[test]
+    fn parses_streaming_text_message() {
+        let sse = concat!(
+            "event: message_start\n",
+            "data: {\"type\":\"message_start\",\"message\":{\"content\":[]}}\n\n",
+            "event: content_block_start\n",
+            "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n",
+            "event: content_block_delta\n",
+            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"真实\"}}\n\n",
+            "event: content_block_delta\n",
+            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" API 验证通过\"}}\n\n",
+            "event: message_delta\n",
+            "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\n",
+            "event: message_stop\n",
+            "data: {\"type\":\"message_stop\"}\n\n",
+        );
+
+        let msg = parse_streaming_message(sse).unwrap();
+
+        assert_eq!(msg.stop_reason.as_deref(), Some("end_turn"));
+        assert_eq!(
+            msg.content,
+            vec![json!({"type": "text", "text": "真实 API 验证通过"})]
+        );
+    }
+
+    #[test]
+    fn parses_streaming_tool_use_message() {
+        let sse = concat!(
+            "event: content_block_start\n",
+            "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_1\",\"name\":\"get_risk_alerts\",\"input\":{}}}\n\n",
+            "event: content_block_delta\n",
+            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"as_of\\\":\"}}\n\n",
+            "event: content_block_delta\n",
+            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"2026-05-07\\\"}\"}}\n\n",
+            "event: message_delta\n",
+            "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"}}\n\n",
+        );
+
+        let msg = parse_streaming_message(sse).unwrap();
+
+        assert_eq!(msg.stop_reason.as_deref(), Some("tool_use"));
+        assert_eq!(
+            msg.content,
+            vec![json!({
+                "type": "tool_use",
+                "id": "toolu_1",
+                "name": "get_risk_alerts",
+                "input": {"as_of": "2026-05-07"}
+            })]
+        );
+    }
 }
