@@ -53,24 +53,23 @@ pub const SYSTEM_PROMPT: &str = "你是 NaviWealth 用户的私人财务助手�
 \n\
 当前时间会作为消息的一部分提供给你。";
 
-/// Hard cap on the size of a single chat request body. The Anthropic API
+/// Hard cap on the size of a single chat request body. The LLM API
 /// itself bills by token, but we run the request count check first; this is
 /// the second wall, defending against a malicious client trying to OOM the
 /// Worker by pushing a 50 MB conversation. The 32K-character bound is
-/// generous enough for real chats (Claude Sonnet's input window is much
-/// larger) without leaving headroom for abuse.
+/// generous enough for real chats without leaving headroom for abuse.
 pub const MAX_REQUEST_BODY_BYTES: usize = 32 * 1024;
 
 /// Per-user request budget (rolling 1h window).
 pub const RATE_LIMIT_PER_HOUR: u32 = 60;
 
-/// Cap the model's output tokens per Anthropic call. Keeps a single response
-/// from running away even if the conversation history slips past us. Anthropic
-/// requires `max_tokens` on every Messages API call anyway.
+/// Cap the model's output tokens per LLM call. Keeps a single response
+/// from running away even if the conversation history slips past us. The
+/// Anthropic-compatible Messages API requires `max_tokens` on every call.
 pub const ANTHROPIC_MAX_OUTPUT_TOKENS: u32 = 4096;
 
 /// Maximum number of tool-call rounds we'll service for a single client
-/// request. Each round is one Anthropic call + the tool dispatch. This bounds
+/// request. Each round is one LLM call + the tool dispatch. This bounds
 /// the worst-case cost of a confused model that keeps asking for the same
 /// data — eight rounds is well past every legitimate flow today.
 pub const MAX_TOOL_ROUNDS: u8 = 8;
