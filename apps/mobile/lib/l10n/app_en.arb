@@ -1198,6 +1198,46 @@
   "@planRebalanceTitle": { "description": "Plan page: rebalance card title" },
   "planRebalanceSubtitle": "Portfolio drift & rebalancing",
   "@planRebalanceSubtitle": { "description": "Plan page: rebalance card subtitle" },
+  "planSummaryLoadError": "Needs attention",
+  "@planSummaryLoadError": { "description": "Plan page summary chip shown when a card summary cannot load." },
+  "planSummaryConfigureGoal": "Set a target",
+  "@planSummaryConfigureGoal": { "description": "Plan page FIRE summary chip when no FIRE goal is configured." },
+  "planSummaryProgress": "Progress {value}",
+  "@planSummaryProgress": {
+    "description": "Plan page FIRE progress summary chip.",
+    "placeholders": { "value": { "type": "String", "example": "42%" } }
+  },
+  "planSummaryEta": "ETA {value}",
+  "@planSummaryEta": {
+    "description": "Plan page FIRE estimated time-to-target summary chip.",
+    "placeholders": { "value": { "type": "String", "example": "8y 2m" } }
+  },
+  "planSummaryNoRiskAlerts": "No concentration alerts",
+  "@planSummaryNoRiskAlerts": { "description": "Plan page analytics summary chip when there are no risk alerts." },
+  "planSummaryRiskAlerts": "{count, plural, =1 {1 alert} other {{count} alerts}}",
+  "@planSummaryRiskAlerts": {
+    "description": "Plan page analytics summary chip for concentration alert count.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "planSummaryCriticalAlerts": "{count, plural, =1 {1 critical} other {{count} critical}}",
+  "@planSummaryCriticalAlerts": {
+    "description": "Plan page analytics summary chip for critical concentration alert count.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "planSummaryNoPortfolio": "No portfolio data",
+  "@planSummaryNoPortfolio": { "description": "Plan page rebalance summary chip when there is no portfolio snapshot." },
+  "planSummaryBalanced": "Balanced",
+  "@planSummaryBalanced": { "description": "Plan page rebalance summary chip when allocation is within thresholds." },
+  "planSummaryDrift": "Drift {value}",
+  "@planSummaryDrift": {
+    "description": "Plan page rebalance summary chip for overall drift.",
+    "placeholders": { "value": { "type": "String", "example": "6.2%" } }
+  },
+  "planSummaryTrades": "{count, plural, =1 {1 trade} other {{count} trades}}",
+  "@planSummaryTrades": {
+    "description": "Plan page rebalance summary chip for suggested trade count.",
+    "placeholders": { "count": { "type": "int" } }
+  },
 
   "settingsDataSection": "Data",
   "@settingsDataSection": { "description": "Settings section header for backup/restore" },

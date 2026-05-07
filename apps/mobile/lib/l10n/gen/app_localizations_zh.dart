@@ -2352,6 +2352,66 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planRebalanceSubtitle => '投资组合偏离与再平衡';
 
   @override
+  String get planSummaryLoadError => '需要关注';
+
+  @override
+  String get planSummaryConfigureGoal => '设置目标';
+
+  @override
+  String planSummaryProgress(String value) {
+    return '进度 $value';
+  }
+
+  @override
+  String planSummaryEta(String value) {
+    return '预计 $value';
+  }
+
+  @override
+  String get planSummaryNoRiskAlerts => '无集中度风险';
+
+  @override
+  String planSummaryRiskAlerts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条提醒',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planSummaryCriticalAlerts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条严重',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planSummaryNoPortfolio => '暂无组合数据';
+
+  @override
+  String get planSummaryBalanced => '已平衡';
+
+  @override
+  String planSummaryDrift(String value) {
+    return '偏离 $value';
+  }
+
+  @override
+  String planSummaryTrades(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔建议交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsDataSection => '数据';
 
   @override

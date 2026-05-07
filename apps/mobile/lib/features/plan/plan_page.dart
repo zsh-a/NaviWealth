@@ -3,8 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/format/formatters.dart';
+import '../../core/format/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../analytics/data/providers.dart';
+import '../analytics/domain/concentration_risk.dart';
+import '../fire/data/fire_providers.dart';
+import '../fire/domain/fire_projection.dart';
+import '../rebalance/data/rebalance_providers.dart';
 
 /// Plan tab — umbrella page showing FIRE progress, portfolio analytics,
 /// and rebalance overview as summary cards.
@@ -14,6 +21,12 @@ class PlanPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = ref.watch(
+      appFormattersProvider(Localizations.localeOf(context)),
+    );
+    final fireView = ref.watch(fireDashboardViewProvider);
+    final riskAlerts = ref.watch(concentrationAlertsProvider);
+    final rebalancePlan = ref.watch(rebalancePlanProvider);
 
     return Scaffold(
       appBar: GlassAppBar(title: Text(l10n.navPlan)),
@@ -27,18 +40,68 @@ class PlanPage extends ConsumerWidget {
               icon: Icons.flag_outlined,
               title: l10n.planFireTitle,
               subtitle: l10n.planFireSubtitle,
+              summary: fireView.when(
+                loading: () => const [_SummarySkeleton()],
+                error: (_, _) => [
+                  _SummaryChip(label: l10n.planSummaryLoadError),
+                ],
+                data: (view) => _fireSummary(l10n, formatters, view),
+              ),
               onTap: () => context.push(AppRoutes.planFire),
             ),
             _PlanCard(
               icon: Icons.pie_chart_outline,
               title: l10n.planAnalyticsTitle,
               subtitle: l10n.planAnalyticsSubtitle,
+              summary: riskAlerts.when(
+                loading: () => const [_SummarySkeleton()],
+                error: (_, _) => [
+                  _SummaryChip(label: l10n.planSummaryLoadError),
+                ],
+                data: (alerts) {
+                  if (alerts.isEmpty) {
+                    return [_SummaryChip(label: l10n.planSummaryNoRiskAlerts)];
+                  }
+                  final critical = alerts
+                      .where((a) => a.severity == RiskSeverity.critical)
+                      .length;
+                  return [
+                    _SummaryChip(
+                      label: l10n.planSummaryRiskAlerts(alerts.length),
+                    ),
+                    if (critical > 0)
+                      _SummaryChip(
+                        label: l10n.planSummaryCriticalAlerts(critical),
+                      ),
+                  ];
+                },
+              ),
               onTap: () => context.push(AppRoutes.planAnalytics),
             ),
             _PlanCard(
               icon: Icons.balance_outlined,
               title: l10n.planRebalanceTitle,
               subtitle: l10n.planRebalanceSubtitle,
+              summary: rebalancePlan == null
+                  ? [_SummaryChip(label: l10n.planSummaryNoPortfolio)]
+                  : [
+                      _SummaryChip(
+                        label: rebalancePlan.isBalanced
+                            ? l10n.planSummaryBalanced
+                            : l10n.planSummaryDrift(
+                                formatters.percent(
+                                  rebalancePlan.driftBeforePct,
+                                  decimalDigits: 1,
+                                ),
+                              ),
+                      ),
+                      if (!rebalancePlan.isBalanced)
+                        _SummaryChip(
+                          label: l10n.planSummaryTrades(
+                            rebalancePlan.trades.length,
+                          ),
+                        ),
+                    ],
               onTap: () => context.push(AppRoutes.planRebalance),
             ),
           ];
@@ -79,6 +142,47 @@ class PlanPage extends ConsumerWidget {
       ),
     );
   }
+
+  List<Widget> _fireSummary(
+    AppLocalizations l10n,
+    AppFormatters formatters,
+    FireDashboardView view,
+  ) {
+    final progress = view.progressRatio;
+    if (progress == null) {
+      return [_SummaryChip(label: l10n.planSummaryConfigureGoal)];
+    }
+    final scenario = _baselineScenario(view);
+    return [
+      _SummaryChip(
+        label: l10n.planSummaryProgress(
+          formatters.percent(progress, decimalDigits: 0),
+        ),
+      ),
+      _SummaryChip(label: l10n.planSummaryEta(_formatMonths(l10n, scenario))),
+    ];
+  }
+
+  FireScenario _baselineScenario(FireDashboardView view) {
+    return view.scenarios.firstWhere(
+      (s) => s.tier == FireScenarioTier.live,
+      orElse: () => view.scenarios.firstWhere(
+        (s) => s.tier == FireScenarioTier.neutral,
+        orElse: () => view.scenarios.first,
+      ),
+    );
+  }
+
+  String _formatMonths(AppLocalizations l10n, FireScenario scenario) {
+    final months = scenario.monthsToTarget;
+    if (months == null) return l10n.fireCountdownUnreachableShort;
+    if (months == 0) return l10n.fireScenarioReachedNow;
+    final years = months ~/ 12;
+    final mm = months % 12;
+    if (years == 0) return l10n.fireCountdownMonthsOnly(mm);
+    if (mm == 0) return l10n.fireCountdownYearsOnly(years);
+    return l10n.fireCountdownYearsMonths(years, mm);
+  }
 }
 
 class _PlanCard extends StatelessWidget {
@@ -86,12 +190,14 @@ class _PlanCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.summary,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final List<Widget> summary;
   final VoidCallback onTap;
 
   @override
@@ -128,6 +234,14 @@ class _PlanCard extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (summary.isNotEmpty) ...[
+                    const SizedBox(height: Spacing.s8),
+                    Wrap(
+                      spacing: Spacing.s6,
+                      runSpacing: Spacing.s6,
+                      children: summary,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -140,5 +254,43 @@ class _PlanCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: Radii.brSm,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s8,
+          vertical: Spacing.s2,
+        ),
+        child: Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SummarySkeleton extends StatelessWidget {
+  const _SummarySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonBox(width: 80, height: 20, radius: Radii.sm);
   }
 }

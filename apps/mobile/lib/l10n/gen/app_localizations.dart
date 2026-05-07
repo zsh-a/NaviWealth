@@ -4398,6 +4398,72 @@ abstract class AppLocalizations {
   /// **'Portfolio drift & rebalancing'**
   String get planRebalanceSubtitle;
 
+  /// Plan page summary chip shown when a card summary cannot load.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get planSummaryLoadError;
+
+  /// Plan page FIRE summary chip when no FIRE goal is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a target'**
+  String get planSummaryConfigureGoal;
+
+  /// Plan page FIRE progress summary chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress {value}'**
+  String planSummaryProgress(String value);
+
+  /// Plan page FIRE estimated time-to-target summary chip.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA {value}'**
+  String planSummaryEta(String value);
+
+  /// Plan page analytics summary chip when there are no risk alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'No concentration alerts'**
+  String get planSummaryNoRiskAlerts;
+
+  /// Plan page analytics summary chip for concentration alert count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 alert} other {{count} alerts}}'**
+  String planSummaryRiskAlerts(int count);
+
+  /// Plan page analytics summary chip for critical concentration alert count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 critical} other {{count} critical}}'**
+  String planSummaryCriticalAlerts(int count);
+
+  /// Plan page rebalance summary chip when there is no portfolio snapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'No portfolio data'**
+  String get planSummaryNoPortfolio;
+
+  /// Plan page rebalance summary chip when allocation is within thresholds.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get planSummaryBalanced;
+
+  /// Plan page rebalance summary chip for overall drift.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift {value}'**
+  String planSummaryDrift(String value);
+
+  /// Plan page rebalance summary chip for suggested trade count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 trade} other {{count} trades}}'**
+  String planSummaryTrades(int count);
+
   /// Settings section header for backup/restore
   ///
   /// In en, this message translates to:
