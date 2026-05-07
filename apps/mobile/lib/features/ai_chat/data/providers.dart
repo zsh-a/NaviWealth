@@ -6,10 +6,12 @@ import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
+import '../../../data/domain/asset.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../investment/data/providers.dart';
+import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_sync_gate.dart';
@@ -34,9 +36,7 @@ final aiChatDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(minutes: 5),
     ),
   );
-  dio.interceptors.add(
-    TalkerDioLogger(talker: ref.read(talkerProvider)),
-  );
+  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
   return dio;
 });
 
@@ -58,24 +58,65 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
   final store = await ref.watch(chatHistoryStoreProvider.future);
   final api = ref.watch(aiChatApiClientProvider);
   final reader = ref.watch(authSessionReaderProvider);
-  return ChatRepository(store: store, api: api, sessionReader: reader);
+  return ChatRepository(
+    store: store,
+    api: api,
+    sessionReader: reader,
+    portfolioSnapshotReader: () => _buildPortfolioSnapshot(ref),
+  );
 });
+
+Future<Map<String, Object?>?> _buildPortfolioSnapshot(Ref ref) async {
+  final holdings = await ref.read(holdingsSnapshotProvider.future);
+  if (holdings.isEmpty) return null;
+  final assets = await ref.read(allAssetsStreamProvider.future);
+  final byId = {for (final asset in assets) asset.id: asset};
+  final asOf = holdings.values.first.asOf.toUtc().toIso8601String();
+  final baseCurrency = holdings.values.first.baseCurrency;
+  return <String, Object?>{
+    'as_of': asOf,
+    'base_currency': baseCurrency,
+    'holdings': <String, Object?>{
+      for (final entry in holdings.entries)
+        entry.key: _holdingSnapshotJson(entry.value, byId[entry.key]),
+    },
+  };
+}
+
+Map<String, Object?> _holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
+  return <String, Object?>{
+    'asset_id': snap.assetId,
+    'symbol': asset?.symbol,
+    'name': asset?.name,
+    'type': asset?.type.name,
+    'net_quantity': snap.quantity.toString(),
+    'asset_currency': snap.assetCurrency,
+    'market_value_asset_currency': snap.marketValueInAssetCurrency.toString(),
+    'cost_basis_asset_currency': snap.costBasisInAssetCurrency.toString(),
+    'base_currency': snap.baseCurrency,
+    'market_value_base': snap.marketValueInBase.toString(),
+    'cost_basis_base': snap.costBasisInBase.toString(),
+    'unrealized_pnl_base': snap.unrealizedPnlInBase.toString(),
+    'weight': snap.weight.toString(),
+    'as_of': snap.asOf.toUtc().toIso8601String(),
+  };
+}
 
 /// Streamed list of all chat sessions for [ownerUserId]. Sidebar UI
 /// watches this directly; one stream per user partition.
 final chatSessionsStreamProvider =
     StreamProvider.family<List<ChatSession>, String>((ref, ownerUserId) async* {
-  final repo = await ref.watch(chatRepositoryProvider.future);
-  yield* repo.watchSessions(ownerUserId);
-});
+      final repo = await ref.watch(chatRepositoryProvider.future);
+      yield* repo.watchSessions(ownerUserId);
+    });
 
 /// Streamed message timeline for a single session. The chat page
 /// watches this; updates fire after every SSE frame.
 final chatMessagesStreamProvider =
     StreamProvider.family<List<ChatMessage>, String>((ref, sessionId) async* {
-  final repo = await ref.watch(chatRepositoryProvider.future);
-  yield* repo.watchMessages(sessionId);
-});
+      final repo = await ref.watch(chatRepositoryProvider.future);
+      yield* repo.watchMessages(sessionId);
+    });
 
 /// Pre-chat sync flush gate (FIR-71). The AI backend reads the user's
 /// data from D1, which is updated by the client's OpLog push. Without
@@ -98,9 +139,7 @@ final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
   );
   final priceRepo = await ref.watch(priceRepositoryProvider.future);
   final accountRepo = await ref.watch(accountRepositoryProvider.future);
-  final manualAssetRepo = await ref.watch(
-    manualAssetRepositoryProvider.future,
-  );
+  final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
   final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
   final currentUserId = ref.watch(currentUserIdProvider);
   return ProposalApplier(

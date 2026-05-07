@@ -1759,6 +1759,94 @@
     "placeholders": { "query": { "type": "String" } }
   },
 
+  "dashboardInsightFireLabel": "FIRE",
+  "@dashboardInsightFireLabel": { "description": "Dashboard insight label: FIRE plan" },
+  "dashboardInsightFireToGoYears": "{years}y {months}m to go",
+  "@dashboardInsightFireToGoYears": {
+    "description": "Dashboard FIRE insight value when at least one year remains",
+    "placeholders": {
+      "years": { "type": "int" },
+      "months": { "type": "int" }
+    }
+  },
+  "dashboardInsightFireToGoMonths": "{months}m to go",
+  "@dashboardInsightFireToGoMonths": {
+    "description": "Dashboard FIRE insight value when less than one year remains",
+    "placeholders": { "months": { "type": "int" } }
+  },
+  "dashboardInsightFireReached": "Goal reached",
+  "@dashboardInsightFireReached": { "description": "Dashboard FIRE insight value when goal is reached" },
+  "dashboardInsightDriftLabel": "Portfolio drift",
+  "@dashboardInsightDriftLabel": { "description": "Dashboard insight label: rebalance drift" },
+  "dashboardInsightDriftOver": "over",
+  "@dashboardInsightDriftOver": { "description": "Dashboard drift direction: overweight" },
+  "dashboardInsightDriftUnder": "under",
+  "@dashboardInsightDriftUnder": { "description": "Dashboard drift direction: underweight" },
+  "dashboardInsightDriftValue": "{category} {direction} {points}pp",
+  "@dashboardInsightDriftValue": {
+    "description": "Dashboard drift insight value",
+    "placeholders": {
+      "category": { "type": "String" },
+      "direction": { "type": "String" },
+      "points": { "type": "int" }
+    }
+  },
+  "dashboardInsightMaturityLabel": "Maturities",
+  "@dashboardInsightMaturityLabel": { "description": "Dashboard insight label: upcoming deposit maturities" },
+  "dashboardInsightMaturityValue": "{count} deposits due in {days}d",
+  "@dashboardInsightMaturityValue": {
+    "description": "Dashboard deposit maturity insight value",
+    "placeholders": {
+      "count": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
+  "dashboardInsightAnomalyLabel": "Expense trend",
+  "@dashboardInsightAnomalyLabel": { "description": "Dashboard insight label: expense anomaly" },
+  "dashboardInsightAnomalyValue": "Projected {percent}",
+  "@dashboardInsightAnomalyValue": {
+    "description": "Dashboard expense anomaly insight value",
+    "placeholders": { "percent": { "type": "String" } }
+  },
+  "portfolioViewAssets": "Assets",
+  "@portfolioViewAssets": { "description": "Portfolio view switcher: assets list" },
+  "portfolioViewAccount": "Account",
+  "@portfolioViewAccount": { "description": "Portfolio view switcher: by account" },
+  "portfolioViewCurrency": "Currency",
+  "@portfolioViewCurrency": { "description": "Portfolio view switcher: by currency" },
+  "portfolioViewClass": "Class",
+  "@portfolioViewClass": { "description": "Portfolio view switcher: by asset class" },
+  "portfolioAggregateItems": "{count} items",
+  "@portfolioAggregateItems": {
+    "description": "Portfolio aggregate row item count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "portfolioCurrencyNative": "Native {amount}",
+  "@portfolioCurrencyNative": {
+    "description": "Portfolio by-currency row native currency total",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "portfolioUnassignedAccount": "Unassigned",
+  "@portfolioUnassignedAccount": { "description": "Portfolio by-account fallback group" },
+  "activityFeedFilterTitle": "Filter",
+  "@activityFeedFilterTitle": { "description": "Activity feed filter action title" },
+  "activityFeedFilterClear": "Clear",
+  "@activityFeedFilterClear": { "description": "Activity feed filter clear action" },
+  "activityFeedFilterKind": "Kind",
+  "@activityFeedFilterKind": { "description": "Activity feed filter kind section" },
+  "activityFeedFilterAccount": "Account",
+  "@activityFeedFilterAccount": { "description": "Activity feed filter account section" },
+  "activityFeedFilterThisMonth": "This month",
+  "@activityFeedFilterThisMonth": { "description": "Activity feed filter date shortcut" },
+  "activityFeedFilteredEmpty": "No activity matches these filters.",
+  "@activityFeedFilteredEmpty": { "description": "Activity feed empty state when filters are active" },
+  "activityFeedLoadMore": "Load more",
+  "@activityFeedLoadMore": { "description": "Activity feed pagination button" },
+  "activityFeedAllLoaded": "All activity loaded",
+  "@activityFeedAllLoaded": { "description": "Activity feed pagination complete text" },
+  "backupWebSecurityWarning": "Web local storage is not SQLCipher-encrypted. Backup files are encrypted with your password; avoid long-term storage of sensitive accounts in the web app.",
+  "@backupWebSecurityWarning": { "description": "Web-only backup and restore security warning banner" },
+
   "formSaving": "Saving…",
   "@formSaving": { "description": "Shared form: saving button label" },
   "formSave": "Save",

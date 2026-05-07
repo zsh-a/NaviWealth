@@ -49,6 +49,7 @@ use crate::error::AppError;
 pub struct ToolCtx<'a> {
     pub user_id: &'a str,
     pub db: &'a D1Database,
+    pub portfolio_snapshot: Option<&'a Value>,
 }
 
 /// Static catalogue. Kept as a function (not a `static` constant) because
@@ -357,6 +358,23 @@ struct HoldingAcc {
 }
 
 async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    if let Some(snapshot) = ctx.portfolio_snapshot {
+        if let Some(holdings) = snapshot.get("holdings").and_then(|v| v.as_object()) {
+            return Ok(json!({
+                "as_of": input
+                    .get("as_of")
+                    .and_then(|v| v.as_str())
+                    .or_else(|| snapshot.get("as_of").and_then(|v| v.as_str()))
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| Utc::now().to_rfc3339()),
+                "base_currency": snapshot.get("base_currency").and_then(|v| v.as_str()),
+                "holdings": Value::Object(holdings.clone()),
+                "approximation": false,
+                "source": "client_portfolio_snapshot",
+            }));
+        }
+    }
+
     let as_of = input
         .get("as_of")
         .and_then(|v| v.as_str())

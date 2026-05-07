@@ -38,6 +38,7 @@ dependencies:
   talker: ^5.1.17
   talker_dio_logger: ^5.1.17
   uuid: ^4.5.1
+  web: ^1.1.1
 
 dev_dependencies:
   build_runner: ^2.15.0

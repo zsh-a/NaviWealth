@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/activity_feed_provider.dart';
 import 'activity_feed_grouping.dart';
 import 'activity_feed_row.dart';
 
@@ -19,16 +19,22 @@ class ActivityFeed extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final journalAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
+    final feedAsync = ref.watch(activityFeedProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
-    return journalAsync.when(
-      data: (entries) {
-        if (entries.isEmpty) return _EmptyFeed(message: l10n.activityFeedEmpty);
+    return feedAsync.when(
+      data: (page) {
+        if (page.entries.isEmpty) {
+          return _EmptyFeed(
+            message: page.isFiltered
+                ? l10n.activityFeedFilteredEmpty
+                : l10n.activityFeedEmpty,
+          );
+        }
         final accountsById = <String, Account>{
           for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
         };
-        final groups = groupActivityEntriesByDate(entries);
+        final groups = groupActivityEntriesByDate(page.entries);
         final formatter = AppFormatters(
           locale: Localizations.localeOf(context),
         );
@@ -37,6 +43,7 @@ class ActivityFeed extends ConsumerWidget {
           accountsById: accountsById,
           formatter: formatter,
           l10n: l10n,
+          hasMore: page.hasMore,
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -51,12 +58,14 @@ class _FeedList extends StatelessWidget {
     required this.accountsById,
     required this.formatter,
     required this.l10n,
+    required this.hasMore,
   });
 
   final List<ActivityDateSection> groups;
   final Map<String, Account> accountsById;
   final AppFormatters formatter;
   final AppLocalizations l10n;
+  final bool hasMore;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +76,7 @@ class _FeedList extends StatelessWidget {
         items.add(_FeedItem.entry(entry));
       }
     }
+    items.add(_FeedItem.footer(hasMore));
 
     return ScrollNotificationHandler(
       child: ListView.builder(
@@ -92,6 +102,10 @@ class _FeedList extends StatelessWidget {
                 formatter: formatter,
               ),
             ),
+            _FeedItemFooter(:final canLoadMore) => _FeedFooter(
+              canLoadMore: canLoadMore,
+              l10n: l10n,
+            ),
           };
         },
       ),
@@ -103,6 +117,7 @@ sealed class _FeedItem {
   const _FeedItem();
   factory _FeedItem.header(ActivityDateGroup group) = _FeedItemHeader;
   factory _FeedItem.entry(JournalEntryWithPostings entry) = _FeedItemEntry;
+  factory _FeedItem.footer(bool canLoadMore) = _FeedItemFooter;
 }
 
 class _FeedItemHeader extends _FeedItem {
@@ -113,6 +128,38 @@ class _FeedItemHeader extends _FeedItem {
 class _FeedItemEntry extends _FeedItem {
   const _FeedItemEntry(this.entry);
   final JournalEntryWithPostings entry;
+}
+
+class _FeedItemFooter extends _FeedItem {
+  const _FeedItemFooter(this.canLoadMore);
+  final bool canLoadMore;
+}
+
+class _FeedFooter extends ConsumerWidget {
+  const _FeedFooter({required this.canLoadMore, required this.l10n});
+
+  final bool canLoadMore;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.s12),
+      child: Center(
+        child: canLoadMore
+            ? TextButton(
+                onPressed: ref
+                    .read(activityFeedQueryProvider.notifier)
+                    .loadMore,
+                child: Text(l10n.activityFeedLoadMore),
+              )
+            : Text(
+                l10n.activityFeedAllLoaded,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+      ),
+    );
+  }
 }
 
 class _DateSectionHeader extends StatelessWidget {

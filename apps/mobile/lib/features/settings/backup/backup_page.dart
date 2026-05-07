@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +12,7 @@ import '../../../core/logging/app_logger.dart';
 import '../../../core/sync/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'file_loader.dart';
 import 'file_saver.dart';
 
 class BackupPage extends ConsumerWidget {
@@ -25,11 +26,16 @@ class BackupPage extends ConsumerWidget {
       appBar: GlassAppBar(title: Text(l10n.settingsDataTitle)),
       body: ListView(
         padding: Spacing.pageMobile.copyWith(
-          bottom: Spacing.pageMobile.bottom +
+          bottom:
+              Spacing.pageMobile.bottom +
               Spacing.floatingBarClearance +
               MediaQuery.paddingOf(context).bottom,
         ),
         children: [
+          if (kIsWeb) ...[
+            _WebBackupSecurityBanner(l10n: l10n),
+            const SizedBox(height: Spacing.s12),
+          ],
           LiquidGlassCard(
             layer: GlassLayer.tertiary,
             padding: EdgeInsets.zero,
@@ -83,8 +89,10 @@ class BackupPage extends ConsumerWidget {
       logger.d('backup_ui: service resolved, calling exportBackup');
       final bytes = await service.exportBackup(passphrase: passphrase);
       sw.stop();
-      logger.d('backup_ui: encryption done (${bytes.length} bytes, '
-          '${sw.elapsedMilliseconds}ms)');
+      logger.d(
+        'backup_ui: encryption done (${bytes.length} bytes, '
+        '${sw.elapsedMilliseconds}ms)',
+      );
 
       await dismiss();
       if (!context.mounted) return;
@@ -134,11 +142,7 @@ class BackupPage extends ConsumerWidget {
     } catch (e, st) {
       logger.e('backup_ui: file picker threw', error: e, stackTrace: st);
       if (!context.mounted) return;
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.backupFilePickerError,
-      );
+      AppMessenger.show(context, ToastKind.error, l10n.backupFilePickerError);
       return;
     }
     if (result == null || result.files.isEmpty) {
@@ -147,29 +151,30 @@ class BackupPage extends ConsumerWidget {
     }
 
     final pickedFile = result.files.first;
-    logger.d('backup_ui: picked file name=${pickedFile.name} '
-        'size=${pickedFile.size} hasBytes=${pickedFile.bytes != null}');
+    logger.d(
+      'backup_ui: picked file name=${pickedFile.name} '
+      'size=${pickedFile.size} hasBytes=${pickedFile.bytes != null}',
+    );
     var fileBytes = pickedFile.bytes;
 
     // On desktop, withData may not load bytes — fall back to reading from path.
     if (fileBytes == null && pickedFile.path != null) {
       logger.d('backup_ui: reading bytes from path=${pickedFile.path}');
       try {
-        fileBytes = await File(pickedFile.path!).readAsBytes();
+        fileBytes = await readPickedFileBytes(pickedFile.path);
       } catch (e, st) {
-        logger.e('backup_ui: failed to read file from path',
-            error: e, stackTrace: st);
+        logger.e(
+          'backup_ui: failed to read file from path',
+          error: e,
+          stackTrace: st,
+        );
       }
     }
 
     if (fileBytes == null) {
       logger.w('backup_ui: no bytes available after file pick');
       if (!context.mounted) return;
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.backupFilePickerError,
-      );
+      AppMessenger.show(context, ToastKind.error, l10n.backupFilePickerError);
       return;
     }
 
@@ -199,8 +204,10 @@ class BackupPage extends ConsumerWidget {
         resumeSync: scheduler.resume,
       );
       sw.stop();
-      logger.i('backup_ui: restore complete '
-          '(${restoreResult.totalRows} rows, ${sw.elapsedMilliseconds}ms)');
+      logger.i(
+        'backup_ui: restore complete '
+        '(${restoreResult.totalRows} rows, ${sw.elapsedMilliseconds}ms)',
+      );
 
       await dismiss();
       if (!context.mounted) return;
@@ -218,8 +225,10 @@ class BackupPage extends ConsumerWidget {
     } on BackupSchemaTooNewException catch (e) {
       await dismiss();
       if (!context.mounted) return;
-      logger.w('backup_ui: restore failed — schema too new '
-          '(backup=${e.backupVersion}, current=${e.currentVersion})');
+      logger.w(
+        'backup_ui: restore failed — schema too new '
+        '(backup=${e.backupVersion}, current=${e.currentVersion})',
+      );
       AppMessenger.show(context, ToastKind.error, l10n.backupSchemaTooNew);
     } on BackupValidationException catch (e) {
       await dismiss();
@@ -227,8 +236,11 @@ class BackupPage extends ConsumerWidget {
       logger.w('backup_ui: restore failed — validation: ${e.message}');
       AppMessenger.show(context, ToastKind.error, e.message);
     } catch (e, st) {
-      logger.e('backup_ui: restore failed unexpectedly',
-          error: e, stackTrace: st);
+      logger.e(
+        'backup_ui: restore failed unexpectedly',
+        error: e,
+        stackTrace: st,
+      );
       await dismiss();
       if (!context.mounted) return;
       AppMessenger.show(context, ToastKind.error, e.toString());
@@ -293,6 +305,33 @@ class BackupPage extends ConsumerWidget {
   }
 }
 
+class _WebBackupSecurityBanner extends StatelessWidget {
+  const _WebBackupSecurityBanner({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.security_outlined, color: theme.colorScheme.primary),
+          const SizedBox(width: Spacing.s12),
+          Expanded(
+            child: Text(
+              l10n.backupWebSecurityWarning,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Private sheet widgets
 // ---------------------------------------------------------------------------
@@ -343,10 +382,7 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              widget.title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: Spacing.s16),
             AppTextField(
               label: l10n.backupPassphraseLabel,
@@ -439,8 +475,8 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
             Text(
               l10n.backupConfirmRestoreMessage,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: Spacing.s16),
             AppTextField(

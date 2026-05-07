@@ -22,6 +22,7 @@ class _FakeApi implements AiChatApiClient {
   Stream<AiChatEvent> chat({
     required AuthSession session,
     required List<WireMessage> messages,
+    Map<String, Object?>? portfolioSnapshot,
     String? model,
     CancelToken? cancelToken,
   }) async* {
@@ -83,8 +84,10 @@ void main() {
 
       final msgs = await store.listMessages(id);
       // user + assistant
-      expect(msgs.where((m) => m.role == ChatRole.user).single.content,
-          '我的总资产？');
+      expect(
+        msgs.where((m) => m.role == ChatRole.user).single.content,
+        '我的总资产？',
+      );
       final assistant = msgs.where((m) => m.role == ChatRole.assistant).single;
       expect(assistant.content, '约 ¥123,456。');
       expect(assistant.status, ChatMessageStatus.complete);
@@ -94,52 +97,59 @@ void main() {
       expect(api.lastMessages!.single.role, 'user');
     });
 
-    test('records tool invocations on the assistant turn in arrival order',
-        () async {
-      api.script.addAll(<AiChatEvent>[
-        const ToolCallEvent(
-          id: 'a',
-          name: 'get_holdings',
-          input: {'as_of': '2026-04-30'},
-        ),
-        const ToolResultEvent(
-          id: 'a',
-          name: 'get_holdings',
-          output: <String, Object?>{'rows': <Object?>[]},
-        ),
-        const TextEvent('好的，'),
-        const ToolCallEvent(
-          id: 'b',
-          name: 'compute_xirr',
-          input: {'scope': 'portfolio'},
-        ),
-        const ToolResultEvent(
-          id: 'b',
-          name: 'compute_xirr',
-          output: {'value': 0.12},
-        ),
-        const TextEvent('XIRR 是 12%'),
-        const DoneEvent(stopReason: 'end_turn', rounds: 2),
-      ]);
-      final id = await activeSessionId();
-      await repo.sendMessage(
-        sessionId: id,
-        ownerUserId: 'user-1',
-        content: '帮我看看持仓和 XIRR',
-      );
+    test(
+      'records tool invocations on the assistant turn in arrival order',
+      () async {
+        api.script.addAll(<AiChatEvent>[
+          const ToolCallEvent(
+            id: 'a',
+            name: 'get_holdings',
+            input: {'as_of': '2026-04-30'},
+          ),
+          const ToolResultEvent(
+            id: 'a',
+            name: 'get_holdings',
+            output: <String, Object?>{'rows': <Object?>[]},
+          ),
+          const TextEvent('好的，'),
+          const ToolCallEvent(
+            id: 'b',
+            name: 'compute_xirr',
+            input: {'scope': 'portfolio'},
+          ),
+          const ToolResultEvent(
+            id: 'b',
+            name: 'compute_xirr',
+            output: {'value': 0.12},
+          ),
+          const TextEvent('XIRR 是 12%'),
+          const DoneEvent(stopReason: 'end_turn', rounds: 2),
+        ]);
+        final id = await activeSessionId();
+        await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: '帮我看看持仓和 XIRR',
+        );
 
-      final assistant = (await store.listMessages(id))
-          .firstWhere((m) => m.role == ChatRole.assistant);
-      expect(assistant.toolCalls.map((t) => t.name),
-          ['get_holdings', 'compute_xirr']);
-      expect(assistant.toolCalls.first.output, isA<Map<String, Object?>>());
-      expect(assistant.toolCalls.last.output, isA<Map<String, Object?>>());
-      expect(assistant.content, '好的，XIRR 是 12%');
-    });
+        final assistant = (await store.listMessages(
+          id,
+        )).firstWhere((m) => m.role == ChatRole.assistant);
+        expect(assistant.toolCalls.map((t) => t.name), [
+          'get_holdings',
+          'compute_xirr',
+        ]);
+        expect(assistant.toolCalls.first.output, isA<Map<String, Object?>>());
+        expect(assistant.toolCalls.last.output, isA<Map<String, Object?>>());
+        expect(assistant.content, '好的，XIRR 是 12%');
+      },
+    );
 
     test('marks turn errored when the stream throws', () async {
-      api.errorToThrow =
-          const AiChatRequestException(statusCode: 500, message: 'boom');
+      api.errorToThrow = const AiChatRequestException(
+        statusCode: 500,
+        message: 'boom',
+      );
 
       final id = await activeSessionId();
       final outcome = await repo.sendMessage(
@@ -149,8 +159,9 @@ void main() {
       );
       expect(outcome, SendOutcome.errored);
 
-      final assistant = (await store.listMessages(id))
-          .firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(
+        id,
+      )).firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.errored);
       expect(assistant.errorMessage, 'boom');
     });
