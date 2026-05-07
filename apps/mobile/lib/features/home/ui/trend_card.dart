@@ -6,6 +6,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
+import 'dashboard_chart_fullscreen.dart';
 
 /// Net-worth trend card: time-range chips + line chart.
 ///
@@ -25,11 +26,30 @@ class TrendCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.dashboardTrendTitle,
-            style: theme.textTheme.titleMedium,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.dashboardTrendTitle,
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+              trendAsync.maybeWhen(
+                data: (trend) => IconButton(
+                  tooltip: l10n.aiChatSheetExpandTooltip,
+                  icon: const Icon(Icons.fullscreen),
+                  onPressed: trend.isEmpty
+                      ? null
+                      : () => showDashboardChartFullscreen(
+                          context: context,
+                          title: l10n.dashboardTrendTitle,
+                          child: const _TrendFullscreenContent(),
+                        ),
+                ),
+                orElse: () => const SizedBox(width: 48, height: 48),
+              ),
+            ],
           ),
-          const SizedBox(height: Spacing.s8),
           const _RangeChips(),
           const SizedBox(height: Spacing.s12),
           trendAsync.when(
@@ -39,6 +59,30 @@ class TrendCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TrendFullscreenContent extends ConsumerWidget {
+  const _TrendFullscreenContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trendAsync = ref.watch(dashboardTrendProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _RangeChips(),
+        const SizedBox(height: Spacing.s16),
+        Expanded(
+          child: trendAsync.when(
+            loading: () => const _TrendSkeleton(),
+            error: (e, st) => _TrendError(error: e),
+            data: (trend) =>
+                _TrendChart(trend: trend, fillAvailableHeight: true),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -85,18 +129,20 @@ class _RangeChips extends ConsumerWidget {
   Future<void> _pickCustomRange(BuildContext context, WidgetRef ref) async {
     final now = DateTime.now();
     final initialEnd = ref.read(dashboardCustomRangeProvider)?.to ?? now;
-    final initialStart = ref.read(dashboardCustomRangeProvider)?.from ??
+    final initialStart =
+        ref.read(dashboardCustomRangeProvider)?.from ??
         now.subtract(const Duration(days: 365));
     final picked = await showDateRangePicker(
       context: context,
-      initialDateRange:
-          DateTimeRange(start: initialStart, end: initialEnd),
+      initialDateRange: DateTimeRange(start: initialStart, end: initialEnd),
       firstDate: DateTime(now.year - 10),
       lastDate: now,
     );
     if (picked == null) return;
-    ref.read(dashboardCustomRangeProvider.notifier).state =
-        (from: picked.start, to: picked.end);
+    ref.read(dashboardCustomRangeProvider.notifier).state = (
+      from: picked.start,
+      to: picked.end,
+    );
     ref.read(dashboardSelectedRangeProvider.notifier).state =
         DashboardRangePreset.custom;
   }
@@ -122,9 +168,10 @@ class _RangeChips extends ConsumerWidget {
 }
 
 class _TrendChart extends StatelessWidget {
-  const _TrendChart({required this.trend});
+  const _TrendChart({required this.trend, this.fillAvailableHeight = false});
 
   final DashboardTrend trend;
+  final bool fillAvailableHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -153,27 +200,20 @@ class _TrendChart extends StatelessWidget {
         final dateFmt = trend.range.spanDays <= 30
             ? AxisDateFormat.dayMonth
             : trend.range.spanDays <= 730
-                ? AxisDateFormat.monthYear
-                : AxisDateFormat.yearOnly;
+            ? AxisDateFormat.monthYear
+            : AxisDateFormat.yearOnly;
+        final chart = _LineChartBody(
+          series: series,
+          trend: trend,
+          dateFmt: dateFmt,
+        );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 220,
-              child: NwLineChart(
-                series: [series],
-                xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
-                yAxis: ValueAxis.currency(
-                  currencyCode: trend.baseCurrency,
-                  maxLabels: 4,
-                  showGrid: true,
-                ),
-                filled: true,
-                heroDots: true,
-                semanticLabel:
-                    AppLocalizations.of(context).dashboardTrendTitle,
-              ),
-            ),
+            if (fillAvailableHeight)
+              Expanded(child: chart)
+            else
+              SizedBox(height: 220, child: chart),
             if (allFlat)
               Padding(
                 padding: const EdgeInsets.only(top: Spacing.s8),
@@ -187,6 +227,36 @@ class _TrendChart extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _LineChartBody extends StatelessWidget {
+  const _LineChartBody({
+    required this.series,
+    required this.trend,
+    required this.dateFmt,
+  });
+
+  final ChartSeries series;
+  final DashboardTrend trend;
+  final AxisDateFormat dateFmt;
+
+  @override
+  Widget build(BuildContext context) {
+    return NwLineChart(
+      series: [series],
+      xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
+      yAxis: ValueAxis.currency(
+        currencyCode: trend.baseCurrency,
+        maxLabels: 4,
+        showGrid: true,
+      ),
+      filled: true,
+      heroDots: true,
+      showXAxis: false,
+      showTouchXAxisLabel: true,
+      semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
     );
   }
 }

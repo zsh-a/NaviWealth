@@ -38,6 +38,8 @@ class NwLineChart extends StatefulWidget {
     this.filled = false,
     this.curveSmoothness = 0.28,
     this.heroDots = false,
+    this.showXAxis = true,
+    this.showTouchXAxisLabel = false,
   });
 
   final List<ChartSeries> series;
@@ -65,6 +67,13 @@ class NwLineChart extends StatefulWidget {
   /// Draw a larger highlighted dot at the last data point of each series.
   /// Intended for hero / showcase charts only.
   final bool heroDots;
+
+  /// Whether to render the bottom X-axis labels in the resting chart.
+  final bool showXAxis;
+
+  /// Whether a compact X value label should appear near the crosshair while
+  /// the user drags across the chart.
+  final bool showTouchXAxisLabel;
 
   @override
   State<NwLineChart> createState() => _NwLineChartState();
@@ -123,25 +132,27 @@ class _NwLineChartState extends State<NwLineChart> {
 
     final stack = Stack(
       children: [
-        LineChart(
-          LineChartData(
-            minX: minX,
-            maxX: maxX,
-            minY: minY - yPad,
-            maxY: maxY + yPad,
-            gridData: FlGridData(
-              show: widget.yAxis.showGrid || widget.xAxis.showGrid,
-              drawHorizontalLine: widget.yAxis.showGrid,
-              drawVerticalLine: widget.xAxis.showGrid,
-              getDrawingHorizontalLine: (_) =>
-                  FlLine(color: palette.gridLine, strokeWidth: 1),
-              getDrawingVerticalLine: (_) =>
-                  FlLine(color: palette.gridLine, strokeWidth: 1),
+        RepaintBoundary(
+          child: LineChart(
+            LineChartData(
+              minX: minX,
+              maxX: maxX,
+              minY: minY - yPad,
+              maxY: maxY + yPad,
+              gridData: FlGridData(
+                show: widget.yAxis.showGrid || widget.xAxis.showGrid,
+                drawHorizontalLine: widget.yAxis.showGrid,
+                drawVerticalLine: widget.xAxis.showGrid,
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: palette.gridLine, strokeWidth: 1),
+                getDrawingVerticalLine: (_) =>
+                    FlLine(color: palette.gridLine, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: _buildTitles(palette, minX, maxX, minY, maxY),
+              lineBarsData: lineBars,
+              lineTouchData: _buildTouchData(context, palette, processed),
             ),
-            borderData: FlBorderData(show: false),
-            titlesData: _buildTitles(palette, minX, maxX, minY, maxY),
-            lineBarsData: lineBars,
-            lineTouchData: _buildTouchData(context, palette, processed),
           ),
         ),
         if (_touchLocalX != null) ...[
@@ -161,13 +172,28 @@ class _NwLineChartState extends State<NwLineChart> {
           ),
           if (_touchedSpotIndex >= 0 &&
               _touchedSpotIndex < processed.first.points.length)
-            IgnorePointer(
-              child: _GlassTooltip(
-                spotIndex: _touchedSpotIndex,
-                processed: processed,
-                xAxis: widget.xAxis,
-                yAxis: widget.yAxis,
-                touchStartPoint: _touchStartPoint,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _GlassTooltip(
+                  spotIndex: _touchedSpotIndex,
+                  processed: processed,
+                  xAxis: widget.xAxis,
+                  yAxis: widget.yAxis,
+                  touchStartPoint: _touchStartPoint,
+                ),
+              ),
+            ),
+          if (widget.showTouchXAxisLabel &&
+              _touchedSpotIndex >= 0 &&
+              _touchedSpotIndex < processed.first.points.length)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _TouchXAxisLabel(
+                  touchX: _touchLocalX!,
+                  label: widget.xAxis.formatTimestamp(
+                    processed.first.points[_touchedSpotIndex].x,
+                  ),
+                ),
               ),
             ),
         ],
@@ -337,8 +363,8 @@ class _NwLineChartState extends State<NwLineChart> {
       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 24,
+          showTitles: widget.showXAxis,
+          reservedSize: widget.showXAxis ? 24 : 0,
           interval: xInterval,
           getTitlesWidget: (value, meta) {
             return Padding(
@@ -374,6 +400,8 @@ class _NwLineChartState extends State<NwLineChart> {
   ) {
     return LineTouchData(
       enabled: true,
+      handleBuiltInTouches: false,
+      touchSpotThreshold: double.infinity,
       touchTooltipData: LineTouchTooltipData(
         getTooltipColor: (_) => Colors.transparent,
         tooltipBorderRadius: BorderRadius.zero,
@@ -405,6 +433,7 @@ class _NwLineChartState extends State<NwLineChart> {
             _touchStartPoint = null;
             _lastSpotIndex = -1;
           });
+          _fireCrossingHaptic(response, processed);
           HapticFeedback.selectionClick();
           return;
         }
@@ -656,44 +685,39 @@ class _GlassTooltip extends StatelessWidget {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
-    return Positioned.fill(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Align(
-          alignment: Alignment.topRight,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(glass.borderRadius),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(
-                sigmaX: glass.blurSigma,
-                sigmaY: glass.blurSigma,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Align(
+        alignment: Alignment.topRight,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(glass.borderRadius),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(
+              sigmaX: glass.blurSigma,
+              sigmaY: glass.blurSigma,
+            ),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: glass.surfaceColor,
+                borderRadius: BorderRadius.circular(glass.borderRadius),
+                border: Border.all(color: glass.hairlineColor, width: 1),
               ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: glass.surfaceColor,
-                  borderRadius: BorderRadius.circular(glass.borderRadius),
-                  border: Border.all(color: glass.hairlineColor, width: 1),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      xAxis.formatTimestamp(point.x),
-                      style: TypographyTokens.numericCaption.copyWith(
-                        color: onSurface.withValues(alpha: 0.6),
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    xAxis.formatTimestamp(point.x),
+                    style: TypographyTokens.numericCaption.copyWith(
+                      color: onSurface.withValues(alpha: 0.6),
                     ),
-                    const SizedBox(height: 4),
-                    for (var i = 0; i < processed.length; i++)
-                      _buildSeriesRow(i, processed[i], safeIndex, onSurface),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  for (var i = 0; i < processed.length; i++)
+                    _buildSeriesRow(i, processed[i], safeIndex, onSurface),
+                ],
               ),
             ),
           ),
@@ -730,6 +754,58 @@ class _GlassTooltip extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _TouchXAxisLabel extends StatelessWidget {
+  const _TouchXAxisLabel({required this.touchX, required this.label});
+
+  final double touchX;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = ChartPalette.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const width = 88.0;
+        final maxLeft = (constraints.maxWidth - width)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+        final left = (touchX - width / 2).clamp(0.0, maxLeft).toDouble();
+        return Stack(
+          children: [
+            Positioned(
+              left: left,
+              bottom: 2,
+              width: width,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: palette.tooltipBackground,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TypographyTokens.numericCaption.copyWith(
+                      color: palette.tooltipForeground,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
