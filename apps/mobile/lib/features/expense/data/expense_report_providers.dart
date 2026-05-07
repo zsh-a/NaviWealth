@@ -19,8 +19,8 @@ import '../domain/monthly_expense_derivation.dart';
 /// what the user picked.
 final expenseReportRangePresetProvider =
     StateProvider<ExpenseReportRangePreset>(
-  (ref) => ExpenseReportRangePreset.m3,
-);
+      (ref) => ExpenseReportRangePreset.m3,
+    );
 
 final expenseReportCustomRangeProvider =
     StateProvider<({DateTime from, DateTime to})?>((ref) => null);
@@ -72,8 +72,10 @@ final expenseReportProvider = Provider<AsyncValue<ExpenseReport>>((ref) {
       expensesAsync.stackTrace ?? StackTrace.current,
     );
   }
-  final aggregator =
-      ExpenseReportAggregator(converter: converter, baseCurrency: base);
+  final aggregator = ExpenseReportAggregator(
+    converter: converter,
+    baseCurrency: base,
+  );
   final report = aggregator.aggregate(
     expenses: expensesAsync.value ?? const [],
     range: range,
@@ -87,78 +89,75 @@ final expenseReportProvider = Provider<AsyncValue<ExpenseReport>>((ref) {
 /// description calls out "近 3 个月平均" as the default; the user can
 /// nudge it to 6 / 12 from the FIRE settings UI when that lands.
 final monthlyExpensePreferencesProvider =
-    StateNotifierProvider<MonthlyExpensePreferencesController,
-        MonthlyExpensePreferences>(
-  (ref) => MonthlyExpensePreferencesController(
-    ref.watch(sharedPreferencesProvider),
-  ),
-);
+    StateNotifierProvider<
+      MonthlyExpensePreferencesController,
+      MonthlyExpensePreferences
+    >(
+      (ref) => MonthlyExpensePreferencesController(
+        ref.watch(sharedPreferencesProvider),
+      ),
+    );
 
 /// Auto-derived rolling average. Pure read — does not consult overrides.
-final autoMonthlyExpenseProvider = Provider<AsyncValue<MonthlyExpenseAverage>>(
-  (ref) {
-    final expensesAsync = ref.watch(journalExpensesStreamProvider);
-    final converter = ref.watch(expenseReportCurrencyConverterProvider);
-    final base = ref.watch(expenseReportBaseCurrencyProvider);
-    final prefs = ref.watch(monthlyExpensePreferencesProvider);
+final autoMonthlyExpenseProvider = Provider<AsyncValue<MonthlyExpenseAverage>>((
+  ref,
+) {
+  final expensesAsync = ref.watch(journalExpensesStreamProvider);
+  final converter = ref.watch(expenseReportCurrencyConverterProvider);
+  final base = ref.watch(expenseReportBaseCurrencyProvider);
+  final prefs = ref.watch(monthlyExpensePreferencesProvider);
 
-    if (expensesAsync.isLoading) return const AsyncValue.loading();
-    final err = expensesAsync.error;
-    if (err != null) {
-      return AsyncValue.error(
-        err,
-        expensesAsync.stackTrace ?? StackTrace.current,
-      );
-    }
-    final derivation = MonthlyExpenseDerivation(
-      converter: converter,
-      baseCurrency: base,
+  if (expensesAsync.isLoading) return const AsyncValue.loading();
+  final err = expensesAsync.error;
+  if (err != null) {
+    return AsyncValue.error(
+      err,
+      expensesAsync.stackTrace ?? StackTrace.current,
     );
-    final average = derivation.compute(
-      expenses: expensesAsync.value ?? const [],
-      windowMonths: prefs.windowMonths,
-    );
-    return AsyncValue.data(average);
-  },
-);
+  }
+  final derivation = MonthlyExpenseDerivation(
+    converter: converter,
+    baseCurrency: base,
+  );
+  final average = derivation.compute(
+    expenses: expensesAsync.value ?? const [],
+    windowMonths: prefs.windowMonths,
+  );
+  return AsyncValue.data(average);
+});
 
 /// What the FIRE dashboard should display: the manual override (if set)
 /// otherwise the rolling average. Always carries the auto value so the
 /// override UI can render "auto would be ¥X" alongside the manual figure.
 final effectiveMonthlyExpenseProvider =
     Provider<AsyncValue<EffectiveMonthlyExpense>>((ref) {
-  final autoAsync = ref.watch(autoMonthlyExpenseProvider);
-  final prefs = ref.watch(monthlyExpensePreferencesProvider);
-  final base = ref.watch(expenseReportBaseCurrencyProvider);
+      final autoAsync = ref.watch(autoMonthlyExpenseProvider);
+      final prefs = ref.watch(monthlyExpensePreferencesProvider);
+      final base = ref.watch(expenseReportBaseCurrencyProvider);
 
-  return autoAsync.when(
-    loading: () => const AsyncValue.loading(),
-    error: (e, st) => AsyncValue.error(e, st),
-    data: (auto) {
-      final override = prefs.override;
-      final source = override == null
-          ? MonthlyExpenseSource.auto
-          : MonthlyExpenseSource.manual;
-      final value = override == null
-          ? auto.average
-          : Money(override, base);
-      return AsyncValue.data(
-        EffectiveMonthlyExpense(source: source, value: value, auto: auto),
+      return autoAsync.when(
+        loading: () => const AsyncValue.loading(),
+        error: (e, st) => AsyncValue.error(e, st),
+        data: (auto) {
+          final override = prefs.override;
+          final source = override == null
+              ? MonthlyExpenseSource.auto
+              : MonthlyExpenseSource.manual;
+          final value = override == null ? auto.average : Money(override, base);
+          return AsyncValue.data(
+            EffectiveMonthlyExpense(source: source, value: value, auto: auto),
+          );
+        },
       );
-    },
-  );
-});
+    });
 
 /// Persistence shape for the user's monthly-expense preferences. Backs the
-/// FIR-57 "月支出 (auto / manual)" toggle: [windowMonths] feeds the
-/// rolling-average derivation, [override] short-circuits it when the user
-/// wants to hand-tune the FIRE projection.
+/// "月支出 (auto / manual)" toggle: [windowMonths] feeds the rolling-average
+/// derivation, [override] short-circuits it when the user wants to hand-tune
+/// the FIRE projection.
 @immutable
 class MonthlyExpensePreferences {
-  const MonthlyExpensePreferences({
-    required this.windowMonths,
-    this.override,
-  });
+  const MonthlyExpensePreferences({required this.windowMonths, this.override});
 
   /// Rolling-window length, in *complete* months, used by the auto
   /// derivation. Clamped to [MonthlyExpensePreferencesController.minWindow]
@@ -183,9 +182,8 @@ class MonthlyExpensePreferences {
 }
 
 /// Persists the FIRE monthly-expense override + window via SharedPreferences.
-/// Per-device for now — when FIR-57 lands we may move this onto the FIRE
-/// `Goal` row so the override syncs, but the public read API (the providers
-/// above) stays the same either way.
+/// Per-device for now; the public read API can stay stable if this later moves
+/// onto a synced FIRE goal row.
 class MonthlyExpensePreferencesController
     extends StateNotifier<MonthlyExpensePreferences> {
   MonthlyExpensePreferencesController(this._prefs) : super(_load(_prefs));
@@ -195,7 +193,7 @@ class MonthlyExpensePreferencesController
   static const _windowKey = 'naviwealth.expense.monthly.window';
   static const _overrideKey = 'naviwealth.expense.monthly.override';
 
-  /// Default rolling window from the FIR-70 description.
+  /// Default rolling window for the report-backed auto derivation.
   static const int defaultWindow = 3;
 
   static const int minWindow = 1;
@@ -209,10 +207,7 @@ class MonthlyExpensePreferencesController
     if (overrideStr != null && overrideStr.isNotEmpty) {
       override = Decimal.tryParse(overrideStr);
     }
-    return MonthlyExpensePreferences(
-      windowMonths: clamped,
-      override: override,
-    );
+    return MonthlyExpensePreferences(windowMonths: clamped, override: override);
   }
 
   Future<void> setWindow(int months) async {
