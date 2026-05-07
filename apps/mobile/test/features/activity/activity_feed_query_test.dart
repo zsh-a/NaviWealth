@@ -68,6 +68,28 @@ void main() {
 
     expect(filtered.map((e) => e.entry.id), ['inside']);
   });
+
+  test('round-trips URL query filters', () {
+    final query = ActivityFeedQuery(
+      dateRange: DateTimeRange(
+        start: DateTime(2026, 5),
+        end: DateTime(2026, 6),
+      ),
+      accountIds: {'bank', 'cash'},
+      kinds: {ActivityKind.transfer, ActivityKind.expense},
+    );
+
+    final uri = Uri(
+      path: '/activity',
+      queryParameters: query.toQueryParameters(),
+    );
+    final decoded = ActivityFeedQuery.fromUri(uri);
+
+    expect(decoded.accountIds, {'bank', 'cash'});
+    expect(decoded.kinds, {ActivityKind.expense, ActivityKind.transfer});
+    expect(decoded.dateRange?.start, DateTime(2026, 5));
+    expect(decoded.dateRange?.end, DateTime(2026, 6));
+  });
 }
 
 final _accounts = {

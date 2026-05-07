@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
+import 'package:naviwealth/data/domain/entry_kind.dart';
+import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/domain/posting.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
@@ -217,56 +219,128 @@ void main() {
       },
     );
 
-    test('soft-deleted JEs and their postings drop out of the stream',
-        () async {
-      final je = await repo.create(
-        entry: JournalEntryDraft(
-          date: DateTime.utc(2026, 1, 15),
-          narration: 'Doomed',
-        ),
-        postings: [cashLeg('a', '-1'), cashLeg('b', '1')],
-      );
-      expect(await repo.watchAllWithPostings().first, hasLength(1));
-      await repo.softDelete(je.entry.id);
-      expect(await repo.watchAllWithPostings().first, isEmpty);
-    });
-
     test(
-      'each emission is independent — the per-JE posting list is a fresh '
-      'snapshot, never mutated in place',
+      'soft-deleted JEs and their postings drop out of the stream',
       () async {
-        // Defends against an `addAll` regression where two JEs that share
-        // a `journal_entry_id` group could accidentally see each other's
-        // postings. We seed two JEs with overlapping accounts but
-        // distinct posting ids and assert the cross-pollination doesn't
-        // happen.
-        await repo.create(
+        final je = await repo.create(
           entry: JournalEntryDraft(
-            id: 'je-1',
-            date: DateTime.utc(2026, 1, 1),
-            narration: 'One',
+            date: DateTime.utc(2026, 1, 15),
+            narration: 'Doomed',
           ),
-          postings: [cashLeg('shared', '-1'), cashLeg('a', '1')],
+          postings: [cashLeg('a', '-1'), cashLeg('b', '1')],
         );
-        await repo.create(
-          entry: JournalEntryDraft(
-            id: 'je-2',
-            date: DateTime.utc(2026, 2, 1),
-            narration: 'Two',
-          ),
-          postings: [cashLeg('shared', '-2'), cashLeg('b', '2')],
-        );
-        final list = await repo.watchAllWithPostings().first;
-        expect(list.map((e) => e.entry.id).toSet(), {'je-1', 'je-2'});
-        for (final je in list) {
-          expect(
-            je.postings.every((p) => p.journalEntryId == je.entry.id),
-            isTrue,
-            reason: 'cross-pollinated postings for ${je.entry.id}: '
-                '${je.postings.map((p) => p.journalEntryId).toList()}',
-          );
-        }
+        expect(await repo.watchAllWithPostings().first, hasLength(1));
+        await repo.softDelete(je.entry.id);
+        expect(await repo.watchAllWithPostings().first, isEmpty);
       },
     );
+
+    test('each emission is independent — the per-JE posting list is a fresh '
+        'snapshot, never mutated in place', () async {
+      // Defends against an `addAll` regression where two JEs that share
+      // a `journal_entry_id` group could accidentally see each other's
+      // postings. We seed two JEs with overlapping accounts but
+      // distinct posting ids and assert the cross-pollination doesn't
+      // happen.
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-1',
+          date: DateTime.utc(2026, 1, 1),
+          narration: 'One',
+        ),
+        postings: [cashLeg('shared', '-1'), cashLeg('a', '1')],
+      );
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-2',
+          date: DateTime.utc(2026, 2, 1),
+          narration: 'Two',
+        ),
+        postings: [cashLeg('shared', '-2'), cashLeg('b', '2')],
+      );
+      final list = await repo.watchAllWithPostings().first;
+      expect(list.map((e) => e.entry.id).toSet(), {'je-1', 'je-2'});
+      for (final je in list) {
+        expect(
+          je.postings.every((p) => p.journalEntryId == je.entry.id),
+          isTrue,
+          reason:
+              'cross-pollinated postings for ${je.entry.id}: '
+              '${je.postings.map((p) => p.journalEntryId).toList()}',
+        );
+      }
+    });
+  });
+
+  group('queryActivityFeed', () {
+    test('uses SQL-backed date/account filters and keyset ordering', () async {
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-old',
+          date: DateTime.utc(2026, 1, 1),
+          narration: 'Old',
+        ),
+        postings: [cashLeg('cash', '-1'), cashLeg('food', '1')],
+      );
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-new-a',
+          date: DateTime.utc(2026, 5, 1),
+          narration: 'New A',
+        ),
+        postings: [cashLeg('cash', '-2'), cashLeg('food', '2')],
+      );
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-new-b',
+          date: DateTime.utc(2026, 5, 1),
+          narration: 'New B',
+        ),
+        postings: [cashLeg('bank', '-3'), cashLeg('food', '3')],
+      );
+
+      final page = await repo.queryActivityFeed(
+        from: DateTime.utc(2026, 5),
+        to: DateTime.utc(2026, 6),
+        accountIds: {'cash'},
+        accountCategories: const {},
+        pageSize: 10,
+      );
+
+      expect(page.entries.map((e) => e.entry.id), ['je-new-a']);
+      expect(page.hasMore, isFalse);
+    });
+
+    test('fills a page after derived kind filtering', () async {
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-transfer',
+          date: DateTime.utc(2026, 5, 2),
+          narration: 'Transfer',
+        ),
+        postings: [cashLeg('cash', '-1'), cashLeg('bank', '1')],
+      );
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-expense',
+          date: DateTime.utc(2026, 5, 1),
+          narration: 'Expense',
+        ),
+        postings: [cashLeg('food', '2'), cashLeg('cash', '-2')],
+      );
+
+      final page = await repo.queryActivityFeed(
+        kinds: {EntryKind.expense},
+        accountCategories: const {
+          'cash': AccountCategory.asset,
+          'bank': AccountCategory.asset,
+          'food': AccountCategory.expense,
+        },
+        pageSize: 1,
+      );
+
+      expect(page.entries.map((e) => e.entry.id), ['je-expense']);
+      expect(page.hasMore, isFalse);
+    });
   });
 }

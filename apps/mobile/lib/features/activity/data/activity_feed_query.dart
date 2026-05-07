@@ -48,6 +48,43 @@ class ActivityFeedQuery {
   }
 
   static const Object _sentinel = Object();
+
+  static ActivityFeedQuery fromUri(Uri uri) {
+    final params = uri.queryParameters;
+    final accounts = _csv(params['accounts']).toSet();
+    final kinds = _csv(
+      params['kinds'],
+    ).map(activityKindFromWire).whereType<ActivityKind>().toSet();
+    final from = _parseDate(params['from']);
+    final to = _parseDate(params['to']);
+    final dateRange = from == null && to == null
+        ? null
+        : DateTimeRange(
+            start: from ?? DateTime.utc(1970),
+            end: to ?? DateTime.utc(9999, 12, 31),
+          );
+    return ActivityFeedQuery(
+      dateRange: dateRange,
+      accountIds: accounts,
+      kinds: kinds,
+    );
+  }
+
+  Map<String, String> toQueryParameters() {
+    final out = <String, String>{};
+    if (accountIds.isNotEmpty) {
+      out['accounts'] = (_sorted(accountIds)).join(',');
+    }
+    if (kinds.isNotEmpty) {
+      out['kinds'] = (_sorted(kinds.map((k) => k.wire))).join(',');
+    }
+    final range = dateRange;
+    if (range != null) {
+      out['from'] = _dateOnly(range.start);
+      out['to'] = _dateOnly(range.end);
+    }
+    return out;
+  }
 }
 
 class ActivityFeedPage {
@@ -56,12 +93,14 @@ class ActivityFeedPage {
     required this.totalCount,
     required this.hasMore,
     required this.isFiltered,
+    required this.accountsById,
   });
 
   final List<JournalEntryWithPostings> entries;
   final int totalCount;
   final bool hasMore;
   final bool isFiltered;
+  final Map<String, Account> accountsById;
 }
 
 List<JournalEntryWithPostings> filterActivityEntries({
@@ -114,4 +153,55 @@ ActivityKind _activityKindFromEntryKind(EntryKind kind) {
     EntryKind.opening => ActivityKind.opening,
     EntryKind.other => ActivityKind.other,
   };
+}
+
+EntryKind entryKindFromActivityKind(ActivityKind kind) {
+  return switch (kind) {
+    ActivityKind.expense => EntryKind.expense,
+    ActivityKind.transfer => EntryKind.transfer,
+    ActivityKind.trade => EntryKind.trade,
+    ActivityKind.income => EntryKind.income,
+    ActivityKind.payment => EntryKind.payment,
+    ActivityKind.adjustment => EntryKind.adjustment,
+    ActivityKind.opening => EntryKind.opening,
+    ActivityKind.other => EntryKind.other,
+  };
+}
+
+ActivityKind? activityKindFromWire(String wire) {
+  for (final kind in ActivityKind.values) {
+    if (kind.wire == wire) return kind;
+  }
+  return null;
+}
+
+extension ActivityKindWire on ActivityKind {
+  String get wire => name;
+}
+
+List<String> _csv(String? value) {
+  if (value == null || value.trim().isEmpty) return const [];
+  return value
+      .split(',')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList(growable: false);
+}
+
+DateTime? _parseDate(String? value) {
+  if (value == null || value.isEmpty) return null;
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) return null;
+  return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+String _dateOnly(DateTime value) {
+  final y = value.year.toString().padLeft(4, '0');
+  final m = value.month.toString().padLeft(2, '0');
+  final d = value.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+}
+
+List<String> _sorted(Iterable<String> values) {
+  return values.toList(growable: false)..sort();
 }

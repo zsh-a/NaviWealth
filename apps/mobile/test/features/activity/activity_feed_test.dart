@@ -8,10 +8,11 @@ import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/journal_entry.dart';
 import 'package:naviwealth/data/domain/posting.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
-import 'package:naviwealth/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/activity/data/activity_feed_provider.dart';
+import 'package:naviwealth/features/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/activity/ui/activity_feed.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -82,8 +83,16 @@ Widget _wrap({
 }) {
   return ProviderScope(
     overrides: [
-      journalEntriesWithPostingsStreamProvider.overrideWith(
-        (_) => Stream.value(entries),
+      activityFeedProvider.overrideWith(
+        (ref) => Stream.value(
+          ActivityFeedPage(
+            entries: entries,
+            totalCount: entries.length,
+            hasMore: false,
+            isFiltered: false,
+            accountsById: {for (final account in accounts) account.id: account},
+          ),
+        ),
       ),
       accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
     ],
