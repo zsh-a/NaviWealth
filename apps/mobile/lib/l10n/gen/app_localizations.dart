@@ -206,12 +206,6 @@ abstract class AppLocalizations {
   /// **'AI assistant'**
   String get homeAiAssistantTooltip;
 
-  /// Tooltip for the home FAB that opens the trade-entry form.
-  ///
-  /// In en, this message translates to:
-  /// **'Record trade'**
-  String get homeRecordTradeTooltip;
-
   /// No description provided for @homeNetWorthTitle.
   ///
   /// In en, this message translates to:
@@ -247,24 +241,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add asset'**
   String get assetsAddAction;
-
-  /// Action that opens the corporate-action entry form (dividend, split, rights issue, DRIP).
-  ///
-  /// In en, this message translates to:
-  /// **'Record corporate action'**
-  String get assetsCorporateActionAction;
-
-  /// No description provided for @assetsAccountsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get assetsAccountsTooltip;
-
-  /// No description provided for @assetsLiabilitiesTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Liabilities & repayment plans'**
-  String get assetsLiabilitiesTooltip;
 
   /// No description provided for @assetsLoadError.
   ///
@@ -319,36 +295,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Purchase price, annual residual rate, automatic depreciation'**
   String get assetsAddVehicleSubtitle;
-
-  /// No description provided for @assetsAddLiabilityTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Liability (mortgage / car loan / credit card / consumer loan)'**
-  String get assetsAddLiabilityTitle;
-
-  /// No description provided for @assetsAddLiabilitySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Record and track repayment plans'**
-  String get assetsAddLiabilitySubtitle;
-
-  /// No description provided for @assetsAddCorporateActionSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Dividend / split / rights issue / bonus shares / DRIP'**
-  String get assetsAddCorporateActionSubtitle;
-
-  /// No description provided for @assetsAddTradeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Securities trade'**
-  String get assetsAddTradeTitle;
-
-  /// No description provided for @assetsAddTradeSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Buy / sell stocks, ETFs, crypto'**
-  String get assetsAddTradeSubtitle;
 
   /// No description provided for @assetsChipInterestRate.
   ///

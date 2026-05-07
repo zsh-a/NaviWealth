@@ -34,8 +34,6 @@
   "homeAppBarTitle": "Overview",
   "homeAiAssistantTooltip": "AI assistant",
   "@homeAiAssistantTooltip": { "description": "Tooltip for the home AppBar action that opens the AI chat surface." },
-  "homeRecordTradeTooltip": "Record trade",
-  "@homeRecordTradeTooltip": { "description": "Tooltip for the home FAB that opens the trade-entry form." },
   "homeNetWorthTitle": "Net Worth",
   "homeNetWorthSubtitle": "Base currency {currency} · shown once data is connected",
   "@homeNetWorthSubtitle": {
@@ -48,10 +46,6 @@
   "@assetsDetailEmpty": { "description": "Master-detail empty state for portfolio at desktop width" },
   "assetsEmptyHint": "No assets yet. Tap the button in the bottom right to add cash, deposits, wealth products, real estate, or vehicles.",
   "assetsAddAction": "Add asset",
-  "assetsCorporateActionAction": "Record corporate action",
-  "@assetsCorporateActionAction": { "description": "Action that opens the corporate-action entry form (dividend, split, rights issue, DRIP)." },
-  "assetsAccountsTooltip": "Accounts",
-  "assetsLiabilitiesTooltip": "Liabilities & repayment plans",
   "assetsLoadError": "Failed to load: {error}",
   "@assetsLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -64,11 +58,6 @@
   "assetsAddWealthSubtitle": "Maintain expected return and current valuation manually",
   "assetsAddRealEstateSubtitle": "Address, purchase price, current valuation; can link a mortgage",
   "assetsAddVehicleSubtitle": "Purchase price, annual residual rate, automatic depreciation",
-  "assetsAddLiabilityTitle": "Liability (mortgage / car loan / credit card / consumer loan)",
-  "assetsAddLiabilitySubtitle": "Record and track repayment plans",
-  "assetsAddCorporateActionSubtitle": "Dividend / split / rights issue / bonus shares / DRIP",
-  "assetsAddTradeTitle": "Securities trade",
-  "assetsAddTradeSubtitle": "Buy / sell stocks, ETFs, crypto",
   "assetsChipInterestRate": "Rate {rate}%",
   "@assetsChipInterestRate": {
     "placeholders": { "rate": { "type": "String", "example": "3.25" } }
