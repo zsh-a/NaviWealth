@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +13,9 @@ import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
+import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/db/providers.dart';
+import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
 import '../../data/db/test_database.dart';
@@ -100,6 +103,121 @@ void main() {
     expect(rebuilt, isNotNull);
     expect(rebuilt!.deviceId, dev);
   });
+
+  test(
+    'provider resets stale pull cursor when applier version appears',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final cursors = DriftCursorStore(db);
+      await cursors.writeCursor(
+        const Hlc(
+          wallMillis: 1_500_000_000_000,
+          counter: 0,
+          nodeId: Hlc.serverNodeId,
+        ),
+      );
+
+      final sessionState = StateProvider<AuthSession?>(
+        (_) => AuthSession(
+          accessToken: 'token',
+          expiresAt: DateTime.utc(2099),
+          userId: 'user-1',
+          deviceId: dev,
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          authSessionProvider.overrideWith((ref) => ref.watch(sessionState)),
+          syncApiClientProvider.overrideWithValue(FakeSyncApiClient()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(await container.read(syncEngineProvider.future), isNotNull);
+      expect(await cursors.readCursor(), isNull);
+
+      final version = await db
+          .customSelect(
+            "SELECT value FROM sync_meta WHERE key = 'sync.applier_version'",
+          )
+          .getSingle();
+      expect(version.read<String>('value'), '2');
+    },
+  );
+
+  test(
+    'provider backfills historical local account rows into outbox',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      await db
+          .into(db.accounts)
+          .insert(
+            AccountsCompanion.insert(
+              id: 'cash-1',
+              type: AccountType.cash,
+              name: 'Cash Wallet',
+              currency: 'CNY',
+              category: const Value(AccountCategory.asset),
+              ownerUserId: 'user-1',
+              updatedAt: DateTime.utc(2026, 1, 1),
+              updatedByDevice: 'legacy-device',
+              hlc: const Hlc(
+                wallMillis: 1,
+                counter: 0,
+                nodeId: 'legacy-device',
+              ),
+            ),
+          );
+      await db
+          .into(db.accounts)
+          .insert(
+            AccountsCompanion.insert(
+              id: 'system-account:user-1:income',
+              type: AccountType.other,
+              name: 'System Income',
+              currency: 'CNY',
+              category: const Value(AccountCategory.income),
+              ownerUserId: 'user-1',
+              updatedAt: DateTime.utc(2026, 1, 1),
+              updatedByDevice: 'legacy-device',
+              hlc: const Hlc(
+                wallMillis: 2,
+                counter: 0,
+                nodeId: 'legacy-device',
+              ),
+            ),
+          );
+
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWith((_) async => db),
+          authSessionProvider.overrideWith(
+            (_) => AuthSession(
+              accessToken: 'token',
+              expiresAt: DateTime.utc(2099),
+              userId: 'user-1',
+              deviceId: dev,
+            ),
+          ),
+          syncApiClientProvider.overrideWithValue(FakeSyncApiClient()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(await container.read(syncEngineProvider.future), isNotNull);
+
+      final outbox = DriftOutboxStore(db);
+      final batch = await outbox.peekBatch();
+      expect(batch, hasLength(1));
+      expect(batch.single.tableName, 'accounts');
+      expect(batch.single.rowId, 'cash-1');
+      expect(batch.single.deviceId, dev);
+      expect(batch.single.fieldsDiff?['name'], 'Cash Wallet');
+    },
+  );
 
   // SP-F-1 / SP-C-1
   test('happy path: push + pull cycle', () async {

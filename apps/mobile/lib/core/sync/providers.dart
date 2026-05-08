@@ -1,14 +1,18 @@
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
+import '../../data/db/app_database.dart';
 import '../../data/db/providers.dart';
+import '../../data/repositories/account_op_applier.dart';
 import '../auth/providers.dart';
 import '../logging/providers.dart';
 import 'dio_sync_api_client.dart';
 import 'drift_sync_storage.dart';
 import 'op_applier.dart';
 import 'sync_api_client.dart';
+import 'sync_backfill.dart';
 import 'sync_engine.dart';
 import 'sync_scheduler.dart';
 import 'sync_status.dart';
@@ -45,12 +49,11 @@ final syncApiClientProvider = Provider<SyncApiClient>((ref) {
   return DioSyncApiClient(dio: dio, tokenProvider: tokenFn);
 });
 
-/// Default applier registry — empty until each feature ticket registers
-/// its table handler. The SyncEngine works correctly with zero handlers:
-/// pulled ops get the LWW comparison + cursor advance, just nothing
-/// materialised. Useful for early integration testing.
+/// Default applier registry for tables that have local materialisers.
 final syncOpApplierProvider = Provider<OpApplier>((ref) {
-  return TableRoutingApplier({});
+  final db = ref.watch(appDatabaseProvider).value;
+  if (db == null) return const NoopOpApplier();
+  return TableRoutingApplier({'accounts': AccountOpApplier(db)});
 });
 
 final syncStatusBusProvider = Provider<SyncStatusBus>((ref) {
@@ -61,6 +64,10 @@ final syncStatusBusProvider = Provider<SyncStatusBus>((ref) {
 
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
+  final resetCursor = await _ensureSyncApplierVersion(db);
+  if (resetCursor) {
+    ref.read(loggerProvider).i('sync: reset pull cursor for accounts applier');
+  }
   final outbox = DriftOutboxStore(db);
   final cursors = DriftCursorStore(db);
   final api = ref.watch(syncApiClientProvider);
@@ -70,7 +77,7 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
     return null;
   }
   final bus = ref.watch(syncStatusBusProvider);
-  return SyncEngine(
+  final engine = SyncEngine(
     api: api,
     outbox: outbox,
     cursors: cursors,
@@ -79,7 +86,44 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
     statusBus: bus,
     logger: ref.read(loggerProvider),
   );
+  final backfilled = await SyncBackfill(
+    db: db,
+    outbox: outbox,
+    engine: engine,
+    session: session,
+  ).enqueueMissingLocalRows();
+  if (backfilled > 0) {
+    ref
+        .read(loggerProvider)
+        .i('sync: queued $backfilled historical local rows');
+  }
+  return engine;
 });
+
+const _kSyncApplierVersionKey = 'sync.applier_version';
+const _kSyncApplierVersion = '2';
+
+Future<bool> _ensureSyncApplierVersion(AppDatabase db) async {
+  final row = await db
+      .customSelect(
+        'SELECT value FROM sync_meta WHERE key = ?',
+        variables: [Variable.withString(_kSyncApplierVersionKey)],
+      )
+      .getSingleOrNull();
+  final current = row?.read<String>('value');
+  if (current == _kSyncApplierVersion) return false;
+  await db.transaction(() async {
+    await db.customStatement('DELETE FROM sync_meta WHERE key = ?', [
+      'sync.cursor',
+    ]);
+    await db.customStatement(
+      'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
+      'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      [_kSyncApplierVersionKey, _kSyncApplierVersion],
+    );
+  });
+  return true;
+}
 
 final syncSchedulerProvider = FutureProvider<SyncScheduler?>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);

@@ -36,6 +36,7 @@ pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
         "postings" => Ok("postings"),
         "prices" => Ok("prices"),
         "liabilities" => Ok("liabilities"),
+        "amortization_entries" => Ok("amortization_entries"),
         "fx_rates" => Ok("fx_rates"),
         "tags" => Ok("tags"),
         "goals" => Ok("goals"),
@@ -296,6 +297,10 @@ mod tests {
         );
         assert_eq!(sql_table_name("postings").unwrap(), "postings");
         assert_eq!(sql_table_name("prices").unwrap(), "prices");
+        assert_eq!(
+            sql_table_name("amortization_entries").unwrap(),
+            "amortization_entries"
+        );
         assert_eq!(sql_table_name("devices").unwrap(), "synced_devices");
     }
 

@@ -14,7 +14,7 @@ import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/sync/providers.dart';
-import '../data/repositories/providers.dart';
+import '../data/db/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
@@ -123,6 +123,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     }
   }
 
+  // Restore the persisted auth session before bootstrapping foreground sync
+  // and startup jobs. Otherwise those jobs can observe the transient
+  // "unknown" auth state and fail before the controller has read storage.
+  if (!effectiveConfig.bypassAuth) {
+    await container.read(authControllerProvider.future);
+  }
+
   // Fire-and-forget FX rate sync on app launch. Errors are logged but
   // don't block startup — the dashboard degrades gracefully with a
   // "currency mismatch" banner when rates are missing.
@@ -142,9 +149,16 @@ Future<void> _syncFxRates(ProviderContainer container, AppLogger logger) async {
     logger.i('FX rate sync: starting...');
     final service = await container.read(fxRateSyncServiceProvider.future);
     final base = container.read(baseCurrencyProvider);
-    final accountRepo = await container.read(accountRepositoryProvider.future);
-    final accounts = await accountRepo.listActive();
-    final currencies = accounts.map((a) => a.currency).toSet();
+    final db = await container.read(appDatabaseProvider.future);
+    final rows = await db
+        .customSelect(
+          'SELECT DISTINCT currency FROM accounts '
+          'WHERE deleted_at IS NULL '
+          'AND archived = 0 '
+          "AND id NOT LIKE 'system-account:%'",
+        )
+        .get();
+    final currencies = rows.map((r) => r.read<String>('currency')).toSet();
     logger.i('FX rate sync: base=$base, currencies=$currencies');
     if (currencies.isEmpty ||
         (currencies.length == 1 && currencies.contains(base))) {

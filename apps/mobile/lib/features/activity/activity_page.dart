@@ -59,6 +59,12 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         actions: [
           if (_tab == _ActivityTab.accounts)
             IconButton(
+              icon: const Icon(Icons.add_card_outlined),
+              tooltip: l10n.accountFormCreateTitle,
+              onPressed: () => context.push(AppRoutes.accountNew),
+            ),
+          if (_tab == _ActivityTab.accounts)
+            IconButton(
               icon: const Icon(Icons.swap_horiz),
               tooltip: l10n.accountsTransferAction,
               onPressed: () => context.push(AppRoutes.accountTransfer),

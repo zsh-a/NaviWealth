@@ -39,6 +39,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   String? _activeSessionId;
   bool _bootstrapped = false;
   String? _lastBootstrappedUserId;
+  String? _bootstrappingUserId;
+  Object? _bootstrapError;
 
   @override
   void initState() {
@@ -47,36 +49,57 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   }
 
   Future<void> _ensureSession(String ownerUserId) async {
-    if (_lastBootstrappedUserId == ownerUserId) return;
-    _lastBootstrappedUserId = ownerUserId;
-    final repo = await ref.read(chatRepositoryProvider.future);
-    final activeSessionId = _activeSessionId;
-    if (activeSessionId != null) {
-      final active = await repo.findSession(activeSessionId);
+    if (_bootstrapped && _lastBootstrappedUserId == ownerUserId) return;
+    if (_bootstrappingUserId == ownerUserId) return;
+    _bootstrappingUserId = ownerUserId;
+    try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      final activeSessionId = _activeSessionId;
+      if (activeSessionId != null) {
+        final active = await repo.findSession(activeSessionId);
+        if (!mounted) return;
+        if (active != null && active.ownerUserId == ownerUserId) {
+          setState(() {
+            _bootstrapped = true;
+            _lastBootstrappedUserId = ownerUserId;
+            _bootstrapError = null;
+          });
+          return;
+        }
+        setState(() => _activeSessionId = null);
+      }
+      final existing = await ref.read(
+        chatSessionsStreamProvider(ownerUserId).future,
+      );
       if (!mounted) return;
-      if (active != null && active.ownerUserId == ownerUserId) {
-        setState(() => _bootstrapped = true);
+      if (existing.isNotEmpty) {
+        setState(() {
+          _activeSessionId = existing.first.id;
+          _bootstrapped = true;
+          _lastBootstrappedUserId = ownerUserId;
+          _bootstrapError = null;
+        });
         return;
       }
-      setState(() => _activeSessionId = null);
-    }
-    final existing = await ref.read(
-      chatSessionsStreamProvider(ownerUserId).future,
-    );
-    if (!mounted) return;
-    if (existing.isNotEmpty) {
+      final session = await repo.createSession(ownerUserId: ownerUserId);
+      if (!mounted) return;
       setState(() {
-        _activeSessionId = existing.first.id;
+        _activeSessionId = session.id;
         _bootstrapped = true;
+        _lastBootstrappedUserId = ownerUserId;
+        _bootstrapError = null;
       });
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _bootstrapped = false;
+        _bootstrapError = e;
+      });
+    } finally {
+      if (_bootstrappingUserId == ownerUserId) {
+        _bootstrappingUserId = null;
+      }
     }
-    final session = await repo.createSession(ownerUserId: ownerUserId);
-    if (!mounted) return;
-    setState(() {
-      _activeSessionId = session.id;
-      _bootstrapped = true;
-    });
   }
 
   Future<void> _newSession(String ownerUserId) async {
@@ -99,7 +122,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       );
     }
 
-    if (!_bootstrapped) {
+    final bootstrappedForUser =
+        _bootstrapped && _lastBootstrappedUserId == session.userId;
+
+    if (!bootstrappedForUser &&
+        _bootstrappingUserId != session.userId &&
+        _bootstrapError == null) {
       // Schedule the bootstrap after build so it doesn't fight the
       // first frame.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,13 +139,24 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isDesktop = MasterDetailLayout.shouldUseMasterDetail(width);
-        final activeId = _activeSessionId;
+        final activeId = bootstrappedForUser ? _activeSessionId : null;
         // At desktop width the URL is the source of truth for the active
         // session — the master-detail surface follows `?selected=`. We
         // still keep `_activeSessionId` populated so the bootstrap path
         // can pick a default.
-        final selectedFromQuery = isDesktop ? selectedQueryOf(context) : null;
+        final selectedFromQuery = isDesktop && bootstrappedForUser
+            ? selectedQueryOf(context)
+            : null;
         final desktopActiveId = selectedFromQuery ?? activeId;
+        final pendingPane = _bootstrapError == null
+            ? const _BootstrappingPane()
+            : _BootstrapErrorPane(
+                error: _bootstrapError!,
+                onRetry: () {
+                  setState(() => _bootstrapError = null);
+                  _ensureSession(session.userId);
+                },
+              );
 
         if (isDesktop) {
           return Scaffold(
@@ -136,7 +175,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                 onNew: () => _newSession(session.userId),
               ),
               detail: desktopActiveId == null
-                  ? const _BootstrappingPane()
+                  ? pendingPane
                   : _ChatPane(sessionId: desktopActiveId),
             ),
           );
@@ -178,9 +217,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               ),
             ),
           ),
-          body: activeId == null
-              ? const _BootstrappingPane()
-              : _ChatPane(sessionId: activeId),
+          body: activeId == null ? pendingPane : _ChatPane(sessionId: activeId),
         );
       },
     );
@@ -386,6 +423,43 @@ class _BootstrappingPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(child: CircularProgressIndicator());
+  }
+}
+
+class _BootstrapErrorPane extends StatelessWidget {
+  const _BootstrapErrorPane({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.s24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 36, color: cs.error),
+            const SizedBox(height: Spacing.s12),
+            Text(
+              l10n.commonLoadError(error.toString()),
+              textAlign: TextAlign.center,
+              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+            ),
+            const SizedBox(height: Spacing.s16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.commonRetry),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

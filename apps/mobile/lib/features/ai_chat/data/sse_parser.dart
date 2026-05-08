@@ -27,16 +27,24 @@ class _RawSseFrame {
 /// declared event are dropped silently — surface them and a backend bump
 /// would crash every client.
 Stream<AiChatEvent> decodeSseEvents(Stream<List<int>> bytes) {
-  return _decodeRawFrames(bytes)
-      .map(_decodeFrame)
-      .where((e) => e != null)
-      .cast<AiChatEvent>();
+  return _decodeRawFrames(
+    bytes,
+  ).map(_decodeFrame).where((e) => e != null).cast<AiChatEvent>();
 }
 
 Stream<_RawSseFrame> _decodeRawFrames(Stream<List<int>> bytes) async* {
   // Decode UTF-8 across chunk boundaries — the worker may flush partial
   // multibyte characters during long Chinese assistant text.
-  final lines = bytes.transform(utf8.decoder).transform(const LineSplitter());
+  //
+  // Dio's native ResponseBody exposes a Stream<Uint8List>. Calling
+  // transform(utf8.decoder) directly on that runtime stream can fail the
+  // stream transformer's generic check because Utf8Decoder is typed for
+  // List<int>. Re-emitting each chunk as List<int> gives the decoder the
+  // exact stream type it expects while preserving incremental decoding.
+  final lines = bytes
+      .map<List<int>>((chunk) => chunk)
+      .transform(utf8.decoder)
+      .transform(const LineSplitter());
   String? event;
   final dataBuf = StringBuffer();
 
