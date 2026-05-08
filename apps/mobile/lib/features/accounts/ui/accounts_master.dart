@@ -110,6 +110,11 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
         title: Text(l10n.accountsAppBarTitle),
         actions: [
           IconButton(
+            tooltip: l10n.accountFormCreateTitle,
+            icon: const Icon(Icons.add_card_outlined),
+            onPressed: () => context.go(AppRoutes.accountNew),
+          ),
+          IconButton(
             tooltip: l10n.accountsJournalTooltip,
             icon: const Icon(Icons.history),
             onPressed: () => context.go(AppRoutes.accountJournal),
@@ -141,6 +146,12 @@ class _EmptyAccounts extends StatelessWidget {
             const Icon(Icons.account_balance_outlined, size: 48),
             const SizedBox(height: Spacing.s12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
+            const SizedBox(height: Spacing.s16),
+            FilledButton.icon(
+              icon: const Icon(Icons.add_card_outlined),
+              label: Text(l10n.accountFormCreateTitle),
+              onPressed: () => context.go(AppRoutes.accountNew),
+            ),
           ],
         ),
       ),

@@ -42,6 +42,12 @@ Future<void> showGlobalActionPanel(BuildContext context) {
               _closeAndPush(sheetContext, context, AppRoutes.accountTransfer),
         ),
         ListTile(
+          leading: const Icon(Icons.add_card_outlined),
+          title: Text(l10n.accountFormCreateTitle),
+          onTap: () =>
+              _closeAndPush(sheetContext, context, AppRoutes.accountNew),
+        ),
+        ListTile(
           leading: const Icon(Icons.payments_outlined),
           title: Text(l10n.superFabLiability),
           onTap: () =>

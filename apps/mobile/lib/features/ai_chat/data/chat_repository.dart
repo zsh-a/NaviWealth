@@ -170,6 +170,8 @@ class ChatRepository {
     final invocationOrder = <String>[];
     final localCancel = cancelToken ?? CancelToken();
     SendOutcome outcome = SendOutcome.completed;
+    var sawStreamEvent = false;
+    var sawDone = false;
 
     try {
       final stream = _api.chat(
@@ -181,6 +183,7 @@ class ChatRepository {
       );
 
       await for (final event in stream) {
+        sawStreamEvent = true;
         switch (event) {
           case TextEvent(:final text):
             buffer.write(text);
@@ -211,6 +214,7 @@ class ChatRepository {
             );
             await _store.updateMessage(assistant);
           case DoneEvent():
+            sawDone = true;
             // Only flip to complete if no error frame already promoted
             // the message to errored.
             if (assistant.status != ChatMessageStatus.errored) {
@@ -220,6 +224,21 @@ class ChatRepository {
               await _store.updateMessage(assistant);
             }
         }
+      }
+      if (!sawStreamEvent) {
+        outcome = SendOutcome.errored;
+        assistant = assistant.copyWith(
+          status: ChatMessageStatus.errored,
+          errorMessage: 'AI response stream ended without any events',
+        );
+        await _store.updateMessage(assistant);
+      } else if (!sawDone && assistant.status == ChatMessageStatus.streaming) {
+        outcome = SendOutcome.errored;
+        assistant = assistant.copyWith(
+          status: ChatMessageStatus.errored,
+          errorMessage: 'AI response stream ended before done',
+        );
+        await _store.updateMessage(assistant);
       }
     } catch (e) {
       if (_isUserCancelled(localCancel)) {

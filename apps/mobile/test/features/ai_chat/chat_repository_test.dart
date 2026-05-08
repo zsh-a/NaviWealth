@@ -44,6 +44,25 @@ class _FakeApi implements AiChatApiClient {
   }
 }
 
+class _NoDoneApi implements AiChatApiClient {
+  _NoDoneApi(this.script);
+
+  final List<AiChatEvent> script;
+
+  @override
+  Stream<AiChatEvent> chat({
+    required AuthSession session,
+    required List<WireMessage> messages,
+    Map<String, Object?>? portfolioSnapshot,
+    String? model,
+    CancelToken? cancelToken,
+  }) async* {
+    for (final e in script) {
+      yield e;
+    }
+  }
+}
+
 final _fakeSession = AuthSession(
   accessToken: 'tkn',
   expiresAt: DateTime.utc(2099, 1, 1),
@@ -223,6 +242,51 @@ void main() {
       expect(assistant.status, ChatMessageStatus.errored);
       expect(assistant.errorMessage, 'boom');
     });
+
+    test('marks turn errored when the response stream is empty', () async {
+      final id = await activeSessionId();
+      final outcome = await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'hi',
+      );
+
+      expect(outcome, SendOutcome.errored);
+      final assistant = (await store.listMessages(
+        id,
+      )).firstWhere((m) => m.role == ChatRole.assistant);
+      expect(assistant.status, ChatMessageStatus.errored);
+      expect(
+        assistant.errorMessage,
+        'AI response stream ended without any events',
+      );
+    });
+
+    test(
+      'marks turn errored when the response stream closes before done',
+      () async {
+        repo = ChatRepository(
+          store: store,
+          api: _NoDoneApi(const [TextEvent('partial')]),
+          sessionReader: () => _fakeSession,
+        );
+
+        final id = await activeSessionId();
+        final outcome = await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: 'hi',
+        );
+
+        expect(outcome, SendOutcome.errored);
+        final assistant = (await store.listMessages(
+          id,
+        )).firstWhere((m) => m.role == ChatRole.assistant);
+        expect(assistant.content, 'partial');
+        expect(assistant.status, ChatMessageStatus.errored);
+        expect(assistant.errorMessage, 'AI response stream ended before done');
+      },
+    );
 
     test(
       'does not show cancelled for internal stream cleanup errors',

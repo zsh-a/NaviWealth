@@ -122,6 +122,16 @@ CREATE TABLE IF NOT EXISTS liabilities (
   PRIMARY KEY (user_id, id)
 );
 
+CREATE TABLE IF NOT EXISTS amortization_entries (
+  user_id            TEXT NOT NULL,
+  id                 TEXT NOT NULL,
+  payload            TEXT NOT NULL,
+  hlc_text           TEXT NOT NULL,
+  updated_by_device  TEXT NOT NULL,
+  deleted_at         TEXT,
+  PRIMARY KEY (user_id, id)
+);
+
 CREATE TABLE IF NOT EXISTS fx_rates (
   user_id            TEXT NOT NULL,
   id                 TEXT NOT NULL,
