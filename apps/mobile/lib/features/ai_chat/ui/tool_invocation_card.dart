@@ -41,117 +41,120 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     final summary = _summarizeInput(invocation.input);
     final jumps = _extractJumps(l10n, invocation.output);
 
-    return Container(
-      margin: const EdgeInsets.only(top: Spacing.s8),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: Radii.brSm,
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            borderRadius: Radii.brSm,
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.s12,
-                vertical: Spacing.s8,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    pending
-                        ? Icons.hourglass_empty
-                        : Icons.check_circle_outline,
-                    size: 16,
-                    color: pending ? cs.tertiary : cs.primary,
-                  ),
-                  const SizedBox(width: Spacing.s8),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: friendlyName,
-                            style: tt.labelLarge?.copyWith(color: cs.onSurface),
-                          ),
-                          if (summary != null) ...[
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s8),
+      child: LiquidGlassCard(
+        layer: GlassLayer.tertiary,
+        borderRadius: Radii.md,
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              borderRadius: Radii.brMd,
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.s12,
+                  vertical: Spacing.s8,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      pending
+                          ? Icons.hourglass_empty
+                          : Icons.check_circle_outline,
+                      size: 16,
+                      color: pending ? cs.tertiary : cs.primary,
+                    ),
+                    const SizedBox(width: Spacing.s8),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
                             TextSpan(
-                              text: '  ·  ',
-                              style: tt.bodySmall?.copyWith(
-                                color: cs.onSurfaceVariant,
+                              text: friendlyName,
+                              style: tt.labelLarge?.copyWith(
+                                color: cs.onSurface,
                               ),
                             ),
-                            TextSpan(
-                              text: summary,
-                              style: tt.bodySmall?.copyWith(
-                                color: cs.onSurfaceVariant,
+                            if (summary != null) ...[
+                              TextSpan(
+                                text: '  ·  ',
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
                               ),
-                            ),
+                              TextSpan(
+                                text: summary,
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Icon(
-                    _expanded ? Icons.expand_less : Icons.expand_more,
-                    size: 18,
-                    color: cs.onSurfaceVariant,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (jumps.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s12,
-                0,
-                Spacing.s12,
-                Spacing.s8,
-              ),
-              child: Wrap(
-                spacing: Spacing.s8,
-                runSpacing: Spacing.s4,
-                children: [
-                  for (final jump in jumps)
-                    ActionChip(
-                      avatar: Icon(jump.icon, size: 16),
-                      label: Text(jump.label),
-                      onPressed: () => _navigate(context, jump),
-                      visualDensity: VisualDensity.compact,
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 18,
+                      color: cs.onSurfaceVariant,
                     ),
-                ],
-              ),
-            ),
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s12,
-                0,
-                Spacing.s12,
-                Spacing.s12,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _kvBlock(
-                    context,
-                    l10n.aiChatToolInputLabel,
-                    invocation.input,
-                  ),
-                  if (invocation.output != null) ...[
-                    const SizedBox(height: Spacing.s8),
-                    _resultBlock(context, l10n, invocation),
                   ],
-                ],
+                ),
               ),
             ),
-        ],
+            if (jumps.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.s12,
+                  0,
+                  Spacing.s12,
+                  Spacing.s8,
+                ),
+                child: Wrap(
+                  spacing: Spacing.s8,
+                  runSpacing: Spacing.s4,
+                  children: [
+                    for (final jump in jumps)
+                      AppChoiceChip(
+                        avatar: Icon(jump.icon, size: 16),
+                        label: Text(jump.label),
+                        selected: false,
+                        onSelected: (_) => _navigate(context, jump),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ),
+            if (_expanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.s12,
+                  0,
+                  Spacing.s12,
+                  Spacing.s12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _kvBlock(
+                      context,
+                      l10n.aiChatToolInputLabel,
+                      invocation.input,
+                    ),
+                    if (invocation.output != null) ...[
+                      const SizedBox(height: Spacing.s8),
+                      _resultBlock(context, l10n, invocation),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

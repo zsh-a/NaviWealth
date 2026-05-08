@@ -85,79 +85,116 @@ class _ChatComposerState extends State<ChatComposer> {
     final l10n = AppLocalizations.of(context);
     final canSend = !widget._busy && _controller.text.trim().isNotEmpty;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border(top: BorderSide(color: cs.outlineVariant)),
+    return GlassSurface(
+      sigma: 16,
+      border: Border(
+        top: BorderSide(color: GlassTokens.of(context).hairlineColor),
       ),
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.s12,
-        Spacing.s8,
-        Spacing.s12,
-        Spacing.s12,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Focus(
-                onKeyEvent: _onKey,
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  textInputAction: TextInputAction.newline,
-                  keyboardType: TextInputType.multiline,
-                  minLines: 1,
-                  maxLines: 6,
-                  enabled: !widget._busy,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: widget.isFlushing
-                        ? l10n.aiChatComposerHintFlushing
-                        : widget.isStreaming
-                            ? l10n.aiChatComposerHintStreaming
-                            : l10n.aiChatComposerHintIdle,
-                    filled: true,
-                    fillColor: cs.surfaceContainerHighest,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.s12,
-                      vertical: Spacing.s12,
-                    ),
-                    border: const OutlineInputBorder(
-                      borderRadius: Radii.brMd,
-                      borderSide: BorderSide.none,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.s12,
+          Spacing.s8,
+          Spacing.s12,
+          Spacing.s12,
+        ),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Focus(
+                  onKeyEvent: _onKey,
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textInputAction: TextInputAction.newline,
+                    keyboardType: TextInputType.multiline,
+                    minLines: 1,
+                    maxLines: 6,
+                    enabled: !widget._busy,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: widget.isFlushing
+                          ? l10n.aiChatComposerHintFlushing
+                          : widget.isStreaming
+                              ? l10n.aiChatComposerHintStreaming
+                              : l10n.aiChatComposerHintIdle,
+                      filled: true,
+                      fillColor: cs.surfaceContainerHighest.withValues(
+                        alpha: 0.6,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.s16,
+                        vertical: Spacing.s12,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderRadius: Radii.brXl,
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderRadius: Radii.brXl,
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: Radii.brXl,
+                        borderSide: BorderSide(color: cs.primary, width: 1.5),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: Spacing.s8),
-            if (widget.isStreaming)
-              IconButton.filledTonal(
-                onPressed: widget.onCancel,
-                tooltip: l10n.aiChatComposerStopTooltip,
-                icon: const Icon(Icons.stop),
-              )
-            else if (widget.isFlushing)
-              const Padding(
-                padding: EdgeInsets.all(Spacing.s8),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            else
-              IconButton.filled(
-                onPressed: canSend ? _send : null,
-                tooltip: l10n.aiChatComposerSendTooltip,
-                icon: const Icon(Icons.arrow_upward),
+              const SizedBox(width: Spacing.s8),
+              AnimatedSwitcher(
+                duration: Motion.fast,
+                transitionBuilder: (child, anim) =>
+                    FadeTransition(opacity: anim, child: child),
+                child: _trailingButton(context, canSend, l10n),
               ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _trailingButton(
+    BuildContext context,
+    bool canSend,
+    AppLocalizations l10n,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    if (widget.isStreaming) {
+      return IconButton.filledTonal(
+        key: const ValueKey('stop'),
+        onPressed: widget.onCancel,
+        tooltip: l10n.aiChatComposerStopTooltip,
+        icon: const Icon(Icons.stop),
+      );
+    }
+    if (widget.isFlushing) {
+      return const Padding(
+        key: ValueKey('flushing'),
+        padding: EdgeInsets.all(Spacing.s8),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    return IconButton.filled(
+      key: const ValueKey('send'),
+      onPressed: canSend ? _send : null,
+      tooltip: l10n.aiChatComposerSendTooltip,
+      style: IconButton.styleFrom(
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+        disabledBackgroundColor: cs.surfaceContainerHighest,
+        disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.5),
+        shape: const StadiumBorder(),
+      ),
+      icon: const Icon(Icons.arrow_upward),
     );
   }
 }

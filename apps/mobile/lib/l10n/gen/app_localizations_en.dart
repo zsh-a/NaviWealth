@@ -1779,6 +1779,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatEmptySuggestion4 => 'What\'s my XIRR since inception?';
 
   @override
+  String get aiChatEmptySuggestionsHeader => 'Try these';
+
+  @override
+  String get aiChatBootstrappingLabel => 'Preparing conversation…';
+
+  @override
   String get aiChatSessionsHeader => 'Conversations';
 
   @override

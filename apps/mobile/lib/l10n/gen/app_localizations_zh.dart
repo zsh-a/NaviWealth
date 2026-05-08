@@ -1706,6 +1706,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatEmptySuggestion4 => '从开户到现在我的 XIRR 是多少？';
 
   @override
+  String get aiChatEmptySuggestionsHeader => '试试这些';
+
+  @override
+  String get aiChatBootstrappingLabel => '正在准备会话…';
+
+  @override
   String get aiChatSessionsHeader => '对话';
 
   @override

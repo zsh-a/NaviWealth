@@ -372,46 +372,131 @@ class _EmptyConversation extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    final suggestions = <String>[
-      l10n.aiChatEmptySuggestion1,
-      l10n.aiChatEmptySuggestion2,
-      l10n.aiChatEmptySuggestion3,
-      l10n.aiChatEmptySuggestion4,
+    final suggestions = <(String, IconData)>[
+      (l10n.aiChatEmptySuggestion1, Icons.calendar_month_outlined),
+      (l10n.aiChatEmptySuggestion2, Icons.shield_outlined),
+      (l10n.aiChatEmptySuggestion3, Icons.donut_small_outlined),
+      (l10n.aiChatEmptySuggestion4, Icons.trending_up),
     ];
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.s24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(Icons.auto_awesome, size: 44, color: cs.primary),
-              const SizedBox(height: Spacing.s12),
-              Text(
-                l10n.aiChatEmptyTitle,
-                style: tt.headlineSmall?.copyWith(color: cs.onSurface),
-              ),
-              const SizedBox(height: Spacing.s8),
-              Text(
-                l10n.aiChatEmptyBody,
-                textAlign: TextAlign.center,
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-              const SizedBox(height: Spacing.s20),
-              Wrap(
-                spacing: Spacing.s8,
-                runSpacing: Spacing.s8,
-                alignment: WrapAlignment.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = Breakpoints.isMobile(constraints.maxWidth);
+        final outerPadding = isMobile ? Spacing.pageMobile : Spacing.pageWide;
+        return SingleChildScrollView(
+          padding: outerPadding,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final q in suggestions)
-                    ActionChip(label: Text(q), onPressed: () => onSuggest(q)),
+                  const SizedBox(height: Spacing.s24),
+                  Center(
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            cs.primary.withValues(alpha: 0.85),
+                            cs.tertiary.withValues(alpha: 0.85),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: AppElevations.of(context).level2,
+                      ),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        size: 28,
+                        color: cs.onPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.s16),
+                  Text(
+                    l10n.aiChatEmptyTitle,
+                    textAlign: TextAlign.center,
+                    style: tt.headlineMedium?.copyWith(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.s8),
+                  Text(
+                    l10n.aiChatEmptyBody,
+                    textAlign: TextAlign.center,
+                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: Spacing.s8),
+                  GlassSectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
+                  for (var i = 0; i < suggestions.length; i++) ...[
+                    if (i > 0) const SizedBox(height: Spacing.s8),
+                    _SuggestionTile(
+                      label: suggestions[i].$1,
+                      icon: suggestions[i].$2,
+                      onTap: () => onSuggest(suggestions[i].$1),
+                    ),
+                  ],
+                  const SizedBox(height: Spacing.s24),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        );
+      },
+    );
+  }
+}
+
+class _SuggestionTile extends StatelessWidget {
+  const _SuggestionTile({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s16,
+        vertical: Spacing.s12,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 16, color: cs.onPrimaryContainer),
+          ),
+          const SizedBox(width: Spacing.s12),
+          Expanded(
+            child: Text(
+              label,
+              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 12,
+            color: cs.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }
@@ -422,7 +507,26 @@ class _BootstrappingPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+          const SizedBox(height: Spacing.s12),
+          Text(
+            l10n.aiChatBootstrappingLabel,
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -451,10 +555,10 @@ class _BootstrapErrorPane extends StatelessWidget {
               style: tt.bodyMedium?.copyWith(color: cs.onSurface),
             ),
             const SizedBox(height: Spacing.s16),
-            FilledButton.icon(
+            AppButton.primary(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.commonRetry),
+              icon: Icons.refresh,
+              label: l10n.commonRetry,
             ),
           ],
         ),

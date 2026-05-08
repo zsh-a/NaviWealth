@@ -3198,6 +3198,18 @@ abstract class AppLocalizations {
   /// **'What\'s my XIRR since inception?'**
   String get aiChatEmptySuggestion4;
 
+  /// No description provided for @aiChatEmptySuggestionsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Try these'**
+  String get aiChatEmptySuggestionsHeader;
+
+  /// No description provided for @aiChatBootstrappingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing conversation…'**
+  String get aiChatBootstrappingLabel;
+
   /// No description provided for @aiChatSessionsHeader.
   ///
   /// In en, this message translates to:

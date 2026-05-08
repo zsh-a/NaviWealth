@@ -868,6 +868,8 @@
   "aiChatEmptySuggestion2": "Which holdings carry the highest risk?",
   "aiChatEmptySuggestion3": "What does my industry breakdown look like?",
   "aiChatEmptySuggestion4": "What's my XIRR since inception?",
+  "aiChatEmptySuggestionsHeader": "Try these",
+  "aiChatBootstrappingLabel": "Preparing conversation…",
 
   "aiChatSessionsHeader": "Conversations",
   "aiChatSessionsEmpty": "Tap the + button to start your first conversation.",
