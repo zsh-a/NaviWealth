@@ -129,54 +129,61 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
         Positioned(
           left: pos.dx,
           top: pos.dy,
-          child: Material(
-            color: Colors.transparent,
-            elevation: 8,
-            borderRadius: Radii.brXl,
-            child: ClipRRect(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
               borderRadius: Radii.brXl,
-              child: GlassSurface(
-                sigma: 20,
+              boxShadow: AppElevations.of(context).level3,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: Radii.brXl,
+              child: ClipRRect(
                 borderRadius: Radii.brXl,
-                border: Border.all(
-                  color: GlassTokens.of(context).hairlineColor,
-                  width: 1,
-                ),
-                child: SizedBox(
-                  width: _sheetW,
-                  height: _sheetH,
-                  child: Column(
-                    children: [
-                      // Drag handle — only this area initiates drag.
-                      GestureDetector(
-                        onPanUpdate: (details) {
-                          setState(() {
-                            _offset = Offset(
-                              pos.dx + details.delta.dx,
-                              pos.dy + details.delta.dy,
-                            );
-                          });
-                        },
-                        onPanEnd: (_) {
-                          if (_offset != null) _persistPosition(_offset!);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: Spacing.s8),
-                          child: Container(
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(2),
+                child: GlassSurface(
+                  sigma: 20,
+                  borderRadius: Radii.brXl,
+                  border: Border.all(
+                    color: GlassTokens.of(context).hairlineColor,
+                    width: 1,
+                  ),
+                  child: SizedBox(
+                    width: _sheetW,
+                    height: _sheetH,
+                    child: Column(
+                      children: [
+                        // Drag handle — only this area initiates drag.
+                        GestureDetector(
+                          onPanUpdate: (details) {
+                            setState(() {
+                              _offset = Offset(
+                                pos.dx + details.delta.dx,
+                                pos.dy + details.delta.dy,
+                              );
+                            });
+                          },
+                          onPanEnd: (_) {
+                            if (_offset != null) _persistPosition(_offset!);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: Spacing.s8),
+                            child: Container(
+                              width: 36,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant
+                                    .withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(child: AiChatSheetBody(prefill: widget.prefill)),
-                    ],
+                        Expanded(
+                          child: AiChatSheetBody(prefill: widget.prefill),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

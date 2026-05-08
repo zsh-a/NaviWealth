@@ -255,10 +255,11 @@ class _ExpandedView extends StatelessWidget {
       margin: const EdgeInsets.only(top: Spacing.s8),
       decoration: BoxDecoration(
         color: cs.tertiaryContainer.withValues(alpha: 0.35),
-        borderRadius: Radii.brSm,
+        borderRadius: Radii.brMd,
         border: Border.all(
           color: cs.tertiary.withValues(alpha: 0.45),
         ),
+        boxShadow: AppElevations.of(context).level1,
       ),
       padding: const EdgeInsets.all(Spacing.s12),
       child: Column(
@@ -389,36 +390,35 @@ class _CollapsedView extends StatelessWidget {
         ? 60 - DateTime.now().difference(applyState.appliedAt!).inSeconds
         : 0;
 
-    return Container(
-      margin: const EdgeInsets.only(top: Spacing.s8),
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s12,
-        vertical: Spacing.s8,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: Radii.brSm,
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: Spacing.s8),
-          Expanded(
-            child: Text(
-              label,
-              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s8),
+      child: LiquidGlassCard(
+        layer: GlassLayer.tertiary,
+        borderRadius: Radii.md,
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s12,
+          vertical: Spacing.s8,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: Spacing.s8),
+            Expanded(
+              child: Text(
+                label,
+                style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          if (onUndo != null && secondsLeft > 0)
-            AppButton.tertiary(
-              onPressed: onUndo,
-              icon: Icons.undo,
-              label: l10n.aiChatProposalUndoCountdown(secondsLeft),
-            ),
-        ],
+            if (onUndo != null && secondsLeft > 0)
+              AppButton.tertiary(
+                onPressed: onUndo,
+                icon: Icons.undo,
+                label: l10n.aiChatProposalUndoCountdown(secondsLeft),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -434,54 +434,53 @@ class _ClarificationView extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    return Container(
-      margin: const EdgeInsets.only(top: Spacing.s8),
-      padding: const EdgeInsets.all(Spacing.s12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh,
-        borderRadius: Radii.brSm,
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.help_outline, size: 18, color: cs.tertiary),
-              const SizedBox(width: Spacing.s8),
-              Text(
-                l10n.aiChatProposalNeedsClarificationHeader(
-                  proposalKindLabel(l10n, plan.kind),
-                ),
-                style: tt.labelMedium?.copyWith(color: cs.onSurface),
-              ),
-            ],
-          ),
-          const SizedBox(height: Spacing.s6),
-          Text(
-            plan.reason,
-            style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-          ),
-          if (plan.candidates.isNotEmpty) ...[
-            const SizedBox(height: Spacing.s8),
-            Text(
-              l10n.aiChatProposalCandidatesHeading,
-              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: Spacing.s4),
-            Wrap(
-              spacing: Spacing.s8,
-              runSpacing: Spacing.s4,
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s8),
+      child: LiquidGlassCard(
+        layer: GlassLayer.tertiary,
+        borderRadius: Radii.md,
+        padding: const EdgeInsets.all(Spacing.s12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                for (final c in plan.candidates)
-                  Chip(
-                    label: Text(c.label ?? c.id),
-                    visualDensity: VisualDensity.compact,
+                Icon(Icons.help_outline, size: 18, color: cs.tertiary),
+                const SizedBox(width: Spacing.s8),
+                Text(
+                  l10n.aiChatProposalNeedsClarificationHeader(
+                    proposalKindLabel(l10n, plan.kind),
                   ),
+                  style: tt.labelMedium?.copyWith(color: cs.onSurface),
+                ),
               ],
             ),
+            const SizedBox(height: Spacing.s6),
+            Text(
+              plan.reason,
+              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+            ),
+            if (plan.candidates.isNotEmpty) ...[
+              const SizedBox(height: Spacing.s8),
+              Text(
+                l10n.aiChatProposalCandidatesHeading,
+                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: Spacing.s4),
+              Wrap(
+                spacing: Spacing.s8,
+                runSpacing: Spacing.s4,
+                children: [
+                  for (final c in plan.candidates)
+                    Chip(
+                      label: Text(c.label ?? c.id),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -938,7 +937,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
       ),
       decoration: BoxDecoration(
         color: cs.primaryContainer.withValues(alpha: 0.4),
-        borderRadius: Radii.brSm,
+        borderRadius: Radii.brMd,
       ),
       child: Row(
         children: [

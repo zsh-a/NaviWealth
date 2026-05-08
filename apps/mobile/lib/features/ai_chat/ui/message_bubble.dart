@@ -26,15 +26,31 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (message.role) {
-      case ChatRole.system:
-        return _SystemNotice(text: message.content);
-      case ChatRole.user:
-        return _UserBubble(message: message);
-      case ChatRole.assistant:
-      case ChatRole.error:
-        return _AssistantBubble(sessionId: sessionId, message: message);
-    }
+    final Widget child = switch (message.role) {
+      ChatRole.system => _SystemNotice(text: message.content),
+      ChatRole.user => _UserBubble(message: message),
+      ChatRole.assistant ||
+      ChatRole.error => _AssistantBubble(
+        sessionId: sessionId,
+        message: message,
+      ),
+    };
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(message.id),
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: Motion.medium,
+      curve: Motion.standardDecelerate,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 8 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
   }
 }
 
@@ -63,11 +79,12 @@ class _UserBubble extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: cs.primaryContainer,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radii.rMd,
+                    topLeft: Radii.rLg,
                     topRight: Radii.rXs,
-                    bottomLeft: Radii.rMd,
-                    bottomRight: Radii.rMd,
+                    bottomLeft: Radii.rLg,
+                    bottomRight: Radii.rLg,
                   ),
+                  boxShadow: AppElevations.of(context).level1,
                 ),
                 child: SelectableText(
                   message.content,
@@ -95,76 +112,103 @@ class _AssistantBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final bubbleColor = _isError ? cs.errorContainer : cs.surfaceContainerLow;
     final textColor = _isError ? cs.onErrorContainer : cs.onSurface;
     final isStreaming = message.status == ChatMessageStatus.streaming;
+
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (message.toolCalls.isNotEmpty)
+          _ToolCallsSection(
+            sessionId: sessionId,
+            message: message,
+          ),
+        if (message.content.isNotEmpty || isStreaming) ...[
+          if (message.toolCalls.isNotEmpty)
+            const SizedBox(height: Spacing.s8),
+          _AssistantBody(
+            text: message.content,
+            isStreaming: isStreaming,
+            textColor: textColor,
+          ),
+        ],
+        if (message.errorMessage != null &&
+            message.errorMessage!.isNotEmpty) ...[
+          const SizedBox(height: Spacing.s8),
+          Text(
+            message.errorMessage!,
+            style: tt.bodySmall?.copyWith(color: cs.error),
+          ),
+        ],
+      ],
+    );
+
+    final bubble = _isError
+        ? Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.s12,
+              vertical: Spacing.s8,
+            ),
+            decoration: BoxDecoration(
+              color: cs.errorContainer,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radii.rXs,
+                topRight: Radii.rLg,
+                bottomLeft: Radii.rLg,
+                bottomRight: Radii.rLg,
+              ),
+            ),
+            child: body,
+          )
+        : LiquidGlassCard(
+            layer: GlassLayer.tertiary,
+            borderRadius: Radii.lg,
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.s12,
+              vertical: Spacing.s8,
+            ),
+            child: body,
+          );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.s6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: cs.secondaryContainer,
-            child: Icon(
-              Icons.auto_awesome,
-              size: 16,
-              color: cs.onSecondaryContainer,
-            ),
-          ),
+          _AssistantAvatar(),
           const SizedBox(width: Spacing.s8),
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
-              child: RepaintBoundary(
-                child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s12,
-                  vertical: Spacing.s8,
-                ),
-                decoration: BoxDecoration(
-                  color: bubbleColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radii.rXs,
-                    topRight: Radii.rMd,
-                    bottomLeft: Radii.rMd,
-                    bottomRight: Radii.rMd,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (message.toolCalls.isNotEmpty)
-                      _ToolCallsSection(
-                        sessionId: sessionId,
-                        message: message,
-                      ),
-                    if (message.content.isNotEmpty || isStreaming) ...[
-                      if (message.toolCalls.isNotEmpty)
-                        const SizedBox(height: Spacing.s8),
-                      _AssistantBody(
-                        text: message.content,
-                        isStreaming: isStreaming,
-                        textColor: textColor,
-                      ),
-                    ],
-                    if (message.errorMessage != null &&
-                        message.errorMessage!.isNotEmpty) ...[
-                      const SizedBox(height: Spacing.s8),
-                      Text(
-                        message.errorMessage!,
-                        style: tt.bodySmall?.copyWith(color: cs.error),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              ),
+              child: RepaintBoundary(child: bubble),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AssistantAvatar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cs.primary.withValues(alpha: 0.85),
+            cs.tertiary.withValues(alpha: 0.85),
+          ],
+        ),
+        shape: BoxShape.circle,
+        boxShadow: AppElevations.of(context).level1,
+      ),
+      child: Icon(Icons.auto_awesome, size: 14, color: cs.onPrimary),
     );
   }
 }
@@ -248,18 +292,13 @@ class _AssistantBody extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: textColor.withValues(alpha: 0.7),
-            ),
-          ),
+          _TypingDots(color: textColor.withValues(alpha: 0.7)),
           const SizedBox(width: Spacing.s8),
           Text(
             l10n.aiChatThinking,
-            style: tt.bodyMedium?.copyWith(color: textColor),
+            style: tt.bodyMedium?.copyWith(
+              color: textColor.withValues(alpha: 0.7),
+            ),
           ),
         ],
       );
@@ -277,6 +316,64 @@ class _AssistantBody extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _TypingDots extends StatefulWidget {
+  const _TypingDots({required this.color});
+  final Color color;
+
+  @override
+  State<_TypingDots> createState() => _TypingDotsState();
+}
+
+class _TypingDotsState extends State<_TypingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < 3; i++) ...[
+              if (i > 0) const SizedBox(width: 4),
+              _dot(i),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _dot(int index) {
+    // Each dot peaks ~133ms apart over the 1200ms cycle.
+    final phase = (_ctrl.value - index * 0.111) % 1.0;
+    final scale = 0.6 + 0.4 * (1 - (phase - 0.3).abs() * 3).clamp(0.0, 1.0);
+    final alpha = 0.4 + 0.6 * (1 - (phase - 0.3).abs() * 3).clamp(0.0, 1.0);
+    return Transform.scale(
+      scale: scale,
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration: BoxDecoration(
+          color: widget.color.withValues(alpha: alpha),
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
@@ -336,8 +433,8 @@ class _SystemNotice extends StatelessWidget {
             vertical: Spacing.s4,
           ),
           decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest,
-            borderRadius: Radii.brSm,
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(Radii.full),
           ),
           child: Text(
             text,

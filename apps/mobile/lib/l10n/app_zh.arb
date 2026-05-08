@@ -565,6 +565,8 @@
   "aiChatEmptySuggestion2": "帮我看看持仓里风险最高的资产。",
   "aiChatEmptySuggestion3": "我的行业分布是怎样的？",
   "aiChatEmptySuggestion4": "从开户到现在我的 XIRR 是多少？",
+  "aiChatEmptySuggestionsHeader": "试试这些",
+  "aiChatBootstrappingLabel": "正在准备会话…",
 
   "aiChatSessionsHeader": "对话",
   "aiChatSessionsEmpty": "点击右上角的 + 开始第一个对话。",
