@@ -165,7 +165,13 @@ class ChatRepository {
     }
     final portfolioSnapshot = await _portfolioSnapshotReader?.call();
 
-    final buffer = StringBuffer();
+    // Interleaved record of the assistant turn. `segments` and
+    // `invocationOrder` together rebuild the original
+    // text → tool → text → tool sequence the model emitted: each new
+    // tool boundary closes the current trailing segment and opens a
+    // fresh empty one. Invariant: `segments.length ==
+    // invocationOrder.length + 1`.
+    final segments = <String>[''];
     final invocations = <String, ToolInvocation>{};
     final invocationOrder = <String>[];
     final localCancel = cancelToken ?? CancelToken();
@@ -186,24 +192,41 @@ class ChatRepository {
         sawStreamEvent = true;
         switch (event) {
           case TextEvent(:final text):
-            buffer.write(text);
-            assistant = assistant.copyWith(content: buffer.toString());
+            segments[segments.length - 1] = segments.last + text;
+            assistant = assistant.copyWith(
+              content: segments.join(),
+              textSegments: List<String>.unmodifiable(segments),
+            );
             await _store.updateMessage(assistant);
           case ToolCallEvent(:final id, :final name, :final input):
+            // First sighting of this id → close the active text
+            // segment and start a new trailing one.
+            if (!invocationOrder.contains(id)) {
+              invocationOrder.add(id);
+              segments.add('');
+            }
             invocations[id] = ToolInvocation(id: id, name: name, input: input);
-            if (!invocationOrder.contains(id)) invocationOrder.add(id);
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
+              textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
           case ToolResultEvent(:final id, :final output):
             final existing = invocations[id];
+            // A tool_result for an unseen id means the call was
+            // synthesised server-side (e.g. proposal cap rejection).
+            // Treat it like a fresh tool call so the segment list
+            // still satisfies its length invariant.
+            if (!invocationOrder.contains(id)) {
+              invocationOrder.add(id);
+              segments.add('');
+            }
             invocations[id] = existing == null
                 ? ToolInvocation(id: id, name: '', input: null, output: output)
                 : existing.copyWith(output: output);
-            if (!invocationOrder.contains(id)) invocationOrder.add(id);
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
+              textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
           case ErrorEvent(:final message):
@@ -213,16 +236,23 @@ class ChatRepository {
               errorMessage: message,
             );
             await _store.updateMessage(assistant);
-          case DoneEvent():
+          case DoneEvent(:final stopReason):
             sawDone = true;
             // Only flip to complete if no error frame already promoted
-            // the message to errored.
+            // the message to errored. The stop reason is captured either
+            // way so the UI can distinguish "natural end" from
+            // "max_tokens / tool_use budget / refusal" without changing
+            // the persistence model.
+            final reason = ChatStopReasonX.parse(stopReason);
             if (assistant.status != ChatMessageStatus.errored) {
               assistant = assistant.copyWith(
                 status: ChatMessageStatus.complete,
+                stopReason: reason,
               );
-              await _store.updateMessage(assistant);
+            } else {
+              assistant = assistant.copyWith(stopReason: reason);
             }
+            await _store.updateMessage(assistant);
         }
       }
       if (!sawStreamEvent) {
@@ -230,6 +260,7 @@ class ChatRepository {
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended without any events',
+          stopReason: ChatStopReason.error,
         );
         await _store.updateMessage(assistant);
       } else if (!sawDone && assistant.status == ChatMessageStatus.streaming) {
@@ -237,6 +268,7 @@ class ChatRepository {
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended before done',
+          stopReason: ChatStopReason.error,
         );
         await _store.updateMessage(assistant);
       }
@@ -246,6 +278,7 @@ class ChatRepository {
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: kCancelledError,
+          stopReason: ChatStopReason.error,
         );
         await _store.updateMessage(assistant);
       } else {
@@ -253,6 +286,7 @@ class ChatRepository {
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: _describeError(e),
+          stopReason: ChatStopReason.error,
         );
         await _store.updateMessage(assistant);
       }

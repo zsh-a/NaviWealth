@@ -3336,6 +3336,48 @@ abstract class AppLocalizations {
   /// **'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.'**
   String get aiChatStaleSyncNotice;
 
+  /// Footer shown when the model hit max_tokens and the visible reply is incomplete
+  ///
+  /// In en, this message translates to:
+  /// **'Reply was cut off — output length limit reached'**
+  String get aiChatTruncatedMaxTokens;
+
+  /// Footer shown when the backend hit MAX_TOOL_ROUNDS while the model still wanted to call tools
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped — tool-call budget exhausted'**
+  String get aiChatTruncatedToolBudget;
+
+  /// Footer shown when the model returned a refusal stop reason
+  ///
+  /// In en, this message translates to:
+  /// **'The model declined to answer'**
+  String get aiChatTruncatedRefusal;
+
+  /// Footer shown when the SSE stream ended before a done event arrived
+  ///
+  /// In en, this message translates to:
+  /// **'Connection dropped before the reply finished'**
+  String get aiChatTruncatedNetwork;
+
+  /// Footer shown for any unrecognised or unknown stop reason
+  ///
+  /// In en, this message translates to:
+  /// **'Reply ended unexpectedly'**
+  String get aiChatTruncatedUnknown;
+
+  /// Inline button next to the truncation footer that asks the model to continue
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get aiChatTruncatedContinue;
+
+  /// Hidden user message sent to the model when the user taps the Continue affordance
+  ///
+  /// In en, this message translates to:
+  /// **'Please continue.'**
+  String get aiChatTruncatedContinuePrompt;
+
   /// No description provided for @aiChatProposalKindTrade.
   ///
   /// In en, this message translates to:

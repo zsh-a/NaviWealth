@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
@@ -160,8 +161,8 @@ class ChatHistoryStore {
     await _db.customStatement(
       'INSERT INTO chat_messages '
       '(id, session_id, owner_user_id, role, content, tool_calls_json, '
-      ' status, error_message, created_at) '
-      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)',
+      ' text_segments_json, status, error_message, stop_reason, created_at) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)',
       <Object?>[
         msg.id,
         msg.sessionId,
@@ -169,8 +170,10 @@ class ChatHistoryStore {
         msg.role.wire,
         msg.content,
         msg.toolCalls.isEmpty ? null : ToolInvocation.encodeList(msg.toolCalls),
+        _encodeTextSegments(msg.textSegments),
         msg.status.wire,
         msg.errorMessage,
+        _encodeStopReason(msg.stopReason),
         msg.createdAt.millisecondsSinceEpoch,
       ],
     );
@@ -180,17 +183,44 @@ class ChatHistoryStore {
   Future<void> updateMessage(ChatMessage msg) async {
     await _db.customStatement(
       'UPDATE chat_messages SET '
-      ' content = ?2, tool_calls_json = ?3, status = ?4, error_message = ?5 '
+      ' content = ?2, tool_calls_json = ?3, text_segments_json = ?4,'
+      ' status = ?5, error_message = ?6, stop_reason = ?7 '
       'WHERE id = ?1',
       <Object?>[
         msg.id,
         msg.content,
         msg.toolCalls.isEmpty ? null : ToolInvocation.encodeList(msg.toolCalls),
+        _encodeTextSegments(msg.textSegments),
         msg.status.wire,
         msg.errorMessage,
+        _encodeStopReason(msg.stopReason),
       ],
     );
     _notify();
+  }
+
+  static String? _encodeStopReason(ChatStopReason? reason) => switch (reason) {
+    null => null,
+    ChatStopReason.endTurn => 'end_turn',
+    ChatStopReason.maxTokens => 'max_tokens',
+    ChatStopReason.toolUse => 'tool_use',
+    ChatStopReason.refusal => 'refusal',
+    ChatStopReason.error => 'error',
+    ChatStopReason.unknown => 'unknown',
+  };
+
+  static String? _encodeTextSegments(List<String> segments) =>
+      segments.isEmpty ? null : jsonEncode(segments);
+
+  static List<String> _decodeTextSegments(String? raw) {
+    if (raw == null || raw.isEmpty) return const <String>[];
+    try {
+      final parsed = jsonDecode(raw);
+      if (parsed is! List) return const <String>[];
+      return parsed.map((e) => e is String ? e : '').toList(growable: false);
+    } on FormatException {
+      return const <String>[];
+    }
   }
 
   // ─── row decoders ─────────────────────────────────────────────────
@@ -217,6 +247,7 @@ class ChatHistoryStore {
   }
 
   ChatMessage _messageFromRow(QueryRow row) {
+    final stopRaw = row.readNullable<String>('stop_reason');
     return ChatMessage(
       id: row.read<String>('id'),
       sessionId: row.read<String>('session_id'),
@@ -226,8 +257,12 @@ class ChatHistoryStore {
       toolCalls: ToolInvocation.decodeList(
         row.readNullable<String>('tool_calls_json'),
       ),
+      textSegments: _decodeTextSegments(
+        row.readNullable<String>('text_segments_json'),
+      ),
       status: ChatMessageStatusX.parse(row.read<String>('status')),
       errorMessage: row.readNullable<String>('error_message'),
+      stopReason: stopRaw == null ? null : ChatStopReasonX.parse(stopRaw),
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         row.read<int>('created_at'),
         isUtc: true,

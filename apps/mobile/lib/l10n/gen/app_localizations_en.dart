@@ -1860,6 +1860,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
 
   @override
+  String get aiChatTruncatedMaxTokens =>
+      'Reply was cut off — output length limit reached';
+
+  @override
+  String get aiChatTruncatedToolBudget =>
+      'Stopped — tool-call budget exhausted';
+
+  @override
+  String get aiChatTruncatedRefusal => 'The model declined to answer';
+
+  @override
+  String get aiChatTruncatedNetwork =>
+      'Connection dropped before the reply finished';
+
+  @override
+  String get aiChatTruncatedUnknown => 'Reply ended unexpectedly';
+
+  @override
+  String get aiChatTruncatedContinue => 'Continue';
+
+  @override
+  String get aiChatTruncatedContinuePrompt => 'Please continue.';
+
+  @override
   String get aiChatProposalKindTrade => 'Trade';
 
   @override

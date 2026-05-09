@@ -1783,6 +1783,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
 
   @override
+  String get aiChatTruncatedMaxTokens => '回复因长度上限被截断';
+
+  @override
+  String get aiChatTruncatedToolBudget => '工具调用次数用尽，已提前结束';
+
+  @override
+  String get aiChatTruncatedRefusal => '模型拒绝回答此问题';
+
+  @override
+  String get aiChatTruncatedNetwork => '连接中断，回复未完整接收';
+
+  @override
+  String get aiChatTruncatedUnknown => '回复异常结束';
+
+  @override
+  String get aiChatTruncatedContinue => '继续';
+
+  @override
+  String get aiChatTruncatedContinuePrompt => '请继续。';
+
+  @override
   String get aiChatProposalKindTrade => '交易';
 
   @override

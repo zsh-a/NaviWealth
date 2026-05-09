@@ -337,6 +337,101 @@ void main() {
       expect(assistant.errorMessage, kCancelledError);
     });
 
+    test(
+      'records textSegments interleaved with tool calls in arrival order',
+      () async {
+        api.script.addAll(<AiChatEvent>[
+          const TextEvent('好的，我先查一下你的 XIRR。'),
+          const ToolCallEvent(
+            id: 'a',
+            name: 'compute_xirr',
+            input: {'scope': 'portfolio'},
+          ),
+          const ToolResultEvent(
+            id: 'a',
+            name: 'compute_xirr',
+            output: {'value': 0.12},
+          ),
+          const TextEvent('数据不够，让我查交易记录。'),
+          const ToolCallEvent(
+            id: 'b',
+            name: 'get_transactions',
+            input: <String, Object?>{},
+          ),
+          const ToolResultEvent(
+            id: 'b',
+            name: 'get_transactions',
+            output: {'rows': <Object?>[]},
+          ),
+          const TextEvent('账户里只有 100 CNY 现金存入。'),
+          const DoneEvent(stopReason: 'end_turn', rounds: 3),
+        ]);
+        final id = await activeSessionId();
+        await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: '帮我看 XIRR',
+        );
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
+        expect(assistant.toolCalls.map((t) => t.name), [
+          'compute_xirr',
+          'get_transactions',
+        ]);
+        expect(assistant.textSegments, [
+          '好的，我先查一下你的 XIRR。',
+          '数据不够，让我查交易记录。',
+          '账户里只有 100 CNY 现金存入。',
+        ]);
+        // displaySegments == textSegments when length matches the
+        // toolCalls.length + 1 invariant.
+        expect(assistant.displaySegments, assistant.textSegments);
+        // Flat content stays available for replay / search.
+        expect(
+          assistant.content,
+          '好的，我先查一下你的 XIRR。数据不够，让我查交易记录。账户里只有 100 CNY 现金存入。',
+        );
+      },
+    );
+
+    test('persists the stop_reason from the SSE done frame', () async {
+      api.script.addAll(const [
+        TextEvent('truncated mid-thought'),
+        DoneEvent(stopReason: 'max_tokens', rounds: 1),
+      ]);
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'long question',
+      );
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
+      expect(assistant.status, ChatMessageStatus.complete);
+      expect(assistant.stopReason, ChatStopReason.maxTokens);
+    });
+
+    test('records ChatStopReason.error when the stream ends without done',
+        () async {
+      final noDoneApi = _NoDoneApi(const [TextEvent('partial')]);
+      final repo2 = ChatRepository(
+        store: store,
+        api: noDoneApi,
+        sessionReader: () => _fakeSession,
+      );
+      final id = await activeSessionId();
+      final outcome = await repo2.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'q',
+      );
+      expect(outcome, SendOutcome.errored);
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
+      expect(assistant.status, ChatMessageStatus.errored);
+      expect(assistant.stopReason, ChatStopReason.error);
+    });
+
     test('autotitles the session from the first user prompt', () async {
       api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
       final id = await activeSessionId();
