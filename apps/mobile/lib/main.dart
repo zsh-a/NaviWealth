@@ -4,12 +4,20 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'app/app.dart';
 import 'app/bootstrap.dart';
+import 'core/perf/refresh_rate.dart';
 
 Future<void> main() async {
   await runGuarded(() async {
     final container = await bootstrap();
-    GlassPerformanceMonitor.rasterBudget = const Duration(microseconds: 8333); // 120 fps
-    GlassPerformanceMonitor.sustainedFrameThreshold = 120; // 120 fps
+    // Match the GlassPerformanceMonitor budget to the device's actual
+    // refresh rate. A fixed 120 fps budget on a 60 fps panel marks every
+    // frame as over-budget and drives adaptiveQuality to permanently
+    // downgrade — defeating the premium tier on hero surfaces.
+    final fps = targetFps();
+    GlassPerformanceMonitor.rasterBudget = Duration(
+      microseconds: targetFrameBudgetUs(),
+    );
+    GlassPerformanceMonitor.sustainedFrameThreshold = fps;
     await LiquidGlassWidgets.initialize();
     runApp(
       UncontrolledProviderScope(

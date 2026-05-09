@@ -38,6 +38,7 @@ class AllocationCard extends StatelessWidget {
         .firstWhere((a) => true, orElse: () => null);
 
     return LiquidGlassCard(
+      layer: GlassLayer.primary,
       padding: Spacing.cardHero,
       child: LayoutBuilder(
         builder: (context, constraints) {

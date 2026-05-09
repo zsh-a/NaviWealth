@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../tokens/breakpoints.dart';
 import '../tokens/spacing_tokens.dart';
@@ -71,70 +72,76 @@ class PageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: background,
-      appBar: appBar,
-      body: SafeArea(
-        top: appBar == null,
-        bottom: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final isMobile = Breakpoints.isMobile(width);
-            final isDesktop = Breakpoints.isDesktop(width);
+    // Per-route GlassBackdropScope: the AppBar, body cards, and any
+    // floating shell glass surfaces inside this Scaffold share a single
+    // GPU framebuffer capture instead of each capturing the backdrop
+    // independently. On Skia/web this is a cheap no-op.
+    return lgw.GlassBackdropScope(
+      child: Scaffold(
+        backgroundColor: background,
+        appBar: appBar,
+        body: SafeArea(
+          top: appBar == null,
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final isMobile = Breakpoints.isMobile(width);
+              final isDesktop = Breakpoints.isDesktop(width);
 
-            // Default page padding bakes in clearance for the mobile
-            // shell's floating glass bottom bar so the last scroll item
-            // isn't masked. When callers pass their own [padding], we
-            // trust it as-is — they may have a ListView inside that's
-            // already managing its own clearance.
-            final EdgeInsets resolvedPadding;
-            if (padding != null) {
-              resolvedPadding = padding!.resolve(Directionality.of(context));
-            } else {
-              final mq = MediaQuery.of(context);
-              final extraBottom = isMobile
-                  ? Spacing.floatingBarClearance + mq.viewPadding.bottom
-                  : mq.viewPadding.bottom;
-              final base = isMobile ? Spacing.pageMobile : Spacing.pageWide;
-              resolvedPadding = base.copyWith(
-                bottom: base.bottom + extraBottom,
+              // Default page padding bakes in clearance for the mobile
+              // shell's floating glass bottom bar so the last scroll item
+              // isn't masked. When callers pass their own [padding], we
+              // trust it as-is — they may have a ListView inside that's
+              // already managing its own clearance.
+              final EdgeInsets resolvedPadding;
+              if (padding != null) {
+                resolvedPadding = padding!.resolve(Directionality.of(context));
+              } else {
+                final mq = MediaQuery.of(context);
+                final extraBottom = isMobile
+                    ? Spacing.floatingBarClearance + mq.viewPadding.bottom
+                    : mq.viewPadding.bottom;
+                final base = isMobile ? Spacing.pageMobile : Spacing.pageWide;
+                resolvedPadding = base.copyWith(
+                  bottom: base.bottom + extraBottom,
+                );
+              }
+
+              final hasAside = aside != null && isDesktop;
+              final Widget content;
+              if (hasAside) {
+                content = Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: asideWidth, child: aside),
+                    const SizedBox(width: Spacing.s24),
+                    Expanded(child: _wrapBody()),
+                  ],
+                );
+              } else {
+                content = _wrapBody();
+              }
+
+              final bool capped = !isMobile && maxWidth.isFinite;
+              // Available width for content after horizontal page padding.
+              final available =
+                  width - resolvedPadding.left - resolvedPadding.right;
+              final cap = hasAside
+                  ? maxWidth + asideWidth + Spacing.s24
+                  : maxWidth;
+              final targetWidth = capped
+                  ? math.min(available, cap)
+                  : available;
+              return Padding(
+                padding: resolvedPadding,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(width: targetWidth, child: content),
+                ),
               );
-            }
-
-            final hasAside = aside != null && isDesktop;
-            final Widget content;
-            if (hasAside) {
-              content = Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(width: asideWidth, child: aside),
-                  const SizedBox(width: Spacing.s24),
-                  Expanded(child: _wrapBody()),
-                ],
-              );
-            } else {
-              content = _wrapBody();
-            }
-
-            final bool capped = !isMobile && maxWidth.isFinite;
-            // Available width for content after horizontal page padding.
-            final available =
-                width - resolvedPadding.left - resolvedPadding.right;
-            final cap = hasAside
-                ? maxWidth + asideWidth + Spacing.s24
-                : maxWidth;
-            final targetWidth = capped
-                ? math.min(available, cap)
-                : available;
-            return Padding(
-              padding: resolvedPadding,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(width: targetWidth, child: content),
-              ),
-            );
-          },
+            },
+          ),
         ),
       ),
     );

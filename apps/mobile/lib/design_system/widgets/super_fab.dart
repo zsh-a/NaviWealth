@@ -206,14 +206,24 @@ class _SpeedDialOverlay extends StatelessWidget {
         return Stack(
           children: [
             // Scrim — soft dim + blur, tap to dismiss.
+            //
+            // BackdropFilter sigma is held constant (16) and the whole
+            // scrim is faded in via Opacity. Animating sigma per frame
+            // would force the blur kernel to re-evaluate each tick — a
+            // measurable GPU cost on a fullscreen overlay. Animating
+            // opacity instead lets the compositor reuse the blurred
+            // texture and just reblend it.
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onDismiss,
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 16 * t, sigmaY: 16 * t),
-                  child: ColoredBox(
-                    color: Colors.black.withValues(alpha: 0.25 * t),
+                child: Opacity(
+                  opacity: t,
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: const ColoredBox(
+                      color: Color(0x40000000), // 25 % black, fixed
+                    ),
                   ),
                 ),
               ),

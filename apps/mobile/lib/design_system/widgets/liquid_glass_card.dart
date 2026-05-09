@@ -6,10 +6,13 @@ import 'scroll_state.dart';
 
 /// Glass hierarchy levels mapping to package quality tiers.
 enum GlassLayer {
-  /// Nav bars, modals — full shader pipeline.
+  /// Hero / focal surfaces (e.g. landing-page summary cards, modals,
+  /// nav bars) — full shader pipeline (premium).
   primary,
 
-  /// Dashboard cards — blur + refraction.
+  /// Dashboard cards — blur only (minimal). Cheap on shader-dense pages
+  /// like the FIRE dashboard or sync status. Promote to [primary] when
+  /// the refraction shader is visually load-bearing.
   secondary,
 
   /// Inline chips, badges — blur only, no shader.
@@ -39,6 +42,7 @@ class LiquidGlassCard extends StatelessWidget {
     this.margin,
     this.borderRadius,
     this.onTap,
+    this.useOwnLayer = false,
   });
 
   final Widget child;
@@ -48,6 +52,14 @@ class LiquidGlassCard extends StatelessWidget {
   final double? borderRadius;
   final VoidCallback? onTap;
 
+  /// When `true`, the card captures its own backdrop instead of sharing
+  /// one with sibling glass surfaces in the enclosing `GlassBackdropScope`.
+  /// Defaults to `false`: the app installs a root scope via
+  /// [LiquidGlassWidgets.wrap] and per-route scopes via [PageScaffold], so
+  /// cards share the GPU framebuffer capture across a screen. Set this to
+  /// `true` only for surfaces rendered outside any scope (rare).
+  final bool useOwnLayer;
+
   lgw.GlassQuality _quality({required bool isScrolling}) {
     // During scroll, always use minimal quality to avoid GPU blur cost.
     if (isScrolling && layer != GlassLayer.tertiary) {
@@ -55,7 +67,10 @@ class LiquidGlassCard extends StatelessWidget {
     }
     return switch (layer) {
       GlassLayer.primary => lgw.GlassQuality.premium,
-      GlassLayer.secondary => lgw.GlassQuality.standard,
+      // Dashboard cards default to minimal — README's "shader-dense
+      // screens" recommendation. Promote a hero card to GlassLayer.primary
+      // when the refraction shader is visually load-bearing.
+      GlassLayer.secondary => lgw.GlassQuality.minimal,
       GlassLayer.tertiary => lgw.GlassQuality.minimal,
     };
   }
@@ -63,21 +78,17 @@ class LiquidGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = borderRadius ?? 16;
-    Widget card = ValueListenableBuilder<bool>(
-      valueListenable: isScrollingNotifier,
-      builder: (context, isScrolling, _) {
-        return RepaintBoundary(
-          child: lgw.GlassContainer(
-            useOwnLayer: true,
-            quality: _quality(isScrolling: isScrolling),
-            padding: padding,
-            margin: margin,
-            shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius),
-            clipBehavior: Clip.antiAlias,
-            child: child,
-          ),
-        );
-      },
+    final isScrolling = ScrollingScope.of(context);
+    Widget card = RepaintBoundary(
+      child: lgw.GlassContainer(
+        useOwnLayer: useOwnLayer,
+        quality: _quality(isScrolling: isScrolling),
+        padding: padding,
+        margin: margin,
+        shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
     );
 
     if (onTap != null) {

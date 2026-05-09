@@ -142,6 +142,7 @@ class _NetWorthHeader extends ConsumerWidget {
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
     return LiquidGlassCard(
+      layer: GlassLayer.primary,
       padding: Spacing.cardHero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
