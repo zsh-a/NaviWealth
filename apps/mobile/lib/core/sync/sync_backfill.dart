@@ -32,7 +32,7 @@ class SyncBackfill {
   final AuthSession _session;
   final Uuid _uuid;
 
-  static const version = '1';
+  static const version = '2';
 
   Future<int> enqueueMissingLocalRows() async {
     final key =
@@ -53,6 +53,10 @@ class SyncBackfill {
     queued += await _backfillPostings();
     queued += await _backfillLiabilities();
     queued += await _backfillAmortizationEntries();
+    queued += await _backfillUsers();
+    queued += await _backfillSettings();
+    queued += await _backfillCategories();
+    queued += await _backfillTagLinks();
 
     await _db.customStatement(
       'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
@@ -243,6 +247,87 @@ class SyncBackfill {
           'interest_payment': r.interestPayment.toString(),
           'remaining_balance': r.remainingBalance.toString(),
           'paid_at': _isoOrNull(r.paidAt),
+          ...sync,
+        };
+      });
+      count++;
+    }
+    return count;
+  }
+
+  Future<int> _backfillUsers() async {
+    final rows = (await _db.select(_db.users).get())
+        .where((r) => r.ownerUserId == _session.userId && r.deletedAt == null)
+        .toList(growable: false);
+    var count = 0;
+    for (final r in rows) {
+      await _enqueue('users', r.id, (sync) {
+        return {
+          'id': r.id,
+          'name': r.name,
+          'email': r.email,
+          'created_at': _iso(r.createdAt),
+          ...sync,
+        };
+      });
+      count++;
+    }
+    return count;
+  }
+
+  Future<int> _backfillSettings() async {
+    final rows = (await _db.select(_db.settingsTable).get())
+        .where((r) => r.ownerUserId == _session.userId && r.deletedAt == null)
+        .toList(growable: false);
+    var count = 0;
+    for (final r in rows) {
+      await _enqueue('settings', r.userId, (sync) {
+        return {
+          'user_id': r.userId,
+          'base_currency': r.baseCurrency,
+          'theme_mode': r.themeMode.name,
+          'privacy_mode': r.privacyMode.name,
+          'cost_basis_method': r.costBasisMethod.name,
+          ...sync,
+        };
+      });
+      count++;
+    }
+    return count;
+  }
+
+  Future<int> _backfillCategories() async {
+    final rows = (await _db.select(_db.categories).get())
+        .where((r) => r.ownerUserId == _session.userId && r.deletedAt == null)
+        .toList(growable: false);
+    var count = 0;
+    for (final r in rows) {
+      await _enqueue('categories', r.id, (sync) {
+        return {
+          'id': r.id,
+          'name': r.name,
+          'parent_id': r.parentId,
+          'sort_order': r.sortOrder,
+          ...sync,
+        };
+      });
+      count++;
+    }
+    return count;
+  }
+
+  Future<int> _backfillTagLinks() async {
+    final rows = (await _db.select(_db.tagLinks).get())
+        .where((r) => r.ownerUserId == _session.userId && r.deletedAt == null)
+        .toList(growable: false);
+    var count = 0;
+    for (final r in rows) {
+      await _enqueue('tag_links', r.id, (sync) {
+        return {
+          'id': r.id,
+          'tag_id': r.tagId,
+          'entity_table': r.entityTable,
+          'entity_id': r.entityId,
           ...sync,
         };
       });
