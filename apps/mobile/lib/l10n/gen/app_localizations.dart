@@ -6123,6 +6123,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tags'**
   String get syncStatusLocalTags;
+
+  /// Hero card subtitle while a cycle is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing changes…'**
+  String get syncStatusHeroSyncing;
+
+  /// Stat tile label — outbox depth
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get syncStatusStatPending;
+
+  /// Stat tile label — total local rows across syncable tables
+  ///
+  /// In en, this message translates to:
+  /// **'Local rows'**
+  String get syncStatusStatLocal;
+
+  /// Stat tile label — when the engine last succeeded
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync'**
+  String get syncStatusStatLastSync;
+
+  /// Stat tile placeholder before first successful sync
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get syncStatusStatNever;
+
+  /// Compact relative-time chip when the event is under a minute old
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get syncStatusStatJustNow;
 }
 
 class _AppLocalizationsDelegate

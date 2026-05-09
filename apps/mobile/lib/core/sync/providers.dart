@@ -122,80 +122,43 @@ final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
   return DriftOutboxStore(db).depth();
 });
 
-/// Per-table row counts from the local materialised tables. Diagnostic only
-/// — surfaced on the Sync Status page so a "pulled N ops but UI shows
-/// nothing" mismatch is immediately visible. Re-runs whenever a status
-/// event lands.
-class LocalTableCounts {
-  const LocalTableCounts({
-    required this.accountsUser,
-    required this.accountsSystem,
-    required this.journalEntries,
-    required this.postings,
-    required this.assets,
-    required this.prices,
-    required this.liabilities,
-    required this.tags,
-  });
+/// Per-table row counts from the local materialised tables, keyed by a
+/// short identifier (e.g. `accounts_user`). Diagnostic-only — surfaced on
+/// the Sync Status page so a "pulled N ops but UI shows nothing" mismatch
+/// is immediately visible. Re-runs whenever a status event lands.
+typedef LocalTableCounts = Map<String, int>;
 
-  final int accountsUser;
-  final int accountsSystem;
-  final int journalEntries;
-  final int postings;
-  final int assets;
-  final int prices;
-  final int liabilities;
-  final int tags;
-}
+/// Wire identifiers for the diagnostic counters, in display order. The UI
+/// resolves each id to a localised label.
+const List<String> kSyncLocalCountIds = [
+  'accounts_user',
+  'accounts_system',
+  'journal_entries',
+  'postings',
+  'assets',
+  'prices',
+  'liabilities',
+  'tags',
+];
+
+const String _kLocalCountsSql = '''
+  SELECT 'accounts_user'   AS t, COUNT(*) AS c FROM accounts          WHERE id NOT LIKE 'system-account:%' AND deleted_at IS NULL
+  UNION ALL SELECT 'accounts_system',  COUNT(*) FROM accounts         WHERE id LIKE 'system-account:%' AND deleted_at IS NULL
+  UNION ALL SELECT 'journal_entries',  COUNT(*) FROM journal_entries  WHERE deleted_at IS NULL
+  UNION ALL SELECT 'postings',         COUNT(*) FROM postings         WHERE deleted_at IS NULL
+  UNION ALL SELECT 'assets',           COUNT(*) FROM assets           WHERE deleted_at IS NULL
+  UNION ALL SELECT 'prices',           COUNT(*) FROM prices           WHERE deleted_at IS NULL
+  UNION ALL SELECT 'liabilities',      COUNT(*) FROM liabilities      WHERE deleted_at IS NULL
+  UNION ALL SELECT 'tags',             COUNT(*) FROM tags             WHERE deleted_at IS NULL
+''';
 
 final syncLocalTableCountsProvider = FutureProvider<LocalTableCounts>((
   ref,
 ) async {
   ref.watch(syncStatusEventStreamProvider);
   final db = await ref.watch(appDatabaseProvider.future);
-
-  Future<int> count(String sql) async {
-    final row = await db.customSelect(sql).getSingle();
-    return row.read<int>('c');
-  }
-
-  // Run sequentially — these all share the same DB connection on web and
-  // we don't need the speed-up of parallelism for diagnostic counts.
-  final accountsUser = await count(
-    "SELECT COUNT(*) AS c FROM accounts WHERE id NOT LIKE 'system-account:%' AND deleted_at IS NULL",
-  );
-  final accountsSystem = await count(
-    "SELECT COUNT(*) AS c FROM accounts WHERE id LIKE 'system-account:%' AND deleted_at IS NULL",
-  );
-  final journalEntries = await count(
-    'SELECT COUNT(*) AS c FROM journal_entries WHERE deleted_at IS NULL',
-  );
-  final postings = await count(
-    'SELECT COUNT(*) AS c FROM postings WHERE deleted_at IS NULL',
-  );
-  final assets = await count(
-    'SELECT COUNT(*) AS c FROM assets WHERE deleted_at IS NULL',
-  );
-  final prices = await count(
-    'SELECT COUNT(*) AS c FROM prices WHERE deleted_at IS NULL',
-  );
-  final liabilities = await count(
-    'SELECT COUNT(*) AS c FROM liabilities WHERE deleted_at IS NULL',
-  );
-  final tags = await count(
-    'SELECT COUNT(*) AS c FROM tags WHERE deleted_at IS NULL',
-  );
-
-  return LocalTableCounts(
-    accountsUser: accountsUser,
-    accountsSystem: accountsSystem,
-    journalEntries: journalEntries,
-    postings: postings,
-    assets: assets,
-    prices: prices,
-    liabilities: liabilities,
-    tags: tags,
-  );
+  final rows = await db.customSelect(_kLocalCountsSql).get();
+  return {for (final r in rows) r.read<String>('t'): r.read<int>('c')};
 });
 
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {

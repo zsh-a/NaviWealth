@@ -3458,4 +3458,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncStatusLocalTags => 'Tags';
+
+  @override
+  String get syncStatusHeroSyncing => 'Syncing changes…';
+
+  @override
+  String get syncStatusStatPending => 'Pending';
+
+  @override
+  String get syncStatusStatLocal => 'Local rows';
+
+  @override
+  String get syncStatusStatLastSync => 'Last sync';
+
+  @override
+  String get syncStatusStatNever => 'Never';
+
+  @override
+  String get syncStatusStatJustNow => 'now';
 }

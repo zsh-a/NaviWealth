@@ -1095,5 +1095,12 @@
   "syncStatusLocalAssets": "资产",
   "syncStatusLocalPrices": "价格",
   "syncStatusLocalLiabilities": "负债",
-  "syncStatusLocalTags": "标签"
+  "syncStatusLocalTags": "标签",
+
+  "syncStatusHeroSyncing": "正在同步…",
+  "syncStatusStatPending": "待推送",
+  "syncStatusStatLocal": "本地行",
+  "syncStatusStatLastSync": "上次同步",
+  "syncStatusStatNever": "尚未",
+  "syncStatusStatJustNow": "刚刚"
 }

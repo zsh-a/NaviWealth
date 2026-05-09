@@ -3325,4 +3325,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStatusLocalTags => '标签';
+
+  @override
+  String get syncStatusHeroSyncing => '正在同步…';
+
+  @override
+  String get syncStatusStatPending => '待推送';
+
+  @override
+  String get syncStatusStatLocal => '本地行';
+
+  @override
+  String get syncStatusStatLastSync => '上次同步';
+
+  @override
+  String get syncStatusStatNever => '尚未';
+
+  @override
+  String get syncStatusStatJustNow => '刚刚';
 }
