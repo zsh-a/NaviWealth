@@ -5,6 +5,7 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../data/db/app_database.dart';
 import '../../data/db/providers.dart';
+import '../../data/domain/hlc.dart';
 import '../../data/repositories/account_op_applier.dart';
 import '../auth/providers.dart';
 import '../logging/providers.dart';
@@ -17,12 +18,11 @@ import 'sync_engine.dart';
 import 'sync_scheduler.dart';
 import 'sync_status.dart';
 
-/// Auth token source. Stub returns `null` until FIR-30 wires real auth in;
-/// every sync call will then 401 and the engine surfaces `failed`. This
-/// is the intended early-development behaviour: visible in the status
-/// indicator instead of crashing.
+/// Auth token source. Reads the current access token from
+/// [authSessionProvider] on every call so a refresh / re-login is
+/// picked up by the next request without rebuilding the API client.
 final syncAuthTokenProvider = Provider<Future<String?> Function()>((ref) {
-  return () async => null;
+  return () async => ref.read(authSessionProvider)?.accessToken;
 });
 
 /// Shared Dio instance pointed at the configured backend. We don't reuse
@@ -60,6 +60,32 @@ final syncStatusBusProvider = Provider<SyncStatusBus>((ref) {
   final bus = SyncStatusBus();
   ref.onDispose(bus.close);
   return bus;
+});
+
+/// Live stream of sync status events seeded with the bus's current
+/// snapshot, so a status page opened mid-cycle paints immediately
+/// instead of waiting for the next event.
+final syncStatusEventStreamProvider = StreamProvider<SyncStatusEvent>((
+  ref,
+) async* {
+  final bus = ref.watch(syncStatusBusProvider);
+  yield bus.current;
+  yield* bus.stream;
+});
+
+/// Last persisted pull cursor (HLC). Returns null before the first pull.
+/// Diagnostic-only; consumers should invalidate after a sync to refresh.
+final syncCursorProvider = FutureProvider<Hlc?>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return DriftCursorStore(db).readCursor();
+});
+
+/// Current outbox depth (pending local ops not yet pushed). Re-runs every
+/// time a status event lands so the count stays in step with the engine.
+final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
+  ref.watch(syncStatusEventStreamProvider);
+  final db = await ref.watch(appDatabaseProvider.future);
+  return DriftOutboxStore(db).depth();
 });
 
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {

@@ -1852,5 +1852,86 @@
   "formSaving": "Saving…",
   "@formSaving": { "description": "Shared form: saving button label" },
   "formSave": "Save",
-  "@formSave": { "description": "Shared form: save button label" }
+  "@formSave": { "description": "Shared form: save button label" },
+
+  "settingsSyncTitle": "Sync",
+  "@settingsSyncTitle": { "description": "Settings tile that opens the sync status page" },
+  "settingsSyncSubtitle": "View sync state and last activity",
+  "@settingsSyncSubtitle": { "description": "Subtitle for the sync settings tile" },
+  "syncStatusTitle": "Sync Status",
+  "@syncStatusTitle": { "description": "App bar title on the sync status page" },
+  "syncStatusRefreshNow": "Sync now",
+  "@syncStatusRefreshNow": { "description": "Tooltip on the manual sync icon button" },
+  "syncStatusBusError": "Could not read sync status: {error}",
+  "@syncStatusBusError": {
+    "description": "Shown when the status stream itself errors",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "syncStatusHeadlineIdle": "Not synced yet",
+  "@syncStatusHeadlineIdle": { "description": "Hero card title before the first sync cycle has run" },
+  "syncStatusHeadlineSyncing": "Syncing…",
+  "@syncStatusHeadlineSyncing": { "description": "Hero card title while a sync cycle is in flight" },
+  "syncStatusHeadlineOnline": "All synced",
+  "@syncStatusHeadlineOnline": { "description": "Hero card title when the last sync succeeded" },
+  "syncStatusHeadlineOffline": "Offline",
+  "@syncStatusHeadlineOffline": { "description": "Hero card title when the last sync failed with a network error" },
+  "syncStatusHeadlineFailed": "Sync failed",
+  "@syncStatusHeadlineFailed": { "description": "Hero card title when the last sync failed with a non-recoverable error" },
+  "syncStatusSubtitleNeverSynced": "No successful sync yet on this device",
+  "@syncStatusSubtitleNeverSynced": { "description": "Hero card subtitle when last_success_at is unknown" },
+  "syncStatusSubtitleLastSynced": "Last synced {when}",
+  "@syncStatusSubtitleLastSynced": {
+    "description": "Hero card subtitle showing how long ago the last successful sync ran",
+    "placeholders": { "when": { "type": "String" } }
+  },
+  "syncStatusJustNow": "just now",
+  "@syncStatusJustNow": { "description": "Relative time chip — under a minute ago" },
+  "syncStatusMinutesAgo": "{n, plural, =1{1 minute ago} other{{n} minutes ago}}",
+  "@syncStatusMinutesAgo": {
+    "description": "Relative time chip — minutes",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "syncStatusHoursAgo": "{n, plural, =1{1 hour ago} other{{n} hours ago}}",
+  "@syncStatusHoursAgo": {
+    "description": "Relative time chip — hours",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "syncStatusDaysAgo": "{n, plural, =1{1 day ago} other{{n} days ago}}",
+  "@syncStatusDaysAgo": {
+    "description": "Relative time chip — days",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "syncStatusPendingHeader": "Pending changes",
+  "@syncStatusPendingHeader": { "description": "Section header for the outbox depth card" },
+  "syncStatusPendingLoading": "Counting…",
+  "@syncStatusPendingLoading": { "description": "Outbox card title while depth is loading" },
+  "syncStatusPendingNone": "Up to date",
+  "@syncStatusPendingNone": { "description": "Outbox card title when nothing is queued" },
+  "syncStatusPendingCount": "{n, plural, =1{1 change waiting} other{{n} changes waiting}}",
+  "@syncStatusPendingCount": {
+    "description": "Outbox card title when local ops are queued",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "syncStatusPendingCaption": "Local edits queued for the next push",
+  "@syncStatusPendingCaption": { "description": "Outbox card caption when there are pending ops" },
+  "syncStatusPendingCaptionEmpty": "All local edits have been pushed to the server",
+  "@syncStatusPendingCaptionEmpty": { "description": "Outbox card caption when nothing is queued" },
+  "syncStatusActionSyncNow": "Sync now",
+  "@syncStatusActionSyncNow": { "description": "Outbox card trailing action button label" },
+  "syncStatusErrorHeader": "Last error",
+  "@syncStatusErrorHeader": { "description": "Section header for the last-error card" },
+  "syncStatusDetailsHeader": "Details",
+  "@syncStatusDetailsHeader": { "description": "Section header for the diagnostics card" },
+  "syncStatusDetailState": "State",
+  "@syncStatusDetailState": { "description": "Diagnostics row label for the raw state name" },
+  "syncStatusDetailUpdatedAt": "Updated",
+  "@syncStatusDetailUpdatedAt": { "description": "Diagnostics row label for the last status-event timestamp" },
+  "syncStatusDetailDevice": "Device",
+  "@syncStatusDetailDevice": { "description": "Diagnostics row label for this device id" },
+  "syncStatusDetailCursor": "Pull cursor",
+  "@syncStatusDetailCursor": { "description": "Diagnostics row label for the persisted last_pulled_hlc" },
+  "syncStatusDetailCursorUnset": "not set",
+  "@syncStatusDetailCursorUnset": { "description": "Diagnostics cursor placeholder before any pull has run" },
+  "syncStatusDetailEndpoint": "Endpoint",
+  "@syncStatusDetailEndpoint": { "description": "Diagnostics row label for the API base URL (debug only)" }
 }

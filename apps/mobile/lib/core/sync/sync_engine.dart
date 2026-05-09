@@ -282,8 +282,19 @@ class SyncEngine {
             await _merge(op.hlc);
           }
           total += res.ops.length;
-          // Advance cursor past the last applied op.
-          await cursors.writeCursor(res.ops.last.hlc);
+          // Spec §7.4 says advance to max(server_hlc_high, last op.hlc).
+          // server_hlc_high is the global MAX(hlc_text) regardless of the
+          // body-size cap (§8.2 step 5), so when has_more=true the page
+          // was truncated and ops with HLCs in (last_op, high] are still
+          // pending — fast-forwarding past them would silently drop data.
+          // Only fast-forward to server_hlc_high once we know the page
+          // wasn't capped; that handles the puller's own ops being
+          // filtered by device_id without risking truncation gaps.
+          final lastOpHlc = res.ops.last.hlc;
+          final newCursor = !res.hasMore && res.serverHlcHigh > lastOpHlc
+              ? res.serverHlcHigh
+              : lastOpHlc;
+          await cursors.writeCursor(newCursor);
         } else {
           // SP-D-5: empty page still advances cursor to server_hlc_high.
           if (res.serverHlcHigh > cursor) {

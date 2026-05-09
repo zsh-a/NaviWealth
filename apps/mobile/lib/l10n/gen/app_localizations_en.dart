@@ -3300,4 +3300,135 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formSave => 'Save';
+
+  @override
+  String get settingsSyncTitle => 'Sync';
+
+  @override
+  String get settingsSyncSubtitle => 'View sync state and last activity';
+
+  @override
+  String get syncStatusTitle => 'Sync Status';
+
+  @override
+  String get syncStatusRefreshNow => 'Sync now';
+
+  @override
+  String syncStatusBusError(String error) {
+    return 'Could not read sync status: $error';
+  }
+
+  @override
+  String get syncStatusHeadlineIdle => 'Not synced yet';
+
+  @override
+  String get syncStatusHeadlineSyncing => 'Syncing…';
+
+  @override
+  String get syncStatusHeadlineOnline => 'All synced';
+
+  @override
+  String get syncStatusHeadlineOffline => 'Offline';
+
+  @override
+  String get syncStatusHeadlineFailed => 'Sync failed';
+
+  @override
+  String get syncStatusSubtitleNeverSynced =>
+      'No successful sync yet on this device';
+
+  @override
+  String syncStatusSubtitleLastSynced(String when) {
+    return 'Last synced $when';
+  }
+
+  @override
+  String get syncStatusJustNow => 'just now';
+
+  @override
+  String syncStatusMinutesAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncStatusHoursAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncStatusDaysAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncStatusPendingHeader => 'Pending changes';
+
+  @override
+  String get syncStatusPendingLoading => 'Counting…';
+
+  @override
+  String get syncStatusPendingNone => 'Up to date';
+
+  @override
+  String syncStatusPendingCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n changes waiting',
+      one: '1 change waiting',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncStatusPendingCaption => 'Local edits queued for the next push';
+
+  @override
+  String get syncStatusPendingCaptionEmpty =>
+      'All local edits have been pushed to the server';
+
+  @override
+  String get syncStatusActionSyncNow => 'Sync now';
+
+  @override
+  String get syncStatusErrorHeader => 'Last error';
+
+  @override
+  String get syncStatusDetailsHeader => 'Details';
+
+  @override
+  String get syncStatusDetailState => 'State';
+
+  @override
+  String get syncStatusDetailUpdatedAt => 'Updated';
+
+  @override
+  String get syncStatusDetailDevice => 'Device';
+
+  @override
+  String get syncStatusDetailCursor => 'Pull cursor';
+
+  @override
+  String get syncStatusDetailCursorUnset => 'not set';
+
+  @override
+  String get syncStatusDetailEndpoint => 'Endpoint';
 }

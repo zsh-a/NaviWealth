@@ -35,6 +35,7 @@ abstract final class AppRoutes {
   static const settingsFxRates = '/settings/fx-rates';
   static const settingsBackup = '/settings/backup';
   static const settingsLogs = '/settings/logs';
+  static const settingsSync = '/settings/sync';
 
   static String portfolioAsset(String id) =>
       '/portfolio/${Uri.encodeComponent(id)}';
@@ -65,6 +66,7 @@ abstract final class AppRouteNames {
   static const fxRates = 'fx-rates';
   static const backup = 'backup';
   static const logs = 'logs';
+  static const sync = 'sync';
 
   static const portfolio = 'portfolio';
   static const assetNewCash = 'asset-new-cash';

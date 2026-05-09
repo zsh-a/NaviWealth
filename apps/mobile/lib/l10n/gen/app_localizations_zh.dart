@@ -3193,4 +3193,109 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get formSave => '保存';
+
+  @override
+  String get settingsSyncTitle => '同步';
+
+  @override
+  String get settingsSyncSubtitle => '查看同步状态与最近活动';
+
+  @override
+  String get syncStatusTitle => '同步状态';
+
+  @override
+  String get syncStatusRefreshNow => '立即同步';
+
+  @override
+  String syncStatusBusError(String error) {
+    return '无法读取同步状态：$error';
+  }
+
+  @override
+  String get syncStatusHeadlineIdle => '尚未同步';
+
+  @override
+  String get syncStatusHeadlineSyncing => '同步中…';
+
+  @override
+  String get syncStatusHeadlineOnline => '已全部同步';
+
+  @override
+  String get syncStatusHeadlineOffline => '网络离线';
+
+  @override
+  String get syncStatusHeadlineFailed => '同步失败';
+
+  @override
+  String get syncStatusSubtitleNeverSynced => '本设备尚未成功同步过';
+
+  @override
+  String syncStatusSubtitleLastSynced(String when) {
+    return '上次同步：$when';
+  }
+
+  @override
+  String get syncStatusJustNow => '刚刚';
+
+  @override
+  String syncStatusMinutesAgo(int n) {
+    return '$n 分钟前';
+  }
+
+  @override
+  String syncStatusHoursAgo(int n) {
+    return '$n 小时前';
+  }
+
+  @override
+  String syncStatusDaysAgo(int n) {
+    return '$n 天前';
+  }
+
+  @override
+  String get syncStatusPendingHeader => '待同步变更';
+
+  @override
+  String get syncStatusPendingLoading => '统计中…';
+
+  @override
+  String get syncStatusPendingNone => '已是最新';
+
+  @override
+  String syncStatusPendingCount(int n) {
+    return '$n 条变更待推送';
+  }
+
+  @override
+  String get syncStatusPendingCaption => '等待下次推送到服务器';
+
+  @override
+  String get syncStatusPendingCaptionEmpty => '所有本地变更已推送至服务器';
+
+  @override
+  String get syncStatusActionSyncNow => '立即同步';
+
+  @override
+  String get syncStatusErrorHeader => '上次错误';
+
+  @override
+  String get syncStatusDetailsHeader => '详情';
+
+  @override
+  String get syncStatusDetailState => '状态';
+
+  @override
+  String get syncStatusDetailUpdatedAt => '更新于';
+
+  @override
+  String get syncStatusDetailDevice => '设备';
+
+  @override
+  String get syncStatusDetailCursor => '拉取游标';
+
+  @override
+  String get syncStatusDetailCursorUnset => '未设置';
+
+  @override
+  String get syncStatusDetailEndpoint => '服务端地址';
 }
