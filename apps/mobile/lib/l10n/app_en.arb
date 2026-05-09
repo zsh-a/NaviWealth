@@ -1952,5 +1952,18 @@
   "syncStatusLocalLiabilities": "Liabilities",
   "@syncStatusLocalLiabilities": { "description": "Diagnostic counter" },
   "syncStatusLocalTags": "Tags",
-  "@syncStatusLocalTags": { "description": "Diagnostic counter" }
+  "@syncStatusLocalTags": { "description": "Diagnostic counter" },
+
+  "syncStatusHeroSyncing": "Syncing changes…",
+  "@syncStatusHeroSyncing": { "description": "Hero card subtitle while a cycle is in flight" },
+  "syncStatusStatPending": "Pending",
+  "@syncStatusStatPending": { "description": "Stat tile label — outbox depth" },
+  "syncStatusStatLocal": "Local rows",
+  "@syncStatusStatLocal": { "description": "Stat tile label — total local rows across syncable tables" },
+  "syncStatusStatLastSync": "Last sync",
+  "@syncStatusStatLastSync": { "description": "Stat tile label — when the engine last succeeded" },
+  "syncStatusStatNever": "Never",
+  "@syncStatusStatNever": { "description": "Stat tile placeholder before first successful sync" },
+  "syncStatusStatJustNow": "now",
+  "@syncStatusStatJustNow": { "description": "Compact relative-time chip when the event is under a minute old" }
 }
