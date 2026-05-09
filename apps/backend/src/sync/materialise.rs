@@ -25,9 +25,9 @@ pub struct ApplyOutcome {
 }
 
 /// Map a wire `table` name to the SQL table it materialises into. Most map
-/// 1:1; the protocol's `devices` collides with the auth-session `devices`
-/// table, so it lives under `synced_devices` server-side. See
-/// `apps/backend/migrations/0002_sync_schema.sql`.
+/// 1:1; the protocol's `devices` and `users` collide with the auth
+/// `devices` / `users` tables, so they live under `synced_devices` /
+/// `synced_users` server-side. See `apps/backend/migrations/`.
 pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
     match wire {
         "accounts" => Ok("accounts"),
@@ -39,8 +39,12 @@ pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
         "amortization_entries" => Ok("amortization_entries"),
         "fx_rates" => Ok("fx_rates"),
         "tags" => Ok("tags"),
+        "tag_links" => Ok("tag_links"),
+        "categories" => Ok("categories"),
+        "settings" => Ok("settings"),
         "goals" => Ok("goals"),
         "devices" => Ok("synced_devices"),
+        "users" => Ok("synced_users"),
         other => Err(AppError::unknown_table(other)),
     }
 }
@@ -301,7 +305,12 @@ mod tests {
             sql_table_name("amortization_entries").unwrap(),
             "amortization_entries"
         );
+        assert_eq!(sql_table_name("categories").unwrap(), "categories");
+        assert_eq!(sql_table_name("settings").unwrap(), "settings");
+        assert_eq!(sql_table_name("tag_links").unwrap(), "tag_links");
+        // `devices` and `users` collide with auth tables; both get aliased.
         assert_eq!(sql_table_name("devices").unwrap(), "synced_devices");
+        assert_eq!(sql_table_name("users").unwrap(), "synced_users");
     }
 
     #[test]

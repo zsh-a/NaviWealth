@@ -43,12 +43,24 @@ class SettingsOverview extends ConsumerWidget {
           LiquidGlassCard(
             layer: GlassLayer.tertiary,
             padding: EdgeInsets.zero,
-            child: ListTile(
-              leading: const Icon(Icons.backup_outlined),
-              title: Text(l10n.settingsDataTitle),
-              subtitle: Text(l10n.settingsDataSubtitle),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.goNamed(AppRouteNames.backup),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.cloud_sync_outlined),
+                  title: Text(l10n.settingsSyncTitle),
+                  subtitle: Text(l10n.settingsSyncSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.goNamed(AppRouteNames.sync),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.backup_outlined),
+                  title: Text(l10n.settingsDataTitle),
+                  subtitle: Text(l10n.settingsDataSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.goNamed(AppRouteNames.backup),
+                ),
+              ],
             ),
           ),
           if (kDebugMode) ...[

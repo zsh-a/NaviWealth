@@ -44,6 +44,7 @@ import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
+import '../features/settings/ui/sync_status_page.dart';
 import 'app_shell.dart';
 import 'deferred_route.dart';
 import 'page_transitions.dart';
@@ -143,6 +144,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'logs',
                     name: AppRouteNames.logs,
                     builder: (context, state) => const LogViewerPage(),
+                  ),
+                  GoRoute(
+                    path: 'sync',
+                    name: AppRouteNames.sync,
+                    builder: (context, state) => const SyncStatusPage(),
                   ),
                 ],
               ),

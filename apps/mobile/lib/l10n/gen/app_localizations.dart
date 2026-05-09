@@ -5883,6 +5883,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get formSave;
+
+  /// Settings tile that opens the sync status page
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get settingsSyncTitle;
+
+  /// Subtitle for the sync settings tile
+  ///
+  /// In en, this message translates to:
+  /// **'View sync state and last activity'**
+  String get settingsSyncSubtitle;
+
+  /// App bar title on the sync status page
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Status'**
+  String get syncStatusTitle;
+
+  /// Tooltip on the manual sync icon button
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncStatusRefreshNow;
+
+  /// Shown when the status stream itself errors
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read sync status: {error}'**
+  String syncStatusBusError(String error);
+
+  /// Hero card title before the first sync cycle has run
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get syncStatusHeadlineIdle;
+
+  /// Hero card title while a sync cycle is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncStatusHeadlineSyncing;
+
+  /// Hero card title when the last sync succeeded
+  ///
+  /// In en, this message translates to:
+  /// **'All synced'**
+  String get syncStatusHeadlineOnline;
+
+  /// Hero card title when the last sync failed with a network error
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get syncStatusHeadlineOffline;
+
+  /// Hero card title when the last sync failed with a non-recoverable error
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStatusHeadlineFailed;
+
+  /// Hero card subtitle when last_success_at is unknown
+  ///
+  /// In en, this message translates to:
+  /// **'No successful sync yet on this device'**
+  String get syncStatusSubtitleNeverSynced;
+
+  /// Hero card subtitle showing how long ago the last successful sync ran
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced {when}'**
+  String syncStatusSubtitleLastSynced(String when);
+
+  /// Relative time chip — under a minute ago
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get syncStatusJustNow;
+
+  /// Relative time chip — minutes
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 minute ago} other{{n} minutes ago}}'**
+  String syncStatusMinutesAgo(int n);
+
+  /// Relative time chip — hours
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 hour ago} other{{n} hours ago}}'**
+  String syncStatusHoursAgo(int n);
+
+  /// Relative time chip — days
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 day ago} other{{n} days ago}}'**
+  String syncStatusDaysAgo(int n);
+
+  /// Section header for the outbox depth card
+  ///
+  /// In en, this message translates to:
+  /// **'Pending changes'**
+  String get syncStatusPendingHeader;
+
+  /// Outbox card title while depth is loading
+  ///
+  /// In en, this message translates to:
+  /// **'Counting…'**
+  String get syncStatusPendingLoading;
+
+  /// Outbox card title when nothing is queued
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get syncStatusPendingNone;
+
+  /// Outbox card title when local ops are queued
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 change waiting} other{{n} changes waiting}}'**
+  String syncStatusPendingCount(int n);
+
+  /// Outbox card caption when there are pending ops
+  ///
+  /// In en, this message translates to:
+  /// **'Local edits queued for the next push'**
+  String get syncStatusPendingCaption;
+
+  /// Outbox card caption when nothing is queued
+  ///
+  /// In en, this message translates to:
+  /// **'All local edits have been pushed to the server'**
+  String get syncStatusPendingCaptionEmpty;
+
+  /// Outbox card trailing action button label
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncStatusActionSyncNow;
+
+  /// Section header for the last-error card
+  ///
+  /// In en, this message translates to:
+  /// **'Last error'**
+  String get syncStatusErrorHeader;
+
+  /// Section header for the diagnostics card
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get syncStatusDetailsHeader;
+
+  /// Diagnostics row label for the raw state name
+  ///
+  /// In en, this message translates to:
+  /// **'State'**
+  String get syncStatusDetailState;
+
+  /// Diagnostics row label for the last status-event timestamp
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get syncStatusDetailUpdatedAt;
+
+  /// Diagnostics row label for this device id
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get syncStatusDetailDevice;
+
+  /// Diagnostics row label for the persisted last_pulled_hlc
+  ///
+  /// In en, this message translates to:
+  /// **'Pull cursor'**
+  String get syncStatusDetailCursor;
+
+  /// Diagnostics cursor placeholder before any pull has run
+  ///
+  /// In en, this message translates to:
+  /// **'not set'**
+  String get syncStatusDetailCursorUnset;
+
+  /// Diagnostics row label for the API base URL (debug only)
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint'**
+  String get syncStatusDetailEndpoint;
 }
 
 class _AppLocalizationsDelegate
