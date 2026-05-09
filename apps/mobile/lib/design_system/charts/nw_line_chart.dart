@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -685,41 +684,39 @@ class _GlassTooltip extends StatelessWidget {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
+    // Tooltips are small, transient, and frequently re-positioned as the
+    // user drags the spot indicator. Per-frame BackdropFilter resampling
+    // is wasted work on a 200-px panel that rebuilds whenever the spot
+    // index changes. Use a near-opaque themed surface — keeps the panel
+    // legible over busy chart lines without GPU readback.
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Align(
         alignment: Alignment.topRight,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(glass.borderRadius),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(
-              sigmaX: glass.blurSigma,
-              sigmaY: glass.blurSigma,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh.withValues(
+              alpha: 0.94,
             ),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: glass.surfaceColor,
-                borderRadius: BorderRadius.circular(glass.borderRadius),
-                border: Border.all(color: glass.hairlineColor, width: 1),
+            borderRadius: BorderRadius.circular(glass.borderRadius),
+            border: Border.all(color: glass.hairlineColor, width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                xAxis.formatTimestamp(point.x),
+                style: TypographyTokens.numericCaption.copyWith(
+                  color: onSurface.withValues(alpha: 0.6),
+                ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    xAxis.formatTimestamp(point.x),
-                    style: TypographyTokens.numericCaption.copyWith(
-                      color: onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  for (var i = 0; i < processed.length; i++)
-                    _buildSeriesRow(i, processed[i], safeIndex, onSurface),
-                ],
-              ),
-            ),
+              const SizedBox(height: 4),
+              for (var i = 0; i < processed.length; i++)
+                _buildSeriesRow(i, processed[i], safeIndex, onSurface),
+            ],
           ),
         ),
       ),

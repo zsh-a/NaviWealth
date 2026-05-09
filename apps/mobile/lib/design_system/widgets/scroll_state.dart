@@ -50,3 +50,50 @@ class ScrollNotificationHandler extends StatelessWidget {
     );
   }
 }
+
+/// App-wide scope that publishes [isScrollingNotifier]'s value via an
+/// [InheritedWidget].
+///
+/// Place once near the app root; descendant glass surfaces read the value
+/// with [ScrollingScope.of] instead of subscribing to the notifier
+/// individually. With N glass cards this collapses N
+/// `ValueListenableBuilder` subscriptions into a single root-level
+/// `ListenableBuilder` plus standard InheritedWidget dependency tracking.
+class ScrollingScope extends StatelessWidget {
+  const ScrollingScope({super.key, required this.child});
+
+  final Widget child;
+
+  /// The current scrolling state. Returns `false` when called outside any
+  /// [ScrollingScope] (e.g. detached test harnesses).
+  static bool of(BuildContext context) {
+    final inherited = context
+        .dependOnInheritedWidgetOfExactType<_InheritedScrollingState>();
+    return inherited?.isScrolling ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: isScrollingNotifier,
+      builder: (ctx, inner) => _InheritedScrollingState(
+        isScrolling: isScrollingNotifier.value,
+        child: inner!,
+      ),
+      child: child,
+    );
+  }
+}
+
+class _InheritedScrollingState extends InheritedWidget {
+  const _InheritedScrollingState({
+    required this.isScrolling,
+    required super.child,
+  });
+
+  final bool isScrolling;
+
+  @override
+  bool updateShouldNotify(_InheritedScrollingState old) =>
+      old.isScrolling != isScrolling;
+}

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../core/command_palette/command_palette.dart';
+import '../core/perf/refresh_rate.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
@@ -37,13 +38,35 @@ class NaviWealthApp extends ConsumerWidget {
     return LiquidGlassWidgets.wrap(
       adaptiveQuality: true,
       respectSystemAccessibility: true,
-      child: GlassTheme(
+      // Match the adaptive scope's frame budget to the panel's actual
+      // refresh rate (8 ms on ProMotion, 16 ms on 60 Hz). `allowStepUp`
+      // lets the scope recover quality after thermal throttling subsides.
+      // The package marks `GlassAdaptiveScopeConfig` @experimental for
+      // threshold tuning, but the README recommends this exact wiring.
+      adaptiveConfig: GlassAdaptiveScopeConfig( // ignore: experimental_member_use
+        targetFrameMs: targetFrameBudgetMs(),
+        allowStepUp: true,
+      ),
+      child: ScrollingScope(
+        child: GlassTheme(
         data: GlassThemeData(
+          // Light: package default already supplies an icy cool blue-white
+          // tint that reads well on white surfaces. We only customize the
+          // brand glow.
           light: GlassThemeVariant.light.copyWith(
             glowColors: const GlassGlowColors(primary: ColorPalette.brand500),
           ),
+          // Dark: package default has no glassColor, so cards visually
+          // disappear against dark backgrounds. Adding a low-alpha white
+          // tint plus a slightly stronger blur restores the iOS-style
+          // frosted look on dark surfaces while keeping legibility.
           dark: GlassThemeVariant.dark.copyWith(
             glowColors: const GlassGlowColors(primary: ColorPalette.brand500),
+            settings: const GlassThemeSettings(
+              glassColor: Color(0x24FFFFFF),
+              blur: 8.0,
+              saturation: 1.15,
+            ),
           ),
         ),
         child: MaterialApp.router(
@@ -119,6 +142,7 @@ class NaviWealthApp extends ConsumerWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

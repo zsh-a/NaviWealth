@@ -186,9 +186,9 @@ class _MobileShell extends StatelessWidget {
             style: DefaultTextStyle.of(
               context,
             ).style.copyWith(decoration: TextDecoration.none),
-            child: ValueListenableBuilder<bool>(
-              valueListenable: isScrollingNotifier,
-              builder: (context, isScrolling, _) {
+            child: Builder(
+              builder: (context) {
+                final isScrolling = ScrollingScope.of(context);
                 return lgw.GlassBottomBar(
                   barHeight: barHeight,
                   verticalPadding: 0,

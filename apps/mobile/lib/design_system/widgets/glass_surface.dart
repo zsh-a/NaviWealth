@@ -60,7 +60,19 @@ class GlassSurface extends StatelessWidget {
     final tint = alpha == null
         ? tokens.surfaceColor
         : tokens.surfaceColor.withValues(alpha: alpha);
-    final useBlur = GlassTokens.isSupported();
+    // Skip the BackdropFilter when the platform reports it cannot or
+    // should not render glass:
+    //   * GlassTokens.isSupported() — build-time / web opt-out.
+    //   * highContrast — the closest Flutter signal for iOS Reduce
+    //     Transparency / Android High-Contrast Text.
+    //   * disableAnimations — users who disable motion typically also
+    //     prefer flatter surfaces; mirrors the package's accessibility
+    //     fallback for `liquid_glass_widgets`.
+    final mq = MediaQuery.maybeOf(context);
+    final highContrast = mq?.highContrast ?? false;
+    final disableAnimations = mq?.disableAnimations ?? false;
+    final useBlur =
+        GlassTokens.isSupported() && !highContrast && !disableAnimations;
     final effectiveSigma = sigma ?? tokens.blurSigma;
 
     Widget surface = DecoratedBox(

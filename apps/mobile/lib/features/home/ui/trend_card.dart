@@ -22,6 +22,7 @@ class TrendCard extends ConsumerWidget {
     final trendAsync = ref.watch(dashboardTrendProvider);
 
     return LiquidGlassCard(
+      layer: GlassLayer.primary,
       padding: Spacing.cardHero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
