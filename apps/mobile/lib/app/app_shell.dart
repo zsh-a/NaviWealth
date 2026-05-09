@@ -8,7 +8,6 @@ import '../features/ai_chat/state/route_context_provider.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
 import 'global_action_panel.dart';
-import 'shell_preferences.dart';
 
 class AppRootShell extends ConsumerStatefulWidget {
   const AppRootShell({super.key, required this.shell});
@@ -274,7 +273,7 @@ class _TabletShell extends StatelessWidget {
   }
 }
 
-class _DesktopShell extends ConsumerWidget {
+class _DesktopShell extends StatelessWidget {
   const _DesktopShell({
     required this.destinations,
     required this.selectedIndex,
@@ -288,8 +287,11 @@ class _DesktopShell extends ConsumerWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final collapsed = ref.watch(sidebarCollapsedProvider);
+  Widget build(BuildContext context) {
+    // Width capping is delegated to `PageScaffold`: single-pane pages
+    // center their content at `Spacing.contentMaxWidth`, master-detail
+    // pages (Accounts / Assets / AI Chat) intentionally fill the full
+    // remaining width to give the splitter room to breathe.
     return Scaffold(
       body: SafeArea(
         child: Row(
@@ -306,18 +308,7 @@ class _DesktopShell extends ConsumerWidget {
               selectedIndex: selectedIndex,
               onDestinationSelected: onDestinationSelected,
             ),
-            Expanded(
-              child: collapsed
-                  ? Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: kCollapsedContentMaxWidth,
-                        ),
-                        child: _GlobalActionHost(child: child),
-                      ),
-                    )
-                  : _GlobalActionHost(child: child),
-            ),
+            Expanded(child: _GlobalActionHost(child: child)),
           ],
         ),
       ),

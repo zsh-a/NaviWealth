@@ -32,6 +32,7 @@ class NaviWealthApp extends ConsumerWidget {
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final compact = ref.watch(compactDensityProvider);
     final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
     return LiquidGlassWidgets.wrap(
       adaptiveQuality: true,
@@ -48,8 +49,14 @@ class NaviWealthApp extends ConsumerWidget {
         child: MaterialApp.router(
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(marketColorMode: marketMode),
-          darkTheme: AppTheme.dark(marketColorMode: marketMode),
+          theme: AppTheme.light(
+            marketColorMode: marketMode,
+            compact: compact,
+          ),
+          darkTheme: AppTheme.dark(
+            marketColorMode: marketMode,
+            compact: compact,
+          ),
           themeMode: themeMode,
           locale: locale,
           // Global ScaffoldMessenger so optimistic-submit failures surface

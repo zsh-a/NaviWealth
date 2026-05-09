@@ -26,7 +26,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    return Scaffold(
+    return PageScaffold(
       appBar: GlassAppBar(
         title: Text(l10n.homeAppBarTitle),
         actions: [
@@ -42,6 +42,7 @@ class HomePage extends ConsumerWidget {
           ),
         ],
       ),
+      padding: EdgeInsets.zero,
       body: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
         isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,

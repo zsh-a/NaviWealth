@@ -14,8 +14,9 @@ class FirePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final viewAsync = ref.watch(fireDashboardViewProvider);
-    return Scaffold(
+    return PageScaffold(
       appBar: GlassAppBar(title: Text(l10n.fireAppBarTitle), actions: const []),
+      padding: EdgeInsets.zero,
       body: PageSkeletonShell<FireDashboardView>(
         skeleton: const FireSkeleton(),
         isLoading: viewAsync.isLoading,

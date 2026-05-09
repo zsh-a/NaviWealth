@@ -28,10 +28,6 @@ const double kMasterPaneMaxWidth = 520;
 const double kSidebarExpandedWidth = 240;
 const double kSidebarCollapsedWidth = 72;
 
-/// Maximum content width when the sidebar is collapsed. Keeps text columns
-/// from running wider than the eye can comfortably scan on a 27" monitor.
-const double kCollapsedContentMaxWidth = 1320;
-
 final sidebarCollapsedProvider =
     StateNotifierProvider<SidebarCollapsedController, bool>((ref) {
       return SidebarCollapsedController(ref.watch(sharedPreferencesProvider));

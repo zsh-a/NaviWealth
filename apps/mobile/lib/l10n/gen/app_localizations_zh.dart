@@ -662,6 +662,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get langChinese => '中文';
 
   @override
+  String get settingsCompactDensityTitle => '紧凑布局';
+
+  @override
+  String get settingsCompactDensitySubtitle => '更紧凑的列表行与控件，适合鼠标操作的桌面 / Web。';
+
+  @override
   String get commonRetry => '重试';
 
   @override

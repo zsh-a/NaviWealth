@@ -20,7 +20,7 @@ class RebalancePage extends ConsumerWidget {
     final plan = ref.watch(rebalancePlanProvider);
     final scheme = ref.watch(selectedSchemeProvider);
 
-    return Scaffold(
+    return PageScaffold(
       appBar: GlassAppBar(
         title: Text(l10n.rebalanceTitle),
         actions: [
@@ -31,6 +31,7 @@ class RebalancePage extends ConsumerWidget {
           ),
         ],
       ),
+      padding: EdgeInsets.zero,
       body: plan == null
           ? _EmptyState()
           : _RebalanceBody(plan: plan, scheme: scheme),
@@ -88,40 +89,22 @@ class _RebalanceBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = !Breakpoints.isMobile(MediaQuery.sizeOf(context).width);
-    final padding = isWide ? Spacing.pageWide : Spacing.pageMobile;
-
-    final schemeSection = _SchemeSelector(current: scheme);
-    final driftSection = _DriftOverview(plan: plan);
-    final tradeSection = _TradeList(plan: plan);
-
-    if (isWide) {
-      return ListView(
-        padding: padding,
-        children: [
-          schemeSection,
-          const SizedBox(height: Spacing.s16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: driftSection),
-              const SizedBox(width: Spacing.s16),
-              Expanded(child: tradeSection),
-            ],
-          ),
-        ],
-      );
-    }
-
-    return ListView(
-      padding: padding,
-      children: [
-        schemeSection,
-        const SizedBox(height: Spacing.s12),
-        driftSection,
-        const SizedBox(height: Spacing.s12),
-        tradeSection,
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = Breakpoints.isMobile(constraints.maxWidth);
+        final padding = isMobile ? Spacing.pageMobile : Spacing.pageWide;
+        return ListView(
+          padding: padding,
+          children: [
+            _SchemeSelector(current: scheme),
+            SizedBox(height: isMobile ? Spacing.s12 : Spacing.s16),
+            ResponsiveTwoColumn(
+              left: _DriftOverview(plan: plan),
+              right: _TradeList(plan: plan),
+            ),
+          ],
+        );
+      },
     );
   }
 }

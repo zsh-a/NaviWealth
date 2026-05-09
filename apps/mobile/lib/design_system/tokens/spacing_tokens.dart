@@ -53,4 +53,19 @@ class Spacing {
   /// (FIR-93). Caps line length on 4K monitors so messages stay readable
   /// instead of stretching the full pane width.
   static const double chatPaneMaxWidth = 960;
+
+  /// Maximum width for single-pane page content on desktop / web.
+  ///
+  /// Caps reading width on 1440 / 4K / ultrawide displays so cards and text
+  /// columns stay scannable instead of stretching the full window.
+  /// See `apps/mobile/docs/design/01-responsive-layout.md` §6.
+  static const double contentMaxWidth = 1200;
+
+  /// Default width of an aside / secondary side panel on desktop pages
+  /// (filters, section nav). Wide enough for a label + dropdown row.
+  static const double asideDefault = 280;
+
+  /// Compact list-tile height for desktop dense lists. Standard `ListTile`
+  /// stays at 56dp on touch devices.
+  static const double listTileCompact = 44;
 }

@@ -5,6 +5,7 @@
 library;
 
 export 'charts/charts.dart';
+export 'preferences/density_preferences.dart';
 export 'preferences/theme_preferences.dart';
 export 'theme/app_elevations.dart';
 export 'theme/app_theme.dart';
@@ -41,6 +42,7 @@ export 'widgets/glass_surface.dart';
 export 'widgets/liquid_glass_card.dart';
 export 'widgets/money_text.dart';
 export 'widgets/optional_hero.dart';
+export 'widgets/page_scaffold.dart';
 export 'widgets/responsive_two_column.dart';
 export 'widgets/scroll_aware_fab.dart';
 export 'widgets/scroll_state.dart';

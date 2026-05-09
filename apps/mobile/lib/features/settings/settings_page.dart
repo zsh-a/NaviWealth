@@ -10,11 +10,12 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
+    return PageScaffold(
       appBar: GlassAppBar(
         title: Text(l10n.settingsAppBarTitle),
         actions: const [],
       ),
+      padding: EdgeInsets.zero,
       body: const SettingsOverview(),
     );
   }
