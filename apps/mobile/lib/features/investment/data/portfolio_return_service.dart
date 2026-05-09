@@ -1,8 +1,7 @@
-import 'dart:isolate';
-
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 
+import '../../../core/async/isolate_runner.dart';
 import '../../../data/db/app_database.dart';
 import '../../../data/domain/enums.dart';
 import '../../../domain/services/currency_converter.dart';
@@ -68,7 +67,7 @@ class LedgerPortfolioReturnService implements PortfolioReturnService {
       flows.add(XirrCashFlow(date: end, amount: endValue.toDouble()));
     }
 
-    final solution = await Isolate.run(() => computeXirr(flows));
+    final solution = await runInIsolate(() => computeXirr(flows));
     return PortfolioReturnResult(
       from: start,
       to: end,
