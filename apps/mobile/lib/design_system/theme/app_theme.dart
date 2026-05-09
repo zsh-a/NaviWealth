@@ -21,13 +21,19 @@ class AppTheme {
 
   static ThemeData light({
     MarketColorMode marketColorMode = MarketColorMode.redUpGreenDown,
-  }) => _build(Brightness.light, marketColorMode);
+    bool compact = false,
+  }) => _build(Brightness.light, marketColorMode, compact);
 
   static ThemeData dark({
     MarketColorMode marketColorMode = MarketColorMode.redUpGreenDown,
-  }) => _build(Brightness.dark, marketColorMode);
+    bool compact = false,
+  }) => _build(Brightness.dark, marketColorMode, compact);
 
-  static ThemeData _build(Brightness brightness, MarketColorMode marketMode) {
+  static ThemeData _build(
+    Brightness brightness,
+    MarketColorMode marketMode,
+    bool compact,
+  ) {
     final scheme = ColorScheme.fromSeed(
       seedColor: _seed,
       brightness: brightness,
@@ -67,7 +73,9 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
-      visualDensity: VisualDensity.adaptivePlatformDensity,
+      visualDensity: compact
+          ? VisualDensity.compact
+          : VisualDensity.adaptivePlatformDensity,
       textTheme: textTheme,
       scaffoldBackgroundColor: scheme.surface,
       // Global ripple removal — T11 item 1.

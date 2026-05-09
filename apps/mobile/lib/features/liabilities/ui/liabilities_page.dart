@@ -62,11 +62,12 @@ class LiabilitiesPage extends ConsumerWidget {
 
     if (embedded) return body;
 
-    return Scaffold(
+    return PageScaffold(
       appBar: GlassAppBar(
         title: Text(l10n.liabilitiesAppBarTitle),
         actions: const [],
       ),
+      padding: EdgeInsets.zero,
       body: body,
     );
   }

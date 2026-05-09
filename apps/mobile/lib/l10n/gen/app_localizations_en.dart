@@ -688,6 +688,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get langChinese => '中文';
 
   @override
+  String get settingsCompactDensityTitle => 'Compact density';
+
+  @override
+  String get settingsCompactDensitySubtitle =>
+      'Tighter list rows and controls. Recommended for mouse use.';
+
+  @override
   String get commonRetry => 'Retry';
 
   @override

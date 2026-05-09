@@ -299,6 +299,10 @@
   "langSystem": "System default",
   "langEnglish": "English",
   "langChinese": "中文",
+  "settingsCompactDensityTitle": "Compact density",
+  "@settingsCompactDensityTitle": { "description": "Settings: toggle for tighter UI density on desktop / web" },
+  "settingsCompactDensitySubtitle": "Tighter list rows and controls. Recommended for mouse use.",
+  "@settingsCompactDensitySubtitle": { "description": "Settings: helper text for compact density toggle" },
 
   "commonRetry": "Retry",
   "commonCancel": "Cancel",

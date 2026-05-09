@@ -77,7 +77,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     );
 
     if (widget.embedded) return body;
-    return Scaffold(
+    return PageScaffold(
       appBar: GlassAppBar(
         title: Text(l10n.navExpenses),
         actions: [
@@ -88,6 +88,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           ),
         ],
       ),
+      padding: EdgeInsets.zero,
       body: body,
     );
   }

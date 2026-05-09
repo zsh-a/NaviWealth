@@ -294,6 +294,8 @@ class _AppearanceSection extends ConsumerWidget {
             child: _MarketColorPreview(),
           ),
           const Divider(height: 1),
+          const _CompactDensityTile(),
+          const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.s16,
@@ -388,6 +390,26 @@ class _AboutTile extends ConsumerWidget {
       leading: const Icon(Icons.info_outline),
       title: Text(l10n.settingsAboutTitle),
       subtitle: Text(subtitle),
+    );
+  }
+}
+
+class _CompactDensityTile extends ConsumerWidget {
+  const _CompactDensityTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final compact = ref.watch(compactDensityProvider);
+    return SwitchListTile(
+      secondary: const Icon(Icons.density_medium_outlined),
+      title: Text(l10n.settingsCompactDensityTitle),
+      subtitle: Text(l10n.settingsCompactDensitySubtitle),
+      value: compact,
+      onChanged: (next) {
+        Haptics.selection();
+        ref.read(compactDensityProvider.notifier).set(next);
+      },
     );
   }
 }
