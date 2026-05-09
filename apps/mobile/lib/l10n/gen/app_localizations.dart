@@ -6069,6 +6069,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Endpoint'**
   String get syncStatusDetailEndpoint;
+
+  /// Section header for the per-table row counters (debug builds only)
+  ///
+  /// In en, this message translates to:
+  /// **'Local row counts (debug)'**
+  String get syncStatusLocalCountsHeader;
+
+  /// Diagnostic counter: non-system accounts
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts (user)'**
+  String get syncStatusLocalAccountsUser;
+
+  /// Diagnostic counter: bootstrap system accounts
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts (system)'**
+  String get syncStatusLocalAccountsSystem;
+
+  /// Diagnostic counter
+  ///
+  /// In en, this message translates to:
+  /// **'Journal entries'**
+  String get syncStatusLocalJournalEntries;
+
+  /// Diagnostic counter
+  ///
+  /// In en, this message translates to:
+  /// **'Postings'**
+  String get syncStatusLocalPostings;
+
+  /// Diagnostic counter
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get syncStatusLocalAssets;
+
+  /// Diagnostic counter
+  ///
+  /// In en, this message translates to:
+  /// **'Prices'**
+  String get syncStatusLocalPrices;
+
+  /// Diagnostic counter
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get syncStatusLocalLiabilities;
+
+  /// Diagnostic counter
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get syncStatusLocalTags;
 }
 
 class _AppLocalizationsDelegate

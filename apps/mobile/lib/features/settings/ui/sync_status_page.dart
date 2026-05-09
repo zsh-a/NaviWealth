@@ -88,6 +88,7 @@ class _SyncStatusBody extends ConsumerWidget {
                   await scheduler?.triggerNow();
                   ref.invalidate(syncCursorProvider);
                   ref.invalidate(syncOutboxDepthProvider);
+                  ref.invalidate(syncLocalTableCountsProvider);
                 },
         ),
         if (event.lastError != null) ...[
@@ -101,7 +102,72 @@ class _SyncStatusBody extends ConsumerWidget {
           deviceId: session?.deviceId,
           apiBaseUrl: kDebugMode ? config.apiBaseUrl : null,
         ),
+        if (kDebugMode) ...[
+          GlassSectionHeader(title: l10n.syncStatusLocalCountsHeader),
+          const _LocalCountsCard(),
+        ],
       ],
+    );
+  }
+}
+
+class _LocalCountsCard extends ConsumerWidget {
+  const _LocalCountsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final asyncCounts = ref.watch(syncLocalTableCountsProvider);
+    return LiquidGlassCard(
+      layer: GlassLayer.tertiary,
+      padding: EdgeInsets.zero,
+      child: asyncCounts.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(Spacing.s16),
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(Spacing.s16),
+          child: SelectableText(
+            'count error: $e',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        data: (c) => Column(
+          children: [
+            _DetailRow(
+              label: l10n.syncStatusLocalAccountsUser,
+              value: '${c.accountsUser}',
+            ),
+            const Divider(height: 1),
+            _DetailRow(
+              label: l10n.syncStatusLocalAccountsSystem,
+              value: '${c.accountsSystem}',
+            ),
+            const Divider(height: 1),
+            _DetailRow(
+              label: l10n.syncStatusLocalJournalEntries,
+              value: '${c.journalEntries}',
+            ),
+            const Divider(height: 1),
+            _DetailRow(
+              label: l10n.syncStatusLocalPostings,
+              value: '${c.postings}',
+            ),
+            const Divider(height: 1),
+            _DetailRow(label: l10n.syncStatusLocalAssets, value: '${c.assets}'),
+            const Divider(height: 1),
+            _DetailRow(label: l10n.syncStatusLocalPrices, value: '${c.prices}'),
+            const Divider(height: 1),
+            _DetailRow(
+              label: l10n.syncStatusLocalLiabilities,
+              value: '${c.liabilities}',
+            ),
+            const Divider(height: 1),
+            _DetailRow(label: l10n.syncStatusLocalTags, value: '${c.tags}'),
+          ],
+        ),
+      ),
     );
   }
 }

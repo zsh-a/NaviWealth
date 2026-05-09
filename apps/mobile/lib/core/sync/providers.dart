@@ -7,6 +7,7 @@ import '../../data/db/app_database.dart';
 import '../../data/db/providers.dart';
 import '../../data/domain/hlc.dart';
 import '../../data/repositories/account_op_applier.dart';
+import '../../data/repositories/generic_op_applier.dart';
 import '../auth/providers.dart';
 import '../logging/providers.dart';
 import 'dio_sync_api_client.dart';
@@ -50,10 +51,43 @@ final syncApiClientProvider = Provider<SyncApiClient>((ref) {
 });
 
 /// Default applier registry for tables that have local materialisers.
+///
+/// `accounts` keeps its hand-written typed applier (stricter validation,
+/// pre-existing). Every other syncable table runs through
+/// [GenericLwwApplier] which derives its column shape from Drift's
+/// runtime metadata — adding a new synced table is just a wire-name
+/// entry below.
 final syncOpApplierProvider = Provider<OpApplier>((ref) {
   final db = ref.watch(appDatabaseProvider).value;
   if (db == null) return const NoopOpApplier();
-  return TableRoutingApplier({'accounts': AccountOpApplier(db)});
+  const genericTables = <String>[
+    'assets',
+    'journal_entries',
+    'postings',
+    'prices',
+    'liabilities',
+    'amortization_entries',
+    'fx_rates',
+    'tags',
+    'tag_links',
+    'categories',
+    'goals',
+    'devices',
+    'users',
+  ];
+  final handlers = <String, OpApplier>{
+    'accounts': AccountOpApplier(db),
+    for (final t in genericTables)
+      t: GenericLwwApplier(db: db, tableName: t),
+    // `settings` uses `user_id` as its primary key on the local Drift
+    // schema (per-user singleton), unlike everything else that uses `id`.
+    'settings': GenericLwwApplier(
+      db: db,
+      tableName: 'settings',
+      pkColumn: 'user_id',
+    ),
+  };
+  return TableRoutingApplier(handlers);
 });
 
 final syncStatusBusProvider = Provider<SyncStatusBus>((ref) {
@@ -86,6 +120,82 @@ final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
   ref.watch(syncStatusEventStreamProvider);
   final db = await ref.watch(appDatabaseProvider.future);
   return DriftOutboxStore(db).depth();
+});
+
+/// Per-table row counts from the local materialised tables. Diagnostic only
+/// — surfaced on the Sync Status page so a "pulled N ops but UI shows
+/// nothing" mismatch is immediately visible. Re-runs whenever a status
+/// event lands.
+class LocalTableCounts {
+  const LocalTableCounts({
+    required this.accountsUser,
+    required this.accountsSystem,
+    required this.journalEntries,
+    required this.postings,
+    required this.assets,
+    required this.prices,
+    required this.liabilities,
+    required this.tags,
+  });
+
+  final int accountsUser;
+  final int accountsSystem;
+  final int journalEntries;
+  final int postings;
+  final int assets;
+  final int prices;
+  final int liabilities;
+  final int tags;
+}
+
+final syncLocalTableCountsProvider = FutureProvider<LocalTableCounts>((
+  ref,
+) async {
+  ref.watch(syncStatusEventStreamProvider);
+  final db = await ref.watch(appDatabaseProvider.future);
+
+  Future<int> count(String sql) async {
+    final row = await db.customSelect(sql).getSingle();
+    return row.read<int>('c');
+  }
+
+  // Run sequentially — these all share the same DB connection on web and
+  // we don't need the speed-up of parallelism for diagnostic counts.
+  final accountsUser = await count(
+    "SELECT COUNT(*) AS c FROM accounts WHERE id NOT LIKE 'system-account:%' AND deleted_at IS NULL",
+  );
+  final accountsSystem = await count(
+    "SELECT COUNT(*) AS c FROM accounts WHERE id LIKE 'system-account:%' AND deleted_at IS NULL",
+  );
+  final journalEntries = await count(
+    'SELECT COUNT(*) AS c FROM journal_entries WHERE deleted_at IS NULL',
+  );
+  final postings = await count(
+    'SELECT COUNT(*) AS c FROM postings WHERE deleted_at IS NULL',
+  );
+  final assets = await count(
+    'SELECT COUNT(*) AS c FROM assets WHERE deleted_at IS NULL',
+  );
+  final prices = await count(
+    'SELECT COUNT(*) AS c FROM prices WHERE deleted_at IS NULL',
+  );
+  final liabilities = await count(
+    'SELECT COUNT(*) AS c FROM liabilities WHERE deleted_at IS NULL',
+  );
+  final tags = await count(
+    'SELECT COUNT(*) AS c FROM tags WHERE deleted_at IS NULL',
+  );
+
+  return LocalTableCounts(
+    accountsUser: accountsUser,
+    accountsSystem: accountsSystem,
+    journalEntries: journalEntries,
+    postings: postings,
+    assets: assets,
+    prices: prices,
+    liabilities: liabilities,
+    tags: tags,
+  );
 });
 
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
@@ -127,7 +237,7 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
 });
 
 const _kSyncApplierVersionKey = 'sync.applier_version';
-const _kSyncApplierVersion = '2';
+const _kSyncApplierVersion = '3';
 
 Future<bool> _ensureSyncApplierVersion(AppDatabase db) async {
   final row = await db
