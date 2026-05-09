@@ -33,6 +33,43 @@ extension ChatRoleX on ChatRole {
 /// `errored` is a turn whose stream aborted before `done`.
 enum ChatMessageStatus { streaming, complete, errored }
 
+/// How an assistant turn finished, mirrored from Anthropic's `stop_reason`
+/// (forwarded by the backend in the SSE `done` frame).
+///
+/// We keep this *ephemeral* — the value lives on [ChatMessage] for the
+/// current session only and is intentionally not persisted to Drift. The
+/// UI uses it to surface a slim "reply was truncated" footer right after
+/// the response lands; once the user moves on (or the session is
+/// re-opened later), the message is treated as plain history.
+///
+///  * [endTurn] — model finished naturally; nothing to flag.
+///  * [maxTokens] — output ran into the per-call token budget; the
+///    visible text is incomplete.
+///  * [toolUse] — backend hit `MAX_TOOL_ROUNDS` while still wanting to
+///    call tools; emitted alongside an `error` frame from the backend.
+///  * [refusal] — model declined to answer.
+///  * [error] — stream ended before `done`, or the backend reported an
+///    upstream failure.
+///  * [unknown] — anything else, surfaced for forward compat so we don't
+///    silently swallow new Anthropic stop reasons.
+enum ChatStopReason { endTurn, maxTokens, toolUse, refusal, error, unknown }
+
+extension ChatStopReasonX on ChatStopReason {
+  /// `true` when the user should be told the reply may be incomplete.
+  /// `endTurn` is the only "all good" outcome.
+  bool get isAbnormal => this != ChatStopReason.endTurn;
+
+  static ChatStopReason parse(String? wire) => switch (wire) {
+    'end_turn' => ChatStopReason.endTurn,
+    'max_tokens' => ChatStopReason.maxTokens,
+    'tool_use' => ChatStopReason.toolUse,
+    'refusal' || 'stop_sequence' => ChatStopReason.refusal,
+    'error' => ChatStopReason.error,
+    null => ChatStopReason.unknown,
+    _ => ChatStopReason.unknown,
+  };
+}
+
 extension ChatMessageStatusX on ChatMessageStatus {
   String get wire => switch (this) {
     ChatMessageStatus.streaming => 'streaming',
@@ -130,6 +167,22 @@ class ToolInvocation {
 }
 
 /// One persisted turn in a [ChatSession].
+///
+/// [stopReason] is set by the repository when the SSE stream finishes
+/// (or aborts) and consumed by the UI to render a truncation footer.
+/// It rides along with the message in Drift so the affordance survives
+/// app restarts; old rows from before the column existed read as
+/// `null`, in which case the UI shows the message as a clean reply.
+///
+/// [textSegments] preserves the temporal interleaving between text and
+/// tool blocks emitted by the model — segment 0 is the prose before
+/// `toolCalls[0]`, segment 1 sits between `toolCalls[0]` and
+/// `toolCalls[1]`, and so on. The invariant
+/// `textSegments.length == toolCalls.length + 1` holds for every turn
+/// recorded by the current repository; legacy rows persist with an
+/// empty list and fall back through [displaySegments] to a single
+/// trailing segment carrying [content] (matching the pre-FIR layout
+/// where prose rendered after all tool cards).
 class ChatMessage {
   const ChatMessage({
     required this.id,
@@ -140,24 +193,55 @@ class ChatMessage {
     required this.status,
     required this.createdAt,
     this.toolCalls = const <ToolInvocation>[],
+    this.textSegments = const <String>[],
     this.errorMessage,
+    this.stopReason,
   });
 
   final String id;
   final String sessionId;
   final String ownerUserId;
   final ChatRole role;
+
+  /// Flattened text of the assistant turn — the join of [textSegments].
+  /// Kept as a stored field so legacy callers (LLM replay, free-text
+  /// search) keep working without touching every site.
   final String content;
   final List<ToolInvocation> toolCalls;
+
+  /// Ordered prose blocks, dense between tool calls. Empty for messages
+  /// recorded before this field existed; consumers should read
+  /// [displaySegments] which normalises both shapes.
+  final List<String> textSegments;
   final ChatMessageStatus status;
   final String? errorMessage;
+  final ChatStopReason? stopReason;
   final DateTime createdAt;
+
+  /// Render-ready segment list. Always returns
+  /// `toolCalls.length + 1` entries:
+  ///
+  ///  * Modern messages return [textSegments] verbatim.
+  ///  * Legacy / inconsistent rows (where the lengths don't line up)
+  ///    fall back to "all empty preceding segments + [content] in the
+  ///    trailing slot", which collapses to the pre-segment layout
+  ///    where prose appeared once *after* every tool card.
+  List<String> get displaySegments {
+    final expected = toolCalls.length + 1;
+    if (textSegments.length == expected) return textSegments;
+    return <String>[
+      for (var i = 0; i < expected - 1; i++) '',
+      content,
+    ];
+  }
 
   ChatMessage copyWith({
     String? content,
     List<ToolInvocation>? toolCalls,
+    List<String>? textSegments,
     ChatMessageStatus? status,
     String? errorMessage,
+    ChatStopReason? stopReason,
   }) => ChatMessage(
     id: id,
     sessionId: sessionId,
@@ -165,8 +249,10 @@ class ChatMessage {
     role: role,
     content: content ?? this.content,
     toolCalls: toolCalls ?? this.toolCalls,
+    textSegments: textSegments ?? this.textSegments,
     status: status ?? this.status,
     errorMessage: errorMessage ?? this.errorMessage,
+    stopReason: stopReason ?? this.stopReason,
     createdAt: createdAt,
   );
 }

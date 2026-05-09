@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,28 @@ class AppDatabase extends _$AppDatabase {
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
       await _createDomainEventLog(this);
+    },
+    onUpgrade: (m, from, to) async {
+      // v1 → v2: capture the AI stream's `stop_reason` on chat messages
+      // so the timeline can render a "reply was truncated" footer that
+      // survives a refresh / app restart instead of flashing for a
+      // single frame.
+      if (from < 2) {
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN stop_reason TEXT',
+        );
+      }
+      // v2 → v3: persist the interleaved text-vs-tool order of the
+      // assistant turn. Pre-v3 rows kept text in a single flat string
+      // and tool cards in a separate list, which forced the bubble to
+      // render "all tools, then all text" — wrong whenever the model
+      // narrated between tool calls. Old rows leave this column NULL
+      // and fall back to the legacy layout via [displaySegments].
+      if (from < 3) {
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN text_segments_json TEXT',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -85,15 +107,17 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
 ''',
     '''
 CREATE TABLE IF NOT EXISTS chat_messages (
-  id               TEXT PRIMARY KEY,
-  session_id       TEXT NOT NULL,
-  owner_user_id    TEXT NOT NULL,
-  role             TEXT NOT NULL,
-  content          TEXT NOT NULL DEFAULT '',
-  tool_calls_json  TEXT,
-  status           TEXT NOT NULL,
-  error_message    TEXT,
-  created_at       INTEGER NOT NULL,
+  id                  TEXT PRIMARY KEY,
+  session_id          TEXT NOT NULL,
+  owner_user_id       TEXT NOT NULL,
+  role                TEXT NOT NULL,
+  content             TEXT NOT NULL DEFAULT '',
+  tool_calls_json     TEXT,
+  text_segments_json  TEXT,
+  status              TEXT NOT NULL,
+  error_message       TEXT,
+  stop_reason         TEXT,
+  created_at          INTEGER NOT NULL,
   FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 )
 ''',

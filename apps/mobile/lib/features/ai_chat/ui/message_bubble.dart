@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
+import '../state/chat_controller.dart';
 import 'propose_card.dart';
 import 'tool_invocation_card.dart';
 
@@ -115,23 +117,19 @@ class _AssistantBubble extends StatelessWidget {
     final textColor = _isError ? cs.onErrorContainer : cs.onSurface;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
+    final showTruncation = !isStreaming &&
+        message.role == ChatRole.assistant &&
+        message.status == ChatMessageStatus.complete &&
+        (message.stopReason?.isAbnormal ?? false);
+
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (message.toolCalls.isNotEmpty)
-          _ToolCallsSection(
-            sessionId: sessionId,
-            message: message,
-          ),
-        if (message.content.isNotEmpty || isStreaming) ...[
-          if (message.toolCalls.isNotEmpty)
-            const SizedBox(height: Spacing.s8),
-          _AssistantBody(
-            text: message.content,
-            isStreaming: isStreaming,
-            textColor: textColor,
-          ),
-        ],
+        ..._buildInterleavedBlocks(
+          context: context,
+          textColor: textColor,
+          isStreaming: isStreaming,
+        ),
         if (message.errorMessage != null &&
             message.errorMessage!.isNotEmpty) ...[
           const SizedBox(height: Spacing.s8),
@@ -140,6 +138,11 @@ class _AssistantBubble extends StatelessWidget {
             style: tt.bodySmall?.copyWith(color: cs.error),
           ),
         ],
+        if (showTruncation)
+          _TruncationFooter(
+            sessionId: sessionId,
+            reason: message.stopReason!,
+          ),
       ],
     );
 
@@ -187,6 +190,97 @@ class _AssistantBubble extends StatelessWidget {
       ),
     );
   }
+
+  /// Walks `displaySegments` and `toolCalls` in lock-step so the bubble
+  /// renders text → tool → text → tool in the same order the model
+  /// emitted them, instead of grouping all tool cards above a single
+  /// concatenated paragraph.
+  ///
+  /// A pending propose-batch action header still floats to the top of
+  /// the list because it is a per-turn summary, not a narrative element.
+  List<Widget> _buildInterleavedBlocks({
+    required BuildContext context,
+    required Color textColor,
+    required bool isStreaming,
+  }) {
+    final segments = message.displaySegments;
+    final tools = message.toolCalls;
+    final l10n = AppLocalizations.of(context);
+
+    // Surface the optional batch propose-confirm header.
+    final pending = <({ToolInvocation invocation, ReadyProposalPlan plan})>[];
+    final plansById = <String, ProposalPlan>{};
+    for (final t in tools) {
+      if (!isProposeTool(t.name)) continue;
+      final plan = ProposalPlan.tryParse(t.output);
+      if (plan == null) continue;
+      plansById[t.id] = plan;
+      if (plan is ReadyProposalPlan) {
+        final state = t.applyState ?? ProposalApplyState.pending;
+        if (state.status == ProposalApplyStatus.pending ||
+            state.status == ProposalApplyStatus.errored) {
+          pending.add((invocation: t, plan: plan));
+        }
+      }
+    }
+
+    final blocks = <Widget>[];
+    if (pending.length >= 2) {
+      blocks.add(
+        ProposeBatchActions(
+          sessionId: sessionId,
+          message: message,
+          pending: pending,
+        ),
+      );
+    }
+
+    bool anythingEmittedYet = false;
+    void addGapIfNeeded() {
+      if (anythingEmittedYet) {
+        blocks.add(const SizedBox(height: Spacing.s8));
+      }
+    }
+
+    for (var i = 0; i < segments.length; i++) {
+      final seg = segments[i];
+      final isLastSeg = i == segments.length - 1;
+      final shouldRenderText = seg.isNotEmpty || (isLastSeg && isStreaming);
+      if (shouldRenderText) {
+        addGapIfNeeded();
+        blocks.add(
+          _AssistantBody(
+            text: seg,
+            isStreaming: isLastSeg && isStreaming,
+            textColor: textColor,
+          ),
+        );
+        anythingEmittedYet = true;
+      }
+      if (i < tools.length) {
+        addGapIfNeeded();
+        blocks.add(_renderToolEntry(tools[i], plansById[tools[i].id], l10n));
+        anythingEmittedYet = true;
+      }
+    }
+    return blocks;
+  }
+
+  Widget _renderToolEntry(
+    ToolInvocation invocation,
+    ProposalPlan? plan,
+    AppLocalizations l10n,
+  ) {
+    if (isProposeTool(invocation.name) && plan != null) {
+      return ProposeCard(
+        sessionId: sessionId,
+        message: message,
+        invocation: invocation,
+        plan: plan,
+      );
+    }
+    return ToolInvocationCard(invocation: invocation);
+  }
 }
 
 class _AssistantAvatar extends StatelessWidget {
@@ -211,67 +305,6 @@ class _AssistantAvatar extends StatelessWidget {
       child: Icon(Icons.auto_awesome, size: 14, color: cs.onPrimary),
     );
   }
-}
-
-/// Splits an assistant turn's tool calls into the propose / non-propose
-/// halves. Propose calls render as `ProposeCard` with a batch action row
-/// when 2+ are still pending; everything else falls through to the
-/// generic `ToolInvocationCard` exactly like before.
-class _ToolCallsSection extends StatelessWidget {
-  const _ToolCallsSection({required this.sessionId, required this.message});
-
-  final String sessionId;
-  final ChatMessage message;
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = <_ToolEntry>[];
-    final pending =
-        <({ToolInvocation invocation, ReadyProposalPlan plan})>[];
-    for (final t in message.toolCalls) {
-      final isPropose = isProposeTool(t.name);
-      final plan = isPropose ? ProposalPlan.tryParse(t.output) : null;
-      if (isPropose && plan != null) {
-        entries.add(_ToolEntry.propose(t, plan));
-        if (plan is ReadyProposalPlan) {
-          final state = t.applyState ?? ProposalApplyState.pending;
-          if (state.status == ProposalApplyStatus.pending ||
-              state.status == ProposalApplyStatus.errored) {
-            pending.add((invocation: t, plan: plan));
-          }
-        }
-      } else {
-        entries.add(_ToolEntry.generic(t));
-      }
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (pending.length >= 2)
-          ProposeBatchActions(
-            sessionId: sessionId,
-            message: message,
-            pending: pending,
-          ),
-        for (final entry in entries)
-          entry.plan == null
-              ? ToolInvocationCard(invocation: entry.invocation)
-              : ProposeCard(
-                  sessionId: sessionId,
-                  message: message,
-                  invocation: entry.invocation,
-                  plan: entry.plan!,
-                ),
-      ],
-    );
-  }
-}
-
-class _ToolEntry {
-  _ToolEntry.propose(this.invocation, this.plan);
-  _ToolEntry.generic(this.invocation) : plan = null;
-  final ToolInvocation invocation;
-  final ProposalPlan? plan;
 }
 
 class _AssistantBody extends StatelessWidget {
@@ -410,6 +443,126 @@ class _StreamingCaretState extends State<_StreamingCaret>
         decoration: BoxDecoration(
           color: widget.color,
           borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+}
+
+/// Slim, muted hairline + label + "Continue" affordance shown at the
+/// bottom of an assistant bubble when [ChatMessage.stopReason] indicates
+/// the reply is incomplete (max_tokens, refusal, tool-budget exhausted,
+/// connection drop, …).
+///
+/// The footer is purely a UX signal — the message itself is already
+/// persisted as `complete`. Tapping "Continue" sends a hidden user turn
+/// asking the model to pick up where it left off.
+class _TruncationFooter extends ConsumerWidget {
+  const _TruncationFooter({required this.sessionId, required this.reason});
+
+  final String sessionId;
+  final ChatStopReason reason;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final muted = cs.onSurfaceVariant;
+
+    final canContinue = switch (reason) {
+      ChatStopReason.maxTokens ||
+      ChatStopReason.toolUse ||
+      ChatStopReason.error ||
+      ChatStopReason.unknown => true,
+      ChatStopReason.refusal || ChatStopReason.endTurn => false,
+    };
+    final label = switch (reason) {
+      ChatStopReason.maxTokens => l10n.aiChatTruncatedMaxTokens,
+      ChatStopReason.toolUse => l10n.aiChatTruncatedToolBudget,
+      ChatStopReason.refusal => l10n.aiChatTruncatedRefusal,
+      ChatStopReason.error => l10n.aiChatTruncatedNetwork,
+      ChatStopReason.unknown => l10n.aiChatTruncatedUnknown,
+      ChatStopReason.endTurn => '',
+    };
+
+    final turn = ref.watch(chatControllerProvider(sessionId));
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Spacing.s8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
+          const SizedBox(height: Spacing.s6),
+          Row(
+            children: [
+              Icon(Icons.content_cut, size: 14, color: muted),
+              const SizedBox(width: Spacing.s6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: tt.bodySmall?.copyWith(color: muted),
+                ),
+              ),
+              if (canContinue)
+                _ContinueButton(
+                  enabled: !turn.isBusy,
+                  label: l10n.aiChatTruncatedContinue,
+                  onPressed: () {
+                    ref
+                        .read(chatControllerProvider(sessionId).notifier)
+                        .send(
+                          l10n.aiChatTruncatedContinuePrompt,
+                          staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                        );
+                  },
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContinueButton extends StatelessWidget {
+  const _ContinueButton({
+    required this.enabled,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final color = enabled ? cs.primary : cs.onSurfaceVariant;
+    return InkWell(
+      onTap: enabled ? onPressed : null,
+      borderRadius: BorderRadius.circular(Radii.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s8,
+          vertical: Spacing.s2,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: tt.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.arrow_forward, size: 14, color: color),
+          ],
         ),
       ),
     );
