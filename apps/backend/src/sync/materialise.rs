@@ -1,7 +1,7 @@
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use worker::{D1Database, D1Type};
+use worker::{D1Database, D1PreparedStatement, D1Type};
 
 use crate::error::AppError;
 use crate::hlc::Hlc;
@@ -64,6 +64,12 @@ struct CurrentRow {
 /// 1. INSERT into `op_log` (PK on `op_id`; conflict => idempotent or mutated).
 /// 2. UPSERT the materialised row iff `server_hlc > current.hlc`.
 ///
+/// The two writes ship as a single `db.batch(...)` so a transient D1 failure
+/// cannot leave op_log written without the matching row mutation (or vice
+/// versa). The reads (idempotency probe, current-row lookup) stay outside
+/// the batch — they don't need transactional isolation, and keeping them
+/// sequential preserves shallow-merge semantics across ops in the same push.
+///
 /// Spec: docs/sync-protocol.md §6 (LWW), §8.1 step 4.
 pub async fn apply(
     db: &D1Database,
@@ -97,44 +103,8 @@ pub async fn apply(
         });
     }
 
-    let now = Utc::now().to_rfc3339();
-    let diff_json: Option<String> = match &op.fields_diff {
-        None => None,
-        Some(v) => Some(serde_json::to_string(v).map_err(|e| AppError::Internal(e.to_string()))?),
-    };
-
-    let server_hlc_str = server_hlc.to_canonical();
-    let client_hlc_str = op.hlc.to_canonical();
-    let op_type_str = op.op_type.as_str();
-    let diff_param: D1Type = match &diff_json {
-        Some(s) => D1Type::Text(s),
-        None => D1Type::Null,
-    };
-
-    db.prepare(
-        "INSERT INTO op_log
-            (op_id, user_id, table_name, row_id, op_type, fields_diff,
-             hlc_text, client_hlc, device_id, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-    )
-    .bind_refs([
-        &D1Type::Text(&op.op_id),
-        &D1Type::Text(user_id),
-        &D1Type::Text(&op.table),
-        &D1Type::Text(&op.row_id),
-        &D1Type::Text(op_type_str),
-        &diff_param,
-        &D1Type::Text(&server_hlc_str),
-        &D1Type::Text(&client_hlc_str),
-        &D1Type::Text(&op.device_id),
-        &D1Type::Text(&now),
-    ])
-    .map_err(|e| AppError::Internal(format!("bind: {e}")))?
-    .run()
-    .await
-    .map_err(|e| AppError::Internal(format!("d1 run: {e}")))?;
-
-    // 2. Materialised row LWW update.
+    // 2. Current materialised row — drives shadowing decision and the
+    //    shallow-merge that produces the row's next payload.
     let select_sql =
         format!("SELECT payload, hlc_text FROM {table} WHERE user_id = ?1 AND id = ?2");
     let current: Option<CurrentRow> = db
@@ -145,13 +115,51 @@ pub async fn apply(
         .await
         .map_err(|e| AppError::Internal(format!("d1 first: {e}")))?;
 
+    let server_hlc_str = server_hlc.to_canonical();
+    let client_hlc_str = op.hlc.to_canonical();
+    let op_type_str = op.op_type.as_str();
+    let now = Utc::now().to_rfc3339();
+    let diff_json: Option<String> = match &op.fields_diff {
+        None => None,
+        Some(v) => Some(serde_json::to_string(v).map_err(|e| AppError::Internal(e.to_string()))?),
+    };
+    let diff_param: D1Type = match &diff_json {
+        Some(s) => D1Type::Text(s),
+        None => D1Type::Null,
+    };
+
     let shadowed = match &current {
         Some(cur) => server_hlc_str.as_str() <= cur.hlc_text.as_str(),
         None => false,
     };
 
+    // 3. Compose the writes into one atomic batch.
+    let mut writes: Vec<D1PreparedStatement> = Vec::with_capacity(2);
+
+    writes.push(
+        db.prepare(
+            "INSERT INTO op_log
+                (op_id, user_id, table_name, row_id, op_type, fields_diff,
+                 hlc_text, client_hlc, device_id, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+        )
+        .bind_refs([
+            &D1Type::Text(&op.op_id),
+            &D1Type::Text(user_id),
+            &D1Type::Text(&op.table),
+            &D1Type::Text(&op.row_id),
+            &D1Type::Text(op_type_str),
+            &diff_param,
+            &D1Type::Text(&server_hlc_str),
+            &D1Type::Text(&client_hlc_str),
+            &D1Type::Text(&op.device_id),
+            &D1Type::Text(&now),
+        ])
+        .map_err(|e| AppError::Internal(format!("bind: {e}")))?,
+    );
+
     if !shadowed {
-        match (op.op_type.clone(), current) {
+        let stmt = match (op.op_type.clone(), current.as_ref()) {
             (OpType::Delete, Some(_)) => {
                 let sql = format!(
                     "UPDATE {table} SET hlc_text = ?1, updated_by_device = ?2, deleted_at = ?3 \
@@ -166,9 +174,6 @@ pub async fn apply(
                         &D1Type::Text(&op.row_id),
                     ])
                     .map_err(|e| AppError::Internal(format!("bind: {e}")))?
-                    .run()
-                    .await
-                    .map_err(|e| AppError::Internal(format!("d1 run: {e}")))?;
             }
             (OpType::Delete, None) => {
                 // Tombstone for a row we've never seen. Materialise as a
@@ -178,24 +183,20 @@ pub async fn apply(
                     "INSERT INTO {table} (user_id, id, payload, hlc_text, updated_by_device, deleted_at) \
                      VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
                 );
-                let empty = "{}";
                 db.prepare(&sql)
                     .bind_refs([
                         &D1Type::Text(user_id),
                         &D1Type::Text(&op.row_id),
-                        &D1Type::Text(empty),
+                        &D1Type::Text("{}"),
                         &D1Type::Text(&server_hlc_str),
                         &D1Type::Text(&op.device_id),
                         &D1Type::Text(&now),
                     ])
                     .map_err(|e| AppError::Internal(format!("bind: {e}")))?
-                    .run()
-                    .await
-                    .map_err(|e| AppError::Internal(format!("d1 run: {e}")))?;
             }
             (OpType::Insert | OpType::Update, current_opt) => {
                 let merged = merge_payload(
-                    current_opt.as_ref().map(|r| r.payload.as_str()),
+                    current_opt.map(|r| r.payload.as_str()),
                     op.fields_diff.as_ref(),
                 );
                 let merged_json = serde_json::to_string(&merged)
@@ -214,9 +215,6 @@ pub async fn apply(
                             &D1Type::Text(&op.row_id),
                         ])
                         .map_err(|e| AppError::Internal(format!("bind: {e}")))?
-                        .run()
-                        .await
-                        .map_err(|e| AppError::Internal(format!("d1 run: {e}")))?;
                 } else {
                     let sql = format!(
                         "INSERT INTO {table} (user_id, id, payload, hlc_text, updated_by_device, deleted_at) \
@@ -231,13 +229,15 @@ pub async fn apply(
                             &D1Type::Text(&op.device_id),
                         ])
                         .map_err(|e| AppError::Internal(format!("bind: {e}")))?
-                        .run()
-                        .await
-                        .map_err(|e| AppError::Internal(format!("d1 run: {e}")))?;
                 }
             }
-        }
+        };
+        writes.push(stmt);
     }
+
+    db.batch(writes)
+        .await
+        .map_err(|e| AppError::Internal(format!("d1 batch: {e}")))?;
 
     Ok(ApplyOutcome {
         accepted: true,
