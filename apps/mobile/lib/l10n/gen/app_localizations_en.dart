@@ -3431,4 +3431,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncStatusDetailEndpoint => 'Endpoint';
+
+  @override
+  String get syncStatusLocalCountsHeader => 'Local row counts (debug)';
+
+  @override
+  String get syncStatusLocalAccountsUser => 'Accounts (user)';
+
+  @override
+  String get syncStatusLocalAccountsSystem => 'Accounts (system)';
+
+  @override
+  String get syncStatusLocalJournalEntries => 'Journal entries';
+
+  @override
+  String get syncStatusLocalPostings => 'Postings';
+
+  @override
+  String get syncStatusLocalAssets => 'Assets';
+
+  @override
+  String get syncStatusLocalPrices => 'Prices';
+
+  @override
+  String get syncStatusLocalLiabilities => 'Liabilities';
+
+  @override
+  String get syncStatusLocalTags => 'Tags';
 }

@@ -143,7 +143,7 @@ void main() {
             "SELECT value FROM sync_meta WHERE key = 'sync.applier_version'",
           )
           .getSingle();
-      expect(version.read<String>('value'), '2');
+      expect(version.read<String>('value'), '3');
     },
   );
 

@@ -1085,5 +1085,15 @@
   "syncStatusDetailDevice": "设备",
   "syncStatusDetailCursor": "拉取游标",
   "syncStatusDetailCursorUnset": "未设置",
-  "syncStatusDetailEndpoint": "服务端地址"
+  "syncStatusDetailEndpoint": "服务端地址",
+
+  "syncStatusLocalCountsHeader": "本地行数（调试）",
+  "syncStatusLocalAccountsUser": "账户（用户）",
+  "syncStatusLocalAccountsSystem": "账户（系统）",
+  "syncStatusLocalJournalEntries": "凭证条目",
+  "syncStatusLocalPostings": "凭证分录",
+  "syncStatusLocalAssets": "资产",
+  "syncStatusLocalPrices": "价格",
+  "syncStatusLocalLiabilities": "负债",
+  "syncStatusLocalTags": "标签"
 }

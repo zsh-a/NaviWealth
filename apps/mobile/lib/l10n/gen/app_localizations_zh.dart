@@ -3298,4 +3298,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStatusDetailEndpoint => '服务端地址';
+
+  @override
+  String get syncStatusLocalCountsHeader => '本地行数（调试）';
+
+  @override
+  String get syncStatusLocalAccountsUser => '账户（用户）';
+
+  @override
+  String get syncStatusLocalAccountsSystem => '账户（系统）';
+
+  @override
+  String get syncStatusLocalJournalEntries => '凭证条目';
+
+  @override
+  String get syncStatusLocalPostings => '凭证分录';
+
+  @override
+  String get syncStatusLocalAssets => '资产';
+
+  @override
+  String get syncStatusLocalPrices => '价格';
+
+  @override
+  String get syncStatusLocalLiabilities => '负债';
+
+  @override
+  String get syncStatusLocalTags => '标签';
 }

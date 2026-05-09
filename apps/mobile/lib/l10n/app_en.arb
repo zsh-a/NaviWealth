@@ -1933,5 +1933,24 @@
   "syncStatusDetailCursorUnset": "not set",
   "@syncStatusDetailCursorUnset": { "description": "Diagnostics cursor placeholder before any pull has run" },
   "syncStatusDetailEndpoint": "Endpoint",
-  "@syncStatusDetailEndpoint": { "description": "Diagnostics row label for the API base URL (debug only)" }
+  "@syncStatusDetailEndpoint": { "description": "Diagnostics row label for the API base URL (debug only)" },
+
+  "syncStatusLocalCountsHeader": "Local row counts (debug)",
+  "@syncStatusLocalCountsHeader": { "description": "Section header for the per-table row counters (debug builds only)" },
+  "syncStatusLocalAccountsUser": "Accounts (user)",
+  "@syncStatusLocalAccountsUser": { "description": "Diagnostic counter: non-system accounts" },
+  "syncStatusLocalAccountsSystem": "Accounts (system)",
+  "@syncStatusLocalAccountsSystem": { "description": "Diagnostic counter: bootstrap system accounts" },
+  "syncStatusLocalJournalEntries": "Journal entries",
+  "@syncStatusLocalJournalEntries": { "description": "Diagnostic counter" },
+  "syncStatusLocalPostings": "Postings",
+  "@syncStatusLocalPostings": { "description": "Diagnostic counter" },
+  "syncStatusLocalAssets": "Assets",
+  "@syncStatusLocalAssets": { "description": "Diagnostic counter" },
+  "syncStatusLocalPrices": "Prices",
+  "@syncStatusLocalPrices": { "description": "Diagnostic counter" },
+  "syncStatusLocalLiabilities": "Liabilities",
+  "@syncStatusLocalLiabilities": { "description": "Diagnostic counter" },
+  "syncStatusLocalTags": "Tags",
+  "@syncStatusLocalTags": { "description": "Diagnostic counter" }
 }
