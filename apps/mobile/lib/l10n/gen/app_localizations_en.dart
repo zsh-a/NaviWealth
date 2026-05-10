@@ -21,19 +21,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get navPortfolio => 'Portfolio';
-
-  @override
   String get navAI => 'AI';
 
   @override
   String get navActivity => 'Activity';
 
   @override
-  String get navPlan => 'Plan';
+  String get navAccounts => 'Accounts';
 
   @override
-  String get navAccounts => 'Accounts';
+  String get accountsHubSectionCashDeposits => 'Cash & Deposits';
+
+  @override
+  String get accountsHubSectionInvestments => 'Investments';
+
+  @override
+  String get accountsHubSectionPhysical => 'Physical';
+
+  @override
+  String get accountsHubSectionLiabilities => 'Liabilities';
+
+  @override
+  String get accountsHubManageBankAccounts => 'Manage bank accounts';
+
+  @override
+  String get dashboardAiInsightsTitle => 'Insights for you';
+
+  @override
+  String get dashboardActivityPreviewTitle => 'Recent activity';
+
+  @override
+  String get dashboardActivityPreviewViewAll => 'View all';
+
+  @override
+  String get dashboardAllocationSummaryTitle => 'Allocation';
+
+  @override
+  String get dashboardAllocationViewBreakdown => 'View breakdown';
+
+  @override
+  String get activityFilterChipAll => 'All';
+
+  @override
+  String get activityFilterChipIncome => 'Income';
+
+  @override
+  String get activityFilterChipExpense => 'Expense';
+
+  @override
+  String get activityFilterChipTransfer => 'Transfer';
+
+  @override
+  String get activityFilterChipTrade => 'Trade';
+
+  @override
+  String get activityEntryDetailTitle => 'Transaction';
+
+  @override
+  String get activityEntryDetailAiExplanation => 'AI insight';
+
+  @override
+  String get activityEntryDetailNoExplanation =>
+      'No insight available for this entry.';
+
+  @override
+  String get aiContextSummaryThisMonth => 'This month';
+
+  @override
+  String get aiContextSummaryNetWorthDelta => 'Net worth Δ';
+
+  @override
+  String get aiContextSummaryTodayDelta => 'Today';
+
+  @override
+  String get aiContextSummaryUnusualExpenses => 'Unusual expenses';
+
+  @override
+  String get aiContextSummaryUpcoming => 'Upcoming maturities';
+
+  @override
+  String get aiActionCardsTitle => 'Suggested actions';
+
+  @override
+  String get aiActionCardsOpen => 'Open →';
+
+  @override
+  String get aiInsightsPanelTitle => 'Insights';
+
+  @override
+  String get aiInsightsRebalanceTitle => 'Rebalance';
+
+  @override
+  String get dashboardNetWorthAssetsLabel => 'Assets';
+
+  @override
+  String get dashboardNetWorthLiabilitiesLabel => 'Liabilities';
 
   @override
   String get portfolioAssetsTab => 'Assets';

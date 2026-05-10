@@ -6,7 +6,7 @@ import '../../assets/data/deposit_maturity_insight_provider.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../rebalance/data/rebalance_drift_insight_provider.dart';
-import '../ui/insight_strip.dart';
+import '../domain/insight_models.dart';
 
 /// Computes actionable insights for the dashboard [InsightStrip].
 ///
@@ -27,7 +27,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.flag_outlined,
           kind: InsightKind.fireProgress,
           monthsToTarget: months,
-          route: AppRoutes.planFire,
+          route: AppRoutes.aiInsightsFire,
         ),
       );
     } else if (months == 0) {
@@ -36,7 +36,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.celebration_outlined,
           kind: InsightKind.fireReached,
           iconColor: Colors.green,
-          route: AppRoutes.planFire,
+          route: AppRoutes.aiInsightsFire,
         ),
       );
     }
@@ -51,7 +51,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         category: drift.category,
         driftPct: drift.deviation,
         iconColor: Colors.amber,
-        route: AppRoutes.planRebalance,
+        route: AppRoutes.aiInsightsRebalance,
       ),
     );
   }
@@ -64,7 +64,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         kind: InsightKind.maturity,
         maturityCount: maturity.count,
         maturityDays: maturity.days,
-        route: AppRoutes.portfolio,
+        route: AppRoutes.accounts,
       ),
     );
   }

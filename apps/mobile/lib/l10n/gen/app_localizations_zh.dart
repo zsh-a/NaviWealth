@@ -21,19 +21,100 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettings => '设置';
 
   @override
-  String get navPortfolio => '投资组合';
-
-  @override
   String get navAI => 'AI';
 
   @override
   String get navActivity => '流水';
 
   @override
-  String get navPlan => '规划';
+  String get navAccounts => '账户';
 
   @override
-  String get navAccounts => '账户';
+  String get accountsHubSectionCashDeposits => '现金与存款';
+
+  @override
+  String get accountsHubSectionInvestments => '投资';
+
+  @override
+  String get accountsHubSectionPhysical => '实物资产';
+
+  @override
+  String get accountsHubSectionLiabilities => '负债';
+
+  @override
+  String get accountsHubManageBankAccounts => '管理银行账户';
+
+  @override
+  String get dashboardAiInsightsTitle => 'AI 洞察';
+
+  @override
+  String get dashboardActivityPreviewTitle => '近期活动';
+
+  @override
+  String get dashboardActivityPreviewViewAll => '查看全部';
+
+  @override
+  String get dashboardAllocationSummaryTitle => '资产分配';
+
+  @override
+  String get dashboardAllocationViewBreakdown => '查看分布';
+
+  @override
+  String get activityFilterChipAll => '全部';
+
+  @override
+  String get activityFilterChipIncome => '收入';
+
+  @override
+  String get activityFilterChipExpense => '支出';
+
+  @override
+  String get activityFilterChipTransfer => '转账';
+
+  @override
+  String get activityFilterChipTrade => '交易';
+
+  @override
+  String get activityEntryDetailTitle => '交易明细';
+
+  @override
+  String get activityEntryDetailAiExplanation => 'AI 洞察';
+
+  @override
+  String get activityEntryDetailNoExplanation => '暂无该笔记录的 AI 洞察。';
+
+  @override
+  String get aiContextSummaryThisMonth => '本月';
+
+  @override
+  String get aiContextSummaryNetWorthDelta => '净值变化';
+
+  @override
+  String get aiContextSummaryTodayDelta => '今日';
+
+  @override
+  String get aiContextSummaryUnusualExpenses => '异常支出';
+
+  @override
+  String get aiContextSummaryUpcoming => '即将到期';
+
+  @override
+  String get aiActionCardsTitle => '建议操作';
+
+  @override
+  String get aiActionCardsOpen => '打开 →';
+
+  @override
+  String get aiInsightsPanelTitle => '深度洞察';
+
+  @override
+  String get aiInsightsRebalanceTitle => '再平衡';
+
+  @override
+  String get dashboardNetWorthAssetsLabel => '资产';
+
+  @override
+  String get dashboardNetWorthLiabilitiesLabel => '负债';
 
   @override
   String get portfolioAssetsTab => '资产';

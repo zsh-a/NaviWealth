@@ -16,7 +16,6 @@ import '../design_system/preferences/theme_preferences.dart';
 ///    stale preference from a previous build can't render off-screen.
 const String _kSidebarCollapsedKey = 'naviwealth.shell.sidebar_collapsed';
 const String _kMasterPaneWidthKey = 'naviwealth.shell.master_pane_width';
-const String _kPortfolioViewKey = 'naviwealth.shell.portfolio_view';
 
 /// Default width for the master list pane on desktop. 380dp is the value
 /// quoted in FIR-106 — wide enough for a primary asset row + delta chip
@@ -37,13 +36,6 @@ final masterPaneWidthProvider =
     StateNotifierProvider<MasterPaneWidthController, double>((ref) {
       return MasterPaneWidthController(ref.watch(sharedPreferencesProvider));
     });
-
-final portfolioViewProvider =
-    StateNotifierProvider<PortfolioViewController, PortfolioViewMode>((ref) {
-      return PortfolioViewController(ref.watch(sharedPreferencesProvider));
-    });
-
-enum PortfolioViewMode { assets, account, currency, assetClass }
 
 class SidebarCollapsedController extends StateNotifier<bool> {
   SidebarCollapsedController(this._prefs)
@@ -79,22 +71,3 @@ class MasterPaneWidthController extends StateNotifier<double> {
   }
 }
 
-class PortfolioViewController extends StateNotifier<PortfolioViewMode> {
-  PortfolioViewController(this._prefs) : super(_load(_prefs));
-
-  final SharedPreferences _prefs;
-
-  static PortfolioViewMode _load(SharedPreferences prefs) {
-    final raw = prefs.getString(_kPortfolioViewKey);
-    return PortfolioViewMode.values.firstWhere(
-      (mode) => mode.name == raw,
-      orElse: () => PortfolioViewMode.assets,
-    );
-  }
-
-  Future<void> set(PortfolioViewMode mode) async {
-    if (mode == state) return;
-    state = mode;
-    await _prefs.setString(_kPortfolioViewKey, mode.name);
-  }
-}

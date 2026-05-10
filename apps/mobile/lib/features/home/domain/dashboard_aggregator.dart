@@ -189,7 +189,7 @@ class DashboardAggregator {
       valueInBase: converted,
       nativeAmount: value,
       nativeCurrency: asset.currency,
-      routeHint: AppRoutes.portfolioAsset(asset.id),
+      routeHint: AppRoutes.accountAsset(asset.id),
     );
   }
 
@@ -209,7 +209,7 @@ class DashboardAggregator {
       valueInBase: Money(snap.marketValueInBase, baseCurrency),
       nativeAmount: snap.marketValueInAssetCurrency,
       nativeCurrency: snap.assetCurrency,
-      routeHint: AppRoutes.portfolioAsset(asset.id),
+      routeHint: AppRoutes.accountAsset(asset.id),
     );
   }
 

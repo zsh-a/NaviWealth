@@ -43,13 +43,13 @@ Future<void> showGlobalActionPanel(BuildContext context) {
             title: Text(l10n.superFabTransfer),
             prefix: const Icon(Icons.swap_horiz),
             onPress: () =>
-                _closeAndPush(sheetContext, context, AppRoutes.accountTransfer),
+                _closeAndPush(sheetContext, context, AppRoutes.transfer),
           ),
           FTile(
             title: Text(l10n.accountFormCreateTitle),
             prefix: const Icon(Icons.add_card_outlined),
             onPress: () =>
-                _closeAndPush(sheetContext, context, AppRoutes.accountNew),
+                _closeAndPush(sheetContext, context, AppRoutes.accountListNew),
           ),
           FTile(
             title: Text(l10n.superFabLiability),
@@ -82,7 +82,7 @@ Future<void> showAssetActionPanel(BuildContext context) {
             onPress: () => _closeAndPush(
               sheetContext,
               context,
-              AppRoutes.portfolioNewCash,
+              AppRoutes.accountNewCash,
             ),
           ),
           FTile(
@@ -92,7 +92,7 @@ Future<void> showAssetActionPanel(BuildContext context) {
             onPress: () => _closeAndPush(
               sheetContext,
               context,
-              AppRoutes.portfolioNewDeposit,
+              AppRoutes.accountNewDeposit,
             ),
           ),
           FTile(
@@ -102,7 +102,7 @@ Future<void> showAssetActionPanel(BuildContext context) {
             onPress: () => _closeAndPush(
               sheetContext,
               context,
-              AppRoutes.portfolioNewWealth,
+              AppRoutes.accountNewWealth,
             ),
           ),
           FTile(

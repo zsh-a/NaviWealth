@@ -44,10 +44,10 @@ void main() {
         id: 'x',
         label: 'Go to Assets',
         icon: Icons.dashboard,
-        keywords: const [AppRoutes.portfolio, '资产'],
+        keywords: const [AppRoutes.accounts, '资产'],
         run: (_) {},
       );
-      expect(entry.matches(AppRoutes.portfolio), isTrue);
+      expect(entry.matches(AppRoutes.accounts), isTrue);
       expect(entry.matches('资产'), isTrue);
     });
   });

@@ -8,9 +8,14 @@ import '../../../data/domain/entry_kind.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
-import '../../shared/entry_kind_badge.dart';
-import '../../shared/postings_preview.dart';
+import 'activity_entry_detail_page.dart';
 
+/// One row in the unified Activity timeline (iOS Wallet style).
+///
+/// Layout: rounded tinted icon disc · stacked title/subtitle · right-aligned
+/// signed amount + time. Tapping pushes [ActivityEntryDetailPage] which
+/// owns the full breakdown — no inline accordion expansion any more
+/// (consistent with the calm-finance "row is the action target" rule).
 class ActivityFeedEntryRow extends StatelessWidget {
   const ActivityFeedEntryRow({
     super.key,
@@ -25,88 +30,138 @@ class ActivityFeedEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
     final summary = _summariseAmount(entry.postings, accountsById);
     final timeStr = _formatTime(entry.entry.date);
+    final iconData = _iconForKind(classification.kind);
+    final iconTint = _tintForKind(classification.kind, colors);
+
+    final subtitle = entry.entry.payee?.isNotEmpty == true
+        ? entry.entry.payee!
+        : _accountSummary(entry.postings, accountsById);
 
     return FCard.raw(
-      child: FAccordion(
-        children: [
-          FAccordionItem(
-            title: Row(
-              children: [
-                EntryKindBadge(classification: classification, compact: true),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        entry.entry.narration,
-                        style: context.theme.typography.sm,
-                        overflow: TextOverflow.ellipsis,
+      child: FTappable(
+        onPress: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ActivityEntryDetailPage(
+              entry: entry,
+              accountsById: accountsById,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: iconTint.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                alignment: Alignment.center,
+                child: Icon(iconData, size: 18, color: iconTint),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      entry.entry.narration.isEmpty
+                          ? '—'
+                          : entry.entry.narration,
+                      style: context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (subtitle != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Row(
-                          children: [
-                            if (entry.entry.payee != null) ...[
-                              Flexible(
-                                child: Text(
-                                  entry.entry.payee!,
-                                  style: context.theme.typography.xs2.copyWith(
-                                    color: context.theme.colors.mutedForeground,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: Text(
-                                  '\u00B7',
-                                  style: context.theme.typography.xs2.copyWith(
-                                    color: context.theme.colors.mutedForeground,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            Text(
-                              timeStr,
-                              style: context.theme.typography.xs2.copyWith(
-                                color: context.theme.colors.mutedForeground,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          subtitle,
+                          style: context.theme.typography.xs.copyWith(
+                            color: colors.mutedForeground,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-                if (summary != null) ...[
-                  const SizedBox(width: 8),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (summary != null)
+                    Text(
+                      summary,
+                      style: context.theme.typography.sm.copyWith(
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  const SizedBox(height: 2),
                   Text(
-                    summary,
-                    style: context.theme.typography.sm.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      color: context.theme.colors.foreground,
+                    timeStr,
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
                     ),
                   ),
                 ],
-              ],
-            ),
-            child: PostingsPreview(
-              postings: entry.postings,
-              accounts: accountsById,
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+}
+
+IconData _iconForKind(EntryKind kind) {
+  switch (kind) {
+    case EntryKind.income:
+      return Icons.south_west_outlined;
+    case EntryKind.expense:
+      return Icons.shopping_bag_outlined;
+    case EntryKind.payment:
+      return Icons.payments_outlined;
+    case EntryKind.transfer:
+      return Icons.swap_horiz_outlined;
+    case EntryKind.trade:
+      return Icons.show_chart_outlined;
+    case EntryKind.adjustment:
+      return Icons.tune_outlined;
+    case EntryKind.opening:
+      return Icons.flag_outlined;
+    case EntryKind.other:
+      return Icons.receipt_long_outlined;
+  }
+}
+
+Color _tintForKind(EntryKind kind, FColors colors) {
+  switch (kind) {
+    case EntryKind.income:
+    case EntryKind.trade:
+      return colors.primary;
+    case EntryKind.expense:
+    case EntryKind.payment:
+    case EntryKind.transfer:
+    case EntryKind.adjustment:
+    case EntryKind.opening:
+    case EntryKind.other:
+      return colors.mutedForeground;
   }
 }
 
@@ -114,6 +169,17 @@ String _formatTime(DateTime date) {
   final h = date.hour.toString().padLeft(2, '0');
   final m = date.minute.toString().padLeft(2, '0');
   return '$h:$m';
+}
+
+String? _accountSummary(
+  List<Posting> postings,
+  Map<String, Account> accounts,
+) {
+  for (final p in postings) {
+    final a = accounts[p.accountId];
+    if (a != null) return a.name;
+  }
+  return null;
 }
 
 String? _summariseAmount(

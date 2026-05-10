@@ -7,6 +7,7 @@ library;
 export 'charts/charts.dart';
 export 'preferences/density_preferences.dart';
 export 'preferences/theme_preferences.dart';
+export 'theme/accent_colors.dart';
 export 'theme/app_theme.dart';
 export 'theme/market_color_mode.dart';
 export 'theme/market_colors.dart';

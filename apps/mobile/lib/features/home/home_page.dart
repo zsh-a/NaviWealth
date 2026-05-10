@@ -9,17 +9,19 @@ import '../../l10n/gen/app_localizations.dart';
 import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
-import 'ui/allocation_card.dart';
+import 'ui/activity_timeline_preview.dart';
+import 'ui/ai_insight_feed.dart';
+import 'ui/allocation_summary.dart';
 import 'ui/currency_mismatch_banner.dart';
-import 'ui/insight_strip.dart';
 import 'ui/trend_card.dart';
 
-/// Dashboard surface (FIR-52).
+/// Home cockpit (FIR-52, redesigned).
 ///
-/// Two cards: a category-allocation pie + drill-down list, and a net-worth
-/// trend chart with time-range chips. Layout adapts at the
-/// [Breakpoints.mobile] boundary — single column on phones, two-column on
-/// tablet / desktop so the cards sit side-by-side.
+/// One-column scroll: Net Worth Hero → AI Insight Feed → Allocation
+/// Summary → Recent Activity preview → Trend chart. The heavy Sankey
+/// allocation moved out of the home (it now lives on the dedicated
+/// detail surface inside the Accounts hub) so the home reads more like
+/// a calm "financial cockpit" than a trading terminal.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -34,10 +36,6 @@ class HomePage extends ConsumerWidget {
           FHeaderAction(
             icon: const Icon(Icons.auto_awesome_outlined),
             onPress: () => context.push(AppRoutes.ai),
-          ),
-          FHeaderAction(
-            icon: const Icon(Icons.settings_outlined),
-            onPress: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
@@ -76,51 +74,41 @@ class _DashboardBody extends ConsumerWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isWide = !Breakpoints.isMobile(width);
-        final padding = isWide
-            ? const EdgeInsets.all(24)
-            : const EdgeInsets.all(16);
-        final header = _NetWorthHeader(snapshot: snapshot);
-        final insightStrip = InsightStrip(insights: insights);
-        final allocation = AllocationCard(snapshot: snapshot);
-        const trend = TrendCard();
+        final basePadding = isWide
+            ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
+            : const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
+        final padding = basePadding.copyWith(
+          bottom: basePadding.bottom + MediaQuery.paddingOf(context).bottom + 16,
+        );
 
-        if (isWide) {
-          return ListView(
-            padding: padding,
-            children: [
-              header,
-              if (insights.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                insightStrip,
-              ],
-              const SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: allocation),
-                  const SizedBox(width: 16),
-                  const Expanded(child: trend),
-                ],
-              ),
-            ],
-          );
-        }
-        return ListView(
-          padding: padding.copyWith(
-            bottom: padding.bottom + 64 + MediaQuery.paddingOf(context).bottom,
-          ),
+        // Tablet/desktop: cap content width to 720 so a wide window doesn't
+        // stretch lines into uncomfortable spans. The cockpit reads as a
+        // focused single column at any width.
+        final content = ListView(
+          padding: padding,
           children: [
-            header,
+            _NetWorthHeader(snapshot: snapshot),
             if (insights.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              insightStrip,
+              const SizedBox(height: 20),
+              AiInsightFeed(insights: insights),
             ],
-            const SizedBox(height: 12),
-            allocation,
-            const SizedBox(height: 12),
-            trend,
+            const SizedBox(height: 20),
+            AllocationSummary(snapshot: snapshot),
+            const SizedBox(height: 20),
+            const ActivityTimelinePreview(),
+            const SizedBox(height: 20),
+            const TrendCard(),
           ],
         );
+        if (isWide) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: content,
+            ),
+          );
+        }
+        return content;
       },
     );
   }
@@ -143,12 +131,18 @@ class _NetWorthHeader extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.homeNetWorthTitle, style: context.theme.typography.md),
+            Text(
+              l10n.homeNetWorthTitle,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             // Cap dynamic-text scaling on the 32dp hero number so users on
             // 200% system font size don't blow the card out of its row.
-            // FittedBox handles the long-currency / many-digits case
-            // (e.g. ¥123,456,789.00) by scaling the glyphs down to fit.
+            // FittedBox handles long currency strings (¥123,456,789.00)
+            // by scaling glyphs down to fit the card's content rect.
             MediaQuery.withClampedTextScaling(
               maxScaleFactor: 1.3,
               child: FittedBox(
@@ -191,11 +185,6 @@ class _NetWorthHeader extends ConsumerWidget {
 }
 
 /// Today / MTD / YTD strip rendered under the hero net-worth number.
-///
-/// Uses [DeltaText] for the today figure (currency formatted), [DeltaChip]
-/// for the month-to-date percentage (chip styling reads as a "this is the
-/// running pulse" badge next to the static breakdown), and another
-/// [DeltaText] for YTD return.
 class _DeltaMetricsRow extends StatelessWidget {
   const _DeltaMetricsRow({required this.metrics});
 

@@ -26,6 +26,7 @@ import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/accounts/accounts_hub_page.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
@@ -40,7 +41,6 @@ import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
-import 'package:naviwealth/features/portfolio/portfolio_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -219,14 +219,14 @@ void main() {
     testWidgets('/portfolio renders Portfolio', (tester) async {
       final container = await _pumpAt(
         tester,
-        initialLocation: AppRoutes.portfolio,
+        initialLocation: AppRoutes.accounts,
       );
-      expect(find.byType(PortfolioPage), findsOneWidget);
-      expect(_currentPath(container), AppRoutes.portfolio);
+      expect(find.byType(AccountsHubPage), findsOneWidget);
+      expect(_currentPath(container), AppRoutes.accounts);
     });
 
     testWidgets('/plan/analytics renders Analytics', (tester) async {
-      await _pumpAt(tester, initialLocation: AppRoutes.planAnalytics);
+      await _pumpAt(tester, initialLocation: AppRoutes.aiInsightsAnalytics);
       expect(find.byType(AnalyticsPage), findsOneWidget);
     });
 
@@ -241,7 +241,7 @@ void main() {
       // Query params on a redirect path should survive the redirect.
       await _pumpAt(
         tester,
-        initialLocation: '${AppRoutes.planAnalytics}?range=1y',
+        initialLocation: '${AppRoutes.aiInsightsAnalytics}?range=1y',
       );
       expect(find.byType(AnalyticsPage), findsOneWidget);
     });
@@ -256,21 +256,21 @@ void main() {
 
       // Navigate via the router directly — the pill bar layout and icon
       // disambiguation are covered by the positional tap test below.
-      container.read(appRouterProvider).go(AppRoutes.portfolio);
+      container.read(appRouterProvider).go(AppRoutes.accounts);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), AppRoutes.portfolio);
-      expect(find.byType(PortfolioPage), findsOneWidget);
+      expect(_currentPath(container), AppRoutes.accounts);
+      expect(find.byType(AccountsHubPage), findsOneWidget);
 
       container.read(appRouterProvider).go(AppRoutes.activity);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.activity);
 
-      container.read(appRouterProvider).go(AppRoutes.plan);
+      container.read(appRouterProvider).go(AppRoutes.ai);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), AppRoutes.plan);
+      expect(_currentPath(container), AppRoutes.ai);
 
       container.read(appRouterProvider).go(AppRoutes.home);
       await tester.pump();
@@ -302,13 +302,13 @@ void main() {
       await tester.tapAt(Offset(portfolioX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), AppRoutes.portfolio);
+      expect(_currentPath(container), AppRoutes.accounts);
       await _drainTimers(tester);
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
       // 4-tab layout: Overview(0) | Portfolio(1) | Activity(2) | Plan(3)
-      final container = await _pumpAt(tester, initialLocation: AppRoutes.plan);
+      final container = await _pumpAt(tester, initialLocation: AppRoutes.ai);
       final bar = tester.widget<NavigationBar>(
         find.byType(NavigationBar),
       );
@@ -366,14 +366,14 @@ void main() {
     ) async {
       final container = await _pumpAt(
         tester,
-        initialLocation: AppRoutes.plan,
+        initialLocation: AppRoutes.ai,
         viewportSize: _tabletSize,
       );
       // Verify the rail is rendered with the correct selected index.
       var rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
       expect(rail.selectedIndex, 3);
 
-      container.read(appRouterProvider).go(AppRoutes.portfolio);
+      container.read(appRouterProvider).go(AppRoutes.accounts);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
@@ -386,7 +386,7 @@ void main() {
     ) async {
       final container = await _pumpAt(
         tester,
-        initialLocation: AppRoutes.planFire,
+        initialLocation: AppRoutes.aiInsightsFire,
         viewportSize: _desktopSize,
       );
       final sidebar = tester.widget<DesktopSidebar>(
@@ -394,7 +394,7 @@ void main() {
       );
       expect(sidebar.selectedIndex, 3);
 
-      container.read(appRouterProvider).go(AppRoutes.portfolio);
+      container.read(appRouterProvider).go(AppRoutes.accounts);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       final updated = tester.widget<DesktopSidebar>(
@@ -409,12 +409,12 @@ void main() {
       expect(_currentPath(container), AppRoutes.home);
 
       // The sidebar shows label text for all items.
-      // Tap the "Portfolio" label to navigate.
-      await tester.tap(find.text('Portfolio'));
+      // Tap the "Accounts" label to navigate (was "Portfolio" pre-redesign).
+      await tester.tap(find.text('Accounts'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), AppRoutes.portfolio);
-      expect(find.byType(PortfolioPage), findsOneWidget);
+      expect(_currentPath(container), AppRoutes.accounts);
+      expect(find.byType(AccountsHubPage), findsOneWidget);
       await _drainTimers(tester);
     });
   });
@@ -430,29 +430,29 @@ void main() {
       final container = await _pumpAt(tester);
       final router = container.read(appRouterProvider);
 
-      router.go(AppRoutes.portfolio);
+      router.go(AppRoutes.accounts);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(PortfolioPage), findsOneWidget);
+      expect(find.byType(AccountsHubPage), findsOneWidget);
 
-      router.go(AppRoutes.planAnalytics);
+      router.go(AppRoutes.aiInsightsAnalytics);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnalyticsPage), findsOneWidget);
 
       // Simulate browser "back": platform replays the previous URL.
-      router.go(AppRoutes.portfolio);
+      router.go(AppRoutes.accounts);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(PortfolioPage), findsOneWidget);
-      expect(_currentPath(container), AppRoutes.portfolio);
+      expect(find.byType(AccountsHubPage), findsOneWidget);
+      expect(_currentPath(container), AppRoutes.accounts);
 
       // Simulate browser "forward".
-      router.go(AppRoutes.planAnalytics);
+      router.go(AppRoutes.aiInsightsAnalytics);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnalyticsPage), findsOneWidget);
-      expect(_currentPath(container), AppRoutes.planAnalytics);
+      expect(_currentPath(container), AppRoutes.aiInsightsAnalytics);
       await _drainTimers(tester);
     });
   });
@@ -468,9 +468,9 @@ void main() {
       (tester) async {
         final first = await _pumpAt(
           tester,
-          initialLocation: AppRoutes.portfolio,
+          initialLocation: AppRoutes.accounts,
         );
-        expect(find.byType(PortfolioPage), findsOneWidget);
+        expect(find.byType(AccountsHubPage), findsOneWidget);
         first.dispose();
 
         await tester.pumpWidget(const SizedBox.shrink());
@@ -479,10 +479,10 @@ void main() {
 
         final second = await _pumpAt(
           tester,
-          initialLocation: AppRoutes.portfolio,
+          initialLocation: AppRoutes.accounts,
         );
-        expect(find.byType(PortfolioPage), findsOneWidget);
-        expect(_currentPath(second), AppRoutes.portfolio);
+        expect(find.byType(AccountsHubPage), findsOneWidget);
+        expect(_currentPath(second), AppRoutes.accounts);
       },
     );
 

@@ -91,7 +91,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                     onPress: () {
                       Navigator.of(context).pop();
                       context.goNamed(
-                        AppRouteNames.assetDetail,
+                        AppRouteNames.accountAssetDetail,
                         pathParameters: {'assetId': h.assetId},
                       );
                     },

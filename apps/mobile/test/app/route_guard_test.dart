@@ -61,7 +61,7 @@ final _testRouterProvider = Provider.family<GoRouter, String>((ref, initial) {
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
       GoRoute(
-        path: AppRoutes.portfolio,
+        path: AppRoutes.accounts,
         builder: (_, _) => const _Marker('portfolio'),
       ),
       GoRoute(path: '/login', builder: (_, _) => const _Marker('login')),
@@ -98,9 +98,9 @@ void main() {
     final router = await _pumpRouter(
       tester,
       container,
-      initialLocation: AppRoutes.portfolio,
+      initialLocation: AppRoutes.accounts,
     );
-    expect(_path(router), AppRoutes.portfolio);
+    expect(_path(router), AppRoutes.accounts);
     expect(find.text('portfolio'), findsOneWidget);
   });
 
@@ -118,7 +118,7 @@ void main() {
     final router = await _pumpRouter(
       tester,
       container,
-      initialLocation: AppRoutes.portfolio,
+      initialLocation: AppRoutes.accounts,
     );
 
     expect(_path(router), '/login');
@@ -152,10 +152,10 @@ void main() {
     // We need a real GoRouterState; the cheapest way to get one is to spin up
     // a throwaway router and grab `configuration` for the constructor.
     final probeRouter = GoRouter(
-      initialLocation: AppRoutes.portfolio,
+      initialLocation: AppRoutes.accounts,
       routes: <RouteBase>[
         GoRoute(
-          path: AppRoutes.portfolio,
+          path: AppRoutes.accounts,
           builder: (_, _) => const _Marker('a'),
         ),
       ],
@@ -166,11 +166,11 @@ void main() {
       Provider<String?>((ref) {
         final state = GoRouterState(
           probeRouter.configuration,
-          uri: Uri.parse(AppRoutes.portfolio),
-          matchedLocation: AppRoutes.portfolio,
-          fullPath: AppRoutes.portfolio,
+          uri: Uri.parse(AppRoutes.accounts),
+          matchedLocation: AppRoutes.accounts,
+          fullPath: AppRoutes.accounts,
           pathParameters: const {},
-          pageKey: const ValueKey(AppRoutes.portfolio),
+          pageKey: const ValueKey(AppRoutes.accounts),
         );
         return routerRedirect(ref.container, _NoopBuildContext(), state);
       }),
@@ -215,9 +215,9 @@ void main() {
     final router = await _pumpRouter(
       tester,
       container,
-      initialLocation: AppRoutes.portfolio,
+      initialLocation: AppRoutes.accounts,
     );
-    expect(_path(router), AppRoutes.portfolio);
+    expect(_path(router), AppRoutes.accounts);
 
     // Flip the guard to redirect, then bump the version. go_router should
     // re-run redirects for the current location.

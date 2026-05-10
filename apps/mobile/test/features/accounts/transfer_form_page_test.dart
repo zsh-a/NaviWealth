@@ -127,7 +127,7 @@ Widget _wrap(
             builder: (_, _) => const TransferFormPage(),
           ),
           GoRoute(
-            path: AppRoutes.activityAccounts,
+            path: AppRoutes.accountsList,
             builder: (_, _) => const SizedBox(),
           ),
         ],
