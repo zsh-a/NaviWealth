@@ -49,7 +49,8 @@ class NwPieChart extends StatefulWidget {
     List<Slice> slices,
     List<Color> colors,
     double total,
-  )? legendBuilder;
+  )?
+  legendBuilder;
 
   @override
   State<NwPieChart> createState() => _NwPieChartState();
@@ -87,17 +88,19 @@ class _NwPieChartState extends State<NwPieChart> {
       final pct = (clampedValue / total) * 100;
       final color = colors[i];
       final isHighlighted = _highlightedIndex == i;
-      sections.add(PieChartSectionData(
-        value: clampedValue,
-        color: color,
-        radius: isHighlighted ? 64 : 56,
-        title: pct >= widget.minLabelPercent
-            ? '${pct.toStringAsFixed(0)}%'
-            : '',
-        titleStyle: TypographyTokens.numericCaption.copyWith(
-          color: _onColor(color),
+      sections.add(
+        PieChartSectionData(
+          value: clampedValue,
+          color: color,
+          radius: isHighlighted ? 64 : 56,
+          title: pct >= widget.minLabelPercent
+              ? '${pct.toStringAsFixed(0)}%'
+              : '',
+          titleStyle: TypographyTokens.numericCaption.copyWith(
+            color: _onColor(color),
+          ),
         ),
-      ));
+      );
     }
 
     final centerRadius = widget.hole * 80;
@@ -128,15 +131,11 @@ class _NwPieChartState extends State<NwPieChart> {
       return Semantics(
         label: widget.semanticLabel,
         container: true,
-        child: AspectRatio(
-          aspectRatio: widget.aspectRatio,
-          child: chartWidget,
-        ),
+        child: AspectRatio(aspectRatio: widget.aspectRatio, child: chartWidget),
       );
     }
 
-    final legend =
-        widget.legendBuilder!(context, widget.slices, colors, total);
+    final legend = widget.legendBuilder!(context, widget.slices, colors, total);
 
     return Semantics(
       label: widget.semanticLabel,
@@ -161,8 +160,7 @@ class _NwPieChartState extends State<NwPieChart> {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
-    if (_highlightedIndex >= 0 &&
-        _highlightedIndex < widget.slices.length) {
+    if (_highlightedIndex >= 0 && _highlightedIndex < widget.slices.length) {
       final s = widget.slices[_highlightedIndex];
       final pct = (s.value / total) * 100;
       return Column(
@@ -170,9 +168,7 @@ class _NwPieChartState extends State<NwPieChart> {
         children: [
           Text(
             _formatCompact(s.value),
-            style: TypographyTokens.numericTitle.copyWith(
-              color: onSurface,
-            ),
+            style: TypographyTokens.numericTitle.copyWith(color: onSurface),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -203,9 +199,7 @@ class _NwPieChartState extends State<NwPieChart> {
       children: [
         Text(
           _formatCompact(total),
-          style: TypographyTokens.displaySmall.copyWith(
-            color: onSurface,
-          ),
+          style: TypographyTokens.displaySmall.copyWith(color: onSurface),
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -236,8 +230,7 @@ class _NwPieChartState extends State<NwPieChart> {
       touchCallback: (event, response) {
         if (event is FlTapUpEvent) {
           final dd = widget.drillDown;
-          final idx =
-              response?.touchedSection?.touchedSectionIndex ?? -1;
+          final idx = response?.touchedSection?.touchedSectionIndex ?? -1;
           if (idx < 0 || idx >= widget.slices.length) {
             setState(() => _highlightedIndex = -1);
             return;
@@ -247,11 +240,9 @@ class _NwPieChartState extends State<NwPieChart> {
             dd.onTap(widget.slices[idx]);
           }
         }
-        if (response?.touchedSection != null &&
-            event is FlPanUpdateEvent) {
+        if (response?.touchedSection != null && event is FlPanUpdateEvent) {
           setState(() {
-            _highlightedIndex =
-                response!.touchedSection!.touchedSectionIndex;
+            _highlightedIndex = response!.touchedSection!.touchedSectionIndex;
           });
         } else if (event is FlTapUpEvent || event is FlPanEndEvent) {
           setState(() => _highlightedIndex = -1);
@@ -262,9 +253,7 @@ class _NwPieChartState extends State<NwPieChart> {
 
   Color _onColor(Color background) {
     final luminance = background.computeLuminance();
-    return luminance > 0.5
-        ? const Color(0xFF111827)
-        : const Color(0xFFFFFFFF);
+    return luminance > 0.5 ? const Color(0xFF111827) : const Color(0xFFFFFFFF);
   }
 }
 

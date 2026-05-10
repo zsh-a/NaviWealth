@@ -136,27 +136,26 @@ class AppTheme {
             vertical: Spacing.s12,
           ),
           textStyle: textTheme.labelLarge,
-        ).copyWith(
-          side: WidgetStateProperty.resolveWith(focusBorder),
-        ),
+        ).copyWith(side: WidgetStateProperty.resolveWith(focusBorder)),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s16,
-            vertical: Spacing.s12,
-          ),
-          textStyle: textTheme.labelLarge,
-        ).copyWith(
-          side: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.focused)) {
-              return BorderSide(color: scheme.primary, width: 1.5);
-            }
-            // Outlined buttons keep their standard 1px outline at rest.
-            return BorderSide(color: scheme.outline);
-          }),
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.s16,
+                vertical: Spacing.s12,
+              ),
+              textStyle: textTheme.labelLarge,
+            ).copyWith(
+              side: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.focused)) {
+                  return BorderSide(color: scheme.primary, width: 1.5);
+                }
+                // Outlined buttons keep their standard 1px outline at rest.
+                return BorderSide(color: scheme.outline);
+              }),
+            ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -166,9 +165,7 @@ class AppTheme {
             vertical: Spacing.s8,
           ),
           textStyle: textTheme.labelLarge,
-        ).copyWith(
-          side: WidgetStateProperty.resolveWith(focusBorder),
-        ),
+        ).copyWith(side: WidgetStateProperty.resolveWith(focusBorder)),
       ),
       chipTheme: ChipThemeData(
         shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
@@ -213,9 +210,7 @@ class AppTheme {
         }),
       ),
       // T11 item 8: surfaceTintColor zeroed on all elevated surfaces.
-      dialogTheme: const DialogThemeData(
-        surfaceTintColor: Colors.transparent,
-      ),
+      dialogTheme: const DialogThemeData(surfaceTintColor: Colors.transparent),
       bottomSheetTheme: BottomSheetThemeData(
         surfaceTintColor: Colors.transparent,
         backgroundColor: scheme.surface,
@@ -255,11 +250,7 @@ class AppTheme {
         selectedTileColor: scheme.primary.withValues(alpha: 0.10),
         selectedColor: scheme.primary,
       ),
-      extensions: <ThemeExtension<dynamic>>[
-        semantic,
-        marketColors,
-        elevations,
-      ],
+      extensions: <ThemeExtension<dynamic>>[semantic, marketColors, elevations],
     );
   }
 }

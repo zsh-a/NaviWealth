@@ -128,8 +128,8 @@ class DeltaText extends StatelessWidget {
     final direction = value! > 0
         ? '+'
         : value! < 0
-            ? '-'
-            : '';
+        ? '-'
+        : '';
     if (format == DeltaFormat.currency) {
       final loc = locale ?? Localizations.maybeLocaleOf(context)?.toString();
       final digits = fractionDigits ?? 2;

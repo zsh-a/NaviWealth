@@ -40,7 +40,7 @@ class AccountsMaster extends ConsumerWidget {
               selectedId: selectedId,
               inMasterDetail: inMasterDetail,
             ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
     );
 
@@ -88,19 +88,16 @@ class AccountsDetailEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.accountsAppBarTitle),
-      ),
-      body: MasterDetailEmpty(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.accountsAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: MasterDetailEmpty(
         icon: Icons.account_balance_outlined,
         message: l10n.accountsDetailEmpty,
       ),
+        ),
     );
   }
 }
@@ -113,33 +110,29 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.accountsAppBarTitle),
-        actions: [
-          IconButton(
-            tooltip: l10n.accountFormCreateTitle,
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.add_card_outlined),
-            onPressed: () => context.go(AppRoutes.accountNew),
+            onPress: () => context.go(AppRoutes.accountNew),
           ),
-          IconButton(
-            tooltip: l10n.accountsJournalTooltip,
+          FHeaderAction(
             icon: const Icon(Icons.history),
-            onPressed: () => context.go(AppRoutes.accountJournal),
+            onPress: () => context.go(AppRoutes.accountJournal),
           ),
-          IconButton(
-            tooltip: l10n.accountsTransferTooltip,
+          FHeaderAction(
             icon: const Icon(Icons.swap_horiz),
-            onPressed: () => context.go(AppRoutes.accountTransfer),
+            onPress: () => context.go(AppRoutes.accountTransfer),
           ),
         ],
       ),
-      body: child,
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: child,
+        ),
     );
   }
 }
@@ -196,39 +189,41 @@ class _AccountsByType extends StatelessWidget {
         .toList(growable: false);
 
     return ListView.builder(
-        padding: Spacing.pageMobile,
-        itemCount: order.length,
-        itemBuilder: (context, i) {
-          final type = order[i];
-          final group = grouped[type]!;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: Spacing.s8,
-                  bottom: Spacing.s8,
-                ),
-                child: Text(
-                  accountTypeLabel(l10n, type),
-                  style: theme.textTheme.titleMedium,
-                ),
+      padding: Spacing.pageMobile,
+      itemCount: order.length,
+      itemBuilder: (context, i) {
+        final type = order[i];
+        final group = grouped[type]!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(
+                top: Spacing.s8,
+                bottom: Spacing.s8,
               ),
-              FCard.raw(child: Column(
-                  children: [
-                    for (final a in group)
-                      _AccountTile(
-                        account: a,
-                        selected: a.id == selectedId,
-                        heroEnabled: !inMasterDetail,
-                      ),
-                  ],
-                )),
-              const SizedBox(height: Spacing.s12),
-            ],
-          );
-        },
-      );
+              child: Text(
+                accountTypeLabel(l10n, type),
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+            FCard.raw(
+              child: Column(
+                children: [
+                  for (final a in group)
+                    _AccountTile(
+                      account: a,
+                      selected: a.id == selectedId,
+                      heroEnabled: !inMasterDetail,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: Spacing.s12),
+          ],
+        );
+      },
+    );
   }
 }
 

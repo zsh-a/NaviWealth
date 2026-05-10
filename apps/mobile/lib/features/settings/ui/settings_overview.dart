@@ -22,7 +22,8 @@ class SettingsOverview extends ConsumerWidget {
 
     return ListView(
       padding: Spacing.pageMobile.copyWith(
-        bottom: Spacing.pageMobile.bottom +
+        bottom:
+            Spacing.pageMobile.bottom +
             Spacing.floatingBarClearance +
             MediaQuery.paddingOf(context).bottom,
       ),
@@ -45,7 +46,7 @@ class SettingsOverview extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.goNamed(AppRouteNames.sync),
               ),
-              const Divider(height: 1),
+              const FDivider(),
               ListTile(
                 leading: const Icon(Icons.backup_outlined),
                 title: Text(l10n.settingsDataTitle),
@@ -164,7 +165,7 @@ class _AccountSection extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.goNamed(AppRouteNames.devices),
           ),
-          const Divider(height: 1),
+          const FDivider(),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.s16,
@@ -207,7 +208,7 @@ class _AccountSection extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const FDivider(),
           ListTile(
             leading: const Icon(Icons.published_with_changes_outlined),
             title: Text(l10n.settingsFxRatesTitle),
@@ -268,7 +269,7 @@ class _AppearanceSection extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const FDivider(),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.s16,
@@ -306,9 +307,9 @@ class _AppearanceSection extends ConsumerWidget {
             padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
             child: _MarketColorPreview(),
           ),
-          const Divider(height: 1),
+          const FDivider(),
           const _CompactDensityTile(),
-          const Divider(height: 1),
+          const FDivider(),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.s16,
@@ -366,7 +367,6 @@ class _AppearanceSection extends ConsumerWidget {
         MarketColorMode.greenUpRedDown => l10n.marketColorGreenUpRedDown,
         MarketColorMode.colorblind => l10n.marketColorColorblind,
       };
-
 }
 
 class _AboutTile extends ConsumerWidget {
@@ -405,15 +405,38 @@ class _CompactDensityTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final compact = ref.watch(compactDensityProvider);
-    return SwitchListTile(
-      secondary: const Icon(Icons.density_medium_outlined),
-      title: Text(l10n.settingsCompactDensityTitle),
-      subtitle: Text(l10n.settingsCompactDensitySubtitle),
-      value: compact,
-      onChanged: (next) {
-        Haptics.selection();
-        ref.read(compactDensityProvider.notifier).set(next);
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s16,
+        vertical: Spacing.s8,
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.density_medium_outlined),
+          const SizedBox(width: Spacing.s16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.settingsCompactDensityTitle),
+                Text(
+                  l10n.settingsCompactDensitySubtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          FSwitch(
+            value: compact,
+            onChange: (next) {
+              Haptics.selection();
+              ref.read(compactDensityProvider.notifier).set(next);
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -450,9 +473,8 @@ class _RiskThresholdSettings extends ConsumerWidget {
           label: l10n.settingsRiskAssetLabel,
           subtitle: l10n.settingsRiskAssetSubtitle,
           value: thresholds.assetWarning,
-          onChanged: (v) => ref
-              .read(concentrationThresholdsProvider.notifier)
-              .updateAsset(v),
+          onChanged: (v) =>
+              ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
         ),
         _ThresholdSlider(
           icon: Icons.category_outlined,

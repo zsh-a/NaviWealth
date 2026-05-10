@@ -239,32 +239,30 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(
           widget.isEdit
               ? l10n.wealthProductEditTitle
               : l10n.wealthProductCreateTitle,
         ),
-        actions: [
+        suffixes: [
           if (widget.isEdit)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.delete_outline),
-              tooltip: l10n.wealthProductDeleteTooltip,
-              onPressed: _busy ? null : _delete,
+              onPress: _busy ? null : _delete,
             ),
         ],
       ),
-      body: accountsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
         data: (accounts) => _buildForm(accounts),
       ),
+        ),
     );
   }
 

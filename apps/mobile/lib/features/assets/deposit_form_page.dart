@@ -233,30 +233,28 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(
           widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle,
         ),
-        actions: [
+        suffixes: [
           if (widget.isEdit)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.delete_outline),
-              tooltip: l10n.depositDeleteTooltip,
-              onPressed: _busy ? null : _delete,
+              onPress: _busy ? null : _delete,
             ),
         ],
       ),
-      body: accountsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
         data: (accounts) => _buildForm(accounts),
       ),
+        ),
     );
   }
 
@@ -292,28 +290,28 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
                 children: [
                   Expanded(
                     child: _DepositKindChip(
-                    icon: Icons.lock_clock,
-                    label: l10n.depositTypeTerm,
-                    selected: _kind == AssetType.bankDepositTerm,
-                    onTap: () {
-                      Haptics.selection();
-                      setState(() => _kind = AssetType.bankDepositTerm);
-                    },
+                      icon: Icons.lock_clock,
+                      label: l10n.depositTypeTerm,
+                      selected: _kind == AssetType.bankDepositTerm,
+                      onTap: () {
+                        Haptics.selection();
+                        setState(() => _kind = AssetType.bankDepositTerm);
+                      },
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _DepositKindChip(
-                    icon: Icons.savings_outlined,
-                    label: l10n.depositTypeDemand,
-                    selected: _kind == AssetType.bankDepositDemand,
-                    onTap: () {
-                      Haptics.selection();
-                      setState(() => _kind = AssetType.bankDepositDemand);
-                    },
+                  Expanded(
+                    child: _DepositKindChip(
+                      icon: Icons.savings_outlined,
+                      label: l10n.depositTypeDemand,
+                      selected: _kind == AssetType.bankDepositDemand,
+                      onTap: () {
+                        Haptics.selection();
+                        setState(() => _kind = AssetType.bankDepositDemand);
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: Spacing.s12),
@@ -397,11 +395,11 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
           ),
           const SizedBox(height: Spacing.s12),
           if (_kind == AssetType.bankDepositTerm)
-            SwitchListTile(
-              title: Text(l10n.depositAutoRenewTitle),
-              subtitle: Text(l10n.depositAutoRenewSubtitle),
+            FSwitch(
+              label: Text(l10n.depositAutoRenewTitle),
+              description: Text(l10n.depositAutoRenewSubtitle),
               value: _autoRenew,
-              onChanged: (v) => setState(() => _autoRenew = v),
+              onChange: (v) => setState(() => _autoRenew = v),
             ),
           const SizedBox(height: Spacing.s24),
           FButton(

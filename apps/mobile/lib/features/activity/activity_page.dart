@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../accounts/accounts_page.dart';
 import '../expense/ui/expense_list_page.dart';
@@ -53,63 +53,46 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       _replaceActivityUrl(query: next);
     });
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.navActivity),
-        actions: [
+        suffixes: [
           if (_tab == _ActivityTab.accounts)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.add_card_outlined),
-              tooltip: l10n.accountFormCreateTitle,
-              onPressed: () => context.push(AppRoutes.accountNew),
+              onPress: () => context.push(AppRoutes.accountNew),
             ),
           if (_tab == _ActivityTab.accounts)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.swap_horiz),
-              tooltip: l10n.accountsTransferAction,
-              onPressed: () => context.push(AppRoutes.accountTransfer),
+              onPress: () => context.push(AppRoutes.accountTransfer),
             ),
           if (_tab == _ActivityTab.accounts)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.receipt_long_outlined),
-              tooltip: l10n.accountsJournalAction,
-              onPressed: () => context.push(AppRoutes.accountJournal),
+              onPress: () => context.push(AppRoutes.accountJournal),
             ),
           if (_tab == _ActivityTab.expenses)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.bar_chart_outlined),
-              tooltip: l10n.expenseReportTitle,
-              onPressed: () => context.push(AppRoutes.expenseReport),
+              onPress: () => context.push(AppRoutes.expenseReport),
             ),
           if (_tab == _ActivityTab.feed)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.filter_list_outlined),
-              tooltip: l10n.activityFeedFilterTitle,
-              onPressed: () => ActivityFeedFilterSheet.show(context),
+              onPress: () => ActivityFeedFilterSheet.show(context),
             ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: _SegmentedControl(
-            current: _tab,
-            onChanged: (_ActivityTab t) {
-              setState(() => _tab = t);
-              _replaceActivityUrl(query: ref.read(activityFeedQueryProvider));
-            },
-            l10n: l10n,
-          ),
-        ),
       ),
-      body: _tab == _ActivityTab.expenses
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: _tab == _ActivityTab.expenses
           ? const ExpenseListPage(embedded: true)
           : _tab == _ActivityTab.accounts
           ? const AccountsPage(embedded: true)
           : const ActivityFeed(),
+        ),
     );
   }
 
@@ -136,62 +119,3 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   }
 }
 
-class _SegmentedControl extends StatelessWidget {
-  const _SegmentedControl({
-    required this.current,
-    required this.onChanged,
-    required this.l10n,
-  });
-
-  final _ActivityTab current;
-  final ValueChanged<_ActivityTab> onChanged;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final segments = [l10n.navExpenses, l10n.navAccounts, l10n.activityFeedTab];
-
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.s16),
-      child: Row(
-        children: List.generate(segments.length, (i) {
-          final tab = _ActivityTab.values[i];
-          final selected = tab == current;
-          return Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onChanged(tab),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    segments[i],
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: selected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.s4),
-                  AnimatedContainer(
-                    duration: Motion.fast,
-                    curve: Motion.standardDecelerate,
-                    height: 2,
-                    width: selected ? 24 : 0,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: Radii.brXxl,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}

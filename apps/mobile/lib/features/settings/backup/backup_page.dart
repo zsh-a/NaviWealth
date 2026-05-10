@@ -23,16 +23,12 @@ class BackupPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.settingsDataTitle),
-      ),
-      body: ListView(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.settingsDataTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: ListView(
         padding: Spacing.pageMobile.copyWith(
           bottom:
               Spacing.pageMobile.bottom +
@@ -65,6 +61,7 @@ class BackupPage extends ConsumerWidget {
           ),
         ],
       ),
+        ),
     );
   }
 
@@ -587,7 +584,7 @@ class _ProgressSheetState extends State<_ProgressSheet> {
           ),
           child: Row(
             children: [
-              const CircularProgressIndicator(),
+              const FCircularProgress(),
               const SizedBox(width: Spacing.s16),
               Expanded(
                 child: Text(

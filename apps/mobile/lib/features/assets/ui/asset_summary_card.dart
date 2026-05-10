@@ -15,26 +15,26 @@ class AssetSummaryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(asset.symbol, style: theme.textTheme.titleMedium),
-          if (asset.name != null) ...[
-            const SizedBox(height: Spacing.s4),
-            Text(asset.name!, style: theme.textTheme.bodyMedium),
-          ],
-          const SizedBox(height: Spacing.s8),
-          Text(
-            '${asset.market ?? l10n.assetDetailUnknown} \u00B7 ${asset.currency}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(asset.symbol, style: theme.textTheme.titleMedium),
+            if (asset.name != null) ...[
+              const SizedBox(height: Spacing.s4),
+              Text(asset.name!, style: theme.textTheme.bodyMedium),
+            ],
+            const SizedBox(height: Spacing.s8),
+            Text(
+              '${asset.market ?? l10n.assetDetailUnknown} \u00B7 ${asset.currency}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }

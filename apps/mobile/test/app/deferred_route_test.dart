@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/app/deferred_route.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -27,13 +28,13 @@ void main() {
         ),
       );
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(FCircularProgress), findsOneWidget);
       expect(find.text('loaded'), findsNothing);
 
       completer.complete();
       await tester.pumpAndSettle();
 
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(FCircularProgress), findsNothing);
       expect(find.text('loaded'), findsOneWidget);
     },
   );

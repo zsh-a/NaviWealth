@@ -37,8 +37,9 @@ class CategoryGridPicker extends StatelessWidget {
         ),
         FormField<String>(
           initialValue: selectedId,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? l10n.expenseCategoryPickerRequired : null,
+          validator: (v) => (v == null || v.isEmpty)
+              ? l10n.expenseCategoryPickerRequired
+              : null,
           builder: (state) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,

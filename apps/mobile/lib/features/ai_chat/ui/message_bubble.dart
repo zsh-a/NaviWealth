@@ -23,7 +23,11 @@ import 'tool_invocation_card.dart';
 /// Streaming assistant turns get a small pulsing dot at the end of the
 /// text so the user can tell content is still arriving.
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.sessionId, required this.message});
+  const MessageBubble({
+    super.key,
+    required this.sessionId,
+    required this.message,
+  });
 
   final String sessionId;
   final ChatMessage message;
@@ -33,8 +37,7 @@ class MessageBubble extends StatelessWidget {
     final Widget child = switch (message.role) {
       ChatRole.system => _SystemNotice(text: message.content),
       ChatRole.user => _UserBubble(message: message),
-      ChatRole.assistant ||
-      ChatRole.error => _AssistantBubble(
+      ChatRole.assistant || ChatRole.error => _AssistantBubble(
         sessionId: sessionId,
         message: message,
       ),
@@ -90,9 +93,9 @@ class _UserBubble extends StatelessWidget {
                 ),
                 child: SelectableText(
                   message.content,
-                  style: SType.body(context).copyWith(
-                    color: tokens.primaryForeground,
-                  ),
+                  style: SType.body(
+                    context,
+                  ).copyWith(color: tokens.primaryForeground),
                 ),
               ),
             ),
@@ -109,7 +112,8 @@ class _AssistantBubble extends StatelessWidget {
   final String sessionId;
   final ChatMessage message;
 
-  bool get _isError => message.role == ChatRole.error ||
+  bool get _isError =>
+      message.role == ChatRole.error ||
       message.status == ChatMessageStatus.errored;
 
   @override
@@ -120,7 +124,8 @@ class _AssistantBubble extends StatelessWidget {
     final textColor = _isError ? cs.onErrorContainer : tokens.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
-    final showTruncation = !isStreaming &&
+    final showTruncation =
+        !isStreaming &&
         message.role == ChatRole.assistant &&
         message.status == ChatMessageStatus.complete &&
         (message.stopReason?.isAbnormal ?? false);
@@ -142,10 +147,7 @@ class _AssistantBubble extends StatelessWidget {
           ),
         ],
         if (showTruncation)
-          _TruncationFooter(
-            sessionId: sessionId,
-            reason: message.stopReason!,
-          ),
+          _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
       ],
     );
 
@@ -316,7 +318,10 @@ class _AssistantBody extends StatelessWidget {
     return SelectableText.rich(
       TextSpan(
         children: [
-          TextSpan(text: text, style: tt.bodyMedium?.copyWith(color: textColor)),
+          TextSpan(
+            text: text,
+            style: tt.bodyMedium?.copyWith(color: textColor),
+          ),
           if (isStreaming)
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
@@ -477,10 +482,7 @@ class _TruncationFooter extends ConsumerWidget {
               Icon(Icons.content_cut, size: 14, color: muted),
               const SizedBox(width: Spacing.s6),
               Expanded(
-                child: Text(
-                  label,
-                  style: tt.bodySmall?.copyWith(color: muted),
-                ),
+                child: Text(label, style: tt.bodySmall?.copyWith(color: muted)),
               ),
               if (canContinue)
                 _ContinueButton(

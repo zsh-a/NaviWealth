@@ -22,8 +22,7 @@ class LiabilityFormPage extends ConsumerStatefulWidget {
   const LiabilityFormPage({super.key});
 
   @override
-  ConsumerState<LiabilityFormPage> createState() =>
-      _LiabilityFormPageState();
+  ConsumerState<LiabilityFormPage> createState() => _LiabilityFormPageState();
 }
 
 class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
@@ -86,15 +85,10 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.liabilitiesAddAction),
-        actions: [
+        suffixes: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: FButton(
@@ -105,7 +99,10 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           ),
         ],
       ),
-      body: Form(
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
@@ -113,18 +110,18 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             DropdownButtonFormField<LiabilityType>(
-  isExpanded: true,
-                    initialValue: _type,
-  decoration: InputDecoration(labelText: l10n.liabilityFieldType),
-  items: [
+              isExpanded: true,
+              initialValue: _type,
+              decoration: InputDecoration(labelText: l10n.liabilityFieldType),
+              items: [
                 for (final t in LiabilityType.values)
                   DropdownMenuItem(
                     value: t,
                     child: Text(liabilityTypeLabel(l10n, t)),
                   ),
               ],
-  onChanged: (v) => setState(() => _type = v ?? _type),
-),
+              onChanged: (v) => setState(() => _type = v ?? _type),
+            ),
             const SizedBox(height: Spacing.s12),
             TextFormField(
               controller: _name,
@@ -180,18 +177,20 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
             ),
             const SizedBox(height: Spacing.s12),
             DropdownButtonFormField<LiabilityRateType>(
-  isExpanded: true,
-                    initialValue: _rateType,
-  decoration: InputDecoration(labelText: l10n.liabilityFieldRateType),
-  items: [
+              isExpanded: true,
+              initialValue: _rateType,
+              decoration: InputDecoration(
+                labelText: l10n.liabilityFieldRateType,
+              ),
+              items: [
                 for (final r in LiabilityRateType.values)
                   DropdownMenuItem(
                     value: r,
                     child: Text(rateTypeLabel(l10n, r)),
                   ),
               ],
-  onChanged: (v) => setState(() => _rateType = v ?? _rateType),
-),
+              onChanged: (v) => setState(() => _rateType = v ?? _rateType),
+            ),
             const SizedBox(height: Spacing.s12),
             TextFormField(
               controller: _currency,
@@ -239,18 +238,20 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
               ),
               const SizedBox(height: Spacing.s12),
               DropdownButtonFormField<RepaymentMethod>(
-  isExpanded: true,
-                    initialValue: _method,
-  decoration: InputDecoration(labelText: l10n.liabilityFieldMethod),
-  items: [
+                isExpanded: true,
+                initialValue: _method,
+                decoration: InputDecoration(
+                  labelText: l10n.liabilityFieldMethod,
+                ),
+                items: [
                   for (final m in RepaymentMethod.values)
                     DropdownMenuItem(
                       value: m,
                       child: Text(repaymentMethodLabel(l10n, m)),
                     ),
                 ],
-  onChanged: (v) => setState(() => _method = v ?? _method),
-),
+                onChanged: (v) => setState(() => _method = v ?? _method),
+              ),
             ] else ...[
               const SizedBox(height: Spacing.s12),
               TextFormField(
@@ -282,6 +283,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           ],
         ),
       ),
+        ),
     );
   }
 
@@ -337,9 +339,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         ? int.tryParse(_paymentDueDay.text.trim())
         : null;
     unawaited(
-      ref.read(formDefaultsProvider.notifier).rememberAsset(
-            currency: currency,
-          ),
+      ref.read(formDefaultsProvider.notifier).rememberAsset(currency: currency),
     );
 
     await submitOptimistic(

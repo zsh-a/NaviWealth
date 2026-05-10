@@ -132,10 +132,7 @@ class _GlobalShortcutsScopeState extends State<GlobalShortcutsScope> {
             onInvoke: (_) => widget.onToggleSidebar(),
           ),
         },
-        child: _VimKeyHandler(
-          onKey: _onVimG,
-          child: widget.child,
-        ),
+        child: _VimKeyHandler(onKey: _onVimG, child: widget.child),
       ),
     );
   }

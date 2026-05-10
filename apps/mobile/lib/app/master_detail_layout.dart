@@ -42,9 +42,7 @@ class MasterDetailLayout extends ConsumerWidget {
           color: divider,
           width: masterWidth,
           onChanged: (delta) {
-            ref
-                .read(masterPaneWidthProvider.notifier)
-                .set(masterWidth + delta);
+            ref.read(masterPaneWidthProvider.notifier).set(masterWidth + delta);
           },
         ),
         Expanded(child: detail),
@@ -127,9 +125,9 @@ class MasterDetailEmpty extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
           ],
         ),

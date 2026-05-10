@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../app/master_detail_layout.dart';
 import '../../../data/domain/account.dart';
@@ -18,19 +19,16 @@ class AssetsDetailEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.assetsAppBarTitle),
-      ),
-      body: MasterDetailEmpty(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.assetsAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: MasterDetailEmpty(
         icon: Icons.account_balance_wallet_outlined,
         message: l10n.assetsDetailEmpty,
       ),
+        ),
     );
   }
 }
@@ -102,19 +100,19 @@ class AssetsBody extends StatelessWidget {
       accountById: accountById,
     );
     return ListView.builder(
-        padding: Spacing.pageMobile.copyWith(
-          bottom:
-              Spacing.pageMobile.bottom +
-              Spacing.floatingBarClearance +
-              MediaQuery.paddingOf(context).bottom,
-        ),
-        itemCount: rows.length,
-        itemBuilder: (context, i) => AssetListRowWidget(
-          row: rows[i],
-          selectedAssetId: selectedAssetId,
-          inMasterDetail: inMasterDetail,
-        ),
-      );
+      padding: Spacing.pageMobile.copyWith(
+        bottom:
+            Spacing.pageMobile.bottom +
+            Spacing.floatingBarClearance +
+            MediaQuery.paddingOf(context).bottom,
+      ),
+      itemCount: rows.length,
+      itemBuilder: (context, i) => AssetListRowWidget(
+        row: rows[i],
+        selectedAssetId: selectedAssetId,
+        inMasterDetail: inMasterDetail,
+      ),
+    );
   }
 }
 

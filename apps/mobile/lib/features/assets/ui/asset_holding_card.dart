@@ -46,55 +46,57 @@ class AssetHoldingCard extends ConsumerWidget {
             : null;
         final marketValueAsset = snap?.marketValueInAssetCurrency;
         return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.assetDetailHoldingsTitle,
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: Spacing.s12),
-              AssetDetailMetricRow(
-                label: l10n.assetDetailCurrentQuantity,
-                value: hasPosition ? formatAssetDetailQuantity(qty) : '\u2014',
-              ),
-              const SizedBox(height: Spacing.s8),
-              AssetDetailMetricRow(
-                label: l10n.assetDetailAverageCost,
-                trailing: AnimatedMoneyText(
-                  amount: avgCost?.toDouble(),
-                  currencyCode: asset.currency,
-                  fractionDigits: assetDetailPriceFractionDigits(asset.type),
+          child: Padding(
+            padding: Spacing.card,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.assetDetailHoldingsTitle,
+                  style: theme.textTheme.titleSmall,
                 ),
-              ),
-              const SizedBox(height: Spacing.s8),
-              AssetDetailMetricRow(
-                label: l10n.assetDetailCurrentMarketValue,
-                trailing: OptionalHero(
-                  tag: 'asset-${asset.id}-value',
-                  child: AnimatedMoneyText(
-                    amount: marketValueAsset?.toDouble(),
+                const SizedBox(height: Spacing.s12),
+                AssetDetailMetricRow(
+                  label: l10n.assetDetailCurrentQuantity,
+                  value: hasPosition
+                      ? formatAssetDetailQuantity(qty)
+                      : '\u2014',
+                ),
+                const SizedBox(height: Spacing.s8),
+                AssetDetailMetricRow(
+                  label: l10n.assetDetailAverageCost,
+                  trailing: AnimatedMoneyText(
+                    amount: avgCost?.toDouble(),
                     currencyCode: asset.currency,
-                    style: theme.textTheme.titleMedium,
+                    fractionDigits: assetDetailPriceFractionDigits(asset.type),
                   ),
                 ),
-              ),
-              if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: Spacing.s8),
-                  child: Text(
-                    l10n.assetDetailPriceUnavailable,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(height: Spacing.s8),
+                AssetDetailMetricRow(
+                  label: l10n.assetDetailCurrentMarketValue,
+                  trailing: OptionalHero(
+                    tag: 'asset-${asset.id}-value',
+                    child: AnimatedMoneyText(
+                      amount: marketValueAsset?.toDouble(),
+                      currencyCode: asset.currency,
+                      style: theme.textTheme.titleMedium,
                     ),
                   ),
                 ),
-            ],
+                if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Spacing.s8),
+                    child: Text(
+                      l10n.assetDetailPriceUnavailable,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      );
+        );
       },
     );
   }

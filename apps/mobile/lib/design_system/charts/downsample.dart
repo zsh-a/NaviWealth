@@ -18,10 +18,7 @@ const int kDefaultDownsampleTarget = 500;
 /// - Caller-supplied `meta` is preserved on the chosen original points; no
 ///   meta synthesis happens, so drill-down callbacks receive the original
 ///   domain object intact.
-List<ChartPoint> downsampleLttb(
-  List<ChartPoint> points,
-  int targetCount,
-) {
+List<ChartPoint> downsampleLttb(List<ChartPoint> points, int targetCount) {
   if (targetCount >= points.length || targetCount < 3) {
     return points;
   }
@@ -34,10 +31,8 @@ List<ChartPoint> downsampleLttb(
   int aIndex = 0;
   for (int i = 0; i < targetCount - 2; i++) {
     // Compute average point of the next bucket (a + 1 worth of buckets ahead).
-    final nextBucketStart =
-        ((i + 1) * bucketSize).floor() + 1;
-    final nextBucketEnd =
-        ((i + 2) * bucketSize).floor() + 1;
+    final nextBucketStart = ((i + 1) * bucketSize).floor() + 1;
+    final nextBucketEnd = ((i + 2) * bucketSize).floor() + 1;
     final nextEnd = nextBucketEnd < n ? nextBucketEnd : n;
 
     double avgX = 0;
@@ -60,9 +55,10 @@ List<ChartPoint> downsampleLttb(
     double maxArea = -1;
     int maxAreaIndex = rangeStart;
     for (int j = rangeStart; j < rangeEnd && j < n; j++) {
-      final area = ((pointAX - avgX) * (points[j].y - pointAY) -
-              (pointAX - points[j].x) * (avgY - pointAY))
-          .abs() *
+      final area =
+          ((pointAX - avgX) * (points[j].y - pointAY) -
+                  (pointAX - points[j].x) * (avgY - pointAY))
+              .abs() *
           0.5;
       if (area > maxArea) {
         maxArea = area;

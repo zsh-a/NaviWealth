@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../app/shell_preferences.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -17,16 +18,12 @@ class PortfolioPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final view = ref.watch(portfolioViewProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.navPortfolio),
-      ),
-      body: Column(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.navPortfolio)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: Column(
         children: [
           const PortfolioViewSwitcher(),
           Expanded(
@@ -39,6 +36,7 @@ class PortfolioPage extends ConsumerWidget {
           ),
         ],
       ),
+        ),
     );
   }
 }

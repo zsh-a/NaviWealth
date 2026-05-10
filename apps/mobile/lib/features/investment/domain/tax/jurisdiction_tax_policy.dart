@@ -101,10 +101,7 @@ class JurisdictionTaxPolicy implements TaxPolicy {
       );
     }
     final rate =
-        dividendRates[DividendTaxKey(
-          sourceJurisdiction,
-          holderJurisdiction,
-        )] ??
+        dividendRates[DividendTaxKey(sourceJurisdiction, holderJurisdiction)] ??
         Decimal.zero;
     if (grossAmount.sign == 0 || rate.sign == 0) {
       return DividendTaxResult(
@@ -183,7 +180,9 @@ class DividendTaxKey {
 
   @override
   bool operator ==(Object other) =>
-      other is DividendTaxKey && other.source == source && other.holder == holder;
+      other is DividendTaxKey &&
+      other.source == source &&
+      other.holder == holder;
 
   @override
   int get hashCode => Object.hash(source, holder);

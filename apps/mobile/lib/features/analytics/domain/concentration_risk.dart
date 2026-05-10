@@ -147,12 +147,20 @@ class ConcentrationRiskService {
 
     // 3. Sector concentration (equities only).
     _detectSectorConcentration(
-      holdings, totalValue, classifier, thresholds, alerts,
+      holdings,
+      totalValue,
+      classifier,
+      thresholds,
+      alerts,
     );
 
     // 4. Region concentration (equities only).
     _detectRegionConcentration(
-      holdings, totalValue, classifier, thresholds, alerts,
+      holdings,
+      totalValue,
+      classifier,
+      thresholds,
+      alerts,
     );
 
     // 5. Currency concentration (all assets).
@@ -175,19 +183,19 @@ class ConcentrationRiskService {
     List<ConcentrationAlert> alerts,
   ) {
     for (final h in holdings) {
-      final weight =
-          (h.snapshot.marketValueInBase / totalValue)
-              .toDouble();
+      final weight = (h.snapshot.marketValueInBase / totalValue).toDouble();
       if (weight > thresholds.assetWarning) {
-        alerts.add(ConcentrationAlert(
-          dimension: RiskDimension.asset,
-          severity: _severity(weight, thresholds.assetWarning),
-          label: h.asset.name ?? h.asset.symbol,
-          weight: weight,
-          threshold: thresholds.assetWarning,
-          valueInBase: h.snapshot.marketValueInBase,
-          assetIds: [h.asset.id],
-        ));
+        alerts.add(
+          ConcentrationAlert(
+            dimension: RiskDimension.asset,
+            severity: _severity(weight, thresholds.assetWarning),
+            label: h.asset.name ?? h.asset.symbol,
+            weight: weight,
+            threshold: thresholds.assetWarning,
+            valueInBase: h.snapshot.marketValueInBase,
+            assetIds: [h.asset.id],
+          ),
+        );
       }
     }
   }
@@ -216,15 +224,17 @@ class ConcentrationRiskService {
     for (final agg in sectorAgg.values) {
       final weight = (agg.totalValue / totalValue).toDouble();
       if (weight > thresholds.sectorWarning) {
-        alerts.add(ConcentrationAlert(
-          dimension: RiskDimension.sector,
-          severity: _severity(weight, thresholds.sectorWarning),
-          label: agg.sector,
-          weight: weight,
-          threshold: thresholds.sectorWarning,
-          valueInBase: agg.totalValue,
-          assetIds: agg.assetIds,
-        ));
+        alerts.add(
+          ConcentrationAlert(
+            dimension: RiskDimension.sector,
+            severity: _severity(weight, thresholds.sectorWarning),
+            label: agg.sector,
+            weight: weight,
+            threshold: thresholds.sectorWarning,
+            valueInBase: agg.totalValue,
+            assetIds: agg.assetIds,
+          ),
+        );
       }
     }
   }
@@ -253,15 +263,17 @@ class ConcentrationRiskService {
     for (final agg in regionAgg.values) {
       final weight = (agg.totalValue / totalValue).toDouble();
       if (weight > thresholds.regionWarning) {
-        alerts.add(ConcentrationAlert(
-          dimension: RiskDimension.region,
-          severity: _severity(weight, thresholds.regionWarning),
-          label: agg.region,
-          weight: weight,
-          threshold: thresholds.regionWarning,
-          valueInBase: agg.totalValue,
-          assetIds: agg.assetIds,
-        ));
+        alerts.add(
+          ConcentrationAlert(
+            dimension: RiskDimension.region,
+            severity: _severity(weight, thresholds.regionWarning),
+            label: agg.region,
+            weight: weight,
+            threshold: thresholds.regionWarning,
+            valueInBase: agg.totalValue,
+            assetIds: agg.assetIds,
+          ),
+        );
       }
     }
   }
@@ -286,15 +298,17 @@ class ConcentrationRiskService {
     for (final agg in currAgg.values) {
       final weight = (agg.totalValue / totalValue).toDouble();
       if (weight > thresholds.currencyWarning) {
-        alerts.add(ConcentrationAlert(
-          dimension: RiskDimension.currency,
-          severity: _severity(weight, thresholds.currencyWarning),
-          label: agg.currency,
-          weight: weight,
-          threshold: thresholds.currencyWarning,
-          valueInBase: agg.totalValue,
-          assetIds: agg.assetIds,
-        ));
+        alerts.add(
+          ConcentrationAlert(
+            dimension: RiskDimension.currency,
+            severity: _severity(weight, thresholds.currencyWarning),
+            label: agg.currency,
+            weight: weight,
+            threshold: thresholds.currencyWarning,
+            valueInBase: agg.totalValue,
+            assetIds: agg.assetIds,
+          ),
+        );
       }
     }
   }

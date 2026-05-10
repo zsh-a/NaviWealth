@@ -133,7 +133,13 @@ class _GaugePainter extends CustomPainter {
 
     canvas.drawArc(rect, _startAngle, _sweepAngle, false, _trackPaint);
     if (progress > 0) {
-      canvas.drawArc(rect, _startAngle, _sweepAngle * progress, false, _fillPaint);
+      canvas.drawArc(
+        rect,
+        _startAngle,
+        _sweepAngle * progress,
+        false,
+        _fillPaint,
+      );
     }
   }
 

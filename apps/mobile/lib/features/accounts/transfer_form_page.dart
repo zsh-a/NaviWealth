@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -94,20 +95,17 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.transferTitle),
-      ),
-      body: accountsAsync.when(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.transferTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
         data: (accounts) => _buildForm(context, accounts),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
       ),
+        ),
     );
   }
 

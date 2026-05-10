@@ -28,11 +28,11 @@ final rebalanceEngineProvider = Provider<RebalanceEngine>((ref) {
 
 /// User-selected allocation scheme preset. Defaults to [balanced].
 final selectedSchemeProvider =
-    StateNotifierProvider<SelectedSchemeController, AllocationSchemePreset>(
-  (ref) {
-    return SelectedSchemeController(ref.watch(sharedPreferencesProvider));
-  },
-);
+    StateNotifierProvider<SelectedSchemeController, AllocationSchemePreset>((
+      ref,
+    ) {
+      return SelectedSchemeController(ref.watch(sharedPreferencesProvider));
+    });
 
 class SelectedSchemeController extends StateNotifier<AllocationSchemePreset> {
   SelectedSchemeController(this._prefs) : super(_load(_prefs));
@@ -56,17 +56,15 @@ class SelectedSchemeController extends StateNotifier<AllocationSchemePreset> {
 /// User's target allocation weights. When the scheme changes, this resets
 /// to the preset's default weights unless the user has customised it.
 final targetAllocationProvider =
-    StateNotifierProvider<TargetAllocationController, TargetAllocation>(
-  (ref) {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    final scheme = ref.watch(selectedSchemeProvider);
-    return TargetAllocationController(prefs, scheme);
-  },
-);
+    StateNotifierProvider<TargetAllocationController, TargetAllocation>((ref) {
+      final prefs = ref.watch(sharedPreferencesProvider);
+      final scheme = ref.watch(selectedSchemeProvider);
+      return TargetAllocationController(prefs, scheme);
+    });
 
 class TargetAllocationController extends StateNotifier<TargetAllocation> {
   TargetAllocationController(this._prefs, this._scheme)
-      : super(_load(_prefs, _scheme));
+    : super(_load(_prefs, _scheme));
 
   final SharedPreferences _prefs;
   final AllocationSchemePreset _scheme;
@@ -89,7 +87,10 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
 
   Future<void> update(TargetAllocation allocation) async {
     state = allocation;
-    await _prefs.setString(_kTargetAllocationKey, jsonEncode(allocation.toJson()));
+    await _prefs.setString(
+      _kTargetAllocationKey,
+      jsonEncode(allocation.toJson()),
+    );
   }
 
   /// Reset to the current scheme's default weights.
@@ -103,26 +104,29 @@ class TargetAllocationController extends StateNotifier<TargetAllocation> {
 /// Warning threshold (default 5%).
 final warningThresholdProvider =
     StateNotifierProvider<ThresholdController, double>((ref) {
-  return ThresholdController(
-    ref.watch(sharedPreferencesProvider),
-    key: _kWarningThresholdKey,
-    defaultValue: 0.05,
-  );
-});
+      return ThresholdController(
+        ref.watch(sharedPreferencesProvider),
+        key: _kWarningThresholdKey,
+        defaultValue: 0.05,
+      );
+    });
 
 /// Critical threshold (default 10%).
 final criticalThresholdProvider =
     StateNotifierProvider<ThresholdController, double>((ref) {
-  return ThresholdController(
-    ref.watch(sharedPreferencesProvider),
-    key: _kCriticalThresholdKey,
-    defaultValue: 0.10,
-  );
-});
+      return ThresholdController(
+        ref.watch(sharedPreferencesProvider),
+        key: _kCriticalThresholdKey,
+        defaultValue: 0.10,
+      );
+    });
 
 class ThresholdController extends StateNotifier<double> {
-  ThresholdController(this._prefs, {required this.key, required this.defaultValue})
-      : super(_prefs.getDouble(key) ?? defaultValue);
+  ThresholdController(
+    this._prefs, {
+    required this.key,
+    required this.defaultValue,
+  }) : super(_prefs.getDouble(key) ?? defaultValue);
 
   final SharedPreferences _prefs;
   final String key;

@@ -7,17 +7,18 @@ import '../domain/concentration_risk.dart';
 /// Persisted concentration-risk thresholds. Stored locally via
 /// SharedPreferences — these are per-device preferences, not synced.
 final concentrationThresholdsProvider =
-    StateNotifierProvider<ConcentrationThresholdsController,
-        ConcentrationThresholds>((ref) {
-  return ConcentrationThresholdsController(
-    ref.watch(sharedPreferencesProvider),
-  );
-});
+    StateNotifierProvider<
+      ConcentrationThresholdsController,
+      ConcentrationThresholds
+    >((ref) {
+      return ConcentrationThresholdsController(
+        ref.watch(sharedPreferencesProvider),
+      );
+    });
 
 class ConcentrationThresholdsController
     extends StateNotifier<ConcentrationThresholds> {
-  ConcentrationThresholdsController(this._prefs)
-      : super(_load(_prefs));
+  ConcentrationThresholdsController(this._prefs) : super(_load(_prefs));
 
   static const _prefix = 'naviwealth.risk.threshold';
   static const _assetKey = '$_prefix.asset';

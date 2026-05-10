@@ -15,7 +15,8 @@ class LotDelta {
   final Lot before;
   final Lot after;
 
-  Decimal get quantityDelta => after.remainingQuantity - before.remainingQuantity;
+  Decimal get quantityDelta =>
+      after.remainingQuantity - before.remainingQuantity;
   Decimal get costPerUnitDelta => after.costPerUnit - before.costPerUnit;
 
   /// True when total cost has changed by more than [tolerance]. Splits and

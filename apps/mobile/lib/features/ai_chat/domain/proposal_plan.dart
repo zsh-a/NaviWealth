@@ -28,10 +28,7 @@
 library;
 
 sealed class ProposalPlan {
-  const ProposalPlan({
-    required this.proposalId,
-    required this.kind,
-  });
+  const ProposalPlan({required this.proposalId, required this.kind});
 
   final String proposalId;
   final ProposalKind kind;
@@ -155,35 +152,31 @@ extension ProposalKindX on ProposalKind {
   }
 
   String get zhLabel => switch (this) {
-        ProposalKind.trade => '交易',
-        ProposalKind.expense => '支出',
-        ProposalKind.liabilityPayment => '还款',
-        ProposalKind.accountCreate => '新账户',
-        ProposalKind.assetValuation => '估值更新',
-        ProposalKind.unknown => '未知',
-      };
+    ProposalKind.trade => '交易',
+    ProposalKind.expense => '支出',
+    ProposalKind.liabilityPayment => '还款',
+    ProposalKind.accountCreate => '新账户',
+    ProposalKind.assetValuation => '估值更新',
+    ProposalKind.unknown => '未知',
+  };
 
   /// Wire name used by `propose_*` tool calls. Used to match a
   /// [ToolInvocation.name] back to its kind.
   String get toolName => switch (this) {
-        ProposalKind.trade => 'propose_trade',
-        ProposalKind.expense => 'propose_expense',
-        ProposalKind.liabilityPayment => 'propose_liability_payment',
-        ProposalKind.accountCreate => 'propose_account_create',
-        ProposalKind.assetValuation => 'propose_asset_valuation',
-        ProposalKind.unknown => '',
-      };
+    ProposalKind.trade => 'propose_trade',
+    ProposalKind.expense => 'propose_expense',
+    ProposalKind.liabilityPayment => 'propose_liability_payment',
+    ProposalKind.accountCreate => 'propose_account_create',
+    ProposalKind.assetValuation => 'propose_asset_valuation',
+    ProposalKind.unknown => '',
+  };
 }
 
 /// A single disambiguation candidate. Fields beyond `id` / `label` are
 /// surfaced as a small subtitle so the user can tell `Citi 储蓄` from
 /// `Citi 信用卡` at a glance.
 class ProposalCandidate {
-  const ProposalCandidate({
-    required this.id,
-    this.label,
-    this.subtitle,
-  });
+  const ProposalCandidate({required this.id, this.label, this.subtitle});
 
   final String id;
   final String? label;
@@ -203,16 +196,20 @@ List<String> _stringList(Object? v) {
 
 List<ProposalCandidate> _candidateList(Object? v) {
   if (v is! List) return const <ProposalCandidate>[];
-  return v.whereType<Map<Object?, Object?>>().map((m) {
-    final mm = m.map((k, vv) => MapEntry(k.toString(), vv));
-    final id = mm['id'];
-    if (id is! String) return null;
-    final label = mm['name'] ?? mm['label'] ?? mm['symbol'];
-    final type = mm['type'];
-    return ProposalCandidate(
-      id: id,
-      label: label is String ? label : null,
-      subtitle: type is String ? type : null,
-    );
-  }).whereType<ProposalCandidate>().toList(growable: false);
+  return v
+      .whereType<Map<Object?, Object?>>()
+      .map((m) {
+        final mm = m.map((k, vv) => MapEntry(k.toString(), vv));
+        final id = mm['id'];
+        if (id is! String) return null;
+        final label = mm['name'] ?? mm['label'] ?? mm['symbol'];
+        final type = mm['type'];
+        return ProposalCandidate(
+          id: id,
+          label: label is String ? label : null,
+          subtitle: type is String ? type : null,
+        );
+      })
+      .whereType<ProposalCandidate>()
+      .toList(growable: false);
 }

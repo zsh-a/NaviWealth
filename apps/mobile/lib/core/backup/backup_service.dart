@@ -18,8 +18,7 @@ class RestoreResult {
   const RestoreResult({required this.tableCounts});
   final Map<String, int> tableCounts;
 
-  int get totalRows =>
-      tableCounts.values.fold(0, (sum, c) => sum + c);
+  int get totalRows => tableCounts.values.fold(0, (sum, c) => sum + c);
 }
 
 /// Thrown when the backup's schema version is newer than the app's.
@@ -51,12 +50,12 @@ class BackupService {
     required String deviceId,
     required Future<Hlc> Function() stampHlc,
     AppLogger? logger,
-  })  : _db = db,
-        _codec = codec,
-        _outbox = outbox,
-        _deviceId = deviceId,
-        _stampHlc = stampHlc,
-        _logger = logger ?? AppLogger.instance;
+  }) : _db = db,
+       _codec = codec,
+       _outbox = outbox,
+       _deviceId = deviceId,
+       _stampHlc = stampHlc,
+       _logger = logger ?? AppLogger.instance;
 
   final AppDatabase _db;
   final BackupCodec _codec;
@@ -77,9 +76,7 @@ class BackupService {
     final data = <String, List<Map<String, Object?>>>{};
 
     for (final tableName in kSyncableTables) {
-      final rows = await _db
-          .customSelect('SELECT * FROM $tableName')
-          .get();
+      final rows = await _db.customSelect('SELECT * FROM $tableName').get();
       final rowMaps = <Map<String, Object?>>[];
       for (final row in rows) {
         rowMaps.add(_rowToMap(row));
@@ -90,8 +87,10 @@ class BackupService {
     }
 
     final totalRows = tableCounts.values.fold(0, (s, c) => s + c);
-    _logger.d('backup: collected $totalRows rows across '
-        '${tableCounts.length} tables, encoding payload');
+    _logger.d(
+      'backup: collected $totalRows rows across '
+      '${tableCounts.length} tables, encoding payload',
+    );
 
     final payload = {
       'header': {
@@ -104,8 +103,10 @@ class BackupService {
     };
 
     final plaintext = utf8.encode(jsonEncode(payload));
-    _logger.d('backup: plaintext size=${plaintext.length} bytes, encrypting '
-        '(iterations=${overrideIterations ?? backupPbkdf2Iterations})');
+    _logger.d(
+      'backup: plaintext size=${plaintext.length} bytes, encrypting '
+      '(iterations=${overrideIterations ?? backupPbkdf2Iterations})',
+    );
     final envelope = await _codec.encrypt(
       passphrase: passphrase,
       plaintext: Uint8List.fromList(plaintext),
@@ -114,8 +115,10 @@ class BackupService {
     );
     final bytes = envelope.encodeBytes();
     sw.stop();
-    _logger.i('backup: export complete (${bytes.length} bytes, '
-        '$totalRows rows, ${sw.elapsedMilliseconds}ms)');
+    _logger.i(
+      'backup: export complete (${bytes.length} bytes, '
+      '$totalRows rows, ${sw.elapsedMilliseconds}ms)',
+    );
     return bytes;
   }
 
@@ -135,9 +138,11 @@ class BackupService {
     // 1. Decode and validate envelope.
     _logger.d('backup: decoding envelope');
     final envelope = BackupEnvelope.decodeBytes(fileBytes);
-    _logger.d('backup: envelope decoded — schema=${envelope.schemaVersion}, '
-        'iterations=${envelope.iterations}, '
-        'created=${envelope.createdAt.toIso8601String()}');
+    _logger.d(
+      'backup: envelope decoded — schema=${envelope.schemaVersion}, '
+      'iterations=${envelope.iterations}, '
+      'created=${envelope.createdAt.toIso8601String()}',
+    );
 
     // 2. Reject newer schema versions.
     if (envelope.schemaVersion > _db.schemaVersion) {
@@ -159,24 +164,30 @@ class BackupService {
       envelope: envelope,
     );
     decryptSw.stop();
-    _logger.d('backup: decrypted ${plaintext.length} bytes '
-        '(${decryptSw.elapsedMilliseconds}ms)');
+    _logger.d(
+      'backup: decrypted ${plaintext.length} bytes '
+      '(${decryptSw.elapsedMilliseconds}ms)',
+    );
 
     // 4. Parse and validate JSON structure.
     _logger.d('backup: parsing and validating JSON');
     final json = jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
     final header = json['header'] as Map<String, Object?>?;
     if (header == null || header['magic'] != _backupMagic) {
-      _logger.e('backup: invalid magic — '
-          'got=${header?['magic']}, expected=$_backupMagic');
+      _logger.e(
+        'backup: invalid magic — '
+        'got=${header?['magic']}, expected=$_backupMagic',
+      );
       throw const BackupValidationException('Invalid backup magic');
     }
 
     final backupSchema = header['schemaVersion'] as int?;
     final createdAt = header['createdAt'] as String?;
     final headerTables = header['tables'] as Map<String, Object?>?;
-    _logger.d('backup: header — schema=$backupSchema, created=$createdAt, '
-        'tables=${headerTables?.keys.toList()}');
+    _logger.d(
+      'backup: header — schema=$backupSchema, created=$createdAt, '
+      'tables=${headerTables?.keys.toList()}',
+    );
 
     final data = json['data'] as Map<String, Object?>?;
     if (data == null) {
@@ -196,8 +207,10 @@ class BackupService {
       restoreTableCounts[entry.key] = (entry.value as List<Object?>).length;
     }
     final totalIncoming = restoreTableCounts.values.fold(0, (s, c) => s + c);
-    _logger.d('backup: validation passed — $totalIncoming rows across '
-        '${restoreTableCounts.length} tables');
+    _logger.d(
+      'backup: validation passed — $totalIncoming rows across '
+      '${restoreTableCounts.length} tables',
+    );
 
     // 5. Pause sync to prevent concurrent mutations.
     _logger.d('backup: pausing sync');
@@ -207,8 +220,10 @@ class BackupService {
       final tableCounts = <String, int>{};
 
       // 6. Restore in a single transaction.
-      _logger.d('backup: starting restore transaction '
-          '(wipe + insert + outbox enqueue)');
+      _logger.d(
+        'backup: starting restore transaction '
+        '(wipe + insert + outbox enqueue)',
+      );
       final txSw = Stopwatch()..start();
       await _db.transaction(() async {
         // Clear all existing data.
@@ -236,13 +251,17 @@ class BackupService {
         }
       });
       txSw.stop();
-      _logger.d('backup: transaction committed '
-          '(${txSw.elapsedMilliseconds}ms)');
+      _logger.d(
+        'backup: transaction committed '
+        '(${txSw.elapsedMilliseconds}ms)',
+      );
 
       final result = RestoreResult(tableCounts: tableCounts);
       sw.stop();
-      _logger.i('backup: restore complete (${result.totalRows} rows, '
-          '${sw.elapsedMilliseconds}ms total)');
+      _logger.i(
+        'backup: restore complete (${result.totalRows} rows, '
+        '${sw.elapsedMilliseconds}ms total)',
+      );
       return result;
     } finally {
       _logger.d('backup: resuming sync');
@@ -265,10 +284,7 @@ class BackupService {
   }
 
   /// Insert a single row from backup data into the database.
-  Future<void> _insertRow(
-    String tableName,
-    Map<String, Object?> row,
-  ) async {
+  Future<void> _insertRow(String tableName, Map<String, Object?> row) async {
     final columns = row.keys.toList();
     final placeholders = List.generate(columns.length, (_) => '?').join(', ');
     final columnList = columns.join(', ');
@@ -280,8 +296,10 @@ class BackupService {
         values,
       );
     } catch (e) {
-      _logger.e('backup: insert failed for $tableName — '
-          'columns=$columns, error=$e');
+      _logger.e(
+        'backup: insert failed for $tableName — '
+        'columns=$columns, error=$e',
+      );
       rethrow;
     }
   }

@@ -24,7 +24,8 @@ class EquityAssetsRepository {
     final query = _db.select(_db.assets)
       ..where(
         (t) =>
-            t.deletedAt.isNull() & t.type.isInValues(kEquityAssetTypes.toList()),
+            t.deletedAt.isNull() &
+            t.type.isInValues(kEquityAssetTypes.toList()),
       )
       ..orderBy([(t) => OrderingTerm(expression: t.symbol)]);
     return query.watch().map((rows) => rows.map(_toAsset).toList());

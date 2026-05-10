@@ -45,53 +45,53 @@ class AllocationCard extends StatelessWidget {
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= Breakpoints.mobile;
             final chart = _AllocationSankeyChart(
-            assetAllocs: assetAllocs,
-            liabilityAlloc: liabilityAlloc,
-            snapshot: snapshot,
-            height: isWide ? 260 : 300,
-            onTap: (alloc) => _openDrillDown(context, alloc),
-          );
-          final legend = _Legend(
-            assetAllocs: assetAllocs,
-            liabilityAlloc: liabilityAlloc,
-            snapshot: snapshot,
-            onTap: (alloc) => _openDrillDown(context, alloc),
-          );
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.dashboardAllocationTitle,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.aiChatSheetExpandTooltip,
-                    icon: const Icon(Icons.fullscreen),
-                    onPressed: () => _openFullscreen(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Spacing.s8),
-              if (isWide)
+              assetAllocs: assetAllocs,
+              liabilityAlloc: liabilityAlloc,
+              snapshot: snapshot,
+              height: isWide ? 260 : 300,
+              onTap: (alloc) => _openDrillDown(context, alloc),
+            );
+            final legend = _Legend(
+              assetAllocs: assetAllocs,
+              liabilityAlloc: liabilityAlloc,
+              snapshot: snapshot,
+              onTap: (alloc) => _openDrillDown(context, alloc),
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 6, child: chart),
-                    const SizedBox(width: Spacing.s24),
-                    Expanded(flex: 5, child: legend),
+                    Expanded(
+                      child: Text(
+                        l10n.dashboardAllocationTitle,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l10n.aiChatSheetExpandTooltip,
+                      icon: const Icon(Icons.fullscreen),
+                      onPressed: () => _openFullscreen(context),
+                    ),
                   ],
-                )
-              else ...[
-                chart,
-                const SizedBox(height: Spacing.s12),
-                legend,
+                ),
+                const SizedBox(height: Spacing.s8),
+                if (isWide)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 6, child: chart),
+                      const SizedBox(width: Spacing.s24),
+                      Expanded(flex: 5, child: legend),
+                    ],
+                  )
+                else ...[
+                  chart,
+                  const SizedBox(height: Spacing.s12),
+                  legend,
+                ],
               ],
-            ],
-          );
+            );
           },
         ),
       ),
@@ -650,7 +650,7 @@ class _Legend extends StatelessWidget {
           ),
         if (liabilityAlloc != null) ...[
           const SizedBox(height: Spacing.s8),
-          const Divider(height: 1),
+          const FDivider(),
           const SizedBox(height: Spacing.s8),
           _LegendRow(
             color: Theme.of(context).colorScheme.error,

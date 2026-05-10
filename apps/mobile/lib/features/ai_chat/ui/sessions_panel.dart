@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -49,11 +50,7 @@ class SessionsPanel extends ConsumerWidget {
       onNew: onNew,
       child: sessionsAsync.when(
         loading: () => const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
-          ),
+          child: SizedBox(width: 24, height: 24, child: FCircularProgress()),
         ),
         error: (e, _) => _PanelMessage(
           icon: Icons.error_outline,
@@ -179,9 +176,7 @@ class SessionsPanel extends ConsumerWidget {
                   maxLength: 60,
                   decoration: InputDecoration(
                     labelText: l10n.aiChatSessionTitleLabel,
-                    border: const OutlineInputBorder(
-                      borderRadius: Radii.brMd,
-                    ),
+                    border: const OutlineInputBorder(borderRadius: Radii.brMd),
                   ),
                 ),
                 Row(
@@ -236,50 +231,48 @@ class _PanelShell extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
               ),
             ),
             child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.s16,
-                  Spacing.s16,
-                  Spacing.s8,
-                  Spacing.s12,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.history,
-                      size: 18,
-                      color: cs.onSurfaceVariant,
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.s16,
+                Spacing.s16,
+                Spacing.s8,
+                Spacing.s12,
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.history, size: 18, color: cs.onSurfaceVariant),
+                  const SizedBox(width: Spacing.s8),
+                  Text(
+                    l10n.aiChatSessionsHeader,
+                    style: tt.titleMedium?.copyWith(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(width: Spacing.s8),
-                    Text(
-                      l10n.aiChatSessionsHeader,
-                      style: tt.titleMedium?.copyWith(
-                        color: cs.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (onNew != null)
-                      IconButton(
-                        tooltip: l10n.aiChatNewSessionTooltip,
-                        onPressed: onNew,
-                        icon: const Icon(Icons.add),
-                        style: IconButton.styleFrom(
-                          backgroundColor: cs.primaryContainer.withValues(
-                            alpha: 0.6,
-                          ),
-                          foregroundColor: cs.onPrimaryContainer,
-                          shape: const StadiumBorder(),
+                  ),
+                  const Spacer(),
+                  if (onNew != null)
+                    IconButton(
+                      tooltip: l10n.aiChatNewSessionTooltip,
+                      onPressed: onNew,
+                      icon: const Icon(Icons.add),
+                      style: IconButton.styleFrom(
+                        backgroundColor: cs.primaryContainer.withValues(
+                          alpha: 0.6,
                         ),
+                        foregroundColor: cs.onPrimaryContainer,
+                        shape: const StadiumBorder(),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
+          ),
           Expanded(child: child),
         ],
       ),

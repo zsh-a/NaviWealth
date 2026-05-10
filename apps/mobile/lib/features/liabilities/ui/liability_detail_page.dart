@@ -23,17 +23,13 @@ class LiabilityDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final summaryAsync = ref.watch(liabilitySummaryProvider(id));
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.liabilitiesAppBarTitle),
-      ),
-      body: summaryAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: summaryAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text('$e')),
         data: (summary) {
           if (summary == null) {
@@ -42,6 +38,7 @@ class LiabilityDetailPage extends ConsumerWidget {
           return _LiabilityDetailBody(summary: summary);
         },
       ),
+        ),
     );
   }
 }
@@ -74,7 +71,7 @@ class _LiabilityDetailBody extends ConsumerWidget {
         scheduleAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(vertical: Spacing.s24),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: FCircularProgress()),
           ),
           error: (e, _) => Padding(
             padding: const EdgeInsets.all(Spacing.s16),
@@ -83,16 +80,13 @@ class _LiabilityDetailBody extends ConsumerWidget {
           data: (schedule) {
             if (schedule.isEmpty) {
               return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.s16),
-          child: Text(l10n.liabilityRevolvingNoSchedule),
-        ),
-      );
+                child: Padding(
+                  padding: const EdgeInsets.all(Spacing.s16),
+                  child: Text(l10n.liabilityRevolvingNoSchedule),
+                ),
+              );
             }
-            return _AmortizationTable(
-              liability: liability,
-              schedule: schedule,
-            );
+            return _AmortizationTable(liability: liability, schedule: schedule);
           },
         ),
       ],
@@ -112,35 +106,35 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final l = summary.liability;
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l.name, style: theme.textTheme.titleLarge),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            '${liabilityTypeLabel(l10n, l.type)} · '
-            '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
-            '${rateTypeLabel(l10n, l.rateType)}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.name, style: theme.textTheme.titleLarge),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              '${liabilityTypeLabel(l10n, l.type)} · '
+              '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
+              '${rateTypeLabel(l10n, l.rateType)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s12),
-          Text(
-            formatters.currency(l.principal, code: l.currency),
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            formatters.percent(l.interestRate.toDouble()),
-            style: theme.textTheme.bodyMedium,
-          ),
-        ],
-      ),
+            const SizedBox(height: Spacing.s12),
+            Text(
+              formatters.currency(l.principal, code: l.currency),
+              style: theme.textTheme.headlineSmall,
+            ),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              formatters.percent(l.interestRate.toDouble()),
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -156,56 +150,54 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final l = summary.liability;
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SummaryRow(
-            label: l10n.liabilitySummaryRemaining,
-            value: formatters.currency(
-              summary.remainingPrincipal,
-              code: l.currency,
-            ),
-          ),
-          _SummaryRow(
-            label: l10n.liabilitySummaryInterestPaid,
-            value: formatters.currency(
-              summary.interestPaid,
-              code: l.currency,
-            ),
-          ),
-          _SummaryRow(
-            label: l10n.liabilitySummaryInterestTotal,
-            value: formatters.currency(
-              summary.totalScheduledInterest,
-              code: l.currency,
-            ),
-          ),
-          _SummaryRow(
-            label: l10n.liabilitySummaryInterestRatio,
-            value: formatters.percent(
-              summary.interestRatio.toDouble(),
-            ),
-          ),
-          const SizedBox(height: Spacing.s8),
-          if (summary.totalPeriods > 0) ...[
-            LinearProgressIndicator(value: summary.progressFraction),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              l10n.liabilitySummaryProgress(
-                summary.paidPeriods,
-                summary.totalPeriods,
-              ),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SummaryRow(
+              label: l10n.liabilitySummaryRemaining,
+              value: formatters.currency(
+                summary.remainingPrincipal,
+                code: l.currency,
               ),
             ),
+            _SummaryRow(
+              label: l10n.liabilitySummaryInterestPaid,
+              value: formatters.currency(
+                summary.interestPaid,
+                code: l.currency,
+              ),
+            ),
+            _SummaryRow(
+              label: l10n.liabilitySummaryInterestTotal,
+              value: formatters.currency(
+                summary.totalScheduledInterest,
+                code: l.currency,
+              ),
+            ),
+            _SummaryRow(
+              label: l10n.liabilitySummaryInterestRatio,
+              value: formatters.percent(summary.interestRatio.toDouble()),
+            ),
+            const SizedBox(height: Spacing.s8),
+            if (summary.totalPeriods > 0) ...[
+              LinearProgressIndicator(value: summary.progressFraction),
+              const SizedBox(height: Spacing.s4),
+              Text(
+                l10n.liabilitySummaryProgress(
+                  summary.paidPeriods,
+                  summary.totalPeriods,
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
-        ],
-      ),
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -247,7 +239,8 @@ class _AmortizationTable extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return FCard.raw(child: Column(
+    return FCard.raw(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header row
@@ -255,7 +248,7 @@ class _AmortizationTable extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             child: _AmortizationHeaderRow(l10n: l10n),
           ),
-          const Divider(height: 1),
+          const FDivider(),
           // Lazy body — only visible rows are built.
           Flexible(
             child: ListView.builder(
@@ -276,7 +269,8 @@ class _AmortizationTable extends ConsumerWidget {
             ),
           ),
         ],
-      ));
+      ),
+    );
   }
 
   Future<void> _confirmMarkPaid(
@@ -288,7 +282,11 @@ class _AmortizationTable extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     if (liability.accountId == null) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.liabilityScheduleMarkPaidNoAccount);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.liabilityScheduleMarkPaidNoAccount,
+      );
       return;
     }
     final formatters = context.formatters(ref);
@@ -309,9 +307,7 @@ class _AmortizationTable extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: Spacing.s8),
-            Text(
-              l10n.liabilityScheduleMarkPaidConfirmBody(amount),
-            ),
+            Text(l10n.liabilityScheduleMarkPaidConfirmBody(amount)),
             const SizedBox(height: Spacing.s16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

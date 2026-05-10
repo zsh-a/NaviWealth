@@ -22,7 +22,8 @@ class MonthlyExpenseBucket {
   final int month;
   final Money total;
 
-  String get key => '${year.toString().padLeft(4, '0')}-'
+  String get key =>
+      '${year.toString().padLeft(4, '0')}-'
       '${month.toString().padLeft(2, '0')}';
 }
 

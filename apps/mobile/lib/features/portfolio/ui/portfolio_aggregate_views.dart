@@ -20,7 +20,7 @@ class PortfolioByClassView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(dashboardSnapshotProvider);
     return snapshot.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => _ErrorText(error: e),
       data: (value) => _AggregateList(
         rows: [
@@ -50,7 +50,7 @@ class PortfolioByCurrencyView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(dashboardSnapshotProvider);
     return snapshot.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => _ErrorText(error: e),
       data: (value) {
         final byCurrency =
@@ -92,7 +92,7 @@ class PortfolioByAccountView extends ConsumerWidget {
     final manualAssets = ref.watch(manualAssetsStreamProvider);
     final accounts = ref.watch(accountsStreamProvider);
     return snapshot.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => _ErrorText(error: e),
       data: (value) {
         final accountById = <String, Account>{
@@ -152,17 +152,17 @@ class _AggregateList extends StatelessWidget {
       return Center(child: Text(l10n.assetsEmptyHint));
     }
     return ListView.separated(
-        padding: Spacing.pageMobile.copyWith(
-          top: Spacing.s8,
-          bottom:
-              Spacing.pageMobile.bottom +
-              Spacing.floatingBarClearance +
-              MediaQuery.paddingOf(context).bottom,
-        ),
-        itemCount: rows.length,
-        separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
-        itemBuilder: (context, index) => _AggregateTile(row: rows[index]),
-      );
+      padding: Spacing.pageMobile.copyWith(
+        top: Spacing.s8,
+        bottom:
+            Spacing.pageMobile.bottom +
+            Spacing.floatingBarClearance +
+            MediaQuery.paddingOf(context).bottom,
+      ),
+      itemCount: rows.length,
+      separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
+      itemBuilder: (context, index) => _AggregateTile(row: rows[index]),
+    );
   }
 }
 
@@ -174,7 +174,8 @@ class _AggregateTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    return FCard.raw(child: ListTile(
+    return FCard.raw(
+      child: ListTile(
         leading: Icon(row.icon),
         title: Text(row.title),
         subtitle: Text(row.subtitle),
@@ -182,7 +183,8 @@ class _AggregateTile extends StatelessWidget {
           formatter.compactCurrency(row.value, code: row.currency),
           style: Theme.of(context).textTheme.titleSmall,
         ),
-      ));
+      ),
+    );
   }
 }
 

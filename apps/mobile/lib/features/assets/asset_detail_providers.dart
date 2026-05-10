@@ -14,11 +14,11 @@ import '../investment/domain/models/holding_snapshot.dart';
 /// zero), so the card can pick a sensible empty state.
 final assetHoldingSnapshotProvider = FutureProvider.autoDispose
     .family<HoldingSnapshot?, String>((ref, assetId) async {
-  final service = await ref.watch(holdingServiceProvider.future);
-  final asOf = DateTime.now().toUtc();
-  final all = await service.computeAt(asOf);
-  return all[assetId];
-});
+      final service = await ref.watch(holdingServiceProvider.future);
+      final asOf = DateTime.now().toUtc();
+      final all = await service.computeAt(asOf);
+      return all[assetId];
+    });
 
 /// Family key for [assetPriceHistoryProvider]. Value-equal so two cards on
 /// the same asset and lookback share a single cache entry.
@@ -50,16 +50,17 @@ class PriceHistoryKey {
 /// this provider just turns its returned [MarketResponse] into a Riverpod
 /// future so the chart can read freshness alongside the data.
 final assetPriceHistoryProvider = FutureProvider.autoDispose
-    .family<MarketResponse<List<HistoricalBar>>, PriceHistoryKey>(
-  (ref, key) async {
-    final service = await ref.watch(marketDataServiceProvider.future);
-    final to = DateTime.now().toUtc();
-    final from = to.subtract(Duration(days: key.days));
-    return service.getHistorical(
-      key.symbol,
-      from: from,
-      to: to,
-      market: key.market,
-    );
-  },
-);
+    .family<MarketResponse<List<HistoricalBar>>, PriceHistoryKey>((
+      ref,
+      key,
+    ) async {
+      final service = await ref.watch(marketDataServiceProvider.future);
+      final to = DateTime.now().toUtc();
+      final from = to.subtract(Duration(days: key.days));
+      return service.getHistorical(
+        key.symbol,
+        from: from,
+        to: to,
+        market: key.market,
+      );
+    });

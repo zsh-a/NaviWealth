@@ -115,41 +115,35 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
       future: _assetFuture,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: Center(child: FCircularProgress()));
         }
         final asset = snap.data;
         if (asset == null) {
           return Scaffold(body: Center(child: Text(l10n.assetDetailNotFound)));
         }
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
+        return FScaffold(
+          header: FHeader.nested(
             title: OptionalHero(
               tag: 'asset-${asset.id}-name',
               child: Text(asset.name ?? asset.symbol),
             ),
-            actions: [
-              IconButton(
-                key: const Key('asset-detail-sync-metadata'),
-                tooltip: l10n.assetDetailSyncMetadataTooltip,
-                onPressed: _syncing ? null : () => _syncMetadata(asset),
+            suffixes: [
+              FHeaderAction(
                 icon: _syncing
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: FCircularProgress(),
                       )
                     : const Icon(Icons.cloud_sync_outlined),
+                onPress: _syncing ? null : () => _syncMetadata(asset),
               ),
             ],
           ),
-          body: ListView(
+          childPad: false,
+          child: Material(
+          color: Colors.transparent,
+          child: ListView(
             padding: const EdgeInsets.all(Spacing.s16),
             children: [
               AssetSummaryCard(asset: asset),
@@ -162,13 +156,13 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               const SizedBox(height: Spacing.s16),
               FButton(
                 variant: FButtonVariant.primary,
-                onPress: () =>
-                    context.push(AppRoutes.tradeForAsset(asset.id)),
+                onPress: () => context.push(AppRoutes.tradeForAsset(asset.id)),
                 prefix: const Icon(Icons.add, size: 16),
                 child: Text(l10n.assetDetailNewTradeLabel),
               ),
             ],
           ),
+        ),
         );
       },
     );

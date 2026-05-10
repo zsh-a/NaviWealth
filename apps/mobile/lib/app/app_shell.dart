@@ -189,9 +189,7 @@ class _MobileShell extends StatelessWidget {
               height: barHeight,
               decoration: BoxDecoration(
                 color: scheme.surface,
-                border: Border(
-                  top: BorderSide(color: hairline, width: 1),
-                ),
+                border: Border(top: BorderSide(color: hairline, width: 1)),
               ),
               child: NavigationBar(
                 height: barHeight,
@@ -201,8 +199,7 @@ class _MobileShell extends StatelessWidget {
                 elevation: 0,
                 selectedIndex: selectedIndex,
                 onDestinationSelected: onDestinationSelected,
-                labelBehavior:
-                    NavigationDestinationLabelBehavior.alwaysShow,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                 destinations: [
                   for (final d in destinations)
                     NavigationDestination(
@@ -247,17 +244,16 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hairline =
-        Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5);
+    final hairline = Theme.of(
+      context,
+    ).colorScheme.outlineVariant.withValues(alpha: 0.5);
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                border: Border(
-                  right: BorderSide(color: hairline, width: 1),
-                ),
+                border: Border(right: BorderSide(color: hairline, width: 1)),
               ),
               child: NavigationRail(
                 selectedIndex: selectedIndex,
@@ -307,17 +303,17 @@ class _DesktopShell extends StatelessWidget {
         child: Row(
           children: [
             DesktopSidebar(
-                destinations: [
-                  for (final d in destinations)
-                    DesktopSidebarDestination(
-                      icon: d.icon,
-                      selectedIcon: d.selectedIcon,
-                      label: d.label,
-                    ),
-                ],
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
-              ),
+              destinations: [
+                for (final d in destinations)
+                  DesktopSidebarDestination(
+                    icon: d.icon,
+                    selectedIcon: d.selectedIcon,
+                    label: d.label,
+                  ),
+              ],
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onDestinationSelected,
+            ),
             Expanded(child: _GlobalActionHost(child: child)),
           ],
         ),

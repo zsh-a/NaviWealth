@@ -24,36 +24,36 @@ class BenchmarkComparisonCard extends ConsumerWidget {
     final resultAsync = ref.watch(benchmarkComparisonResultProvider);
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.benchmarkComparisonTitle,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            l10n.benchmarkComparisonSubtitle,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.benchmarkComparisonTitle,
+              style: theme.textTheme.titleMedium,
             ),
-          ),
-          const SizedBox(height: Spacing.s12),
-          const _BenchmarkSelectionChips(),
-          const SizedBox(height: Spacing.s12),
-          const _BenchmarkRangeChips(),
-          const SizedBox(height: Spacing.s16),
-          resultAsync.when(
-            loading: () => const BenchmarkCardSkeleton(),
-            error: (e, _) => BenchmarkCardError(error: e),
-            data: (result) => BenchmarkComparisonContent(result: result),
-          ),
-        ],
-      ),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              l10n.benchmarkComparisonSubtitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: Spacing.s12),
+            const _BenchmarkSelectionChips(),
+            const SizedBox(height: Spacing.s12),
+            const _BenchmarkRangeChips(),
+            const SizedBox(height: Spacing.s16),
+            resultAsync.when(
+              loading: () => const BenchmarkCardSkeleton(),
+              error: (e, _) => BenchmarkCardError(error: e),
+              data: (result) => BenchmarkComparisonContent(result: result),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 

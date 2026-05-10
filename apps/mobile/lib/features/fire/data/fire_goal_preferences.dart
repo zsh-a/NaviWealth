@@ -12,8 +12,9 @@ import '../domain/fire_goal.dart';
 /// (`theme_preferences.dart`) rather than the Drift schema. That also keeps
 /// the goal local-only by construction; the user's target net worth is the
 /// kind of thing they'd rather not see roundtripped through the sync pipe.
-final fireGoalProvider =
-    StateNotifierProvider<FireGoalController, FireGoal>((ref) {
+final fireGoalProvider = StateNotifierProvider<FireGoalController, FireGoal>((
+  ref,
+) {
   return FireGoalController(ref.watch(sharedPreferencesProvider));
 });
 
@@ -36,8 +37,7 @@ class FireGoalController extends StateNotifier<FireGoal> {
       targetAmount: _readDecimal(p, _kTarget) ?? Decimal.zero,
       monthlyExpenses: _readDecimal(p, _kMonthlyExpenses) ?? Decimal.zero,
       monthlySurplus: _readDecimal(p, _kMonthlySurplus) ?? Decimal.zero,
-      inflationRate:
-          p.getDouble(_kInflation) ?? FireGoal.defaultInflationRate,
+      inflationRate: p.getDouble(_kInflation) ?? FireGoal.defaultInflationRate,
     );
   }
 

@@ -40,13 +40,14 @@ class AccountPicker extends StatelessWidget {
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
     // Null out value if it doesn't exist in the filtered list to avoid
     // DropdownButtonFormField assertion errors.
-    final effectiveValue =
-        filtered.any((a) => a.id == value) ? value : null;
+    final effectiveValue = filtered.any((a) => a.id == value) ? value : null;
     return DropdownButtonFormField<String>(
-  isExpanded: true,
-                    initialValue: effectiveValue,
-  decoration: InputDecoration(labelText: label ?? l10n.formAccountPickerLabelDefault),
-  items: [
+      isExpanded: true,
+      initialValue: effectiveValue,
+      decoration: InputDecoration(
+        labelText: label ?? l10n.formAccountPickerLabelDefault,
+      ),
+      items: [
         for (final a in filtered)
           DropdownMenuItem(
             value: a.id,
@@ -56,9 +57,9 @@ class AccountPicker extends StatelessWidget {
             ),
           ),
       ],
-  onChanged: filtered.isEmpty ? null : onChanged,
-  validator: (v) =>
+      onChanged: filtered.isEmpty ? null : onChanged,
+      validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,
-);
+    );
   }
 }

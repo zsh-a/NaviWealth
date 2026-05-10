@@ -58,10 +58,9 @@ class LiabilitySummary {
   /// 0..1 progress fraction. 0 = nothing paid, 1 = fully paid off.
   double get progressFraction {
     if (totalScheduledPrincipal.sign <= 0) return 0;
-    final ratio =
-        (principalPaid / totalScheduledPrincipal).toDecimal(
-          scaleOnInfinitePrecision: 6,
-        ).toDouble();
+    final ratio = (principalPaid / totalScheduledPrincipal)
+        .toDecimal(scaleOnInfinitePrecision: 6)
+        .toDouble();
     if (ratio.isNaN || ratio.isInfinite) return 0;
     return ratio.clamp(0, 1);
   }

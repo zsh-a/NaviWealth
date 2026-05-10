@@ -132,9 +132,7 @@ class AmortizationCalculator {
     final pow = _pow(onePlusR, termMonths);
     final numerator = principal * monthlyRate * pow;
     final denominator = pow - Decimal.one;
-    return (numerator / denominator).toDecimal(
-      scaleOnInfinitePrecision: scale,
-    );
+    return (numerator / denominator).toDecimal(scaleOnInfinitePrecision: scale);
   }
 
   List<AmortizationRow> _equalInstallment({

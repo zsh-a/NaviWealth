@@ -47,8 +47,7 @@ class ChartPalette {
   }
 
   /// Pick a color for series index `i`, wrapping if `i >= length`.
-  Color accentAt(int i) =>
-      accentSequence[i.abs() % accentSequence.length];
+  Color accentAt(int i) => accentSequence[i.abs() % accentSequence.length];
 
   static List<Color> _accentSequence({required bool isDark}) {
     // The 4th and 8th slots stay aligned with `MarketColors.up/down` so a
@@ -104,11 +103,7 @@ enum SeriesIntent {
 }
 
 /// Visual emphasis for a line / area series. Bar / pie series ignore this.
-enum SeriesEmphasis {
-  solid,
-  dashed,
-  dotted,
-}
+enum SeriesEmphasis { solid, dashed, dotted }
 
 /// Resolves a [SeriesIntent] (and series ordinal, used by `benchmark`) to a
 /// concrete color.

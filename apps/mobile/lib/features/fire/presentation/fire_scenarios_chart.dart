@@ -96,10 +96,7 @@ class FireScenariosChart extends StatelessWidget {
         locale: locale,
         maxLabels: 6,
       ),
-      yAxis: ValueAxis.currency(
-        currencyCode: baseCurrency,
-        locale: locale,
-      ),
+      yAxis: ValueAxis.currency(currencyCode: baseCurrency, locale: locale),
       semanticLabel: 'FIRE projection',
     );
   }

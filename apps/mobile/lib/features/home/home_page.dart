@@ -27,28 +27,24 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.homeAppBarTitle),
-        actions: [
-          IconButton(
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.auto_awesome_outlined),
-            tooltip: l10n.navAI,
-            onPressed: () => context.push(AppRoutes.ai),
+            onPress: () => context.push(AppRoutes.ai),
           ),
-          IconButton(
+          FHeaderAction(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.navSettings,
-            onPressed: () => context.push(AppRoutes.settings),
+            onPress: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
-      body: PageSkeletonShell<DashboardSnapshot>(
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
         isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
         child: snapshotAsync.when(
@@ -63,6 +59,7 @@ class HomePage extends ConsumerWidget {
           ),
         ),
       ),
+        ),
     );
   }
 }
@@ -87,44 +84,44 @@ class _DashboardBody extends ConsumerWidget {
 
         if (isWide) {
           return ListView(
-              padding: padding,
-              children: [
-                header,
-                if (insights.isNotEmpty) ...[
-                  const SizedBox(height: Spacing.s12),
-                  insightStrip,
-                ],
-                const SizedBox(height: Spacing.s16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: allocation),
-                    const SizedBox(width: Spacing.s16),
-                    const Expanded(child: trend),
-                  ],
-                ),
-              ],
-            );
-        }
-        return ListView(
-            padding: padding.copyWith(
-              bottom:
-                  padding.bottom +
-                  Spacing.floatingBarClearance +
-                  MediaQuery.paddingOf(context).bottom,
-            ),
+            padding: padding,
             children: [
               header,
               if (insights.isNotEmpty) ...[
                 const SizedBox(height: Spacing.s12),
                 insightStrip,
               ],
-              const SizedBox(height: Spacing.s12),
-              allocation,
-              const SizedBox(height: Spacing.s12),
-              trend,
+              const SizedBox(height: Spacing.s16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: allocation),
+                  const SizedBox(width: Spacing.s16),
+                  const Expanded(child: trend),
+                ],
+              ),
             ],
           );
+        }
+        return ListView(
+          padding: padding.copyWith(
+            bottom:
+                padding.bottom +
+                Spacing.floatingBarClearance +
+                MediaQuery.paddingOf(context).bottom,
+          ),
+          children: [
+            header,
+            if (insights.isNotEmpty) ...[
+              const SizedBox(height: Spacing.s12),
+              insightStrip,
+            ],
+            const SizedBox(height: Spacing.s12),
+            allocation,
+            const SizedBox(height: Spacing.s12),
+            trend,
+          ],
+        );
       },
     );
   }
@@ -149,45 +146,45 @@ class _NetWorthHeader extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
-          const SizedBox(height: Spacing.s8),
-          // Cap dynamic-text scaling on the 32dp hero number so users on
-          // 200% system font size don't blow the card out of its row.
-          // FittedBox handles the long-currency / many-digits case
-          // (e.g. ¥123,456,789.00) by scaling the glyphs down to fit.
-          MediaQuery.withClampedTextScaling(
-            maxScaleFactor: 1.3,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: AnimatedMoneyText(
-                amount: value,
-                currencyCode: snapshot.baseCurrency,
-                style: TypographyTokens.numericDisplay,
-                showSign: value != null && value < 0,
+            const SizedBox(height: Spacing.s8),
+            // Cap dynamic-text scaling on the 32dp hero number so users on
+            // 200% system font size don't blow the card out of its row.
+            // FittedBox handles the long-currency / many-digits case
+            // (e.g. ¥123,456,789.00) by scaling the glyphs down to fit.
+            MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.3,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: AnimatedMoneyText(
+                  amount: value,
+                  currencyCode: snapshot.baseCurrency,
+                  style: TypographyTokens.numericDisplay,
+                  showSign: value != null && value < 0,
+                ),
               ),
             ),
-          ),
-          if (hasData) ...[
-            const SizedBox(height: Spacing.s8),
-            _DeltaMetricsRow(metrics: metricsAsync),
-          ],
-          const SizedBox(height: Spacing.s4),
-          Text(
-            hasData
-                ? l10n.dashboardNetWorthBreakdown(
-                    _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
-                    _formatBaseAmount(
-                      snapshot.totalLiabilities.amount.toDouble(),
-                    ),
-                    snapshot.baseCurrency,
-                  )
-                : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            if (hasData) ...[
+              const SizedBox(height: Spacing.s8),
+              _DeltaMetricsRow(metrics: metricsAsync),
+            ],
+            const SizedBox(height: Spacing.s4),
+            Text(
+              hasData
+                  ? l10n.dashboardNetWorthBreakdown(
+                      _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
+                      _formatBaseAmount(
+                        snapshot.totalLiabilities.amount.toDouble(),
+                      ),
+                      snapshot.baseCurrency,
+                    )
+                  : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

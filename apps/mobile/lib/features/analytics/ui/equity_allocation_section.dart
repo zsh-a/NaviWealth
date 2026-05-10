@@ -250,20 +250,23 @@ class _UnclassifiedBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s12,
-        vertical: Spacing.s12,
-      ),
-          child: Row(
-        children: [
-          Icon(Icons.warning_amber_outlined, color: theme.colorScheme.tertiary),
-          const SizedBox(width: Spacing.s8),
-          Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
-        ],
-      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s12,
+          vertical: Spacing.s12,
         ),
-      );
+        child: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_outlined,
+              color: theme.colorScheme.tertiary,
+            ),
+            const SizedBox(width: Spacing.s8),
+            Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
+          ],
+        ),
+      ),
+    );
   }
 }
 

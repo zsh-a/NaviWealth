@@ -20,32 +20,29 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final assetAsync = ref.watch(physicalAssetDetailProvider(id));
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: assetAsync.maybeWhen(
           data: (a) => Text(a?.name ?? l10n.physicalAssetNotFound),
           orElse: () => const SizedBox.shrink(),
         ),
-        actions: [
+        suffixes: [
           assetAsync.maybeWhen(
             data: (a) => a == null
                 ? const SizedBox.shrink()
-                : IconButton(
+                : FHeaderAction(
                     icon: const Icon(Icons.delete_outline),
-                    tooltip: l10n.physicalAssetDeleteAction,
-                    onPressed: () => _confirmDelete(context, ref, a.id),
+                    onPress: () => _confirmDelete(context, ref, a.id),
                   ),
             orElse: () => const SizedBox.shrink(),
           ),
         ],
       ),
-      body: assetAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: assetAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, st) => Center(child: Text('$e')),
         data: (asset) {
           if (asset == null) {
@@ -54,6 +51,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
           return _DetailBody(asset: asset);
         },
       ),
+        ),
     );
   }
 
@@ -71,7 +69,10 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.physicalAssetDeleteConfirmTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.physicalAssetDeleteConfirmTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.physicalAssetDeleteConfirmBody),
             const SizedBox(height: Spacing.s16),
@@ -115,8 +116,9 @@ class _DetailBody extends ConsumerWidget {
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
-    final historyAsync =
-        ref.watch(physicalAssetValuationHistoryProvider(asset.id));
+    final historyAsync = ref.watch(
+      physicalAssetValuationHistoryProvider(asset.id),
+    );
 
     final estimatedToday = _estimatedToday(asset);
 
@@ -124,106 +126,103 @@ class _DetailBody extends ConsumerWidget {
       padding: Spacing.pageMobile,
       children: [
         FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.physicalAssetDetailValuationTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: Spacing.s8),
-              AnimatedMoneyText(
-                amount: asset.currentValuation.toDouble(),
-                currencyCode: asset.currency,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (asset.lastValuationAt != null) ...[
-                const SizedBox(height: Spacing.s4),
+          child: Padding(
+            padding: Spacing.cardHero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  dateFormat.format(asset.lastValuationAt!),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  l10n.physicalAssetDetailValuationTitle,
+                  style: theme.textTheme.titleMedium,
                 ),
-              ],
-              if (estimatedToday != null) ...[
                 const SizedBox(height: Spacing.s8),
-                Text(
-                  l10n.physicalAssetDetailEstimatedToday(estimatedToday),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.tertiary,
+                AnimatedMoneyText(
+                  amount: asset.currentValuation.toDouble(),
+                  currencyCode: asset.currency,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
+                if (asset.lastValuationAt != null) ...[
+                  const SizedBox(height: Spacing.s4),
+                  Text(
+                    dateFormat.format(asset.lastValuationAt!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                if (estimatedToday != null) ...[
+                  const SizedBox(height: Spacing.s8),
+                  Text(
+                    l10n.physicalAssetDetailEstimatedToday(estimatedToday),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: Spacing.s16),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: () =>
+                      ValuationUpdateSheet.show(context, asset: asset),
+                  prefix: const Icon(Icons.edit_outlined, size: 16),
+                  child: Text(l10n.physicalAssetUpdateValuationAction),
+                ),
               ],
-              const SizedBox(height: Spacing.s16),
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: () =>
-                    ValuationUpdateSheet.show(context, asset: asset),
-                prefix: const Icon(Icons.edit_outlined, size: 16),
-                child: Text(l10n.physicalAssetUpdateValuationAction),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
         const SizedBox(height: Spacing.s12),
         _FactsCard(asset: asset, dateFormat: dateFormat),
         const SizedBox(height: Spacing.s12),
         FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.physicalAssetDetailHistoryTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: Spacing.s12),
-              historyAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, st) => Text('$e'),
-                data: (history) {
-                  final projection = _projectionFor(asset, history);
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ValuationTrendChart(
-                        points: history,
-                        projection: projection,
-                        currency: asset.currency,
-                      ),
-                      const SizedBox(height: Spacing.s8),
-                      ...history.reversed.map(
-                        (p) => _HistoryRow(
-                          point: p,
+          child: Padding(
+            padding: Spacing.card,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.physicalAssetDetailHistoryTitle,
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: Spacing.s12),
+                historyAsync.when(
+                  loading: () => const Center(child: FCircularProgress()),
+                  error: (e, st) => Text('$e'),
+                  data: (history) {
+                    final projection = _projectionFor(asset, history);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ValuationTrendChart(
+                          points: history,
+                          projection: projection,
                           currency: asset.currency,
-                          dateFormat: dateFormat,
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                        const SizedBox(height: Spacing.s8),
+                        ...history.reversed.map(
+                          (p) => _HistoryRow(
+                            point: p,
+                            currency: asset.currency,
+                            dateFormat: dateFormat,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ],
     );
   }
 
   String? _estimatedToday(PhysicalAsset a) {
-    if (!a.isVehicle ||
-        !a.autoDepreciation ||
-        a.annualResidualRate == null) {
+    if (!a.isVehicle || !a.autoDepreciation || a.annualResidualRate == null) {
       return null;
     }
     final estimate = VehicleDepreciation.estimate(
@@ -232,25 +231,24 @@ class _DetailBody extends ConsumerWidget {
       annualResidualRate: a.annualResidualRate!,
       asOf: DateTime.now(),
     );
-    return NumberFormat.simpleCurrency(name: a.currency)
-        .format(estimate.toDouble());
+    return NumberFormat.simpleCurrency(
+      name: a.currency,
+    ).format(estimate.toDouble());
   }
 
   List<ValuationPoint> _projectionFor(
     PhysicalAsset a,
     List<ValuationPoint> history,
   ) {
-    if (!a.isVehicle ||
-        !a.autoDepreciation ||
-        a.annualResidualRate == null) {
+    if (!a.isVehicle || !a.autoDepreciation || a.annualResidualRate == null) {
       return const [];
     }
     final lastManual = history
         .where((p) => p.kind != ValuationPointKind.projected)
         .fold<DateTime?>(
-      null,
-      (acc, p) => acc == null || p.asOf.isAfter(acc) ? p.asOf : acc,
-    );
+          null,
+          (acc, p) => acc == null || p.asOf.isAfter(acc) ? p.asOf : acc,
+        );
     final from = lastManual ?? a.purchaseDate;
     final to = DateTime.now();
     if (!to.isAfter(from)) return const [];
@@ -281,8 +279,9 @@ class _FactsCard extends StatelessWidget {
       ),
       (
         l10n.physicalAssetFieldPurchasePrice,
-        NumberFormat.simpleCurrency(name: asset.currency)
-            .format(asset.purchasePrice.toDouble()),
+        NumberFormat.simpleCurrency(
+          name: asset.currency,
+        ).format(asset.purchasePrice.toDouble()),
       ),
       if (asset.address != null && asset.address!.isNotEmpty)
         (l10n.physicalAssetFieldAddress, asset.address!),
@@ -296,43 +295,41 @@ class _FactsCard extends StatelessWidget {
         (l10n.physicalAssetFieldLinkedLiability, asset.linkedLiabilityId!),
     ];
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final (label, value) in entries) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: Spacing.s4,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (label, value) in entries) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      value,
-                      style: theme.textTheme.bodyMedium,
-                      textAlign: TextAlign.end,
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        value,
+                        style: theme.textTheme.bodyMedium,
+                        textAlign: TextAlign.end,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
-      ),
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -354,8 +351,7 @@ class _HistoryRow extends StatelessWidget {
     final label = switch (point.kind) {
       ValuationPointKind.purchase => l10n.physicalAssetDetailPurchaseLabel,
       ValuationPointKind.manual => l10n.physicalAssetDetailManualUpdateLabel,
-      ValuationPointKind.projected =>
-        l10n.physicalAssetDetailAutoEstimateLabel,
+      ValuationPointKind.projected => l10n.physicalAssetDetailAutoEstimateLabel,
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.s4),

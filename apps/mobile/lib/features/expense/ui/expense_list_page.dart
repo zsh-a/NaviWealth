@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -71,28 +72,26 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
     );
 
     if (widget.embedded) return body;
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.navExpenses),
-        actions: [
-          IconButton(
-            tooltip: l10n.expensesReportTooltip,
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.insights_outlined),
-            onPressed: () => context.go(AppRoutes.expenseReport),
+            onPress: () => context.go(AppRoutes.expenseReport),
           ),
         ],
       ),
-      body: body,
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: body,
+        ),
     );
   }
 

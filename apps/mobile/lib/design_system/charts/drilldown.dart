@@ -17,8 +17,9 @@ sealed class ChartDrillDown {
 
   const factory ChartDrillDown.point(ValueChanged<ChartPoint> onTap) =
       PointDrillDown;
-  const factory ChartDrillDown.range(ValueChanged<ChartRangeSelection> onRange) =
-      RangeDrillDown;
+  const factory ChartDrillDown.range(
+    ValueChanged<ChartRangeSelection> onRange,
+  ) = RangeDrillDown;
   const factory ChartDrillDown.slice(ValueChanged<Slice> onTap) =
       SliceDrillDown;
   const factory ChartDrillDown.bar(ValueChanged<CategoryDatum> onTap) =
@@ -81,7 +82,7 @@ class ChartRangeSelection {
   final List<ChartPoint> points;
 
   DateTimeRange get asDateRange => DateTimeRange(
-        start: DateTime.fromMillisecondsSinceEpoch(start.round()),
-        end: DateTime.fromMillisecondsSinceEpoch(end.round()),
-      );
+    start: DateTime.fromMillisecondsSinceEpoch(start.round()),
+    end: DateTime.fromMillisecondsSinceEpoch(end.round()),
+  );
 }

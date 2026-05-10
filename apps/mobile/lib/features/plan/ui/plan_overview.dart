@@ -85,36 +85,36 @@ class PlanOverview extends ConsumerWidget {
 
         if (isWide) {
           return ListView(
-              padding: padding,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: cards[0]),
-                    const SizedBox(width: Spacing.s16),
-                    Expanded(child: cards[1]),
-                  ],
-                ),
-                const SizedBox(height: Spacing.s16),
-                cards[2],
-              ],
-            );
+            padding: padding,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: cards[0]),
+                  const SizedBox(width: Spacing.s16),
+                  Expanded(child: cards[1]),
+                ],
+              ),
+              const SizedBox(height: Spacing.s16),
+              cards[2],
+            ],
+          );
         }
 
         return ListView(
-            padding: padding.copyWith(
-              bottom:
-                  padding.bottom +
-                  Spacing.floatingBarClearance +
-                  MediaQuery.paddingOf(context).bottom,
-            ),
-            children: [
-              for (int i = 0; i < cards.length; i++) ...[
-                cards[i],
-                if (i < cards.length - 1) const SizedBox(height: Spacing.s12),
-              ],
+          padding: padding.copyWith(
+            bottom:
+                padding.bottom +
+                Spacing.floatingBarClearance +
+                MediaQuery.paddingOf(context).bottom,
+          ),
+          children: [
+            for (int i = 0; i < cards.length; i++) ...[
+              cards[i],
+              if (i < cards.length - 1) const SizedBox(height: Spacing.s12),
             ],
-          );
+          ],
+        );
       },
     );
   }
@@ -205,48 +205,48 @@ class _PlanCard extends StatelessWidget {
           child: Padding(
             padding: Spacing.card,
             child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: Radii.brMd,
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, color: theme.colorScheme.primary, size: 22),
-            ),
-            const SizedBox(width: Spacing.s16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: Spacing.s4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: Radii.brMd,
                   ),
-                  if (summary.isNotEmpty) ...[
-                    const SizedBox(height: Spacing.s8),
-                    Wrap(
-                      spacing: Spacing.s6,
-                      runSpacing: Spacing.s6,
-                      children: summary,
-                    ),
-                  ],
-                ],
-              ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, color: theme.colorScheme.primary, size: 22),
+                ),
+                const SizedBox(width: Spacing.s16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: Spacing.s4),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (summary.isNotEmpty) ...[
+                        const SizedBox(height: Spacing.s8),
+                        Wrap(
+                          spacing: Spacing.s6,
+                          runSpacing: Spacing.s6,
+                          children: summary,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              ],
             ),
-            Icon(
-              Icons.chevron_right,
-              color: theme.colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
-          ],
-        ),
           ),
         ),
       ),

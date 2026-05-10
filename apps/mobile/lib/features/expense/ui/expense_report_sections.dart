@@ -24,56 +24,56 @@ class ExpenseCategoryPieCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.expenseReportCategoryShare,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: Spacing.s12),
-          if (report.byCategory.isEmpty)
-            LayoutBuilder(
-              builder: (context, c) => AspectRatio(
-                aspectRatio: chartAspectFor(c.maxWidth),
-                child: const EmptyChartPlaceholder(icon: Icons.donut_large),
-              ),
-            )
-          else
-            LayoutBuilder(
-              builder: (context, c) {
-                final isWide = c.maxWidth >= Breakpoints.mobile;
-                final pie = _Pie(report: report, categoryById: categoryById);
-                final legend = _PieLegend(
-                  report: report,
-                  categoryById: categoryById,
-                );
-                if (isWide) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.expenseReportCategoryShare,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: Spacing.s12),
+            if (report.byCategory.isEmpty)
+              LayoutBuilder(
+                builder: (context, c) => AspectRatio(
+                  aspectRatio: chartAspectFor(c.maxWidth),
+                  child: const EmptyChartPlaceholder(icon: Icons.donut_large),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, c) {
+                  final isWide = c.maxWidth >= Breakpoints.mobile;
+                  final pie = _Pie(report: report, categoryById: categoryById);
+                  final legend = _PieLegend(
+                    report: report,
+                    categoryById: categoryById,
+                  );
+                  if (isWide) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: pie),
+                        const SizedBox(width: Spacing.s24),
+                        Expanded(child: legend),
+                      ],
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: pie),
-                      const SizedBox(width: Spacing.s24),
-                      Expanded(child: legend),
+                      pie,
+                      const SizedBox(height: Spacing.s12),
+                      legend,
                     ],
                   );
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    pie,
-                    const SizedBox(height: Spacing.s12),
-                    legend,
-                  ],
-                );
-              },
-            ),
-        ],
-      ),
+                },
+              ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -96,48 +96,48 @@ class ExpenseTrendCard extends StatelessWidget {
         ),
     ];
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.expenseReportMonthlyTrend,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: Spacing.s12),
-          LayoutBuilder(
-            builder: (context, c) {
-              final aspect = chartAspectFor(c.maxWidth);
-              if (data.isEmpty) {
-                return AspectRatio(
-                  aspectRatio: aspect,
-                  child: const EmptyChartPlaceholder(),
-                );
-              }
-              return SizedBox(
-                height: 220,
-                child: NwBarChart(
-                  series: [
-                    CategorySeries(
-                      name: l10n.expenseReportSeriesExpenses,
-                      data: data,
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.expenseReportMonthlyTrend,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: Spacing.s12),
+            LayoutBuilder(
+              builder: (context, c) {
+                final aspect = chartAspectFor(c.maxWidth);
+                if (data.isEmpty) {
+                  return AspectRatio(
+                    aspectRatio: aspect,
+                    child: const EmptyChartPlaceholder(),
+                  );
+                }
+                return SizedBox(
+                  height: 220,
+                  child: NwBarChart(
+                    series: [
+                      CategorySeries(
+                        name: l10n.expenseReportSeriesExpenses,
+                        data: data,
+                      ),
+                    ],
+                    yAxis: ValueAxis.currency(
+                      currencyCode: report.baseCurrency,
+                      maxLabels: 4,
                     ),
-                  ],
-                  yAxis: ValueAxis.currency(
-                    currencyCode: report.baseCurrency,
-                    maxLabels: 4,
+                    aspectRatio: aspect,
+                    semanticLabel: l10n.expenseReportMonthlyTrendSemantic,
                   ),
-                  aspectRatio: aspect,
-                  semanticLabel: l10n.expenseReportMonthlyTrendSemantic,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+                );
+              },
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -159,36 +159,36 @@ class ExpenseCategoryListCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s4,
-        vertical: Spacing.s8,
-      ),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.s12,
-              Spacing.s8,
-              Spacing.s12,
-              Spacing.s4,
-            ),
-            child: Text(
-              l10n.expenseReportCategoryDetail,
-              style: theme.textTheme.titleMedium,
-            ),
-          ),
-          for (final breakdown in report.byCategory)
-            _CategoryTile(
-              breakdown: breakdown,
-              categoryById: categoryById,
-              baseCurrency: report.baseCurrency,
-            ),
-        ],
-      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.s4,
+          vertical: Spacing.s8,
         ),
-      );
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.s12,
+                Spacing.s8,
+                Spacing.s12,
+                Spacing.s4,
+              ),
+              child: Text(
+                l10n.expenseReportCategoryDetail,
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+            for (final breakdown in report.byCategory)
+              _CategoryTile(
+                breakdown: breakdown,
+                categoryById: categoryById,
+                baseCurrency: report.baseCurrency,
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -460,7 +460,7 @@ class _CategoryDrillDown extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: Spacing.s12),
-              const Divider(height: 1),
+              const FDivider(),
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,

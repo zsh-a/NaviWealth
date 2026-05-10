@@ -50,11 +50,13 @@ class ChatHistoryStore {
       _listSessions(ownerUserId);
 
   Future<List<ChatSession>> _listSessions(String ownerUserId) async {
-    final rows = await _db.customSelect(
-      'SELECT * FROM chat_sessions WHERE owner_user_id = ?1 '
-      'ORDER BY COALESCE(last_message_at, created_at) DESC',
-      variables: [Variable<String>(ownerUserId)],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM chat_sessions WHERE owner_user_id = ?1 '
+          'ORDER BY COALESCE(last_message_at, created_at) DESC',
+          variables: [Variable<String>(ownerUserId)],
+        )
+        .get();
     return rows.map(_sessionFromRow).toList(growable: false);
   }
 
@@ -75,6 +77,7 @@ class ChatHistoryStore {
         if (!controller.isClosed) controller.addError(e, st);
       }
     }
+
     controller = StreamController<T>(
       onListen: () {
         sub = _changes.stream.listen((_) => push());
@@ -89,10 +92,12 @@ class ChatHistoryStore {
   }
 
   Future<ChatSession?> findSession(String id) async {
-    final row = await _db.customSelect(
-      'SELECT * FROM chat_sessions WHERE id = ?1',
-      variables: [Variable<String>(id)],
-    ).getSingleOrNull();
+    final row = await _db
+        .customSelect(
+          'SELECT * FROM chat_sessions WHERE id = ?1',
+          variables: [Variable<String>(id)],
+        )
+        .getSingleOrNull();
     return row == null ? null : _sessionFromRow(row);
   }
 
@@ -155,11 +160,13 @@ class ChatHistoryStore {
   }
 
   Future<List<ChatMessage>> listMessages(String sessionId) async {
-    final rows = await _db.customSelect(
-      'SELECT * FROM chat_messages WHERE session_id = ?1 '
-      'ORDER BY created_at ASC, id ASC',
-      variables: [Variable<String>(sessionId)],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM chat_messages WHERE session_id = ?1 '
+          'ORDER BY created_at ASC, id ASC',
+          variables: [Variable<String>(sessionId)],
+        )
+        .get();
     return rows.map(_messageFromRow).toList(growable: false);
   }
 

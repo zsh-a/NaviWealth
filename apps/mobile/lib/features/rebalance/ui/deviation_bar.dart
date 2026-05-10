@@ -39,9 +39,7 @@ class DeviationBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(label, style: theme.textTheme.bodyMedium),
-              ),
+              Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
               Text(
                 '${(actualWeight * 100).toStringAsFixed(1)}%',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -110,20 +108,35 @@ class _DeviationChip extends StatelessWidget {
     final text = '$sign${(deviation * 100).toStringAsFixed(1)}%';
 
     final (bg, fg) = switch (severity) {
-      DriftSeverity.ok => (colorScheme.primaryContainer, colorScheme.onPrimaryContainer),
-      DriftSeverity.warning => (colorScheme.tertiaryContainer, colorScheme.onTertiaryContainer),
-      DriftSeverity.critical => (colorScheme.errorContainer, colorScheme.onErrorContainer),
+      DriftSeverity.ok => (
+        colorScheme.primaryContainer,
+        colorScheme.onPrimaryContainer,
+      ),
+      DriftSeverity.warning => (
+        colorScheme.tertiaryContainer,
+        colorScheme.onTertiaryContainer,
+      ),
+      DriftSeverity.critical => (
+        colorScheme.errorContainer,
+        colorScheme.onErrorContainer,
+      ),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.s8, vertical: Spacing.s2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s8,
+        vertical: Spacing.s2,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         text,
-        style: theme.textTheme.labelSmall?.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

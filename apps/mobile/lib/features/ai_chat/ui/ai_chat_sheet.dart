@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -133,7 +134,9 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
             decoration: BoxDecoration(
               borderRadius: Radii.brXl,
               border: Border.all(
-                color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                 width: 1,
               ),
               boxShadow: AppElevations.of(context).level3,
@@ -147,47 +150,45 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                   width: _sheetW,
                   height: _sheetH,
                   child: Column(
-                      children: [
-                        // Drag handle — only this area initiates drag.
-                        GestureDetector(
-                          onPanUpdate: (details) {
-                            setState(() {
-                              _offset = Offset(
-                                pos.dx + details.delta.dx,
-                                pos.dy + details.delta.dy,
-                              );
-                            });
-                          },
-                          onPanEnd: (_) {
-                            if (_offset != null) _persistPosition(_offset!);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: Spacing.s8),
-                            child: Container(
-                              width: 36,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant
-                                    .withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
+                    children: [
+                      // Drag handle — only this area initiates drag.
+                      GestureDetector(
+                        onPanUpdate: (details) {
+                          setState(() {
+                            _offset = Offset(
+                              pos.dx + details.delta.dx,
+                              pos.dy + details.delta.dy,
+                            );
+                          });
+                        },
+                        onPanEnd: (_) {
+                          if (_offset != null) _persistPosition(_offset!);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: Spacing.s8),
+                          child: Container(
+                            width: 36,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: AiChatSheetBody(prefill: widget.prefill),
-                        ),
-                      ],
-                    ),
+                      ),
+                      Expanded(child: AiChatSheetBody(prefill: widget.prefill)),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }
 
@@ -269,11 +270,11 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
                   context.go(AppRoutes.ai);
                 },
         ),
-        const Divider(height: 1),
+        const FDivider(),
         // ── Messages ──
         Expanded(
           child: activeId == null
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: FCircularProgress())
               : _SheetMessages(sessionId: activeId),
         ),
         // ── Composer ──
@@ -358,7 +359,7 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
     });
 
     return messagesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => Center(
         child: Text(AppLocalizations.of(context).commonLoadError(e.toString())),
       ),

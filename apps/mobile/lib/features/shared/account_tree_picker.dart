@@ -75,13 +75,17 @@ class AccountTreePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = _buildEntries();
-    final effectiveValue =
-        entries.any((e) => e.account.id == value) ? value : null;
+    final effectiveValue = entries.any((e) => e.account.id == value)
+        ? value
+        : null;
     return DropdownButtonFormField<String>(
-  isExpanded: true,
-                    initialValue: effectiveValue,
-  decoration: InputDecoration(labelText: label ?? 'Account', helperText: helperText),
-  items: entries.map((e) {
+      isExpanded: true,
+      initialValue: effectiveValue,
+      decoration: InputDecoration(
+        labelText: label ?? 'Account',
+        helperText: helperText,
+      ),
+      items: entries.map((e) {
         final iconData = resolveAccountIcon(e.account.icon);
         final iconColor = _parseHexColor(e.account.color);
         final prefix = e.account.parentId == null ? '• ' : '› ';
@@ -96,33 +100,26 @@ class AccountTreePicker extends StatelessWidget {
                   Icon(
                     iconData,
                     size: 16,
-                    color: iconColor ??
+                    color:
+                        iconColor ??
                         Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: Spacing.s4),
-                  Text(
-                    e.path,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(e.path, overflow: TextOverflow.ellipsis),
                 ] else
-                  Text(
-                    '$prefix${e.path}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text('$prefix${e.path}', overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
         );
       }).toList(),
-  onChanged: entries.isEmpty ? null : onChanged,
-  validator: validator,
-);
+      onChanged: entries.isEmpty ? null : onChanged,
+      validator: validator,
+    );
   }
 
   List<_PickerEntry> _buildEntries() {
-    final byId = <String, Account>{
-      for (final a in accounts) a.id: a,
-    };
+    final byId = <String, Account>{for (final a in accounts) a.id: a};
     final filtered = accounts.where((a) {
       if (a.sync.deletedAt != null) return false;
       if (!includeArchived && a.archived) return false;

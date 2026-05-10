@@ -29,38 +29,38 @@ class TrendCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.dashboardTrendTitle,
-                  style: theme.textTheme.titleMedium,
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.dashboardTrendTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
-              ),
-              trendAsync.maybeWhen(
-                data: (trend) => IconButton(
-                  tooltip: l10n.aiChatSheetExpandTooltip,
-                  icon: const Icon(Icons.fullscreen),
-                  onPressed: trend.isEmpty
-                      ? null
-                      : () => showDashboardChartFullscreen(
-                          context: context,
-                          title: l10n.dashboardTrendTitle,
-                          child: const _TrendFullscreenContent(),
-                        ),
+                trendAsync.maybeWhen(
+                  data: (trend) => IconButton(
+                    tooltip: l10n.aiChatSheetExpandTooltip,
+                    icon: const Icon(Icons.fullscreen),
+                    onPressed: trend.isEmpty
+                        ? null
+                        : () => showDashboardChartFullscreen(
+                            context: context,
+                            title: l10n.dashboardTrendTitle,
+                            child: const _TrendFullscreenContent(),
+                          ),
+                  ),
+                  orElse: () => const SizedBox(width: 48, height: 48),
                 ),
-                orElse: () => const SizedBox(width: 48, height: 48),
-              ),
-            ],
-          ),
-          const _RangeChips(),
-          const SizedBox(height: Spacing.s12),
-          trendAsync.when(
-            loading: () => const _TrendSkeleton(),
-            error: (e, st) => _TrendError(error: e),
-            data: (trend) => _TrendChart(trend: trend),
-          ),
-        ],
-      ),
+              ],
+            ),
+            const _RangeChips(),
+            const SizedBox(height: Spacing.s12),
+            trendAsync.when(
+              loading: () => const _TrendSkeleton(),
+              error: (e, st) => _TrendError(error: e),
+              data: (trend) => _TrendChart(trend: trend),
+            ),
+          ],
+        ),
       ),
     );
   }

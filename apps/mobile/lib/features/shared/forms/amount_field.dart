@@ -113,7 +113,9 @@ class _AmountFieldState extends State<AmountField> {
       ),
       decoration: InputDecoration(
         labelText: widget.label,
-        prefixText: widget.currencyCode == null ? null : '${widget.currencyCode} ',
+        prefixText: widget.currencyCode == null
+            ? null
+            : '${widget.currencyCode} ',
         helperText: widget.helperText,
         border: const OutlineInputBorder(),
       ),

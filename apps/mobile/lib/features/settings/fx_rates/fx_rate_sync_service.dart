@@ -17,8 +17,8 @@ class FxRateSyncService {
   FxRateSyncService({
     required MarketDataService marketData,
     required FxRateRepository fxRepo,
-  })  : _marketData = marketData,
-        _fxRepo = fxRepo;
+  }) : _marketData = marketData,
+       _fxRepo = fxRepo;
 
   final MarketDataService _marketData;
   final FxRateRepository _fxRepo;
@@ -73,12 +73,15 @@ class FxRateSyncService {
       AppLogger.instance.d('FX sync: $symbol failed ($e), trying inverse');
       // Try inverse: quoteBase=X and invert the rate.
       final inverseSymbol = '$quote$base=X';
-      final resp =
-          await _marketData.getQuote(inverseSymbol, market: AssetMarket.fx);
+      final resp = await _marketData.getQuote(
+        inverseSymbol,
+        market: AssetMarket.fx,
+      );
       final inverseRate = resp.data.price;
       if (inverseRate == Decimal.zero) rethrow;
-      final rate =
-          (Decimal.one / inverseRate).toDecimal(scaleOnInfinitePrecision: 8);
+      final rate = (Decimal.one / inverseRate).toDecimal(
+        scaleOnInfinitePrecision: 8,
+      );
       await _fxRepo.upsertDaily(
         baseCurrency: base,
         quoteCurrency: quote,

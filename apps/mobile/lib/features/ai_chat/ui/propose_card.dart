@@ -109,7 +109,8 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         return _CollapsedView(
           plan: plan,
           applyState: state,
-          onUndo: state.status == ProposalApplyStatus.applied &&
+          onUndo:
+              state.status == ProposalApplyStatus.applied &&
                   state.isUndoableAt(DateTime.now())
               ? _onUndo
               : null,
@@ -180,9 +181,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onCancel() async {
-    await _persist(
-      _applyState.copyWith(status: ProposalApplyStatus.cancelled),
-    );
+    await _persist(_applyState.copyWith(status: ProposalApplyStatus.cancelled));
   }
 
   Future<void> _onUndo() async {
@@ -215,10 +214,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     final result = await showModalBottomSheet<Map<String, Object?>>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => ProposalEditSheet(
-        plan: plan,
-        initial: _overrides,
-      ),
+      builder: (ctx) => ProposalEditSheet(plan: plan, initial: _overrides),
     );
     if (result == null || !mounted) return;
     setState(() => _overrides = result);
@@ -258,9 +254,7 @@ class _ExpandedView extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.tertiaryContainer.withValues(alpha: 0.35),
         borderRadius: Radii.brMd,
-        border: Border.all(
-          color: cs.tertiary.withValues(alpha: 0.45),
-        ),
+        border: Border.all(color: cs.tertiary.withValues(alpha: 0.45)),
         boxShadow: AppElevations.of(context).level1,
       ),
       padding: const EdgeInsets.all(Spacing.s12),
@@ -269,7 +263,11 @@ class _ExpandedView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(_iconFor(plan.kind), size: 18, color: cs.onTertiaryContainer),
+              Icon(
+                _iconFor(plan.kind),
+                size: 18,
+                color: cs.onTertiaryContainer,
+              ),
               const SizedBox(width: Spacing.s8),
               Text(
                 l10n.aiChatProposalPendingHeader(
@@ -378,7 +376,8 @@ class _CollapsedView extends StatelessWidget {
       case ProposalApplyStatus.applied:
         icon = Icons.check_circle;
         color = cs.primary;
-        label = applyState.shortLabel ??
+        label =
+            applyState.shortLabel ??
             l10n.aiChatProposalAppliedFallback(plan.summaryZh);
       case ProposalApplyStatus.undone:
         icon = Icons.undo;
@@ -400,31 +399,31 @@ class _CollapsedView extends StatelessWidget {
       child: FCard.raw(
         child: Padding(
           padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s12,
-          vertical: Spacing.s8,
-        ),
+            horizontal: Spacing.s12,
+            vertical: Spacing.s8,
+          ),
           child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: Spacing.s8),
-            Expanded(
-              child: Text(
-                label,
-                style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: Spacing.s8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            if (onUndo != null && secondsLeft > 0)
-              SButton(
-                variant: SButtonVariant.ghost,
-                onPressed: onUndo,
-                icon: Icons.undo,
-                label: l10n.aiChatProposalUndoCountdown(secondsLeft),
-                dense: true,
-              ),
-          ],
-        ),
+              if (onUndo != null && secondsLeft > 0)
+                SButton(
+                  variant: SButtonVariant.ghost,
+                  onPressed: onUndo,
+                  icon: Icons.undo,
+                  label: l10n.aiChatProposalUndoCountdown(secondsLeft),
+                  dense: true,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -447,46 +446,46 @@ class _ClarificationView extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(Spacing.s12),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.help_outline, size: 18, color: cs.tertiary),
-                const SizedBox(width: Spacing.s8),
-                Text(
-                  l10n.aiChatProposalNeedsClarificationHeader(
-                    proposalKindLabel(l10n, plan.kind),
-                  ),
-                  style: tt.labelMedium?.copyWith(color: cs.onSurface),
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.s6),
-            Text(
-              plan.reason,
-              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-            ),
-            if (plan.candidates.isNotEmpty) ...[
-              const SizedBox(height: Spacing.s8),
-              Text(
-                l10n.aiChatProposalCandidatesHeading,
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-              const SizedBox(height: Spacing.s4),
-              Wrap(
-                spacing: Spacing.s8,
-                runSpacing: Spacing.s4,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  for (final c in plan.candidates)
-                    Chip(
-                      label: Text(c.label ?? c.id),
-                      visualDensity: VisualDensity.compact,
+                  Icon(Icons.help_outline, size: 18, color: cs.tertiary),
+                  const SizedBox(width: Spacing.s8),
+                  Text(
+                    l10n.aiChatProposalNeedsClarificationHeader(
+                      proposalKindLabel(l10n, plan.kind),
                     ),
+                    style: tt.labelMedium?.copyWith(color: cs.onSurface),
+                  ),
                 ],
               ),
+              const SizedBox(height: Spacing.s6),
+              Text(
+                plan.reason,
+                style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+              ),
+              if (plan.candidates.isNotEmpty) ...[
+                const SizedBox(height: Spacing.s8),
+                Text(
+                  l10n.aiChatProposalCandidatesHeading,
+                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: Spacing.s4),
+                Wrap(
+                  spacing: Spacing.s8,
+                  runSpacing: Spacing.s4,
+                  children: [
+                    for (final c in plan.candidates)
+                      Chip(
+                        label: Text(c.label ?? c.id),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ],
             ],
-          ],
-        ),
+          ),
         ),
       ),
     );
@@ -499,11 +498,7 @@ class _ClarificationView extends StatelessWidget {
 /// doesn't fit those slots stays inside the raw plan, accessible via the
 /// edit sheet's "完整编辑" follow-up.
 class ProposalPayloadDetails extends StatelessWidget {
-  const ProposalPayloadDetails({
-    super.key,
-    required this.plan,
-    this.overrides,
-  });
+  const ProposalPayloadDetails({super.key, required this.plan, this.overrides});
 
   final ReadyProposalPlan plan;
   final Map<String, Object?>? overrides;
@@ -564,11 +559,7 @@ class ProposalPayloadDetails extends StatelessWidget {
 /// these flows back to the full FIR-44 / FIR-63 / FIR-64 entry pages —
 /// surfaced as a TextButton at the bottom of the sheet.
 class ProposalEditSheet extends StatefulWidget {
-  const ProposalEditSheet({
-    super.key,
-    required this.plan,
-    this.initial,
-  });
+  const ProposalEditSheet({super.key, required this.plan, this.initial});
 
   final ReadyProposalPlan plan;
   final Map<String, Object?>? initial;
@@ -887,22 +878,22 @@ List<_Row> _rowsFor(
 }
 
 IconData _iconFor(ProposalKind kind) => switch (kind) {
-      ProposalKind.trade => Icons.trending_up,
-      ProposalKind.expense => Icons.receipt_long,
-      ProposalKind.liabilityPayment => Icons.payments_outlined,
-      ProposalKind.accountCreate => Icons.account_balance_outlined,
-      ProposalKind.assetValuation => Icons.update,
-      ProposalKind.unknown => Icons.help_outline,
-    };
+  ProposalKind.trade => Icons.trending_up,
+  ProposalKind.expense => Icons.receipt_long,
+  ProposalKind.liabilityPayment => Icons.payments_outlined,
+  ProposalKind.accountCreate => Icons.account_balance_outlined,
+  ProposalKind.assetValuation => Icons.update,
+  ProposalKind.unknown => Icons.help_outline,
+};
 
 String _tradeTypeLabel(AppLocalizations l10n, String wire) => switch (wire) {
-      'buy' => l10n.tradeTypeBuy,
-      'sell' => l10n.tradeTypeSell,
-      'transferIn' => l10n.tradeTypeTransferIn,
-      'transferOut' => l10n.tradeTypeTransferOut,
-      'valuationAdjust' => l10n.tradeTypeValuationAdjust,
-      _ => wire,
-    };
+  'buy' => l10n.tradeTypeBuy,
+  'sell' => l10n.tradeTypeSell,
+  'transferIn' => l10n.tradeTypeTransferIn,
+  'transferOut' => l10n.tradeTypeTransferOut,
+  'valuationAdjust' => l10n.tradeTypeValuationAdjust,
+  _ => wire,
+};
 
 /// Batch action row shown above multiple pending propose cards in the
 /// same assistant turn. Hidden when there's only zero or one ready

@@ -261,25 +261,22 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                 )
               : Text(l10n.accountFormEditTitle))
         : Text(l10n.accountFormCreateTitle);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: title,
-        actions: [
+        suffixes: [
           if (widget.isEdit)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.delete_outline),
-              tooltip: l10n.accountFormDeleteTooltip,
-              onPressed: _busy ? null : _delete,
+              onPress: _busy ? null : _delete,
             ),
         ],
       ),
-      body: loadingExisting
-          ? const Center(child: CircularProgressIndicator())
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: loadingExisting
+          ? const Center(child: FCircularProgress())
           : Form(
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -289,17 +286,19 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
                   DropdownButtonFormField<AccountType>(
-  isExpanded: true,
+                    isExpanded: true,
                     initialValue: _type,
-  decoration: InputDecoration(labelText: l10n.accountFormTypeLabel),
-  items: [
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormTypeLabel,
+                    ),
+                    items: [
                       for (final t in AccountType.values)
                         DropdownMenuItem(
                           value: t,
                           child: Text(accountTypeLabel(l10n, t)),
                         ),
                     ],
-  onChanged: (v) {
+                    onChanged: (v) {
                       if (v == null) return;
                       setState(() {
                         _type = v;
@@ -308,27 +307,30 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         }
                       });
                     },
-),
+                  ),
                   const SizedBox(height: Spacing.s12),
                   DropdownButtonFormField<AccountCategory>(
-  isExpanded: true,
+                    isExpanded: true,
                     initialValue: _category,
-  decoration: InputDecoration(labelText: l10n.accountFormCategoryLabel, helperText: l10n.accountFormCategoryHelper),
-  items: [
+                    decoration: InputDecoration(
+                      labelText: l10n.accountFormCategoryLabel,
+                      helperText: l10n.accountFormCategoryHelper,
+                    ),
+                    items: [
                       for (final c in AccountCategory.values)
                         DropdownMenuItem(
                           value: c,
                           child: Text(accountCategoryLabel(l10n, c)),
                         ),
                     ],
-  onChanged: (v) {
+                    onChanged: (v) {
                       if (v == null) return;
                       setState(() {
                         _category = v;
                         _categoryUserPicked = true;
                       });
                     },
-),
+                  ),
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _nameController,
@@ -393,24 +395,25 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   NoteField(controller: _noteController, focusNode: _noteFocus),
                   if (widget.isEdit) ...[
                     const SizedBox(height: Spacing.s12),
-                    SwitchListTile(
-                      title: Text(l10n.accountFormArchivedTitle),
-                      subtitle: Text(l10n.accountFormArchivedSubtitle),
+                    FSwitch(
+                      label: Text(l10n.accountFormArchivedTitle),
+                      description: Text(l10n.accountFormArchivedSubtitle),
                       value: _archived,
-                      onChanged: (v) => setState(() => _archived = v),
+                      onChange: (v) => setState(() => _archived = v),
                     ),
                   ],
                   const SizedBox(height: Spacing.s24),
                   FButton(
                     variant: FButtonVariant.primary,
                     onPress: _busy ? null : _save,
-                    child: Text(_busy
-                        ? l10n.accountFormSaving
-                        : l10n.accountFormSave),
+                    child: Text(
+                      _busy ? l10n.accountFormSaving : l10n.accountFormSave,
+                    ),
                   ),
                 ],
               ),
             ),
+        ),
     );
   }
 }

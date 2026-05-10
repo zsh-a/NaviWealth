@@ -7,12 +7,7 @@ import '../tokens/motion_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 
 /// Toast severity levels.
-enum ToastKind {
-  success,
-  warning,
-  error,
-  info,
-}
+enum ToastKind { success, warning, error, info }
 
 /// Top-anchored glass toast that replaces Material's bottom SnackBar.
 ///
@@ -160,21 +155,18 @@ class _ToastWidgetState extends State<_ToastWidget>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Motion.medium,
-    );
+    _controller = AnimationController(vsync: this, duration: Motion.medium);
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
       curve: Motion.emphasizedDecelerate,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Motion.emphasizedDecelerate,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: Motion.emphasizedDecelerate,
+          ),
+        );
     _controller.forward();
   }
 
@@ -235,55 +227,52 @@ class _ToastWidgetState extends State<_ToastWidget>
                 clipBehavior: Clip.antiAlias,
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(color: accent, width: 3),
-                    ),
+                    border: Border(left: BorderSide(color: accent, width: 3)),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: Spacing.s12,
                     vertical: Spacing.s12,
                   ),
                   child: Row(
-                      children: [
-                        Icon(_icon(), color: accent, size: 20),
-                        const SizedBox(width: Spacing.s8),
-                        Expanded(
-                          child: Text(
-                            widget.message,
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                    children: [
+                      Icon(_icon(), color: accent, size: 20),
+                      const SizedBox(width: Spacing.s8),
+                      Expanded(
+                        child: Text(
+                          widget.message,
+                          style: theme.textTheme.bodyMedium,
                         ),
-                        if (widget.actionLabel != null &&
-                            widget.onAction != null)
-                          GestureDetector(
-                            onTap: () {
-                              widget.onAction?.call();
-                              widget.onDismiss();
-                            },
-                            child: Text(
-                              widget.actionLabel!,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: theme.colorScheme.primary,
-                              ),
+                      ),
+                      if (widget.actionLabel != null && widget.onAction != null)
+                        GestureDetector(
+                          onTap: () {
+                            widget.onAction?.call();
+                            widget.onDismiss();
+                          },
+                          child: Text(
+                            widget.actionLabel!,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.primary,
                             ),
                           ),
-                        const SizedBox(width: Spacing.s4),
-                        GestureDetector(
-                          onTap: widget.onDismiss,
-                          child: Icon(
-                            Icons.close_rounded,
-                            size: 18,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
                         ),
-                      ],
-                    ),
+                      const SizedBox(width: Spacing.s4),
+                      GestureDetector(
+                        onTap: widget.onDismiss,
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 }

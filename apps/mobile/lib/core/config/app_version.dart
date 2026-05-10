@@ -24,10 +24,10 @@ class AppVersionInfo {
   );
 
   static AppVersionInfo fromPackage(PackageInfo info) => AppVersionInfo(
-        version: info.version,
-        buildNumber: info.buildNumber,
-        commitSha: _embeddedSha,
-      );
+    version: info.version,
+    buildNumber: info.buildNumber,
+    commitSha: _embeddedSha,
+  );
 }
 
 /// Runtime app version, build number, and commit SHA. Resolved once at

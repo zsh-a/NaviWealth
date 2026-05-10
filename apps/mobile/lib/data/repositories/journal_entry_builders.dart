@@ -74,16 +74,8 @@ class JournalEntryBuilders {
   }) {
     _assertPositive(qty, 'qty');
     _assertPositive(price, 'price');
-    final fee = _normalizeOptionalAmount(
-      feeAmount,
-      feeAccountId,
-      label: 'fee',
-    );
-    final tax = _normalizeOptionalAmount(
-      taxAmount,
-      taxAccountId,
-      label: 'tax',
-    );
+    final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
+    final tax = _normalizeOptionalAmount(taxAmount, taxAccountId, label: 'tax');
 
     final notional = qty * price;
     final feeCcy = feeCurrency ?? quoteCurrency;
@@ -222,16 +214,8 @@ class JournalEntryBuilders {
         'is FIR-132 territory.',
       );
     }
-    final fee = _normalizeOptionalAmount(
-      feeAmount,
-      feeAccountId,
-      label: 'fee',
-    );
-    final tax = _normalizeOptionalAmount(
-      taxAmount,
-      taxAccountId,
-      label: 'tax',
-    );
+    final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
+    final tax = _normalizeOptionalAmount(taxAmount, taxAccountId, label: 'tax');
 
     final grossProceeds = qty * price;
     final realisedPnl = (price - costPerUnit) * qty;
@@ -509,9 +493,7 @@ class JournalEntryBuilders {
         settledOn: settledOn,
         narration: narration ?? 'Dividend',
         payee: payee,
-        tagIds: assetUnit == null
-            ? tagIds
-            : _withAssetTag(tagIds, assetUnit),
+        tagIds: assetUnit == null ? tagIds : _withAssetTag(tagIds, assetUnit),
       ),
       postings: postings,
     );
@@ -546,9 +528,7 @@ class JournalEntryBuilders {
     }
     final total = principal + interest;
     if (total == Decimal.zero) {
-      throw ArgumentError(
-        'liabilityPayment requires principal + interest > 0',
-      );
+      throw ArgumentError('liabilityPayment requires principal + interest > 0');
     }
 
     final postings = <PostingDraft>[
@@ -747,11 +727,7 @@ class JournalEntryBuilders {
     List<String> tagIds = const <String>[],
   }) {
     if (newValuation <= Decimal.zero) {
-      throw ArgumentError.value(
-        newValuation,
-        'newValuation',
-        'must be > 0',
-      );
+      throw ArgumentError.value(newValuation, 'newValuation', 'must be > 0');
     }
     // Cash-class: units=1 with price=newValuation (absolute value).
     // Physical/security: units=quantity with price=newValuation (per-unit).

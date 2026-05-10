@@ -62,7 +62,10 @@ class RebalanceEngine {
     Money totalAssets,
   ) {
     if (totalAssets.amount <= Decimal.zero) {
-      return {for (final cat in AssetCategory.values) if (cat != AssetCategory.liability) cat: 0.0};
+      return {
+        for (final cat in AssetCategory.values)
+          if (cat != AssetCategory.liability) cat: 0.0,
+      };
     }
     final total = totalAssets.amount.toDouble();
     final weights = <AssetCategory, double>{};
@@ -91,12 +94,14 @@ class RebalanceEngine {
       final targetW = target[cat];
       final dev = actualW - targetW;
       final severity = _severity(dev.abs());
-      drifts.add(Drift(
-        category: cat,
-        actualWeight: actualW,
-        targetWeight: targetW,
-        severity: severity,
-      ));
+      drifts.add(
+        Drift(
+          category: cat,
+          actualWeight: actualW,
+          targetWeight: targetW,
+          severity: severity,
+        ),
+      );
     }
     return drifts;
   }
@@ -123,11 +128,13 @@ class RebalanceEngine {
       if (drift.deviation <= 0) continue;
       final sellAmount = total * Decimal.parse(drift.deviation.toString());
       if (sellAmount <= Decimal.zero) continue;
-      trades.add(SuggestedTrade(
-        category: drift.category,
-        direction: TradeDirection.sell,
-        amount: Money(sellAmount, totalAssets.currency),
-      ));
+      trades.add(
+        SuggestedTrade(
+          category: drift.category,
+          direction: TradeDirection.sell,
+          amount: Money(sellAmount, totalAssets.currency),
+        ),
+      );
     }
 
     // Then buy underweight categories.
@@ -135,33 +142,41 @@ class RebalanceEngine {
       if (drift.deviation >= 0) continue;
       final buyAmount = total * Decimal.parse((-drift.deviation).toString());
       if (buyAmount <= Decimal.zero) continue;
-      trades.add(SuggestedTrade(
-        category: drift.category,
-        direction: TradeDirection.buy,
-        amount: Money(buyAmount, totalAssets.currency),
-      ));
+      trades.add(
+        SuggestedTrade(
+          category: drift.category,
+          direction: TradeDirection.buy,
+          amount: Money(buyAmount, totalAssets.currency),
+        ),
+      );
     }
 
     return trades;
   }
 
   Money _estimateFees(List<SuggestedTrade> trades) {
-    if (trades.isEmpty) return Money.zero(trades.isEmpty ? 'CNY' : trades.first.amount.currency);
+    if (trades.isEmpty) {
+      return Money.zero(trades.isEmpty ? 'CNY' : trades.first.amount.currency);
+    }
     final currency = trades.first.amount.currency;
     var totalFee = Decimal.zero;
     for (final trade in trades) {
-      totalFee += trade.amount.amount * Decimal.parse(estimatedFeeRate.toString());
+      totalFee +=
+          trade.amount.amount * Decimal.parse(estimatedFeeRate.toString());
     }
     return Money(totalFee, currency);
   }
 
   Money _estimateTaxes(List<SuggestedTrade> trades) {
-    if (trades.isEmpty) return Money.zero(trades.isEmpty ? 'CNY' : trades.first.amount.currency);
+    if (trades.isEmpty) {
+      return Money.zero(trades.isEmpty ? 'CNY' : trades.first.amount.currency);
+    }
     final currency = trades.first.amount.currency;
     var totalTax = Decimal.zero;
     for (final trade in trades) {
       if (trade.isSell) {
-        totalTax += trade.amount.amount * Decimal.parse(estimatedTaxRate.toString());
+        totalTax +=
+            trade.amount.amount * Decimal.parse(estimatedTaxRate.toString());
       }
     }
     return Money(totalTax, currency);
@@ -181,8 +196,8 @@ class RebalanceEngine {
     if (totalAssets.amount <= Decimal.zero) return 0;
     // After perfect rebalance, drift → 0. Estimate with a small residual
     // due to rounding and fee drag.
-    final feeDrag = _estimateFees(trades).amount.toDouble() /
-        totalAssets.amount.toDouble();
+    final feeDrag =
+        _estimateFees(trades).amount.toDouble() / totalAssets.amount.toDouble();
     return feeDrag;
   }
 }

@@ -32,7 +32,7 @@ class LiabilitiesPage extends ConsumerWidget {
     final summaries = summariesAsync.value ?? const {};
 
     final body = asyncList.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => Center(child: Text('$e')),
       data: (items) {
         if (items.isEmpty) {
@@ -42,35 +42,32 @@ class LiabilitiesPage extends ConsumerWidget {
         // per-item layout during scroll, critical for 120fps.
         const itemHeight = 72.0 + Spacing.s8;
         return ListView.builder(
-            padding: Spacing.pageMobile.copyWith(
-              bottom:
-                  Spacing.pageMobile.bottom +
-                  Spacing.floatingBarClearance +
-                  MediaQuery.paddingOf(context).bottom,
-            ),
-            itemCount: items.length,
-            itemExtent: itemHeight,
-            itemBuilder: (context, i) => _LiabilityListTile(
-              liability: items[i],
-              summary: summaries[items[i].id],
-              formatters: formatters,
-            ),
-          );
+          padding: Spacing.pageMobile.copyWith(
+            bottom:
+                Spacing.pageMobile.bottom +
+                Spacing.floatingBarClearance +
+                MediaQuery.paddingOf(context).bottom,
+          ),
+          itemCount: items.length,
+          itemExtent: itemHeight,
+          itemBuilder: (context, i) => _LiabilityListTile(
+            liability: items[i],
+            summary: summaries[items[i].id],
+            formatters: formatters,
+          ),
+        );
       },
     );
 
     if (embedded) return body;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.liabilitiesAppBarTitle),
-      ),
-      body: body,
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: body,
+        ),
     );
   }
 }

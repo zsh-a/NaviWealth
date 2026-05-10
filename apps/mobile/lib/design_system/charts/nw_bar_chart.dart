@@ -48,8 +48,9 @@ class NwBarChart extends StatelessWidget {
     }
 
     final palette = ChartPalette.of(context);
-    final categoryCount =
-        series.map((s) => s.data.length).reduce((a, b) => a > b ? a : b);
+    final categoryCount = series
+        .map((s) => s.data.length)
+        .reduce((a, b) => a > b ? a : b);
 
     // Pre-resolve series colors.
     final colors = <Color>[
@@ -73,45 +74,53 @@ class NwBarChart extends StatelessWidget {
         // Build a single rod with stacked items.
         final stackItems = <BarChartRodStackItem>[];
         for (var si = 0; si < series.length; si++) {
-          final datum = ci < series[si].data.length ? series[si].data[ci] : null;
+          final datum = ci < series[si].data.length
+              ? series[si].data[ci]
+              : null;
           if (datum == null) continue;
           final color = datum.colorOverride ?? colors[si];
           if (datum.value >= 0) {
-            stackItems.add(BarChartRodStackItem(
-              stackTop,
-              stackTop + datum.value,
-              color,
-            ));
+            stackItems.add(
+              BarChartRodStackItem(stackTop, stackTop + datum.value, color),
+            );
             stackTop += datum.value;
           } else {
-            stackItems.add(BarChartRodStackItem(
-              stackBottom + datum.value,
-              stackBottom,
-              color,
-            ));
+            stackItems.add(
+              BarChartRodStackItem(
+                stackBottom + datum.value,
+                stackBottom,
+                color,
+              ),
+            );
             stackBottom += datum.value;
           }
         }
-        rods.add(BarChartRodData(
-          toY: stackTop,
-          fromY: stackBottom,
-          width: barWidth,
-          rodStackItems: stackItems,
-          borderRadius: const BorderRadius.all(Radius.circular(2)),
-        ));
+        rods.add(
+          BarChartRodData(
+            toY: stackTop,
+            fromY: stackBottom,
+            width: barWidth,
+            rodStackItems: stackItems,
+            borderRadius: const BorderRadius.all(Radius.circular(2)),
+          ),
+        );
         if (stackTop > maxY) maxY = stackTop;
         if (stackBottom < minY) minY = stackBottom;
       } else {
         for (var si = 0; si < series.length; si++) {
-          final datum = ci < series[si].data.length ? series[si].data[ci] : null;
+          final datum = ci < series[si].data.length
+              ? series[si].data[ci]
+              : null;
           if (datum == null) continue;
           final color = datum.colorOverride ?? colors[si];
-          rods.add(BarChartRodData(
-            toY: datum.value,
-            width: barWidth,
-            color: color,
-            borderRadius: const BorderRadius.all(Radius.circular(2)),
-          ));
+          rods.add(
+            BarChartRodData(
+              toY: datum.value,
+              width: barWidth,
+              color: color,
+              borderRadius: const BorderRadius.all(Radius.circular(2)),
+            ),
+          );
           if (datum.value > maxY) maxY = datum.value;
           if (datum.value < minY) minY = datum.value;
         }
@@ -198,10 +207,7 @@ class NwBarChart extends StatelessWidget {
       touchTooltipData: BarTouchTooltipData(
         getTooltipColor: (_) => palette.tooltipBackground,
         tooltipBorderRadius: BorderRadius.circular(6),
-        tooltipPadding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
+        tooltipPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
           final ci = group.x;
           final si = stacked ? rodIndex : rodIndex;
@@ -227,9 +233,7 @@ class NwBarChart extends StatelessWidget {
         // that owns the segment under the finger; for grouped bars, the
         // rod index does the same.
         final si = stacked
-            ? (spot.touchedStackItemIndex >= 0
-                ? spot.touchedStackItemIndex
-                : 0)
+            ? (spot.touchedStackItemIndex >= 0 ? spot.touchedStackItemIndex : 0)
             : spot.touchedRodDataIndex;
         if (si >= series.length || ci >= series[si].data.length) return;
         final datum = series[si].data[ci];

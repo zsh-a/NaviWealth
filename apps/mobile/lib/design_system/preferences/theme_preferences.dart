@@ -70,11 +70,9 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
 /// User preference: locale override (en / zh / system).
 ///
 /// When `null`, the app follows the system locale.
-final localeProvider = StateNotifierProvider<LocaleController, Locale?>(
-  (ref) {
-    return LocaleController(ref.watch(sharedPreferencesProvider));
-  },
-);
+final localeProvider = StateNotifierProvider<LocaleController, Locale?>((ref) {
+  return LocaleController(ref.watch(sharedPreferencesProvider));
+});
 
 class LocaleController extends StateNotifier<Locale?> {
   LocaleController(this._prefs) : super(_load(_prefs));
@@ -90,10 +88,7 @@ class LocaleController extends StateNotifier<Locale?> {
 
   /// Cycle to the next supported locale: en → zh → system → en …
   void cycle() {
-    final supported = <Locale>[
-      const Locale('en'),
-      const Locale('zh'),
-    ];
+    final supported = <Locale>[const Locale('en'), const Locale('zh')];
     if (state == null) {
       // system → first supported
       set(supported.first);
