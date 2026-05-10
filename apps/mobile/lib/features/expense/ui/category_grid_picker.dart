@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -22,7 +23,6 @@ class CategoryGridPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +31,7 @@ class CategoryGridPicker extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             label ?? l10n.expenseCategoryPickerLabelDefault,
-            style: theme.textTheme.labelLarge,
+            style: context.theme.typography.sm,
           ),
         ),
         FormField<String>(
@@ -75,8 +75,8 @@ class CategoryGridPicker extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8, left: 4),
                     child: Text(
                       state.errorText!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.destructive,
                       ),
                     ),
                   ),
@@ -102,8 +102,7 @@ class _AccountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final accent = account.accentColor ?? theme.colorScheme.primary;
+    final accent = account.accentColor ?? context.theme.colors.primary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -112,7 +111,7 @@ class _AccountTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? accent.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest,
+              : context.theme.colors.secondary,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? accent : Colors.transparent,
@@ -131,7 +130,7 @@ class _AccountTile extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               account.name,
-              style: theme.textTheme.labelMedium,
+              style: context.theme.typography.xs,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

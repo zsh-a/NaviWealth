@@ -80,7 +80,7 @@ class _RateList extends ConsumerWidget {
           child: Text(
             l10n.fxRatesEmpty,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: context.theme.typography.sm.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
           ),

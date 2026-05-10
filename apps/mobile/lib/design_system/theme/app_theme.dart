@@ -49,22 +49,22 @@ class AppTheme {
       scrim: f.barrier,
     );
     final textTheme = TypographyTokens.textTheme().apply(
-      bodyColor: scheme.onSurface,
-      displayColor: scheme.onSurface,
+      bodyColor: f.foreground,
+      displayColor: f.foreground,
     );
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
       textTheme: textTheme,
-      scaffoldBackgroundColor: scheme.surface,
+      scaffoldBackgroundColor: f.background,
       visualDensity: compact
           ? VisualDensity.compact
           : VisualDensity.adaptivePlatformDensity,
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
-      hoverColor: scheme.primary.withValues(alpha: 0.04),
-      focusColor: scheme.primary.withValues(alpha: 0.06),
+      hoverColor: f.primary.withValues(alpha: 0.04),
+      focusColor: f.primary.withValues(alpha: 0.06),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),

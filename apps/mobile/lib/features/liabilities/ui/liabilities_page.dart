@@ -75,7 +75,6 @@ class _LiabilitiesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -85,14 +84,14 @@ class _LiabilitiesEmptyState extends StatelessWidget {
             Icon(
               Icons.account_balance_outlined,
               size: 48,
-              color: theme.colorScheme.onSurfaceVariant,
+              color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(height: 16),
             Text(
               l10n.liabilitiesEmptyHint,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],
@@ -136,14 +135,14 @@ class _LiabilityListTile extends StatelessWidget {
         suffix: remaining != null
             ? Text(
                 formatters.currency(remaining, code: liability.currency),
-                style: theme.textTheme.titleMedium,
+                style: context.theme.typography.md,
               )
             : Text(
                 formatters.currency(
                   liability.principal,
                   code: liability.currency,
                 ),
-                style: theme.textTheme.titleMedium,
+                style: context.theme.typography.md,
               ),
         onPress: () => context.push(AppRoutes.liability(liability.id)),
       ),

@@ -18,7 +18,6 @@ class AssetHoldingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
-    final theme = Theme.of(context);
     return snapshotAsync.when(
       loading: () => const SkeletonCard(
         padding: EdgeInsets.all(16),
@@ -53,7 +52,7 @@ class AssetHoldingCard extends ConsumerWidget {
               children: [
                 Text(
                   l10n.assetDetailHoldingsTitle,
-                  style: theme.textTheme.titleSmall,
+                  style: context.theme.typography.sm,
                 ),
                 const SizedBox(height: 12),
                 AssetDetailMetricRow(
@@ -79,7 +78,7 @@ class AssetHoldingCard extends ConsumerWidget {
                     child: AnimatedMoneyText(
                       amount: marketValueAsset?.toDouble(),
                       currencyCode: asset.currency,
-                      style: theme.textTheme.titleMedium,
+                      style: context.theme.typography.md,
                     ),
                   ),
                 ),
@@ -88,8 +87,8 @@ class AssetHoldingCard extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       l10n.assetDetailPriceUnavailable,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                   ),

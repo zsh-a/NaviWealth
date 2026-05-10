@@ -24,7 +24,6 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = ref.watch(
       appFormattersProvider(Localizations.localeOf(context)),
@@ -39,21 +38,21 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
           children: [
             Text(
               l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
-              style: theme.textTheme.titleLarge,
+              style: context.theme.typography.lg,
             ),
             const SizedBox(height: 4),
             Text(
               l10n.analyticsHoldingsCount(bucket.holdings.length),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             if (bucket.isUnclassified) ...[
               const SizedBox(height: 8),
               Text(
                 l10n.analyticsUnclassifiedRowCta,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.tertiary,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ],
@@ -75,7 +74,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                         AnimatedMoneyText(
                           amount: h.marketValueInBase.toDouble(),
                           currencyCode: baseCurrency,
-                          style: theme.textTheme.titleSmall,
+                          style: context.theme.typography.sm,
                           minDeltaThreshold: 0.01,
                         ),
                         Text(
@@ -83,8 +82,8 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                             h.weight.toDouble(),
                             decimalDigits: 1,
                           ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          style: context.theme.typography.xs.copyWith(
+                            color: context.theme.colors.mutedForeground,
                           ),
                         ),
                       ],

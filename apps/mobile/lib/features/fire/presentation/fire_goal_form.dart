@@ -77,12 +77,12 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
               children: [
                 Text(
                   l10n.fireGoalSheetTitle,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: context.theme.typography.lg,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   l10n.fireGoalSheetSubtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  style: context.theme.typography.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                 ),
@@ -110,7 +110,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                   l10n.fireGoalFieldInflation(
                     (_inflation * 100).toStringAsFixed(1),
                   ),
-                  style: Theme.of(context).textTheme.titleSmall,
+                  style: context.theme.typography.sm,
                 ),
                 FSlider(
                   control: FSliderControl.managedContinuous(

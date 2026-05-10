@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/tokens/typography_tokens.dart';
 
@@ -36,7 +37,6 @@ class FireProgressGauge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final clamped = progress.clamp(0.0, 1.0);
     return SizedBox(
       width: diameter,
@@ -50,8 +50,8 @@ class FireProgressGauge extends StatelessWidget {
               painter: _GaugePainter(
                 progress: clamped,
                 strokeWidth: strokeWidth,
-                trackColor: theme.colorScheme.surfaceContainerHigh,
-                progressColor: theme.colorScheme.primary,
+                trackColor: context.theme.colors.muted,
+                progressColor: context.theme.colors.primary,
               ),
             ),
           ),
@@ -70,7 +70,7 @@ class FireProgressGauge extends StatelessWidget {
                       centerLabel,
                       style: TypographyTokens.numericTitle.copyWith(
                         fontSize: diameter * 0.18,
-                        color: theme.colorScheme.onSurface,
+                        color: context.theme.colors.foreground,
                       ),
                     ),
                   ),
@@ -79,8 +79,8 @@ class FireProgressGauge extends StatelessWidget {
                     Text(
                       caption!,
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                   ],

@@ -103,7 +103,7 @@ class DevicesPage extends ConsumerWidget {
           children: [
             Text(
               l10n.authLogoutDialogTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             Text(l10n.authLogoutDialogBody),
@@ -203,7 +203,7 @@ class _DevicesList extends ConsumerWidget {
           children: [
             Text(
               l10n.authDeviceRevokeDialogTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             Text(
@@ -255,13 +255,16 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 40, color: theme.colorScheme.error),
+          Icon(
+            Icons.error_outline,
+            size: 40,
+            color: context.theme.colors.destructive,
+          ),
           const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           if (details != null && details!.isNotEmpty) ...[
@@ -269,8 +272,8 @@ class _ErrorView extends StatelessWidget {
             Text(
               details!,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],

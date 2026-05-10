@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../theme/market_colors.dart';
 import '../tokens/typography_tokens.dart';
@@ -679,8 +680,7 @@ class _ChartTooltip extends StatelessWidget {
     }
     final safeIndex = spotIndex.clamp(0, processed.first.points.length - 1);
     final point = processed.first.points[safeIndex];
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
+    final onSurface = context.theme.colors.foreground;
 
     // Tooltips are small, transient, and frequently re-positioned as the
     // user drags the spot indicator. Per-frame BackdropFilter resampling
@@ -695,12 +695,10 @@ class _ChartTooltip extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 200),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh.withValues(
-              alpha: 0.94,
-            ),
+            color: context.theme.colors.muted.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: context.theme.colors.border.withValues(alpha: 0.5),
               width: 1,
             ),
           ),

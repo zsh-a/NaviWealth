@@ -110,6 +110,29 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     });
   }
 
+  Future<void> _openSessionsSheet(String ownerUserId) async {
+    await showFSheet<void>(
+      context: context,
+      side: FLayout.rtl,
+      builder: (ctx) => SafeArea(
+        child: SizedBox(
+          width: 320,
+          child: SessionsPanel(
+            activeSessionId: _activeSessionId,
+            onSelect: (id) {
+              setState(() => _activeSessionId = id);
+              Navigator.of(ctx).pop();
+            },
+            onNew: () async {
+              Navigator.of(ctx).pop();
+              await _newSession(ownerUserId);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -118,10 +141,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       return FScaffold(
         header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
         childPad: false,
-        child: const Material(
-          color: Colors.transparent,
-          child: _LoginRequired(),
-        ),
+        child: const _LoginRequired(),
       );
     }
 
@@ -165,25 +185,22 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           return FScaffold(
             header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
             childPad: false,
-            child: Material(
-              color: Colors.transparent,
-              child: MasterDetailLayout(
-                master: SessionsPanel(
-                  activeSessionId: desktopActiveId,
-                  onSelect: (id) {
-                    setState(() => _activeSessionId = id);
-                    replaceSelectedQuery(
-                      context,
-                      path: AppRoutes.ai,
-                      selected: id,
-                    );
-                  },
-                  onNew: () => _newSession(session.userId),
-                ),
-                detail: desktopActiveId == null
-                    ? pendingPane
-                    : _ChatPane(sessionId: desktopActiveId),
+            child: MasterDetailLayout(
+              master: SessionsPanel(
+                activeSessionId: desktopActiveId,
+                onSelect: (id) {
+                  setState(() => _activeSessionId = id);
+                  replaceSelectedQuery(
+                    context,
+                    path: AppRoutes.ai,
+                    selected: id,
+                  );
+                },
+                onNew: () => _newSession(session.userId),
               ),
+              detail: desktopActiveId == null
+                  ? pendingPane
+                  : _ChatPane(sessionId: desktopActiveId),
             ),
           );
         }
@@ -193,13 +210,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           header: FHeader.nested(
             title: Text(_titleForActive(session.userId, activeId, l10n)),
             suffixes: [
-              Builder(
-                builder: (ctx) => FHeaderAction(
-                  icon: const Icon(Icons.history),
-                  onPress: () {
-                    Scaffold.of(ctx).openEndDrawer();
-                  },
-                ),
+              FHeaderAction(
+                icon: const Icon(Icons.history),
+                onPress: () => _openSessionsSheet(session.userId),
               ),
               FHeaderAction(
                 icon: const Icon(Icons.add),
@@ -208,12 +221,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             ],
           ),
           childPad: false,
-          child: Material(
-            color: Colors.transparent,
-            child: activeId == null
-                ? pendingPane
-                : _ChatPane(sessionId: activeId),
-          ),
+          child: activeId == null
+              ? pendingPane
+              : _ChatPane(sessionId: activeId),
         );
       },
     );
@@ -362,8 +372,7 @@ class _EmptyConversation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final suggestions = <(String, IconData)>[
       (l10n.aiChatEmptySuggestion1, Icons.calendar_month_outlined),
@@ -396,8 +405,8 @@ class _EmptyConversation extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            cs.primary.withValues(alpha: 0.85),
-                            cs.tertiary.withValues(alpha: 0.85),
+                            colors.primary.withValues(alpha: 0.85),
+                            colors.mutedForeground.withValues(alpha: 0.85),
                           ],
                         ),
                         shape: BoxShape.circle,
@@ -405,7 +414,7 @@ class _EmptyConversation extends StatelessWidget {
                       child: Icon(
                         Icons.auto_awesome,
                         size: 28,
-                        color: cs.onPrimary,
+                        color: colors.primaryForeground,
                       ),
                     ),
                   ),
@@ -413,8 +422,8 @@ class _EmptyConversation extends StatelessWidget {
                   Text(
                     l10n.aiChatEmptyTitle,
                     textAlign: TextAlign.center,
-                    style: tt.headlineMedium?.copyWith(
-                      color: cs.onSurface,
+                    style: context.theme.typography.xl2.copyWith(
+                      color: colors.foreground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -422,7 +431,9 @@ class _EmptyConversation extends StatelessWidget {
                   Text(
                     l10n.aiChatEmptyBody,
                     textAlign: TextAlign.center,
-                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                    style: context.theme.typography.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
@@ -458,40 +469,38 @@ class _SuggestionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     return FCard.raw(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
+      child: FTappable(
+        onPress: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 16, color: colors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.foreground,
                   ),
-                  child: Icon(icon, size: 16, color: cs.onPrimaryContainer),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 12,
-                  color: cs.onSurfaceVariant,
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 12,
+                color: colors.mutedForeground,
+              ),
+            ],
           ),
         ),
       ),
@@ -504,8 +513,6 @@ class _BootstrappingPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
@@ -515,7 +522,9 @@ class _BootstrappingPane extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             l10n.aiChatBootstrappingLabel,
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
         ],
       ),
@@ -531,8 +540,6 @@ class _BootstrapErrorPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
@@ -540,12 +547,18 @@ class _BootstrapErrorPane extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 36, color: cs.error),
+            Icon(
+              Icons.error_outline,
+              size: 36,
+              color: context.theme.colors.destructive,
+            ),
             const SizedBox(height: 12),
             Text(
               l10n.commonLoadError(error.toString()),
               textAlign: TextAlign.center,
-              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.foreground,
+              ),
             ),
             const SizedBox(height: 16),
             FButton(
@@ -566,8 +579,6 @@ class _LoginRequired extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
@@ -575,11 +586,17 @@ class _LoginRequired extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.lock_outline, size: 36, color: cs.onSurfaceVariant),
+            Icon(
+              Icons.lock_outline,
+              size: 36,
+              color: context.theme.colors.mutedForeground,
+            ),
             const SizedBox(height: 12),
             Text(
               l10n.aiChatLoginRequired,
-              style: tt.titleMedium?.copyWith(color: cs.onSurface),
+              style: context.theme.typography.md.copyWith(
+                color: context.theme.colors.foreground,
+              ),
             ),
           ],
         ),

@@ -157,21 +157,20 @@ class _TotalsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           l10n.analyticsTotalValueLabel(baseCurrency),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: context.theme.typography.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
           ),
         ),
         AnimatedMoneyText(
           amount: totalValueInBase.toDouble(),
           currencyCode: baseCurrency,
-          style: theme.textTheme.titleLarge,
+          style: context.theme.typography.lg,
         ),
       ],
     );
@@ -195,13 +194,12 @@ class _BucketRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final pct = bucket.weight.toDouble();
     return FTile(
       title: Text(
         localizeBucketLabel(l10n, bucket),
-        style: theme.textTheme.titleMedium,
+        style: context.theme.typography.md,
       ),
       prefix: Container(
         width: 14,
@@ -210,8 +208,8 @@ class _BucketRow extends StatelessWidget {
       ),
       subtitle: Text(
         l10n.analyticsHoldingsCount(bucket.holdings.length),
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
         ),
       ),
       suffix: SizedBox(
@@ -223,13 +221,13 @@ class _BucketRow extends StatelessWidget {
             AnimatedMoneyText(
               amount: bucket.totalValueInBase.toDouble(),
               currencyCode: baseCurrency,
-              style: theme.textTheme.titleSmall,
+              style: context.theme.typography.sm,
               minDeltaThreshold: 0.01,
             ),
             Text(
               formatters.percent(pct, decimalDigits: 1),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],
@@ -247,7 +245,6 @@ class _UnclassifiedBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Padding(
@@ -256,7 +253,7 @@ class _UnclassifiedBanner extends StatelessWidget {
           children: [
             Icon(
               Icons.warning_amber_outlined,
-              color: theme.colorScheme.tertiary,
+              color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(width: 8),
             Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
@@ -272,7 +269,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
@@ -281,19 +277,19 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.donut_large_outlined,
             size: 48,
-            color: theme.colorScheme.onSurfaceVariant,
+            color: context.theme.colors.mutedForeground,
           ),
           const SizedBox(height: 12),
           Text(
             l10n.analyticsEmptyTitle,
-            style: theme.textTheme.titleMedium,
+            style: context.theme.typography.md,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
             l10n.analyticsEmptyHint,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
             textAlign: TextAlign.center,
           ),
@@ -337,13 +333,16 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 32),
+          Icon(
+            Icons.error_outline,
+            color: context.theme.colors.destructive,
+            size: 32,
+          ),
           const SizedBox(height: 8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 8),

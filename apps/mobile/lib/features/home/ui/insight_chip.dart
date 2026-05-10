@@ -21,8 +21,7 @@ class InsightChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
+    final effectiveIconColor = iconColor ?? context.theme.colors.primary;
 
     return FCard.raw(
       child: Material(
@@ -43,15 +42,15 @@ class InsightChip extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: context.theme.typography.xs2.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         value,
-                        style: theme.textTheme.labelLarge?.copyWith(
+                        style: context.theme.typography.sm.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
@@ -65,7 +64,7 @@ class InsightChip extends StatelessWidget {
                   Icon(
                     Icons.chevron_right,
                     size: 14,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                    color: context.theme.colors.mutedForeground.withValues(
                       alpha: 0.5,
                     ),
                   ),

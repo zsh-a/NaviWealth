@@ -21,7 +21,6 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final marketKey = assetDetailHistoryKey(asset);
-    final theme = Theme.of(context);
     if (marketKey == null) {
       return FCard.raw(
         child: Padding(
@@ -29,12 +28,15 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
+              Text(
+                l10n.assetDetailTrend30d,
+                style: context.theme.typography.sm,
+              ),
               const SizedBox(height: 8),
               Text(
                 l10n.assetDetailNoMarketLinked,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ],
@@ -57,7 +59,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     l10n.assetDetailTrend30d,
-                    style: theme.textTheme.titleSmall,
+                    style: context.theme.typography.sm,
                   ),
                 ),
                 if (historyAsync.value?.isStale == true) const _StaleBadge(),
@@ -102,7 +104,7 @@ class _ChartBody extends StatelessWidget {
         child: Center(
           child: Text(
             l10n.assetDetailTrendLoadError('${history.error}'),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: context.theme.typography.xs,
             textAlign: TextAlign.center,
           ),
         ),
@@ -160,17 +162,16 @@ class _StaleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: context.theme.colors.secondary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         l10n.assetDetailStaleBadge,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: context.theme.typography.xs2.copyWith(
+          color: context.theme.colors.mutedForeground,
         ),
       ),
     );

@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
@@ -19,12 +20,13 @@ Future<void> showCommandPalette(
 }) {
   if (_isOpen) return Future<void>.value();
   _isOpen = true;
-  return showDialog<void>(
+  return showFDialog<void>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    builder: (BuildContext ctx) =>
-        _CommandPaletteDialog(commands: commands, onAskAi: onAskAi),
+    builder: (ctx, style, animation) => FDialog.raw(
+      builder: (innerCtx, _) =>
+          _CommandPaletteDialog(commands: commands, onAskAi: onAskAi),
+    ),
   ).whenComplete(() => _isOpen = false);
 }
 
@@ -80,7 +82,6 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
         ? widget.commands
         : widget.commands.where((c) => c.matches(q)).toList(growable: false);
 
-    // Prepend a dynamic "Ask AI" entry when the user has typed a query.
     if (raw.isNotEmpty && widget.onAskAi != null) {
       final l10n = AppLocalizations.of(context);
       final aiEntry = CommandPaletteEntry(
@@ -162,69 +163,72 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final colors = context.theme.colors;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final Size mediaSize = MediaQuery.sizeOf(context);
 
     final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
     final double maxHeight = mediaSize.height * 0.6;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
-      clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Focus(
-              onKeyEvent: _onKey,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: FTextField(
-                  control: FTextFieldControl.managed(
-                    controller: _searchController,
-                  ),
-                  focusNode: _searchFocus,
-                  autofocus: true,
-                  textInputAction: TextInputAction.search,
-                  hint: l10n.commandPaletteSearchHint,
-                  prefixBuilder: (ctx, style, variants) => const Padding(
-                    padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-                    child: Icon(Icons.search, size: 18),
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.background,
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          border: Border.all(color: colors.border, width: 1),
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Focus(
+                onKeyEvent: _onKey,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: FTextField(
+                    control: FTextFieldControl.managed(
+                      controller: _searchController,
+                    ),
+                    focusNode: _searchFocus,
+                    autofocus: true,
+                    textInputAction: TextInputAction.search,
+                    hint: l10n.commandPaletteSearchHint,
+                    prefixBuilder: (ctx, style, variants) => const Padding(
+                      padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+                      child: Icon(Icons.search, size: 18),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const Divider(height: 1),
-            Flexible(
-              child: _filtered.isEmpty
-                  ? _EmptyState(
-                      message: l10n.commandPaletteEmpty,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    )
-                  : ListView.builder(
-                      controller: _listScroll,
-                      shrinkWrap: true,
-                      itemCount: _filtered.length,
-                      itemExtent: 56,
-                      itemBuilder: (BuildContext _, int i) {
-                        final CommandPaletteEntry entry = _filtered[i];
-                        final bool selected = i == _selectedIndex;
-                        return _CommandRow(
-                          entry: entry,
-                          selected: selected,
-                          onTap: () => _invoke(entry),
-                          onHover: (bool hovering) {
-                            if (hovering && !selected) {
-                              setState(() => _selectedIndex = i);
-                            }
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
+              const FDivider(),
+              Flexible(
+                child: _filtered.isEmpty
+                    ? _EmptyState(message: l10n.commandPaletteEmpty)
+                    : ListView.builder(
+                        controller: _listScroll,
+                        shrinkWrap: true,
+                        itemCount: _filtered.length,
+                        itemExtent: 56,
+                        itemBuilder: (BuildContext _, int i) {
+                          final CommandPaletteEntry entry = _filtered[i];
+                          final bool selected = i == _selectedIndex;
+                          return _CommandRow(
+                            entry: entry,
+                            selected: selected,
+                            onTap: () => _invoke(entry),
+                            onHover: (bool hovering) {
+                              if (hovering && !selected) {
+                                setState(() => _selectedIndex = i);
+                              }
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -246,18 +250,17 @@ class _CommandRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color background = selected
-        ? theme.colorScheme.surfaceContainerHighest
-        : Colors.transparent;
-    final Color labelColor = theme.colorScheme.onSurface;
-    final Color iconColor = theme.colorScheme.onSurfaceVariant;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final Color background = selected ? colors.muted : const Color(0x00000000);
+    final Color labelColor = colors.foreground;
+    final Color iconColor = colors.mutedForeground;
 
     return MouseRegion(
       onEnter: (_) => onHover(true),
       cursor: SystemMouseCursors.click,
-      child: InkWell(
-        onTap: onTap,
+      child: FTappable(
+        onPress: onTap,
         child: Container(
           color: background,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -272,7 +275,7 @@ class _CommandRow extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       entry.label,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: typography.sm.copyWith(
                         color: labelColor,
                         fontWeight: selected
                             ? FontWeight.w600
@@ -284,9 +287,7 @@ class _CommandRow extends StatelessWidget {
                     if (entry.subtitle != null)
                       Text(
                         entry.subtitle!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: iconColor,
-                        ),
+                        style: typography.xs.copyWith(color: iconColor),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -302,10 +303,9 @@ class _CommandRow extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message, required this.color});
+  const _EmptyState({required this.message});
 
   final String message;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -314,7 +314,9 @@ class _EmptyState extends StatelessWidget {
       child: Center(
         child: Text(
           message,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
+          style: context.theme.typography.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
         ),
       ),
     );

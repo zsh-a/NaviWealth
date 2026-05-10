@@ -63,10 +63,7 @@ class _LiabilityDetailBody extends ConsumerWidget {
         const SizedBox(height: 12),
         _LiabilitySummaryCard(summary: summary),
         const SizedBox(height: 16),
-        Text(
-          l10n.liabilityScheduleHeading,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text(l10n.liabilityScheduleHeading, style: context.theme.typography.md),
         const SizedBox(height: 8),
         scheduleAsync.when(
           loading: () => const Padding(
@@ -99,7 +96,6 @@ class _LiabilityHeaderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
@@ -109,25 +105,25 @@ class _LiabilityHeaderCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.name, style: theme.textTheme.titleLarge),
+            Text(l.name, style: context.theme.typography.lg),
             const SizedBox(height: 4),
             Text(
               '${liabilityTypeLabel(l10n, l.type)} · '
               '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
               '${rateTypeLabel(l10n, l.rateType)}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               formatters.currency(l.principal, code: l.currency),
-              style: theme.textTheme.headlineSmall,
+              style: context.theme.typography.xl,
             ),
             const SizedBox(height: 4),
             Text(
               formatters.percent(l.interestRate.toDouble()),
-              style: theme.textTheme.bodyMedium,
+              style: context.theme.typography.sm,
             ),
           ],
         ),
@@ -143,7 +139,6 @@ class _LiabilitySummaryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
@@ -189,8 +184,8 @@ class _LiabilitySummaryCard extends ConsumerWidget {
                   summary.paidPeriods,
                   summary.totalPeriods,
                 ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ],
@@ -209,7 +204,6 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -217,11 +211,11 @@ class _SummaryRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
           ),
-          Text(value, style: theme.textTheme.titleSmall),
+          Text(value, style: context.theme.typography.sm),
         ],
       ),
     );
@@ -236,7 +230,6 @@ class _AmortizationTable extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return FCard.raw(
@@ -261,7 +254,7 @@ class _AmortizationTable extends ConsumerWidget {
                   currency: liability.currency,
                   formatters: formatters,
                   l10n: l10n,
-                  theme: theme,
+                  theme: Theme.of(context),
                   onMarkPaid: () =>
                       _confirmMarkPaid(context, ref, row, liability),
                 );
@@ -305,7 +298,7 @@ class _AmortizationTable extends ConsumerWidget {
           children: [
             Text(
               l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             Text(l10n.liabilityScheduleMarkPaidConfirmBody(amount)),
@@ -346,7 +339,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelSmall;
+    final style = context.theme.typography.xs2;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -409,7 +402,7 @@ class _AmortizationDataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = theme.textTheme.bodySmall;
+    final textStyle = context.theme.typography.xs;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../design_system/design_system.dart';
@@ -120,8 +121,6 @@ class _HoldingsTable extends StatelessWidget {
     final visible = rows.take(_kMaxVisibleRows).toList();
     final hidden = rows.length - visible.length;
 
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -133,7 +132,9 @@ class _HoldingsTable extends StatelessWidget {
                 flex: 4,
                 child: Text(
                   '资产',
-                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
                 ),
               ),
               Expanded(
@@ -141,7 +142,9 @@ class _HoldingsTable extends StatelessWidget {
                 child: Text(
                   '数量',
                   textAlign: TextAlign.right,
-                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
                 ),
               ),
               Expanded(
@@ -149,7 +152,9 @@ class _HoldingsTable extends StatelessWidget {
                 child: Text(
                   '成本',
                   textAlign: TextAlign.right,
-                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
                 ),
               ),
             ],
@@ -161,7 +166,9 @@ class _HoldingsTable extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4, left: 8),
             child: Text(
               '还有 $hidden 项未展示',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             ),
           ),
       ],
@@ -169,8 +176,6 @@ class _HoldingsTable extends StatelessWidget {
   }
 
   Widget _holdingRowTile(BuildContext context, _HoldingRow row) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final qtyText = NumberFormat.decimalPattern().format(row.quantity);
     final primary = row.symbol ?? row.name ?? row.assetId;
     final secondary = row.symbol != null && row.name != null ? row.name! : null;
@@ -178,7 +183,9 @@ class _HoldingsTable extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3)),
+          top: BorderSide(
+            color: context.theme.colors.border.withValues(alpha: 0.3),
+          ),
         ),
       ),
       child: Row(
@@ -191,14 +198,18 @@ class _HoldingsTable extends StatelessWidget {
               children: [
                 Text(
                   primary,
-                  style: tt.bodySmall?.copyWith(color: cs.onSurface),
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.foreground,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (secondary != null)
                   Text(
                     secondary,
-                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                    style: context.theme.typography.xs2.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -210,8 +221,8 @@ class _HoldingsTable extends StatelessWidget {
             child: Text(
               qtyText,
               textAlign: TextAlign.right,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.foreground,
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
             ),
@@ -223,8 +234,8 @@ class _HoldingsTable extends StatelessWidget {
               child: MoneyText(
                 amount: row.costBasis,
                 currencyCode: row.currency,
-                style: tt.bodySmall,
-                color: cs.onSurface,
+                style: context.theme.typography.xs,
+                color: context.theme.colors.foreground,
               ),
             ),
           ),
@@ -273,8 +284,6 @@ class _XirrSummary extends StatelessWidget {
     final to = _asDate(outMap['to']);
     final flows = _asList(outMap['flows']) ?? const <Object?>[];
 
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final scopeLabel = scope == 'asset' && assetId != null
         ? '资产 $assetId'
         : '组合整体';
@@ -289,13 +298,17 @@ class _XirrSummary extends StatelessWidget {
         children: [
           Text(
             scopeLabel,
-            style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.theme.typography.xs2.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
           const SizedBox(height: 4),
           if (rate == null)
             Text(
               '无法计算（现金流方向单一或样本不足）',
-              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             )
           else
             DeltaText(
@@ -307,7 +320,9 @@ class _XirrSummary extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '$rangeLabel · ${flows.length} 条现金流',
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
         ],
       ),
@@ -349,8 +364,6 @@ class _NetWorthSparkline extends StatelessWidget {
     final end = points.last.$2;
     final delta = end - start;
 
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final chartPoints = <ChartPoint>[
       for (final p in points)
         ChartPoint(x: p.$1.millisecondsSinceEpoch.toDouble(), y: p.$2),
@@ -370,15 +383,15 @@ class _NetWorthSparkline extends StatelessWidget {
                   children: [
                     Text(
                       '当前净资产',
-                      style: tt.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
+                      style: context.theme.typography.xs2.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                     MoneyText(
                       amount: end,
                       currencyCode: currency,
                       style: TypographyTokens.numericTitle,
-                      color: cs.onSurface,
+                      color: context.theme.colors.foreground,
                     ),
                   ],
                 ),
@@ -408,7 +421,9 @@ class _NetWorthSparkline extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${points.length} 个采样点',
-            style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.theme.typography.xs2.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
         ],
       ),
@@ -453,8 +468,6 @@ class _BreakdownView extends StatelessWidget {
     buckets.sort((a, b) => b.cost.compareTo(a.cost));
     final palette = ChartPalette.of(context);
     final top = buckets.take(3).toList();
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
 
     final slices = <Slice>[
       for (var i = 0; i < buckets.length; i++)
@@ -501,7 +514,9 @@ class _BreakdownView extends StatelessWidget {
                         Expanded(
                           child: Text(
                             top[i].label,
-                            style: tt.bodySmall?.copyWith(color: cs.onSurface),
+                            style: context.theme.typography.xs.copyWith(
+                              color: context.theme.colors.foreground,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -510,8 +525,8 @@ class _BreakdownView extends StatelessWidget {
                           NumberFormat.percentPattern().format(
                             top[i].share.clamp(0.0, 1.0),
                           ),
-                          style: tt.bodySmall?.copyWith(
-                            color: cs.onSurface,
+                          style: context.theme.typography.xs.copyWith(
+                            color: context.theme.colors.foreground,
                             fontFeatures: TypographyTokens.tabularFigures,
                           ),
                         ),
@@ -524,8 +539,8 @@ class _BreakdownView extends StatelessWidget {
                     child: Text(
                       '其他 ${buckets.length - top.length} 类共 '
                       '${NumberFormat.percentPattern().format(buckets.skip(top.length).fold<double>(0, (s, b) => s + b.share).clamp(0.0, 1.0))}',
-                      style: tt.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
+                      style: context.theme.typography.xs2.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                   ),
@@ -589,8 +604,6 @@ class _RiskAlertList extends StatelessWidget {
     if (alerts.isEmpty) return const SizedBox.shrink();
     final visible = alerts.take(_kMaxVisibleRows).toList();
     final hidden = alerts.length - visible.length;
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -601,7 +614,9 @@ class _RiskAlertList extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4, left: 8),
             child: Text(
               '还有 $hidden 项未展示',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             ),
           ),
       ],
@@ -610,7 +625,6 @@ class _RiskAlertList extends StatelessWidget {
 
   Widget _alertTile(BuildContext context, _RiskAlert alert) {
     final semantic = SemanticColors.of(context);
-    final tt = Theme.of(context).textTheme;
     final (bg, fg, icon) = switch (alert.severity) {
       'high' => (
         semantic.dangerContainer,
@@ -646,9 +660,12 @@ class _RiskAlertList extends StatelessWidget {
               children: [
                 Text(
                   alert.subject.isEmpty ? '风险预警' : alert.subject,
-                  style: tt.labelSmall?.copyWith(color: fg),
+                  style: context.theme.typography.xs2.copyWith(color: fg),
                 ),
-                Text(alert.message, style: tt.bodySmall?.copyWith(color: fg)),
+                Text(
+                  alert.message,
+                  style: context.theme.typography.xs.copyWith(color: fg),
+                ),
               ],
             ),
           ),
@@ -659,7 +676,7 @@ class _RiskAlertList extends StatelessWidget {
                 NumberFormat.percentPattern().format(
                   alert.share!.clamp(0.0, 1.0),
                 ),
-                style: tt.labelSmall?.copyWith(
+                style: context.theme.typography.xs2.copyWith(
                   color: fg,
                   fontFeatures: TypographyTokens.tabularFigures,
                 ),
@@ -695,8 +712,6 @@ class _EmptyResult extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -704,12 +719,14 @@ class _EmptyResult extends StatelessWidget {
           Icon(
             positive ? Icons.check_circle_outline : Icons.inbox_outlined,
             size: 16,
-            color: cs.onSurfaceVariant,
+            color: context.theme.colors.mutedForeground,
           ),
           const SizedBox(width: 8),
           Text(
             message,
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
         ],
       ),

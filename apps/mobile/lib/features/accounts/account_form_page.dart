@@ -193,7 +193,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
           children: [
             Text(
               l10n.accountFormDeleteTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             Text(l10n.accountFormDeleteContent(_initial!.name)),
@@ -514,16 +514,12 @@ class _IconPickerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final tint = _parseHexColor(color) ?? scheme.primary;
+    final tint = _parseHexColor(color) ?? context.theme.colors.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.accountFormIconHeading,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
+        Text(l10n.accountFormIconHeading, style: context.theme.typography.xs),
         const SizedBox(height: 4),
         SizedBox(
           height: 56,
@@ -541,7 +537,7 @@ class _IconPickerSection extends StatelessWidget {
                   tooltip: l10n.accountFormNoIconTooltip,
                   child: Icon(
                     Icons.do_not_disturb_on_outlined,
-                    color: scheme.onSurfaceVariant,
+                    color: context.theme.colors.mutedForeground,
                   ),
                 );
               }
@@ -554,7 +550,7 @@ class _IconPickerSection extends StatelessWidget {
                 tooltip: entry.name,
                 child: Icon(
                   entry.icon,
-                  color: isSelected ? tint : scheme.onSurface,
+                  color: isSelected ? tint : context.theme.colors.foreground,
                 ),
               );
             },
@@ -619,15 +615,11 @@ class _ColorPickerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.accountFormColorHeading,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
+        Text(l10n.accountFormColorHeading, style: context.theme.typography.xs),
         const SizedBox(height: 4),
         Wrap(
           spacing: 8,
@@ -637,23 +629,23 @@ class _ColorPickerSection extends StatelessWidget {
               isSelected: selected == null,
               onTap: () => onChanged(null),
               tooltip: l10n.accountFormNoColorTooltip,
-              fill: scheme.surfaceContainerLow,
-              border: scheme.outlineVariant,
+              fill: context.theme.colors.muted,
+              border: context.theme.colors.border,
               child: Icon(
                 Icons.do_not_disturb_on_outlined,
                 size: 16,
-                color: scheme.onSurfaceVariant,
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             for (final hex in kAccountColorPalette)
               _ColorSwatch(
                 isSelected: selected == hex,
                 onTap: () => onChanged(hex),
-                fill: _parseHexColor(hex) ?? scheme.surfaceContainerHighest,
+                fill: _parseHexColor(hex) ?? context.theme.colors.secondary,
                 tooltip: hex,
                 border: selected == hex
-                    ? scheme.primary
-                    : scheme.outlineVariant,
+                    ? context.theme.colors.primary
+                    : context.theme.colors.border,
               ),
           ],
         ),

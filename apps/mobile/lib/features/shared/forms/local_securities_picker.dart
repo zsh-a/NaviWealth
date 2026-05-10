@@ -291,7 +291,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        style: context.theme.typography.xs.copyWith(
           color: context.theme.colors.primary,
           fontWeight: FontWeight.w600,
         ),
@@ -317,7 +317,7 @@ class _HitTile extends StatelessWidget {
       subtitle: display == null
           ? null
           : Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
-      suffix: Text(hit.currency, style: Theme.of(context).textTheme.bodySmall),
+      suffix: Text(hit.currency, style: context.theme.typography.xs),
       onPress: onTap,
     );
   }

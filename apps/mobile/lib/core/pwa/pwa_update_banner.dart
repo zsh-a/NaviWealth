@@ -1,16 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import 'pwa_update.dart';
 
-/// Renders the app's child plus a `MaterialBanner` overlay when the
-/// service worker has a new version waiting. Only the web build can ever
-/// show the banner — on mobile/desktop the underlying provider is a no-op.
+/// Renders the app's child plus an inverted-surface banner overlay when
+/// the service worker has a new version waiting. Only the web build can
+/// ever show the banner — on mobile/desktop the underlying provider is a
+/// no-op.
 ///
 /// Wrap below `MaterialApp.router`'s builder so the banner inherits
-/// `Localizations` and `Theme` and can render above the route content.
+/// `Localizations` and forui [FTheme] and can render above the route
+/// content.
 class PwaUpdateBanner extends ConsumerStatefulWidget {
   const PwaUpdateBanner({required this.child, super.key});
 
@@ -34,6 +37,7 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
     final showBanner = available && !_dismissed;
     final l10n = AppLocalizations.of(context);
 
+    final colors = context.theme.colors;
     return Stack(
       children: [
         widget.child,
@@ -44,9 +48,17 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
             bottom: 0,
             child: SafeArea(
               top: false,
-              child: Material(
-                elevation: 6,
-                color: Theme.of(context).colorScheme.inverseSurface,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.foreground,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 12,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -54,20 +66,14 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.system_update_alt,
-                        color: Theme.of(context).colorScheme.onInverseSurface,
-                      ),
+                      Icon(Icons.system_update_alt, color: colors.background),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           l10n.pwaUpdateAvailable,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onInverseSurface,
-                              ),
+                          style: context.theme.typography.sm.copyWith(
+                            color: colors.background,
+                          ),
                         ),
                       ),
                       FButton(

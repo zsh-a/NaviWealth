@@ -77,7 +77,6 @@ class _LogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final color = _colorForLevel(log.logLevel);
 
     return Padding(
@@ -101,7 +100,7 @@ class _LogTile extends StatelessWidget {
                     ),
                     child: Text(
                       log.title ?? log.logLevel?.name ?? 'log',
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: context.theme.typography.xs2.copyWith(
                         color: color,
                         fontWeight: FontWeight.w600,
                       ),
@@ -110,20 +109,20 @@ class _LogTile extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     log.displayTime(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs2.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(log.message ?? '', style: theme.textTheme.bodySmall),
+              Text(log.message ?? '', style: context.theme.typography.xs),
               if (log.error != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   '${log.error}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.destructive,
                   ),
                 ),
               ],

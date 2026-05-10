@@ -25,8 +25,6 @@ class ActivityFeedEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
@@ -48,7 +46,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                     children: [
                       Text(
                         entry.entry.narration,
-                        style: theme.textTheme.titleSmall,
+                        style: context.theme.typography.sm,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Padding(
@@ -59,8 +57,8 @@ class ActivityFeedEntryRow extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   entry.entry.payee!,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
+                                  style: context.theme.typography.xs2.copyWith(
+                                    color: context.theme.colors.mutedForeground,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -71,16 +69,16 @@ class ActivityFeedEntryRow extends StatelessWidget {
                                 ),
                                 child: Text(
                                   '\u00B7',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
+                                  style: context.theme.typography.xs2.copyWith(
+                                    color: context.theme.colors.mutedForeground,
                                   ),
                                 ),
                               ),
                             ],
                             Text(
                               timeStr,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
+                              style: context.theme.typography.xs2.copyWith(
+                                color: context.theme.colors.mutedForeground,
                               ),
                             ),
                           ],
@@ -93,9 +91,9 @@ class ActivityFeedEntryRow extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     summary,
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style: context.theme.typography.sm.copyWith(
                       fontFeatures: const [FontFeature.tabularFigures()],
-                      color: scheme.onSurface,
+                      color: context.theme.colors.foreground,
                     ),
                   ),
                 ],

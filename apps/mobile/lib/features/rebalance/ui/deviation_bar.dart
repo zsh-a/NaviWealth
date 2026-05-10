@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../domain/rebalance_models.dart';
 
@@ -22,8 +23,7 @@ class DeviationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final barColor = switch (severity) {
       DriftSeverity.ok => colorScheme.primary,
       DriftSeverity.warning => colorScheme.tertiary,
@@ -38,17 +38,17 @@ class DeviationBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+              Expanded(child: Text(label, style: context.theme.typography.sm)),
               Text(
                 '${(actualWeight * 100).toStringAsFixed(1)}%',
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: context.theme.typography.sm.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 ' / ${(targetWeight * 100).toStringAsFixed(1)}%',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
               const SizedBox(width: 8),
@@ -107,8 +107,7 @@ class _DeviationChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final sign = deviation >= 0 ? '+' : '';
     final text = '$sign${(deviation * 100).toStringAsFixed(1)}%';
 
@@ -135,7 +134,7 @@ class _DeviationChip extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: context.theme.typography.xs2.copyWith(
           color: fg,
           fontWeight: FontWeight.w600,
         ),

@@ -18,7 +18,6 @@ class BenchmarkComparisonCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final resultAsync = ref.watch(benchmarkComparisonResultProvider);
 
@@ -30,13 +29,13 @@ class BenchmarkComparisonCard extends ConsumerWidget {
           children: [
             Text(
               l10n.benchmarkComparisonTitle,
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 4),
             Text(
               l10n.benchmarkComparisonSubtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 12),

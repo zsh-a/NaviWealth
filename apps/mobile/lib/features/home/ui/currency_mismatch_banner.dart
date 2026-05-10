@@ -22,12 +22,12 @@ class CurrencyMismatchBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final mismatches = ref.watch(dashboardCurrencyMismatchesProvider);
     if (mismatches.isEmpty) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
     final base = ref.watch(dashboardBaseCurrencyProvider);
-    final theme = Theme.of(context);
     return Material(
       color: theme.colorScheme.errorContainer,
       child: InkWell(
@@ -44,7 +44,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
               Expanded(
                 child: Text(
                   l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: context.theme.typography.sm.copyWith(
                     color: theme.colorScheme.onErrorContainer,
                   ),
                 ),
@@ -52,7 +52,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 l10n.dashboardCurrencyMismatchAction,
-                style: theme.textTheme.labelLarge?.copyWith(
+                style: context.theme.typography.sm.copyWith(
                   color: theme.colorScheme.onErrorContainer,
                 ),
               ),

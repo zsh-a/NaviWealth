@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons, MaterialPageRoute, Navigator;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 Future<void> showDashboardChartFullscreen({
@@ -7,16 +8,16 @@ Future<void> showDashboardChartFullscreen({
   required String title,
   required Widget child,
 }) {
-  return showDialog<void>(
-    context: context,
-    useSafeArea: false,
-    builder: (context) =>
-        _DashboardChartFullscreenDialog(title: title, child: child),
+  return Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => _DashboardChartFullscreenPage(title: title, child: child),
+    ),
   );
 }
 
-class _DashboardChartFullscreenDialog extends StatefulWidget {
-  const _DashboardChartFullscreenDialog({
+class _DashboardChartFullscreenPage extends StatefulWidget {
+  const _DashboardChartFullscreenPage({
     required this.title,
     required this.child,
   });
@@ -25,12 +26,12 @@ class _DashboardChartFullscreenDialog extends StatefulWidget {
   final Widget child;
 
   @override
-  State<_DashboardChartFullscreenDialog> createState() =>
-      _DashboardChartFullscreenDialogState();
+  State<_DashboardChartFullscreenPage> createState() =>
+      _DashboardChartFullscreenPageState();
 }
 
-class _DashboardChartFullscreenDialogState
-    extends State<_DashboardChartFullscreenDialog> {
+class _DashboardChartFullscreenPageState
+    extends State<_DashboardChartFullscreenPage> {
   @override
   void initState() {
     super.initState();
@@ -48,27 +49,19 @@ class _DashboardChartFullscreenDialogState
 
   @override
   Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(widget.title),
-          prefixes: [
-            FHeaderAction(
-              icon: const Icon(Icons.close),
-              onPress: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-        childPad: false,
-        child: Material(
-          color: Colors.transparent,
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: widget.child,
-            ),
+    return FScaffold(
+      header: FHeader.nested(
+        title: Text(widget.title),
+        prefixes: [
+          FHeaderAction(
+            icon: const Icon(Icons.close),
+            onPress: () => Navigator.of(context).pop(),
           ),
-        ),
+        ],
+      ),
+      childPad: false,
+      child: SafeArea(
+        child: Padding(padding: const EdgeInsets.all(16), child: widget.child),
       ),
     );
   }

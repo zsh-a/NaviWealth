@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons, IconData, Navigator;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -8,7 +9,7 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 
 /// List of past chat sessions. Used as a permanent sidebar on
-/// tablet/desktop, and shown inside a [Drawer] on mobile.
+/// tablet/desktop, and as a right-slide [showFSheet] panel on mobile.
 ///
 /// Renders an empty-state cell when the user has never chatted, plus a
 /// "+" affordance the surrounding page handles by opening a brand-new
@@ -27,13 +28,11 @@ class SessionsPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final session = ref.watch(authSessionProvider);
 
     if (session == null) {
       return _PanelShell(
-        cs: cs,
         onNew: null,
         child: _PanelMessage(
           icon: Icons.lock_outline,
@@ -44,7 +43,6 @@ class SessionsPanel extends ConsumerWidget {
 
     final sessionsAsync = ref.watch(chatSessionsStreamProvider(session.userId));
     return _PanelShell(
-      cs: cs,
       onNew: onNew,
       child: sessionsAsync.when(
         loading: () => const Center(
@@ -52,7 +50,7 @@ class SessionsPanel extends ConsumerWidget {
         ),
         error: (e, _) => _PanelMessage(
           icon: Icons.error_outline,
-          iconColor: cs.error,
+          iconColor: context.theme.colors.destructive,
           message: l10n.commonLoadError(e.toString()),
         ),
         data: (sessions) {
@@ -106,7 +104,9 @@ class SessionsPanel extends ConsumerWidget {
           children: [
             Text(
               l10n.aiChatSessionDeleteTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Text(l10n.aiChatSessionDeleteBody(session.title)),
@@ -121,7 +121,7 @@ class SessionsPanel extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 FButton(
-                  variant: FButtonVariant.outline,
+                  variant: FButtonVariant.destructive,
                   onPress: () => Navigator.of(ctx).pop(true),
                   child: Text(l10n.commonDelete),
                 ),
@@ -164,7 +164,9 @@ class SessionsPanel extends ConsumerWidget {
               children: [
                 Text(
                   l10n.aiChatSessionRenameTitle,
-                  style: Theme.of(ctx).textTheme.titleMedium,
+                  style: ctx.theme.typography.md.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 FTextField(
@@ -203,44 +205,33 @@ class SessionsPanel extends ConsumerWidget {
 }
 
 class _PanelShell extends StatelessWidget {
-  const _PanelShell({
-    required this.cs,
-    required this.onNew,
-    required this.child,
-  });
+  const _PanelShell({required this.onNew, required this.child});
 
-  final ColorScheme cs;
   final VoidCallback? onNew;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
     return ColoredBox(
-      color: cs.surface,
+      color: colors.background,
       child: Column(
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outlineVariant.withValues(alpha: 0.5),
-                ),
-              ),
+              border: Border(bottom: BorderSide(color: colors.border)),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
               child: Row(
                 children: [
-                  Icon(Icons.history, size: 18, color: cs.onSurfaceVariant),
+                  Icon(Icons.history, size: 18, color: colors.mutedForeground),
                   const SizedBox(width: 8),
                   Text(
                     l10n.aiChatSessionsHeader,
-                    style: tt.titleMedium?.copyWith(
-                      color: cs.onSurface,
+                    style: context.theme.typography.md.copyWith(
+                      color: colors.foreground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -280,20 +271,21 @@ class _PanelMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 36, color: iconColor ?? cs.onSurfaceVariant),
+            Icon(icon, size: 36, color: iconColor ?? colors.mutedForeground),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: context.theme.typography.sm.copyWith(
+                color: colors.mutedForeground,
+              ),
             ),
             if (action != null) ...[const SizedBox(height: 16), action!],
           ],
@@ -320,86 +312,82 @@ class _SessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final lastAt = session.lastMessageAt ?? session.createdAt;
-    return Material(
-      color: selected
-          ? cs.primaryContainer.withValues(alpha: 0.45)
-          : Colors.transparent,
+    return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 3,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: selected ? cs.primary : Colors.transparent,
-                  borderRadius: const BorderRadius.all(Radius.circular(2)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chat_bubble_outline,
-                size: 18,
-                color: selected ? cs.primary : cs.onSurfaceVariant,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      session.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: tt.bodyMedium?.copyWith(
-                        color: cs.onSurface,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatRelative(l10n, lastAt),
-                      style: tt.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              FTooltip(
-                tipBuilder: (_, _) => Text(l10n.aiChatSessionMoreTooltip),
-                child: FButton.icon(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => _showActions(context, l10n, cs),
-                  child: Icon(
-                    Icons.more_horiz,
-                    size: 18,
-                    color: cs.onSurfaceVariant,
+      child: ColoredBox(
+        color: selected
+            ? colors.primary.withValues(alpha: 0.10)
+            : const Color(0x00000000),
+        child: FTappable(
+          onPress: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: selected ? colors.primary : const Color(0x00000000),
+                    borderRadius: const BorderRadius.all(Radius.circular(2)),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chat_bubble_outline,
+                  size: 18,
+                  color: selected ? colors.primary : colors.mutedForeground,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        session.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.theme.typography.sm.copyWith(
+                          color: colors.foreground,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatRelative(l10n, lastAt),
+                        style: context.theme.typography.xs2.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                FTooltip(
+                  tipBuilder: (_, _) => Text(l10n.aiChatSessionMoreTooltip),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => _showActions(context, l10n),
+                    child: Icon(
+                      Icons.more_horiz,
+                      size: 18,
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Future<void> _showActions(
-    BuildContext context,
-    AppLocalizations l10n,
-    ColorScheme cs,
-  ) {
+  Future<void> _showActions(BuildContext context, AppLocalizations l10n) {
     return showFSheet<void>(
       side: FLayout.btt,
       context: context,
@@ -421,7 +409,7 @@ class _SessionTile extends StatelessWidget {
               _ActionRow(
                 icon: Icons.delete_outline,
                 label: l10n.commonDelete,
-                color: cs.error,
+                color: ctx.theme.colors.destructive,
                 onTap: () {
                   Navigator.of(ctx).pop();
                   onDelete();
@@ -450,22 +438,21 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final fg = color ?? cs.onSurface;
-    return Material(
-      color: Colors.transparent,
+    final fg = color ?? context.theme.colors.foreground;
+    return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
+      child: FTappable(
+        onPress: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
               Icon(icon, size: 20, color: fg),
               const SizedBox(width: 12),
-              Text(label, style: tt.bodyLarge?.copyWith(color: fg)),
+              Text(
+                label,
+                style: context.theme.typography.md.copyWith(color: fg),
+              ),
             ],
           ),
         ),

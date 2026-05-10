@@ -133,7 +133,6 @@ class _NetWorthHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
@@ -144,7 +143,7 @@ class _NetWorthHeader extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
+            Text(l10n.homeNetWorthTitle, style: context.theme.typography.md),
             const SizedBox(height: 8),
             // Cap dynamic-text scaling on the 32dp hero number so users on
             // 200% system font size don't blow the card out of its row.
@@ -178,8 +177,8 @@ class _NetWorthHeader extends ConsumerWidget {
                       snapshot.baseCurrency,
                     )
                   : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],
@@ -276,15 +275,14 @@ class _MetricCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: context.theme.typography.xs2.copyWith(
+            color: context.theme.colors.mutedForeground,
           ),
         ),
         const SizedBox(width: 4),
@@ -301,15 +299,14 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
           AppLocalizations.of(context).dashboardSnapshotError('$error'),
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.error,
+          style: context.theme.typography.sm.copyWith(
+            color: context.theme.colors.destructive,
           ),
         ),
       ),

@@ -103,7 +103,6 @@ class _PhysicalAssetCreateSheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
@@ -125,7 +124,7 @@ class _PhysicalAssetCreateSheetState
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.outlineVariant,
+                      color: context.theme.colors.border,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -134,7 +133,7 @@ class _PhysicalAssetCreateSheetState
                   _isVehicle
                       ? l10n.physicalAssetAddVehicle
                       : l10n.physicalAssetAddRealEstate,
-                  style: theme.textTheme.titleLarge,
+                  style: context.theme.typography.lg,
                 ),
                 const SizedBox(height: 16),
                 FTextFormField(

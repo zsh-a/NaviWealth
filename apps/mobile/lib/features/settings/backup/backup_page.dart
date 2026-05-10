@@ -282,27 +282,24 @@ class BackupPage extends ConsumerWidget {
   }
 
   /// Shows a non-dismissable progress indicator and returns a callback
-  /// that dismisses it. Uses [showGeneralDialog] instead of
-  /// [showFSheet] because GoRouter's navigator takes over the
-  /// root navigator — popping a sheet from there removes the underlying
-  /// page. [showGeneralDialog] creates its own Navigator scope, so
-  /// `Navigator.of(context).pop()` only dismisses the dialog.
+  /// that dismisses it. Uses [showFDialog] which creates its own
+  /// Navigator scope, so `Navigator.of(context).pop()` only dismisses
+  /// the dialog (not the underlying GoRouter page).
   Future<void> Function() _showProgressSheet(
     BuildContext context,
     String message,
   ) {
     final completer = Completer<VoidCallback>();
-    showGeneralDialog<void>(
+    showFDialog<void>(
       context: context,
       barrierDismissible: false,
-      barrierLabel: 'backup-progress',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (ctx, _, _) => _ProgressSheet(
-        message: message,
-        onReady: (dismiss) {
-          if (!completer.isCompleted) completer.complete(dismiss);
-        },
+      builder: (ctx, style, animation) => FDialog.raw(
+        builder: (innerCtx, _) => _ProgressSheet(
+          message: message,
+          onReady: (dismiss) {
+            if (!completer.isCompleted) completer.complete(dismiss);
+          },
+        ),
       ),
     );
     return () async {
@@ -319,19 +316,18 @@ class _WebBackupSecurityBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.security_outlined, color: theme.colorScheme.primary),
+            Icon(Icons.security_outlined, color: context.theme.colors.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 l10n.backupWebSecurityWarning,
-                style: theme.textTheme.bodyMedium,
+                style: context.theme.typography.sm,
               ),
             ),
           ],
@@ -386,7 +382,7 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+            Text(widget.title, style: context.theme.typography.lg),
             const SizedBox(height: 16),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _controller),
@@ -470,12 +466,12 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
           children: [
             Text(
               l10n.backupConfirmRestoreTitle,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: context.theme.typography.lg,
             ),
             const SizedBox(height: 8),
             Text(
               l10n.backupConfirmRestoreMessage,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: context.theme.typography.sm.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
@@ -556,24 +552,17 @@ class _ProgressSheetState extends State<_ProgressSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          child: Row(
-            children: [
-              const FCircularProgress(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  widget.message,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const FCircularProgress(),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(widget.message, style: context.theme.typography.sm),
           ),
-        ),
+        ],
       ),
     );
   }

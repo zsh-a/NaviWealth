@@ -22,7 +22,6 @@ class ExpenseCategoryPieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -31,7 +30,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
           children: [
             Text(
               l10n.expenseReportCategoryShare,
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 12),
             if (report.byCategory.isEmpty)
@@ -81,7 +80,6 @@ class ExpenseTrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final palette = ChartPalette.of(context);
     final data = [
       for (final bucket in report.monthlyBuckets)
@@ -99,7 +97,7 @@ class ExpenseTrendCard extends StatelessWidget {
           children: [
             Text(
               l10n.expenseReportMonthlyTrend,
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 12),
             LayoutBuilder(
@@ -150,7 +148,6 @@ class ExpenseCategoryListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     if (report.byCategory.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -164,7 +161,7 @@ class ExpenseCategoryListCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
               child: Text(
                 l10n.expenseReportCategoryDetail,
-                style: theme.textTheme.titleMedium,
+                style: context.theme.typography.md,
               ),
             ),
             for (final breakdown in report.byCategory)
@@ -234,7 +231,6 @@ class _PieLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final palette = ChartPalette.of(context);
     final total = report.total.amount.toDouble();
     return Column(
@@ -265,8 +261,8 @@ class _PieLegend extends StatelessWidget {
         if (report.byCategory.isEmpty)
           Text(
             l10n.expenseReportNoExpenses,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
           ),
       ],
@@ -293,7 +289,6 @@ class _LegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -311,11 +306,11 @@ class _LegendRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: theme.textTheme.bodyMedium),
+                  Text(label, style: context.theme.typography.sm),
                   Text(
                     '${(percent * 100).toStringAsFixed(1)}%',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ],
@@ -330,7 +325,7 @@ class _LegendRow extends StatelessWidget {
             Icon(
               Icons.chevron_right,
               size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
+              color: context.theme.colors.mutedForeground,
             ),
           ],
         ),
@@ -353,9 +348,8 @@ class _CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final category = categoryById[breakdown.expenseAccountId];
-    final accent = category?.accentColor ?? theme.colorScheme.primary;
+    final accent = category?.accentColor ?? context.theme.colors.primary;
     return FTile(
       title: Text(category?.name ?? l10n.expenseReportUncategorized),
       prefix: CircleAvatar(
@@ -396,7 +390,6 @@ class _CategoryDrillDown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     final category = categoryById[breakdown.expenseAccountId];
     final entries = [...breakdown.items]
@@ -417,13 +410,13 @@ class _CategoryDrillDown extends StatelessWidget {
                 children: [
                   Icon(
                     category?.iconData ?? Icons.payment,
-                    color: theme.colorScheme.primary,
+                    color: context.theme.colors.primary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       category?.name ?? l10n.expenseReportUncategorized,
-                      style: theme.textTheme.titleLarge,
+                      style: context.theme.typography.lg,
                     ),
                   ),
                   MoneyText(
@@ -435,8 +428,8 @@ class _CategoryDrillDown extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 l10n.expenseReportItemCount(entries.length),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
               const SizedBox(height: 12),
@@ -467,13 +460,12 @@ class _ExpenseLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FTile(
       title: Text(expense.note ?? formatter.date(expense.tradeDate)),
       subtitle: Text(formatter.date(expense.tradeDate)),
       suffix: Text(
         formatter.currency(expense.amount, code: expense.currency),
-        style: theme.textTheme.bodyMedium?.copyWith(
+        style: context.theme.typography.sm.copyWith(
           fontFeatures: TypographyTokens.tabularFigures,
         ),
       ),

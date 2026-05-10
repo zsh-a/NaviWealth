@@ -127,7 +127,6 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final palette = _palette(context, event.status);
     final syncing = event.status == SyncStatus.syncing;
 
@@ -144,15 +143,15 @@ class _HeroCard extends StatelessWidget {
                 children: [
                   Text(
                     _statusHeadline(l10n, event.status),
-                    style: theme.textTheme.titleLarge?.copyWith(
+                    style: context.theme.typography.lg.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _heroSubtitle(l10n, event),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ],
@@ -206,7 +205,6 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final semantic = SemanticColors.of(context);
 
     final pendingValue = pending == null ? '—' : '$pending';
@@ -235,7 +233,7 @@ class _StatGrid extends StatelessWidget {
                 icon: Icons.outbox_outlined,
                 value: pendingValue,
                 label: l10n.syncStatusStatPending,
-                accent: pendingHasItems ? scheme.primary : null,
+                accent: pendingHasItems ? context.theme.colors.primary : null,
               ),
             ),
             tile(
@@ -275,29 +273,31 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 18, color: accent ?? scheme.onSurfaceVariant),
+            Icon(
+              icon,
+              size: 18,
+              color: accent ?? context.theme.colors.mutedForeground,
+            ),
             const SizedBox(height: 8),
             Text(
               value,
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: context.theme.typography.lg.copyWith(
                 fontWeight: FontWeight.w600,
                 fontFeatures: const [FontFeature.tabularFigures()],
-                color: accent ?? scheme.onSurface,
+                color: accent ?? context.theme.colors.foreground,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],
@@ -318,7 +318,6 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final semantic = SemanticColors.of(context);
     return FCard.raw(
       child: Padding(
@@ -331,7 +330,7 @@ class _ErrorCard extends StatelessWidget {
             Expanded(
               child: SelectableText(
                 message,
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: context.theme.typography.xs.copyWith(
                   color: semantic.onDangerContainer,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
@@ -421,8 +420,6 @@ class _LocalCountsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
 
     if (counts == null) {
       return const FCard.raw(
@@ -442,15 +439,17 @@ class _LocalCountsCard extends StatelessWidget {
             Expanded(
               child: Text(
                 _localCountLabel(l10n, id),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ),
             Text(
               '$value',
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: value > 0 ? scheme.onSurface : scheme.onSurfaceVariant,
+              style: context.theme.typography.sm.copyWith(
+                color: value > 0
+                    ? context.theme.colors.foreground
+                    : context.theme.colors.mutedForeground,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
@@ -469,8 +468,8 @@ class _LocalCountsCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
               child: Text(
                 l10n.syncStatusLocalCountsHeader,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -619,12 +618,10 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final valueStyle =
-        (monospace ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)
-            ?.copyWith(
-              color: scheme.onSurface,
+        (monospace ? context.theme.typography.xs : context.theme.typography.sm)
+            .copyWith(
+              color: context.theme.colors.foreground,
               fontFeatures: monospace
                   ? const [FontFeature.tabularFigures()]
                   : null,
@@ -642,8 +639,8 @@ class _Row extends StatelessWidget {
             width: 96,
             child: Text(
               label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ),
@@ -673,18 +670,17 @@ class _StatusPalette {
 }
 
 _StatusPalette _palette(BuildContext context, SyncStatus s) {
-  final scheme = Theme.of(context).colorScheme;
   final semantic = SemanticColors.of(context);
   return switch (s) {
     SyncStatus.idle => _StatusPalette(
-      foreground: scheme.onSurfaceVariant,
-      onForeground: scheme.surface,
-      container: scheme.surfaceContainerHighest,
+      foreground: context.theme.colors.mutedForeground,
+      onForeground: context.theme.colors.background,
+      container: context.theme.colors.secondary,
     ),
     SyncStatus.syncing => _StatusPalette(
-      foreground: scheme.primary,
-      onForeground: scheme.onPrimary,
-      container: scheme.primaryContainer,
+      foreground: context.theme.colors.primary,
+      onForeground: context.theme.colors.primaryForeground,
+      container: context.theme.colors.muted,
     ),
     SyncStatus.online => _StatusPalette(
       foreground: semantic.success,

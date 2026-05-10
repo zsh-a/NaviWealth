@@ -81,7 +81,6 @@ class _DeferredError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FScaffold(
       childPad: false,
@@ -96,19 +95,19 @@ class _DeferredError extends StatelessWidget {
                 Icon(
                   Icons.cloud_off_outlined,
                   size: 48,
-                  color: theme.colorScheme.error,
+                  color: context.theme.colors.destructive,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   l10n.deferredLoadFailedTitle,
-                  style: theme.textTheme.titleMedium,
+                  style: context.theme.typography.md,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$error',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                   textAlign: TextAlign.center,
                 ),

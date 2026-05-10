@@ -146,7 +146,6 @@ class _ChatComposerState extends State<ChatComposer> {
     bool canSend,
     AppLocalizations l10n,
   ) {
-    final cs = Theme.of(context).colorScheme;
     if (widget.isStreaming) {
       return IconButton.filledTonal(
         key: const ValueKey('stop'),
@@ -167,10 +166,11 @@ class _ChatComposerState extends State<ChatComposer> {
       onPressed: canSend ? _send : null,
       tooltip: l10n.aiChatComposerSendTooltip,
       style: IconButton.styleFrom(
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        disabledBackgroundColor: cs.surfaceContainerHighest,
-        disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.5),
+        backgroundColor: context.theme.colors.primary,
+        foregroundColor: context.theme.colors.primaryForeground,
+        disabledBackgroundColor: context.theme.colors.secondary,
+        disabledForegroundColor: context.theme.colors.mutedForeground
+            .withValues(alpha: 0.5),
         shape: const StadiumBorder(),
       ),
       icon: const Icon(Icons.arrow_upward),

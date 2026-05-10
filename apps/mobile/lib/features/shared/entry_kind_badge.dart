@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../data/domain/entry_kind.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -63,7 +64,7 @@ class EntryKindBadge extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  style: context.theme.typography.xs2.copyWith(
                     color: visuals.foreground,
                     fontWeight: FontWeight.w600,
                   ),
@@ -132,8 +133,8 @@ _BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
     case EntryKind.transfer:
       return _BadgeVisuals(
         icon: Icons.swap_horiz,
-        background: scheme.surfaceContainerHighest,
-        foreground: scheme.onSurfaceVariant,
+        background: scheme.secondaryContainer,
+        foreground: scheme.onSecondaryContainer,
         defaultLabel: 'Transfer',
       );
     case EntryKind.income:
@@ -174,8 +175,8 @@ _BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
     case EntryKind.other:
       return _BadgeVisuals(
         icon: Icons.edit_note,
-        background: scheme.surfaceContainerHighest,
-        foreground: scheme.onSurfaceVariant,
+        background: scheme.secondaryContainer,
+        foreground: scheme.onSecondaryContainer,
         defaultLabel: 'Entry',
       );
   }

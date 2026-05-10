@@ -47,13 +47,16 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 32),
+          Icon(
+            Icons.error_outline,
+            color: context.theme.colors.destructive,
+            size: 32,
+          ),
           const SizedBox(height: 8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 8),

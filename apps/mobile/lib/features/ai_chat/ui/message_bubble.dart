@@ -119,10 +119,10 @@ class _AssistantBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final colors = context.theme.colors;
-    final textColor = _isError ? cs.onErrorContainer : colors.foreground;
+    final textColor = _isError
+        ? colors.destructiveForeground
+        : colors.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
     final showTruncation =
@@ -144,7 +144,9 @@ class _AssistantBubble extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             message.errorMessage!,
-            style: tt.bodySmall?.copyWith(color: cs.error),
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.destructive,
+            ),
           ),
         ],
         if (showTruncation)
@@ -156,7 +158,7 @@ class _AssistantBubble extends StatelessWidget {
         ? Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: cs.errorContainer,
+              color: colors.destructive,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(8),
@@ -298,7 +300,6 @@ class _AssistantBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     if (text.isEmpty && isStreaming) {
       return Row(
@@ -308,7 +309,7 @@ class _AssistantBody extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             l10n.aiChatThinking,
-            style: tt.bodyMedium?.copyWith(
+            style: context.theme.typography.sm.copyWith(
               color: textColor.withValues(alpha: 0.7),
             ),
           ),
@@ -320,7 +321,7 @@ class _AssistantBody extends StatelessWidget {
         children: [
           TextSpan(
             text: text,
-            style: tt.bodyMedium?.copyWith(color: textColor),
+            style: context.theme.typography.sm.copyWith(color: textColor),
           ),
           if (isStreaming)
             WidgetSpan(
@@ -448,9 +449,7 @@ class _TruncationFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final muted = cs.onSurfaceVariant;
+    final muted = context.theme.colors.mutedForeground;
 
     final canContinue = switch (reason) {
       ChatStopReason.maxTokens ||
@@ -475,14 +474,20 @@ class _TruncationFooter extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
+          Container(
+            height: 1,
+            color: context.theme.colors.border.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 6),
           Row(
             children: [
               Icon(Icons.content_cut, size: 14, color: muted),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(label, style: tt.bodySmall?.copyWith(color: muted)),
+                child: Text(
+                  label,
+                  style: context.theme.typography.xs.copyWith(color: muted),
+                ),
               ),
               if (canContinue)
                 _ContinueButton(
@@ -518,12 +523,11 @@ class _ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final color = enabled ? cs.primary : cs.onSurfaceVariant;
-    return InkWell(
-      onTap: enabled ? onPressed : null,
-      borderRadius: BorderRadius.circular(8),
+    final color = enabled
+        ? context.theme.colors.primary
+        : context.theme.colors.mutedForeground;
+    return FTappable(
+      onPress: enabled ? onPressed : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Row(
@@ -531,7 +535,7 @@ class _ContinueButton extends StatelessWidget {
           children: [
             Text(
               label,
-              style: tt.labelMedium?.copyWith(
+              style: context.theme.typography.xs.copyWith(
                 color: color,
                 fontWeight: FontWeight.w600,
               ),
@@ -569,20 +573,20 @@ class _SystemNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest.withValues(alpha: 0.6),
+            color: context.theme.colors.secondary.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(9999),
           ),
           child: Text(
             text,
-            style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.theme.typography.xs2.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
         ),
       ),

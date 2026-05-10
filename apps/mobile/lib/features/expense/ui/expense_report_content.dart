@@ -133,7 +133,6 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     final monthSpan = report.range.monthSpan;
     final divisor = Decimal.fromInt(monthSpan == 0 ? 1 : monthSpan);
@@ -148,7 +147,7 @@ class _SummaryCard extends StatelessWidget {
           children: [
             Text(
               l10n.expenseReportTotalExpenses,
-              style: theme.textTheme.titleSmall,
+              style: context.theme.typography.sm,
             ),
             const SizedBox(height: 4),
             Text(
@@ -156,7 +155,7 @@ class _SummaryCard extends StatelessWidget {
                 report.total.amount,
                 code: report.baseCurrency,
               ),
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: context.theme.typography.xl.copyWith(
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
             ),
@@ -192,16 +191,16 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 l10n.expenseReportSkippedFx(report.skippedFxCount),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.destructive,
                 ),
               ),
             ],
             const SizedBox(height: 4),
             Text(
               l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],
@@ -219,19 +218,18 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.mutedForeground,
           ),
         ),
         Text(
           value,
-          style: theme.textTheme.titleMedium?.copyWith(
+          style: context.theme.typography.md.copyWith(
             fontFeatures: TypographyTokens.tabularFigures,
           ),
         ),

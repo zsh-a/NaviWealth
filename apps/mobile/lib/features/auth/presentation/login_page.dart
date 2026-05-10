@@ -129,7 +129,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(height: 8),
                       Text(
                         l10n.authLoginTitle,
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: context.theme.typography.md,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -228,7 +228,6 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final semantic = SemanticColors.of(context);
     final (background, foreground, icon) = switch (kind) {
       _BannerKind.info => (
@@ -257,13 +256,13 @@ class _Banner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(message, style: theme.textTheme.bodyMedium),
+                Text(message, style: context.theme.typography.sm),
                 if (details != null && details!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
                     details!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ],

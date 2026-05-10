@@ -23,7 +23,6 @@ class AssetPnLCard extends ConsumerWidget {
     final historyAsync = marketKey == null
         ? null
         : ref.watch(assetPriceHistoryProvider(marketKey));
-    final theme = Theme.of(context);
 
     if (snapshotAsync.isLoading) {
       return const SkeletonCard(
@@ -70,7 +69,7 @@ class AssetPnLCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.assetDetailPnLTitle, style: theme.textTheme.titleSmall),
+            Text(l10n.assetDetailPnLTitle, style: context.theme.typography.sm),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -81,15 +80,15 @@ class AssetPnLCard extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.assetDetailUnrealizedPnL,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                       ),
                       const SizedBox(height: 4),
                       DeltaText(
                         value: unrealizedAsset?.toDouble(),
                         currencyCode: asset.currency,
-                        style: theme.textTheme.titleMedium,
+                        style: context.theme.typography.md,
                       ),
                     ],
                   ),
@@ -105,8 +104,8 @@ class AssetPnLCard extends ConsumerWidget {
               Text(
                 '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
                 '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ],
@@ -159,7 +158,7 @@ class _DailyChangeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (!hasPosition || !hasHistory) {
-      return Text('\u2014', style: Theme.of(context).textTheme.bodyMedium);
+      return Text('\u2014', style: context.theme.typography.sm);
     }
     if (isLoading && value == null) {
       return const SizedBox(
@@ -170,7 +169,7 @@ class _DailyChangeView extends StatelessWidget {
     if (value == null) {
       return Text(
         isStale ? l10n.assetDetailQuoteStale : l10n.assetDetailQuoteUnavailable,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        style: context.theme.typography.xs.copyWith(
           color: context.theme.colors.mutedForeground,
         ),
       );

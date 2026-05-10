@@ -106,7 +106,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
                 children: [
                   Text(
                     l10n.cashFormDuplicateTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: context.theme.typography.md,
                   ),
                   const SizedBox(height: 8),
                   Text(l10n.cashFormDuplicateMessage),
@@ -327,10 +327,7 @@ Future<bool?> confirmManualAssetDelete(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.manualAssetDeleteTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text(l10n.manualAssetDeleteTitle, style: context.theme.typography.md),
           const SizedBox(height: 8),
           Text(l10n.manualAssetDeleteContent),
           const SizedBox(height: 16),

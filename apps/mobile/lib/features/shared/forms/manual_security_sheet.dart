@@ -285,12 +285,12 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
             children: [
               Text(
                 l10n.manualSecuritySheetTitle,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: context.theme.typography.md,
               ),
               const SizedBox(height: 4),
               Text(
                 l10n.manualSecuritySheetDescription,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: context.theme.typography.xs,
               ),
               const SizedBox(height: 16),
               FTextFormField(

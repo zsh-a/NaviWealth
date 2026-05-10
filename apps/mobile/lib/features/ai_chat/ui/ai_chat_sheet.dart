@@ -126,70 +126,58 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
       screenSize,
     );
 
+    final colors = context.theme.colors;
     return Stack(
       children: [
         Positioned(
           left: pos.dx,
           top: pos.dy,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Theme.of(
-                  context,
-                ).colorScheme.outlineVariant.withValues(alpha: 0.5),
-                width: 1,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 24,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Material(
-              color: context.theme.colors.background,
-              borderRadius: BorderRadius.circular(20),
-              child: ClipRRect(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: _sheetW,
+              height: _sheetH,
+              decoration: BoxDecoration(
+                color: colors.background,
                 borderRadius: BorderRadius.circular(20),
-                child: SizedBox(
-                  width: _sheetW,
-                  height: _sheetH,
-                  child: Column(
-                    children: [
-                      // Drag handle — only this area initiates drag.
-                      GestureDetector(
-                        onPanUpdate: (details) {
-                          setState(() {
-                            _offset = Offset(
-                              pos.dx + details.delta.dx,
-                              pos.dy + details.delta.dy,
-                            );
-                          });
-                        },
-                        onPanEnd: (_) {
-                          if (_offset != null) _persistPosition(_offset!);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Container(
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
+                border: Border.all(color: colors.border, width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Drag handle — only this area initiates drag.
+                  GestureDetector(
+                    onPanUpdate: (details) {
+                      setState(() {
+                        _offset = Offset(
+                          pos.dx + details.delta.dx,
+                          pos.dy + details.delta.dy,
+                        );
+                      });
+                    },
+                    onPanEnd: (_) {
+                      if (_offset != null) _persistPosition(_offset!);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colors.mutedForeground.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      Expanded(child: AiChatSheetBody(prefill: widget.prefill)),
-                    ],
+                    ),
                   ),
-                ),
+                  Expanded(child: AiChatSheetBody(prefill: widget.prefill)),
+                ],
               ),
             ),
           ),
@@ -238,7 +226,6 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final cs = Theme.of(context).colorScheme;
     final session = ref.watch(authSessionProvider);
 
     if (session == null) {
@@ -248,7 +235,11 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.lock_outline, size: 32, color: cs.onSurfaceVariant),
+              Icon(
+                Icons.lock_outline,
+                size: 32,
+                color: context.theme.colors.mutedForeground,
+              ),
               const SizedBox(height: 12),
               Text(l10n.aiChatLoginRequired),
             ],
@@ -299,16 +290,17 @@ class _SheetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.auto_awesome, size: 20, color: cs.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Icon(
+            Icons.auto_awesome,
+            size: 20,
+            color: context.theme.colors.primary,
           ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, style: context.theme.typography.md)),
           FTooltip(
             tipBuilder: (_, _) =>
                 Text(AppLocalizations.of(context).aiChatSheetExpandTooltip),
@@ -379,7 +371,7 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
               padding: const EdgeInsets.all(24),
               child: Text(
                 AppLocalizations.of(context).aiChatSheetEmpty,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                style: context.theme.typography.sm.copyWith(
                   color: context.theme.colors.mutedForeground,
                 ),
                 textAlign: TextAlign.center,

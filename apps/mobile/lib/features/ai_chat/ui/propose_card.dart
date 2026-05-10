@@ -239,8 +239,7 @@ class _ExpandedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final isApplying = applyState.status == ProposalApplyStatus.applying;
     final isErrored = applyState.status == ProposalApplyStatus.errored;
@@ -251,9 +250,9 @@ class _ExpandedView extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: cs.tertiaryContainer.withValues(alpha: 0.35),
+        color: colors.muted,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.tertiary.withValues(alpha: 0.45)),
+        border: Border.all(color: colors.border),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -261,25 +260,23 @@ class _ExpandedView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                _iconFor(plan.kind),
-                size: 18,
-                color: cs.onTertiaryContainer,
-              ),
+              Icon(_iconFor(plan.kind), size: 18, color: colors.foreground),
               const SizedBox(width: 8),
               Text(
                 l10n.aiChatProposalPendingHeader(
                   proposalKindLabel(l10n, plan.kind),
                 ),
-                style: tt.labelMedium?.copyWith(color: cs.onTertiaryContainer),
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             summary,
-            style: tt.bodyLarge?.copyWith(
-              color: cs.onSurface,
+            style: context.theme.typography.md.copyWith(
+              color: colors.foreground,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -296,14 +293,14 @@ class _ExpandedView extends StatelessWidget {
                     Icon(
                       Icons.warning_amber_rounded,
                       size: 14,
-                      color: cs.tertiary,
+                      color: colors.mutedForeground,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         w,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                       ),
                     ),
@@ -315,7 +312,9 @@ class _ExpandedView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.aiChatProposalFailure(applyState.errorMessage!),
-              style: tt.bodySmall?.copyWith(color: cs.error),
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.destructive,
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -366,8 +365,6 @@ class _CollapsedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     final IconData icon;
     final Color color;
@@ -375,17 +372,17 @@ class _CollapsedView extends StatelessWidget {
     switch (applyState.status) {
       case ProposalApplyStatus.applied:
         icon = Icons.check_circle;
-        color = cs.primary;
+        color = context.theme.colors.primary;
         label =
             applyState.shortLabel ??
             l10n.aiChatProposalAppliedFallback(plan.summaryZh);
       case ProposalApplyStatus.undone:
         icon = Icons.undo;
-        color = cs.onSurfaceVariant;
+        color = context.theme.colors.mutedForeground;
         label = l10n.aiChatProposalUndoneLabel(plan.summaryZh);
       case ProposalApplyStatus.cancelled:
         icon = Icons.cancel_outlined;
-        color = cs.onSurfaceVariant;
+        color = context.theme.colors.mutedForeground;
         label = l10n.aiChatProposalCancelledLabel(plan.summaryZh);
       default:
         return const SizedBox.shrink();
@@ -406,7 +403,9 @@ class _CollapsedView extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                  style: context.theme.typography.sm.copyWith(
+                    color: context.theme.colors.foreground,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -433,8 +432,7 @@ class _ClarificationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -446,26 +444,36 @@ class _ClarificationView extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.help_outline, size: 18, color: cs.tertiary),
+                  Icon(
+                    Icons.help_outline,
+                    size: 18,
+                    color: colors.mutedForeground,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     l10n.aiChatProposalNeedsClarificationHeader(
                       proposalKindLabel(l10n, plan.kind),
                     ),
-                    style: tt.labelMedium?.copyWith(color: cs.onSurface),
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.foreground,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
                 plan.reason,
-                style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                style: context.theme.typography.sm.copyWith(
+                  color: context.theme.colors.foreground,
+                ),
               ),
               if (plan.candidates.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
                   l10n.aiChatProposalCandidatesHeading,
-                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Wrap(
@@ -498,17 +506,17 @@ class ProposalPayloadDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     final rows = _rowsFor(l10n, plan, overrides);
     if (rows.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: cs.surface.withValues(alpha: 0.6),
+        color: context.theme.colors.background.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: context.theme.colors.border.withValues(alpha: 0.4),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,8 +531,8 @@ class ProposalPayloadDetails extends StatelessWidget {
                     width: 64,
                     child: Text(
                       r.label,
-                      style: tt.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
+                      style: context.theme.typography.xs2.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                   ),
@@ -532,7 +540,9 @@ class ProposalPayloadDetails extends StatelessWidget {
                   Expanded(
                     child: Text(
                       r.value,
-                      style: tt.bodySmall?.copyWith(color: cs.onSurface),
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.foreground,
+                      ),
                     ),
                   ),
                 ],
@@ -632,7 +642,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
                   l10n.aiChatProposalEditKindTitle(
                     proposalKindLabel(l10n, widget.plan.kind),
                   ),
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: context.theme.typography.md,
                 ),
                 const Spacer(),
                 FButton.icon(
@@ -915,25 +925,27 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     if (widget.pending.length < 2) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: cs.primaryContainer.withValues(alpha: 0.4),
+        color: colors.primary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
-          Icon(Icons.layers_outlined, size: 18, color: cs.onPrimaryContainer),
+          Icon(Icons.layers_outlined, size: 18, color: colors.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               l10n.aiChatProposalBatchPending(widget.pending.length),
-              style: tt.labelMedium?.copyWith(color: cs.onPrimaryContainer),
+              style: context.theme.typography.xs.copyWith(
+                color: colors.primary,
+              ),
             ),
           ),
           FButton(

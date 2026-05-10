@@ -149,7 +149,7 @@ class _FeedFooter extends ConsumerWidget {
               )
             : Text(
                 l10n.activityFeedAllLoaded,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: context.theme.typography.xs,
               ),
       ),
     );
@@ -181,7 +181,6 @@ class _EmptyFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -191,14 +190,16 @@ class _EmptyFeed extends StatelessWidget {
             Icon(
               Icons.timeline_outlined,
               size: 48,
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              color: context.theme.colors.mutedForeground.withValues(
+                alpha: 0.4,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],

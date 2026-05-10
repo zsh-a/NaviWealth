@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -109,7 +110,6 @@ class _AnnualizedSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final port = result.portfolioAnnualizedReturn;
     return Row(
@@ -117,18 +117,18 @@ class _AnnualizedSummary extends StatelessWidget {
         Expanded(
           child: Text(
             l10n.benchmarkPortfolioAnnualizedLabel,
-            style: theme.textTheme.bodyMedium,
+            style: context.theme.typography.sm,
           ),
         ),
         Text(
           port == null ? '—' : _formatPercent(port),
-          style: theme.textTheme.titleMedium?.copyWith(
+          style: context.theme.typography.md.copyWith(
             fontWeight: FontWeight.w600,
             color: port == null
-                ? theme.colorScheme.onSurfaceVariant
+                ? context.theme.colors.mutedForeground
                 : (port >= 0
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.error),
+                      ? context.theme.colors.primary
+                      : context.theme.colors.destructive),
           ),
         ),
       ],
@@ -144,7 +144,6 @@ class _ExcessRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final excess = result.excessReturnFor(series.index);
     final benchAnn = series.annualizedReturn;
@@ -159,14 +158,14 @@ class _ExcessRow extends StatelessWidget {
               children: [
                 Text(
                   benchmarkLabel(l10n, series.index),
-                  style: theme.textTheme.bodyMedium,
+                  style: context.theme.typography.sm,
                 ),
                 Text(
                   l10n.benchmarkAnnualizedSubtitle(
                     benchAnn == null ? '—' : _formatPercent(benchAnn),
                   ),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
               ],
@@ -213,14 +212,13 @@ class BenchmarkCardError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: Text(
           l10n.benchmarkComparisonError('$error'),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.error,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.destructive,
           ),
         ),
       ),

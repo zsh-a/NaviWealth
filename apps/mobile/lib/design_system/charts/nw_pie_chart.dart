@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../tokens/typography_tokens.dart';
 import 'chart_palette.dart';
@@ -157,8 +158,7 @@ class _NwPieChartState extends State<NwPieChart> {
     List<Color> colors,
     ChartPalette palette,
   ) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
+    final onSurface = context.theme.colors.foreground;
 
     if (_highlightedIndex >= 0 && _highlightedIndex < widget.slices.length) {
       final s = widget.slices[_highlightedIndex];
@@ -277,7 +277,7 @@ class LegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final onSurface = context.theme.colors.foreground;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
