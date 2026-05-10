@@ -8,6 +8,7 @@ import '../../../data/domain/entry_kind.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
+import '../../../design_system/design_system.dart';
 import 'activity_entry_detail_page.dart';
 
 /// One row in the unified Activity timeline (iOS Wallet style).
@@ -44,19 +45,17 @@ class ActivityFeedEntryRow extends StatelessWidget {
         ? entry.entry.payee!
         : _accountSummary(entry.postings, accountsById);
 
-    return FCard.raw(
-      child: FTappable(
-        onPress: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ActivityEntryDetailPage(
-              entry: entry,
-              accountsById: accountsById,
-            ),
+    return SoftCard(
+      onPress: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ActivityEntryDetailPage(
+            entry: entry,
+            accountsById: accountsById,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
             children: [
               Container(
                 width: 38,
@@ -123,8 +122,6 @@ class ActivityFeedEntryRow extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }

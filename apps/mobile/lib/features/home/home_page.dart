@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../app/route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/dashboard_insights_provider.dart';
@@ -13,6 +11,7 @@ import 'ui/activity_timeline_preview.dart';
 import 'ui/ai_insight_feed.dart';
 import 'ui/allocation_summary.dart';
 import 'ui/currency_mismatch_banner.dart';
+import 'ui/home_greeting_header.dart';
 import 'ui/trend_card.dart';
 
 /// Home cockpit (FIR-52, redesigned).
@@ -27,33 +26,30 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.homeAppBarTitle),
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(Icons.auto_awesome_outlined),
-            onPress: () => context.push(AppRoutes.ai),
-          ),
-        ],
-      ),
+      // The home cockpit owns its hero greeting; we drop the static
+      // "Overview" page title in favour of a personalized status line
+      // rendered inside [HomeGreetingHeader]. A bare scaffold (no
+      // FHeader) keeps the top of the page calm.
       childPad: false,
       child: Material(
         color: Colors.transparent,
         child: PageSkeletonShell<DashboardSnapshot>(
           skeleton: const HomeSkeleton(),
           isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
-          child: snapshotAsync.when(
-            loading: () => const HomeSkeleton(),
-            error: (e, st) => _ErrorBody(error: e),
-            data: (snapshot) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const CurrencyMismatchBanner(),
-                Expanded(child: _DashboardBody(snapshot: snapshot)),
-              ],
+          child: SafeArea(
+            bottom: false,
+            child: snapshotAsync.when(
+              loading: () => const HomeSkeleton(),
+              error: (e, st) => _ErrorBody(error: e),
+              data: (snapshot) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const CurrencyMismatchBanner(),
+                  Expanded(child: _DashboardBody(snapshot: snapshot)),
+                ],
+              ),
             ),
           ),
         ),
@@ -85,8 +81,9 @@ class _DashboardBody extends ConsumerWidget {
         // stretch lines into uncomfortable spans. The cockpit reads as a
         // focused single column at any width.
         final content = ListView(
-          padding: padding,
+          padding: padding.copyWith(top: 0),
           children: [
+            const HomeGreetingHeader(),
             _NetWorthHeader(snapshot: snapshot),
             if (insights.isNotEmpty) ...[
               const SizedBox(height: 20),
@@ -125,10 +122,10 @@ class _NetWorthHeader extends ConsumerWidget {
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+    return SoftCard(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 18,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -177,7 +174,6 @@ class _NetWorthHeader extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 

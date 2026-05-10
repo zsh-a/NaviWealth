@@ -60,6 +60,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardAllocationViewBreakdown => 'View breakdown';
 
   @override
+  String get homeGreetingMorning => 'Good morning';
+
+  @override
+  String get homeGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get homeGreetingEvening => 'Good evening';
+
+  @override
+  String get homeGreetingNight => 'Good night';
+
+  @override
+  String homeGreetingNetWorthFragment(String pct) {
+    return 'Net worth $pct this month';
+  }
+
+  @override
+  String homeGreetingInsightsFragment(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count insights available',
+      one: '1 insight available',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get activityFilterChipAll => 'All';
 
   @override

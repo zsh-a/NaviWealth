@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../home/data/dashboard_insights_provider.dart';
 import '../../home/domain/insight_models.dart';
@@ -68,12 +69,10 @@ class _ActionCard extends StatelessWidget {
     final route = item.route;
     return SizedBox(
       width: 240,
-      child: FCard.raw(
-        child: FTappable(
-          onPress: route == null ? null : () => context.push(route),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
+      child: SoftCard(
+        onPress: route == null ? null : () => context.push(route),
+        padding: const EdgeInsets.all(14),
+        child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -126,8 +125,6 @@ class _ActionCard extends StatelessWidget {
                   ),
               ],
             ),
-          ),
-        ),
       ),
     );
   }

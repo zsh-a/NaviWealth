@@ -28,3 +28,5 @@ export 'widgets/responsive_two_column.dart';
 export 'widgets/section_header.dart';
 export 'widgets/skeleton.dart';
 export 'widgets/skeletons/page_skeletons.dart';
+export 'widgets/soft_card.dart';
+

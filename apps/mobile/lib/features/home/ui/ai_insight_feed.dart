@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/insight_models.dart';
 import 'insight_feed_strings.dart';
@@ -41,7 +42,10 @@ class AiInsightFeed extends StatelessWidget {
         for (var i = 0; i < insights.length; i++)
           Padding(
             padding: EdgeInsets.only(bottom: i == insights.length - 1 ? 0 : 8),
-            child: _InsightCard(item: insights[i]),
+            child: _StaggeredFadeIn(
+              delay: Duration(milliseconds: 60 * i),
+              child: _InsightCard(item: insights[i]),
+            ),
           ),
       ],
     );
@@ -60,14 +64,12 @@ class _InsightCard extends StatelessWidget {
     final route = item.route;
     final tappable = item.onTap != null || route != null;
     final iconTint = item.iconColor ?? colors.primary;
-    return FCard.raw(
-      child: FTappable(
-        onPress: !tappable
-            ? null
-            : (item.onTap ?? () => context.push(route!)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
+    return SoftCard(
+      onPress: !tappable
+          ? null
+          : (item.onTap ?? () => context.push(route!)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
             children: [
               Container(
                 width: 36,
@@ -115,8 +117,59 @@ class _InsightCard extends StatelessWidget {
               ],
             ],
           ),
-        ),
-      ),
+    );
+  }
+}
+
+/// Tiny entrance animation: 6dp upward translate + opacity 0 → 1 over
+/// 240ms, gated by [delay] so a list of cards stagger in.
+class _StaggeredFadeIn extends StatefulWidget {
+  const _StaggeredFadeIn({required this.child, required this.delay});
+
+  final Widget child;
+  final Duration delay;
+
+  @override
+  State<_StaggeredFadeIn> createState() => _StaggeredFadeInState();
+}
+
+class _StaggeredFadeInState extends State<_StaggeredFadeIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+    );
+    Future.delayed(widget.delay, () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = Curves.easeOutCubic.transform(_controller.value);
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, 6 * (1 - t)),
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

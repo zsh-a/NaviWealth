@@ -39,6 +39,7 @@ class NwLineChart extends StatefulWidget {
     this.heroDots = false,
     this.showXAxis = true,
     this.showTouchXAxisLabel = false,
+    this.minimal = false,
   });
 
   final List<ChartSeries> series;
@@ -73,6 +74,12 @@ class NwLineChart extends StatefulWidget {
   /// Whether a compact X value label should appear near the crosshair while
   /// the user drags across the chart.
   final bool showTouchXAxisLabel;
+
+  /// Sparkline mode: hide grid lines + axis tick labels + touch tooltip.
+  /// Used for hero / cockpit micro-charts where the chart is decorative
+  /// context, not an analytical surface. Overrides [showXAxis] /
+  /// [TimeAxis.showGrid] / [ValueAxis.showGrid] / tooltip settings.
+  final bool minimal;
 
   @override
   State<NwLineChart> createState() => _NwLineChartState();
@@ -129,6 +136,9 @@ class _NwLineChartState extends State<NwLineChart> {
       );
     }
 
+    final showGrid =
+        !widget.minimal &&
+        (widget.yAxis.showGrid || widget.xAxis.showGrid);
     final stack = Stack(
       children: [
         RepaintBoundary(
@@ -139,18 +149,22 @@ class _NwLineChartState extends State<NwLineChart> {
               minY: minY - yPad,
               maxY: maxY + yPad,
               gridData: FlGridData(
-                show: widget.yAxis.showGrid || widget.xAxis.showGrid,
-                drawHorizontalLine: widget.yAxis.showGrid,
-                drawVerticalLine: widget.xAxis.showGrid,
+                show: showGrid,
+                drawHorizontalLine: showGrid && widget.yAxis.showGrid,
+                drawVerticalLine: showGrid && widget.xAxis.showGrid,
                 getDrawingHorizontalLine: (_) =>
                     FlLine(color: palette.gridLine, strokeWidth: 1),
                 getDrawingVerticalLine: (_) =>
                     FlLine(color: palette.gridLine, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
-              titlesData: _buildTitles(palette, minX, maxX, minY, maxY),
+              titlesData: widget.minimal
+                  ? const FlTitlesData(show: false)
+                  : _buildTitles(palette, minX, maxX, minY, maxY),
               lineBarsData: lineBars,
-              lineTouchData: _buildTouchData(context, palette, processed),
+              lineTouchData: widget.minimal
+                  ? const LineTouchData(enabled: false)
+                  : _buildTouchData(context, palette, processed),
             ),
           ),
         ),

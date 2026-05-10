@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// "Insights" section block — entry points into the deep-dive surfaces
@@ -30,7 +31,7 @@ class _AiInsightsPanelState extends State<AiInsightsPanel> {
     final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: FCard.raw(
+      child: SoftCard(
         child: Column(
           children: [
             FTappable(
