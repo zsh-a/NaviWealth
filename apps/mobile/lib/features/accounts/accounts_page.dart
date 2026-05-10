@@ -8,7 +8,7 @@ import '../../data/domain/enums.dart';
 import 'account_form_page.dart';
 import 'ui/accounts_master.dart';
 
-/// Lists every active account, grouped by [AccountType].
+/// Lists every active account, grouped by [AccountCategory].
 ///
 /// Tapping an account opens its edit form; the floating action button
 /// creates a new one. Soft-deleted / archived accounts hide here — the

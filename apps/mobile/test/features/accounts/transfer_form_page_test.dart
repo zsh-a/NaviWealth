@@ -75,9 +75,9 @@ class _Harness {
 Account _account({
   required String id,
   required String name,
-  required AccountCategory category,
+  required AccountSide category,
   String currency = 'CNY',
-  AccountType type = AccountType.bank,
+  AccountCategory type = AccountCategory.bank,
   String? parentId,
 }) => Account(
   id: id,
@@ -163,12 +163,12 @@ void main() {
           _account(
             id: 'a-bank-a',
             name: 'Bank A',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
           ),
           _account(
             id: 'a-bank-b',
             name: 'Bank B',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
           ),
         ],
       ),
@@ -196,12 +196,12 @@ void main() {
           _account(
             id: 'a-bank-a',
             name: 'Bank A',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
           ),
           _account(
             id: 'a-bank-b',
             name: 'Bank B',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
           ),
         ],
       ),
@@ -247,7 +247,7 @@ void main() {
           _account(
             id: 'a-only',
             name: 'Only Bank',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
           ),
         ],
       ),
@@ -294,13 +294,13 @@ void main() {
           _account(
             id: 'a-usd',
             name: 'USD Bank',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
             currency: 'USD',
           ),
           _account(
             id: 'a-cny',
             name: 'CNY Bank',
-            category: AccountCategory.asset,
+            category: AccountSide.asset,
             currency: 'CNY',
           ),
         ],
@@ -370,13 +370,13 @@ void main() {
             _account(
               id: 'a-usd',
               name: 'USD Bank',
-              category: AccountCategory.asset,
+              category: AccountSide.asset,
               currency: 'USD',
             ),
             _account(
               id: 'a-cny',
               name: 'CNY Bank',
-              category: AccountCategory.asset,
+              category: AccountSide.asset,
               currency: 'CNY',
             ),
           ],

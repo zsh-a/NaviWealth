@@ -44,11 +44,11 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
   bool _hydratedFromList = false;
 
   static const _eligibleAccountTypes = {
-    AccountType.bank,
-    AccountType.cash,
-    AccountType.brokerage,
-    AccountType.cryptoWallet,
-    AccountType.other,
+    AccountCategory.bank,
+    AccountCategory.cash,
+    AccountCategory.broker,
+    AccountCategory.crypto,
+    AccountCategory.asset,
   };
 
   @override

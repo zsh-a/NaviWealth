@@ -162,7 +162,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get superFabTransfer => '转账';
 
   @override
+  String get superFabTransferSubtitle => '在两个账户之间转移资金';
+
+  @override
+  String get superFabConvert => '换汇';
+
+  @override
+  String get superFabConvertSubtitle => '在同一账户内兑换币种';
+
+  @override
   String get superFabLiability => '负债';
+
+  @override
+  String get transferConvertModeBanner => '在同一账户内换汇 — 两侧请选同一账户并选择不同币种。';
 
   @override
   String get homeAppBarTitle => '总览';
@@ -2253,43 +2265,67 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsEmptyHint => '还没有账户。点击右下角新建一个，再去录入资产。';
 
   @override
-  String get accountTypeBrokerage => '券商账户';
+  String get accountCategoryCash => '现金';
 
   @override
-  String get accountTypeBank => '银行账户';
+  String get accountCategoryBank => '银行';
 
   @override
-  String get accountTypeCryptoWallet => '加密钱包';
+  String get accountCategoryBroker => '券商';
 
   @override
-  String get accountTypeRealEstate => '不动产账户';
+  String get accountCategoryCrypto => '加密钱包';
 
   @override
-  String get accountTypeVehicle => '车辆账户';
+  String get accountCategoryCredit => '信用';
 
   @override
-  String get accountTypeLiability => '负债账户';
+  String get accountCategoryLoan => '贷款';
 
   @override
-  String get accountTypeCash => '现金账户';
+  String get accountCategoryAsset => '其他资产';
 
   @override
-  String get accountTypeOther => '其他账户';
+  String get accountCategoryLiability => '其他负债';
 
   @override
-  String get accountCategoryAsset => '资产';
+  String get accountCategoryCashHint => '现金、电子钱包（支付宝/微信）';
 
   @override
-  String get accountCategoryLiability => '负债';
+  String get accountCategoryBankHint => '活期、储蓄、定期存款';
 
   @override
-  String get accountCategoryIncome => '收入';
+  String get accountCategoryBrokerHint => '股票、ETF、基金';
 
   @override
-  String get accountCategoryExpense => '支出';
+  String get accountCategoryCryptoHint => '链上钱包、交易所';
 
   @override
-  String get accountCategoryEquity => '权益';
+  String get accountCategoryCreditHint => '信用卡、循环信用';
+
+  @override
+  String get accountCategoryLoanHint => '房贷、车贷、学生贷';
+
+  @override
+  String get accountCategoryAssetHint => '不动产、车辆、收藏品';
+
+  @override
+  String get accountCategoryLiabilityHint => '信用 / 贷款之外的其他负债';
+
+  @override
+  String get accountSideAsset => '资产';
+
+  @override
+  String get accountSideLiability => '负债';
+
+  @override
+  String get accountSideIncome => '收入';
+
+  @override
+  String get accountSideExpense => '支出';
+
+  @override
+  String get accountSideEquity => '权益';
 
   @override
   String get accountFormCreateTitle => '新建账户';

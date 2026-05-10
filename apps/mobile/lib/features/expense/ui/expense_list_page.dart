@@ -45,7 +45,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         final accounts = accountsAsync.value ?? const <Account>[];
         final expenseAccountById = {
           for (final a in accounts.where(
-            (a) => a.category == AccountCategory.expense,
+            (a) => a.category == AccountSide.expense,
           ))
             a.id: a,
         };

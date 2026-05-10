@@ -34,8 +34,8 @@ Posting _p({
       sync: _sync,
     );
 
-AccountCategory? Function(String) _categoryMap(
-  Map<String, AccountCategory> m,
+AccountSide? Function(String) _categoryMap(
+  Map<String, AccountSide> m,
 ) =>
     (id) => m[id];
 
@@ -81,7 +81,7 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-brokerage': AccountCategory.asset,
+          'a-brokerage': AccountSide.asset,
         }),
       );
       expect(result.kind, EntryKind.trade);
@@ -114,8 +114,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-brokerage': AccountCategory.asset,
-          'a-cap-gains': AccountCategory.income,
+          'a-brokerage': AccountSide.asset,
+          'a-cap-gains': AccountSide.income,
         }),
       );
       expect(result.kind, EntryKind.income);
@@ -138,8 +138,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-bank-a': AccountCategory.asset,
-          'a-bank-b': AccountCategory.asset,
+          'a-bank-a': AccountSide.asset,
+          'a-bank-b': AccountSide.asset,
         }),
       );
       expect(result.kind, EntryKind.transfer);
@@ -162,8 +162,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-food': AccountCategory.expense,
-          'a-bank': AccountCategory.asset,
+          'a-food': AccountSide.expense,
+          'a-bank': AccountSide.asset,
         }),
       );
       expect(result.kind, EntryKind.expense);
@@ -186,8 +186,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-bank': AccountCategory.asset,
-          'a-salary': AccountCategory.income,
+          'a-bank': AccountSide.asset,
+          'a-salary': AccountSide.income,
         }),
       );
       expect(result.kind, EntryKind.income);
@@ -216,9 +216,9 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-mortgage': AccountCategory.liability,
-          'a-interest': AccountCategory.expense,
-          'a-bank': AccountCategory.asset,
+          'a-mortgage': AccountSide.liability,
+          'a-interest': AccountSide.expense,
+          'a-bank': AccountSide.asset,
         }),
       );
       // Liability presence wins over the Expense interest leg.
@@ -244,8 +244,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-brokerage': AccountCategory.asset,
-          'a-equity-splits': AccountCategory.equity,
+          'a-brokerage': AccountSide.asset,
+          'a-equity-splits': AccountSide.equity,
         }),
       );
       expect(result.kind, EntryKind.adjustment);
@@ -268,8 +268,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-bank': AccountCategory.asset,
-          'a-equity-opening': AccountCategory.equity,
+          'a-bank': AccountSide.asset,
+          'a-equity-opening': AccountSide.equity,
         }),
       );
       expect(result.kind, EntryKind.opening);
@@ -296,8 +296,8 @@ void main() {
           ),
         ],
         resolveCategory: _categoryMap({
-          'a-mortgage': AccountCategory.liability,
-          'a-equity-opening': AccountCategory.equity,
+          'a-mortgage': AccountSide.liability,
+          'a-equity-opening': AccountSide.equity,
         }),
       );
       expect(result.kind, EntryKind.opening);

@@ -20,7 +20,7 @@ class AccountPicker extends StatelessWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
   final String? label;
-  final Set<AccountType>? allowedTypes;
+  final Set<AccountCategory>? allowedTypes;
 
   @override
   Widget build(BuildContext context) {

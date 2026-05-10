@@ -422,8 +422,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final eligible = accounts
         .where(
           (a) =>
-              a.type == AccountType.brokerage ||
-              a.type == AccountType.cryptoWallet,
+              a.type == AccountCategory.broker ||
+              a.type == AccountCategory.crypto,
         )
         .toList(growable: false);
 
@@ -466,8 +466,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               accounts: accounts
                   .where(
                     (a) =>
-                        a.type == AccountType.bank ||
-                        a.type == AccountType.cash,
+                        a.type == AccountCategory.bank ||
+                        a.type == AccountCategory.cash,
                   )
                   .toList(growable: false),
               value: _cashAccountId,

@@ -14,11 +14,11 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Account {
 
- String get id; AccountType get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived;/// Accounting classification of the account
+ String get id; AccountCategory get type; String get name; String get currency; String? get institution; String? get accountNumber; String? get note; bool get archived;/// Accounting classification of the account
 /// (asset / liability / income / expense / equity). Defaults to
-/// [AccountCategory.asset] for back-compat with code paths that
+/// [AccountSide.asset] for back-compat with code paths that
 /// construct an [Account] without an explicit category.
- AccountCategory get category;/// FIR-130 — Beancount-style account tree. NULL on top-level
+ AccountSide get category;/// FIR-130 — Beancount-style account tree. NULL on top-level
 /// accounts; on a child the parent's [id] forms the chain. The tree
 /// is enforced as a parent / child relationship at the application
 /// level (no DB constraint) so a sync-borne reorder doesn't fight
@@ -59,7 +59,7 @@ abstract mixin class $AccountCopyWith<$Res>  {
   factory $AccountCopyWith(Account value, $Res Function(Account) _then) = _$AccountCopyWithImpl;
 @useResult
 $Res call({
- String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, String? parentId, String? icon, String? color, SyncMeta sync
+ String id, AccountCategory type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountSide category, String? parentId, String? icon, String? color, SyncMeta sync
 });
 
 
@@ -80,14 +80,14 @@ class _$AccountCopyWithImpl<$Res>
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as AccountType,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as AccountCategory,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,institution: freezed == institution ? _self.institution : institution // ignore: cast_nullable_to_non_nullable
 as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
 as bool,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as AccountCategory,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as AccountSide,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
 as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
@@ -185,7 +185,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  AccountCategory type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountSide category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Account() when $default != null:
 return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.parentId,_that.icon,_that.color,_that.sync);case _:
@@ -206,7 +206,7 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  AccountCategory type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountSide category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _Account():
 return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.parentId,_that.icon,_that.color,_that.sync);case _:
@@ -226,7 +226,7 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountType type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountCategory category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  AccountCategory type,  String name,  String currency,  String? institution,  String? accountNumber,  String? note,  bool archived,  AccountSide category,  String? parentId,  String? icon,  String? color,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _Account() when $default != null:
 return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,_that.accountNumber,_that.note,_that.archived,_that.category,_that.parentId,_that.icon,_that.color,_that.sync);case _:
@@ -241,11 +241,11 @@ return $default(_that.id,_that.type,_that.name,_that.currency,_that.institution,
 
 
 class _Account implements Account {
-  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, this.category = AccountCategory.asset, this.parentId, this.icon, this.color, required this.sync});
+  const _Account({required this.id, required this.type, required this.name, required this.currency, this.institution, this.accountNumber, this.note, this.archived = false, this.category = AccountSide.asset, this.parentId, this.icon, this.color, required this.sync});
   
 
 @override final  String id;
-@override final  AccountType type;
+@override final  AccountCategory type;
 @override final  String name;
 @override final  String currency;
 @override final  String? institution;
@@ -254,9 +254,9 @@ class _Account implements Account {
 @override@JsonKey() final  bool archived;
 /// Accounting classification of the account
 /// (asset / liability / income / expense / equity). Defaults to
-/// [AccountCategory.asset] for back-compat with code paths that
+/// [AccountSide.asset] for back-compat with code paths that
 /// construct an [Account] without an explicit category.
-@override@JsonKey() final  AccountCategory category;
+@override@JsonKey() final  AccountSide category;
 /// FIR-130 — Beancount-style account tree. NULL on top-level
 /// accounts; on a child the parent's [id] forms the chain. The tree
 /// is enforced as a parent / child relationship at the application
@@ -302,7 +302,7 @@ abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
   factory _$AccountCopyWith(_Account value, $Res Function(_Account) _then) = __$AccountCopyWithImpl;
 @override @useResult
 $Res call({
- String id, AccountType type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountCategory category, String? parentId, String? icon, String? color, SyncMeta sync
+ String id, AccountCategory type, String name, String currency, String? institution, String? accountNumber, String? note, bool archived, AccountSide category, String? parentId, String? icon, String? color, SyncMeta sync
 });
 
 
@@ -323,14 +323,14 @@ class __$AccountCopyWithImpl<$Res>
   return _then(_Account(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as AccountType,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as AccountCategory,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,institution: freezed == institution ? _self.institution : institution // ignore: cast_nullable_to_non_nullable
 as String?,accountNumber: freezed == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
 as bool,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as AccountCategory,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as AccountSide,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
 as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable

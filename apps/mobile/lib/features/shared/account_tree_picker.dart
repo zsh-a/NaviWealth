@@ -47,7 +47,7 @@ class AccountTreePicker extends StatelessWidget {
 
   /// When non-null, only accounts whose [Account.category] equals this
   /// are shown.
-  final AccountCategory? category;
+  final AccountSide? category;
 
   /// Form-field label override. When null, the picker renders a
   /// generic "Account" placeholder.

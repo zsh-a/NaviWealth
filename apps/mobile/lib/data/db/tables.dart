@@ -67,7 +67,7 @@ class SettingsTable extends Table with SyncableTable {
 class Accounts extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get type =>
-      text().map(const EnumStringConverter(AccountType.values))();
+      text().map(const EnumStringConverter(AccountCategory.values))();
   TextColumn get name => text()();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
   TextColumn get institution => text().nullable()();
@@ -76,15 +76,15 @@ class Accounts extends Table with SyncableTable {
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
   /// FIR-126 — accounting classification (asset / liability / income /
-  /// expense / equity). See [AccountCategory] for the why and the
+  /// expense / equity). See [AccountSide] for the why and the
   /// migration in `app_database.dart` (v8) for the back-fill rules.
   ///
   /// Defaulting to `asset` at the column level gives new accounts the
   /// conservative accounting class; creation code still sets the intended
   /// category explicitly.
   TextColumn get category => text()
-      .map(const EnumStringConverter(AccountCategory.values))
-      .withDefault(Constant(AccountCategory.asset.name))();
+      .map(const EnumStringConverter(AccountSide.values))
+      .withDefault(Constant(AccountSide.asset.name))();
 
   /// FIR-130 — id of this account's parent in the Beancount-style tree.
   /// NULL on top-level rows; otherwise points at another row in this

@@ -291,7 +291,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     allAccountsAsync.when(
                       data: (allAccounts) {
                         final expenseAccounts = allAccounts
-                            .where((a) => a.category == AccountCategory.expense)
+                            .where((a) => a.category == AccountSide.expense)
                             .toList(growable: false);
                         if (expenseAccounts.isEmpty) {
                           return Padding(
@@ -326,8 +326,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         final fromAccounts = accounts
                             .where(
                               (a) =>
-                                  a.category == AccountCategory.asset &&
-                                  a.type != AccountType.other,
+                                  a.category == AccountSide.asset &&
+                                  a.type != AccountCategory.asset,
                             )
                             .toList(growable: false);
                         if (fromAccounts.isEmpty) {

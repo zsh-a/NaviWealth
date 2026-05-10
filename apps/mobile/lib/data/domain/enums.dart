@@ -6,56 +6,65 @@
 /// requires a migration that rewrites the persisted name.
 library;
 
-/// Container/owner of holdings or cash flows.
-enum AccountType {
-  brokerage,
-  bank,
-  cryptoWallet,
-  realEstate,
-  vehicle,
-  liability,
+/// Wealth-container category — the user-visible "what kind of account is
+/// this" semantic. Drives icons, defaults, AI behaviour (cash counts toward
+/// liquidity, broker counts toward risk exposure, credit is short-term
+/// liability with billing cycles, etc.).
+///
+/// Replaced the carrier-shape `AccountType` (FIR-126) with a calmer 8-value
+/// taxonomy modelled after how the user actually thinks about their wealth
+/// containers, not how a bookkeeping system files them. The companion
+/// accounting "side of the double-entry book" classification is
+/// [AccountSide] and is auto-derived via [accountSideForCategory] — users
+/// never see it.
+///
+/// Storage uses the generic [EnumStringConverter]; new values must be
+/// appended at the end. The v3→v4 migration maps the legacy carrier-shape
+/// values to this enum (brokerage→broker, cryptoWallet→crypto,
+/// realEstate/vehicle/other→asset; cash/bank/liability unchanged).
+enum AccountCategory {
   cash,
-  other,
+  bank,
+  broker,
+  crypto,
+  credit,
+  loan,
+  asset,
+  liability,
 }
 
-/// FIR-126 — accounting classification orthogonal to [AccountType].
+/// Side of the standard double-entry bookkeeping identity the account
+/// settles to. Auto-derived from [AccountCategory] via
+/// [accountSideForCategory]; never shown to or edited by the user.
 ///
-/// [AccountType] describes the *carrier shape* of an account ("is this a
-/// bank card or a brokerage account?"). [AccountCategory] describes which
-/// side of the standard double-entry bookkeeping identity the account
-/// belongs to. The two are intentionally independent: the same `bank`
-/// carrier might back an asset (a savings deposit) or a liability (a credit
-/// card) depending on the user's intent.
+/// The seeded virtual system accounts (income / expense / equity sub-trees)
+/// for cash-flow counter-postings live under the corresponding side; they
+/// are not user-creatable wealth containers and are surfaced separately
+/// in the ledger / posting model.
 ///
-/// The full five-category set (P1-A scope) is required so that future
-/// double-entry posting (P2-A) has a complete account taxonomy to lean on:
-/// every transaction will resolve to a debit + credit pair across asset /
-/// liability / income / expense / equity buckets.
-///
-/// The seeded virtual system accounts ([systemAccountSlugForCategory]) for
-/// income / expense / equity give cash flows a counter-account to settle
-/// against before the proper posting model lands. Storage uses the
-/// generic [EnumStringConverter], so adding new values must be appended at
-/// the end and no value may be reordered or renamed without a migration.
-enum AccountCategory { asset, liability, income, expense, equity }
+/// Storage uses the generic [EnumStringConverter]; new values must be
+/// appended at the end. The v3→v4 migration rewrites the legacy
+/// `accounts.category` column from the old user-facing enum
+/// (asset/liability/income/expense/equity) into this auto-derived one.
+enum AccountSide { asset, liability, income, expense, equity }
 
-/// Default [AccountCategory] suggestion for a given [AccountType].
+/// Auto-derive the accounting side from a wealth-container category.
 ///
-/// Mirrors the v8 backfill rules so the create-account form, the AI
-/// proposal applier and the migration agree on the same heuristic. UI
-/// callers always let the user override the suggestion before saving.
-AccountCategory defaultCategoryForAccountType(AccountType type) {
-  switch (type) {
-    case AccountType.brokerage:
-    case AccountType.bank:
-    case AccountType.cryptoWallet:
-    case AccountType.cash:
-    case AccountType.realEstate:
-    case AccountType.vehicle:
-    case AccountType.other:
-      return AccountCategory.asset;
-    case AccountType.liability:
-      return AccountCategory.liability;
+/// User-creatable containers always map to either `asset` or `liability`;
+/// `income` / `expense` / `equity` sides only ever back system accounts
+/// (seeded counter-postings) and never come from this function.
+AccountSide accountSideForCategory(AccountCategory category) {
+  switch (category) {
+    case AccountCategory.cash:
+    case AccountCategory.bank:
+    case AccountCategory.broker:
+    case AccountCategory.crypto:
+    case AccountCategory.asset:
+      return AccountSide.asset;
+    case AccountCategory.credit:
+    case AccountCategory.loan:
+    case AccountCategory.liability:
+      return AccountSide.liability;
   }
 }
 

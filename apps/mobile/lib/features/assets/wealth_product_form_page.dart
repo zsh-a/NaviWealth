@@ -56,9 +56,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   bool _hydratedFromList = false;
 
   static const _eligibleAccountTypes = {
-    AccountType.bank,
-    AccountType.brokerage,
-    AccountType.other,
+    AccountCategory.bank,
+    AccountCategory.broker,
+    AccountCategory.asset,
   };
 
   @override

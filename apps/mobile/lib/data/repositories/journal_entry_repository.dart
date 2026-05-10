@@ -129,7 +129,7 @@ class JournalEntryRepository {
     DateTime? to,
     Set<String> accountIds = const <String>{},
     Set<EntryKind> kinds = const <EntryKind>{},
-    required Map<String, AccountCategory> accountCategories,
+    required Map<String, AccountSide> accountCategories,
     int pageSize = 50,
   }) {
     final trigger = _db
@@ -159,7 +159,7 @@ class JournalEntryRepository {
     DateTime? to,
     Set<String> accountIds = const <String>{},
     Set<EntryKind> kinds = const <EntryKind>{},
-    required Map<String, AccountCategory> accountCategories,
+    required Map<String, AccountSide> accountCategories,
     int pageSize = 50,
   }) async {
     final limit = pageSize.clamp(1, 500).toInt();
@@ -337,6 +337,37 @@ class JournalEntryRepository {
     return sum;
   }
 
+  /// Live stream of per-unit balances across **every** account in one go.
+  ///
+  /// Returned shape: `{ accountId → { unit → runningTotal } }`. Zero-sum
+  /// legs are dropped so the UI doesn't render a "USD 0.00" row for a
+  /// closed currency leg. Used by the Accounts Hub multi-currency rows
+  /// — keeping it as a single bulk stream avoids O(N) per-account
+  /// subscriptions when the user has dozens of accounts.
+  Stream<Map<String, Map<String, Decimal>>> watchBalancesByUnit() {
+    final query = _db.select(_db.postings).join([
+      innerJoin(
+        _db.journalEntries,
+        _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+      ),
+    ])
+      ..where(_db.postings.deletedAt.isNull())
+      ..where(_db.journalEntries.deletedAt.isNull());
+    return query.watch().map((rows) {
+      final out = <String, Map<String, Decimal>>{};
+      for (final row in rows) {
+        final p = row.readTable(_db.postings);
+        final byUnit = out.putIfAbsent(p.accountId, () => <String, Decimal>{});
+        byUnit[p.unit] = (byUnit[p.unit] ?? Decimal.zero) + p.units;
+      }
+      // Drop zero-sum legs.
+      for (final byUnit in out.values) {
+        byUnit.removeWhere((_, v) => v == Decimal.zero);
+      }
+      return out;
+    });
+  }
+
   /// FIR-132 — live stream of expense entries materialised from the
   /// journal. Each row is a JE whose expense-leg posting sits on an
   /// `accounts.category = 'expense'` account. The result is shaped as
@@ -354,7 +385,7 @@ class JournalEntryRepository {
               _db.accounts.id.equalsExp(_db.postings.accountId),
             ),
           ])
-          ..where(_db.accounts.category.equals(AccountCategory.expense.name))
+          ..where(_db.accounts.category.equals(AccountSide.expense.name))
           ..where(_db.journalEntries.deletedAt.isNull())
           ..where(_db.postings.deletedAt.isNull())
           ..where(_db.accounts.deletedAt.isNull())

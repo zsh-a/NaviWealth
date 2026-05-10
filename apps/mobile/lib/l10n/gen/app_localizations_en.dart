@@ -164,7 +164,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get superFabTransfer => 'Transfer';
 
   @override
+  String get superFabTransferSubtitle => 'Move funds between accounts';
+
+  @override
+  String get superFabConvert => 'Convert';
+
+  @override
+  String get superFabConvertSubtitle => 'Exchange currency inside one account';
+
+  @override
   String get superFabLiability => 'Liability';
+
+  @override
+  String get transferConvertModeBanner =>
+      'Converting inside a single account — pick the same account twice and choose two different currencies.';
 
   @override
   String get homeAppBarTitle => 'Overview';
@@ -2337,43 +2350,68 @@ class AppLocalizationsEn extends AppLocalizations {
       'No accounts yet. Tap the bottom-right button to add one, then come back to record assets.';
 
   @override
-  String get accountTypeBrokerage => 'Brokerage account';
+  String get accountCategoryCash => 'Cash';
 
   @override
-  String get accountTypeBank => 'Bank account';
+  String get accountCategoryBank => 'Bank';
 
   @override
-  String get accountTypeCryptoWallet => 'Crypto wallet';
+  String get accountCategoryBroker => 'Brokerage';
 
   @override
-  String get accountTypeRealEstate => 'Real estate account';
+  String get accountCategoryCrypto => 'Crypto wallet';
 
   @override
-  String get accountTypeVehicle => 'Vehicle account';
+  String get accountCategoryCredit => 'Credit';
 
   @override
-  String get accountTypeLiability => 'Liability account';
+  String get accountCategoryLoan => 'Loan';
 
   @override
-  String get accountTypeCash => 'Cash account';
+  String get accountCategoryAsset => 'Other asset';
 
   @override
-  String get accountTypeOther => 'Other account';
+  String get accountCategoryLiability => 'Other liability';
 
   @override
-  String get accountCategoryAsset => 'Asset';
+  String get accountCategoryCashHint => 'Wallets, e-wallets, physical bills';
 
   @override
-  String get accountCategoryLiability => 'Liability';
+  String get accountCategoryBankHint => 'Checking, savings, deposits';
 
   @override
-  String get accountCategoryIncome => 'Income';
+  String get accountCategoryBrokerHint => 'Stocks, ETFs, mutual funds';
 
   @override
-  String get accountCategoryExpense => 'Expense';
+  String get accountCategoryCryptoHint => 'On-chain wallets, exchanges';
 
   @override
-  String get accountCategoryEquity => 'Equity';
+  String get accountCategoryCreditHint => 'Credit cards, revolving credit';
+
+  @override
+  String get accountCategoryLoanHint => 'Mortgage, car loan, student loan';
+
+  @override
+  String get accountCategoryAssetHint => 'Real estate, vehicles, collectibles';
+
+  @override
+  String get accountCategoryLiabilityHint =>
+      'Anything you owe that isn\'t credit or loan';
+
+  @override
+  String get accountSideAsset => 'Asset';
+
+  @override
+  String get accountSideLiability => 'Liability';
+
+  @override
+  String get accountSideIncome => 'Income';
+
+  @override
+  String get accountSideExpense => 'Expense';
+
+  @override
+  String get accountSideEquity => 'Equity';
 
   @override
   String get accountFormCreateTitle => 'New account';

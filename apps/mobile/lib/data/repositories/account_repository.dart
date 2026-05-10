@@ -89,10 +89,10 @@ class AccountRepository {
   // ---------- Writes ----------
 
   Future<Account> create({
-    required AccountType type,
+    required AccountCategory type,
     required String name,
     required String currency,
-    AccountCategory? category,
+    AccountSide? category,
     String? institution,
     String? accountNumber,
     String? note,
@@ -102,7 +102,7 @@ class AccountRepository {
   }) async {
     final stamp = await _stamper.stamp();
     final id = _uuid.v4();
-    final resolvedCategory = category ?? defaultCategoryForAccountType(type);
+    final resolvedCategory = category ?? accountSideForCategory(type);
     final companion = AccountsCompanion.insert(
       id: id,
       type: type,
@@ -178,7 +178,7 @@ class AccountRepository {
     String id, {
     String? name,
     String? currency,
-    AccountCategory? category,
+    AccountSide? category,
     String? institution,
     bool? clearInstitution,
     String? accountNumber,
@@ -395,10 +395,10 @@ class AccountRepository {
 
   Map<String, Object?> _accountInsertFields({
     required String id,
-    required AccountType type,
+    required AccountCategory type,
     required String name,
     required String currency,
-    required AccountCategory category,
+    required AccountSide category,
     required String? institution,
     required String? accountNumber,
     required String? note,
@@ -548,10 +548,10 @@ class AccountRepository {
   /// auto-seed those; the income / expense / equity buckets are abstract
   /// counter-accounts the double-entry posting model needs as default
   /// targets for cash flows that don't terminate on a real account.
-  static const List<AccountCategory> systemAccountCategories = [
-    AccountCategory.income,
-    AccountCategory.expense,
-    AccountCategory.equity,
+  static const List<AccountSide> systemAccountCategories = [
+    AccountSide.income,
+    AccountSide.expense,
+    AccountSide.equity,
   ];
 
   /// Resolves any system-account `id` from a `:`-separated [path] under
@@ -566,7 +566,7 @@ class AccountRepository {
   /// Convenience for the three root system accounts.
   /// Prefer [systemAccountIdForPath] for deeper nodes.
   static String systemAccountIdFor(
-    AccountCategory category, {
+    AccountSide category, {
     required String ownerUserId,
   }) => systemAccountIdForPath(category.name, ownerUserId: ownerUserId);
 
@@ -575,16 +575,16 @@ class AccountRepository {
   /// natural without an l10n round-trip; child accounts seeded by FIR-133
   /// use the canonical Beancount-style English names from
   /// [_kSystemAccountTreeSeeds] — the UI localises at render time.
-  static String systemAccountDisplayName(AccountCategory category) {
+  static String systemAccountDisplayName(AccountSide category) {
     switch (category) {
-      case AccountCategory.income:
+      case AccountSide.income:
         return '系统收入账户';
-      case AccountCategory.expense:
+      case AccountSide.expense:
         return '系统支出账户';
-      case AccountCategory.equity:
+      case AccountSide.equity:
         return '系统权益账户';
-      case AccountCategory.asset:
-      case AccountCategory.liability:
+      case AccountSide.asset:
+      case AccountSide.liability:
         // Defensive: the seeder never reaches this branch because
         // [systemAccountCategories] excludes asset / liability.
         throw ArgumentError.value(
@@ -634,7 +634,7 @@ class AccountRepository {
       )..where((t) => t.id.equals(id))).getSingleOrNull();
       if (existing != null) continue;
 
-      const type = AccountType.other;
+      const type = AccountCategory.asset;
       final name = seed.isRoot
           ? systemAccountDisplayName(seed.category)
           : seed.name;
@@ -739,7 +739,7 @@ class _SystemAccountSeed {
   /// Roots ignore this and use the localised display name instead.
   final String name;
 
-  final AccountCategory category;
+  final AccountSide category;
 
   /// Material icon name (e.g. `work`, `restaurant`).
   final String icon;
@@ -761,7 +761,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'income',
     parentPath: null,
     name: 'Income',
-    category: AccountCategory.income,
+    category: AccountSide.income,
     icon: 'south_west',
     color: '#10B981',
   ),
@@ -769,7 +769,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense',
     parentPath: null,
     name: 'Expenses',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'north_east',
     color: '#EF4444',
   ),
@@ -777,7 +777,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'equity',
     parentPath: null,
     name: 'Equity',
-    category: AccountCategory.equity,
+    category: AccountSide.equity,
     icon: 'account_balance',
     color: '#3B82F6',
   ),
@@ -787,7 +787,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'income:salary',
     parentPath: 'income',
     name: 'Salary',
-    category: AccountCategory.income,
+    category: AccountSide.income,
     icon: 'work',
     color: '#10B981',
   ),
@@ -795,7 +795,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'income:dividend',
     parentPath: 'income',
     name: 'Dividend',
-    category: AccountCategory.income,
+    category: AccountSide.income,
     icon: 'paid',
     color: '#10B981',
   ),
@@ -803,7 +803,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'income:interest',
     parentPath: 'income',
     name: 'Interest',
-    category: AccountCategory.income,
+    category: AccountSide.income,
     icon: 'savings',
     color: '#10B981',
   ),
@@ -811,7 +811,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'income:capitalGains',
     parentPath: 'income',
     name: 'Capital Gains',
-    category: AccountCategory.income,
+    category: AccountSide.income,
     icon: 'trending_up',
     color: '#10B981',
   ),
@@ -819,7 +819,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'income:other',
     parentPath: 'income',
     name: 'Other Income',
-    category: AccountCategory.income,
+    category: AccountSide.income,
     icon: 'more_horiz',
     color: '#10B981',
   ),
@@ -829,7 +829,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:food',
     parentPath: 'expense',
     name: 'Food',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'restaurant',
     color: '#EF4444',
   ),
@@ -837,7 +837,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:transport',
     parentPath: 'expense',
     name: 'Transport',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'directions_bus',
     color: '#EF4444',
   ),
@@ -845,7 +845,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:housing',
     parentPath: 'expense',
     name: 'Housing',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'home',
     color: '#EF4444',
   ),
@@ -853,7 +853,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:household',
     parentPath: 'expense',
     name: 'Household',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'chair',
     color: '#EF4444',
   ),
@@ -861,7 +861,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:entertainment',
     parentPath: 'expense',
     name: 'Entertainment',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'sports_esports',
     color: '#EF4444',
   ),
@@ -869,7 +869,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:medical',
     parentPath: 'expense',
     name: 'Medical',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'medical_services',
     color: '#EF4444',
   ),
@@ -877,7 +877,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:education',
     parentPath: 'expense',
     name: 'Education',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'school',
     color: '#EF4444',
   ),
@@ -885,7 +885,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:shopping',
     parentPath: 'expense',
     name: 'Shopping',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'shopping_bag',
     color: '#EF4444',
   ),
@@ -893,7 +893,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:travel',
     parentPath: 'expense',
     name: 'Travel',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'flight',
     color: '#EF4444',
   ),
@@ -901,7 +901,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:communication',
     parentPath: 'expense',
     name: 'Communication',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'smartphone',
     color: '#EF4444',
   ),
@@ -909,7 +909,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:gift',
     parentPath: 'expense',
     name: 'Gift',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'card_giftcard',
     color: '#EF4444',
   ),
@@ -917,7 +917,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:trading',
     parentPath: 'expense',
     name: 'Trading',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'show_chart',
     color: '#EF4444',
   ),
@@ -925,7 +925,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:trading:fee',
     parentPath: 'expense:trading',
     name: 'Trading Fee',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'receipt_long',
     color: '#EF4444',
   ),
@@ -933,7 +933,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:trading:tax',
     parentPath: 'expense:trading',
     name: 'Trading Tax',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'request_quote',
     color: '#EF4444',
   ),
@@ -941,7 +941,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:trading:interest',
     parentPath: 'expense:trading',
     name: 'Trading Interest',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'credit_card',
     color: '#EF4444',
   ),
@@ -949,7 +949,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'expense:other',
     parentPath: 'expense',
     name: 'Other Expense',
-    category: AccountCategory.expense,
+    category: AccountSide.expense,
     icon: 'more_horiz',
     color: '#EF4444',
   ),
@@ -959,7 +959,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'equity:openingBalance',
     parentPath: 'equity',
     name: 'Opening Balance',
-    category: AccountCategory.equity,
+    category: AccountSide.equity,
     icon: 'flag',
     color: '#3B82F6',
   ),
@@ -967,7 +967,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'equity:splits',
     parentPath: 'equity',
     name: 'Stock Splits',
-    category: AccountCategory.equity,
+    category: AccountSide.equity,
     icon: 'call_split',
     color: '#3B82F6',
   ),
@@ -975,7 +975,7 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     path: 'equity:adjustments',
     parentPath: 'equity',
     name: 'Adjustments',
-    category: AccountCategory.equity,
+    category: AccountSide.equity,
     icon: 'tune',
     color: '#3B82F6',
   ),

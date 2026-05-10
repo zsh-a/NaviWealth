@@ -93,16 +93,16 @@ void main() {
 }
 
 final _accounts = {
-  'cash': _account('cash', AccountCategory.asset),
-  'bank': _account('bank', AccountCategory.asset),
-  'expense': _account('expense', AccountCategory.expense),
-  'income': _account('income', AccountCategory.income),
+  'cash': _account('cash', AccountSide.asset),
+  'bank': _account('bank', AccountSide.asset),
+  'expense': _account('expense', AccountSide.expense),
+  'income': _account('income', AccountSide.income),
 };
 
-Account _account(String id, AccountCategory category) {
+Account _account(String id, AccountSide category) {
   return Account(
     id: id,
-    type: AccountType.bank,
+    type: AccountCategory.bank,
     name: id,
     currency: 'CNY',
     category: category,
