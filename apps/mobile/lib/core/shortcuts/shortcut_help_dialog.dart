@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import 'shortcut_bindings.dart';
@@ -9,9 +10,10 @@ import 'shortcut_bindings.dart';
 Future<void> showShortcutHelpDialog(BuildContext context) {
   if (_isOpen) return Future<void>.value();
   _isOpen = true;
-  return showModalBottomSheet<void>(
+  return showFSheet<void>(
+    side: FLayout.btt,
     context: context,
-    isScrollControlled: true,
+    mainAxisMaxRatio: null,
     builder: (BuildContext ctx) => const _ShortcutHelpSheet(),
   ).whenComplete(() => _isOpen = false);
 }

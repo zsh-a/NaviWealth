@@ -1,16 +1,11 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-/// Decimal-precision amount entry.
-///
-/// We expose a plain [TextFormField] under the hood — Material's currency
-/// fields don't preserve trailing zeros and silently coerce to `double`,
-/// which is exactly the bug we're trying to avoid by using [Decimal] in
-/// the model.
+/// Decimal-precision amount entry built on [FTextFormField].
 ///
 /// `validator` returns `null` on success, or the localised error string;
 /// callers compose it with [FormState.validate] in the usual way.
@@ -38,20 +33,8 @@ class AmountField extends StatefulWidget {
   final bool required;
   final String? helperText;
   final void Function(Decimal? value)? onChanged;
-
-  /// Optional focus node so callers can chain fields with
-  /// `TextInputAction.next` and the soft-keyboard "next" arrow jumps to
-  /// the right input. When omitted Flutter creates one internally and
-  /// focus traversal falls back to widget order.
   final FocusNode? focusNode;
-
-  /// Defaults to [TextInputAction.next] when null so callers wiring a
-  /// focus chain just get the right keyboard affordance for free.
   final TextInputAction? textInputAction;
-
-  /// Invoked when the user hits the keyboard action button. Pair with
-  /// [textInputAction] = `done` on the last field so a single keypress
-  /// submits the form.
   final ValueChanged<String>? onFieldSubmitted;
 
   @override
@@ -72,25 +55,34 @@ class _AmountFieldState extends State<AmountField> {
         text: widget.initialValue?.toString() ?? '',
       );
     }
+    _effectiveController.addListener(_onTextChanged);
   }
 
   @override
   void didUpdateWidget(AmountField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller == null && oldWidget.controller != null) {
-      // Caller dropped their controller; take over with an internal one
-      // seeded from the last known text so we don't lose the user's input.
+      oldWidget.controller!.removeListener(_onTextChanged);
       _internalController = TextEditingController(
         text: oldWidget.controller!.text,
       );
+      _internalController!.addListener(_onTextChanged);
     } else if (widget.controller != null && oldWidget.controller == null) {
+      _internalController?.removeListener(_onTextChanged);
       _internalController?.dispose();
       _internalController = null;
+      widget.controller!.addListener(_onTextChanged);
     }
+  }
+
+  void _onTextChanged() {
+    if (widget.onChanged == null) return;
+    widget.onChanged!(Decimal.tryParse(_effectiveController.text.trim()));
   }
 
   @override
   void dispose() {
+    _effectiveController.removeListener(_onTextChanged);
     _internalController?.dispose();
     super.dispose();
   }
@@ -101,24 +93,16 @@ class _AmountFieldState extends State<AmountField> {
     final pattern = widget.allowNegative
         ? RegExp(r'^-?\d*\.?\d*$')
         : RegExp(r'^\d*\.?\d*$');
-    return TextFormField(
-      controller: _effectiveController,
+    return FTextFormField(
+      control: FTextFieldControl.managed(controller: _effectiveController),
       focusNode: widget.focusNode,
       textInputAction: widget.textInputAction ?? TextInputAction.next,
-      onFieldSubmitted: widget.onFieldSubmitted,
+      onSubmit: widget.onFieldSubmitted,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(pattern)],
-      style: TypographyTokens.numericBody.copyWith(
-        fontFeatures: TypographyTokens.tabularFigures,
-      ),
-      decoration: InputDecoration(
-        labelText: widget.label,
-        prefixText: widget.currencyCode == null
-            ? null
-            : '${widget.currencyCode} ',
-        helperText: widget.helperText,
-        border: const OutlineInputBorder(),
-      ),
+      label: Text(widget.label),
+      hint: widget.currencyCode == null ? null : '${widget.currencyCode} ',
+      description: widget.helperText == null ? null : Text(widget.helperText!),
       validator: (value) {
         final trimmed = value?.trim() ?? '';
         if (trimmed.isEmpty) {
@@ -131,11 +115,6 @@ class _AmountFieldState extends State<AmountField> {
         }
         return null;
       },
-      onChanged: widget.onChanged == null
-          ? null
-          : (raw) {
-              widget.onChanged!(Decimal.tryParse(raw.trim()));
-            },
     );
   }
 }

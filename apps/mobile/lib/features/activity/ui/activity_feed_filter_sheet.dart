@@ -13,10 +13,10 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
   const ActivityFeedFilterSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet<void>(
+    return showFSheet<void>(
+      side: FLayout.btt,
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       builder: (_) => const ActivityFeedFilterSheet(),
     );
   }

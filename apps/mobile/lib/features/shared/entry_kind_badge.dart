@@ -8,7 +8,7 @@ import '../../l10n/gen/app_localizations.dart';
 /// kind).
 ///
 /// Stateless and theme-aware: colours come off [ColorScheme] so the
-/// badge tracks light / dark / Glass automatically. Callers are
+/// badge tracks light / dark automatically. Callers are
 /// expected to render the badge tightly next to the entry summary
 /// (list rows, AI proposal cards), so the contract here is "smallest
 /// horizontal real estate that still reads at a glance".

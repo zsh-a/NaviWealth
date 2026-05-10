@@ -182,36 +182,46 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
   Future<SymbolInfo?> _pickFromCandidates(List<SymbolInfo> hits) {
     final l10n = AppLocalizations.of(context);
-    return showDialog<SymbolInfo>(
+    return showFDialog<SymbolInfo>(
       context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.manualSecuritySelectMatchTitle),
-        children: [
-          // Each row uses a self-contained `ListTile.onTap` rather than
-          // wrapping in `SimpleDialogOption`. The ListTile's own gesture
-          // detector swallows taps from its parent, which made the
-          // `SimpleDialogOption` callback unreachable in widget tests.
-          // Two listings can share a symbol (e.g. cross-listings), so the
-          // key incorporates the exchange to stay unique in those cases.
-          for (final hit in hits)
-            FTile(
-              key: Key(
-                'manual-security-import-candidate-${hit.symbol}-'
-                '${hit.exchange ?? 'unknown'}',
+      builder: (ctx, style, animation) => FDialog.raw(
+        builder: (innerCtx, _) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.manualSecuritySelectMatchTitle,
+                style: innerCtx.theme.typography.lg.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              title: Text(
-                hit.symbol,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                [hit.name, if (hit.exchange != null) hit.exchange!].join(' · '),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              suffix: Text(hit.currency ?? '—'),
-              onPress: () => Navigator.of(ctx).pop(hit),
-            ),
-        ],
+              const SizedBox(height: 12),
+              for (final hit in hits)
+                FTile(
+                  key: Key(
+                    'manual-security-import-candidate-${hit.symbol}-'
+                    '${hit.exchange ?? 'unknown'}',
+                  ),
+                  title: Text(
+                    hit.symbol,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    [
+                      hit.name,
+                      if (hit.exchange != null) hit.exchange!,
+                    ].join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  suffix: Text(hit.currency ?? '—'),
+                  onPress: () => Navigator.of(ctx).pop(hit),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

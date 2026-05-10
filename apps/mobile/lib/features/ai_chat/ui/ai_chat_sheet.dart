@@ -15,7 +15,7 @@ import 'message_bubble.dart';
 
 /// Shows the AI chat as a half-screen overlay.
 ///
-/// On mobile (< 600 dp) this is a 70-vh glass modal bottom sheet.
+/// On mobile (< 600 dp) this is a 70-vh modal bottom sheet.
 /// On tablet / desktop it is a 480 × 600 floating card anchored to
 /// the bottom-right corner of the screen.
 ///
@@ -29,9 +29,10 @@ Future<void> showAiChatSheet(BuildContext context, {String? prefill}) {
 }
 
 Future<void> _showMobileSheet(BuildContext context, {String? prefill}) {
-  return showModalBottomSheet<void>(
+  return showFSheet<void>(
+    side: FLayout.btt,
     context: context,
-    isScrollControlled: true,
+    mainAxisMaxRatio: null,
     builder: (_) => _SheetSized(child: AiChatSheetBody(prefill: prefill)),
   );
 }
@@ -139,7 +140,13 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                 ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                 width: 1,
               ),
-              boxShadow: AppElevations.of(context).level3,
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 12),
+                ),
+              ],
             ),
             child: Material(
               color: context.theme.colors.background,

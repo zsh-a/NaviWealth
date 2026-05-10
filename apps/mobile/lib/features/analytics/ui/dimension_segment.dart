@@ -92,7 +92,15 @@ class _DimensionChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? theme.colorScheme.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(9999),
-          boxShadow: selected ? AppElevations.of(context).level1 : null,
+          boxShadow: selected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

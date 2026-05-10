@@ -92,7 +92,8 @@ class DevicesPage extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showModalBottomSheet<bool>(
+    final ok = await showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(16),
@@ -188,7 +189,8 @@ class _DevicesList extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final fallback = l10n.authDeviceRevokeError;
-    final ok = await showModalBottomSheet<bool>(
+    final ok = await showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(16),

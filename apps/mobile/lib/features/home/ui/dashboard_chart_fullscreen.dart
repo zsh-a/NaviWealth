@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
-
 Future<void> showDashboardChartFullscreen({
   required BuildContext context,
   required String title,
@@ -64,7 +63,10 @@ class _DashboardChartFullscreenDialogState
         child: Material(
           color: Colors.transparent,
           child: SafeArea(
-            child: Padding(padding: const EdgeInsets.all(16), child: widget.child),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: widget.child,
+            ),
           ),
         ),
       ),

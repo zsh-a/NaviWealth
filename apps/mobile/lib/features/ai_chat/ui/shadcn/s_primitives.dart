@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import 's_tokens.dart';
 
-/// SCard — flat surface with hairline border and a subtle muted fill.
-/// AI-panel card surface, complement to Forui's `FCard` used in the
-/// rest of the app.
+/// SCard — thin border + muted fill surface. Delegates colors to forui.
 class SCard extends StatelessWidget {
   const SCard({
     super.key,
@@ -23,20 +22,20 @@ class SCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
+    final colors = context.theme.colors;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: background ?? tokens.muted,
+        color: background ?? colors.muted,
         borderRadius: BorderRadius.all(Radius.circular(radius)),
-        border: Border.all(color: borderColor ?? tokens.border, width: 1),
+        border: Border.all(color: borderColor ?? colors.border, width: 1),
       ),
       child: child,
     );
   }
 }
 
-/// SBadge — small pill used for status, role labels, etc.
+/// SBadge — small pill, forui-tinted.
 class SBadge extends StatelessWidget {
   const SBadge({
     super.key,
@@ -53,14 +52,14 @@ class SBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
-    final fg = foreground ?? tokens.mutedForeground;
+    final colors = context.theme.colors;
+    final fg = foreground ?? colors.mutedForeground;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: SSpace.sm, vertical: 2),
       decoration: BoxDecoration(
-        color: background ?? tokens.accent,
+        color: background ?? colors.secondary,
         borderRadius: SRadius.brMd,
-        border: Border.all(color: tokens.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -85,8 +84,7 @@ class SBadge extends StatelessWidget {
   }
 }
 
-/// SAvatar — small circular avatar with optional gradient background and
-/// fallback initial.
+/// SAvatar — circular avatar w/ optional gradient bg + fallback glyph.
 class SAvatar extends StatelessWidget {
   const SAvatar({
     super.key,
@@ -107,16 +105,16 @@ class SAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
-    final fg = foreground ?? tokens.foreground;
+    final colors = context.theme.colors;
+    final fg = foreground ?? colors.foreground;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: gradient == null ? (background ?? tokens.accent) : null,
+        color: gradient == null ? (background ?? colors.secondary) : null,
         gradient: gradient,
-        border: Border.all(color: tokens.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       alignment: Alignment.center,
       child: icon != null
@@ -134,7 +132,7 @@ class SAvatar extends StatelessWidget {
   }
 }
 
-/// SButton — compact button with primary / outline / ghost variants.
+/// SButton — compact button. Maps to FButton variants.
 enum SButtonVariant { primary, outline, ghost, destructive }
 
 class SButton extends StatelessWidget {
@@ -155,80 +153,24 @@ class SButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
-    final disabled = onPressed == null;
-
-    final (Color bg, Color fg, Color border) = switch (variant) {
-      SButtonVariant.primary => (
-        tokens.primary,
-        tokens.primaryForeground,
-        tokens.primary,
-      ),
-      SButtonVariant.outline => (
-        tokens.background,
-        tokens.foreground,
-        tokens.border,
-      ),
-      SButtonVariant.ghost => (
-        Colors.transparent,
-        tokens.foreground,
-        Colors.transparent,
-      ),
-      SButtonVariant.destructive => (
-        tokens.destructive,
-        Colors.white,
-        tokens.destructive,
-      ),
+    final fVariant = switch (variant) {
+      SButtonVariant.primary => FButtonVariant.primary,
+      SButtonVariant.outline => FButtonVariant.outline,
+      SButtonVariant.ghost => FButtonVariant.ghost,
+      SButtonVariant.destructive => FButtonVariant.destructive,
     };
-
-    final effectiveBg = disabled ? bg.withValues(alpha: 0.5) : bg;
-    final effectiveFg = disabled ? fg.withValues(alpha: 0.5) : fg;
-
-    final hPad = dense ? SSpace.sm : SSpace.md;
-    final vPad = dense ? 4.0 : 6.0;
-
-    Widget content = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: dense ? 12 : 14, color: effectiveFg),
-          if (label != null) const SizedBox(width: SSpace.xs),
-        ],
-        if (label != null)
-          Text(
-            label!,
-            style: TextStyle(
-              fontSize: dense ? 12 : 13,
-              fontWeight: FontWeight.w500,
-              color: effectiveFg,
-              height: 1.2,
-            ),
-          ),
-      ],
-    );
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: SRadius.brMd,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: effectiveBg,
-            borderRadius: SRadius.brMd,
-            border: Border.all(color: border, width: 1),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-            child: content,
-          ),
-        ),
-      ),
+    return FButton(
+      variant: fVariant,
+      onPress: onPressed,
+      prefix: icon != null ? Icon(icon, size: dense ? 12 : 14) : null,
+      child: label != null
+          ? Text(label!, style: TextStyle(fontSize: dense ? 12 : 13))
+          : const SizedBox.shrink(),
     );
   }
 }
 
-/// SSeparator — 1-px horizontal hairline divider.
+/// SSeparator — thin hairline divider.
 class SSeparator extends StatelessWidget {
   const SSeparator({super.key, this.thickness = 1, this.color});
 
@@ -240,12 +182,12 @@ class SSeparator extends StatelessWidget {
     return Container(
       height: thickness,
       width: double.infinity,
-      color: color ?? STokens.of(context).border,
+      color: color ?? context.theme.colors.border,
     );
   }
 }
 
-/// SSkeleton — pulsing placeholder for loading states.
+/// SSkeleton — pulsing placeholder. Forui has no skeleton primitive.
 class SSkeleton extends StatefulWidget {
   const SSkeleton({super.key, this.height = 14, this.width, this.radius = 4});
 
@@ -278,14 +220,14 @@ class _SSkeletonState extends State<SSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
+    final colors = context.theme.colors;
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (_, _) => Container(
         height: widget.height,
         width: widget.width,
         decoration: BoxDecoration(
-          color: Color.lerp(tokens.muted, tokens.accent, _ctrl.value),
+          color: Color.lerp(colors.muted, colors.secondary, _ctrl.value),
           borderRadius: BorderRadius.circular(widget.radius),
         ),
       ),
@@ -293,7 +235,7 @@ class _SSkeletonState extends State<SSkeleton>
   }
 }
 
-/// SCollapsible — stateful expand/collapse panel with rotating chevron.
+/// SCollapsible — single-section expand/collapse.
 class SCollapsible extends StatefulWidget {
   const SCollapsible({
     super.key,
@@ -338,14 +280,13 @@ class _SCollapsibleState extends State<SCollapsible>
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
+    final colors = context.theme.colors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        InkWell(
-          onTap: _toggle,
-          borderRadius: SRadius.brMd,
+        FTappable(
+          onPress: _toggle,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: SSpace.sm,
@@ -359,7 +300,7 @@ class _SCollapsibleState extends State<SCollapsible>
                   child: Icon(
                     Icons.chevron_right,
                     size: 16,
-                    color: tokens.mutedForeground,
+                    color: colors.mutedForeground,
                   ),
                 ),
               ],
@@ -381,7 +322,7 @@ class _SCollapsibleState extends State<SCollapsible>
   }
 }
 
-/// SCodeBlock — monospace block for JSON / code with subtle muted fill.
+/// SCodeBlock — monospace block w/ subtle muted fill. No forui equivalent.
 class SCodeBlock extends StatelessWidget {
   const SCodeBlock({super.key, required this.text, this.maxLines});
 
@@ -390,14 +331,14 @@ class SCodeBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
+    final colors = context.theme.colors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(SSpace.md),
       decoration: BoxDecoration(
-        color: tokens.muted,
+        color: colors.muted,
         borderRadius: SRadius.brMd,
-        border: Border.all(color: tokens.border, width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: SelectableText(
         text,

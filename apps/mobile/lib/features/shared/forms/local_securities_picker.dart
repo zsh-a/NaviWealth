@@ -165,9 +165,10 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
   }
 
   Future<void> _openManualSheet({String? prefillSymbol}) async {
-    final result = await showModalBottomSheet<LocalSecurityChoice>(
+    final result = await showFSheet<LocalSecurityChoice>(
+      side: FLayout.btt,
       context: context,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       builder: (ctx) => ManualSecuritySheet(prefillSymbol: prefillSymbol),
     );
     if (result != null) {

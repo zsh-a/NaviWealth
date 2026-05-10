@@ -76,7 +76,9 @@ class _DashboardBody extends ConsumerWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isWide = !Breakpoints.isMobile(width);
-        final padding = isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16);
+        final padding = isWide
+            ? const EdgeInsets.all(24)
+            : const EdgeInsets.all(16);
         final header = _NetWorthHeader(snapshot: snapshot);
         final insightStrip = InsightStrip(insights: insights);
         final allocation = AllocationCard(snapshot: snapshot);

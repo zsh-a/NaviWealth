@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../design_system/design_system.dart';
 import 'shell_preferences.dart';
 
-/// Two-pane master-detail surface used by the desktop shell at ≥ 1240dp
-/// (FIR-106). The list pane lives on the left at the user's preferred
-/// width (clamped 320–520) and the detail pane fills the remainder.
-/// A draggable hairline between the two acts as the splitter.
+/// Two-pane master-detail surface used by the desktop shell at ≥ 1240dp.
+/// The list pane lives on the left at the user's preferred width
+/// (clamped 320–520) and the detail pane fills the remainder. A draggable
+/// hairline between the two acts as the splitter.
 ///
 /// At narrower widths each consumer falls back to its single-column
 /// rendering — this widget is only mounted when [shouldUseMasterDetail]
@@ -23,24 +24,19 @@ class MasterDetailLayout extends ConsumerWidget {
   final Widget master;
   final Widget detail;
 
-  /// Master-detail is only useful when the window is wide enough to host
-  /// a usable [Master] + [Detail]. We use the same desktop breakpoint as
-  /// the shell so the transition stays consistent with the sidebar.
   static bool shouldUseMasterDetail(double width) =>
       width >= Breakpoints.desktop;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final masterWidth = ref.watch(masterPaneWidthProvider);
-    final theme = Theme.of(context);
-    final divider =
-        theme.dividerTheme.color ?? theme.colorScheme.outlineVariant;
+    final colors = context.theme.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(width: masterWidth, child: master),
         _Splitter(
-          color: divider,
+          color: colors.border,
           width: masterWidth,
           onChanged: (delta) {
             ref.read(masterPaneWidthProvider.notifier).set(masterWidth + delta);
@@ -108,7 +104,8 @@ class MasterDetailEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -118,15 +115,13 @@ class MasterDetailEmpty extends StatelessWidget {
             Icon(
               icon ?? Icons.touch_app_outlined,
               size: 36,
-              color: cs.onSurfaceVariant,
+              color: colors.mutedForeground,
             ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: typography.sm.copyWith(color: colors.mutedForeground),
             ),
           ],
         ),

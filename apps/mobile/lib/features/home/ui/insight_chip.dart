@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-
 /// A single insight pill showing an icon, label, and value.
 /// Used in the [InsightStrip] on the dashboard.
 class InsightChip extends StatelessWidget {

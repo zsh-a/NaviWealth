@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../theme/market_colors.dart';
-import '../theme/semantic_colors.dart';
 
 /// Chart-only color sequence and theme-derived palette helpers.
 ///
@@ -33,16 +33,16 @@ class ChartPalette {
   /// callers should resolve this once per `build()` rather than per data
   /// point.
   factory ChartPalette.of(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final semantic = SemanticColors.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.theme.colors;
+    final isDark =
+        MediaQuery.maybeOf(context)?.platformBrightness == Brightness.dark ||
+        colors.brightness == Brightness.dark;
     return ChartPalette(
       accentSequence: _accentSequence(isDark: isDark),
-      gridLine: semantic.divider,
-      axisLabel: scheme.onSurfaceVariant,
-      tooltipBackground: scheme.inverseSurface,
-      tooltipForeground: scheme.onInverseSurface,
+      gridLine: colors.border,
+      axisLabel: colors.mutedForeground,
+      tooltipBackground: colors.foreground,
+      tooltipForeground: colors.background,
     );
   }
 
@@ -114,18 +114,18 @@ Color resolveSeriesColor(
   Color? override,
 }) {
   if (override != null) return override;
-  final theme = Theme.of(context);
+  final colors = context.theme.colors;
   final palette = ChartPalette.of(context);
   final market = MarketColors.of(context);
   switch (intent) {
     case SeriesIntent.primary:
-      return theme.colorScheme.primary;
+      return colors.primary;
     case SeriesIntent.benchmark:
       return palette.accentAt(ordinal);
     case SeriesIntent.projection:
-      return theme.colorScheme.tertiary;
+      return colors.mutedForeground;
     case SeriesIntent.muted:
-      return theme.colorScheme.onSurfaceVariant;
+      return colors.mutedForeground;
     case SeriesIntent.up:
       return market.up;
     case SeriesIntent.down:

@@ -1,24 +1,20 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../design_system/design_system.dart';
 import 'shell_preferences.dart';
 
-/// Collapsible left sidebar for the desktop shell (FIR-106).
+/// Collapsible left sidebar for the desktop shell.
 ///
 /// Two visual states:
 ///
 ///  * Expanded (240dp) — icon + label per destination, selected row gets a
 ///    primary-tinted pill background and 2dp leading indicator.
-///  * Collapsed (72dp) — icons only, label travels into the [Tooltip] so a
+///  * Collapsed (72dp) — icons only, label travels into the [FTooltip] so a
 ///    pointer hover surfaces the destination name without re-flowing the
 ///    layout.
-///
-/// The collapse toggle at the bottom (`«` / `»`) drives the same
-/// [SidebarCollapsedController] as the `Cmd/Ctrl+B` global shortcut, so
-/// mouse and keyboard stay in sync without either path knowing about the
-/// other.
 class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({
     super.key,
@@ -34,19 +30,14 @@ class DesktopSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final collapsed = ref.watch(sidebarCollapsedProvider);
-    final theme = Theme.of(context);
+    final colors = context.theme.colors;
     return AnimatedContainer(
       duration: Motion.fast,
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          right: BorderSide(
-            color: theme.dividerTheme.color ?? theme.colorScheme.outlineVariant,
-            width: 1,
-          ),
-        ),
+        color: colors.background,
+        border: Border(right: BorderSide(color: colors.border, width: 1)),
       ),
       child: SafeArea(
         right: false,
@@ -107,11 +98,10 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final iconColor = selected ? cs.primary : cs.onSurfaceVariant;
-    final labelStyle = theme.textTheme.labelLarge?.copyWith(
-      color: selected ? cs.primary : cs.onSurface,
+    final colors = context.theme.colors;
+    final iconColor = selected ? colors.primary : colors.mutedForeground;
+    final labelStyle = context.theme.typography.sm.copyWith(
+      color: selected ? colors.primary : colors.foreground,
       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
     );
     final row = Row(
@@ -145,7 +135,7 @@ class _SidebarItem extends StatelessWidget {
             child: Container(
               width: 3,
               decoration: BoxDecoration(
-                color: cs.primary,
+                color: colors.primary,
                 borderRadius: const BorderRadius.horizontal(
                   right: Radius.circular(2),
                 ),
@@ -158,8 +148,8 @@ class _SidebarItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: selected
-                ? cs.primary.withValues(alpha: 0.10)
-                : Colors.transparent,
+                ? colors.primary.withValues(alpha: 0.10)
+                : const Color(0x00000000),
             borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.centerLeft,
@@ -168,20 +158,11 @@ class _SidebarItem extends StatelessWidget {
       ],
     );
 
-    final tap = Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: content,
-      ),
-    );
+    final tap = FTappable(onPress: onTap, child: content);
 
     if (collapsed) {
-      return Tooltip(
-        message: destination.label,
-        waitDuration: const Duration(milliseconds: 250),
-        preferBelow: false,
+      return FTooltip(
+        tipBuilder: (_, _) => Text(destination.label),
         child: tap,
       );
     }
@@ -197,13 +178,14 @@ class _CollapseToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Tooltip(
-        message: collapsed ? 'Expand sidebar  (⌘B)' : 'Collapse sidebar  (⌘B)',
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onToggle,
+      child: FTooltip(
+        tipBuilder: (_, _) =>
+            Text(collapsed ? 'Expand sidebar  (⌘B)' : 'Collapse sidebar  (⌘B)'),
+        child: FTappable(
+          onPress: onToggle,
           child: SizedBox(
             height: 40,
             child: Row(
@@ -215,7 +197,7 @@ class _CollapseToggle extends StatelessWidget {
                   collapsed
                       ? Icons.chevron_right_rounded
                       : Icons.chevron_left_rounded,
-                  color: context.theme.colors.mutedForeground,
+                  color: colors.mutedForeground,
                 ),
               ],
             ),

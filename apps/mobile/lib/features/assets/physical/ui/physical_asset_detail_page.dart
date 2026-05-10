@@ -61,7 +61,8 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     String assetId,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showModalBottomSheet<bool>(
+    final confirmed = await showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(16),

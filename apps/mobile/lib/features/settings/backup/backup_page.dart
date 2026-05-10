@@ -260,10 +260,10 @@ class BackupPage extends ConsumerWidget {
     required String hint,
     required String confirmLabel,
   }) {
-    return showModalBottomSheet<String>(
+    return showFSheet<String>(
+      side: FLayout.btt,
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
+      mainAxisMaxRatio: null,
       builder: (_) => _PassphraseSheet(
         title: title,
         hint: hint,
@@ -273,17 +273,17 @@ class BackupPage extends ConsumerWidget {
   }
 
   Future<String?> _showRestoreConfirmSheet(BuildContext context) {
-    return showModalBottomSheet<String>(
+    return showFSheet<String>(
+      side: FLayout.btt,
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
+      mainAxisMaxRatio: null,
       builder: (_) => const _RestoreConfirmSheet(),
     );
   }
 
   /// Shows a non-dismissable progress indicator and returns a callback
   /// that dismisses it. Uses [showGeneralDialog] instead of
-  /// [showModalBottomSheet] because GoRouter's navigator takes over the
+  /// [showFSheet] because GoRouter's navigator takes over the
   /// root navigator — popping a sheet from there removes the underlying
   /// page. [showGeneralDialog] creates its own Navigator scope, so
   /// `Navigator.of(context).pop()` only dismisses the dialog.

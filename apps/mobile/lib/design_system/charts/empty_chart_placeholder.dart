@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
-import '../theme/semantic_colors.dart';
 import '../tokens/typography_tokens.dart';
 
-/// Standard empty-state for any chart. Used by [Nw*Chart] when the data is
+/// Standard empty-state for any chart. Used by `Nw*Chart` when the data is
 /// empty so business code never has to write its own if/else.
 class EmptyChartPlaceholder extends StatelessWidget {
   const EmptyChartPlaceholder({
@@ -18,12 +19,11 @@ class EmptyChartPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: semantic.divider),
+        border: Border.all(color: colors.border),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
@@ -32,12 +32,12 @@ class EmptyChartPlaceholder extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: scheme.onSurfaceVariant, size: 32),
+              Icon(icon, color: colors.mutedForeground, size: 32),
               const SizedBox(height: 8),
               Text(
                 message ?? l10n.chartEmptyDefault,
                 style: TypographyTokens.bodyMedium.copyWith(
-                  color: scheme.onSurfaceVariant,
+                  color: colors.mutedForeground,
                 ),
               ),
             ],

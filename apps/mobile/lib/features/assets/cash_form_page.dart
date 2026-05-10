@@ -95,7 +95,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
         final existing = await repo.findCashByAccountId(_accountId!);
         if (existing != null && mounted) {
           final l10n = AppLocalizations.of(context);
-          final goEdit = await showModalBottomSheet<bool>(
+          final goEdit = await showFSheet<bool>(
+            side: FLayout.btt,
             context: context,
             builder: (ctx) => Padding(
               padding: const EdgeInsets.all(16),
@@ -317,7 +318,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
 /// The strings live in ARB so every "delete asset" surface stays in sync.
 Future<bool?> confirmManualAssetDelete(BuildContext context) {
   final l10n = AppLocalizations.of(context);
-  return showModalBottomSheet<bool>(
+  return showFSheet<bool>(
+    side: FLayout.btt,
     context: context,
     builder: (ctx) => Padding(
       padding: const EdgeInsets.all(16),

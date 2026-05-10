@@ -4,11 +4,15 @@ import '../tokens/color_palette.dart';
 
 /// Status colors that aren't directionally tied to market gain/loss.
 ///
-/// Direction-sensitive colors live on [MarketColors] because they swap based
-/// on user preference. This extension stays stable across all market color
+/// Direction-sensitive colors live on [MarketColors] (which can swap based
+/// on user preference). These tokens stay stable across all market color
 /// modes — `success` is always green, `danger` is always red.
+///
+/// Forui's [FColors] doesn't carry success/warning/info; this small object
+/// fills the gap. `divider` aliases forui's `colors.border` at call sites
+/// where preferred.
 @immutable
-class SemanticColors extends ThemeExtension<SemanticColors> {
+class SemanticColors {
   const SemanticColors({
     required this.success,
     required this.onSuccess,
@@ -53,7 +57,7 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
   final Color divider;
   final Color scrim;
 
-  factory SemanticColors.light() => const SemanticColors(
+  static const SemanticColors light = SemanticColors(
     success: ColorPalette.green600,
     onSuccess: ColorPalette.neutral0,
     successContainer: ColorPalette.green50,
@@ -74,7 +78,7 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     scrim: Color(0x66000000),
   );
 
-  factory SemanticColors.dark() => const SemanticColors(
+  static const SemanticColors dark = SemanticColors(
     success: ColorPalette.green300,
     onSuccess: ColorPalette.green900,
     successContainer: Color(0xFF0F3D22),
@@ -95,94 +99,7 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     scrim: Color(0x99000000),
   );
 
+  /// Resolve the appropriate set from the surrounding theme brightness.
   static SemanticColors of(BuildContext context) =>
-      Theme.of(context).extension<SemanticColors>() ?? SemanticColors.light();
-
-  @override
-  SemanticColors copyWith({
-    Color? success,
-    Color? onSuccess,
-    Color? successContainer,
-    Color? onSuccessContainer,
-    Color? warning,
-    Color? onWarning,
-    Color? warningContainer,
-    Color? onWarningContainer,
-    Color? danger,
-    Color? onDanger,
-    Color? dangerContainer,
-    Color? onDangerContainer,
-    Color? info,
-    Color? onInfo,
-    Color? infoContainer,
-    Color? onInfoContainer,
-    Color? divider,
-    Color? scrim,
-  }) {
-    return SemanticColors(
-      success: success ?? this.success,
-      onSuccess: onSuccess ?? this.onSuccess,
-      successContainer: successContainer ?? this.successContainer,
-      onSuccessContainer: onSuccessContainer ?? this.onSuccessContainer,
-      warning: warning ?? this.warning,
-      onWarning: onWarning ?? this.onWarning,
-      warningContainer: warningContainer ?? this.warningContainer,
-      onWarningContainer: onWarningContainer ?? this.onWarningContainer,
-      danger: danger ?? this.danger,
-      onDanger: onDanger ?? this.onDanger,
-      dangerContainer: dangerContainer ?? this.dangerContainer,
-      onDangerContainer: onDangerContainer ?? this.onDangerContainer,
-      info: info ?? this.info,
-      onInfo: onInfo ?? this.onInfo,
-      infoContainer: infoContainer ?? this.infoContainer,
-      onInfoContainer: onInfoContainer ?? this.onInfoContainer,
-      divider: divider ?? this.divider,
-      scrim: scrim ?? this.scrim,
-    );
-  }
-
-  @override
-  SemanticColors lerp(ThemeExtension<SemanticColors>? other, double t) {
-    if (other is! SemanticColors) return this;
-    return SemanticColors(
-      success: Color.lerp(success, other.success, t)!,
-      onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
-      successContainer: Color.lerp(
-        successContainer,
-        other.successContainer,
-        t,
-      )!,
-      onSuccessContainer: Color.lerp(
-        onSuccessContainer,
-        other.onSuccessContainer,
-        t,
-      )!,
-      warning: Color.lerp(warning, other.warning, t)!,
-      onWarning: Color.lerp(onWarning, other.onWarning, t)!,
-      warningContainer: Color.lerp(
-        warningContainer,
-        other.warningContainer,
-        t,
-      )!,
-      onWarningContainer: Color.lerp(
-        onWarningContainer,
-        other.onWarningContainer,
-        t,
-      )!,
-      danger: Color.lerp(danger, other.danger, t)!,
-      onDanger: Color.lerp(onDanger, other.onDanger, t)!,
-      dangerContainer: Color.lerp(dangerContainer, other.dangerContainer, t)!,
-      onDangerContainer: Color.lerp(
-        onDangerContainer,
-        other.onDangerContainer,
-        t,
-      )!,
-      info: Color.lerp(info, other.info, t)!,
-      onInfo: Color.lerp(onInfo, other.onInfo, t)!,
-      infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,
-      onInfoContainer: Color.lerp(onInfoContainer, other.onInfoContainer, t)!,
-      divider: Color.lerp(divider, other.divider, t)!,
-      scrim: Color.lerp(scrim, other.scrim, t)!,
-    );
-  }
+      Theme.of(context).brightness == Brightness.dark ? dark : light;
 }

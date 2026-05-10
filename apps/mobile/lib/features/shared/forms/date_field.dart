@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons, showDatePicker;
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-/// Tap-to-pick date input, rendered as a read-only [TextFormField] so it
-/// inherits Material's outline + focus styling and lines up visually with
-/// the other shared form widgets.
+/// Tap-to-pick date input rendered on top of [FTextFormField].
 class DateField extends StatefulWidget {
   const DateField({
     super.key,
@@ -55,8 +55,6 @@ class _DateFieldState extends State<DateField> {
       _controller.text = '';
       return;
     }
-    // Defer the actual format until build, where we can grab the locale-aware
-    // formatter; on first init we just stash the ISO date.
     _controller.text = _value!.toIso8601String().split('T').first;
   }
 
@@ -84,28 +82,39 @@ class _DateFieldState extends State<DateField> {
     if (_value != null) {
       _controller.text = formatter.date(_value!);
     }
-    return TextFormField(
-      controller: _controller,
+    return FTextFormField(
+      control: FTextFieldControl.managed(controller: _controller),
       readOnly: true,
       onTap: () => _pick(context),
-      decoration: InputDecoration(
-        labelText: widget.label,
-        helperText: widget.helperText,
-        suffixIcon: _value == null
-            ? const Icon(Icons.calendar_today_outlined)
-            : IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: l10n.formDateFieldClearTooltip,
-                onPressed: widget.required
+      label: Text(widget.label),
+      description: widget.helperText == null ? null : Text(widget.helperText!),
+      suffixBuilder: (ctx, style, variants) => _value == null
+          ? Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: Icon(
+                Icons.calendar_today_outlined,
+                size: 18,
+                color: ctx.theme.colors.mutedForeground,
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsetsDirectional.only(end: 4),
+              child: FButton.icon(
+                variant: FButtonVariant.ghost,
+                onPress: widget.required
                     ? null
                     : () {
                         setState(() => _value = null);
                         _controller.clear();
                         widget.onChanged?.call(null);
                       },
+                child: Icon(
+                  Icons.clear,
+                  size: 18,
+                  semanticLabel: l10n.formDateFieldClearTooltip,
+                ),
               ),
-        border: const OutlineInputBorder(),
-      ),
+            ),
       validator: (_) {
         if (widget.required && _value == null) {
           return l10n.formDateFieldRequired;

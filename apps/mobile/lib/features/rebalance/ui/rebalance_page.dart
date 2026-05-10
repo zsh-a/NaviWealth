@@ -42,10 +42,10 @@ class RebalancePage extends ConsumerWidget {
   }
 
   void _openSettings(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet<void>(
+    showFSheet<void>(
+      side: FLayout.btt,
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       builder: (ctx) => const _SettingsSheet(),
     );
   }
@@ -99,7 +99,9 @@ class _RebalanceBody extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isMobile ? const EdgeInsets.all(16) : const EdgeInsets.all(24);
+        final padding = isMobile
+            ? const EdgeInsets.all(16)
+            : const EdgeInsets.all(24);
         return ListView(
           padding: padding,
           children: [

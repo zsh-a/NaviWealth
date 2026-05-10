@@ -172,7 +172,7 @@ class _NwLineChartState extends State<NwLineChart> {
               _touchedSpotIndex < processed.first.points.length)
             Positioned.fill(
               child: IgnorePointer(
-                child: _GlassTooltip(
+                child: _ChartTooltip(
                   spotIndex: _touchedSpotIndex,
                   processed: processed,
                   xAxis: widget.xAxis,
@@ -654,11 +654,11 @@ class _CrosshairPainter extends CustomPainter {
 }
 
 // ---------------------------------------------------------------------------
-// Glass Tooltip — tabular data + delta badges
+// Tooltip — tabular data + delta badges
 // ---------------------------------------------------------------------------
 
-class _GlassTooltip extends StatelessWidget {
-  const _GlassTooltip({
+class _ChartTooltip extends StatelessWidget {
+  const _ChartTooltip({
     required this.spotIndex,
     required this.processed,
     required this.xAxis,

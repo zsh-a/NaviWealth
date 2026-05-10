@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 /// Switches between a two-column [Row] (wide) and a stacked [Column]
 /// (narrow) at [breakpoint].
 ///

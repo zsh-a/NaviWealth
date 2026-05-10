@@ -96,7 +96,8 @@ class SessionsPanel extends ConsumerWidget {
     ChatSession session,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showModalBottomSheet<bool>(
+    final ok = await showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(16),
@@ -144,9 +145,10 @@ class SessionsPanel extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: session.title);
-    final result = await showModalBottomSheet<String>(
+    final result = await showFSheet<String>(
+      side: FLayout.btt,
       context: context,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       builder: (ctx) {
         final padding = MediaQuery.viewInsetsOf(ctx).bottom;
         return SafeArea(
@@ -406,7 +408,8 @@ class _SessionTile extends StatelessWidget {
     AppLocalizations l10n,
     ColorScheme cs,
   ) {
-    return showModalBottomSheet<void>(
+    return showFSheet<void>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => SafeArea(
         child: Padding(

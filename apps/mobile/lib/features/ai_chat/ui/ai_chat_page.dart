@@ -375,7 +375,9 @@ class _EmptyConversation extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
-        final outerPadding = isMobile ? const EdgeInsets.all(16) : const EdgeInsets.all(24);
+        final outerPadding = isMobile
+            ? const EdgeInsets.all(16)
+            : const EdgeInsets.all(24);
         return SingleChildScrollView(
           padding: outerPadding,
           child: Center(
@@ -400,7 +402,6 @@ class _EmptyConversation extends StatelessWidget {
                           ],
                         ),
                         shape: BoxShape.circle,
-                        boxShadow: AppElevations.of(context).level2,
                       ),
                       child: Icon(
                         Icons.auto_awesome,
