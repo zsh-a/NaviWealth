@@ -9,7 +9,7 @@ part 'account.freezed.dart';
 abstract class Account with _$Account {
   const factory Account({
     required String id,
-    required AccountType type,
+    required AccountCategory type,
     required String name,
     required String currency,
     String? institution,
@@ -19,9 +19,9 @@ abstract class Account with _$Account {
 
     /// Accounting classification of the account
     /// (asset / liability / income / expense / equity). Defaults to
-    /// [AccountCategory.asset] for back-compat with code paths that
+    /// [AccountSide.asset] for back-compat with code paths that
     /// construct an [Account] without an explicit category.
-    @Default(AccountCategory.asset) AccountCategory category,
+    @Default(AccountSide.asset) AccountSide category,
 
     /// FIR-130 — Beancount-style account tree. NULL on top-level
     /// accounts; on a child the parent's [id] forms the chain. The tree

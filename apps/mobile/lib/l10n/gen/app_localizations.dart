@@ -386,11 +386,35 @@ abstract class AppLocalizations {
   /// **'Transfer'**
   String get superFabTransfer;
 
+  /// Affordance under Transfer in the global action panel
+  ///
+  /// In en, this message translates to:
+  /// **'Move funds between accounts'**
+  String get superFabTransferSubtitle;
+
+  /// Global action panel entry — exchange currency inside one container
+  ///
+  /// In en, this message translates to:
+  /// **'Convert'**
+  String get superFabConvert;
+
+  /// Affordance under Convert in the global action panel
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange currency inside one account'**
+  String get superFabConvertSubtitle;
+
   /// No description provided for @superFabLiability.
   ///
   /// In en, this message translates to:
   /// **'Liability'**
   String get superFabLiability;
+
+  /// Hint shown at the top of the Transfer form when the user enters via the Convert action
+  ///
+  /// In en, this message translates to:
+  /// **'Converting inside a single account — pick the same account twice and choose two different currencies.'**
+  String get transferConvertModeBanner;
 
   /// No description provided for @homeAppBarTitle.
   ///
@@ -4194,83 +4218,131 @@ abstract class AppLocalizations {
   /// **'No accounts yet. Tap the bottom-right button to add one, then come back to record assets.'**
   String get accountsEmptyHint;
 
-  /// No description provided for @accountTypeBrokerage.
+  /// Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)
   ///
   /// In en, this message translates to:
-  /// **'Brokerage account'**
-  String get accountTypeBrokerage;
+  /// **'Cash'**
+  String get accountCategoryCash;
 
-  /// No description provided for @accountTypeBank.
+  /// Wealth container category — bank checking / savings deposit account
   ///
   /// In en, this message translates to:
-  /// **'Bank account'**
-  String get accountTypeBank;
+  /// **'Bank'**
+  String get accountCategoryBank;
 
-  /// No description provided for @accountTypeCryptoWallet.
+  /// Wealth container category — securities brokerage (stocks, ETFs, options)
+  ///
+  /// In en, this message translates to:
+  /// **'Brokerage'**
+  String get accountCategoryBroker;
+
+  /// Wealth container category — on-chain wallet or exchange holding crypto assets
   ///
   /// In en, this message translates to:
   /// **'Crypto wallet'**
-  String get accountTypeCryptoWallet;
+  String get accountCategoryCrypto;
 
-  /// No description provided for @accountTypeRealEstate.
+  /// Wealth container category — revolving credit (credit cards, lines of credit)
   ///
   /// In en, this message translates to:
-  /// **'Real estate account'**
-  String get accountTypeRealEstate;
+  /// **'Credit'**
+  String get accountCategoryCredit;
 
-  /// No description provided for @accountTypeVehicle.
+  /// Wealth container category — installment debt (mortgage, car loan, student loan)
   ///
   /// In en, this message translates to:
-  /// **'Vehicle account'**
-  String get accountTypeVehicle;
+  /// **'Loan'**
+  String get accountCategoryLoan;
 
-  /// No description provided for @accountTypeLiability.
+  /// Wealth container category — fallback for tangible / illiquid assets (real estate, vehicle, art)
   ///
   /// In en, this message translates to:
-  /// **'Liability account'**
-  String get accountTypeLiability;
+  /// **'Other asset'**
+  String get accountCategoryAsset;
 
-  /// No description provided for @accountTypeCash.
+  /// Wealth container category — fallback for obligations not credit / loan
   ///
   /// In en, this message translates to:
-  /// **'Cash account'**
-  String get accountTypeCash;
+  /// **'Other liability'**
+  String get accountCategoryLiability;
 
-  /// No description provided for @accountTypeOther.
+  /// One-line affordance shown under the Cash card in the account category picker
   ///
   /// In en, this message translates to:
-  /// **'Other account'**
-  String get accountTypeOther;
+  /// **'Wallets, e-wallets, physical bills'**
+  String get accountCategoryCashHint;
 
-  /// No description provided for @accountCategoryAsset.
+  /// Affordance for the Bank card
+  ///
+  /// In en, this message translates to:
+  /// **'Checking, savings, deposits'**
+  String get accountCategoryBankHint;
+
+  /// Affordance for the Brokerage card
+  ///
+  /// In en, this message translates to:
+  /// **'Stocks, ETFs, mutual funds'**
+  String get accountCategoryBrokerHint;
+
+  /// Affordance for the Crypto card
+  ///
+  /// In en, this message translates to:
+  /// **'On-chain wallets, exchanges'**
+  String get accountCategoryCryptoHint;
+
+  /// Affordance for the Credit card
+  ///
+  /// In en, this message translates to:
+  /// **'Credit cards, revolving credit'**
+  String get accountCategoryCreditHint;
+
+  /// Affordance for the Loan card
+  ///
+  /// In en, this message translates to:
+  /// **'Mortgage, car loan, student loan'**
+  String get accountCategoryLoanHint;
+
+  /// Affordance for the Other asset card
+  ///
+  /// In en, this message translates to:
+  /// **'Real estate, vehicles, collectibles'**
+  String get accountCategoryAssetHint;
+
+  /// Affordance for the Other liability card
+  ///
+  /// In en, this message translates to:
+  /// **'Anything you owe that isn\'t credit or loan'**
+  String get accountCategoryLiabilityHint;
+
+  /// Accounting side — asset (debit-balance). Auto-derived; only shown in debug / ledger surfaces.
   ///
   /// In en, this message translates to:
   /// **'Asset'**
-  String get accountCategoryAsset;
+  String get accountSideAsset;
 
-  /// No description provided for @accountCategoryLiability.
+  /// Accounting side — liability (credit-balance).
   ///
   /// In en, this message translates to:
   /// **'Liability'**
-  String get accountCategoryLiability;
+  String get accountSideLiability;
 
-  /// No description provided for @accountCategoryIncome.
+  /// Accounting side — income (system account).
   ///
   /// In en, this message translates to:
   /// **'Income'**
-  String get accountCategoryIncome;
+  String get accountSideIncome;
 
-  /// No description provided for @accountCategoryExpense.
+  /// Accounting side — expense (system account).
   ///
   /// In en, this message translates to:
   /// **'Expense'**
-  String get accountCategoryExpense;
+  String get accountSideExpense;
 
-  /// No description provided for @accountCategoryEquity.
+  /// Accounting side — equity (system account, opening balance counter-postings).
   ///
   /// In en, this message translates to:
   /// **'Equity'**
-  String get accountCategoryEquity;
+  String get accountSideEquity;
 
   /// No description provided for @accountFormCreateTitle.
   ///

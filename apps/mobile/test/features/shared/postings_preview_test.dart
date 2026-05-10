@@ -21,12 +21,12 @@ final _sync = SyncMeta(
 Account _account({
   required String id,
   required String name,
-  AccountCategory category = AccountCategory.asset,
+  AccountSide category = AccountSide.asset,
   String? parentId,
 }) =>
     Account(
       id: id,
-      type: AccountType.other,
+      type: AccountCategory.asset,
       name: name,
       currency: 'USD',
       category: category,
@@ -83,19 +83,19 @@ void main() {
       'a-fee': _account(
         id: 'a-fee',
         name: 'Trading Fee',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
         parentId: 'a-trading',
       ),
       'a-trading': _account(
         id: 'a-trading',
         name: 'Trading',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
         parentId: 'a-expense-root',
       ),
       'a-expense-root': _account(
         id: 'a-expense-root',
         name: 'Expenses',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
       ),
     };
     final postings = [

@@ -40,10 +40,10 @@ Expense _expense({
 
 Account _account(String id, String name) => Account(
       id: id,
-      type: AccountType.other,
+      type: AccountCategory.asset,
       name: name,
       currency: 'CNY',
-      category: AccountCategory.expense,
+      category: AccountSide.expense,
       sync: _meta(),
     );
 

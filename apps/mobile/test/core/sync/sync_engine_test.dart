@@ -157,10 +157,10 @@ void main() {
           .insert(
             AccountsCompanion.insert(
               id: 'cash-1',
-              type: AccountType.cash,
+              type: AccountCategory.cash,
               name: 'Cash Wallet',
               currency: 'CNY',
-              category: const Value(AccountCategory.asset),
+              category: const Value(AccountSide.asset),
               ownerUserId: 'user-1',
               updatedAt: DateTime.utc(2026, 1, 1),
               updatedByDevice: 'legacy-device',
@@ -176,10 +176,10 @@ void main() {
           .insert(
             AccountsCompanion.insert(
               id: 'system-account:user-1:income',
-              type: AccountType.other,
+              type: AccountCategory.asset,
               name: 'System Income',
               currency: 'CNY',
-              category: const Value(AccountCategory.income),
+              category: const Value(AccountSide.income),
               ownerUserId: 'user-1',
               updatedAt: DateTime.utc(2026, 1, 1),
               updatedByDevice: 'legacy-device',

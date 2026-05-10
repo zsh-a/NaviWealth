@@ -332,9 +332,9 @@ void main() {
       final page = await repo.queryActivityFeed(
         kinds: {EntryKind.expense},
         accountCategories: const {
-          'cash': AccountCategory.asset,
-          'bank': AccountCategory.asset,
-          'food': AccountCategory.expense,
+          'cash': AccountSide.asset,
+          'bank': AccountSide.asset,
+          'food': AccountSide.expense,
         },
         pageSize: 1,
       );

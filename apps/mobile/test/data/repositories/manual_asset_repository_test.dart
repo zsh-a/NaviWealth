@@ -170,10 +170,10 @@ Future<void> _insertAccount(
       .insert(
         AccountsCompanion.insert(
           id: id,
-          type: AccountType.cash,
+          type: AccountCategory.cash,
           name: 'Cash',
           currency: currency,
-          category: const Value(AccountCategory.asset),
+          category: const Value(AccountSide.asset),
           ownerUserId: 'u-test',
           updatedAt: DateTime.utc(2026),
           updatedByDevice: 'dev-test',

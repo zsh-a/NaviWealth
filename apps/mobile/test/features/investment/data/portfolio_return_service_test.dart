@@ -255,34 +255,34 @@ Future<void> _seedAccounts(AppDatabase db) async {
   await _insertAccount(
     db,
     id: 'broker',
-    type: AccountType.brokerage,
-    category: AccountCategory.asset,
+    type: AccountCategory.broker,
+    category: AccountSide.asset,
   );
   await _insertAccount(
     db,
     id: 'cash',
-    type: AccountType.bank,
-    category: AccountCategory.asset,
+    type: AccountCategory.bank,
+    category: AccountSide.asset,
   );
   await _insertAccount(
     db,
     id: 'fee',
-    type: AccountType.other,
-    category: AccountCategory.expense,
+    type: AccountCategory.asset,
+    category: AccountSide.expense,
   );
   await _insertAccount(
     db,
     id: 'capital-gains',
-    type: AccountType.other,
-    category: AccountCategory.income,
+    type: AccountCategory.asset,
+    category: AccountSide.income,
   );
 }
 
 Future<void> _insertAccount(
   AppDatabase db, {
   required String id,
-  required AccountType type,
-  required AccountCategory category,
+  required AccountCategory type,
+  required AccountSide category,
 }) {
   return db
       .into(db.accounts)

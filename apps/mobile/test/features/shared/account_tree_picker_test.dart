@@ -19,8 +19,8 @@ final _sync = SyncMeta(
 Account _account({
   required String id,
   required String name,
-  AccountType type = AccountType.other,
-  AccountCategory category = AccountCategory.expense,
+  AccountCategory type = AccountCategory.asset,
+  AccountSide category = AccountSide.expense,
   String currency = 'CNY',
   String? parentId,
   bool archived = false,
@@ -101,7 +101,7 @@ void main() {
       _account(
         id: 'income',
         name: 'Income',
-        category: AccountCategory.income,
+        category: AccountSide.income,
       ),
     ];
 
@@ -111,7 +111,7 @@ void main() {
           accounts: accounts,
           value: null,
           onChanged: (_) {},
-          category: AccountCategory.expense,
+          category: AccountSide.expense,
         ),
       ),
     );

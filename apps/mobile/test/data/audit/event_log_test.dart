@@ -208,7 +208,7 @@ void main() {
         stamper: makeStubStamper(),
       );
       final account = await repo.create(
-        type: AccountType.bank,
+        type: AccountCategory.bank,
         name: 'Original',
         currency: 'CNY',
       );
@@ -236,7 +236,7 @@ void main() {
         stamper: makeStubStamper(),
       );
       final account = await repo.create(
-        type: AccountType.bank,
+        type: AccountCategory.bank,
         name: 'A',
         currency: 'CNY',
         institution: '招商银行',

@@ -55,7 +55,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Asset? _initial;
   bool _hydratedFromList = false;
 
-  static const _eligibleAccountTypes = {AccountType.bank, AccountType.cash};
+  static const _eligibleAccountTypes = {AccountCategory.bank, AccountCategory.cash};
 
   @override
   void initState() {

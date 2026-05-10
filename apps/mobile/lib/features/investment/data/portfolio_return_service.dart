@@ -111,7 +111,7 @@ class LedgerPortfolioReturnService implements PortfolioReturnService {
           ..where(_db.journalEntries.deletedAt.isNull())
           ..where(_db.accounts.deletedAt.isNull())
           ..where(_db.postings.journalEntryId.isIn(securityEntryIds))
-          ..where(_db.accounts.category.equals(AccountCategory.asset.name))
+          ..where(_db.accounts.category.equals(AccountSide.asset.name))
           ..orderBy([
             OrderingTerm.asc(_db.journalEntries.date),
             OrderingTerm.asc(_db.postings.position),

@@ -12,7 +12,7 @@ library;
 import 'package:decimal/decimal.dart';
 
 import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart' show AccountType, AssetType;
+import '../../../data/domain/enums.dart' show AccountCategory, AssetType;
 import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/account_repository.dart';
@@ -488,16 +488,16 @@ class ProposalApplier {
     };
   }
 
-  AccountType _parseAccountType(String? s) {
+  AccountCategory _parseAccountType(String? s) {
     return switch (s) {
-      'brokerage' => AccountType.brokerage,
-      'bank' => AccountType.bank,
-      'cryptoWallet' => AccountType.cryptoWallet,
-      'realEstate' => AccountType.realEstate,
-      'vehicle' => AccountType.vehicle,
-      'liability' => AccountType.liability,
-      'cash' => AccountType.cash,
-      'other' => AccountType.other,
+      'brokerage' => AccountCategory.broker,
+      'bank' => AccountCategory.bank,
+      'cryptoWallet' => AccountCategory.crypto,
+      'realEstate' => AccountCategory.asset,
+      'vehicle' => AccountCategory.asset,
+      'liability' => AccountCategory.liability,
+      'cash' => AccountCategory.cash,
+      'other' => AccountCategory.asset,
       _ => throw ProposalApplyException('不支持的账户类型: $s'),
     };
   }

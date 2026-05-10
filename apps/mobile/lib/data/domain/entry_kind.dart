@@ -70,14 +70,14 @@ class EntryKindClassification {
 /// is still hydrating.
 EntryKindClassification classifyEntryKind({
   required List<Posting> postings,
-  required AccountCategory? Function(String accountId) resolveCategory,
+  required AccountSide? Function(String accountId) resolveCategory,
 }) {
   if (postings.isEmpty) {
     return const EntryKindClassification(kind: EntryKind.other);
   }
 
   // Bucket categories + record per-account/unit observations.
-  final categories = <AccountCategory>{};
+  final categories = <AccountSide>{};
   final assetUnits = <String, Set<String>>{}; // accountId → unit set
   var hasNonFiatLeg = false;
   var hasFiatLeg = false;
@@ -96,7 +96,7 @@ EntryKindClassification classifyEntryKind({
     } else {
       hasNonFiatLeg = true;
     }
-    if (category == AccountCategory.asset) {
+    if (category == AccountSide.asset) {
       assetAccountsTouched.add(p.accountId);
       assetUnits.putIfAbsent(p.accountId, () => <String>{}).add(p.unit);
       if (isFiat) {
@@ -106,8 +106,8 @@ EntryKindClassification classifyEntryKind({
   }
 
   // Rule 1 — liability + asset → payment.
-  if (categories.contains(AccountCategory.liability) &&
-      categories.contains(AccountCategory.asset)) {
+  if (categories.contains(AccountSide.liability) &&
+      categories.contains(AccountSide.asset)) {
     return EntryKindClassification(
       kind: EntryKind.payment,
       isInflow: assetCashSum > 0,
@@ -115,7 +115,7 @@ EntryKindClassification classifyEntryKind({
   }
 
   // Rule 2 — equity touching → adjustment (when commodity unit) or opening.
-  if (categories.contains(AccountCategory.equity)) {
+  if (categories.contains(AccountSide.equity)) {
     if (hasNonFiatLeg) {
       return const EntryKindClassification(kind: EntryKind.adjustment);
     }
@@ -126,13 +126,13 @@ EntryKindClassification classifyEntryKind({
   }
 
   // Rule 3 / 4 — income / expense always pair against an asset.
-  if (categories.contains(AccountCategory.income)) {
+  if (categories.contains(AccountSide.income)) {
     return EntryKindClassification(
       kind: EntryKind.income,
       isInflow: assetCashSum > 0,
     );
   }
-  if (categories.contains(AccountCategory.expense)) {
+  if (categories.contains(AccountSide.expense)) {
     return EntryKindClassification(
       kind: EntryKind.expense,
       isInflow: assetCashSum > 0,
@@ -141,7 +141,7 @@ EntryKindClassification classifyEntryKind({
 
   // Rule 5 — two distinct asset accounts, all fiat legs → transfer.
   if (categories.length == 1 &&
-      categories.first == AccountCategory.asset &&
+      categories.first == AccountSide.asset &&
       assetAccountsTouched.length >= 2 &&
       !hasNonFiatLeg) {
     return const EntryKindClassification(
@@ -153,7 +153,7 @@ EntryKindClassification classifyEntryKind({
 
   // Rule 6 — single asset account with both fiat and non-fiat legs → trade.
   if (categories.length == 1 &&
-      categories.first == AccountCategory.asset &&
+      categories.first == AccountSide.asset &&
       assetAccountsTouched.isNotEmpty &&
       hasNonFiatLeg &&
       hasFiatLeg) {

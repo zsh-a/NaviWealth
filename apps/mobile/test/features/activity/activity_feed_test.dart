@@ -27,12 +27,12 @@ final _sync = SyncMeta(
 Account _account({
   required String id,
   required String name,
-  required AccountCategory category,
+  required AccountSide category,
   String currency = 'CNY',
 }) {
   return Account(
     id: id,
-    type: AccountType.bank,
+    type: AccountCategory.bank,
     name: name,
     currency: currency,
     category: category,
@@ -128,12 +128,12 @@ void main() {
       _account(
         id: 'expenses:food',
         name: 'Food',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
       ),
       _account(
         id: 'assets:wallet',
         name: 'Wallet',
-        category: AccountCategory.asset,
+        category: AccountSide.asset,
       ),
     ];
     final today = DateTime.now();
@@ -176,12 +176,12 @@ void main() {
       _account(
         id: 'expenses:food',
         name: 'Food',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
       ),
       _account(
         id: 'assets:wallet',
         name: 'Wallet',
-        category: AccountCategory.asset,
+        category: AccountSide.asset,
       ),
     ];
     final today = DateTime.now();

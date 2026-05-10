@@ -25,7 +25,7 @@ class ExpenseReportBody extends ConsumerWidget {
     final allAccounts = accountsAsync.value ?? const <Account>[];
     final expenseAccountById = {
       for (final a in allAccounts.where(
-        (a) => a.category == AccountCategory.expense,
+        (a) => a.category == AccountSide.expense,
       ))
         a.id: a,
     };

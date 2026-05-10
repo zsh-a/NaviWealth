@@ -94,13 +94,22 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
+    // `?convert=1` query (set by the global action panel's Convert
+    // entry) tells us the user wants to exchange currencies inside one
+    // account. We surface a banner above the form and pre-select the
+    // same account on both sides so they only need to pick currencies.
+    final convertMode =
+        GoRouter.of(context).routeInformationProvider.value.uri.queryParameters['convert'] ==
+            '1';
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.transferTitle)),
+      header: FHeader.nested(
+        title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,
         child: accountsAsync.when(
-          data: (accounts) => _buildForm(context, accounts),
+          data: (accounts) => _buildForm(context, accounts, convertMode),
           loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
         ),
@@ -108,15 +117,19 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     );
   }
 
-  Widget _buildForm(BuildContext context, List<Account> accounts) {
+  Widget _buildForm(
+    BuildContext context,
+    List<Account> accounts,
+    bool convertMode,
+  ) {
     final l10n = AppLocalizations.of(context);
     // Pre-compute the asset+liability subset once so the picker /
     // preview can resolve account names without re-walking per
     // keystroke.
     final transferable = <Account>[
       for (final a in accounts)
-        if (a.category == AccountCategory.asset ||
-            a.category == AccountCategory.liability)
+        if (a.category == AccountSide.asset ||
+            a.category == AccountSide.liability)
           a,
     ];
     final accountsById = <String, Account>{for (final a in accounts) a.id: a};
@@ -159,11 +172,21 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       toAmount: toAmount,
     );
 
+    // Same-account is allowed when the two currencies differ — that's
+    // a "Convert" (e.g. exchanging USD → HKD inside one IBKR
+    // container). Same-account same-currency is still meaningless and
+    // blocked. Cross-account same- or cross-currency is the classic
+    // transfer.
+    final isSameAccountConvert = _fromAccountId != null &&
+        _toAccountId != null &&
+        _fromAccountId == _toAccountId &&
+        isCrossCurrency;
+    final isCrossAccount = _fromAccountId != null &&
+        _toAccountId != null &&
+        _fromAccountId != _toAccountId;
     final canSubmit =
         !_busy &&
-        _fromAccountId != null &&
-        _toAccountId != null &&
-        _fromAccountId != _toAccountId &&
+        (isCrossAccount || isSameAccountConvert) &&
         amount != null &&
         amount > Decimal.zero &&
         (!isCrossCurrency || (toAmount != null && toAmount > Decimal.zero));
@@ -175,6 +198,36 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (convertMode)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: context.theme.colors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.currency_exchange,
+                        size: 16,
+                        color: context.theme.colors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.transferConvertModeBanner,
+                          style: context.theme.typography.xs.copyWith(
+                            color: context.theme.colors.foreground,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             AccountTreePicker(
               accounts: transferable,
               value: _fromAccountId,

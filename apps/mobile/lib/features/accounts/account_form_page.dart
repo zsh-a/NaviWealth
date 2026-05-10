@@ -14,7 +14,7 @@ import '../settings/data/base_currency_preference.dart';
 import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
 import 'account_icon_catalog.dart';
-import 'ui/account_labels.dart';
+import 'ui/account_category_picker.dart';
 
 /// Create / edit page for a single [Account].
 ///
@@ -48,16 +48,12 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   final _accountNumberFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  AccountType _type = AccountType.bank;
-  AccountCategory _category = defaultCategoryForAccountType(AccountType.bank);
+  AccountCategory _type = AccountCategory.bank;
+  AccountSide _category = accountSideForCategory(AccountCategory.bank);
 
   /// Tracks whether the user has explicitly picked a [_category] yet. Until
-  /// they do, switching [_type] auto-syncs the suggestion (so picking
-  /// "Liability account" snaps the category to liability without needing
-  /// a second tap). Once the user touches the category dropdown we leave
-  /// the value alone — they may legitimately want a non-default mapping
-  /// (e.g. classifying an "Other" carrier as income).
-  bool _categoryUserPicked = false;
+  // _categoryUserPicked is gone — accounting side is auto-derived from
+  // the wealth-container category and never user-pickable.
   String? _currency;
   bool _archived = false;
   bool _busy = false;
@@ -100,10 +96,6 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       _noteController.text = existing.note ?? '';
       _type = existing.type;
       _category = existing.category;
-      // The persisted value already reflects the user's choice; treat it
-      // as user-picked so changing the type doesn't silently re-default
-      // the category in an edit flow.
-      _categoryUserPicked = true;
       _currency = existing.currency;
       _archived = existing.archived;
       _parentId = existing.parentId;
@@ -286,45 +278,31 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   children: [
-                    FSelect<AccountType>(
-                      items: {
-                        for (final t in AccountType.values)
-                          accountTypeLabel(l10n, t): t,
-                      },
-                      control: FSelectControl<AccountType>.managed(
-                        initial: _type,
-                        onChange: (v) {
-                          if (v == null) return;
-                          setState(() {
-                            _type = v;
-                            if (!_categoryUserPicked) {
-                              _category = defaultCategoryForAccountType(v);
-                            }
-                          });
-                        },
+                    // Wealth-container category picker — semantic
+                    // icon-grid, not a dropdown. The accounting side
+                    // (`_category`) auto-derives via
+                    // [accountSideForCategory] on every selection and
+                    // is never user-editable.
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text(
+                        l10n.accountFormTypeLabel,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: context.theme.colors.mutedForeground,
+                        ),
                       ),
-                      label: Text(l10n.accountFormTypeLabel),
                     ),
-                    const SizedBox(height: 12),
-                    FSelect<AccountCategory>(
-                      items: {
-                        for (final c in AccountCategory.values)
-                          accountCategoryLabel(l10n, c): c,
+                    AccountCategoryPicker(
+                      value: _type,
+                      onChanged: (v) {
+                        setState(() {
+                          _type = v;
+                          _category = accountSideForCategory(v);
+                        });
                       },
-                      control: FSelectControl<AccountCategory>.managed(
-                        initial: _category,
-                        onChange: (v) {
-                          if (v == null) return;
-                          setState(() {
-                            _category = v;
-                            _categoryUserPicked = true;
-                          });
-                        },
-                      ),
-                      label: Text(l10n.accountFormCategoryLabel),
-                      description: Text(l10n.accountFormCategoryHelper),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _nameController,
@@ -424,7 +402,7 @@ class _ParentAccountPickerSection extends ConsumerWidget {
 
   /// `null` in the create flow.
   final String? currentAccountId;
-  final AccountCategory category;
+  final AccountSide category;
   final String? parentId;
   final ValueChanged<String?> onChanged;
 

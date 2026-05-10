@@ -75,9 +75,9 @@ class _Harness {
 Account _account({
   required String id,
   required String name,
-  AccountCategory category = AccountCategory.expense,
+  AccountSide category = AccountSide.expense,
   String currency = 'CNY',
-  AccountType type = AccountType.other,
+  AccountCategory type = AccountCategory.asset,
   String? parentId,
   String? icon,
   String? color,
@@ -159,19 +159,19 @@ void main() {
           _account(
             id: 'expense-root',
             name: 'Expenses',
-            category: AccountCategory.expense,
+            category: AccountSide.expense,
           ),
           _account(
             id: 'income-root',
             name: 'Income',
-            category: AccountCategory.income,
+            category: AccountSide.income,
           ),
         ],
       ),
     );
     await tester.pumpAndSettle();
 
-    // The form defaults to AccountCategory.asset (bank carrier). The
+    // The form defaults to AccountSide.asset (bank carrier). The
     // parent picker filters to same-category — both seeded accounts
     // are non-asset, so the dropdown opens empty.
     final picker = find.byType(AccountTreePicker);

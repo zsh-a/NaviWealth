@@ -1309,14 +1309,14 @@ class $AccountsTable extends Accounts
     requiredDuringInsert: true,
   );
   @override
-  late final GeneratedColumnWithTypeConverter<AccountType, String> type =
+  late final GeneratedColumnWithTypeConverter<AccountCategory, String> type =
       GeneratedColumn<String>(
         'type',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<AccountType>($AccountsTable.$convertertype);
+      ).withConverter<AccountCategory>($AccountsTable.$convertertype);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -1388,15 +1388,15 @@ class $AccountsTable extends Accounts
     defaultValue: const Constant(false),
   );
   @override
-  late final GeneratedColumnWithTypeConverter<AccountCategory, String>
-  category = GeneratedColumn<String>(
-    'category',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: Constant(AccountCategory.asset.name),
-  ).withConverter<AccountCategory>($AccountsTable.$convertercategory);
+  late final GeneratedColumnWithTypeConverter<AccountSide, String> category =
+      GeneratedColumn<String>(
+        'category',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(AccountSide.asset.name),
+      ).withConverter<AccountSide>($AccountsTable.$convertercategory);
   static const VerificationMeta _parentIdMeta = const VerificationMeta(
     'parentId',
   );
@@ -1655,10 +1655,10 @@ class $AccountsTable extends Accounts
   }
 
   static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-  static TypeConverter<AccountType, String> $convertertype =
-      const EnumStringConverter(AccountType.values);
-  static TypeConverter<AccountCategory, String> $convertercategory =
+  static TypeConverter<AccountCategory, String> $convertertype =
       const EnumStringConverter(AccountCategory.values);
+  static TypeConverter<AccountSide, String> $convertercategory =
+      const EnumStringConverter(AccountSide.values);
 }
 
 class AccountRow extends DataClass implements Insertable<AccountRow> {
@@ -1684,7 +1684,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   /// during a separate `vacuum` pass.
   final DateTime? deletedAt;
   final String id;
-  final AccountType type;
+  final AccountCategory type;
   final String name;
   final String currency;
   final String? institution;
@@ -1693,13 +1693,13 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   final bool archived;
 
   /// FIR-126 — accounting classification (asset / liability / income /
-  /// expense / equity). See [AccountCategory] for the why and the
+  /// expense / equity). See [AccountSide] for the why and the
   /// migration in `app_database.dart` (v8) for the back-fill rules.
   ///
   /// Defaulting to `asset` at the column level gives new accounts the
   /// conservative accounting class; creation code still sets the intended
   /// category explicitly.
-  final AccountCategory category;
+  final AccountSide category;
 
   /// FIR-130 — id of this account's parent in the Beancount-style tree.
   /// NULL on top-level rows; otherwise points at another row in this
@@ -1820,14 +1820,14 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
       hlc: serializer.fromJson<Hlc>(json['hlc']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       id: serializer.fromJson<String>(json['id']),
-      type: serializer.fromJson<AccountType>(json['type']),
+      type: serializer.fromJson<AccountCategory>(json['type']),
       name: serializer.fromJson<String>(json['name']),
       currency: serializer.fromJson<String>(json['currency']),
       institution: serializer.fromJson<String?>(json['institution']),
       accountNumber: serializer.fromJson<String?>(json['accountNumber']),
       note: serializer.fromJson<String?>(json['note']),
       archived: serializer.fromJson<bool>(json['archived']),
-      category: serializer.fromJson<AccountCategory>(json['category']),
+      category: serializer.fromJson<AccountSide>(json['category']),
       parentId: serializer.fromJson<String?>(json['parentId']),
       icon: serializer.fromJson<String?>(json['icon']),
       color: serializer.fromJson<String?>(json['color']),
@@ -1843,14 +1843,14 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
       'hlc': serializer.toJson<Hlc>(hlc),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'id': serializer.toJson<String>(id),
-      'type': serializer.toJson<AccountType>(type),
+      'type': serializer.toJson<AccountCategory>(type),
       'name': serializer.toJson<String>(name),
       'currency': serializer.toJson<String>(currency),
       'institution': serializer.toJson<String?>(institution),
       'accountNumber': serializer.toJson<String?>(accountNumber),
       'note': serializer.toJson<String?>(note),
       'archived': serializer.toJson<bool>(archived),
-      'category': serializer.toJson<AccountCategory>(category),
+      'category': serializer.toJson<AccountSide>(category),
       'parentId': serializer.toJson<String?>(parentId),
       'icon': serializer.toJson<String?>(icon),
       'color': serializer.toJson<String?>(color),
@@ -1864,14 +1864,14 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
     Hlc? hlc,
     Value<DateTime?> deletedAt = const Value.absent(),
     String? id,
-    AccountType? type,
+    AccountCategory? type,
     String? name,
     String? currency,
     Value<String?> institution = const Value.absent(),
     Value<String?> accountNumber = const Value.absent(),
     Value<String?> note = const Value.absent(),
     bool? archived,
-    AccountCategory? category,
+    AccountSide? category,
     Value<String?> parentId = const Value.absent(),
     Value<String?> icon = const Value.absent(),
     Value<String?> color = const Value.absent(),
@@ -2000,14 +2000,14 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
   final Value<Hlc> hlc;
   final Value<DateTime?> deletedAt;
   final Value<String> id;
-  final Value<AccountType> type;
+  final Value<AccountCategory> type;
   final Value<String> name;
   final Value<String> currency;
   final Value<String?> institution;
   final Value<String?> accountNumber;
   final Value<String?> note;
   final Value<bool> archived;
-  final Value<AccountCategory> category;
+  final Value<AccountSide> category;
   final Value<String?> parentId;
   final Value<String?> icon;
   final Value<String?> color;
@@ -2039,7 +2039,7 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     required Hlc hlc,
     this.deletedAt = const Value.absent(),
     required String id,
-    required AccountType type,
+    required AccountCategory type,
     required String name,
     required String currency,
     this.institution = const Value.absent(),
@@ -2108,14 +2108,14 @@ class AccountsCompanion extends UpdateCompanion<AccountRow> {
     Value<Hlc>? hlc,
     Value<DateTime?>? deletedAt,
     Value<String>? id,
-    Value<AccountType>? type,
+    Value<AccountCategory>? type,
     Value<String>? name,
     Value<String>? currency,
     Value<String?>? institution,
     Value<String?>? accountNumber,
     Value<String?>? note,
     Value<bool>? archived,
-    Value<AccountCategory>? category,
+    Value<AccountSide>? category,
     Value<String?>? parentId,
     Value<String?>? icon,
     Value<String?>? color,
@@ -15486,14 +15486,14 @@ typedef $$AccountsTableCreateCompanionBuilder =
       required Hlc hlc,
       Value<DateTime?> deletedAt,
       required String id,
-      required AccountType type,
+      required AccountCategory type,
       required String name,
       required String currency,
       Value<String?> institution,
       Value<String?> accountNumber,
       Value<String?> note,
       Value<bool> archived,
-      Value<AccountCategory> category,
+      Value<AccountSide> category,
       Value<String?> parentId,
       Value<String?> icon,
       Value<String?> color,
@@ -15507,14 +15507,14 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<Hlc> hlc,
       Value<DateTime?> deletedAt,
       Value<String> id,
-      Value<AccountType> type,
+      Value<AccountCategory> type,
       Value<String> name,
       Value<String> currency,
       Value<String?> institution,
       Value<String?> accountNumber,
       Value<String?> note,
       Value<bool> archived,
-      Value<AccountCategory> category,
+      Value<AccountSide> category,
       Value<String?> parentId,
       Value<String?> icon,
       Value<String?> color,
@@ -15561,11 +15561,11 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<AccountType, AccountType, String> get type =>
-      $composableBuilder(
-        column: $table.type,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
+  ColumnWithTypeConverterFilters<AccountCategory, AccountCategory, String>
+  get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
@@ -15597,7 +15597,7 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<AccountCategory, AccountCategory, String>
+  ColumnWithTypeConverterFilters<AccountSide, AccountSide, String>
   get category => $composableBuilder(
     column: $table.category,
     builder: (column) => ColumnWithTypeConverterFilters(column),
@@ -15745,7 +15745,7 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<AccountType, String> get type =>
+  GeneratedColumnWithTypeConverter<AccountCategory, String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -15770,7 +15770,7 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<bool> get archived =>
       $composableBuilder(column: $table.archived, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<AccountCategory, String> get category =>
+  GeneratedColumnWithTypeConverter<AccountSide, String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
   GeneratedColumn<String> get parentId =>
@@ -15820,14 +15820,14 @@ class $$AccountsTableTableManager
                 Value<Hlc> hlc = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> id = const Value.absent(),
-                Value<AccountType> type = const Value.absent(),
+                Value<AccountCategory> type = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String?> institution = const Value.absent(),
                 Value<String?> accountNumber = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
-                Value<AccountCategory> category = const Value.absent(),
+                Value<AccountSide> category = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
                 Value<String?> icon = const Value.absent(),
                 Value<String?> color = const Value.absent(),
@@ -15860,14 +15860,14 @@ class $$AccountsTableTableManager
                 required Hlc hlc,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String id,
-                required AccountType type,
+                required AccountCategory type,
                 required String name,
                 required String currency,
                 Value<String?> institution = const Value.absent(),
                 Value<String?> accountNumber = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
-                Value<AccountCategory> category = const Value.absent(),
+                Value<AccountSide> category = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
                 Value<String?> icon = const Value.absent(),
                 Value<String?> color = const Value.absent(),

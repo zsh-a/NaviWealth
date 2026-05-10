@@ -42,8 +42,19 @@ Future<void> showGlobalActionPanel(BuildContext context) {
           FTile(
             title: Text(l10n.superFabTransfer),
             prefix: const Icon(Icons.swap_horiz),
+            subtitle: Text(l10n.superFabTransferSubtitle),
             onPress: () =>
                 _closeAndPush(sheetContext, context, AppRoutes.transfer),
+          ),
+          FTile(
+            title: Text(l10n.superFabConvert),
+            prefix: const Icon(Icons.currency_exchange),
+            subtitle: Text(l10n.superFabConvertSubtitle),
+            onPress: () => _closeAndPush(
+              sheetContext,
+              context,
+              '${AppRoutes.transfer}?convert=1',
+            ),
           ),
           FTile(
             title: Text(l10n.accountFormCreateTitle),

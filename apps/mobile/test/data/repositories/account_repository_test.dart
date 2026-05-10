@@ -29,14 +29,14 @@ void main() {
 
   test('create writes the row and queues an insert op', () async {
     final account = await repo.create(
-      type: AccountType.bank,
+      type: AccountCategory.bank,
       name: '招行储蓄',
       currency: 'CNY',
       institution: '招商银行',
     );
 
     expect(account.name, '招行储蓄');
-    expect(account.type, AccountType.bank);
+    expect(account.type, AccountCategory.bank);
     expect(account.sync.ownerUserId, 'u-test');
 
     final batch = await outbox.peekBatch();
@@ -51,7 +51,7 @@ void main() {
 
   test('update only diffs the changed fields and bumps HLC', () async {
     final account = await repo.create(
-      type: AccountType.brokerage,
+      type: AccountCategory.broker,
       name: 'Original',
       currency: 'USD',
     );
@@ -73,7 +73,7 @@ void main() {
 
   test('softDelete writes a tombstone and queues a delete op', () async {
     final account = await repo.create(
-      type: AccountType.cash,
+      type: AccountCategory.cash,
       name: '现金',
       currency: 'CNY',
     );
@@ -91,17 +91,17 @@ void main() {
 
   test('listActive excludes archived and deleted accounts', () async {
     final live = await repo.create(
-      type: AccountType.bank,
+      type: AccountCategory.bank,
       name: 'Live',
       currency: 'USD',
     );
     final archived = await repo.create(
-      type: AccountType.brokerage,
+      type: AccountCategory.broker,
       name: 'Archived',
       currency: 'USD',
     );
     final deleted = await repo.create(
-      type: AccountType.cash,
+      type: AccountCategory.cash,
       name: 'Deleted',
       currency: 'CNY',
     );
@@ -114,7 +114,7 @@ void main() {
 
   test('clearInstitution serialises a null in the diff', () async {
     final acc = await repo.create(
-      type: AccountType.bank,
+      type: AccountCategory.bank,
       name: 'A',
       currency: 'CNY',
       institution: '招商银行',
@@ -134,18 +134,18 @@ void main() {
   group('FIR-126 — accountCategory', () {
     test('create defaults the category from the carrier type', () async {
       final bank = await repo.create(
-        type: AccountType.bank,
+        type: AccountCategory.bank,
         name: 'Bank',
         currency: 'CNY',
       );
-      expect(bank.category, AccountCategory.asset);
+      expect(bank.category, AccountSide.asset);
 
       final liability = await repo.create(
-        type: AccountType.liability,
+        type: AccountCategory.liability,
         name: 'Mortgage',
         currency: 'CNY',
       );
-      expect(liability.category, AccountCategory.liability);
+      expect(liability.category, AccountSide.liability);
 
       // The insert op carries the category so peers learn the new
       // accounting classification on their next pull.
@@ -157,17 +157,17 @@ void main() {
 
     test('create honours an explicit category override', () async {
       final acc = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: '工资',
         currency: 'CNY',
-        category: AccountCategory.income,
+        category: AccountSide.income,
       );
-      expect(acc.category, AccountCategory.income);
+      expect(acc.category, AccountSide.income);
     });
 
     test('update with a new category emits a single-field diff', () async {
       final acc = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: 'TBD',
         currency: 'CNY',
       );
@@ -175,9 +175,9 @@ void main() {
 
       final updated = await repo.update(
         acc.id,
-        category: AccountCategory.equity,
+        category: AccountSide.equity,
       );
-      expect(updated.category, AccountCategory.equity);
+      expect(updated.category, AccountSide.equity);
 
       final batch = await outbox.peekBatch();
       expect(batch, hasLength(1));
@@ -211,12 +211,12 @@ void main() {
       () async {
         await repo.seedSystemAccounts();
         final id = AccountRepository.systemAccountIdFor(
-          AccountCategory.income,
+          AccountSide.income,
           ownerUserId: 'u-test',
         );
         final row = await repo.findById(id);
         expect(row, isNotNull);
-        expect(row!.category, AccountCategory.income);
+        expect(row!.category, AccountSide.income);
       },
     );
 
@@ -225,7 +225,7 @@ void main() {
       () async {
         await repo.seedSystemAccounts();
         final user = await repo.create(
-          type: AccountType.bank,
+          type: AccountCategory.bank,
           name: '招行储蓄',
           currency: 'CNY',
         );
@@ -239,10 +239,10 @@ void main() {
   group('FIR-133 — account tree', () {
     test('create round-trips parentId / icon / color', () async {
       final parent = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: 'Bills',
         currency: 'CNY',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
         icon: 'receipt_long',
         color: '#EF4444',
       );
@@ -251,10 +251,10 @@ void main() {
       expect(parent.color, '#EF4444');
 
       final child = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: 'Electricity',
         currency: 'CNY',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
         parentId: parent.id,
         icon: 'bolt',
         color: '#F97316',
@@ -273,10 +273,10 @@ void main() {
 
     test('update emits per-field diffs for parentId / icon / color', () async {
       final acc = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: 'Misc',
         currency: 'CNY',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
       );
       await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
@@ -303,16 +303,16 @@ void main() {
 
     test('clearParentId nulls the link in the diff', () async {
       final root = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: 'Top',
         currency: 'CNY',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
       );
       final child = await repo.create(
-        type: AccountType.other,
+        type: AccountCategory.asset,
         name: 'Leaf',
         currency: 'CNY',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
         parentId: root.id,
       );
       await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
@@ -337,7 +337,7 @@ void main() {
       );
       expect(salary, isNotNull);
       expect(salary!.parentId, 'system-account:u-test:income');
-      expect(salary.category, AccountCategory.income);
+      expect(salary.category, AccountSide.income);
       expect(salary.icon, 'work');
       expect(salary.color, '#10B981');
 

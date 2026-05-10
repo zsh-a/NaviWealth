@@ -176,11 +176,11 @@ class _AccountsByType extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final grouped = <AccountType, List<Account>>{};
+    final grouped = <AccountCategory, List<Account>>{};
     for (final a in accounts) {
       grouped.putIfAbsent(a.type, () => []).add(a);
     }
-    final order = AccountType.values
+    final order = AccountCategory.values
         .where((t) => grouped.containsKey(t))
         .toList(growable: false);
 
@@ -196,7 +196,7 @@ class _AccountsByType extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
               child: Text(
-                accountTypeLabel(l10n, type),
+                accountCategoryLabel(l10n, type),
                 style: context.theme.typography.md,
               ),
             ),

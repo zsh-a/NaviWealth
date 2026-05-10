@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -84,6 +84,34 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'ALTER TABLE chat_messages ADD COLUMN text_segments_json TEXT',
         );
+      }
+      // v3 → v4: reshape the account taxonomy from carrier shape +
+      // accounting category into wealth-container category +
+      // auto-derived accounting side. The `type` column keeps its name
+      // but its enum string values change (brokerage→broker,
+      // cryptoWallet→crypto, realEstate/vehicle/other→asset). The
+      // `category` column likewise keeps its name but switches from the
+      // old user-facing accounting enum (asset/liability/income/expense
+      // /equity, all five values) to the auto-derived AccountSide
+      // (asset / liability for user containers; income / expense /
+      // equity remain only on the seeded system accounts that already
+      // store those exact strings, so they pass through unchanged).
+      if (from < 4) {
+        await customStatement(
+          "UPDATE accounts SET type = 'broker' WHERE type = 'brokerage'",
+        );
+        await customStatement(
+          "UPDATE accounts SET type = 'crypto' WHERE type = 'cryptoWallet'",
+        );
+        await customStatement(
+          "UPDATE accounts SET type = 'asset' "
+              "WHERE type IN ('realEstate', 'vehicle', 'other')",
+        );
+        // Other legacy values (cash, bank, liability) keep the same
+        // enum string under the new AccountCategory and need no
+        // rewrite. The category column requires no rewrite for system
+        // accounts (income/expense/equity) and for user accounts whose
+        // legacy value (asset/liability) maps 1:1 to AccountSide.
       }
     },
     beforeOpen: (details) async {

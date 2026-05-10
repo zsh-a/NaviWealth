@@ -26,12 +26,12 @@ final _sync = SyncMeta(
 Account _account({
   required String id,
   required String name,
-  AccountCategory category = AccountCategory.asset,
+  AccountSide category = AccountSide.asset,
   String currency = 'CNY',
 }) =>
     Account(
       id: id,
-      type: AccountType.bank,
+      type: AccountCategory.bank,
       name: name,
       currency: currency,
       category: category,
@@ -224,7 +224,7 @@ void main() {
       _account(
         id: 'a-food',
         name: 'Food',
-        category: AccountCategory.expense,
+        category: AccountSide.expense,
       ),
       _account(id: 'a-bank', name: 'Bank'),
     ];
@@ -276,12 +276,12 @@ void main() {
       _account(
         id: 'a-equity',
         name: 'Equity',
-        category: AccountCategory.equity,
+        category: AccountSide.equity,
       ),
       _account(
         id: 'a-income',
         name: 'Income',
-        category: AccountCategory.income,
+        category: AccountSide.income,
       ),
     ];
     final entries = [

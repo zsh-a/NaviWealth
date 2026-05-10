@@ -245,8 +245,8 @@ String? _summariseAmount(
   for (final p in postings) {
     final account = accounts[p.accountId];
     if (account == null) continue;
-    if (account.category != AccountCategory.asset &&
-        account.category != AccountCategory.liability) {
+    if (account.category != AccountSide.asset &&
+        account.category != AccountSide.liability) {
       continue;
     }
     final magnitude = p.units.abs();

@@ -70,7 +70,7 @@ class AccountOpApplier implements OpApplier {
       currency: _requiredString(fields, 'currency'),
       category: Value(
         _accountCategory(fields['category'] as String?) ??
-            defaultCategoryForAccountType(type),
+            accountSideForCategory(type),
       ),
       institution: Value(_string(fields, 'institution')),
       accountNumber: Value(_string(fields, 'account_number')),
@@ -190,12 +190,12 @@ class AccountOpApplier implements OpApplier {
     throw StateError('account op field $key is not bool: $value');
   }
 
-  AccountType _accountType(String value) {
-    return AccountType.values.byName(value);
+  AccountCategory _accountType(String value) {
+    return AccountCategory.values.byName(value);
   }
 
-  AccountCategory? _accountCategory(String? value) {
+  AccountSide? _accountCategory(String? value) {
     if (value == null || value.isEmpty) return null;
-    return AccountCategory.values.byName(value);
+    return AccountSide.values.byName(value);
   }
 }
