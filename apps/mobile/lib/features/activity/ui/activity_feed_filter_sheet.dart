@@ -7,8 +7,22 @@ import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/activity_feed_provider.dart';
-import '../data/activity_feed_query.dart';
 
+/// Activity timeline filter sheet — dimensions the inline kind chip row
+/// can't express: **date range** + **per-account multi-select**.
+///
+/// Kind selection is intentionally absent here even though the
+/// underlying `ActivityFeedQuery` carries a `kinds` field — that's
+/// already covered by the inline chip row at the top of the timeline.
+/// Showing it twice was the original "redundant content" complaint, so
+/// the sheet now stays narrowly focused on the two dimensions inline
+/// chips can't reach.
+///
+/// Edits apply live (the timeline rebuilds via Riverpod the moment the
+/// query changes); there is no Save button. Dismiss the sheet by
+/// dragging it down or tapping outside. The Clear action in the sheet
+/// header zeroes the date range + accounts (kind chips stay where the
+/// user left them in the inline row).
 class ActivityFeedFilterSheet extends ConsumerWidget {
   const ActivityFeedFilterSheet({super.key});
 
@@ -19,14 +33,21 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
       title: l10n.activityFeedFilterTitle,
       builder: (_) => const ActivityFeedFilterSheet(),
       actions: [
-        Builder(
-          builder: (ctx) => TextButton(
-            onPressed: () {
-              ProviderScope.containerOf(ctx)
-                  .read(activityFeedQueryProvider.notifier)
-                  .clearFilters();
+        Consumer(
+          builder: (ctx, ref, _) => _HeaderTextAction(
+            label: l10n.activityFeedFilterClear,
+            onPress: () {
+              // Zero the dimensions this sheet owns. Kind selection
+              // stays untouched — that's the inline row's domain.
+              final controller =
+                  ref.read(activityFeedQueryProvider.notifier);
+              controller.mutateQuery(
+                (q) => q.copyWith(
+                  dateRange: null,
+                  accountIds: const <String>{},
+                ),
+              );
             },
-            child: Text(l10n.activityFeedFilterClear),
           ),
         ),
       ],
@@ -40,91 +61,212 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
     final accounts =
         ref.watch(accountsStreamProvider).value ?? const <Account>[];
     final controller = ref.read(activityFeedQueryProvider.notifier);
+    final activeRange = _activeRangeOf(query.dateRange);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SheetSectionLabel(text: l10n.activityFeedFilterKind),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final kind in ActivityKind.values)
-              _PillChip(
-                label: _kindLabel(l10n, kind),
-                selected: query.kinds.contains(kind),
-                onTap: () {
-                  final wasSelected = query.kinds.contains(kind);
-                  controller.mutateQuery((q) {
-                    final kinds = {...q.kinds};
-                    wasSelected ? kinds.remove(kind) : kinds.add(kind);
-                    return q.copyWith(kinds: kinds);
-                  });
-                },
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _SheetSectionLabel(text: l10n.activityFeedFilterAccount),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 240),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              for (final account in accounts)
-                _AccountFilterRow(
-                  account: account,
-                  selected: query.accountIds.contains(account.id),
-                  onToggle: () {
-                    controller.mutateQuery((q) {
-                      final ids = {...q.accountIds};
-                      ids.contains(account.id)
-                          ? ids.remove(account.id)
-                          : ids.add(account.id);
-                      return q.copyWith(accountIds: ids);
-                    });
-                  },
-                ),
-            ],
+        _SheetSectionLabel(text: l10n.activityFeedFilterDateRange),
+        _DateRangeRow(
+          active: activeRange,
+          onPick: (range) => controller.mutateQuery(
+            (q) => q.copyWith(dateRange: _rangeFor(range)),
           ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: FButton(
-                variant: FButtonVariant.outline,
-                onPress: () {
-                  final now = DateTime.now();
-                  final start = DateTime(now.year, now.month);
-                  final end = DateTime(now.year, now.month + 1);
-                  controller.mutateQuery(
-                    (q) => q.copyWith(
-                      dateRange: DateTimeRange(start: start, end: end),
+        if (query.dateRange != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              _formatRange(l10n, query.dateRange!),
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ),
+        const SizedBox(height: 18),
+        _SheetSectionLabel(text: l10n.activityFeedFilterAccount),
+        if (accounts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 8),
+            child: Text(
+              l10n.activityFeedFilterAccountEmpty,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          )
+        else
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final account in accounts)
+                    _AccountFilterRow(
+                      account: account,
+                      selected: query.accountIds.contains(account.id),
+                      onToggle: () {
+                        controller.mutateQuery((q) {
+                          final ids = {...q.accountIds};
+                          ids.contains(account.id)
+                              ? ids.remove(account.id)
+                              : ids.add(account.id);
+                          return q.copyWith(accountIds: ids);
+                        });
+                      },
                     ),
-                  );
-                },
-                child: Text(l10n.activityFeedFilterThisMonth),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: FButton(
-                onPress: () => Navigator.of(context).pop(),
-                child: Text(l10n.formSave),
-              ),
-            ),
-          ],
-        ),
+          ),
       ],
     );
   }
 }
 
-/// Inline section eyebrow used inside [AppSheet] bodies. Same look as
-/// the inset-grouped headers on the Settings page so the sheet reads
-/// like a tightly-scoped settings micro-page rather than a separate
-/// component family.
+enum _DateRange { thisWeek, thisMonth, lastMonth, thisYear, custom }
+
+DateTimeRange? _rangeFor(_DateRange r) {
+  final now = DateTime.now();
+  switch (r) {
+    case _DateRange.thisWeek:
+      final start = now.subtract(Duration(days: now.weekday - 1));
+      return DateTimeRange(
+        start: DateTime(start.year, start.month, start.day),
+        end: DateTime(now.year, now.month, now.day + 1),
+      );
+    case _DateRange.thisMonth:
+      return DateTimeRange(
+        start: DateTime(now.year, now.month),
+        end: DateTime(now.year, now.month + 1),
+      );
+    case _DateRange.lastMonth:
+      return DateTimeRange(
+        start: DateTime(now.year, now.month - 1),
+        end: DateTime(now.year, now.month),
+      );
+    case _DateRange.thisYear:
+      return DateTimeRange(
+        start: DateTime(now.year),
+        end: DateTime(now.year + 1),
+      );
+    case _DateRange.custom:
+      return null;
+  }
+}
+
+_DateRange? _activeRangeOf(DateTimeRange? r) {
+  if (r == null) return null;
+  for (final preset in [
+    _DateRange.thisWeek,
+    _DateRange.thisMonth,
+    _DateRange.lastMonth,
+    _DateRange.thisYear,
+  ]) {
+    final candidate = _rangeFor(preset);
+    if (candidate != null &&
+        candidate.start == r.start &&
+        candidate.end == r.end) {
+      return preset;
+    }
+  }
+  return _DateRange.custom;
+}
+
+String _formatRange(AppLocalizations l10n, DateTimeRange r) {
+  String fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  return '${fmt(r.start)} → ${fmt(r.end.subtract(const Duration(days: 1)))}';
+}
+
+class _DateRangeRow extends StatelessWidget {
+  const _DateRangeRow({required this.active, required this.onPick});
+
+  final _DateRange? active;
+  final ValueChanged<_DateRange> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final entries = <(_DateRange, String)>[
+      (_DateRange.thisWeek, l10n.activityFeedFilterRangeThisWeek),
+      (_DateRange.thisMonth, l10n.activityFeedFilterRangeThisMonth),
+      (_DateRange.lastMonth, l10n.activityFeedFilterRangeLastMonth),
+      (_DateRange.thisYear, l10n.activityFeedFilterRangeThisYear),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final (range, label) in entries)
+          _PillChip(
+            label: label,
+            selected: active == range,
+            onTap: () => onPick(range),
+          ),
+        // Custom date pickers feel out-of-place inside a quick-filter
+        // sheet on mobile, so we surface a "Pick range…" pill that
+        // routes to the platform date range picker.
+        _PillChip(
+          label: l10n.activityFeedFilterRangeCustom,
+          selected: active == _DateRange.custom,
+          onTap: () => _pickCustom(context, onPick),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickCustom(
+    BuildContext context,
+    ValueChanged<_DateRange> onPick,
+  ) async {
+    final now = DateTime.now();
+    // Capture the container before await so the post-await check
+    // doesn't need a reanchored BuildContext.
+    final container = ProviderScope.containerOf(context);
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 10),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: DateTimeRange(
+        start: DateTime(now.year, now.month),
+        end: DateTime(now.year, now.month, now.day + 1),
+      ),
+    );
+    if (result != null) {
+      container
+          .read(activityFeedQueryProvider.notifier)
+          .mutateQuery((q) => q.copyWith(dateRange: result));
+    }
+  }
+}
+
+class _HeaderTextAction extends StatelessWidget {
+  const _HeaderTextAction({required this.label, required this.onPress});
+
+  final String label;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return FTappable(
+      onPress: onPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          style: context.theme.typography.sm.copyWith(
+            color: context.theme.colors.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SheetSectionLabel extends StatelessWidget {
   const _SheetSectionLabel({required this.text});
   final String text;
@@ -215,17 +357,4 @@ class _AccountFilterRow extends StatelessWidget {
       ),
     );
   }
-}
-
-String _kindLabel(AppLocalizations l10n, ActivityKind kind) {
-  return switch (kind) {
-    ActivityKind.expense => l10n.entryKindExpense,
-    ActivityKind.transfer => l10n.entryKindTransfer,
-    ActivityKind.trade => l10n.entryKindTrade,
-    ActivityKind.income => l10n.entryKindIncome,
-    ActivityKind.payment => l10n.entryKindPayment,
-    ActivityKind.adjustment => l10n.entryKindAdjustment,
-    ActivityKind.opening => l10n.entryKindOpening,
-    ActivityKind.other => l10n.entryKindEntry,
-  };
 }

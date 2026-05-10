@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/global_action_panel.dart';
 import '../../app/route_paths.dart';
 import '../../core/format/providers.dart';
 import '../../data/domain/account.dart';
@@ -16,6 +15,7 @@ import '../home/data/dashboard_providers.dart';
 import 'data/account_balances_provider.dart';
 import 'domain/account_balances.dart';
 import 'ui/account_labels.dart';
+import 'ui/accounts_action_panel.dart';
 
 /// Accounts Hub — account-centric view of every wealth container.
 ///
@@ -42,7 +42,7 @@ class AccountsHubPage extends ConsumerWidget {
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.add_outlined),
-            onPress: () => showGlobalActionPanel(context),
+            onPress: () => showAccountsActionPanel(context),
           ),
         ],
       ),

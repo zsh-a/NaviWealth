@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/global_action_panel.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/activity_feed_provider.dart';
 import 'data/activity_feed_query.dart';
+import 'ui/activity_action_panel.dart';
 import 'ui/activity_feed.dart';
 import 'ui/activity_feed_filter_sheet.dart';
 
@@ -58,20 +58,17 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           ),
           FHeaderAction(
             icon: const Icon(Icons.add_outlined),
-            onPress: () => showGlobalActionPanel(context),
+            onPress: () => showActivityActionPanel(context),
           ),
         ],
       ),
       childPad: false,
-      child: const Material(
-        color: Colors.transparent,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ActivityKindFilterRow(),
-            Expanded(child: ActivityFeed()),
-          ],
-        ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ActivityKindFilterRow(),
+          Expanded(child: ActivityFeed()),
+        ],
       ),
     );
   }
