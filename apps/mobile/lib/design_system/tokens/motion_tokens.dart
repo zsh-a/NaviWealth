@@ -1,7 +1,5 @@
 import 'package:flutter/animation.dart';
 
-import 'liquid_spring_curve.dart';
-
 /// Duration + easing scale for animations.
 ///
 /// Exposed so screens use the same micro-interaction feel (e.g. number
@@ -22,9 +20,4 @@ class Motion {
   static const Curve standard = Cubic(0.2, 0.0, 0.0, 1.0);
   static const Curve standardDecelerate = Cubic(0.0, 0.0, 0.0, 1.0);
   static const Curve standardAccelerate = Cubic(0.3, 0.0, 1.0, 1.0);
-
-  // Liquid Glass spring curves — elastic, physics-driven.
-  static final Curve liquidPress = LiquidSprings.press;
-  static final Curve liquidAppear = LiquidSprings.appear;
-  static final Curve liquidDrag = LiquidSprings.drag;
 }

@@ -184,7 +184,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       if (!mounted) return;
       final resulting = currentBalance - cashOut;
       if (resulting < Decimal.zero) {
-        final confirmed = await showGlassModalBottomSheet<bool>(
+        final confirmed = await showModalBottomSheet<bool>(
           context: context,
           builder: (ctx) => Padding(
             padding: const EdgeInsets.all(Spacing.s16),
@@ -589,7 +589,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       runSpacing: 8,
       children: [
         for (final t in _tradeTypes)
-          AppChoiceChip(
+          ChoiceChip(
             label: Text(_typeLabel(l10n, t)),
             selected: _type == t,
             onSelected: (s) {

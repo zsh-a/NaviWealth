@@ -165,7 +165,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showGlassModalBottomSheet<bool>(
+    final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),

@@ -134,15 +134,15 @@ class _HeroCard extends StatelessWidget {
     final palette = _palette(context, event.status);
     final syncing = event.status == SyncStatus.syncing;
 
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: const EdgeInsets.fromLTRB(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
         Spacing.s20,
         Spacing.s20,
         Spacing.s12,
         Spacing.s20,
       ),
-      child: Row(
+          child: Row(
         children: [
           _StatusOrb(palette: palette, status: event.status),
           const SizedBox(width: Spacing.s16),
@@ -176,7 +176,8 @@ class _HeroCard extends StatelessWidget {
           ],
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -284,15 +285,15 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: const EdgeInsets.fromLTRB(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
         Spacing.s12,
         Spacing.s12,
         Spacing.s12,
         Spacing.s12,
       ),
-      child: Column(
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
@@ -318,7 +319,8 @@ class _StatTile extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -335,10 +337,10 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final semantic = SemanticColors.of(context);
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: const EdgeInsets.all(Spacing.s12),
-      child: Row(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.s12),
+          child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
@@ -354,7 +356,8 @@ class _ErrorCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -378,10 +381,7 @@ class _DiagnosticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: EdgeInsets.zero,
-      child: Column(
+    return FCard.raw(child: Column(
         children: [
           _Row(
             label: l10n.syncStatusDetailState,
@@ -418,8 +418,7 @@ class _DiagnosticsCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
+      ));
   }
 }
 
@@ -444,10 +443,11 @@ class _LocalCountsCard extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     if (counts == null) {
-      return const LiquidGlassCard(
-        layer: GlassLayer.tertiary,
-        padding: EdgeInsets.all(Spacing.s12),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      return const FCard.raw(
+        child: Padding(
+          padding: EdgeInsets.all(Spacing.s12),
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
       );
     }
 
@@ -480,10 +480,10 @@ class _LocalCountsCard extends StatelessWidget {
       );
     }
 
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
@@ -514,7 +514,8 @@ class _LocalCountsCard extends StatelessWidget {
             ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

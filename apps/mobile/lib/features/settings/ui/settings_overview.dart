@@ -175,18 +175,24 @@ class _AccountSection extends ConsumerWidget {
                 const Icon(Icons.currency_exchange),
                 const SizedBox(width: Spacing.s16),
                 Expanded(
-                  child: AppDropdown<String>(
-                    value: baseCurrency,
-                    label: l10n.settingsBaseCurrencyTitle,
-                    displayBuilder: (_, v) => Text(
-                      v ?? '',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: baseCurrency,
+                    decoration: InputDecoration(
+                      labelText: l10n.settingsBaseCurrencyTitle,
                     ),
                     items: [
                       for (final code in kCommonCurrencies)
                         DropdownMenuItem(
                           value: code,
                           child: Text(currencyDisplayLabel(l10n, code)),
+                        ),
+                    ],
+                    selectedItemBuilder: (context) => [
+                      for (final code in kCommonCurrencies)
+                        Text(
+                          code,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                     ],
                     onChanged: (picked) async {
@@ -238,9 +244,12 @@ class _AppearanceSection extends ConsumerWidget {
                 const Icon(Icons.brightness_6_outlined),
                 const SizedBox(width: Spacing.s16),
                 Expanded(
-                  child: AppDropdown<ThemeMode>(
-                    value: themeMode,
-                    label: l10n.settingsThemeModeTitle,
+                  child: DropdownButtonFormField<ThemeMode>(
+                    isExpanded: true,
+                    initialValue: themeMode,
+                    decoration: InputDecoration(
+                      labelText: l10n.settingsThemeModeTitle,
+                    ),
                     items: [
                       for (final m in ThemeMode.values)
                         DropdownMenuItem(
@@ -270,9 +279,12 @@ class _AppearanceSection extends ConsumerWidget {
                 const Icon(Icons.swap_vert),
                 const SizedBox(width: Spacing.s16),
                 Expanded(
-                  child: AppDropdown<MarketColorMode>(
-                    value: marketMode,
-                    label: l10n.settingsMarketColorTitle,
+                  child: DropdownButtonFormField<MarketColorMode>(
+                    isExpanded: true,
+                    initialValue: marketMode,
+                    decoration: InputDecoration(
+                      labelText: l10n.settingsMarketColorTitle,
+                    ),
                     items: [
                       for (final m in MarketColorMode.values)
                         DropdownMenuItem(
@@ -307,12 +319,11 @@ class _AppearanceSection extends ConsumerWidget {
                 const Icon(Icons.translate_outlined),
                 const SizedBox(width: Spacing.s16),
                 Expanded(
-                  child: AppDropdown<Locale?>(
-                    value: locale,
-                    label: l10n.settingsLanguageTitle,
-                    displayBuilder: (_, v) => Text(
-                      _localeLabel(l10n, v),
-                      style: Theme.of(context).textTheme.bodyMedium,
+                  child: DropdownButtonFormField<Locale?>(
+                    isExpanded: true,
+                    initialValue: locale,
+                    decoration: InputDecoration(
+                      labelText: l10n.settingsLanguageTitle,
                     ),
                     items: [
                       DropdownMenuItem(
@@ -356,14 +367,6 @@ class _AppearanceSection extends ConsumerWidget {
         MarketColorMode.colorblind => l10n.marketColorColorblind,
       };
 
-  String _localeLabel(AppLocalizations l10n, Locale? locale) {
-    if (locale == null) return l10n.langSystem;
-    return switch (locale.languageCode) {
-      'en' => l10n.langEnglish,
-      'zh' => l10n.langChinese,
-      _ => locale.languageCode,
-    };
-  }
 }
 
 class _AboutTile extends ConsumerWidget {

@@ -103,7 +103,7 @@ class SessionsPanel extends ConsumerWidget {
     ChatSession session,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showGlassModalBottomSheet<bool>(
+    final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),
@@ -151,7 +151,7 @@ class SessionsPanel extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: session.title);
-    final result = await showGlassModalBottomSheet<String>(
+    final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -236,7 +236,7 @@ class _PanelShell extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: GlassTokens.of(context).hairlineColor,
+                  color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -426,7 +426,7 @@ class _SessionTile extends StatelessWidget {
     AppLocalizations l10n,
     ColorScheme cs,
   ) {
-    return showGlassModalBottomSheet<void>(
+    return showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Padding(

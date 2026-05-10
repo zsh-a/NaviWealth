@@ -101,8 +101,7 @@ class AssetsBody extends StatelessWidget {
       valuationMap: valuationMap,
       accountById: accountById,
     );
-    return ScrollNotificationHandler(
-      child: ListView.builder(
+    return ListView.builder(
         padding: Spacing.pageMobile.copyWith(
           bottom:
               Spacing.pageMobile.bottom +
@@ -115,8 +114,7 @@ class AssetsBody extends StatelessWidget {
           selectedAssetId: selectedAssetId,
           inMasterDetail: inMasterDetail,
         ),
-      ),
-    );
+      );
   }
 }
 

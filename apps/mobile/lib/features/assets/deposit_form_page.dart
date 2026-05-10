@@ -168,7 +168,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showGlassModalBottomSheet<bool>(
+    final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),
@@ -285,14 +285,13 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         padding: Spacing.pageMobile,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
-          LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            borderRadius: Radii.lg.toDouble(),
-            padding: const EdgeInsets.all(Spacing.s4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _DepositKindChip(
+          FCard.raw(
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.s4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _DepositKindChip(
                     icon: Icons.lock_clock,
                     label: l10n.depositTypeTerm,
                     selected: _kind == AssetType.bankDepositTerm,
@@ -314,6 +313,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
                   ),
                 ),
               ],
+            ),
             ),
           ),
           const SizedBox(height: Spacing.s12),

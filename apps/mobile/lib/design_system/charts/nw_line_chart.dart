@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/market_colors.dart';
-import '../tokens/glass_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
@@ -680,7 +679,6 @@ class _GlassTooltip extends StatelessWidget {
     }
     final safeIndex = spotIndex.clamp(0, processed.first.points.length - 1);
     final point = processed.first.points[safeIndex];
-    final glass = GlassTokens.of(context);
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
@@ -700,8 +698,11 @@ class _GlassTooltip extends StatelessWidget {
             color: theme.colorScheme.surfaceContainerHigh.withValues(
               alpha: 0.94,
             ),
-            borderRadius: BorderRadius.circular(glass.borderRadius),
-            border: Border.all(color: glass.hairlineColor, width: 1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              width: 1,
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

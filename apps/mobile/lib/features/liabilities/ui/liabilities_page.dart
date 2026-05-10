@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -40,8 +41,7 @@ class LiabilitiesPage extends ConsumerWidget {
         // Standard two-line ListTile height — lets the scroll view skip
         // per-item layout during scroll, critical for 120fps.
         const itemHeight = 72.0 + Spacing.s8;
-        return ScrollNotificationHandler(
-          child: ListView.builder(
+        return ListView.builder(
             padding: Spacing.pageMobile.copyWith(
               bottom:
                   Spacing.pageMobile.bottom +
@@ -55,8 +55,7 @@ class LiabilitiesPage extends ConsumerWidget {
               summary: summaries[items[i].id],
               formatters: formatters,
             ),
-          ),
-        );
+          );
       },
     );
 
@@ -127,7 +126,7 @@ class _LiabilityListTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final remaining = summary?.remainingPrincipal;
 
-    return LiquidGlassCard(
+    return FCard.raw(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.s16,

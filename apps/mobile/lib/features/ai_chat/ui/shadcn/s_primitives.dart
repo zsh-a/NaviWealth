@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 's_tokens.dart';
 
 /// SCard — flat surface with hairline border and a subtle muted fill.
-/// Replaces Material `Card` / `LiquidGlassCard` inside the AI panel.
+/// AI-panel card surface, complement to Forui's `FCard` used in the
+/// rest of the app.
 class SCard extends StatelessWidget {
   const SCard({
     super.key,

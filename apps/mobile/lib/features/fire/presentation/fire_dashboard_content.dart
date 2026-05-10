@@ -129,9 +129,10 @@ class _ProgressHeaderCard extends StatelessWidget {
     final target = view.goal.targetAmount.toDouble();
     final gap = target - current;
 
-    return LiquidGlassCard(
-      padding: Spacing.cardHero,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.cardHero,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.fireProgressTitle, style: theme.textTheme.titleMedium),
@@ -172,7 +173,8 @@ class _ProgressHeaderCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -227,9 +229,10 @@ class _CountdownCard extends StatelessWidget {
             ],
           );
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -240,7 +243,8 @@ class _CountdownCard extends StatelessWidget {
           body,
         ],
       ),
-    );
+        ),
+      );
   }
 
   static FireScenarioTier _baselineTier(FireDashboardView view) {
@@ -261,9 +265,10 @@ class _ProjectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.fireProjectionTitle, style: theme.textTheme.titleMedium),
@@ -288,7 +293,8 @@ class _ProjectionCard extends StatelessWidget {
           _ScenarioLegend(view: view),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -332,8 +338,7 @@ class _ScenariosTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      margin: EdgeInsets.zero,
+    return FCard.raw(
       child: Column(
         children: [
           Padding(
@@ -406,9 +411,10 @@ class _SafeWithdrawalCard extends StatelessWidget {
             ),
           );
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -449,7 +455,8 @@ class _SafeWithdrawalCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -464,9 +471,10 @@ class _SensitivityCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final s = view.sensitivity;
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.fireSensitivityTitle, style: theme.textTheme.titleMedium),
@@ -494,7 +502,8 @@ class _SensitivityCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

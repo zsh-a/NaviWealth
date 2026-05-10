@@ -321,18 +321,19 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 ),
               ),
               const SizedBox(height: Spacing.s12),
-              AppDropdown<AssetMarket>(
-                key: const Key('manual-security-market'),
-                label: l10n.manualSecurityMarketLabel,
-                value: _market,
-                items: [
+              DropdownButtonFormField<AssetMarket>(
+  isExpanded: true,
+                    key: const Key('manual-security-market'),
+  initialValue: _market,
+  decoration: InputDecoration(labelText: l10n.manualSecurityMarketLabel),
+  items: [
                   for (final m in _supportedMarkets)
                     DropdownMenuItem(
                       value: m,
                       child: Text(marketLabels[m] ?? m.wire),
                     ),
                 ],
-                onChanged: (m) {
+  onChanged: (m) {
                   if (m == null) return;
                   setState(() {
                     _market = m;
@@ -344,24 +345,25 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                     }
                   });
                 },
-              ),
+),
               const SizedBox(height: Spacing.s12),
-              AppDropdown<AssetType>(
-                key: const Key('manual-security-type'),
-                label: l10n.manualSecurityTypeLabel,
-                value: _type,
-                items: [
+              DropdownButtonFormField<AssetType>(
+  isExpanded: true,
+                    key: const Key('manual-security-type'),
+  initialValue: _type,
+  decoration: InputDecoration(labelText: l10n.manualSecurityTypeLabel),
+  items: [
                   for (final t in _supportedTypes)
                     DropdownMenuItem(
                       value: t,
                       child: Text(typeLabels[t] ?? t.name),
                     ),
                 ],
-                onChanged: (t) {
+  onChanged: (t) {
                   if (t == null) return;
                   setState(() => _type = t);
                 },
-              ),
+),
               const SizedBox(height: Spacing.s12),
               CurrencyPicker(
                 value: _currency,

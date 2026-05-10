@@ -82,10 +82,12 @@ class _LiabilityDetailBody extends ConsumerWidget {
           ),
           data: (schedule) {
             if (schedule.isEmpty) {
-              return LiquidGlassCard(
-                padding: const EdgeInsets.all(Spacing.s16),
-                child: Text(l10n.liabilityRevolvingNoSchedule),
-              );
+              return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.s16),
+          child: Text(l10n.liabilityRevolvingNoSchedule),
+        ),
+      );
             }
             return _AmortizationTable(
               liability: liability,
@@ -109,9 +111,10 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return LiquidGlassCard(
-      padding: Spacing.cardHero,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.cardHero,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l.name, style: theme.textTheme.titleLarge),
@@ -136,7 +139,8 @@ class _LiabilityHeaderCard extends ConsumerWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -151,9 +155,10 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SummaryRow(
@@ -199,7 +204,8 @@ class _LiabilitySummaryCard extends ConsumerWidget {
           ],
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -241,8 +247,7 @@ class _AmortizationTable extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return LiquidGlassCard(
-      child: Column(
+    return FCard.raw(child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header row
@@ -271,8 +276,7 @@ class _AmortizationTable extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
+      ));
   }
 
   Future<void> _confirmMarkPaid(
@@ -292,7 +296,7 @@ class _AmortizationTable extends ConsumerWidget {
       row.principalPayment + row.interestPayment,
       code: liability.currency,
     );
-    final confirmed = await showGlassModalBottomSheet<bool>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),

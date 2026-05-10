@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -59,18 +60,14 @@ class _AlertList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Spacing.s12),
-        LiquidGlassCard(
-          layer: GlassLayer.tertiary,
-          padding: EdgeInsets.zero,
-          child: Column(
+        FCard.raw(child: Column(
             children: [
               for (var i = 0; i < alerts.length; i++) ...[
                 if (i > 0) const Divider(height: 1),
                 _AlertRow(alert: alerts[i]),
               ],
             ],
-          ),
-        ),
+          )),
       ],
     );
   }

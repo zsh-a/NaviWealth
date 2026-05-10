@@ -86,8 +86,7 @@ class _DashboardBody extends ConsumerWidget {
         const trend = TrendCard();
 
         if (isWide) {
-          return ScrollNotificationHandler(
-            child: ListView(
+          return ListView(
               padding: padding,
               children: [
                 header,
@@ -105,11 +104,9 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ],
-            ),
-          );
+            );
         }
-        return ScrollNotificationHandler(
-          child: ListView(
+        return ListView(
             padding: padding.copyWith(
               bottom:
                   padding.bottom +
@@ -127,8 +124,7 @@ class _DashboardBody extends ConsumerWidget {
               const SizedBox(height: Spacing.s12),
               trend,
             ],
-          ),
-        );
+          );
       },
     );
   }

@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/domain/enums.dart';
-import '../design_system/design_system.dart';
 import '../features/assets/physical/ui/physical_asset_create_sheet.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
 
 Future<void> showGlobalActionPanel(BuildContext context) {
   final l10n = AppLocalizations.of(context);
-  return showGlassModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (sheetContext) => ListView(
@@ -61,7 +60,7 @@ Future<void> showGlobalActionPanel(BuildContext context) {
 Future<void> showAssetActionPanel(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   final theme = Theme.of(context);
-  return showGlassModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (sheetContext) => ListView(

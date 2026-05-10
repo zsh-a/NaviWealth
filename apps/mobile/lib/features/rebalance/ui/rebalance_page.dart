@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -43,7 +44,7 @@ class RebalancePage extends ConsumerWidget {
   }
 
   void _openSettings(BuildContext context, WidgetRef ref) {
-    showGlassModalBottomSheet<void>(
+    showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
@@ -122,9 +123,10 @@ class _SchemeSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.rebalanceSchemeTitle, style: theme.textTheme.titleSmall),
@@ -133,7 +135,7 @@ class _SchemeSelector extends ConsumerWidget {
             spacing: Spacing.s8,
             children: [
               for (final preset in AllocationSchemePreset.values)
-                AppChoiceChip(
+                ChoiceChip(
                   label: Text(_schemeLabel(l10n, preset)),
                   selected: current == preset,
                   onSelected: (selected) {
@@ -146,7 +148,8 @@ class _SchemeSelector extends ConsumerWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 
   String _schemeLabel(AppLocalizations l10n, AllocationSchemePreset preset) {
@@ -173,9 +176,10 @@ class _DriftOverview extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -226,7 +230,8 @@ class _DriftOverview extends StatelessWidget {
             ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -241,21 +246,24 @@ class _TradeList extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (plan.isBalanced) {
-      return LiquidGlassCard(
-        padding: Spacing.card,
-        child: Column(
+      return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
           children: [
             Icon(Icons.check_circle_outline, size: 40, color: theme.colorScheme.primary),
             const SizedBox(height: Spacing.s8),
             Text(l10n.rebalanceBalanced, style: theme.textTheme.titleSmall),
           ],
         ),
+        ),
       );
     }
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.rebalanceTradeTitle, style: theme.textTheme.titleSmall),
@@ -318,7 +326,8 @@ class _TradeList extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/asset.dart';
 import '../../../design_system/design_system.dart';
@@ -44,7 +45,8 @@ class AssetHoldingCard extends ConsumerWidget {
               )
             : null;
         final marketValueAsset = snap?.marketValueInAssetCurrency;
-        return LiquidGlassCard(
+        return FCard.raw(
+        child: Padding(
           padding: Spacing.card,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +93,8 @@ class AssetHoldingCard extends ConsumerWidget {
                 ),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }

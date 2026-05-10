@@ -263,7 +263,7 @@ class BackupPage extends ConsumerWidget {
     required String hint,
     required String confirmLabel,
   }) {
-    return showGlassModalBottomSheet<String>(
+    return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -276,7 +276,7 @@ class BackupPage extends ConsumerWidget {
   }
 
   Future<String?> _showRestoreConfirmSheet(BuildContext context) {
-    return showGlassModalBottomSheet<String>(
+    return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -396,9 +396,12 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
           children: [
             Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: Spacing.s16),
-            AppTextField(
-              label: l10n.backupPassphraseLabel,
-              hint: widget.hint,
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: l10n.backupPassphraseLabel,
+                hintText: widget.hint,
+                border: const OutlineInputBorder(),
+              ),
               controller: _controller,
               obscureText: true,
               autofocus: true,
@@ -493,9 +496,12 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
               ),
             ),
             const SizedBox(height: Spacing.s16),
-            AppTextField(
-              label: l10n.backupPassphraseLabel,
-              hint: l10n.backupRestorePassphraseHint,
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: l10n.backupPassphraseLabel,
+                hintText: l10n.backupRestorePassphraseHint,
+                border: const OutlineInputBorder(),
+              ),
               controller: _controller,
               obscureText: true,
               autofocus: true,

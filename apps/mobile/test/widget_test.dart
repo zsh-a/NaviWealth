@@ -18,8 +18,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    SuperFab.disablePulseGlobally = true;
-    addTearDown(() => SuperFab.disablePulseGlobally = false);
   });
 
   testWidgets('NaviWealthApp boots into the home shell', (tester) async {

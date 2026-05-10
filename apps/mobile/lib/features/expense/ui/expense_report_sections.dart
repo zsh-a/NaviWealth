@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
@@ -22,9 +23,10 @@ class ExpenseCategoryPieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return LiquidGlassCard(
-      padding: Spacing.cardHero,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.cardHero,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -70,7 +72,8 @@ class ExpenseCategoryPieCard extends StatelessWidget {
             ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -92,9 +95,10 @@ class ExpenseTrendCard extends StatelessWidget {
           colorOverride: palette.accentAt(0),
         ),
     ];
-    return LiquidGlassCard(
-      padding: Spacing.cardHero,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.cardHero,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -132,7 +136,8 @@ class ExpenseTrendCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -153,12 +158,13 @@ class ExpenseCategoryListCard extends StatelessWidget {
     if (report.byCategory.isEmpty) {
       return const SizedBox.shrink();
     }
-    return LiquidGlassCard(
-      padding: const EdgeInsets.symmetric(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
         horizontal: Spacing.s4,
         vertical: Spacing.s8,
       ),
-      child: Column(
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
@@ -181,7 +187,8 @@ class ExpenseCategoryListCard extends StatelessWidget {
             ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -213,7 +220,7 @@ class _Pie extends StatelessWidget {
         drillDown: SliceDrillDown((slice) {
           final breakdown = slice.meta;
           if (breakdown is! CategoryBreakdown) return;
-          showGlassModalBottomSheet<void>(
+          showModalBottomSheet<void>(
             context: context,
             showDragHandle: true,
             isScrollControlled: true,
@@ -256,7 +263,7 @@ class _PieLegend extends StatelessWidget {
             percent: total == 0
                 ? 0
                 : report.byCategory[i].total.amount.toDouble() / total,
-            onTap: () => showGlassModalBottomSheet<void>(
+            onTap: () => showModalBottomSheet<void>(
               context: context,
               showDragHandle: true,
               isScrollControlled: true,
@@ -365,7 +372,7 @@ class _CategoryTile extends StatelessWidget {
     final category = categoryById[breakdown.expenseAccountId];
     final accent = category?.accentColor ?? theme.colorScheme.primary;
     return ListTile(
-      onTap: () => showGlassModalBottomSheet<void>(
+      onTap: () => showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
         isScrollControlled: true,

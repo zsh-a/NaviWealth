@@ -73,8 +73,7 @@ class _FeedList extends StatelessWidget {
     }
     items.add(_FeedItem.footer(hasMore));
 
-    return ScrollNotificationHandler(
-      child: ListView.builder(
+    return ListView.builder(
         padding: Spacing.pageMobile.copyWith(
           bottom:
               Spacing.pageMobile.bottom +
@@ -103,8 +102,7 @@ class _FeedList extends StatelessWidget {
             ),
           };
         },
-      ),
-    );
+      );
   }
 }
 
@@ -171,7 +169,7 @@ class _DateSectionHeader extends StatelessWidget {
       ActivityDateGroup.thisWeek => l10n.activityFeedThisWeek,
       ActivityDateGroup.earlier => l10n.activityFeedEarlier,
     };
-    return GlassSectionHeader(title: title);
+    return SectionHeader(title: title);
   }
 }
 

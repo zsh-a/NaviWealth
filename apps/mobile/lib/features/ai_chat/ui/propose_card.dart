@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
@@ -211,7 +212,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onEdit(ReadyProposalPlan plan) async {
-    final result = await showGlassModalBottomSheet<Map<String, Object?>>(
+    final result = await showModalBottomSheet<Map<String, Object?>>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => ProposalEditSheet(
@@ -396,14 +397,13 @@ class _CollapsedView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.s8),
-      child: LiquidGlassCard(
-        layer: GlassLayer.tertiary,
-        borderRadius: Radii.md,
-        padding: const EdgeInsets.symmetric(
+      child: FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
           horizontal: Spacing.s12,
           vertical: Spacing.s8,
         ),
-        child: Row(
+          child: Row(
           children: [
             Icon(icon, size: 16, color: color),
             const SizedBox(width: Spacing.s8),
@@ -425,6 +425,7 @@ class _CollapsedView extends StatelessWidget {
               ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -442,11 +443,10 @@ class _ClarificationView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.s8),
-      child: LiquidGlassCard(
-        layer: GlassLayer.tertiary,
-        borderRadius: Radii.md,
-        padding: const EdgeInsets.all(Spacing.s12),
-        child: Column(
+      child: FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.s12),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -486,6 +486,7 @@ class _ClarificationView extends StatelessWidget {
               ),
             ],
           ],
+        ),
         ),
       ),
     );

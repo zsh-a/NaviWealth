@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/asset.dart';
 import '../../../design_system/design_system.dart';
@@ -22,9 +23,10 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
     final marketKey = assetDetailHistoryKey(asset);
     final theme = Theme.of(context);
     if (marketKey == null) {
-      return LiquidGlassCard(
-        padding: Spacing.card,
-        child: Column(
+      return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
@@ -37,15 +39,17 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
             ),
           ],
         ),
+        ),
       );
     }
 
     final historyAsync = ref.watch(assetPriceHistoryProvider(marketKey));
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -67,7 +71,8 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

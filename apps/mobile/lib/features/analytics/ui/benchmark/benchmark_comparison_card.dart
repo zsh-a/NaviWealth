@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -22,9 +23,10 @@ class BenchmarkComparisonCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final resultAsync = ref.watch(benchmarkComparisonResultProvider);
 
-    return LiquidGlassCard(
-      padding: Spacing.cardHero,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.cardHero,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -50,7 +52,8 @@ class BenchmarkComparisonCard extends ConsumerWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 
@@ -100,7 +103,7 @@ class _BenchmarkRangeChips extends ConsumerWidget {
           for (final preset in DashboardRangePreset.values)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.s8),
-              child: AppChoiceChip(
+              child: ChoiceChip(
                 label: Text(_rangeLabel(l10n, preset)),
                 selected: preset == selected,
                 onSelected: (_) => _select(context, ref, preset),

@@ -24,7 +24,7 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required PhysicalAsset asset,
   }) {
-    return showGlassModalBottomSheet<bool>(
+    return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
