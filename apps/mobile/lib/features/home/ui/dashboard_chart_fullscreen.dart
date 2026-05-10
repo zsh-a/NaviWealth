@@ -52,7 +52,12 @@ class _DashboardChartFullscreenDialogState
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
       child: Scaffold(
-        appBar: GlassAppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           title: Text(widget.title),
           leading: IconButton(
             tooltip: AppLocalizations.of(context).commonClose,

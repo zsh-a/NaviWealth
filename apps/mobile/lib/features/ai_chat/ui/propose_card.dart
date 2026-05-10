@@ -11,6 +11,7 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
+import 'shadcn/s_primitives.dart';
 
 String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
     switch (kind) {
@@ -325,19 +326,22 @@ class _ExpandedView extends StatelessWidget {
             spacing: Spacing.s8,
             runSpacing: Spacing.s4,
             children: [
-              AppButton.primary(
+              SButton(
+                variant: SButtonVariant.primary,
                 onPressed: isApplying ? null : onConfirm,
                 icon: Icons.check,
                 label: isApplying
                     ? l10n.aiChatProposalApplying
                     : l10n.aiChatProposalConfirm,
               ),
-              AppButton.secondary(
+              SButton(
+                variant: SButtonVariant.outline,
                 onPressed: isApplying ? null : onCancel,
                 icon: Icons.close,
                 label: l10n.commonCancel,
               ),
-              AppButton.tertiary(
+              SButton(
+                variant: SButtonVariant.ghost,
                 onPressed: isApplying ? null : onEdit,
                 icon: Icons.edit_outlined,
                 label: l10n.aiChatProposalEdit,
@@ -412,10 +416,12 @@ class _CollapsedView extends StatelessWidget {
               ),
             ),
             if (onUndo != null && secondsLeft > 0)
-              AppButton.tertiary(
+              SButton(
+                variant: SButtonVariant.ghost,
                 onPressed: onUndo,
                 icon: Icons.undo,
                 label: l10n.aiChatProposalUndoCountdown(secondsLeft),
+                dense: true,
               ),
           ],
         ),
@@ -667,7 +673,8 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
               ),
               const SizedBox(height: Spacing.s12),
             ],
-            AppButton.primary(
+            SButton(
+              variant: SButtonVariant.primary,
               onPressed: () => Navigator.of(context).pop(_collect()),
               label: l10n.aiChatProposalSaveEdits,
             ),
@@ -949,7 +956,8 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
               style: tt.labelMedium?.copyWith(color: cs.onPrimaryContainer),
             ),
           ),
-          AppButton.primary(
+          SButton(
+            variant: SButtonVariant.primary,
             onPressed: _busy ? null : _confirmAll,
             icon: Icons.done_all,
             label: l10n.aiChatProposalBatchConfirmAll,

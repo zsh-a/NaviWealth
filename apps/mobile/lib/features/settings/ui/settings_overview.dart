@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -19,71 +20,75 @@ class SettingsOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    return ScrollNotificationHandler(
-      child: ListView(
-        padding: Spacing.pageMobile.copyWith(
-          bottom:
-              Spacing.pageMobile.bottom +
-              Spacing.floatingBarClearance +
-              MediaQuery.paddingOf(context).bottom,
-        ),
-        children: [
-          const _AccountHeader(),
-          const SizedBox(height: Spacing.s12),
-          const _AccountSection(),
-          GlassSectionHeader(title: l10n.settingsAppearanceSection),
-          const _AppearanceSection(),
-          GlassSectionHeader(title: l10n.settingsRiskSection),
-          const LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            padding: EdgeInsets.zero,
-            child: _RiskThresholdSettings(),
-          ),
-          GlassSectionHeader(title: l10n.settingsDataSection),
-          LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.cloud_sync_outlined),
-                  title: Text(l10n.settingsSyncTitle),
-                  subtitle: Text(l10n.settingsSyncSubtitle),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.goNamed(AppRouteNames.sync),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.backup_outlined),
-                  title: Text(l10n.settingsDataTitle),
-                  subtitle: Text(l10n.settingsDataSubtitle),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.goNamed(AppRouteNames.backup),
-                ),
-              ],
-            ),
-          ),
-          if (kDebugMode) ...[
-            GlassSectionHeader(title: l10n.settingsDeveloperSection),
-            LiquidGlassCard(
-              layer: GlassLayer.tertiary,
-              padding: EdgeInsets.zero,
-              child: ListTile(
-                leading: const Icon(Icons.bug_report_outlined),
-                title: Text(l10n.settingsLogsTitle),
-                subtitle: Text(l10n.settingsLogsSubtitle),
+    return ListView(
+      padding: Spacing.pageMobile.copyWith(
+        bottom: Spacing.pageMobile.bottom +
+            Spacing.floatingBarClearance +
+            MediaQuery.paddingOf(context).bottom,
+      ),
+      children: [
+        const _AccountHeader(),
+        const SizedBox(height: Spacing.s12),
+        const _AccountSection(),
+        _SectionHeader(title: l10n.settingsAppearanceSection),
+        const _AppearanceSection(),
+        _SectionHeader(title: l10n.settingsRiskSection),
+        const FCard.raw(child: _RiskThresholdSettings()),
+        _SectionHeader(title: l10n.settingsDataSection),
+        FCard.raw(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.cloud_sync_outlined),
+                title: Text(l10n.settingsSyncTitle),
+                subtitle: Text(l10n.settingsSyncSubtitle),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.goNamed(AppRouteNames.logs),
+                onTap: () => context.goNamed(AppRouteNames.sync),
               ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.backup_outlined),
+                title: Text(l10n.settingsDataTitle),
+                subtitle: Text(l10n.settingsDataSubtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.goNamed(AppRouteNames.backup),
+              ),
+            ],
+          ),
+        ),
+        if (kDebugMode) ...[
+          _SectionHeader(title: l10n.settingsDeveloperSection),
+          FCard.raw(
+            child: ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: Text(l10n.settingsLogsTitle),
+              subtitle: Text(l10n.settingsLogsSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.goNamed(AppRouteNames.logs),
             ),
-          ],
-          const SizedBox(height: Spacing.s12),
-          const LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            padding: EdgeInsets.zero,
-            child: _AboutTile(),
           ),
         ],
+        const SizedBox(height: Spacing.s12),
+        const FCard.raw(child: _AboutTile()),
+      ],
+    );
+  }
+}
+
+/// Light section header — Apple-News style accent title above each card group.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
+      child: Text(
+        title,
+        style: TypographyTokens.sectionHeaderTitle(scheme.primary),
       ),
     );
   }
@@ -149,9 +154,7 @@ class _AccountSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: EdgeInsets.zero,
+    return FCard.raw(
       child: Column(
         children: [
           ListTile(
@@ -222,9 +225,7 @@ class _AppearanceSection extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: EdgeInsets.zero,
+    return FCard.raw(
       child: Column(
         children: [
           Padding(
@@ -446,8 +447,9 @@ class _RiskThresholdSettings extends ConsumerWidget {
           label: l10n.settingsRiskAssetLabel,
           subtitle: l10n.settingsRiskAssetSubtitle,
           value: thresholds.assetWarning,
-          onChanged: (v) =>
-              ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
+          onChanged: (v) => ref
+              .read(concentrationThresholdsProvider.notifier)
+              .updateAsset(v),
         ),
         _ThresholdSlider(
           icon: Icons.category_outlined,
@@ -480,11 +482,12 @@ class _RiskThresholdSettings extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: AppButton.tertiary(
-              label: l10n.settingsRiskResetDefaults,
-              onPressed: () => ref
+            child: FButton(
+              onPress: () => ref
                   .read(concentrationThresholdsProvider.notifier)
                   .resetToDefaults(),
+              variant: FButtonVariant.ghost,
+              child: Text(l10n.settingsRiskResetDefaults),
             ),
           ),
         ),

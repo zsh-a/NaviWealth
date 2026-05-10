@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
@@ -21,7 +22,12 @@ class SyncStatusPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final eventAsync = ref.watch(syncStatusEventStreamProvider);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.syncStatusTitle),
         actions: [
           IconButton(
@@ -162,9 +168,10 @@ class _HeroCard extends StatelessWidget {
           ),
           if (onSyncNow != null && !syncing) ...[
             const SizedBox(width: Spacing.s8),
-            AppButton.tertiary(
-              label: l10n.syncStatusActionSyncNow,
-              onPressed: onSyncNow,
+            FButton(
+              variant: FButtonVariant.ghost,
+              onPress: onSyncNow,
+              child: Text(l10n.syncStatusActionSyncNow),
             ),
           ],
         ],

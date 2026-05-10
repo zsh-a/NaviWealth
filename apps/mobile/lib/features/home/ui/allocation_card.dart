@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../design_system/design_system.dart';
@@ -37,13 +38,13 @@ class AllocationCard extends StatelessWidget {
         .cast<CategoryAllocation?>()
         .firstWhere((a) => true, orElse: () => null);
 
-    return LiquidGlassCard(
-      layer: GlassLayer.primary,
-      padding: Spacing.cardHero,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= Breakpoints.mobile;
-          final chart = _AllocationSankeyChart(
+    return FCard.raw(
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= Breakpoints.mobile;
+            final chart = _AllocationSankeyChart(
             assetAllocs: assetAllocs,
             liabilityAlloc: liabilityAlloc,
             snapshot: snapshot,
@@ -91,7 +92,8 @@ class AllocationCard extends StatelessWidget {
               ],
             ],
           );
-        },
+          },
+        ),
       ),
     );
   }

@@ -28,7 +28,14 @@ class JournalEntryListPage extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.journalTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.journalTitle),
+      ),
       body: journalAsync.when(
         data: (entries) {
           if (entries.isEmpty) return const _EmptyJournal();

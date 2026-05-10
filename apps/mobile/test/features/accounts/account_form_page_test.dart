@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -222,7 +223,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Tap save.
-    await tester.tap(find.widgetWithText(AppButton, 'Save'));
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
     // The repo-driven write completes optimistically (pop-then-write).
@@ -249,7 +250,7 @@ void main() {
       'My Bank',
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(AppButton, 'Save'));
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
     final batch = await h.outbox.peekBatch();

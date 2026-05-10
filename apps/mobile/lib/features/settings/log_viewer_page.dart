@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:talker/talker.dart';
 
 import '../../core/logging/providers.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 
 /// Debug-only page that displays Talker's log history in real time.
@@ -35,7 +35,12 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     final talker = ref.watch(talkerProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.settingsLogsTitle),
         actions: [
           IconButton(
@@ -77,10 +82,12 @@ class _LogTile extends StatelessWidget {
     final theme = Theme.of(context);
     final color = _colorForLevel(log.logLevel);
 
-    return LiquidGlassCard(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      padding: const EdgeInsets.all(8),
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -126,6 +133,8 @@ class _LogTile extends StatelessWidget {
             ),
           ],
         ],
+      ),
+        ),
       ),
     );
   }

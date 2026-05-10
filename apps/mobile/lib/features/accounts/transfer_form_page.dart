@@ -95,7 +95,14 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.transferTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.transferTitle),
+      ),
       body: accountsAsync.when(
         data: (accounts) => _buildForm(context, accounts),
         loading: () => const Center(child: CircularProgressIndicator()),

@@ -7,6 +7,8 @@ import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
+import 'shadcn/s_primitives.dart';
+import 'shadcn/s_tokens.dart';
 import 'tool_invocation_renderers.dart';
 
 /// Collapsible card surfacing one tool invocation. Header shows the
@@ -42,11 +44,9 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     final jumps = _extractJumps(l10n, invocation.output);
 
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s8),
-      child: LiquidGlassCard(
-        layer: GlassLayer.tertiary,
-        borderRadius: Radii.md,
-        padding: EdgeInsets.zero,
+      padding: const EdgeInsets.only(top: SSpace.sm),
+      child: SCard(
+        radius: SRadius.md,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -255,52 +255,16 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   }
 
   Widget _rawJsonView(BuildContext context, Object? value) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(Spacing.s8),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: Radii.brXs,
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
-      ),
-      child: SelectableText(
-        _prettyJson(value),
-        style: tt.bodySmall?.copyWith(
-          fontFamily: TypographyTokens.fontFamilyMono,
-          fontSize: 12,
-          height: 1.4,
-        ),
-      ),
-    );
+    return SCodeBlock(text: _prettyJson(value));
   }
 
   Widget _kvBlock(BuildContext context, String label, Object? value) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-        const SizedBox(height: Spacing.s4),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(Spacing.s8),
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: Radii.brXs,
-            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
-          ),
-          child: SelectableText(
-            _prettyJson(value),
-            style: tt.bodySmall?.copyWith(
-              fontFamily: TypographyTokens.fontFamilyMono,
-              fontSize: 12,
-              height: 1.4,
-            ),
-          ),
-        ),
+        Text(label, style: SType.label(context)),
+        const SizedBox(height: SSpace.xs),
+        SCodeBlock(text: _prettyJson(value)),
       ],
     );
   }

@@ -23,7 +23,12 @@ class FxRatesPage extends ConsumerWidget {
     final ratesAsync = ref.watch(fxRatesStreamProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.fxRatesAppBarTitle),
         actions: [
           IconButton(

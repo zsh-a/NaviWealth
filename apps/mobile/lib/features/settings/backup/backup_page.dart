@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/backup/backup_codec.dart';
 import '../../../core/backup/backup_service.dart';
@@ -23,7 +24,14 @@ class BackupPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.settingsDataTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.settingsDataTitle),
+      ),
       body: ListView(
         padding: Spacing.pageMobile.copyWith(
           bottom:
@@ -36,9 +44,7 @@ class BackupPage extends ConsumerWidget {
             _WebBackupSecurityBanner(l10n: l10n),
             const SizedBox(height: Spacing.s12),
           ],
-          LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            padding: EdgeInsets.zero,
+          FCard.raw(
             child: ListTile(
               leading: const Icon(Icons.upload_outlined),
               title: Text(l10n.backupExportTitle),
@@ -48,9 +54,7 @@ class BackupPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: Spacing.s12),
-          LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            padding: EdgeInsets.zero,
+          FCard.raw(
             child: ListTile(
               leading: const Icon(Icons.download_outlined),
               title: Text(l10n.backupImportTitle),
@@ -319,20 +323,22 @@ class _WebBackupSecurityBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.security_outlined, color: theme.colorScheme.primary),
-          const SizedBox(width: Spacing.s12),
-          Expanded(
-            child: Text(
-              l10n.backupWebSecurityWarning,
-              style: theme.textTheme.bodyMedium,
+    return FCard.raw(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.s16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.security_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: Spacing.s12),
+            Expanded(
+              child: Text(
+                l10n.backupWebSecurityWarning,
+                style: theme.textTheme.bodyMedium,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -401,16 +407,18 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
             Row(
               children: [
                 Expanded(
-                  child: AppButton.secondary(
-                    label: l10n.backupCancelAction,
-                    onPressed: () => Navigator.of(context).pop(),
+                  child: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => Navigator.of(context).pop(),
+                    child: Text(l10n.backupCancelAction),
                   ),
                 ),
                 const SizedBox(width: Spacing.s12),
                 Expanded(
-                  child: AppButton.primary(
-                    label: widget.confirmLabel,
-                    onPressed: _submit,
+                  child: FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: _submit,
+                    child: Text(widget.confirmLabel),
                   ),
                 ),
               ],
@@ -496,16 +504,18 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
             Row(
               children: [
                 Expanded(
-                  child: AppButton.secondary(
-                    label: l10n.backupCancelAction,
-                    onPressed: () => Navigator.of(context).pop(),
+                  child: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => Navigator.of(context).pop(),
+                    child: Text(l10n.backupCancelAction),
                   ),
                 ),
                 const SizedBox(width: Spacing.s12),
                 Expanded(
-                  child: AppButton.primary(
-                    label: l10n.backupConfirmRestoreAction,
-                    onPressed: _submit,
+                  child: FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: _submit,
+                    child: Text(l10n.backupConfirmRestoreAction),
                   ),
                 ),
               ],
