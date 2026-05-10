@@ -80,16 +80,26 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                 shrinkWrap: true,
                 children: [
                   for (final account in accounts)
-                    CheckboxListTile(
-                      dense: true,
-                      value: query.accountIds.contains(account.id),
+                    FTile(
                       title: Text(account.name),
-                      onChanged: (selected) {
+                      suffix: FCheckbox(
+                        value: query.accountIds.contains(account.id),
+                        onChange: (selected) {
+                          controller.mutateQuery((q) {
+                            final ids = {...q.accountIds};
+                            selected
+                                ? ids.add(account.id)
+                                : ids.remove(account.id);
+                            return q.copyWith(accountIds: ids);
+                          });
+                        },
+                      ),
+                      onPress: () {
                         controller.mutateQuery((q) {
                           final ids = {...q.accountIds};
-                          selected == true
-                              ? ids.add(account.id)
-                              : ids.remove(account.id);
+                          ids.contains(account.id)
+                              ? ids.remove(account.id)
+                              : ids.add(account.id);
                           return q.copyWith(accountIds: ids);
                         });
                       },

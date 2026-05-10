@@ -309,14 +309,19 @@ class _SheetHeader extends StatelessWidget {
           Expanded(
             child: Text(title, style: Theme.of(context).textTheme.titleMedium),
           ),
-          IconButton(
-            icon: const Icon(Icons.open_in_full, size: 20),
-            tooltip: AppLocalizations.of(context).aiChatSheetExpandTooltip,
-            onPressed: onExpand,
+          FTooltip(
+            tipBuilder: (_, _) =>
+                Text(AppLocalizations.of(context).aiChatSheetExpandTooltip),
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: onExpand,
+              child: const Icon(Icons.open_in_full, size: 20),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 20),
-            onPressed: () => Navigator.of(context).pop(),
+          FButton.icon(
+            variant: FButtonVariant.ghost,
+            onPress: () => Navigator.of(context).pop(),
+            child: const Icon(Icons.close, size: 20),
           ),
         ],
       ),

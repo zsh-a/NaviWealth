@@ -68,10 +68,13 @@ class AllocationCard extends StatelessWidget {
                         style: theme.textTheme.titleMedium,
                       ),
                     ),
-                    IconButton(
-                      tooltip: l10n.aiChatSheetExpandTooltip,
-                      icon: const Icon(Icons.fullscreen),
-                      onPressed: () => _openFullscreen(context),
+                    FTooltip(
+                      tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                      child: FButton.icon(
+                        variant: FButtonVariant.ghost,
+                        onPress: () => _openFullscreen(context),
+                        child: const Icon(Icons.fullscreen, size: 20),
+                      ),
                     ),
                   ],
                 ),

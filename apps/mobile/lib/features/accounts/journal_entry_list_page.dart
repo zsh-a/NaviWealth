@@ -132,67 +132,74 @@ class _JournalEntryRow extends StatelessWidget {
         border: Border.all(color: scheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Theme(
-        // Drop the default ExpansionTile divider lines so the card
-        // border + the PostingsPreview's inner divider line do the
-        // visual work.
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  entry.entry.narration,
-                  style: Theme.of(context).textTheme.titleSmall,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (summary != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text(
-                    summary,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      color: scheme.onSurface,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
+      child: FAccordion(
+        children: [
+          FAccordionItem(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                EntryKindBadge(classification: classification, compact: true),
-                const SizedBox(width: 8),
-                Text(
-                  dateLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        entry.entry.narration,
+                        style: Theme.of(context).textTheme.titleSmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (summary != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          summary,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                                color: scheme.onSurface,
+                              ),
+                        ),
+                      ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      EntryKindBadge(
+                        classification: classification,
+                        compact: true,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        dateLabel,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (entry.entry.payee != null) ...[
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            '· ${entry.entry.payee}',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (entry.entry.payee != null) ...[
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      '· ${entry.entry.payee}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
               ],
             ),
+            child: PostingsPreview(
+              postings: entry.postings,
+              accounts: accountsById,
+            ),
           ),
-          children: [
-            PostingsPreview(postings: entry.postings, accounts: accountsById),
-          ],
-        ),
+        ],
       ),
     );
   }

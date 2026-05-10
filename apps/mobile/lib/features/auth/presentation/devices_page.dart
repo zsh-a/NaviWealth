@@ -171,10 +171,13 @@ class _DevicesList extends ConsumerWidget {
             ),
             suffix: isCurrent
                 ? FBadge(child: Text(l10n.authDeviceCurrent))
-                : IconButton(
-                    icon: const Icon(Icons.logout),
-                    tooltip: l10n.authDeviceRevokeTooltip,
-                    onPressed: () => _confirmRevoke(context, ref, device),
+                : FTooltip(
+                    tipBuilder: (_, _) => Text(l10n.authDeviceRevokeTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => _confirmRevoke(context, ref, device),
+                      child: const Icon(Icons.logout, size: 18),
+                    ),
                   ),
           );
         },

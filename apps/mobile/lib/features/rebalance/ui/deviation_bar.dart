@@ -61,11 +61,17 @@ class DeviationBar extends StatelessWidget {
               // Background bar.
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: actualWeight.clamp(0, 1),
-                  backgroundColor: bgBarColor,
-                  valueColor: AlwaysStoppedAnimation(barColor),
-                  minHeight: 8,
+                child: SizedBox(
+                  height: 8,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: ColoredBox(color: bgBarColor)),
+                      FractionallySizedBox(
+                        widthFactor: actualWeight.clamp(0.0, 1.0).toDouble(),
+                        child: ColoredBox(color: barColor),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // Target line.

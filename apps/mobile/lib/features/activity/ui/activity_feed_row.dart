@@ -35,66 +35,78 @@ class ActivityFeedEntryRow extends StatelessWidget {
     final timeStr = _formatTime(entry.entry.date);
 
     return FCard.raw(
-      child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-          leading: EntryKindBadge(
-            classification: classification,
-            compact: true,
-          ),
-          title: Text(
-            entry.entry.narration,
-            style: theme.textTheme.titleSmall,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Row(
+      child: FAccordion(
+        children: [
+          FAccordionItem(
+            title: Row(
               children: [
-                if (entry.entry.payee != null) ...[
-                  Flexible(
-                    child: Text(
-                      entry.entry.payee!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                EntryKindBadge(classification: classification, compact: true),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.entry.narration,
+                        style: theme.textTheme.titleSmall,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            if (entry.entry.payee != null) ...[
+                              Flexible(
+                                child: Text(
+                                  entry.entry.payee!,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: Text(
+                                  '\u00B7',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            Text(
+                              timeStr,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      '\u00B7',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                ),
+                if (summary != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    summary,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: scheme.onSurface,
                     ),
                   ),
                 ],
-                Text(
-                  timeStr,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
               ],
             ),
+            child: PostingsPreview(
+              postings: entry.postings,
+              accounts: accountsById,
+            ),
           ),
-          trailing: summary != null
-              ? Text(
-                  summary,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    color: scheme.onSurface,
-                  ),
-                )
-              : null,
-          children: [
-            PostingsPreview(postings: entry.postings, accounts: accountsById),
-          ],
-        ),
+        ],
       ),
     );
   }

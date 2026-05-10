@@ -112,13 +112,11 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                   ),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                Slider(
-                  value: _inflation,
-                  min: 0,
-                  max: 0.10,
-                  divisions: 20,
-                  label: '${(_inflation * 100).toStringAsFixed(1)}%',
-                  onChanged: (v) => setState(() => _inflation = v),
+                FSlider(
+                  control: FSliderControl.managedContinuous(
+                    initial: FSliderValue(max: _inflation / 0.10),
+                    onChange: (v) => setState(() => _inflation = v.max * 0.10),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(

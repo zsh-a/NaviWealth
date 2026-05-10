@@ -327,52 +327,43 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 label: Text(l10n.manualSecurityNameLabel),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<AssetMarket>(
-                isExpanded: true,
+              FSelect<AssetMarket>(
                 key: const Key('manual-security-market'),
-                initialValue: _market,
-                decoration: InputDecoration(
-                  labelText: l10n.manualSecurityMarketLabel,
-                ),
-                items: [
+                items: {
                   for (final m in _supportedMarkets)
-                    DropdownMenuItem(
-                      value: m,
-                      child: Text(marketLabels[m] ?? m.wire),
-                    ),
-                ],
-                onChanged: (m) {
-                  if (m == null) return;
-                  setState(() {
-                    _market = m;
-                    _currency = _defaultCurrencyFor(m);
-                    if (m == AssetMarket.crypto) {
-                      _type = AssetType.crypto;
-                    } else if (_type == AssetType.crypto) {
-                      _type = AssetType.stock;
-                    }
-                  });
+                    (marketLabels[m] ?? m.wire): m,
                 },
+                control: FSelectControl<AssetMarket>.managed(
+                  initial: _market,
+                  onChange: (m) {
+                    if (m == null) return;
+                    setState(() {
+                      _market = m;
+                      _currency = _defaultCurrencyFor(m);
+                      if (m == AssetMarket.crypto) {
+                        _type = AssetType.crypto;
+                      } else if (_type == AssetType.crypto) {
+                        _type = AssetType.stock;
+                      }
+                    });
+                  },
+                ),
+                label: Text(l10n.manualSecurityMarketLabel),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<AssetType>(
-                isExpanded: true,
+              FSelect<AssetType>(
                 key: const Key('manual-security-type'),
-                initialValue: _type,
-                decoration: InputDecoration(
-                  labelText: l10n.manualSecurityTypeLabel,
-                ),
-                items: [
-                  for (final t in _supportedTypes)
-                    DropdownMenuItem(
-                      value: t,
-                      child: Text(typeLabels[t] ?? t.name),
-                    ),
-                ],
-                onChanged: (t) {
-                  if (t == null) return;
-                  setState(() => _type = t);
+                items: {
+                  for (final t in _supportedTypes) (typeLabels[t] ?? t.name): t,
                 },
+                control: FSelectControl<AssetType>.managed(
+                  initial: _type,
+                  onChange: (t) {
+                    if (t == null) return;
+                    setState(() => _type = t);
+                  },
+                ),
+                label: Text(l10n.manualSecurityTypeLabel),
               ),
               const SizedBox(height: 12),
               CurrencyPicker(

@@ -173,33 +173,22 @@ class _AccountSection extends ConsumerWidget {
                 const Icon(Icons.currency_exchange),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    initialValue: baseCurrency,
-                    decoration: InputDecoration(
-                      labelText: l10n.settingsBaseCurrencyTitle,
-                    ),
-                    items: [
+                  child: FSelect<String>(
+                    items: {
                       for (final code in kCommonCurrencies)
-                        DropdownMenuItem(
-                          value: code,
-                          child: Text(currencyDisplayLabel(l10n, code)),
-                        ),
-                    ],
-                    selectedItemBuilder: (context) => [
-                      for (final code in kCommonCurrencies)
-                        Text(
-                          code,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                    ],
-                    onChanged: (picked) async {
-                      if (picked != null && picked != baseCurrency) {
-                        await ref
-                            .read(baseCurrencyProvider.notifier)
-                            .set(picked);
-                      }
+                        currencyDisplayLabel(l10n, code): code,
                     },
+                    control: FSelectControl<String>.managed(
+                      initial: baseCurrency,
+                      onChange: (picked) async {
+                        if (picked != null && picked != baseCurrency) {
+                          await ref
+                              .read(baseCurrencyProvider.notifier)
+                              .set(picked);
+                        }
+                      },
+                    ),
+                    label: Text(l10n.settingsBaseCurrencyTitle),
                   ),
                 ),
               ],
@@ -239,25 +228,21 @@ class _AppearanceSection extends ConsumerWidget {
                 const Icon(Icons.brightness_6_outlined),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: DropdownButtonFormField<ThemeMode>(
-                    isExpanded: true,
-                    initialValue: themeMode,
-                    decoration: InputDecoration(
-                      labelText: l10n.settingsThemeModeTitle,
-                    ),
-                    items: [
+                  child: FSelect<ThemeMode>(
+                    items: {
                       for (final m in ThemeMode.values)
-                        DropdownMenuItem(
-                          value: m,
-                          child: Text(_themeModeLabel(l10n, m)),
-                        ),
-                    ],
-                    onChanged: (m) {
-                      if (m != null) {
-                        Haptics.selection();
-                        ref.read(themeModeProvider.notifier).set(m);
-                      }
+                        _themeModeLabel(l10n, m): m,
                     },
+                    control: FSelectControl<ThemeMode>.managed(
+                      initial: themeMode,
+                      onChange: (m) {
+                        if (m != null) {
+                          Haptics.selection();
+                          ref.read(themeModeProvider.notifier).set(m);
+                        }
+                      },
+                    ),
+                    label: Text(l10n.settingsThemeModeTitle),
                   ),
                 ),
               ],
@@ -271,24 +256,20 @@ class _AppearanceSection extends ConsumerWidget {
                 const Icon(Icons.swap_vert),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: DropdownButtonFormField<MarketColorMode>(
-                    isExpanded: true,
-                    initialValue: marketMode,
-                    decoration: InputDecoration(
-                      labelText: l10n.settingsMarketColorTitle,
-                    ),
-                    items: [
+                  child: FSelect<MarketColorMode>(
+                    items: {
                       for (final m in MarketColorMode.values)
-                        DropdownMenuItem(
-                          value: m,
-                          child: Text(_marketModeLabel(l10n, m)),
-                        ),
-                    ],
-                    onChanged: (m) {
-                      if (m != null) {
-                        ref.read(marketColorModeProvider.notifier).set(m);
-                      }
+                        _marketModeLabel(l10n, m): m,
                     },
+                    control: FSelectControl<MarketColorMode>.managed(
+                      initial: marketMode,
+                      onChange: (m) {
+                        if (m != null) {
+                          ref.read(marketColorModeProvider.notifier).set(m);
+                        }
+                      },
+                    ),
+                    label: Text(l10n.settingsMarketColorTitle),
                   ),
                 ),
               ],
@@ -308,30 +289,26 @@ class _AppearanceSection extends ConsumerWidget {
                 const Icon(Icons.translate_outlined),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: DropdownButtonFormField<Locale?>(
-                    isExpanded: true,
-                    initialValue: locale,
-                    decoration: InputDecoration(
-                      labelText: l10n.settingsLanguageTitle,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: null,
-                        child: Text(l10n.langSystem),
-                      ),
-                      DropdownMenuItem(
-                        value: const Locale('en'),
-                        child: Text(l10n.langEnglish),
-                      ),
-                      DropdownMenuItem(
-                        value: const Locale('zh'),
-                        child: Text(l10n.langChinese),
-                      ),
-                    ],
-                    onChanged: (picked) {
-                      Haptics.selection();
-                      ref.read(localeProvider.notifier).set(picked);
+                  child: FSelect<String>(
+                    items: {
+                      l10n.langSystem: '',
+                      l10n.langEnglish: 'en',
+                      l10n.langChinese: 'zh',
                     },
+                    control: FSelectControl<String>.managed(
+                      initial: locale?.languageCode ?? '',
+                      onChange: (picked) {
+                        Haptics.selection();
+                        ref
+                            .read(localeProvider.notifier)
+                            .set(
+                              (picked == null || picked.isEmpty)
+                                  ? null
+                                  : Locale(picked),
+                            );
+                      },
+                    ),
+                    label: Text(l10n.settingsLanguageTitle),
                   ),
                 ),
               ],

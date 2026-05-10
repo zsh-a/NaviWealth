@@ -246,16 +246,12 @@ class _PanelShell extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (onNew != null)
-                    IconButton(
-                      tooltip: l10n.aiChatNewSessionTooltip,
-                      onPressed: onNew,
-                      icon: const Icon(Icons.add),
-                      style: IconButton.styleFrom(
-                        backgroundColor: cs.primaryContainer.withValues(
-                          alpha: 0.6,
-                        ),
-                        foregroundColor: cs.onPrimaryContainer,
-                        shape: const StadiumBorder(),
+                    FTooltip(
+                      tipBuilder: (_, _) => Text(l10n.aiChatNewSessionTooltip),
+                      child: FButton.icon(
+                        variant: FButtonVariant.secondary,
+                        onPress: onNew,
+                        child: const Icon(Icons.add, size: 18),
                       ),
                     ),
                 ],
@@ -380,15 +376,17 @@ class _SessionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: l10n.aiChatSessionMoreTooltip,
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  Icons.more_horiz,
-                  size: 18,
-                  color: cs.onSurfaceVariant,
+              FTooltip(
+                tipBuilder: (_, _) => Text(l10n.aiChatSessionMoreTooltip),
+                child: FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => _showActions(context, l10n, cs),
+                  child: Icon(
+                    Icons.more_horiz,
+                    size: 18,
+                    color: cs.onSurfaceVariant,
+                  ),
                 ),
-                onPressed: () => _showActions(context, l10n, cs),
               ),
             ],
           ),

@@ -37,16 +37,19 @@ class TrendCard extends ConsumerWidget {
                   ),
                 ),
                 trendAsync.maybeWhen(
-                  data: (trend) => IconButton(
-                    tooltip: l10n.aiChatSheetExpandTooltip,
-                    icon: const Icon(Icons.fullscreen),
-                    onPressed: trend.isEmpty
-                        ? null
-                        : () => showDashboardChartFullscreen(
-                            context: context,
-                            title: l10n.dashboardTrendTitle,
-                            child: const _TrendFullscreenContent(),
-                          ),
+                  data: (trend) => FTooltip(
+                    tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: trend.isEmpty
+                          ? null
+                          : () => showDashboardChartFullscreen(
+                              context: context,
+                              title: l10n.dashboardTrendTitle,
+                              child: const _TrendFullscreenContent(),
+                            ),
+                      child: const Icon(Icons.fullscreen, size: 20),
+                    ),
                   ),
                   orElse: () => const SizedBox(width: 48, height: 48),
                 ),
