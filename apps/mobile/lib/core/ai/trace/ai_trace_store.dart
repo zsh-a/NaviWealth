@@ -21,6 +21,12 @@ abstract class AiTraceStore {
   /// Drop traces whose `startedAtIso` is strictly before [cutoff].
   /// Callers schedule this — the store does not run cleanup itself.
   Future<void> pruneOlderThan(DateTime cutoff);
+
+  /// Look up one trace by its [AiTrace.requestId]. Returns `null` if
+  /// no matching trace exists in the store. The chat surface keys
+  /// `requestId == ChatMessage.id` so the UI can resolve a message's
+  /// trace directly.
+  Future<AiTrace?> findByRequestId(String requestId);
 }
 
 /// In-memory, ring-buffered [AiTraceStore] suitable for Phase 1.
@@ -55,6 +61,14 @@ class InMemoryAiTraceStore implements AiTraceStore {
   Future<void> pruneOlderThan(DateTime cutoff) async {
     final cutoffIso = cutoff.toUtc().toIso8601String();
     _buffer.removeWhere((t) => t.startedAtIso.compareTo(cutoffIso) < 0);
+  }
+
+  @override
+  Future<AiTrace?> findByRequestId(String requestId) async {
+    for (var i = _buffer.length - 1; i >= 0; i--) {
+      if (_buffer[i].requestId == requestId) return _buffer[i];
+    }
+    return null;
   }
 
   /// Test-only escape hatch.

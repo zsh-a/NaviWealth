@@ -24,6 +24,7 @@ use worker::{Headers, Request, Response, Result as WorkerResult, RouteContext};
 use crate::ai::anthropic::{
     self, AnthropicMessage, AnthropicRequest, ChatMessage, LlmConfig, DEFAULT_MODEL,
 };
+use crate::ai::context::{ContextPack, CURRENT_CONTEXT_PACK_VERSION};
 use crate::ai::guardrails::{
     self, ANTHROPIC_MAX_OUTPUT_TOKENS, MAX_PROPOSALS_PER_CONVERSATION, MAX_REQUEST_BODY_BYTES,
     MAX_TOOL_ROUNDS, SYSTEM_PROMPT,
@@ -54,6 +55,12 @@ struct ChatRequest {
     model: Option<String>,
     #[serde(default)]
     portfolio_snapshot: Option<Value>,
+    /// Phase 2-A: typed context summary built by the device
+    /// `ContextCompressor`. Validated for version + budget here, but
+    /// not yet threaded into the system prompt — that's a separate
+    /// Phase 2.5 decision once the planner can actually consume it.
+    #[serde(default)]
+    context_pack: Option<ContextPack>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -95,6 +102,20 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
         .any(|m| m.role != "user" && m.role != "assistant")
     {
         return Err(AppError::BadRequest("unsupported message role".into()));
+    }
+    if let Some(ref pack) = body.context_pack {
+        pack.assert_version(&CURRENT_CONTEXT_PACK_VERSION)
+            .map_err(|e| AppError::BadRequest(format!("context_pack: {e}")))?;
+        pack.assert_budget()
+            .map_err(|e| AppError::BadRequest(format!("context_pack: {e}")))?;
+        worker::console_log!(
+            "context_pack received: tier={:?} version={}.{} signals={} aggregates={}",
+            pack.budget.tier,
+            pack.version.major,
+            pack.version.minor,
+            pack.task.signals.len(),
+            pack.task.aggregates.len(),
+        );
     }
 
     let db = ctx
@@ -472,6 +493,92 @@ mod tests {
         let content = block["content"].as_str().unwrap();
         let decoded: Value = serde_json::from_str(content).unwrap();
         assert_eq!(decoded, output);
+    }
+
+    #[test]
+    fn chat_request_parses_with_context_pack() {
+        let raw = r#"{
+            "messages": [{"role": "user", "content": "hi"}],
+            "context_pack": {
+                "version": {"major": 1, "minor": 0},
+                "base": {
+                    "preferred_currency": "USD",
+                    "risk_preference": "moderate",
+                    "accounts": {"total_count": 0, "by_kind": {}},
+                    "cashflow": {
+                        "base_currency": "USD",
+                        "months_covered": 0,
+                        "average_inflow_minor": "0",
+                        "average_outflow_minor": "0",
+                        "trend": "unknown"
+                    }
+                },
+                "task": {
+                    "route": {"path": "/expense", "area": "expense"},
+                    "intent": {"capability": "analyze", "risk": "suggest"}
+                },
+                "budget": {"tier": "standard"}
+            }
+        }"#;
+
+        let body: ChatRequest = serde_json::from_str(raw).expect("parse");
+        let pack = body.context_pack.expect("context_pack present");
+        assert!(pack.assert_version(&CURRENT_CONTEXT_PACK_VERSION).is_ok());
+        assert!(pack.assert_budget().is_ok());
+    }
+
+    #[test]
+    fn chat_request_parses_without_context_pack_for_legacy_clients() {
+        let raw = r#"{"messages": [{"role": "user", "content": "hi"}]}"#;
+        let body: ChatRequest = serde_json::from_str(raw).expect("parse");
+        assert!(body.context_pack.is_none());
+    }
+
+    #[test]
+    fn context_pack_rejects_incompatible_major_version() {
+        use crate::ai::context::*;
+        let pack = ContextPack {
+            version: ContextPackVersion { major: 2, minor: 0 },
+            base: BaseContext {
+                preferred_currency: "USD".into(),
+                risk_preference: RiskPreference::Moderate,
+                accounts: AccountSummary {
+                    total_count: 0,
+                    by_kind: Default::default(),
+                },
+                cashflow: CashflowSummary {
+                    base_currency: "USD".into(),
+                    months_covered: 0,
+                    average_inflow_minor: "0".into(),
+                    average_outflow_minor: "0".into(),
+                    trend: CashflowTrend::Unknown,
+                },
+                fire_goal: None,
+            },
+            task: TaskContext {
+                route: RouteContext {
+                    path: "/".into(),
+                    area: "home".into(),
+                },
+                intent: IntentHint {
+                    capability: Capability::Analyze,
+                    risk: RiskLevel::Info,
+                    side_effect: None,
+                    label: None,
+                },
+                signals: Vec::new(),
+                retrieved: Vec::new(),
+                aggregates: Vec::new(),
+            },
+            budget: PrivacyBudget {
+                tier: BudgetTier::Standard,
+            },
+        };
+        let res = pack.assert_version(&CURRENT_CONTEXT_PACK_VERSION);
+        assert!(matches!(
+            res,
+            Err(ContextPackError::VersionUnsupported { .. })
+        ));
     }
 
     #[test]
