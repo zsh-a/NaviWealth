@@ -274,146 +274,146 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: loadingExisting
-          ? const Center(child: FCircularProgress())
-          : Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: ListView(
-                padding: Spacing.pageMobile,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  DropdownButtonFormField<AccountType>(
-                    isExpanded: true,
-                    initialValue: _type,
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormTypeLabel,
+        color: Colors.transparent,
+        child: loadingExisting
+            ? const Center(child: FCircularProgress())
+            : Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: ListView(
+                  padding: Spacing.pageMobile,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    DropdownButtonFormField<AccountType>(
+                      isExpanded: true,
+                      initialValue: _type,
+                      decoration: InputDecoration(
+                        labelText: l10n.accountFormTypeLabel,
+                      ),
+                      items: [
+                        for (final t in AccountType.values)
+                          DropdownMenuItem(
+                            value: t,
+                            child: Text(accountTypeLabel(l10n, t)),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() {
+                          _type = v;
+                          if (!_categoryUserPicked) {
+                            _category = defaultCategoryForAccountType(v);
+                          }
+                        });
+                      },
                     ),
-                    items: [
-                      for (final t in AccountType.values)
-                        DropdownMenuItem(
-                          value: t,
-                          child: Text(accountTypeLabel(l10n, t)),
-                        ),
-                    ],
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() {
-                        _type = v;
-                        if (!_categoryUserPicked) {
-                          _category = defaultCategoryForAccountType(v);
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  DropdownButtonFormField<AccountCategory>(
-                    isExpanded: true,
-                    initialValue: _category,
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormCategoryLabel,
-                      helperText: l10n.accountFormCategoryHelper,
-                    ),
-                    items: [
-                      for (final c in AccountCategory.values)
-                        DropdownMenuItem(
-                          value: c,
-                          child: Text(accountCategoryLabel(l10n, c)),
-                        ),
-                    ],
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() {
-                        _category = v;
-                        _categoryUserPicked = true;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  TextFormField(
-                    controller: _nameController,
-                    focusNode: _nameFocus,
-                    textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => _institutionFocus.requestFocus(),
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormNameLabel,
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? l10n.accountFormNameRequired
-                        : null,
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  _ParentAccountPickerSection(
-                    currentAccountId: _initial?.id,
-                    category: _category,
-                    parentId: _parentId,
-                    onChanged: (v) => setState(() => _parentId = v),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  _IconPickerSection(
-                    selected: _icon,
-                    color: _color,
-                    onChanged: (v) => setState(() => _icon = v),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  _ColorPickerSection(
-                    selected: _color,
-                    onChanged: (v) => setState(() => _color = v),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  CurrencyPicker(
-                    value: _currency,
-                    onChanged: (v) => setState(() => _currency = v),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  TextFormField(
-                    controller: _institutionController,
-                    focusNode: _institutionFocus,
-                    textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => _accountNumberFocus.requestFocus(),
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormInstitutionLabel,
-                      helperText: l10n.accountFormInstitutionHelper,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  TextFormField(
-                    controller: _accountNumberController,
-                    focusNode: _accountNumberFocus,
-                    textInputAction: TextInputAction.next,
-                    onFieldSubmitted: (_) => _noteFocus.requestFocus(),
-                    decoration: InputDecoration(
-                      labelText: l10n.accountFormAccountNumberLabel,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  NoteField(controller: _noteController, focusNode: _noteFocus),
-                  if (widget.isEdit) ...[
                     const SizedBox(height: Spacing.s12),
-                    FSwitch(
-                      label: Text(l10n.accountFormArchivedTitle),
-                      description: Text(l10n.accountFormArchivedSubtitle),
-                      value: _archived,
-                      onChange: (v) => setState(() => _archived = v),
+                    DropdownButtonFormField<AccountCategory>(
+                      isExpanded: true,
+                      initialValue: _category,
+                      decoration: InputDecoration(
+                        labelText: l10n.accountFormCategoryLabel,
+                        helperText: l10n.accountFormCategoryHelper,
+                      ),
+                      items: [
+                        for (final c in AccountCategory.values)
+                          DropdownMenuItem(
+                            value: c,
+                            child: Text(accountCategoryLabel(l10n, c)),
+                          ),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() {
+                          _category = v;
+                          _categoryUserPicked = true;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _nameController,
+                      ),
+                      label: Text(l10n.accountFormNameLabel),
+                      focusNode: _nameFocus,
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? l10n.accountFormNameRequired
+                          : null,
+                      onSubmit: (_) => _institutionFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    _ParentAccountPickerSection(
+                      currentAccountId: _initial?.id,
+                      category: _category,
+                      parentId: _parentId,
+                      onChanged: (v) => setState(() => _parentId = v),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    _IconPickerSection(
+                      selected: _icon,
+                      color: _color,
+                      onChanged: (v) => setState(() => _icon = v),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    _ColorPickerSection(
+                      selected: _color,
+                      onChanged: (v) => setState(() => _color = v),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    CurrencyPicker(
+                      value: _currency,
+                      onChanged: (v) => setState(() => _currency = v),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _institutionController,
+                      ),
+                      label: Text(l10n.accountFormInstitutionLabel),
+                      description: Text(l10n.accountFormInstitutionHelper),
+                      focusNode: _institutionFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmit: (_) => _accountNumberFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _accountNumberController,
+                      ),
+                      label: Text(l10n.accountFormAccountNumberLabel),
+                      focusNode: _accountNumberFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmit: (_) => _noteFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    NoteField(
+                      controller: _noteController,
+                      focusNode: _noteFocus,
+                    ),
+                    if (widget.isEdit) ...[
+                      const SizedBox(height: Spacing.s12),
+                      FSwitch(
+                        label: Text(l10n.accountFormArchivedTitle),
+                        description: Text(l10n.accountFormArchivedSubtitle),
+                        value: _archived,
+                        onChange: (v) => setState(() => _archived = v),
+                      ),
+                    ],
+                    const SizedBox(height: Spacing.s24),
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      onPress: _busy ? null : _save,
+                      child: Text(
+                        _busy ? l10n.accountFormSaving : l10n.accountFormSave,
+                      ),
                     ),
                   ],
-                  const SizedBox(height: Spacing.s24),
-                  FButton(
-                    variant: FButtonVariant.primary,
-                    onPress: _busy ? null : _save,
-                    child: Text(
-                      _busy ? l10n.accountFormSaving : l10n.accountFormSave,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-        ),
+      ),
     );
   }
 }

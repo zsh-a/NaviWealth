@@ -40,18 +40,18 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: assetAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, st) => Center(child: Text('$e')),
-        data: (asset) {
-          if (asset == null) {
-            return Center(child: Text(l10n.physicalAssetNotFound));
-          }
-          return _DetailBody(asset: asset);
-        },
-      ),
+        color: Colors.transparent,
+        child: assetAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, st) => Center(child: Text('$e')),
+          data: (asset) {
+            if (asset == null) {
+              return Center(child: Text(l10n.physicalAssetNotFound));
+            }
+            return _DetailBody(asset: asset);
+          },
         ),
+      ),
     );
   }
 

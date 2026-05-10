@@ -357,14 +357,14 @@ class _ScenariosTable extends StatelessWidget {
             ),
           ),
           for (final scenario in view.scenarios)
-            ListTile(
+            FTile(
               title: Text(_scenarioLabel(l10n, scenario.tier)),
               subtitle: Text(
                 l10n.fireScenarioRateLabel(
                   (scenario.annualReturn * 100).toStringAsFixed(1),
                 ),
               ),
-              trailing: SizedBox(
+              suffix: SizedBox(
                 width: 110,
                 child: Text(
                   scenario.monthsToTarget == null

@@ -19,22 +19,22 @@ class FirePage extends ConsumerWidget {
       header: FHeader.nested(title: Text(l10n.fireAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: PageSkeletonShell<FireDashboardView>(
-        skeleton: const FireSkeleton(),
-        isLoading: viewAsync.isLoading,
-        child: viewAsync.when(
-          loading: () => const FireSkeleton(),
-          error: (e, _) => _ErrorState(
-            message: l10n.fireLoadError('$e'),
-            onRetry: () => ref.invalidate(fireDashboardViewProvider),
+        color: Colors.transparent,
+        child: PageSkeletonShell<FireDashboardView>(
+          skeleton: const FireSkeleton(),
+          isLoading: viewAsync.isLoading,
+          child: viewAsync.when(
+            loading: () => const FireSkeleton(),
+            error: (e, _) => _ErrorState(
+              message: l10n.fireLoadError('$e'),
+              onRetry: () => ref.invalidate(fireDashboardViewProvider),
+            ),
+            data: (view) => view.goal.isConfigured
+                ? FireConfiguredBody(view: view)
+                : const FireUnconfiguredBody(),
           ),
-          data: (view) => view.goal.isConfigured
-              ? FireConfiguredBody(view: view)
-              : const FireUnconfiguredBody(),
         ),
       ),
-        ),
     );
   }
 }

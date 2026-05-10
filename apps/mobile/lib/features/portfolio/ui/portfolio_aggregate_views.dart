@@ -175,11 +175,11 @@ class _AggregateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     return FCard.raw(
-      child: ListTile(
-        leading: Icon(row.icon),
+      child: FTile(
         title: Text(row.title),
+        prefix: Icon(row.icon),
         subtitle: Text(row.subtitle),
-        trailing: Text(
+        suffix: Text(
           formatter.compactCurrency(row.value, code: row.currency),
           style: Theme.of(context).textTheme.titleSmall,
         ),

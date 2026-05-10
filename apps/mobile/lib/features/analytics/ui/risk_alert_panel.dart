@@ -117,19 +117,13 @@ class _AlertRow extends ConsumerWidget {
     final severityColor = _severityColor(alert.severity, theme);
     final dimensionLabel = _dimensionLabel(l10n, alert.dimension);
 
-    return ListTile(
-      onTap: alert.assetIds.length == 1
-          ? () => context.goNamed(
-              AppRouteNames.assetDetail,
-              pathParameters: {'assetId': alert.assetIds.first},
-            )
-          : null,
-      leading: Container(
+    return FTile(
+      title: Text(_alertTitle(l10n, alert), style: theme.textTheme.titleSmall),
+      prefix: Container(
         width: 14,
         height: 14,
         decoration: BoxDecoration(color: severityColor, shape: BoxShape.circle),
       ),
-      title: Text(_alertTitle(l10n, alert), style: theme.textTheme.titleSmall),
       subtitle: Text(
         l10n.riskAlertThresholdBreached(
           dimensionLabel,
@@ -139,7 +133,7 @@ class _AlertRow extends ConsumerWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: SizedBox(
+      suffix: SizedBox(
         width: 96,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -163,6 +157,12 @@ class _AlertRow extends ConsumerWidget {
           ],
         ),
       ),
+      onPress: alert.assetIds.length == 1
+          ? () => context.goNamed(
+              AppRouteNames.assetDetail,
+              pathParameters: {'assetId': alert.assetIds.first},
+            )
+          : null,
     );
   }
 

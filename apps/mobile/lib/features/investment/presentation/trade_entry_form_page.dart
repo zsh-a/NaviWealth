@@ -407,13 +407,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       header: FHeader.nested(title: Text(l10n.tradeEntryAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-        data: (accounts) => _buildForm(accounts),
-      ),
+        color: Colors.transparent,
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          data: (accounts) => _buildForm(accounts),
         ),
+      ),
     );
   }
 
@@ -586,12 +586,12 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       runSpacing: 8,
       children: [
         for (final t in _tradeTypes)
-          ChoiceChip(
-            label: Text(_typeLabel(l10n, t)),
-            selected: _type == t,
-            onSelected: (s) {
-              if (s) setState(() => _type = t);
-            },
+          FButton(
+            variant: (_type == t)
+                ? FButtonVariant.primary
+                : FButtonVariant.outline,
+            onPress: () => setState(() => _type = t),
+            child: Text(_typeLabel(l10n, t)),
           ),
       ],
     );

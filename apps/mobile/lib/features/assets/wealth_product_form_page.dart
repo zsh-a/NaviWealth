@@ -256,13 +256,13 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-        data: (accounts) => _buildForm(accounts),
-      ),
+        color: Colors.transparent,
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          data: (accounts) => _buildForm(accounts),
         ),
+      ),
     );
   }
 
@@ -315,40 +315,33 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             onChanged: (v) => setState(() => _accountId = v),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _nameController,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _nameController),
+            label: Text(l10n.wealthProductNameLabel),
             focusNode: _nameFocus,
             textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _issuerFocus.requestFocus(),
-            decoration: InputDecoration(
-              labelText: l10n.wealthProductNameLabel,
-              border: const OutlineInputBorder(),
-            ),
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? l10n.wealthProductNameRequired
                 : null,
+            onSubmit: (_) => _issuerFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _issuerController,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _issuerController),
+            label: Text(l10n.wealthProductIssuerLabel),
             focusNode: _issuerFocus,
             textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _productCodeFocus.requestFocus(),
-            decoration: InputDecoration(
-              labelText: l10n.wealthProductIssuerLabel,
-              border: const OutlineInputBorder(),
-            ),
+            onSubmit: (_) => _productCodeFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _productCodeController,
+          FTextFormField(
+            control: FTextFieldControl.managed(
+              controller: _productCodeController,
+            ),
+            label: Text(l10n.wealthProductCodeLabel),
             focusNode: _productCodeFocus,
             textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _principalFocus.requestFocus(),
-            decoration: InputDecoration(
-              labelText: l10n.wealthProductCodeLabel,
-              border: const OutlineInputBorder(),
-            ),
+            onSubmit: (_) => _principalFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
           CurrencyPicker(
@@ -364,17 +357,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             onFieldSubmitted: (_) => _returnFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _expectedReturnPctController,
-            focusNode: _returnFocus,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _valuationFocus.requestFocus(),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.wealthProductExpectedReturnLabel,
-              border: const OutlineInputBorder(),
-              helperText: l10n.wealthProductExpectedReturnHelper,
+          FTextFormField(
+            control: FTextFieldControl.managed(
+              controller: _expectedReturnPctController,
             ),
+            label: Text(l10n.wealthProductExpectedReturnLabel),
+            description: Text(l10n.wealthProductExpectedReturnHelper),
+            focusNode: _returnFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
             validator: (v) {
               final trimmed = v?.trim() ?? '';
               if (trimmed.isEmpty) {
@@ -384,6 +375,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
               if (parsed == null) return l10n.wealthProductInvalidFormat;
               return null;
             },
+            onSubmit: (_) => _valuationFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
           DateField(

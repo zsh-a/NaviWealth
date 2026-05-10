@@ -101,189 +101,170 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: ListView(
-          padding: Spacing.pageMobile,
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          children: [
-            DropdownButtonFormField<LiabilityType>(
-              isExpanded: true,
-              initialValue: _type,
-              decoration: InputDecoration(labelText: l10n.liabilityFieldType),
-              items: [
-                for (final t in LiabilityType.values)
-                  DropdownMenuItem(
-                    value: t,
-                    child: Text(liabilityTypeLabel(l10n, t)),
-                  ),
-              ],
-              onChanged: (v) => setState(() => _type = v ?? _type),
-            ),
-            const SizedBox(height: Spacing.s12),
-            TextFormField(
-              controller: _name,
-              focusNode: _nameFocus,
-              textInputAction: TextInputAction.next,
-              onFieldSubmitted: (_) => _principalFocus.requestFocus(),
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldName,
-                border: const OutlineInputBorder(),
+        color: Colors.transparent,
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: ListView(
+            padding: Spacing.pageMobile,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            children: [
+              DropdownButtonFormField<LiabilityType>(
+                isExpanded: true,
+                initialValue: _type,
+                decoration: InputDecoration(labelText: l10n.liabilityFieldType),
+                items: [
+                  for (final t in LiabilityType.values)
+                    DropdownMenuItem(
+                      value: t,
+                      child: Text(liabilityTypeLabel(l10n, t)),
+                    ),
+                ],
+                onChanged: (v) => setState(() => _type = v ?? _type),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? l10n.liabilityValidationRequired
-                  : null,
-            ),
-            const SizedBox(height: Spacing.s12),
-            TextFormField(
-              controller: _principal,
-              focusNode: _principalFocus,
-              textInputAction: TextInputAction.next,
-              onFieldSubmitted: (_) => _rateFocus.requestFocus(),
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldPrincipal,
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: _validatePositive(l10n),
-            ),
-            const SizedBox(height: Spacing.s12),
-            TextFormField(
-              controller: _rate,
-              focusNode: _rateFocus,
-              textInputAction: TextInputAction.next,
-              onFieldSubmitted: (_) => _currencyFocus.requestFocus(),
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldInterestRate,
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return l10n.liabilityValidationRequired;
-                }
-                final d = Decimal.tryParse(v.trim());
-                if (d == null || d.sign < 0) {
-                  return l10n.liabilityValidationPositive;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: Spacing.s12),
-            DropdownButtonFormField<LiabilityRateType>(
-              isExpanded: true,
-              initialValue: _rateType,
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldRateType,
-              ),
-              items: [
-                for (final r in LiabilityRateType.values)
-                  DropdownMenuItem(
-                    value: r,
-                    child: Text(rateTypeLabel(l10n, r)),
-                  ),
-              ],
-              onChanged: (v) => setState(() => _rateType = v ?? _rateType),
-            ),
-            const SizedBox(height: Spacing.s12),
-            TextFormField(
-              controller: _currency,
-              focusNode: _currencyFocus,
-              textInputAction: _isCreditCard
-                  ? TextInputAction.next
-                  : TextInputAction.next,
-              onFieldSubmitted: (_) => _isCreditCard
-                  ? _statementDayFocus.requestFocus()
-                  : _termFocus.requestFocus(),
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                labelText: l10n.liabilityFieldCurrency,
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) => (v == null || v.trim().length < 3)
-                  ? l10n.liabilityValidationRequired
-                  : null,
-            ),
-            if (!_isCreditCard) ...[
               const SizedBox(height: Spacing.s12),
-              TextFormField(
-                controller: _term,
-                focusNode: _termFocus,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _saving ? null : _save(),
-                decoration: InputDecoration(
-                  labelText: l10n.liabilityFieldTerm,
-                  border: const OutlineInputBorder(),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _name),
+                label: Text(l10n.liabilityFieldName),
+                focusNode: _nameFocus,
+                textInputAction: TextInputAction.next,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l10n.liabilityValidationRequired
+                    : null,
+                onSubmit: (_) => _principalFocus.requestFocus(),
+              ),
+              const SizedBox(height: Spacing.s12),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _principal),
+                label: Text(l10n.liabilityFieldPrincipal),
+                focusNode: _principalFocus,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
-                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                validator: _validatePositive(l10n),
+                onSubmit: (_) => _rateFocus.requestFocus(),
+              ),
+              const SizedBox(height: Spacing.s12),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _rate),
+                label: Text(l10n.liabilityFieldInterestRate),
+                focusNode: _rateFocus,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                textInputAction: TextInputAction.next,
                 validator: (v) {
-                  final n = int.tryParse((v ?? '').trim());
-                  if (n == null || n <= 0) {
+                  if (v == null || v.trim().isEmpty) {
+                    return l10n.liabilityValidationRequired;
+                  }
+                  final d = Decimal.tryParse(v.trim());
+                  if (d == null || d.sign < 0) {
                     return l10n.liabilityValidationPositive;
                   }
                   return null;
                 },
+                onSubmit: (_) => _currencyFocus.requestFocus(),
               ),
               const SizedBox(height: Spacing.s12),
-              _DateField(
-                label: l10n.liabilityFieldStartDate,
-                value: _startDate,
-                onChanged: (v) => setState(() => _startDate = v),
-              ),
-              const SizedBox(height: Spacing.s12),
-              DropdownButtonFormField<RepaymentMethod>(
+              DropdownButtonFormField<LiabilityRateType>(
                 isExpanded: true,
-                initialValue: _method,
+                initialValue: _rateType,
                 decoration: InputDecoration(
-                  labelText: l10n.liabilityFieldMethod,
+                  labelText: l10n.liabilityFieldRateType,
                 ),
                 items: [
-                  for (final m in RepaymentMethod.values)
+                  for (final r in LiabilityRateType.values)
                     DropdownMenuItem(
-                      value: m,
-                      child: Text(repaymentMethodLabel(l10n, m)),
+                      value: r,
+                      child: Text(rateTypeLabel(l10n, r)),
                     ),
                 ],
-                onChanged: (v) => setState(() => _method = v ?? _method),
-              ),
-            ] else ...[
-              const SizedBox(height: Spacing.s12),
-              TextFormField(
-                controller: _statementDay,
-                focusNode: _statementDayFocus,
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_) => _paymentDueDayFocus.requestFocus(),
-                decoration: InputDecoration(
-                  labelText: l10n.liabilityFieldStatementDay,
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: _validateOptionalDay(l10n),
+                onChanged: (v) => setState(() => _rateType = v ?? _rateType),
               ),
               const SizedBox(height: Spacing.s12),
-              TextFormField(
-                controller: _paymentDueDay,
-                focusNode: _paymentDueDayFocus,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _saving ? null : _save(),
-                decoration: InputDecoration(
-                  labelText: l10n.liabilityFieldPaymentDueDay,
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: _validateOptionalDay(l10n),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _currency),
+                label: Text(l10n.liabilityFieldCurrency),
+                focusNode: _currencyFocus,
+                textInputAction: _isCreditCard
+                    ? TextInputAction.next
+                    : TextInputAction.next,
+                textCapitalization: TextCapitalization.characters,
+                validator: (v) => (v == null || v.trim().length < 3)
+                    ? l10n.liabilityValidationRequired
+                    : null,
+                onSubmit: (_) => _isCreditCard
+                    ? _statementDayFocus.requestFocus()
+                    : _termFocus.requestFocus(),
               ),
+              if (!_isCreditCard) ...[
+                const SizedBox(height: Spacing.s12),
+                FTextFormField(
+                  control: FTextFieldControl.managed(controller: _term),
+                  label: Text(l10n.liabilityFieldTerm),
+                  focusNode: _termFocus,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  validator: (v) {
+                    final n = int.tryParse((v ?? '').trim());
+                    if (n == null || n <= 0) {
+                      return l10n.liabilityValidationPositive;
+                    }
+                    return null;
+                  },
+                  onSubmit: (_) => _saving ? null : _save(),
+                ),
+                const SizedBox(height: Spacing.s12),
+                _DateField(
+                  label: l10n.liabilityFieldStartDate,
+                  value: _startDate,
+                  onChanged: (v) => setState(() => _startDate = v),
+                ),
+                const SizedBox(height: Spacing.s12),
+                DropdownButtonFormField<RepaymentMethod>(
+                  isExpanded: true,
+                  initialValue: _method,
+                  decoration: InputDecoration(
+                    labelText: l10n.liabilityFieldMethod,
+                  ),
+                  items: [
+                    for (final m in RepaymentMethod.values)
+                      DropdownMenuItem(
+                        value: m,
+                        child: Text(repaymentMethodLabel(l10n, m)),
+                      ),
+                  ],
+                  onChanged: (v) => setState(() => _method = v ?? _method),
+                ),
+              ] else ...[
+                const SizedBox(height: Spacing.s12),
+                FTextFormField(
+                  control: FTextFieldControl.managed(controller: _statementDay),
+                  label: Text(l10n.liabilityFieldStatementDay),
+                  focusNode: _statementDayFocus,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  validator: _validateOptionalDay(l10n),
+                  onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
+                ),
+                const SizedBox(height: Spacing.s12),
+                FTextFormField(
+                  control: FTextFieldControl.managed(
+                    controller: _paymentDueDay,
+                  ),
+                  label: Text(l10n.liabilityFieldPaymentDueDay),
+                  focusNode: _paymentDueDayFocus,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  validator: _validateOptionalDay(l10n),
+                  onSubmit: (_) => _saving ? null : _save(),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
-        ),
     );
   }
 

@@ -248,13 +248,13 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-        data: (accounts) => _buildForm(accounts),
-      ),
+        color: Colors.transparent,
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          data: (accounts) => _buildForm(accounts),
         ),
+      ),
     );
   }
 
@@ -321,19 +321,16 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             onChanged: (v) => setState(() => _accountId = v),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _nameController,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _nameController),
+            label: Text(l10n.depositNameLabel),
+            description: Text(l10n.depositNameHelper),
             focusNode: _nameFocus,
             textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _principalFocus.requestFocus(),
-            decoration: InputDecoration(
-              labelText: l10n.depositNameLabel,
-              helperText: l10n.depositNameHelper,
-              border: const OutlineInputBorder(),
-            ),
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? l10n.depositNameRequired
                 : null,
+            onSubmit: (_) => _principalFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
           CurrencyPicker(
@@ -349,17 +346,15 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             onFieldSubmitted: (_) => _rateFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _ratePercentController,
-            focusNode: _rateFocus,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _valuationFocus.requestFocus(),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l10n.depositRateLabel,
-              border: const OutlineInputBorder(),
-              helperText: l10n.depositRateHelper,
+          FTextFormField(
+            control: FTextFieldControl.managed(
+              controller: _ratePercentController,
             ),
+            label: Text(l10n.depositRateLabel),
+            description: Text(l10n.depositRateHelper),
+            focusNode: _rateFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textInputAction: TextInputAction.next,
             validator: (v) {
               final trimmed = v?.trim() ?? '';
               if (trimmed.isEmpty) return l10n.depositRateRequired;
@@ -368,6 +363,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               if (parsed < Decimal.zero) return l10n.depositRateNegative;
               return null;
             },
+            onSubmit: (_) => _valuationFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
           DateField(

@@ -263,115 +263,118 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: loadingExisting
-          ? const Center(child: FCircularProgress())
-          : Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: ListView(
-                padding: Spacing.pageMobile,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  AmountField(
-                    label: l10n.expenseFormAmountLabel,
-                    controller: _amountController,
-                    currencyCode: _currency,
-                    focusNode: _amountFocus,
-                    onFieldSubmitted: (_) => _noteFocus.requestFocus(),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  CurrencyPicker(
-                    value: _currency,
-                    onChanged: (v) => setState(() => _currency = v),
-                  ),
-                  const SizedBox(height: Spacing.s8),
-                  allAccountsAsync.when(
-                    data: (allAccounts) {
-                      final expenseAccounts = allAccounts
-                          .where((a) => a.category == AccountCategory.expense)
-                          .toList(growable: false);
-                      if (expenseAccounts.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: Spacing.s12,
-                          ),
-                          child: Text(l10n.expenseFormCategoriesLoading),
-                        );
-                      }
-                      // Resolve default: explicit pick > first account
-                      if (_expenseAccountId == null ||
-                          !expenseAccounts.any(
-                            (a) => a.id == _expenseAccountId,
-                          )) {
-                        _expenseAccountId = expenseAccounts.first.id;
-                      }
-                      return CategoryGridPicker(
-                        accounts: expenseAccounts,
-                        selectedId: _expenseAccountId,
-                        onSelect: (id) =>
-                            setState(() => _expenseAccountId = id),
-                      );
-                    },
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: Spacing.s12),
-                      child: LinearProgressIndicator(),
+        color: Colors.transparent,
+        child: loadingExisting
+            ? const Center(child: FCircularProgress())
+            : Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: ListView(
+                  padding: Spacing.pageMobile,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    AmountField(
+                      label: l10n.expenseFormAmountLabel,
+                      controller: _amountController,
+                      currencyCode: _currency,
+                      focusNode: _amountFocus,
+                      onFieldSubmitted: (_) => _noteFocus.requestFocus(),
                     ),
-                    error: (e, _) =>
-                        Text(l10n.expenseFormCategoriesLoadError('$e')),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  accountsAsync.when(
-                    data: (accounts) {
-                      final fromAccounts = accounts
-                          .where(
-                            (a) =>
-                                a.category == AccountCategory.asset &&
-                                a.type != AccountType.other,
-                          )
-                          .toList(growable: false);
-                      if (fromAccounts.isEmpty) {
-                        return _NoAccountsHint();
-                      }
-                      final hasCurrent =
-                          _fromAccountId != null &&
-                          fromAccounts.any((a) => a.id == _fromAccountId);
-                      if (!hasCurrent) {
-                        _fromAccountId = fromAccounts.first.id;
-                      }
-                      return AccountPicker(
-                        accounts: fromAccounts,
-                        value: _fromAccountId,
-                        onChanged: (v) => setState(() => _fromAccountId = v),
-                        label: l10n.expenseFormAccountLabel,
-                      );
-                    },
-                    loading: () => const LinearProgressIndicator(),
-                    error: (e, _) =>
-                        Text(l10n.expenseFormAccountsLoadError('$e')),
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  DateField(
-                    label: l10n.expenseFormDateLabel,
-                    initialValue: _date,
-                    required: true,
-                    onChanged: (v) {
-                      if (v != null) setState(() => _date = v);
-                    },
-                  ),
-                  const SizedBox(height: Spacing.s12),
-                  NoteField(controller: _noteController, focusNode: _noteFocus),
-                  const SizedBox(height: Spacing.s24),
-                  FButton(
-                    variant: FButtonVariant.primary,
-                    onPress: _busy ? null : _save,
-                    child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
-                  ),
-                ],
+                    const SizedBox(height: Spacing.s12),
+                    CurrencyPicker(
+                      value: _currency,
+                      onChanged: (v) => setState(() => _currency = v),
+                    ),
+                    const SizedBox(height: Spacing.s8),
+                    allAccountsAsync.when(
+                      data: (allAccounts) {
+                        final expenseAccounts = allAccounts
+                            .where((a) => a.category == AccountCategory.expense)
+                            .toList(growable: false);
+                        if (expenseAccounts.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: Spacing.s12,
+                            ),
+                            child: Text(l10n.expenseFormCategoriesLoading),
+                          );
+                        }
+                        // Resolve default: explicit pick > first account
+                        if (_expenseAccountId == null ||
+                            !expenseAccounts.any(
+                              (a) => a.id == _expenseAccountId,
+                            )) {
+                          _expenseAccountId = expenseAccounts.first.id;
+                        }
+                        return CategoryGridPicker(
+                          accounts: expenseAccounts,
+                          selectedId: _expenseAccountId,
+                          onSelect: (id) =>
+                              setState(() => _expenseAccountId = id),
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: Spacing.s12),
+                        child: LinearProgressIndicator(),
+                      ),
+                      error: (e, _) =>
+                          Text(l10n.expenseFormCategoriesLoadError('$e')),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    accountsAsync.when(
+                      data: (accounts) {
+                        final fromAccounts = accounts
+                            .where(
+                              (a) =>
+                                  a.category == AccountCategory.asset &&
+                                  a.type != AccountType.other,
+                            )
+                            .toList(growable: false);
+                        if (fromAccounts.isEmpty) {
+                          return _NoAccountsHint();
+                        }
+                        final hasCurrent =
+                            _fromAccountId != null &&
+                            fromAccounts.any((a) => a.id == _fromAccountId);
+                        if (!hasCurrent) {
+                          _fromAccountId = fromAccounts.first.id;
+                        }
+                        return AccountPicker(
+                          accounts: fromAccounts,
+                          value: _fromAccountId,
+                          onChanged: (v) => setState(() => _fromAccountId = v),
+                          label: l10n.expenseFormAccountLabel,
+                        );
+                      },
+                      loading: () => const LinearProgressIndicator(),
+                      error: (e, _) =>
+                          Text(l10n.expenseFormAccountsLoadError('$e')),
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    DateField(
+                      label: l10n.expenseFormDateLabel,
+                      initialValue: _date,
+                      required: true,
+                      onChanged: (v) {
+                        if (v != null) setState(() => _date = v);
+                      },
+                    ),
+                    const SizedBox(height: Spacing.s12),
+                    NoteField(
+                      controller: _noteController,
+                      focusNode: _noteFocus,
+                    ),
+                    const SizedBox(height: Spacing.s24),
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      onPress: _busy ? null : _save,
+                      child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ),
+      ),
     );
   }
 }
@@ -381,14 +384,14 @@ class _NoAccountsHint extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
-      child: ListTile(
-        leading: Icon(
+      child: FTile(
+        title: Text(l10n.expenseFormNoAccountsTitle),
+        prefix: Icon(
           Icons.warning_amber_outlined,
           color: Theme.of(context).colorScheme.error,
         ),
-        title: Text(l10n.expenseFormNoAccountsTitle),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
-        trailing: FButton(
+        suffix: FButton(
           variant: FButtonVariant.ghost,
           onPress: () => GoRouter.of(context).go(AppRoutes.accountNew),
           child: Text(l10n.expenseFormNoAccountsCta),

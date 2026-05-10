@@ -115,11 +115,23 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
       future: _assetFuture,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Scaffold(body: Center(child: FCircularProgress()));
+          return const FScaffold(
+            childPad: false,
+            child: Material(
+              color: Colors.transparent,
+              child: Center(child: FCircularProgress()),
+            ),
+          );
         }
         final asset = snap.data;
         if (asset == null) {
-          return Scaffold(body: Center(child: Text(l10n.assetDetailNotFound)));
+          return FScaffold(
+            childPad: false,
+            child: Material(
+              color: Colors.transparent,
+              child: Center(child: Text(l10n.assetDetailNotFound)),
+            ),
+          );
         }
         return FScaffold(
           header: FHeader.nested(
@@ -142,27 +154,28 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
           ),
           childPad: false,
           child: Material(
-          color: Colors.transparent,
-          child: ListView(
-            padding: const EdgeInsets.all(Spacing.s16),
-            children: [
-              AssetSummaryCard(asset: asset),
-              const SizedBox(height: Spacing.s12),
-              AssetHoldingCard(asset: asset),
-              const SizedBox(height: Spacing.s12),
-              AssetPnLCard(asset: asset),
-              const SizedBox(height: Spacing.s12),
-              AssetTrendMiniChartCard(asset: asset),
-              const SizedBox(height: Spacing.s16),
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: () => context.push(AppRoutes.tradeForAsset(asset.id)),
-                prefix: const Icon(Icons.add, size: 16),
-                child: Text(l10n.assetDetailNewTradeLabel),
-              ),
-            ],
+            color: Colors.transparent,
+            child: ListView(
+              padding: const EdgeInsets.all(Spacing.s16),
+              children: [
+                AssetSummaryCard(asset: asset),
+                const SizedBox(height: Spacing.s12),
+                AssetHoldingCard(asset: asset),
+                const SizedBox(height: Spacing.s12),
+                AssetPnLCard(asset: asset),
+                const SizedBox(height: Spacing.s12),
+                AssetTrendMiniChartCard(asset: asset),
+                const SizedBox(height: Spacing.s16),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: () =>
+                      context.push(AppRoutes.tradeForAsset(asset.id)),
+                  prefix: const Icon(Icons.add, size: 16),
+                  child: Text(l10n.assetDetailNewTradeLabel),
+                ),
+              ],
+            ),
           ),
-        ),
         );
       },
     );

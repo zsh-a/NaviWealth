@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -120,12 +121,10 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   runSpacing: Spacing.s4,
                   children: [
                     for (final jump in jumps)
-                      ChoiceChip(
-                        avatar: Icon(jump.icon, size: 16),
-                        label: Text(jump.label),
-                        selected: false,
-                        onSelected: (_) => _navigate(context, jump),
-                        visualDensity: VisualDensity.compact,
+                      FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: () => _navigate(context, jump),
+                        child: Text(jump.label),
                       ),
                   ],
                 ),

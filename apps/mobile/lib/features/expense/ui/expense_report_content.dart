@@ -73,10 +73,12 @@ class _RangeChips extends ConsumerWidget {
           for (final preset in ExpenseReportRangePreset.values)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.s8),
-              child: ChoiceChip(
-                label: Text(_label(preset, l10n)),
-                selected: preset == selected,
-                onSelected: (_) => _select(context, ref, preset),
+              child: FButton(
+                variant: (preset == selected)
+                    ? FButtonVariant.primary
+                    : FButtonVariant.outline,
+                onPress: () => _select(context, ref, preset),
+                child: Text(_label(preset, l10n)),
               ),
             ),
         ],

@@ -86,13 +86,13 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: _tab == _ActivityTab.expenses
-          ? const ExpenseListPage(embedded: true)
-          : _tab == _ActivityTab.accounts
-          ? const AccountsPage(embedded: true)
-          : const ActivityFeed(),
-        ),
+        color: Colors.transparent,
+        child: _tab == _ActivityTab.expenses
+            ? const ExpenseListPage(embedded: true)
+            : _tab == _ActivityTab.accounts
+            ? const AccountsPage(embedded: true)
+            : const ActivityFeed(),
+      ),
     );
   }
 
@@ -118,4 +118,3 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     }
   }
 }
-

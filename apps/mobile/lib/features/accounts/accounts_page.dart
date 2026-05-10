@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../app/master_detail_layout.dart';
 import '../../app/selection_query.dart';
@@ -33,15 +34,19 @@ class AccountsPage extends ConsumerWidget {
         );
         final selected = selectedQueryOf(context);
         if (masterDetail) {
-          return Scaffold(
-            body: MasterDetailLayout(
-              master: AccountsMaster(
-                selectedId: selected,
-                inMasterDetail: true,
+          return FScaffold(
+            childPad: false,
+            child: Material(
+              color: Colors.transparent,
+              child: MasterDetailLayout(
+                master: AccountsMaster(
+                  selectedId: selected,
+                  inMasterDetail: true,
+                ),
+                detail: selected == null
+                    ? const AccountsDetailEmpty()
+                    : AccountFormPage(accountId: selected),
               ),
-              detail: selected == null
-                  ? const AccountsDetailEmpty()
-                  : AccountFormPage(accountId: selected),
             ),
           );
         }

@@ -23,12 +23,12 @@ class AssetsDetailEmpty extends StatelessWidget {
       header: FHeader.nested(title: Text(l10n.assetsAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: MasterDetailEmpty(
-        icon: Icons.account_balance_wallet_outlined,
-        message: l10n.assetsDetailEmpty,
-      ),
+        color: Colors.transparent,
+        child: MasterDetailEmpty(
+          icon: Icons.account_balance_wallet_outlined,
+          message: l10n.assetsDetailEmpty,
         ),
+      ),
     );
   }
 }

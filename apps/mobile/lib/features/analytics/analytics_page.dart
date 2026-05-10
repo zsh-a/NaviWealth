@@ -33,31 +33,31 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       header: FHeader.nested(title: Text(l10n.analyticsAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-          final basePadding = isWide ? Spacing.pageWide : Spacing.pageMobile;
-          return ListView(
-            padding: basePadding.copyWith(
-              bottom:
-                  basePadding.bottom +
-                  Spacing.floatingBarClearance +
-                  MediaQuery.paddingOf(context).bottom,
-            ),
-            children: [
-              ResponsiveTwoColumn(
-                left: AnalyticsEquityColumn(
-                  dimension: _dimension,
-                  onDimensionChanged: (d) => setState(() => _dimension = d),
-                ),
-                right: const _RiskAndBenchmarkColumn(),
+        color: Colors.transparent,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+            final basePadding = isWide ? Spacing.pageWide : Spacing.pageMobile;
+            return ListView(
+              padding: basePadding.copyWith(
+                bottom:
+                    basePadding.bottom +
+                    Spacing.floatingBarClearance +
+                    MediaQuery.paddingOf(context).bottom,
               ),
-            ],
-          );
-        },
-      ),
+              children: [
+                ResponsiveTwoColumn(
+                  left: AnalyticsEquityColumn(
+                    dimension: _dimension,
+                    onDimensionChanged: (d) => setState(() => _dimension = d),
+                  ),
+                  right: const _RiskAndBenchmarkColumn(),
+                ),
+              ],
+            );
+          },
         ),
+      ),
     );
   }
 }

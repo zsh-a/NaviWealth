@@ -477,10 +477,7 @@ class _ClarificationView extends StatelessWidget {
                   runSpacing: Spacing.s4,
                   children: [
                     for (final c in plan.candidates)
-                      Chip(
-                        label: Text(c.label ?? c.id),
-                        visualDensity: VisualDensity.compact,
-                      ),
+                      FBadge(child: Text(c.label ?? c.id)),
                   ],
                 ),
               ],

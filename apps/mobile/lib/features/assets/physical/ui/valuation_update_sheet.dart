@@ -97,11 +97,9 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: Spacing.s16),
-              TextFormField(
-                controller: _amountCtrl,
-                decoration: InputDecoration(
-                  labelText: l10n.physicalAssetUpdateValuationAmount,
-                ),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _amountCtrl),
+                label: Text(l10n.physicalAssetUpdateValuationAmount),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -127,13 +125,11 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 ),
               ),
               const SizedBox(height: Spacing.s12),
-              TextFormField(
-                controller: _noteCtrl,
-                decoration: InputDecoration(
-                  labelText: l10n.physicalAssetFieldNote,
-                ),
-                minLines: 1,
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _noteCtrl),
+                label: Text(l10n.physicalAssetFieldNote),
                 maxLines: 3,
+                minLines: 1,
               ),
               const SizedBox(height: Spacing.s24),
               FButton(

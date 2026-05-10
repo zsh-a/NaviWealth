@@ -88,10 +88,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         ],
       ),
       childPad: false,
-      child: Material(
-          color: Colors.transparent,
-          child: body,
-        ),
+      child: Material(color: Colors.transparent, child: body),
     );
   }
 

@@ -69,19 +69,22 @@ class _BenchmarkSelectionChips extends ConsumerWidget {
       runSpacing: Spacing.s8,
       children: [
         for (final index in BenchmarkIndex.values)
-          FilterChip(
-            label: Text(benchmarkLabel(l10n, index)),
-            selected: selection.contains(index),
-            onSelected: (picked) {
+          FButton(
+            variant: selection.contains(index)
+                ? FButtonVariant.primary
+                : FButtonVariant.outline,
+            onPress: () {
               final next = [...selection];
-              if (picked) {
-                if (!next.contains(index)) next.add(index);
-              } else if (next.length > 1) {
-                next.remove(index);
+              final isSelected = next.contains(index);
+              if (isSelected) {
+                if (next.length > 1) next.remove(index);
+              } else {
+                next.add(index);
               }
               ref.read(benchmarkComparisonSelectionProvider.notifier).state =
                   next;
             },
+            child: Text(benchmarkLabel(l10n, index)),
           ),
       ],
     );
@@ -103,10 +106,12 @@ class _BenchmarkRangeChips extends ConsumerWidget {
           for (final preset in DashboardRangePreset.values)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.s8),
-              child: ChoiceChip(
-                label: Text(_rangeLabel(l10n, preset)),
-                selected: preset == selected,
-                onSelected: (_) => _select(context, ref, preset),
+              child: FButton(
+                variant: (preset == selected)
+                    ? FButtonVariant.primary
+                    : FButtonVariant.outline,
+                onPress: () => _select(context, ref, preset),
+                child: Text(_rangeLabel(l10n, preset)),
               ),
             ),
         ],

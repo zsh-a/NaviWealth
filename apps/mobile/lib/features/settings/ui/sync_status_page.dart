@@ -33,18 +33,18 @@ class SyncStatusPage extends ConsumerWidget {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: eventAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(Spacing.s24),
-            child: Text(l10n.syncStatusBusError(e.toString())),
+        color: Colors.transparent,
+        child: eventAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.s24),
+              child: Text(l10n.syncStatusBusError(e.toString())),
+            ),
           ),
+          data: (event) => _Body(event: event),
         ),
-        data: (event) => _Body(event: event),
       ),
-        ),
     );
   }
 }

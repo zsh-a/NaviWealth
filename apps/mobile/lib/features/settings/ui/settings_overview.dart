@@ -39,20 +39,20 @@ class SettingsOverview extends ConsumerWidget {
         FCard.raw(
           child: Column(
             children: [
-              ListTile(
-                leading: const Icon(Icons.cloud_sync_outlined),
+              FTile(
                 title: Text(l10n.settingsSyncTitle),
+                prefix: const Icon(Icons.cloud_sync_outlined),
                 subtitle: Text(l10n.settingsSyncSubtitle),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.goNamed(AppRouteNames.sync),
+                suffix: const Icon(Icons.chevron_right),
+                onPress: () => context.goNamed(AppRouteNames.sync),
               ),
               const FDivider(),
-              ListTile(
-                leading: const Icon(Icons.backup_outlined),
+              FTile(
                 title: Text(l10n.settingsDataTitle),
+                prefix: const Icon(Icons.backup_outlined),
                 subtitle: Text(l10n.settingsDataSubtitle),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.goNamed(AppRouteNames.backup),
+                suffix: const Icon(Icons.chevron_right),
+                onPress: () => context.goNamed(AppRouteNames.backup),
               ),
             ],
           ),
@@ -60,12 +60,12 @@ class SettingsOverview extends ConsumerWidget {
         if (kDebugMode) ...[
           _SectionHeader(title: l10n.settingsDeveloperSection),
           FCard.raw(
-            child: ListTile(
-              leading: const Icon(Icons.bug_report_outlined),
+            child: FTile(
               title: Text(l10n.settingsLogsTitle),
+              prefix: const Icon(Icons.bug_report_outlined),
               subtitle: Text(l10n.settingsLogsSubtitle),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.goNamed(AppRouteNames.logs),
+              suffix: const Icon(Icons.chevron_right),
+              onPress: () => context.goNamed(AppRouteNames.logs),
             ),
           ),
         ],
@@ -158,12 +158,12 @@ class _AccountSection extends ConsumerWidget {
     return FCard.raw(
       child: Column(
         children: [
-          ListTile(
-            leading: const Icon(Icons.devices_outlined),
+          FTile(
             title: Text(l10n.settingsDevicesTitle),
+            prefix: const Icon(Icons.devices_outlined),
             subtitle: Text(l10n.settingsDevicesSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.goNamed(AppRouteNames.devices),
+            suffix: const Icon(Icons.chevron_right),
+            onPress: () => context.goNamed(AppRouteNames.devices),
           ),
           const FDivider(),
           Padding(
@@ -209,12 +209,12 @@ class _AccountSection extends ConsumerWidget {
             ),
           ),
           const FDivider(),
-          ListTile(
-            leading: const Icon(Icons.published_with_changes_outlined),
+          FTile(
             title: Text(l10n.settingsFxRatesTitle),
+            prefix: const Icon(Icons.published_with_changes_outlined),
             subtitle: Text(l10n.settingsFxRatesSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.goNamed(AppRouteNames.fxRates),
+            suffix: const Icon(Icons.chevron_right),
+            onPress: () => context.goNamed(AppRouteNames.fxRates),
           ),
         ],
       ),
@@ -390,9 +390,9 @@ class _AboutTile extends ConsumerWidget {
         return '$base · $shortSha';
       },
     );
-    return ListTile(
-      leading: const Icon(Icons.info_outline),
+    return FTile(
       title: Text(l10n.settingsAboutTitle),
+      prefix: const Icon(Icons.info_outline),
       subtitle: Text(subtitle),
     );
   }
@@ -539,9 +539,9 @@ class _ThresholdSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon),
+    return FTile(
       title: Text(label),
+      prefix: Icon(icon),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

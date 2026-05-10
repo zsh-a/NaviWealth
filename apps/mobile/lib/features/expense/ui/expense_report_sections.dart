@@ -371,8 +371,19 @@ class _CategoryTile extends StatelessWidget {
     final theme = Theme.of(context);
     final category = categoryById[breakdown.expenseAccountId];
     final accent = category?.accentColor ?? theme.colorScheme.primary;
-    return ListTile(
-      onTap: () => showModalBottomSheet<void>(
+    return FTile(
+      title: Text(category?.name ?? l10n.expenseReportUncategorized),
+      prefix: CircleAvatar(
+        backgroundColor: accent.withValues(alpha: 0.15),
+        child: Icon(category?.iconData ?? Icons.payment, color: accent),
+      ),
+      subtitle: Text(l10n.expenseReportItemCount(breakdown.items.length)),
+      suffix: MoneyText(
+        amount: breakdown.total.amount.toDouble(),
+        currencyCode: baseCurrency,
+        compact: true,
+      ),
+      onPress: () => showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
         isScrollControlled: true,
@@ -381,17 +392,6 @@ class _CategoryTile extends StatelessWidget {
           categoryById: categoryById,
           baseCurrency: baseCurrency,
         ),
-      ),
-      leading: CircleAvatar(
-        backgroundColor: accent.withValues(alpha: 0.15),
-        child: Icon(category?.iconData ?? Icons.payment, color: accent),
-      ),
-      title: Text(category?.name ?? l10n.expenseReportUncategorized),
-      subtitle: Text(l10n.expenseReportItemCount(breakdown.items.length)),
-      trailing: MoneyText(
-        amount: breakdown.total.amount.toDouble(),
-        currencyCode: baseCurrency,
-        compact: true,
       ),
     );
   }
@@ -488,11 +488,10 @@ class _ExpenseLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      dense: true,
+    return FTile(
       title: Text(expense.note ?? formatter.date(expense.tradeDate)),
       subtitle: Text(formatter.date(expense.tradeDate)),
-      trailing: Text(
+      suffix: Text(
         formatter.currency(expense.amount, code: expense.currency),
         style: theme.textTheme.bodyMedium?.copyWith(
           fontFeatures: TypographyTokens.tabularFigures,

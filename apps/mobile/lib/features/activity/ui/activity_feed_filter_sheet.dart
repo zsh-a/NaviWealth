@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../data/repositories/providers.dart';
@@ -55,16 +56,19 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
               runSpacing: Spacing.s8,
               children: [
                 for (final kind in ActivityKind.values)
-                  FilterChip(
-                    label: Text(_kindLabel(l10n, kind)),
-                    selected: query.kinds.contains(kind),
-                    onSelected: (selected) {
+                  FButton(
+                    variant: query.kinds.contains(kind)
+                        ? FButtonVariant.primary
+                        : FButtonVariant.outline,
+                    onPress: () {
+                      final wasSelected = query.kinds.contains(kind);
                       controller.mutateQuery((q) {
                         final kinds = {...q.kinds};
-                        selected ? kinds.add(kind) : kinds.remove(kind);
+                        wasSelected ? kinds.remove(kind) : kinds.add(kind);
                         return q.copyWith(kinds: kinds);
                       });
                     },
+                    child: Text(_kindLabel(l10n, kind)),
                   ),
               ],
             ),

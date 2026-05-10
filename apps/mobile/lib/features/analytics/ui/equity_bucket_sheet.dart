@@ -70,10 +70,10 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                 separatorBuilder: (_, _) => const FDivider(),
                 itemBuilder: (context, index) {
                   final h = bucket.holdings[index];
-                  return ListTile(
+                  return FTile(
                     title: Text(h.name ?? h.symbol),
                     subtitle: Text(h.symbol),
-                    trailing: Column(
+                    suffix: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -94,7 +94,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    onTap: () {
+                    onPress: () {
                       Navigator.of(context).pop();
                       context.goNamed(
                         AppRouteNames.assetDetail,
