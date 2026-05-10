@@ -53,6 +53,14 @@ class ChatRepository {
   Stream<List<ChatMessage>> watchMessages(String sessionId) =>
       _store.watchMessages(sessionId);
 
+  /// One-shot read of the user's existing sessions. Used by the AI chat
+  /// page bootstrap so it never has to wait on a `StreamProvider.future`
+  /// that may not deliver its first emission until the next change
+  /// notification fires (an issue we hit with the page getting stuck on
+  /// "Preparing conversation…" until the user manually tapped "+").
+  Future<List<ChatSession>> listSessions(String ownerUserId) =>
+      _store.listSessions(ownerUserId);
+
   Future<ChatSession?> findSession(String id) => _store.findSession(id);
 
   /// Create a new empty thread. Used by the "+" button.

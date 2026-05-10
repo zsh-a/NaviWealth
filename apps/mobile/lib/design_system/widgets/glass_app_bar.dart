@@ -5,12 +5,12 @@ import 'scroll_state.dart';
 
 /// Drop-in [AppBar] replacement with iOS 26 Liquid Glass rendering.
 ///
-/// Delegates to the package's `GlassAppBar` (from `liquid_glass_widgets`)
-/// which provides shader-based glassmorphism with automatic accessibility
-/// fallbacks (Reduce Transparency, Reduce Motion).
-///
-/// Use `useOwnLayer: true` when the app bar is NOT inside a
-/// `LiquidGlassLayer` / `GlassBackdropScope` (the default for most pages).
+/// Delegates to the package's `GlassAppBar` from `liquid_glass_widgets`,
+/// which provides shader-based glassmorphism plus automatic accessibility
+/// fallbacks (Reduce Transparency, Reduce Motion). The app's root
+/// `AdaptiveLiquidGlassLayer` (installed in `app.dart`) supplies the
+/// shader render link, so individual app bars share that layer instead
+/// of capturing their own backdrop.
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GlassAppBar({
     super.key,
@@ -20,7 +20,6 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
     this.automaticallyImplyLeading = true,
     this.centerTitle,
-    this.useOwnLayer = true,
     this.quality,
   });
 
@@ -30,7 +29,6 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final PreferredSizeWidget? bottom;
   final bool automaticallyImplyLeading;
   final bool? centerTitle;
-  final bool useOwnLayer;
   final lgw.GlassQuality? quality;
 
   @override
@@ -59,7 +57,6 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
       centerTitle: centerTitle ?? true,
       preferredSize: const Size.fromHeight(kToolbarHeight),
-      useOwnLayer: useOwnLayer,
       quality: effectiveQuality,
     );
 

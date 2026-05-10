@@ -43,7 +43,6 @@ Future<T?> showGlassModalBottomSheet<T>({
       ),
     ),
     builder: (ctx) => lgw.GlassContainer(
-      useOwnLayer: true,
       quality: lgw.GlassQuality.premium,
       shape: const lgw.LiquidRoundedRectangle(borderRadius: 20),
       clipBehavior: Clip.antiAlias,

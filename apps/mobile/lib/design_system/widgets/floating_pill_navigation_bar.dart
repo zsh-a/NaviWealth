@@ -64,7 +64,6 @@ class FloatingPillNavigationBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _horizontalMargin),
       child: lgw.GlassContainer(
-        useOwnLayer: true,
         quality: lgw.GlassQuality.premium,
         height: _barHeight,
         shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.xxl),

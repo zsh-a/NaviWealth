@@ -43,6 +43,12 @@ class ChatHistoryStore {
     return _drive(() => _listSessions(ownerUserId));
   }
 
+  /// One-shot read used by the chat page bootstrap. Equivalent to
+  /// `watchSessions(ownerUserId).first` but bypasses the StreamController
+  /// in [_drive] entirely.
+  Future<List<ChatSession>> listSessions(String ownerUserId) =>
+      _listSessions(ownerUserId);
+
   Future<List<ChatSession>> _listSessions(String ownerUserId) async {
     final rows = await _db.customSelect(
       'SELECT * FROM chat_sessions WHERE owner_user_id = ?1 '

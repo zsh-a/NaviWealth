@@ -68,9 +68,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         }
         setState(() => _activeSessionId = null);
       }
-      final existing = await ref.read(
-        chatSessionsStreamProvider(ownerUserId).future,
-      );
+      final existing = await repo.listSessions(ownerUserId);
       if (!mounted) return;
       if (existing.isNotEmpty) {
         setState(() {

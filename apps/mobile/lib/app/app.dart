@@ -69,7 +69,20 @@ class NaviWealthApp extends ConsumerWidget {
             ),
           ),
         ),
-        child: MaterialApp.router(
+        // AdaptiveLiquidGlassLayer provides the LiquidGlassLayer +
+        // (Impeller-only) BlendGroup that `LiquidGlass.grouped` looks
+        // up when a glass widget renders premium quality with
+        // `useOwnLayer: false`. Without this ancestor, premium grouped
+        // surfaces silently render the child without any glass effect
+        // in release builds, exposing the scaffold background.
+        //
+        // Sits inside `GlassTheme` so it can resolve default
+        // settings/quality from the theme, and outside `MaterialApp`
+        // so every route — including modals / dialogs pushed via the
+        // root Navigator — inherits the same layer.
+        child: AdaptiveLiquidGlassLayer(
+          quality: GlassQuality.premium,
+          child: MaterialApp.router(
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(
@@ -141,6 +154,7 @@ class NaviWealthApp extends ConsumerWidget {
               ),
             );
           },
+        ),
         ),
       ),
       ),

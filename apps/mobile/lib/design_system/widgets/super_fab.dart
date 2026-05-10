@@ -313,7 +313,6 @@ class _GlassActionChip extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: lgw.GlassContainer(
-        useOwnLayer: true,
         quality: lgw.GlassQuality.minimal,
         height: height,
         margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
