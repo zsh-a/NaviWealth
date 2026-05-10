@@ -265,7 +265,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                       toCcy: toCurrency,
                     ),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ),

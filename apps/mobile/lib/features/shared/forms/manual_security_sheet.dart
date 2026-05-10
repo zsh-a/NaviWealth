@@ -194,7 +194,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
           // Two listings can share a symbol (e.g. cross-listings), so the
           // key incorporates the exchange to stay unique in those cases.
           for (final hit in hits)
-            ListTile(
+            FTile(
               key: Key(
                 'manual-security-import-candidate-${hit.symbol}-'
                 '${hit.exchange ?? 'unknown'}',
@@ -208,8 +208,8 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              trailing: Text(hit.currency ?? '—'),
-              onTap: () => Navigator.of(ctx).pop(hit),
+              suffix: Text(hit.currency ?? '—'),
+              onPress: () => Navigator.of(ctx).pop(hit),
             ),
         ],
       ),

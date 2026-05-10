@@ -81,7 +81,7 @@ class _RateList extends ConsumerWidget {
             l10n.fxRatesEmpty,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: context.theme.colors.mutedForeground,
             ),
           ),
         ),

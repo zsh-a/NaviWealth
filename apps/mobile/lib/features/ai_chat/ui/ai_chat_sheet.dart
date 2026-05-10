@@ -142,7 +142,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
               boxShadow: AppElevations.of(context).level3,
             ),
             child: Material(
-              color: Theme.of(context).colorScheme.surface,
+              color: context.theme.colors.background,
               borderRadius: Radii.brXl,
               child: ClipRRect(
                 borderRadius: Radii.brXl,
@@ -371,7 +371,7 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
               child: Text(
                 AppLocalizations.of(context).aiChatSheetEmpty,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: context.theme.colors.mutedForeground,
                 ),
                 textAlign: TextAlign.center,
               ),

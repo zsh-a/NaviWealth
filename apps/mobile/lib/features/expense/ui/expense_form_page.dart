@@ -388,7 +388,7 @@ class _NoAccountsHint extends StatelessWidget {
         title: Text(l10n.expenseFormNoAccountsTitle),
         prefix: Icon(
           Icons.warning_amber_outlined,
-          color: Theme.of(context).colorScheme.error,
+          color: context.theme.colors.destructive,
         ),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
         suffix: FButton(

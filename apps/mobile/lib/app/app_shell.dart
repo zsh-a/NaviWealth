@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../design_system/design_system.dart';
@@ -215,12 +216,12 @@ class _MobileShell extends StatelessWidget {
         Positioned(
           right: Spacing.s16,
           bottom: sysBottom + barHeight + Spacing.s16,
-          child: Material(
-            type: MaterialType.transparency,
-            child: FloatingActionButton(
-              tooltip: AppLocalizations.of(context).assetsAddAction,
-              onPressed: () => showGlobalActionPanel(context),
-              child: const Icon(Icons.add),
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: FButton.icon(
+              onPress: () => showGlobalActionPanel(context),
+              child: const Icon(Icons.add, size: 24),
             ),
           ),
         ),
@@ -259,7 +260,7 @@ class _TabletShell extends StatelessWidget {
                 selectedIndex: selectedIndex,
                 onDestinationSelected: onDestinationSelected,
                 labelType: NavigationRailLabelType.all,
-                backgroundColor: Theme.of(context).colorScheme.surface,
+                backgroundColor: context.theme.colors.background,
                 destinations: [
                   for (final d in destinations)
                     NavigationRailDestination(
@@ -335,12 +336,12 @@ class _GlobalActionHost extends StatelessWidget {
         Positioned(
           right: Spacing.s24,
           bottom: Spacing.s24,
-          child: Material(
-            type: MaterialType.transparency,
-            child: FloatingActionButton(
-              tooltip: AppLocalizations.of(context).assetsAddAction,
-              onPressed: () => showGlobalActionPanel(context),
-              child: const Icon(Icons.add),
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: FButton.icon(
+              onPress: () => showGlobalActionPanel(context),
+              child: const Icon(Icons.add, size: 24),
             ),
           ),
         ),

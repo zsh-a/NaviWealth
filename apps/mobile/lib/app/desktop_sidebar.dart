@@ -221,7 +221,7 @@ class _CollapseToggle extends StatelessWidget {
                   collapsed
                       ? Icons.chevron_right_rounded
                       : Icons.chevron_left_rounded,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: context.theme.colors.mutedForeground,
                 ),
               ],
             ),

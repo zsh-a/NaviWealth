@@ -486,7 +486,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
             Text(
               l10n.backupConfirmRestoreMessage,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: Spacing.s16),

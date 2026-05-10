@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
-import '../../../l10n/gen/app_localizations.dart';
 
 Future<void> showDashboardChartFullscreen({
   required BuildContext context,
@@ -51,22 +51,22 @@ class _DashboardChartFullscreenDialogState
   @override
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
-      child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
+      child: FScaffold(
+        header: FHeader.nested(
           title: Text(widget.title),
-          leading: IconButton(
-            tooltip: AppLocalizations.of(context).commonClose,
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          prefixes: [
+            FHeaderAction(
+              icon: const Icon(Icons.close),
+              onPress: () => Navigator.of(context).pop(),
+            ),
+          ],
         ),
-        body: SafeArea(
-          child: Padding(padding: Spacing.pageMobile, child: widget.child),
+        childPad: false,
+        child: Material(
+          color: Colors.transparent,
+          child: SafeArea(
+            child: Padding(padding: Spacing.pageMobile, child: widget.child),
+          ),
         ),
       ),
     );

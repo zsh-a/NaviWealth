@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../design_system/design_system.dart';
 import 'shell_preferences.dart';
@@ -89,9 +90,7 @@ class _SplitterState extends State<_Splitter> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 120),
               width: highlight ? 2 : 1,
-              color: highlight
-                  ? Theme.of(context).colorScheme.primary
-                  : widget.color,
+              color: highlight ? context.theme.colors.primary : widget.color,
             ),
           ),
         ),

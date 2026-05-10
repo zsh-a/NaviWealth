@@ -246,9 +246,9 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
                         _HitTile(hit: hit, onTap: () => _select(hit)),
                     ],
                     const FDivider(),
-                    ListTile(
+                    FTile(
                       key: const Key('local-securities-picker-manual'),
-                      leading: const Icon(Icons.add),
+                      prefix: const Icon(Icons.add),
                       title: Text(l10n.localSecuritiesManualAdd),
                       subtitle: _lastQuery.isEmpty
                           ? null
@@ -257,7 +257,8 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                      onTap: () => _openManualSheet(prefillSymbol: _lastQuery),
+                      onPress: () =>
+                          _openManualSheet(prefillSymbol: _lastQuery),
                     ),
                   ],
                 ),
@@ -281,7 +282,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
+          color: context.theme.colors.primary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -298,8 +299,7 @@ class _HitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final display = hit.nameCn ?? hit.nameEn;
-    return ListTile(
-      dense: true,
+    return FTile(
       title: Text(
         hit.symbol,
         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -307,11 +307,8 @@ class _HitTile extends StatelessWidget {
       subtitle: display == null
           ? null
           : Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Text(
-        hit.currency,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      onTap: onTap,
+      suffix: Text(hit.currency, style: Theme.of(context).textTheme.bodySmall),
+      onPress: onTap,
     );
   }
 }

@@ -89,7 +89,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 Text(
                   l10n.fireGoalSheetSubtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
                 const SizedBox(height: Spacing.s16),

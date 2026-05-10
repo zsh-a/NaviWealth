@@ -422,7 +422,7 @@ class _CompactDensityTile extends ConsumerWidget {
                 Text(
                   l10n.settingsCompactDensitySubtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
               ],
@@ -549,13 +549,13 @@ class _ThresholdSlider extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Slider(
-                  value: value,
-                  min: 0.05,
-                  max: 0.95,
-                  divisions: 18,
-                  label: '${(value * 100).round()}%',
-                  onChanged: onChanged,
+                child: FSlider(
+                  control: FSliderControl.managedContinuous(
+                    initial: FSliderValue(max: (value - 0.05) / 0.90),
+                    onChange: (v) => onChanged(0.05 + v.max * 0.90),
+                  ),
+                  tooltipBuilder: (_, v) =>
+                      Text('${((0.05 + v * 0.90) * 100).round()}%'),
                 ),
               ),
               SizedBox(
