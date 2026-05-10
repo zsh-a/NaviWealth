@@ -7,8 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
-import 'shadcn/s_primitives.dart';
-import 'shadcn/s_tokens.dart';
 import 'tool_invocation_renderers.dart';
 
 /// Collapsible card surfacing one tool invocation. Header shows the
@@ -43,10 +41,15 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     final summary = _summarizeInput(invocation.input);
     final jumps = _extractJumps(l10n, invocation.output);
 
+    final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.only(top: SSpace.sm),
-      child: SCard(
-        radius: SRadius.md,
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.muted,
+          borderRadius: const BorderRadius.all(Radius.circular(6)),
+          border: Border.all(color: colors.border, width: 1),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -243,17 +246,57 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
   }
 
   Widget _rawJsonView(BuildContext context, Object? value) {
-    return SCodeBlock(text: _prettyJson(value));
+    return _CodeBlock(text: _prettyJson(value));
   }
 
   Widget _kvBlock(BuildContext context, String label, Object? value) {
+    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: SType.label(context)),
-        const SizedBox(height: SSpace.xs),
-        SCodeBlock(text: _prettyJson(value)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.2,
+            fontWeight: FontWeight.w500,
+            color: colors.mutedForeground,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        _CodeBlock(text: _prettyJson(value)),
       ],
+    );
+  }
+}
+
+/// Monospace block with a subtle muted fill, used for raw JSON payloads.
+class _CodeBlock extends StatelessWidget {
+  const _CodeBlock({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: const BorderRadius.all(Radius.circular(6)),
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      child: SelectableText(
+        text,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontFamilyFallback: const ['Menlo', 'Consolas', 'Courier'],
+          fontSize: 12,
+          height: 1.45,
+          color: colors.foreground,
+        ),
+      ),
     );
   }
 }

@@ -198,29 +198,38 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextFormField(
+        FTextFormField(
           key: const Key('local-securities-picker-field'),
-          controller: _controller,
-          focusNode: _focusNode,
-          decoration: InputDecoration(
-            labelText: effectiveLabel,
-            hintText: effectiveHint,
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _selected != null
-                ? IconButton(icon: const Icon(Icons.clear), onPressed: _clear)
-                : _loading
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: FCircularProgress(),
-                    ),
-                  )
-                : null,
+          control: FTextFieldControl.managed(
+            controller: _controller,
+            onChange: (v) => _onChanged(v.text),
           ),
-          onChanged: _onChanged,
+          focusNode: _focusNode,
+          label: Text(effectiveLabel),
+          hint: effectiveHint,
+          prefixBuilder: (ctx, style, variants) => const Padding(
+            padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+            child: Icon(Icons.search, size: 18),
+          ),
+          suffixBuilder: _selected != null
+              ? (ctx, style, variants) => Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 4),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: _clear,
+                    child: const Icon(Icons.clear, size: 18),
+                  ),
+                )
+              : _loading
+              ? (ctx, style, variants) => const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: FCircularProgress(),
+                  ),
+                )
+              : null,
           // Re-render so focus changes flip the dropdown.
           onTap: () => setState(() {}),
           validator: (_) =>

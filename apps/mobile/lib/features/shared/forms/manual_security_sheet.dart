@@ -293,13 +293,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              FTextFormField(
                 key: const Key('manual-security-symbol'),
-                controller: _symbolCtl,
-                decoration: InputDecoration(
-                  labelText: l10n.manualSecurityCodeLabel,
-                  border: const OutlineInputBorder(),
-                ),
+                control: FTextFieldControl.managed(controller: _symbolCtl),
+                label: Text(l10n.manualSecurityCodeLabel),
                 textCapitalization: TextCapitalization.characters,
                 validator: (v) {
                   final t = v?.trim() ?? '';
@@ -324,13 +321,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              FTextFormField(
                 key: const Key('manual-security-name'),
-                controller: _nameCtl,
-                decoration: InputDecoration(
-                  labelText: l10n.manualSecurityNameLabel,
-                  border: const OutlineInputBorder(),
-                ),
+                control: FTextFieldControl.managed(controller: _nameCtl),
+                label: Text(l10n.manualSecurityNameLabel),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<AssetMarket>(
@@ -388,13 +382,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              FTextFormField(
                 key: const Key('manual-security-isin'),
-                controller: _isinCtl,
-                decoration: InputDecoration(
-                  labelText: l10n.manualSecurityIsinLabel,
-                  border: const OutlineInputBorder(),
-                ),
+                control: FTextFieldControl.managed(controller: _isinCtl),
+                label: Text(l10n.manualSecurityIsinLabel),
                 textCapitalization: TextCapitalization.characters,
               ),
               const SizedBox(height: 24),

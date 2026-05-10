@@ -15,7 +15,6 @@ import '../state/route_context_provider.dart';
 import 'chat_composer.dart';
 import 'message_bubble.dart';
 import 'sessions_panel.dart';
-import 'shadcn/s_primitives.dart';
 
 /// Top-level "AI 助手" surface (FIR-60).
 ///
@@ -549,11 +548,11 @@ class _BootstrapErrorPane extends StatelessWidget {
               style: tt.bodyMedium?.copyWith(color: cs.onSurface),
             ),
             const SizedBox(height: 16),
-            SButton(
-              variant: SButtonVariant.primary,
-              onPressed: onRetry,
-              icon: Icons.refresh,
-              label: l10n.commonRetry,
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: onRetry,
+              prefix: const Icon(Icons.refresh, size: 14),
+              child: Text(l10n.commonRetry),
             ),
           ],
         ),

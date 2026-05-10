@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -8,8 +9,6 @@ import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
 import 'propose_card.dart';
-import 'shadcn/s_primitives.dart';
-import 'shadcn/s_tokens.dart';
 import 'tool_invocation_card.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
@@ -68,9 +67,10 @@ class _UserBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = STokens.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: SSpace.xs),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -79,23 +79,24 @@ class _UserBubble extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 640),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: SSpace.md,
-                  vertical: SSpace.sm,
+                  horizontal: 12,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: tokens.primary,
+                  color: colors.primary,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(SRadius.lg),
-                    topRight: Radius.circular(SRadius.sm),
-                    bottomLeft: Radius.circular(SRadius.lg),
-                    bottomRight: Radius.circular(SRadius.lg),
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(4),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
                   ),
                 ),
                 child: SelectableText(
                   message.content,
-                  style: SType.body(
-                    context,
-                  ).copyWith(color: tokens.primaryForeground),
+                  style: typography.sm.copyWith(
+                    height: 1.5,
+                    color: colors.primaryForeground,
+                  ),
                 ),
               ),
             ),
@@ -120,8 +121,8 @@ class _AssistantBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final tokens = STokens.of(context);
-    final textColor = _isError ? cs.onErrorContainer : tokens.foreground;
+    final colors = context.theme.colors;
+    final textColor = _isError ? cs.onErrorContainer : colors.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
     final showTruncation =
@@ -153,36 +154,35 @@ class _AssistantBubble extends StatelessWidget {
 
     final bubble = _isError
         ? Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: SSpace.md,
-              vertical: SSpace.sm,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: cs.errorContainer,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(SRadius.sm),
-                topRight: Radius.circular(SRadius.lg),
-                bottomLeft: Radius.circular(SRadius.lg),
-                bottomRight: Radius.circular(SRadius.lg),
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(8),
+                bottomLeft: Radius.circular(8),
+                bottomRight: Radius.circular(8),
               ),
             ),
             child: body,
           )
-        : SCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: SSpace.md,
-              vertical: SSpace.sm,
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colors.muted,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              border: Border.all(color: colors.border, width: 1),
             ),
             child: body,
           );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: SSpace.xs),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SAvatar(initial: 'A', icon: Icons.auto_awesome),
-          const SizedBox(width: SSpace.sm),
+          _AssistantAvatar(),
+          const SizedBox(width: 8),
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
@@ -541,6 +541,24 @@ class _ContinueButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AssistantAvatar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.secondary,
+        border: Border.all(color: colors.border, width: 1),
+      ),
+      alignment: Alignment.center,
+      child: Icon(Icons.auto_awesome, size: 16, color: colors.foreground),
     );
   }
 }
