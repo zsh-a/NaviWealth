@@ -37,6 +37,24 @@
   "@dashboardAllocationSummaryTitle": { "description": "Section header above the home compact allocation summary" },
   "dashboardAllocationViewBreakdown": "View breakdown",
   "@dashboardAllocationViewBreakdown": { "description": "Link from the home allocation summary into the Accounts hub" },
+  "homeGreetingMorning": "Good morning",
+  "@homeGreetingMorning": { "description": "Home page greeting hero — 5:00 to 12:00" },
+  "homeGreetingAfternoon": "Good afternoon",
+  "@homeGreetingAfternoon": { "description": "Home page greeting hero — 12:00 to 18:00" },
+  "homeGreetingEvening": "Good evening",
+  "@homeGreetingEvening": { "description": "Home page greeting hero — 18:00 to 24:00" },
+  "homeGreetingNight": "Good night",
+  "@homeGreetingNight": { "description": "Home page greeting hero — 0:00 to 5:00" },
+  "homeGreetingNetWorthFragment": "Net worth {pct} this month",
+  "@homeGreetingNetWorthFragment": {
+    "description": "Status line fragment under the home greeting describing month-to-date net worth direction",
+    "placeholders": { "pct": { "type": "String" } }
+  },
+  "homeGreetingInsightsFragment": "{count, plural, =1{1 insight available} other{{count} insights available}}",
+  "@homeGreetingInsightsFragment": {
+    "description": "Status line fragment under the home greeting describing pending AI insights",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "activityFilterChipAll": "All",
   "@activityFilterChipAll": { "description": "Activity timeline filter chip: clear all kind filters" },
   "activityFilterChipIncome": "Income",

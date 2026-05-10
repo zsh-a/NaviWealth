@@ -34,9 +34,9 @@ class SettingsOverview extends ConsumerWidget {
         _SectionHeader(title: l10n.settingsAppearanceSection),
         const _AppearanceSection(),
         _SectionHeader(title: l10n.settingsRiskSection),
-        const FCard.raw(child: _RiskThresholdSettings()),
+        const SoftCard(child: _RiskThresholdSettings()),
         _SectionHeader(title: l10n.settingsDataSection),
-        FCard.raw(
+        SoftCard(
           child: Column(
             children: [
               FTile(
@@ -59,7 +59,7 @@ class SettingsOverview extends ConsumerWidget {
         ),
         if (kDebugMode) ...[
           _SectionHeader(title: l10n.settingsDeveloperSection),
-          FCard.raw(
+          SoftCard(
             child: FTile(
               title: Text(l10n.settingsLogsTitle),
               prefix: const Icon(Icons.bug_report_outlined),
@@ -70,13 +70,16 @@ class SettingsOverview extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: 12),
-        const FCard.raw(child: _AboutTile()),
+        const SoftCard(child: _AboutTile()),
       ],
     );
   }
 }
 
-/// Light section header — Apple-News style accent title above each card group.
+/// iOS-style inset-grouped section header — small, all-caps, muted so it
+/// reads as a "category divider" rather than a content title. Matches
+/// the Apple Settings convention where the section body (the SoftCard
+/// below) carries the visual weight.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -85,11 +88,13 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
+      padding: const EdgeInsets.fromLTRB(12, 24, 12, 8),
       child: Text(
-        title,
-        style: TypographyTokens.sectionHeaderTitle(
-          context.theme.colors.primary,
+        title.toUpperCase(),
+        style: context.theme.typography.xs2.copyWith(
+          color: context.theme.colors.mutedForeground,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.6,
         ),
       ),
     );
@@ -155,7 +160,7 @@ class _AccountSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
-    return FCard.raw(
+    return SoftCard(
       child: Column(
         children: [
           FTile(
@@ -218,7 +223,7 @@ class _AppearanceSection extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 
-    return FCard.raw(
+    return SoftCard(
       child: Column(
         children: [
           Padding(

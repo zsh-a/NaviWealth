@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/global_action_panel.dart';
 import '../../app/route_paths.dart';
+import '../../core/format/formatters.dart';
+import '../../core/format/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../home/data/dashboard_providers.dart';
@@ -13,11 +15,14 @@ import '../home/domain/dashboard_models.dart';
 
 /// Accounts Hub — the 5th primary tab.
 ///
-/// One scrollable surface that aggregates everything the user owns or owes,
-/// grouped into four sections (Cash & Deposits, Investments, Physical,
-/// Liabilities). Each row is a `CategoryItem` whose `routeHint` deep-links
-/// into the corresponding detail page (asset detail / physical detail /
-/// liability detail), preserving the existing detail flows untouched.
+/// Account-first layout: a slim "net worth pulse" strip up top so the
+/// reference number is always visible, then the user's actual accounts
+/// take over the surface — Cash & Deposits / Investments / Physical /
+/// Liabilities sections each list every entity with both native amount
+/// and base-currency value (the "structure" the user thinks in).
+///
+/// We intentionally weaken the net-worth hero compared to Home — Home
+/// answers "where do I stand?", Accounts answers "what do I own?".
 class AccountsHubPage extends ConsumerWidget {
   const AccountsHubPage({super.key});
 
@@ -41,162 +46,127 @@ class AccountsHubPage extends ConsumerWidget {
         child: snapshotAsync.when(
           loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Center(child: Text('$e')),
-          data: (snapshot) =>
-              _AccountsHubBody(snapshot: snapshot, baseCurrency: snapshot.baseCurrency),
+          data: (snapshot) => _AccountsHubBody(snapshot: snapshot),
         ),
       ),
     );
   }
 }
 
-class _AccountsHubBody extends StatelessWidget {
-  const _AccountsHubBody({required this.snapshot, required this.baseCurrency});
+class _AccountsHubBody extends ConsumerWidget {
+  const _AccountsHubBody({required this.snapshot});
 
   final DashboardSnapshot snapshot;
-  final String baseCurrency;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.sizeOf(context).width;
-    final padding = Breakpoints.isMobile(width)
-        ? const EdgeInsets.fromLTRB(16, 8, 16, 80)
-        : const EdgeInsets.fromLTRB(24, 12, 24, 96);
-
-    final groups = _groupAllocations(snapshot.allocations);
+    final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final groups = _groupAllocations(snapshot.allocations);
 
     return ListView(
-      padding: padding,
+      padding: EdgeInsets.fromLTRB(
+        hPad,
+        4,
+        hPad,
+        80 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
-        _NetSummaryHeader(snapshot: snapshot),
-        const SizedBox(height: 16),
-        if (groups.cashAndDeposits.isNotEmpty) ...[
+        _NetPulseStrip(snapshot: snapshot, formatters: formatters),
+        const SizedBox(height: 18),
+        if (groups.cashAndDeposits.isNotEmpty)
           _AccountsSection(
             title: l10n.accountsHubSectionCashDeposits,
             items: groups.cashAndDeposits,
-            baseCurrency: baseCurrency,
+            baseCurrency: snapshot.baseCurrency,
+            formatters: formatters,
           ),
-          const SizedBox(height: 16),
-        ],
-        if (groups.investments.isNotEmpty) ...[
+        if (groups.investments.isNotEmpty)
           _AccountsSection(
             title: l10n.accountsHubSectionInvestments,
             items: groups.investments,
-            baseCurrency: baseCurrency,
+            baseCurrency: snapshot.baseCurrency,
+            formatters: formatters,
           ),
-          const SizedBox(height: 16),
-        ],
-        if (groups.physical.isNotEmpty) ...[
+        if (groups.physical.isNotEmpty)
           _AccountsSection(
             title: l10n.accountsHubSectionPhysical,
             items: groups.physical,
-            baseCurrency: baseCurrency,
+            baseCurrency: snapshot.baseCurrency,
+            formatters: formatters,
           ),
-          const SizedBox(height: 16),
-        ],
-        if (groups.liabilities.isNotEmpty) ...[
+        if (groups.liabilities.isNotEmpty)
           _AccountsSection(
             title: l10n.accountsHubSectionLiabilities,
             items: groups.liabilities,
-            baseCurrency: baseCurrency,
+            baseCurrency: snapshot.baseCurrency,
+            formatters: formatters,
             isLiability: true,
           ),
-          const SizedBox(height: 16),
-        ],
+        const SizedBox(height: 8),
         _BankAccountsLink(),
       ],
     );
   }
 }
 
-class _NetSummaryHeader extends StatelessWidget {
-  const _NetSummaryHeader({required this.snapshot});
+/// Slim "net pulse" strip — replaces the heavy net-worth hero card.
+///
+/// Renders as one inline row: net worth value · assets · liabilities.
+/// Reads as a tiny status bar so the eye drops straight to the account
+/// list below.
+class _NetPulseStrip extends StatelessWidget {
+  const _NetPulseStrip({required this.snapshot, required this.formatters});
 
   final DashboardSnapshot snapshot;
+  final AppFormatters formatters;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final total = snapshot.netWorth.amount.toDouble();
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.homeNetWorthTitle,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: 8),
-            AnimatedMoneyText(
-              amount: total,
-              currencyCode: snapshot.baseCurrency,
-              style: TypographyTokens.numericDisplay,
-              showSign: total < 0,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCell(
-                    label: l10n.dashboardNetWorthAssetsLabel,
-                    amount: snapshot.totalAssets.amount.toDouble(),
-                    currency: snapshot.baseCurrency,
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 28,
-                  color: context.theme.colors.border,
-                ),
-                Expanded(
-                  child: _StatCell(
-                    label: l10n.dashboardNetWorthLiabilitiesLabel,
-                    amount: snapshot.totalLiabilities.amount.toDouble(),
-                    currency: snapshot.baseCurrency,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatCell extends StatelessWidget {
-  const _StatCell({
-    required this.label,
-    required this.amount,
-    required this.currency,
-  });
-
-  final String label;
-  final double amount;
-  final String currency;
-
-  @override
-  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
+            l10n.homeNetWorthTitle.toUpperCase(),
+            style: context.theme.typography.xs2.copyWith(
+              color: colors.mutedForeground,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.6,
             ),
           ),
           const SizedBox(height: 4),
-          MoneyText(
-            amount: amount,
-            currencyCode: currency,
-            style: TypographyTokens.numericTitle,
+          AnimatedMoneyText(
+            amount: snapshot.netWorth.amount.toDouble(),
+            currencyCode: snapshot.baseCurrency,
+            style: TypographyTokens.numericTitle.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          DefaultTextStyle.merge(
+            style: context.theme.typography.xs.copyWith(
+              color: colors.mutedForeground,
+            ),
+            child: Wrap(
+              spacing: 6,
+              children: [
+                Text(
+                  '${l10n.dashboardNetWorthAssetsLabel} '
+                  '${formatters.currency(snapshot.totalAssets.amount, code: snapshot.baseCurrency)}',
+                ),
+                const Text('·'),
+                Text(
+                  '${l10n.dashboardNetWorthLiabilitiesLabel} '
+                  '${formatters.currency(snapshot.totalLiabilities.amount, code: snapshot.baseCurrency)}',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -209,12 +179,14 @@ class _AccountsSection extends StatelessWidget {
     required this.title,
     required this.items,
     required this.baseCurrency,
+    required this.formatters,
     this.isLiability = false,
   });
 
   final String title;
   final List<CategoryItem> items;
   final String baseCurrency;
+  final AppFormatters formatters;
   final bool isLiability;
 
   @override
@@ -223,51 +195,60 @@ class _AccountsSection extends StatelessWidget {
       Decimal.zero,
       (acc, it) => acc + it.valueInBase.amount,
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title.toUpperCase(),
+                    style: context.theme.typography.xs2.copyWith(
+                      color: colors.mutedForeground,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
-              ),
-              MoneyText(
-                amount: total.toDouble(),
-                currencyCode: baseCurrency,
-                style: context.theme.typography.sm.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
-          ),
-        ),
-        FCard.raw(
-          child: Column(
-            children: [
-              for (var i = 0; i < items.length; i++) ...[
-                _AccountRow(
-                  item: items[i],
-                  baseCurrency: baseCurrency,
-                  isLiability: isLiability,
-                ),
-                if (i < items.length - 1)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: FDivider(),
+                Text(
+                  formatters.currency(total, code: baseCurrency),
+                  style: context.theme.typography.xs.copyWith(
+                    color: colors.mutedForeground,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
+                ),
               ],
-            ],
+            ),
           ),
-        ),
-      ],
+          SoftCard(
+            child: Column(
+              children: [
+                for (var i = 0; i < items.length; i++) ...[
+                  _AccountRow(
+                    item: items[i],
+                    baseCurrency: baseCurrency,
+                    isLiability: isLiability,
+                    formatters: formatters,
+                  ),
+                  if (i < items.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Container(
+                        height: 1,
+                        color: colors.foreground.withValues(alpha: 0.05),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -277,16 +258,22 @@ class _AccountRow extends StatelessWidget {
     required this.item,
     required this.baseCurrency,
     required this.isLiability,
+    required this.formatters,
   });
 
   final CategoryItem item;
   final String baseCurrency;
   final bool isLiability;
+  final AppFormatters formatters;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final amount = item.valueInBase.amount.toDouble();
+    final nativeAmount = isLiability ? -item.nativeAmount : item.nativeAmount;
+    final baseAmount = isLiability
+        ? -item.valueInBase.amount
+        : item.valueInBase.amount;
+    final showFx = item.nativeCurrency != baseCurrency;
     return FTappable(
       onPress: item.routeHint == null
           ? null
@@ -299,7 +286,7 @@ class _AccountRow extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: colors.muted,
+                color: colors.foreground.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
@@ -339,13 +326,33 @@ class _AccountRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            MoneyText(
-              amount: isLiability ? -amount : amount,
-              currencyCode: baseCurrency,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Lead with native amount — that's how the user thinks
+                // about each account ("how much CNY in招行", "how many
+                // BTC"). Show base only as a small subline when there's
+                // an FX gap.
+                Text(
+                  formatters.currency(nativeAmount, code: item.nativeCurrency),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                if (showFx)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      formatters.currency(baseAmount, code: baseCurrency),
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -355,10 +362,11 @@ class _AccountRow extends StatelessWidget {
 
   IconData _iconFor(CategoryItem item) {
     if (isLiability) return Icons.south_east_outlined;
-    // Best-effort mapping; could swap to AssetCategoryVisuals.icon if we
-    // threaded the parent category through. CategoryItem doesn't carry
-    // category itself, so we fall back to a neutral wallet glyph.
-    return Icons.account_balance_wallet_outlined;
+    final cur = item.nativeCurrency.toUpperCase();
+    if (cur == 'BTC' || cur == 'ETH' || cur == 'USDT' || cur == 'USDC') {
+      return Icons.currency_bitcoin;
+    }
+    return Icons.account_balance_outlined;
   }
 }
 
@@ -366,43 +374,40 @@ class _BankAccountsLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
-      child: FTappable(
-        onPress: () => context.push(AppRoutes.accountsList),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: context.theme.colors.muted,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.account_balance_outlined,
-                  size: 18,
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.accountsHubManageBankAccounts,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: context.theme.colors.mutedForeground,
-              ),
-            ],
+    final colors = context.theme.colors;
+    return SoftCard(
+      onPress: () => context.push(AppRoutes.accountsList),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: colors.foreground.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.tune_outlined,
+              size: 18,
+              color: colors.mutedForeground,
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.accountsHubManageBankAccounts,
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: colors.mutedForeground,
+          ),
+        ],
       ),
     );
   }
@@ -443,7 +448,6 @@ _AccountsHubGroups _groupAllocations(List<CategoryAllocation> allocations) {
         liab.addAll(a.items);
     }
   }
-  // Sort each section by base-currency value descending for "biggest first".
   int cmp(CategoryItem a, CategoryItem b) =>
       b.valueInBase.amount.compareTo(a.valueInBase.amount);
   cash.sort(cmp);
@@ -457,4 +461,3 @@ _AccountsHubGroups _groupAllocations(List<CategoryAllocation> allocations) {
     liabilities: liab,
   );
 }
-

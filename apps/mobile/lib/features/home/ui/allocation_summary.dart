@@ -68,10 +68,9 @@ class AllocationSummary extends StatelessWidget {
             ),
           ),
         ),
-        FCard.raw(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Column(
+        SoftCard(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _StackedBar(segments: segments),
@@ -108,7 +107,6 @@ class AllocationSummary extends StatelessWidget {
                 ),
               ],
             ),
-          ),
         ),
       ],
     );

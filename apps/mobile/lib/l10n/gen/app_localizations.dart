@@ -200,6 +200,42 @@ abstract class AppLocalizations {
   /// **'View breakdown'**
   String get dashboardAllocationViewBreakdown;
 
+  /// Home page greeting hero — 5:00 to 12:00
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingMorning;
+
+  /// Home page greeting hero — 12:00 to 18:00
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoon;
+
+  /// Home page greeting hero — 18:00 to 24:00
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEvening;
+
+  /// Home page greeting hero — 0:00 to 5:00
+  ///
+  /// In en, this message translates to:
+  /// **'Good night'**
+  String get homeGreetingNight;
+
+  /// Status line fragment under the home greeting describing month-to-date net worth direction
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth {pct} this month'**
+  String homeGreetingNetWorthFragment(String pct);
+
+  /// Status line fragment under the home greeting describing pending AI insights
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 insight available} other{{count} insights available}}'**
+  String homeGreetingInsightsFragment(int count);
+
   /// Activity timeline filter chip: clear all kind filters
   ///
   /// In en, this message translates to:

@@ -24,10 +24,9 @@ class AiContextSummaryHeader extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Column(
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -104,7 +103,6 @@ class AiContextSummaryHeader extends ConsumerWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }

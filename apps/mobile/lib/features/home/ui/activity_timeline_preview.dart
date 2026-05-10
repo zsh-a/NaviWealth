@@ -10,6 +10,7 @@ import '../../../data/domain/entry_kind.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../activity/data/activity_feed_provider.dart';
 
@@ -71,7 +72,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
                 ],
               ),
             ),
-            FCard.raw(
+            SoftCard(
               child: Column(
                 children: [
                   for (var i = 0; i < entries.length; i++) ...[
@@ -80,9 +81,13 @@ class ActivityTimelinePreview extends ConsumerWidget {
                       accountsById: page.accountsById,
                     ),
                     if (i < entries.length - 1)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: FDivider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Container(
+                          height: 1,
+                          color: context.theme.colors.foreground
+                              .withValues(alpha: 0.06),
+                        ),
                       ),
                   ],
                 ],

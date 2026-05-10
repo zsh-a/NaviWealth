@@ -60,6 +60,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardAllocationViewBreakdown => '查看分布';
 
   @override
+  String get homeGreetingMorning => '早上好';
+
+  @override
+  String get homeGreetingAfternoon => '下午好';
+
+  @override
+  String get homeGreetingEvening => '晚上好';
+
+  @override
+  String get homeGreetingNight => '夜深了';
+
+  @override
+  String homeGreetingNetWorthFragment(String pct) {
+    return '本月净值 $pct';
+  }
+
+  @override
+  String homeGreetingInsightsFragment(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条洞察待查看',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get activityFilterChipAll => '全部';
 
   @override
