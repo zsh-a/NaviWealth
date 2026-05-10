@@ -44,12 +44,17 @@ use serde_json::{json, Map, Value};
 use worker::{D1Database, D1Type};
 
 use super::anthropic::ToolSchema;
+use super::context::BudgetTier;
+use super::policy::{check_tool_call, lookup, PolicyDecision};
 use crate::error::AppError;
 
 pub struct ToolCtx<'a> {
     pub user_id: &'a str,
     pub db: &'a D1Database,
     pub portfolio_snapshot: Option<&'a Value>,
+    /// Budget tier reported by the client's [`ContextPack`]. `None`
+    /// for legacy clients that haven't adopted Phase 2-A yet.
+    pub context_tier: Option<BudgetTier>,
 }
 
 /// Static catalogue. Kept as a function (not a `static` constant) because
@@ -280,6 +285,21 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
     use super::proposals;
     use futures_util::future::{select, Either};
     use gloo_timers::future::TimeoutFuture;
+
+    // Phase 2-C: advisory policy check. Log violations to surface
+    // metadata bugs against real traffic; do NOT yet reject — that
+    // flips to enforcement in Phase 3 once the descriptor table is
+    // proven against production calls.
+    let descriptor = lookup(name);
+    match check_tool_call(descriptor, ctx.context_tier) {
+        PolicyDecision::Allowed => {}
+        PolicyDecision::Denied(reason) => {
+            worker::console_log!(
+                "tool_policy advisory deny: tool={name} reason={reason:?} client_tier={:?}",
+                ctx.context_tier
+            );
+        }
+    }
 
     let work = async {
         match name {
