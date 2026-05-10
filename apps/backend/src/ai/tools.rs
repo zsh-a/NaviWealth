@@ -157,6 +157,29 @@ pub fn schemas() -> Vec<ToolSchema> {
             description: "扫描当前持仓集中度并返回风险预警列表：单一资产或单一行业占比 > 20% 即触发 warning。".into(),
             input_schema: json!({"type": "object", "properties": {}}),
         },
+        ToolSchema {
+            name: "get_monthly_spend_by_category".into(),
+            description: "返回某月（YYYY-MM）按类目 × 币种聚合的支出。\
+                          数据来自 AI Read Model（`monthly_spend_by_category`，Snapshot 层 P0），\
+                          首次调用会同步刷新；后续命中缓存。\
+                          类目在内置 9 类（food/transport/housing/entertainment/medical/education/shopping/travel/other）。\
+                          外部导入数据可能落到自定义 category 字符串。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["year_month"],
+                "properties": {
+                    "year_month": {
+                        "type": "string",
+                        "description": "YYYY-MM，例如 '2026-04'",
+                        "pattern": "^[0-9]{4}-[0-9]{2}$"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "可选；只看某一类目的数字。"
+                    }
+                }
+            }),
+        },
         // -------------------------------------------------------------------
         // Write-proposal tools (FIR-66). These never persist anything;
         // they always return a plan the client confirms.
@@ -311,6 +334,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_geo_breakdown" => get_breakdown(ctx, BreakdownDim::Region).await,
             "get_market_cap_breakdown" => get_breakdown(ctx, BreakdownDim::MarketCap).await,
             "get_risk_alerts" => get_risk_alerts(ctx).await,
+            "get_monthly_spend_by_category" => get_monthly_spend_by_category(ctx, input).await,
             // FIR-66 write proposals — never persist; always return a plan.
             "propose_trade" => proposals::propose_trade(ctx, input).await,
             "propose_expense" => proposals::propose_expense(ctx, input).await,
@@ -1209,6 +1233,88 @@ async fn get_risk_alerts(ctx: &ToolCtx<'_>) -> Result<Value, AppError> {
         "alerts":        alerts,
         "approximation": true,
     }))
+}
+
+// ---------------------------------------------------------------------------
+// get_monthly_spend_by_category — Read Model 主通道入口（§4.3）
+// ---------------------------------------------------------------------------
+
+async fn get_monthly_spend_by_category(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::monthly_spend_by_category::{query, MonthlySpendByCategory};
+    use super::read_models::projection::ensure_fresh;
+
+    let year_month = input
+        .get("year_month")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| AppError::BadRequest("year_month required (YYYY-MM)".into()))?;
+    if year_month.len() != 7 || !year_month.as_bytes().iter().enumerate().all(|(i, b)| {
+        match i {
+            0..=3 => b.is_ascii_digit(),
+            4 => *b == b'-',
+            5..=6 => b.is_ascii_digit(),
+            _ => false,
+        }
+    }) {
+        return Err(AppError::BadRequest(
+            "year_month must be YYYY-MM".into(),
+        ));
+    }
+    let category = input.get("category").and_then(|v| v.as_str());
+
+    let proj = MonthlySpendByCategory;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+    let buckets = query(ctx.db, ctx.user_id, year_month, category).await?;
+
+    let rows: Vec<Value> = buckets
+        .iter()
+        .map(|b| {
+            json!({
+                "year_month":  b.year_month,
+                "category":    b.category,
+                "currency":    b.currency,
+                "total_minor": b.total_minor.to_string(),
+                "txn_count":   b.txn_count,
+            })
+        })
+        .collect();
+    let summary = summarize_buckets(&buckets);
+
+    Ok(json!({
+        "year_month": year_month,
+        "rows":       rows,
+        "summary":    summary,
+        "freshness":  freshness,
+    }))
+}
+
+fn summarize_buckets(
+    buckets: &[super::read_models::monthly_spend_by_category::Bucket],
+) -> Value {
+    use std::collections::BTreeMap;
+    // 按币种合计；不跨币种汇总（避免假装会 FX）。
+    let mut by_currency: BTreeMap<&str, (i128, u32)> = BTreeMap::new();
+    for b in buckets {
+        let entry = by_currency.entry(b.currency.as_str()).or_insert((0, 0));
+        entry.0 += b.total_minor as i128;
+        entry.1 += b.txn_count;
+    }
+    let totals: Vec<Value> = by_currency
+        .into_iter()
+        .map(|(c, (total, count))| {
+            json!({
+                "currency":    c,
+                "total_minor": total.to_string(),
+                "txn_count":   count,
+            })
+        })
+        .collect();
+    json!({
+        "row_count": buckets.len(),
+        "by_currency": totals,
+    })
 }
 
 #[cfg(test)]

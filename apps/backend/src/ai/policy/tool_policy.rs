@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 13] = [
+const DESCRIPTORS: [ToolDescriptor; 14] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -94,6 +94,14 @@ const DESCRIPTORS: [ToolDescriptor; 13] = [
         risk: RiskLevel::Suggest,
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Standard,
+    },
+    // Snapshot-layer read model (docs/ai-architecture.md §4.3.2)
+    ToolDescriptor {
+        name: "get_monthly_spend_by_category",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
     },
     // ── Propose tools (FIR-66) ─────────────────────────────────
     ToolDescriptor {

@@ -154,6 +154,7 @@ mod tests {
             "get_geo_breakdown",
             "get_market_cap_breakdown",
             "get_risk_alerts",
+            "get_monthly_spend_by_category",
             "propose_trade",
             "propose_expense",
             "propose_liability_payment",
