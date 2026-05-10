@@ -267,104 +267,103 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
       header: FHeader.nested(title: Text(l10n.corpActionTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Asset picker.
-              DropdownButtonFormField<CorporateActionAsset>(
-                isExpanded: true,
-                key: const Key('corp-action-asset'),
-                initialValue: asset,
-                decoration: InputDecoration(
-                  labelText: l10n.corpActionSelectAsset,
-                  helperText: l10n.corpActionSelectAssetHint,
-                ),
-                items: [
-                  for (final a in widget.assets)
-                    DropdownMenuItem(value: a, child: Text(a.displayName)),
-                ],
-                onChanged: _onAssetChanged,
-              ),
-              const SizedBox(height: 16),
-              // Effective date row.
-              ListTile(
-                key: const Key('corp-action-date'),
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.event),
-                title: Text(l10n.corpActionEffectiveDate),
-                subtitle: Text(dateFmt.format(_effectiveDate)),
-                trailing: IconButton(
-                  icon: const Icon(Icons.edit_calendar),
-                  onPressed: _pickEffectiveDate,
-                ),
-              ),
-              const FDivider(),
-              // Event type selector.
-              Text(
-                l10n.corpActionEventTypeTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              _TypeSelector(
-                selected: _type,
-                onChanged: _onTypeChanged,
-                l10n: l10n,
-              ),
-              const SizedBox(height: 16),
-              // Type-specific fields.
-              ..._fieldsForType(l10n),
-              const SizedBox(height: 24),
-              // Action buttons.
-              Row(
-                children: [
-                  FButton(
-                    key: const Key('corp-action-preview'),
-                    variant: FButtonVariant.outline,
-                    onPress: asset == null ? null : _runPreview,
-                    child: Text(l10n.corpActionPreviewAction),
+        color: Colors.transparent,
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Asset picker.
+                DropdownButtonFormField<CorporateActionAsset>(
+                  isExpanded: true,
+                  key: const Key('corp-action-asset'),
+                  initialValue: asset,
+                  decoration: InputDecoration(
+                    labelText: l10n.corpActionSelectAsset,
+                    helperText: l10n.corpActionSelectAssetHint,
                   ),
-                  const SizedBox(width: 12),
-                  FButton(
-                    key: const Key('corp-action-submit'),
-                    variant: FButtonVariant.primary,
-                    onPress: _preview == null ? null : _submit,
-                    child: Text(l10n.corpActionSubmitAction),
-                  ),
-                ],
-              ),
-              if (_previewError != null) ...[
+                  items: [
+                    for (final a in widget.assets)
+                      DropdownMenuItem(value: a, child: Text(a.displayName)),
+                  ],
+                  onChanged: _onAssetChanged,
+                ),
                 const SizedBox(height: 16),
-                FCard.raw(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      _previewError!,
-                      style: TextStyle(
-                        color: theme.colorScheme.onErrorContainer,
+                // Effective date row.
+                FTile(
+                  key: const Key('corp-action-date'),
+                  title: Text(l10n.corpActionEffectiveDate),
+                  prefix: const Icon(Icons.event),
+                  subtitle: Text(dateFmt.format(_effectiveDate)),
+                  suffix: IconButton(
+                    icon: const Icon(Icons.edit_calendar),
+                    onPressed: _pickEffectiveDate,
+                  ),
+                ),
+                const FDivider(),
+                // Event type selector.
+                Text(
+                  l10n.corpActionEventTypeTitle,
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _TypeSelector(
+                  selected: _type,
+                  onChanged: _onTypeChanged,
+                  l10n: l10n,
+                ),
+                const SizedBox(height: 16),
+                // Type-specific fields.
+                ..._fieldsForType(l10n),
+                const SizedBox(height: 24),
+                // Action buttons.
+                Row(
+                  children: [
+                    FButton(
+                      key: const Key('corp-action-preview'),
+                      variant: FButtonVariant.outline,
+                      onPress: asset == null ? null : _runPreview,
+                      child: Text(l10n.corpActionPreviewAction),
+                    ),
+                    const SizedBox(width: 12),
+                    FButton(
+                      key: const Key('corp-action-submit'),
+                      variant: FButtonVariant.primary,
+                      onPress: _preview == null ? null : _submit,
+                      child: Text(l10n.corpActionSubmitAction),
+                    ),
+                  ],
+                ),
+                if (_previewError != null) ...[
+                  const SizedBox(height: 16),
+                  FCard.raw(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        _previewError!,
+                        style: TextStyle(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
+                if (_preview != null) ...[
+                  const SizedBox(height: 16),
+                  _PreviewCard(
+                    key: const Key('corp-action-preview-card'),
+                    preview: _preview!,
+                    l10n: l10n,
+                  ),
+                ],
               ],
-              if (_preview != null) ...[
-                const SizedBox(height: 16),
-                _PreviewCard(
-                  key: const Key('corp-action-preview-card'),
-                  preview: _preview!,
-                  l10n: l10n,
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),
-        ),
     );
   }
 
@@ -480,15 +479,16 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     required bool requirePositive,
     required AppLocalizations l10n,
   }) {
-    return TextFormField(
+    return FTextFormField(
       key: Key('corp-action-$controllerKey'),
-      controller: controller,
+      control: FTextFieldControl.managed(controller: controller),
+      label: Text(label),
+      description: helper == null ? null : Text(helper),
       keyboardType: const TextInputType.numberWithOptions(
         signed: true,
         decimal: true,
       ),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]'))],
-      decoration: InputDecoration(labelText: label, helperText: helper),
       validator: (value) =>
           _validateDecimal(value, requirePositive: requirePositive, l10n: l10n),
     );
@@ -548,11 +548,13 @@ class _TypeSelector extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final (type, label) in entries)
-          ChoiceChip(
+          FButton(
             key: Key('corp-action-type-${type.name}'),
-            label: Text(label),
-            selected: selected == type,
-            onSelected: (s) => s ? onChanged(type) : null,
+            variant: (selected == type)
+                ? FButtonVariant.primary
+                : FButtonVariant.outline,
+            onPress: () => onChanged(type),
+            child: Text(label),
           ),
       ],
     );

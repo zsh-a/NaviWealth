@@ -73,17 +73,17 @@ class DevicesPage extends ConsumerWidget {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: state.when(
-        data: (data) => _DevicesList(response: data),
-        loading: () => const Center(child: FCircularProgress()),
-        error: (error, _) => _ErrorView(
-          message: l10n.authDevicesLoadError,
-          details: error is AuthException ? error.message : '$error',
-          onRetry: () => ref.invalidate(devicesProvider),
+        color: Colors.transparent,
+        child: state.when(
+          data: (data) => _DevicesList(response: data),
+          loading: () => const Center(child: FCircularProgress()),
+          error: (error, _) => _ErrorView(
+            message: l10n.authDevicesLoadError,
+            details: error is AuthException ? error.message : '$error',
+            onRetry: () => ref.invalidate(devicesProvider),
+          ),
         ),
       ),
-        ),
     );
   }
 
@@ -156,25 +156,20 @@ class _DevicesList extends ConsumerWidget {
         itemBuilder: (context, i) {
           final device = devices[i];
           final isCurrent = device.id == response.currentDeviceId;
-          return ListTile(
-            leading: Icon(
-              isCurrent ? Icons.verified_user : Icons.devices_other,
-            ),
+          return FTile(
             title: Text(
               device.name?.isNotEmpty == true
                   ? device.name!
                   : l10n.authDeviceUnnamed,
             ),
+            prefix: Icon(isCurrent ? Icons.verified_user : Icons.devices_other),
             subtitle: Text(
               l10n.authDeviceLastSeen(
                 formatters.dateTime(device.lastSeenAt.toLocal()),
               ),
             ),
-            trailing: isCurrent
-                ? Chip(
-                    label: Text(l10n.authDeviceCurrent),
-                    visualDensity: VisualDensity.compact,
-                  )
+            suffix: isCurrent
+                ? FBadge(child: Text(l10n.authDeviceCurrent))
                 : IconButton(
                     icon: const Icon(Icons.logout),
                     tooltip: l10n.authDeviceRevokeTooltip,

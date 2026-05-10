@@ -31,43 +31,47 @@ class RouteErrorPage extends StatelessWidget {
         ? l10n.routeNotFoundMessage(state.uri.toString())
         : l10n.commonError;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  hasError
-                      ? Icons.travel_explore_outlined
-                      : Icons.error_outline,
-                  size: 56,
-                  color: theme.colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: theme.textTheme.titleLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+    return FScaffold(
+      childPad: false,
+      child: Material(
+        color: Colors.transparent,
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    hasError
+                        ? Icons.travel_explore_outlined
+                        : Icons.error_outline,
+                    size: 56,
+                    color: theme.colorScheme.error,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => context.go(AppRoutes.home),
-                  prefix: const Icon(Icons.home_outlined, size: 16),
-                  child: Text(l10n.routeGoHome),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    style: theme.textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: () => context.go(AppRoutes.home),
+                    prefix: const Icon(Icons.home_outlined, size: 16),
+                    child: Text(l10n.routeGoHome),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

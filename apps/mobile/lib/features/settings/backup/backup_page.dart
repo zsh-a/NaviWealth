@@ -27,41 +27,41 @@ class BackupPage extends ConsumerWidget {
       header: FHeader.nested(title: Text(l10n.settingsDataTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: ListView(
-        padding: Spacing.pageMobile.copyWith(
-          bottom:
-              Spacing.pageMobile.bottom +
-              Spacing.floatingBarClearance +
-              MediaQuery.paddingOf(context).bottom,
-        ),
-        children: [
-          if (kIsWeb) ...[
-            _WebBackupSecurityBanner(l10n: l10n),
+        color: Colors.transparent,
+        child: ListView(
+          padding: Spacing.pageMobile.copyWith(
+            bottom:
+                Spacing.pageMobile.bottom +
+                Spacing.floatingBarClearance +
+                MediaQuery.paddingOf(context).bottom,
+          ),
+          children: [
+            if (kIsWeb) ...[
+              _WebBackupSecurityBanner(l10n: l10n),
+              const SizedBox(height: Spacing.s12),
+            ],
+            FCard.raw(
+              child: FTile(
+                title: Text(l10n.backupExportTitle),
+                prefix: const Icon(Icons.upload_outlined),
+                subtitle: Text(l10n.backupExportSubtitle),
+                suffix: const Icon(Icons.chevron_right),
+                onPress: () => _exportBackup(context, ref),
+              ),
+            ),
             const SizedBox(height: Spacing.s12),
+            FCard.raw(
+              child: FTile(
+                title: Text(l10n.backupImportTitle),
+                prefix: const Icon(Icons.download_outlined),
+                subtitle: Text(l10n.backupImportSubtitle),
+                suffix: const Icon(Icons.chevron_right),
+                onPress: () => _importBackup(context, ref),
+              ),
+            ),
           ],
-          FCard.raw(
-            child: ListTile(
-              leading: const Icon(Icons.upload_outlined),
-              title: Text(l10n.backupExportTitle),
-              subtitle: Text(l10n.backupExportSubtitle),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _exportBackup(context, ref),
-            ),
-          ),
-          const SizedBox(height: Spacing.s12),
-          FCard.raw(
-            child: ListTile(
-              leading: const Icon(Icons.download_outlined),
-              title: Text(l10n.backupImportTitle),
-              subtitle: Text(l10n.backupImportSubtitle),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _importBackup(context, ref),
-            ),
-          ),
-        ],
-      ),
         ),
+      ),
     );
   }
 
@@ -393,13 +393,10 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
           children: [
             Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: Spacing.s16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: l10n.backupPassphraseLabel,
-                hintText: widget.hint,
-                border: const OutlineInputBorder(),
-              ),
-              controller: _controller,
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _controller),
+              label: Text(l10n.backupPassphraseLabel),
+              hint: widget.hint,
               obscureText: true,
               autofocus: true,
             ),
@@ -493,13 +490,10 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
               ),
             ),
             const SizedBox(height: Spacing.s16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: l10n.backupPassphraseLabel,
-                hintText: l10n.backupRestorePassphraseHint,
-                border: const OutlineInputBorder(),
-              ),
-              controller: _controller,
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _controller),
+              label: Text(l10n.backupPassphraseLabel),
+              hint: l10n.backupRestorePassphraseHint,
               obscureText: true,
               autofocus: true,
             ),

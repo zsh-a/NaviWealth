@@ -22,7 +22,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   final _passwordFocus = FocusNode();
   bool _submitting = false;
-  bool _obscurePassword = true;
+  final bool _obscurePassword = true;
   AuthErrorKind? _lastErrorKind;
   String? _lastErrorMessage;
 
@@ -97,109 +97,98 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         _lastErrorKind == null &&
         authState is AuthLoggedOut &&
         authState.reason == LoggedOutReason.sessionExpired;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.s24,
-                vertical: Spacing.s32,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/svg/logo.svg',
-                      width: 80,
-                      height: 80,
-                    ),
-                    const SizedBox(height: Spacing.s16),
-                    Text(
-                      l10n.appTitle,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: Spacing.s8),
-                    Text(
-                      l10n.authLoginTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: Spacing.s24),
-                    if (showExpiredBanner)
-                      _Banner(
-                        kind: _BannerKind.info,
-                        message: l10n.authLoginNoticeSessionExpired,
+    return FScaffold(
+      childPad: false,
+      child: Material(
+        color: Colors.transparent,
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.s24,
+                  vertical: Spacing.s32,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/svg/logo.svg',
+                        width: 80,
+                        height: 80,
                       ),
-                    if (_lastErrorKind != null) ...[
+                      const SizedBox(height: Spacing.s16),
+                      Text(
+                        l10n.appTitle,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: Spacing.s8),
-                      _Banner(
-                        kind: _BannerKind.error,
-                        message: _errorMessage(l10n, _lastErrorKind!),
-                        details: _lastErrorMessage,
+                      Text(
+                        l10n.authLoginTitle,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: Spacing.s24),
+                      if (showExpiredBanner)
+                        _Banner(
+                          kind: _BannerKind.info,
+                          message: l10n.authLoginNoticeSessionExpired,
+                        ),
+                      if (_lastErrorKind != null) ...[
+                        const SizedBox(height: Spacing.s8),
+                        _Banner(
+                          kind: _BannerKind.error,
+                          message: _errorMessage(l10n, _lastErrorKind!),
+                          details: _lastErrorMessage,
+                        ),
+                      ],
+                      const SizedBox(height: Spacing.s16),
+                      FTextFormField(
+                        key: const ValueKey('login.email'),
+                        control: FTextFieldControl.managed(
+                          controller: _emailController,
+                        ),
+                        label: Text(l10n.authEmailLabel),
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofocus: !kIsWeb,
+                        enabled: !_submitting,
+                        autofillHints: const [
+                          AutofillHints.username,
+                          AutofillHints.email,
+                        ],
+                        validator: (value) => _validateEmail(value, l10n: l10n),
+                        onSubmit: (_) => _passwordFocus.requestFocus(),
+                      ),
+                      const SizedBox(height: Spacing.s16),
+                      FTextFormField(
+                        key: const ValueKey('login.password'),
+                        control: FTextFieldControl.managed(
+                          controller: _passwordController,
+                        ),
+                        label: Text(l10n.authPasswordLabel),
+                        focusNode: _passwordFocus,
+                        textInputAction: TextInputAction.done,
+                        obscureText: _obscurePassword,
+                        enabled: !_submitting,
+                        autofillHints: const [AutofillHints.password],
+                        validator: (value) =>
+                            _validatePassword(value, l10n: l10n),
+                        onSubmit: (_) => _submit(),
+                      ),
+                      const SizedBox(height: Spacing.s24),
+                      FButton(
+                        key: const ValueKey('login.submit'),
+                        variant: FButtonVariant.primary,
+                        onPress: _submitting ? null : _submit,
+                        child: Text(_submitting ? '' : l10n.authLoginSubmit),
                       ),
                     ],
-                    const SizedBox(height: Spacing.s16),
-                    TextFormField(
-                      key: const ValueKey('login.email'),
-                      controller: _emailController,
-                      autofocus: !kIsWeb,
-                      enabled: !_submitting,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [
-                        AutofillHints.username,
-                        AutofillHints.email,
-                      ],
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: l10n.authEmailLabel,
-                      ),
-                      validator: (value) => _validateEmail(value, l10n: l10n),
-                      onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-                    ),
-                    const SizedBox(height: Spacing.s16),
-                    TextFormField(
-                      key: const ValueKey('login.password'),
-                      controller: _passwordController,
-                      enabled: !_submitting,
-                      focusNode: _passwordFocus,
-                      autofillHints: const [AutofillHints.password],
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      decoration: InputDecoration(
-                        labelText: l10n.authPasswordLabel,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
-                          tooltip: _obscurePassword
-                              ? l10n.authPasswordShowTooltip
-                              : l10n.authPasswordHideTooltip,
-                          onPressed: _submitting
-                              ? null
-                              : () => setState(
-                                  () => _obscurePassword = !_obscurePassword,
-                                ),
-                        ),
-                      ),
-                      validator: (value) =>
-                          _validatePassword(value, l10n: l10n),
-                      onFieldSubmitted: (_) => _submit(),
-                    ),
-                    const SizedBox(height: Spacing.s24),
-                    FButton(
-                      key: const ValueKey('login.submit'),
-                      variant: FButtonVariant.primary,
-                      onPress: _submitting ? null : _submit,
-                      child: Text(_submitting ? '' : l10n.authLoginSubmit),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

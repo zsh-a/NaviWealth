@@ -43,23 +43,23 @@ class HomePage extends ConsumerWidget {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: PageSkeletonShell<DashboardSnapshot>(
-        skeleton: const HomeSkeleton(),
-        isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
-        child: snapshotAsync.when(
-          loading: () => const HomeSkeleton(),
-          error: (e, st) => _ErrorBody(error: e),
-          data: (snapshot) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const CurrencyMismatchBanner(),
-              Expanded(child: _DashboardBody(snapshot: snapshot)),
-            ],
+        color: Colors.transparent,
+        child: PageSkeletonShell<DashboardSnapshot>(
+          skeleton: const HomeSkeleton(),
+          isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
+          child: snapshotAsync.when(
+            loading: () => const HomeSkeleton(),
+            error: (e, st) => _ErrorBody(error: e),
+            data: (snapshot) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const CurrencyMismatchBanner(),
+                Expanded(child: _DashboardBody(snapshot: snapshot)),
+              ],
+            ),
           ),
         ),
       ),
-        ),
     );
   }
 }

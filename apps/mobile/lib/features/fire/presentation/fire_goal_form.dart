@@ -197,15 +197,12 @@ class _MoneyField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return TextFormField(
-      controller: controller,
+    return FTextFormField(
+      control: FTextFieldControl.managed(controller: controller),
+      label: Text(label),
+      description: Text(helper),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-      decoration: InputDecoration(
-        labelText: label,
-        helperText: helper,
-        border: const OutlineInputBorder(),
-      ),
       validator: (value) {
         final text = (value ?? '').trim();
         if (text.isEmpty) {

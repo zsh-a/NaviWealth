@@ -63,7 +63,13 @@ class _DeferredLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: FCircularProgress()));
+    return const FScaffold(
+      childPad: false,
+      child: Material(
+        color: Colors.transparent,
+        child: Center(child: FCircularProgress()),
+      ),
+    );
   }
 }
 
@@ -77,40 +83,44 @@ class _DeferredError extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.cloud_off_outlined,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.deferredLoadFailedTitle,
-                style: theme.textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$error',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+    return FScaffold(
+      childPad: false,
+      child: Material(
+        color: Colors.transparent,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cloud_off_outlined,
+                  size: 48,
+                  color: theme.colorScheme.error,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: onRetry,
-                prefix: const Icon(Icons.refresh, size: 16),
-                child: Text(l10n.deferredLoadRetry),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  l10n.deferredLoadFailedTitle,
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$error',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: onRetry,
+                  prefix: const Icon(Icons.refresh, size: 16),
+                  child: Text(l10n.deferredLoadRetry),
+                ),
+              ],
+            ),
           ),
         ),
       ),

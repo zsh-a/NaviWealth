@@ -85,16 +85,17 @@ class ExpenseFiltersBar extends StatelessWidget {
                         child: ListView(
                           shrinkWrap: true,
                           children: [
-                            ListTile(
-                              leading: const Icon(Icons.clear),
+                            FTile(
                               title: Text(l10n.expenseListAllCategories),
-                              onTap: () => Navigator.of(ctx).pop<String?>(null),
+                              prefix: const Icon(Icons.clear),
+                              onPress: () =>
+                                  Navigator.of(ctx).pop<String?>(null),
                             ),
                             for (final a in expenseAccounts)
-                              ListTile(
-                                leading: Icon(a.iconData),
+                              FTile(
                                 title: Text(a.name),
-                                onTap: () => Navigator.of(ctx).pop(a.id),
+                                prefix: Icon(a.iconData),
+                                onPress: () => Navigator.of(ctx).pop(a.id),
                               ),
                           ],
                         ),
@@ -322,13 +323,12 @@ class _ExpenseRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final accent =
         account?.accentColor ?? Theme.of(context).colorScheme.primary;
-    return ListTile(
-      onTap: onTap,
-      leading: CircleAvatar(
+    return FTile(
+      title: Text(account?.name ?? l10n.expenseListUncategorized),
+      prefix: CircleAvatar(
         backgroundColor: accent.withValues(alpha: 0.15),
         child: Icon(account?.iconData ?? Icons.payment, color: accent),
       ),
-      title: Text(account?.name ?? l10n.expenseListUncategorized),
       subtitle: Text(
         [
           formatter.date(expense.tradeDate),
@@ -337,12 +337,13 @@ class _ExpenseRow extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: Text(
+      suffix: Text(
         formatter.currency(expense.amount, code: expense.currency),
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
           fontFeatures: TypographyTokens.tabularFigures,
         ),
       ),
+      onPress: onTap,
     );
   }
 }

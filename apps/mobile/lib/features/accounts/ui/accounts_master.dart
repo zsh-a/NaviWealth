@@ -92,12 +92,12 @@ class AccountsDetailEmpty extends StatelessWidget {
       header: FHeader.nested(title: Text(l10n.accountsAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: MasterDetailEmpty(
-        icon: Icons.account_balance_outlined,
-        message: l10n.accountsDetailEmpty,
-      ),
+        color: Colors.transparent,
+        child: MasterDetailEmpty(
+          icon: Icons.account_balance_outlined,
+          message: l10n.accountsDetailEmpty,
         ),
+      ),
     );
   }
 }
@@ -129,10 +129,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
         ],
       ),
       childPad: false,
-      child: Material(
-          color: Colors.transparent,
-          child: child,
-        ),
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 }
@@ -245,15 +242,15 @@ class _AccountTile extends StatelessWidget {
       color: selected
           ? theme.colorScheme.primary.withValues(alpha: 0.10)
           : null,
-      child: ListTile(
+      child: FTile(
         title: OptionalHero(
           tag: 'account-${account.id}-name',
           enabled: heroEnabled,
           child: Text(account.name),
         ),
         subtitle: Text(_subtitleFor(account)),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => _onTap(context),
+        suffix: const Icon(Icons.chevron_right),
+        onPress: () => _onTap(context),
       ),
     );
   }

@@ -22,21 +22,21 @@ class PortfolioPage extends ConsumerWidget {
       header: FHeader.nested(title: Text(l10n.navPortfolio)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: Column(
-        children: [
-          const PortfolioViewSwitcher(),
-          Expanded(
-            child: switch (view) {
-              PortfolioViewMode.assets => const AssetsPage(),
-              PortfolioViewMode.account => const PortfolioByAccountView(),
-              PortfolioViewMode.currency => const PortfolioByCurrencyView(),
-              PortfolioViewMode.assetClass => const PortfolioByClassView(),
-            },
-          ),
-        ],
-      ),
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            const PortfolioViewSwitcher(),
+            Expanded(
+              child: switch (view) {
+                PortfolioViewMode.assets => const AssetsPage(),
+                PortfolioViewMode.account => const PortfolioByAccountView(),
+                PortfolioViewMode.currency => const PortfolioByCurrencyView(),
+                PortfolioViewMode.assetClass => const PortfolioByClassView(),
+              },
+            ),
+          ],
         ),
+      ),
     );
   }
 }

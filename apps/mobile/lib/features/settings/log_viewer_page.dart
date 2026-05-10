@@ -49,23 +49,23 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: StreamBuilder<TalkerData>(
-        stream: talker.stream,
-        builder: (context, _) {
-          final logs = talker.history;
-          return ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(8),
-            itemCount: logs.length,
-            itemBuilder: (context, index) {
-              final log = logs[index];
-              return _LogTile(log: log);
-            },
-          );
-        },
-      ),
+        color: Colors.transparent,
+        child: StreamBuilder<TalkerData>(
+          stream: talker.stream,
+          builder: (context, _) {
+            final logs = talker.history;
+            return ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(8),
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                final log = logs[index];
+                return _LogTile(log: log);
+              },
+            );
+          },
         ),
+      ),
     );
   }
 }

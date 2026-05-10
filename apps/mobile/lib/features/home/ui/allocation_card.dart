@@ -824,8 +824,9 @@ class CategoryDrillDownSheet extends StatelessWidget {
                   final native = item.nativeAmount.toDouble();
                   final base = item.valueInBase.amount.toDouble();
                   final showFx = item.nativeCurrency != baseCurrency;
-                  return ListTile(
-                    leading: CircleAvatar(
+                  return FTile(
+                    title: Text(item.name),
+                    prefix: CircleAvatar(
                       backgroundColor:
                           theme.colorScheme.surfaceContainerHighest,
                       child: Icon(
@@ -834,11 +835,10 @@ class CategoryDrillDownSheet extends StatelessWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    title: Text(item.name),
                     subtitle: _itemSubtitle(l10n, item) == null
                         ? null
                         : Text(_itemSubtitle(l10n, item)!),
-                    trailing: Column(
+                    suffix: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -860,7 +860,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                           ),
                       ],
                     ),
-                    onTap: item.routeHint == null
+                    onPress: item.routeHint == null
                         ? null
                         : () {
                             Navigator.of(context).pop();

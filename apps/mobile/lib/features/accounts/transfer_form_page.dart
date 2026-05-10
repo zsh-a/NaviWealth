@@ -99,13 +99,13 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       header: FHeader.nested(title: Text(l10n.transferTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-        data: (accounts) => _buildForm(context, accounts),
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
-      ),
+        color: Colors.transparent,
+        child: accountsAsync.when(
+          data: (accounts) => _buildForm(context, accounts),
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
         ),
+      ),
     );
   }
 

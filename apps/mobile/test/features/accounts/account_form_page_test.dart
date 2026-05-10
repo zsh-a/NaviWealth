@@ -217,7 +217,7 @@ void main() {
 
     // Fill the required name field.
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Account name'),
+      find.widgetWithText(FTextFormField, 'Account name'),
       'Savings Bank',
     );
     await tester.pumpAndSettle();
@@ -246,7 +246,7 @@ void main() {
     await tester.tap(find.byTooltip('#3B82F6'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Account name'),
+      find.widgetWithText(FTextFormField, 'Account name'),
       'My Bank',
     );
     await tester.pumpAndSettle();

@@ -167,25 +167,25 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
             childPad: false,
             child: Material(
-          color: Colors.transparent,
-          child: MasterDetailLayout(
-              master: SessionsPanel(
-                activeSessionId: desktopActiveId,
-                onSelect: (id) {
-                  setState(() => _activeSessionId = id);
-                  replaceSelectedQuery(
-                    context,
-                    path: AppRoutes.ai,
-                    selected: id,
-                  );
-                },
-                onNew: () => _newSession(session.userId),
+              color: Colors.transparent,
+              child: MasterDetailLayout(
+                master: SessionsPanel(
+                  activeSessionId: desktopActiveId,
+                  onSelect: (id) {
+                    setState(() => _activeSessionId = id);
+                    replaceSelectedQuery(
+                      context,
+                      path: AppRoutes.ai,
+                      selected: id,
+                    );
+                  },
+                  onNew: () => _newSession(session.userId),
+                ),
+                detail: desktopActiveId == null
+                    ? pendingPane
+                    : _ChatPane(sessionId: desktopActiveId),
               ),
-              detail: desktopActiveId == null
-                  ? pendingPane
-                  : _ChatPane(sessionId: desktopActiveId),
             ),
-        ),
           );
         }
 
@@ -210,11 +210,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           ),
           childPad: false,
           child: Material(
-          color: Colors.transparent,
-          child: activeId == null
-              ? pendingPane
-              : _ChatPane(sessionId: activeId),
-        ),
+            color: Colors.transparent,
+            child: activeId == null
+                ? pendingPane
+                : _ChatPane(sessionId: activeId),
+          ),
         );
       },
     );

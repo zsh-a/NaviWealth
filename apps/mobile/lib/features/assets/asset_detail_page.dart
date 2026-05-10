@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../data/domain/asset.dart';
 import '../../data/domain/enums.dart';
@@ -27,20 +28,41 @@ class AssetDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final repoAsync = ref.watch(manualAssetRepositoryProvider);
     return repoAsync.when(
-      loading: () => const Scaffold(body: AssetDetailSkeleton()),
-      error: (e, _) =>
-          Scaffold(body: Center(child: Text(l10n.assetDetailLoadError('$e')))),
+      loading: () => const FScaffold(
+        childPad: false,
+        child: Material(
+          color: Colors.transparent,
+          child: AssetDetailSkeleton(),
+        ),
+      ),
+      error: (e, _) => FScaffold(
+        childPad: false,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(child: Text(l10n.assetDetailLoadError('$e'))),
+        ),
+      ),
       data: (repo) {
         return FutureBuilder<Asset?>(
           future: repo.findById(assetId),
           builder: (context, snap) {
             if (!snap.hasData) {
-              return const Scaffold(body: AssetDetailSkeleton());
+              return const FScaffold(
+                childPad: false,
+                child: Material(
+                  color: Colors.transparent,
+                  child: AssetDetailSkeleton(),
+                ),
+              );
             }
             final asset = snap.data;
             if (asset == null) {
-              return Scaffold(
-                body: Center(child: Text(l10n.assetDetailNotFound)),
+              return FScaffold(
+                childPad: false,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Center(child: Text(l10n.assetDetailNotFound)),
+                ),
               );
             }
             return switch (asset.type) {

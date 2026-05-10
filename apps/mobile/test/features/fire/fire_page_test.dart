@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -193,7 +194,7 @@ void main() {
     await _pumpFrames(tester);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Target net worth'),
+      find.widgetWithText(FTextFormField, 'Target net worth'),
       '500000',
     );
     await tester.tap(find.text('Save'));

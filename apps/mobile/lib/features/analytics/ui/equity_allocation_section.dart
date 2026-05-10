@@ -198,16 +198,15 @@ class _BucketRow extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final pct = bucket.weight.toDouble();
-    return ListTile(
-      onTap: onTap,
-      leading: Container(
-        width: 14,
-        height: 14,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      ),
+    return FTile(
       title: Text(
         localizeBucketLabel(l10n, bucket),
         style: theme.textTheme.titleMedium,
+      ),
+      prefix: Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
       subtitle: Text(
         l10n.analyticsHoldingsCount(bucket.holdings.length),
@@ -215,7 +214,7 @@ class _BucketRow extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: SizedBox(
+      suffix: SizedBox(
         width: 96,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -236,6 +235,7 @@ class _BucketRow extends StatelessWidget {
           ],
         ),
       ),
+      onPress: onTap,
     );
   }
 }

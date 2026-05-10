@@ -15,10 +15,7 @@ class PlanPage extends StatelessWidget {
     return FScaffold(
       header: FHeader.nested(title: Text(l10n.navPlan)),
       childPad: false,
-      child: const Material(
-          color: Colors.transparent,
-          child: PlanOverview(),
-        ),
+      child: const Material(color: Colors.transparent, child: PlanOverview()),
     );
   }
 }

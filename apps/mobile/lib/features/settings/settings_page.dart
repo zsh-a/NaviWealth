@@ -14,9 +14,9 @@ class SettingsPage extends StatelessWidget {
       header: FHeader.nested(title: Text(l10n.settingsAppBarTitle)),
       childPad: false,
       child: const Material(
-          color: Colors.transparent,
-          child: SettingsOverview(),
-        ),
+        color: Colors.transparent,
+        child: SettingsOverview(),
+      ),
     );
   }
 }

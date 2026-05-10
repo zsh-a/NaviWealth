@@ -17,13 +17,14 @@ class ExpenseReportPage extends ConsumerWidget {
       header: FHeader.nested(title: Text(l10n.expenseReportAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: reportAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.expenseReportLoadError('$e'))),
-        data: (report) => ExpenseReportBody(report: report),
-      ),
+        color: Colors.transparent,
+        child: reportAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) =>
+              Center(child: Text(l10n.expenseReportLoadError('$e'))),
+          data: (report) => ExpenseReportBody(report: report),
         ),
+      ),
     );
   }
 }

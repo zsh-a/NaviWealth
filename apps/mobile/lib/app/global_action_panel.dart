@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/domain/enums.dart';
@@ -14,42 +15,42 @@ Future<void> showGlobalActionPanel(BuildContext context) {
     builder: (sheetContext) => ListView(
       shrinkWrap: true,
       children: [
-        ListTile(
-          leading: const Icon(Icons.add_card_outlined),
+        FTile(
           title: Text(l10n.superFabExpense),
-          onTap: () =>
+          prefix: const Icon(Icons.add_card_outlined),
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.expenseNew),
         ),
-        ListTile(
-          leading: const Icon(Icons.add_chart_outlined),
+        FTile(
           title: Text(l10n.superFabTrade),
-          onTap: () =>
+          prefix: const Icon(Icons.add_chart_outlined),
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.tradeEntry),
         ),
-        ListTile(
-          leading: const Icon(Icons.account_balance_wallet_outlined),
+        FTile(
           title: Text(l10n.superFabAsset),
-          onTap: () {
+          prefix: const Icon(Icons.account_balance_wallet_outlined),
+          onPress: () {
             Navigator.of(sheetContext).pop();
             showAssetActionPanel(context);
           },
         ),
-        ListTile(
-          leading: const Icon(Icons.swap_horiz),
+        FTile(
           title: Text(l10n.superFabTransfer),
-          onTap: () =>
+          prefix: const Icon(Icons.swap_horiz),
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountTransfer),
         ),
-        ListTile(
-          leading: const Icon(Icons.add_card_outlined),
+        FTile(
           title: Text(l10n.accountFormCreateTitle),
-          onTap: () =>
+          prefix: const Icon(Icons.add_card_outlined),
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountNew),
         ),
-        ListTile(
-          leading: const Icon(Icons.payments_outlined),
+        FTile(
           title: Text(l10n.superFabLiability),
-          onTap: () =>
+          prefix: const Icon(Icons.payments_outlined),
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.liabilityNew),
         ),
       ],
@@ -67,48 +68,48 @@ Future<void> showAssetActionPanel(BuildContext context) {
       shrinkWrap: true,
       children: [
         _sectionHeader(theme, l10n.portfolioAssetsTab),
-        ListTile(
-          leading: const Icon(Icons.account_balance_wallet_outlined),
+        FTile(
           title: Text(l10n.assetsAddCashTitle),
+          prefix: const Icon(Icons.account_balance_wallet_outlined),
           subtitle: Text(l10n.assetsAddCashSubtitle),
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.portfolioNewCash),
         ),
-        ListTile(
-          leading: const Icon(Icons.savings_outlined),
+        FTile(
           title: Text(l10n.assetsAddDepositTitle),
+          prefix: const Icon(Icons.savings_outlined),
           subtitle: Text(l10n.assetsAddDepositSubtitle),
-          onTap: () => _closeAndPush(
+          onPress: () => _closeAndPush(
             sheetContext,
             context,
             AppRoutes.portfolioNewDeposit,
           ),
         ),
-        ListTile(
-          leading: const Icon(Icons.auto_graph_outlined),
+        FTile(
           title: Text(l10n.assetsAddWealthTitle),
+          prefix: const Icon(Icons.auto_graph_outlined),
           subtitle: Text(l10n.assetsAddWealthSubtitle),
-          onTap: () => _closeAndPush(
+          onPress: () => _closeAndPush(
             sheetContext,
             context,
             AppRoutes.portfolioNewWealth,
           ),
         ),
-        ListTile(
-          leading: const Icon(Icons.home_outlined),
+        FTile(
           title: Text(l10n.physicalAssetAddRealEstate),
+          prefix: const Icon(Icons.home_outlined),
           subtitle: Text(l10n.assetsAddRealEstateSubtitle),
-          onTap: () => _closeAndOpenPhysical(
+          onPress: () => _closeAndOpenPhysical(
             sheetContext,
             context,
             AssetType.realEstate,
           ),
         ),
-        ListTile(
-          leading: const Icon(Icons.directions_car_outlined),
+        FTile(
           title: Text(l10n.physicalAssetAddVehicle),
+          prefix: const Icon(Icons.directions_car_outlined),
           subtitle: Text(l10n.assetsAddVehicleSubtitle),
-          onTap: () =>
+          onPress: () =>
               _closeAndOpenPhysical(sheetContext, context, AssetType.vehicle),
         ),
       ],

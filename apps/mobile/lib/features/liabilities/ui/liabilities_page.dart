@@ -64,10 +64,7 @@ class LiabilitiesPage extends ConsumerWidget {
     return FScaffold(
       header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle)),
       childPad: false,
-      child: Material(
-          color: Colors.transparent,
-          child: body,
-        ),
+      child: Material(color: Colors.transparent, child: body),
     );
   }
 }
@@ -124,24 +121,20 @@ class _LiabilityListTile extends StatelessWidget {
     final remaining = summary?.remainingPrincipal;
 
     return FCard.raw(
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s16,
-          vertical: Spacing.s8,
-        ),
-        leading: CircleAvatar(
+      child: FTile(
+        title: Text(liability.name),
+        prefix: CircleAvatar(
           backgroundColor: theme.colorScheme.primaryContainer,
           child: Icon(
             _iconFor(liability.type),
             color: theme.colorScheme.onPrimaryContainer,
           ),
         ),
-        title: Text(liability.name),
         subtitle: Text(
           '${liabilityTypeLabel(l10n, liability.type)} · '
           '${formatters.percent(liability.interestRate.toDouble())}',
         ),
-        trailing: remaining != null
+        suffix: remaining != null
             ? Text(
                 formatters.currency(remaining, code: liability.currency),
                 style: theme.textTheme.titleMedium,
@@ -153,7 +146,7 @@ class _LiabilityListTile extends StatelessWidget {
                 ),
                 style: theme.textTheme.titleMedium,
               ),
-        onTap: () => context.push(AppRoutes.liability(liability.id)),
+        onPress: () => context.push(AppRoutes.liability(liability.id)),
       ),
     );
   }

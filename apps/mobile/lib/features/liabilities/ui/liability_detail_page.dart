@@ -27,18 +27,18 @@ class LiabilityDetailPage extends ConsumerWidget {
       header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle)),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: summaryAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (summary) {
-          if (summary == null) {
-            return Center(child: Text(l10n.liabilityNotFound));
-          }
-          return _LiabilityDetailBody(summary: summary);
-        },
-      ),
+        color: Colors.transparent,
+        child: summaryAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (summary) {
+            if (summary == null) {
+              return Center(child: Text(l10n.liabilityNotFound));
+            }
+            return _LiabilityDetailBody(summary: summary);
+          },
         ),
+      ),
     );
   }
 }
@@ -454,11 +454,7 @@ class _AmortizationDataRow extends StatelessWidget {
           SizedBox(
             width: 120,
             child: row.paidAt != null
-                ? Chip(
-                    visualDensity: VisualDensity.compact,
-                    label: Text(l10n.liabilityScheduleStatusPaid),
-                    backgroundColor: theme.colorScheme.secondaryContainer,
-                  )
+                ? FBadge(child: Text(l10n.liabilityScheduleStatusPaid))
                 : FButton(
                     variant: FButtonVariant.ghost,
                     onPress: onMarkPaid,

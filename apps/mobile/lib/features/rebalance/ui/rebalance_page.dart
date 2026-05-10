@@ -33,11 +33,11 @@ class RebalancePage extends ConsumerWidget {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: plan == null
-          ? _EmptyState()
-          : _RebalanceBody(plan: plan, scheme: scheme),
-        ),
+        color: Colors.transparent,
+        child: plan == null
+            ? _EmptyState()
+            : _RebalanceBody(plan: plan, scheme: scheme),
+      ),
     );
   }
 
@@ -137,16 +137,14 @@ class _SchemeSelector extends ConsumerWidget {
               spacing: Spacing.s8,
               children: [
                 for (final preset in AllocationSchemePreset.values)
-                  ChoiceChip(
-                    label: Text(_schemeLabel(l10n, preset)),
-                    selected: current == preset,
-                    onSelected: (selected) {
-                      if (selected) {
-                        ref
-                            .read(selectedSchemeProvider.notifier)
-                            .select(preset);
-                      }
-                    },
+                  FButton(
+                    variant: (current == preset)
+                        ? FButtonVariant.primary
+                        : FButtonVariant.outline,
+                    onPress: () => ref
+                        .read(selectedSchemeProvider.notifier)
+                        .select(preset),
+                    child: Text(_schemeLabel(l10n, preset)),
                   ),
               ],
             ),

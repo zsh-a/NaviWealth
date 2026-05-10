@@ -35,13 +35,13 @@ class FxRatesPage extends ConsumerWidget {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: ratesAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (rates) => _RateList(rates: rates),
-      ),
+        color: Colors.transparent,
+        child: ratesAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (rates) => _RateList(rates: rates),
         ),
+      ),
     );
   }
 
@@ -116,9 +116,9 @@ class _RateList extends ConsumerWidget {
             );
             return true;
           },
-          child: ListTile(
-            leading: const Icon(Icons.currency_exchange),
+          child: FTile(
             title: Text('1 ${r.base} = ${r.rate} ${r.quote}'),
+            prefix: const Icon(Icons.currency_exchange),
             subtitle: Text('${dateFmt.format(r.date)} · ${r.source}'),
           ),
         );

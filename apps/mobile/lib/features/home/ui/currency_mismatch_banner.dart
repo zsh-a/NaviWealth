@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -93,13 +94,12 @@ class CurrencyMismatchBanner extends ConsumerWidget {
               ),
               const SizedBox(height: Spacing.s8),
               for (final m in mismatches)
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.currency_exchange),
+                FTile(
                   title: Text('${m.currency} → $baseCurrency'),
+                  prefix: const Icon(Icons.currency_exchange),
                   subtitle: Text(m.id),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
+                  suffix: const Icon(Icons.chevron_right),
+                  onPress: () {
                     Navigator.of(ctx).pop();
                     context.goNamed(AppRouteNames.fxRates);
                   },

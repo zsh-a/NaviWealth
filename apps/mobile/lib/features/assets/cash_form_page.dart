@@ -214,13 +214,13 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       ),
       childPad: false,
       child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
-        data: (accounts) => _buildForm(l10n, accounts),
-      ),
+        color: Colors.transparent,
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
+          data: (accounts) => _buildForm(l10n, accounts),
         ),
+      ),
     );
   }
 
@@ -293,16 +293,13 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             onFieldSubmitted: (_) => _nicknameFocus.requestFocus(),
           ),
           const SizedBox(height: Spacing.s12),
-          TextFormField(
-            controller: _nicknameController,
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _nicknameController),
+            label: Text(l10n.cashFormNicknameLabel),
+            description: Text(l10n.cashFormNicknameHelper),
             focusNode: _nicknameFocus,
             textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _busy ? null : _save(),
-            decoration: InputDecoration(
-              labelText: l10n.cashFormNicknameLabel,
-              border: const OutlineInputBorder(),
-              helperText: l10n.cashFormNicknameHelper,
-            ),
+            onSubmit: (_) => _busy ? null : _save(),
           ),
           const SizedBox(height: Spacing.s24),
           FButton(
