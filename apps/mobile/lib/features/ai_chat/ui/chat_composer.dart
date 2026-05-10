@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -88,12 +87,12 @@ class _ChatComposerState extends State<ChatComposer> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
           top: BorderSide(color: GlassTokens.of(context).hairlineColor),
         ),
       ),
-      child: lgw.GlassContainer(
-        child: Padding(
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(
           Spacing.s12,
           Spacing.s8,
@@ -157,7 +156,6 @@ class _ChatComposerState extends State<ChatComposer> {
             ],
           ),
         ),
-      ),
       ),
     );
   }

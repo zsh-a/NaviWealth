@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../tokens/breakpoints.dart';
 import '../tokens/spacing_tokens.dart';
@@ -72,16 +71,10 @@ class PageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Per-route `GlassBackdropScope` lets the page's BackdropFilter
-    // surfaces share a single GPU framebuffer capture. Premium glass
-    // cards (currently only the dashboard hero cards) provision their
-    // own LiquidGlassLayer via `useOwnLayer: true`, applied
-    // automatically by `LiquidGlassCard` for `GlassLayer.primary`.
-    return lgw.GlassBackdropScope(
-      child: Scaffold(
-        backgroundColor: background,
-        appBar: appBar,
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: background,
+      appBar: appBar,
+      body: SafeArea(
           top: appBar == null,
           bottom: false,
           child: LayoutBuilder(
@@ -144,8 +137,7 @@ class PageScaffold extends StatelessWidget {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _wrapBody() => scrollableBody

@@ -16,7 +16,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/desktop_sidebar.dart';
 import 'package:naviwealth/app/route_error_page.dart';
@@ -204,7 +203,7 @@ void main() {
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);
-      expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
     });
 
     for (final legacy in <String>[
@@ -296,7 +295,7 @@ void main() {
 
       // Find the GlassBottomBar and calculate nav item positions.
       // Layout: [tab0] [tab1] [tab2] [tab3] — 4 equally-spaced tabs, no extra button.
-      final barFinder = find.byType(lgw.GlassBottomBar);
+      final barFinder = find.byType(NavigationBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
       final barOrigin = barBox.localToGlobal(Offset.zero);
@@ -317,16 +316,16 @@ void main() {
     testWidgets('selected tab index follows the current URL', (tester) async {
       // 4-tab layout: Overview(0) | Portfolio(1) | Activity(2) | Plan(3)
       final container = await _pumpAt(tester, initialLocation: AppRoutes.plan);
-      final bar = tester.widget<lgw.GlassBottomBar>(
-        find.byType(lgw.GlassBottomBar),
+      final bar = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
       );
       expect(bar.selectedIndex, 3);
 
       container.read(appRouterProvider).go(AppRoutes.activity);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      final updated = tester.widget<lgw.GlassBottomBar>(
-        find.byType(lgw.GlassBottomBar),
+      final updated = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
       );
       expect(updated.selectedIndex, 2);
       await _drainTimers(tester);
@@ -342,21 +341,21 @@ void main() {
       tester,
     ) async {
       await _pumpAt(tester, viewportSize: _mobileSize);
-      expect(find.byType(lgw.GlassBottomBar), findsOneWidget);
-      expect(find.byType(lgw.GlassSideBar), findsNothing);
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
     testWidgets('tablet width uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: _tabletSize);
-      expect(find.byType(lgw.GlassSideBar), findsOneWidget);
-      expect(find.byType(lgw.GlassBottomBar), findsNothing);
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
     testWidgets('tablet width ≥ 900 still uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: const Size(1100, 1000));
-      expect(find.byType(lgw.GlassSideBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
@@ -365,8 +364,8 @@ void main() {
     ) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
       expect(find.byType(DesktopSidebar), findsOneWidget);
-      expect(find.byType(lgw.GlassSideBar), findsNothing);
-      expect(find.byType(lgw.GlassBottomBar), findsNothing);
+      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(NavigationBar), findsNothing);
     });
 
     testWidgets('GlassSideBar selectedIndex follows the current URL', (
@@ -377,19 +376,15 @@ void main() {
         initialLocation: AppRoutes.plan,
         viewportSize: _tabletSize,
       );
-      // Verify the sidebar is rendered with the correct selected item.
-      var items = tester.widgetList<lgw.GlassSideBarItem>(
-        find.byType(lgw.GlassSideBarItem),
-      );
-      expect(items.elementAt(3).isSelected, isTrue);
+      // Verify the rail is rendered with the correct selected index.
+      var rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.selectedIndex, 3);
 
       container.read(appRouterProvider).go(AppRoutes.portfolio);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      items = tester.widgetList<lgw.GlassSideBarItem>(
-        find.byType(lgw.GlassSideBarItem),
-      );
-      expect(items.elementAt(1).isSelected, isTrue);
+      rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.selectedIndex, 1);
       await _drainTimers(tester);
     });
 

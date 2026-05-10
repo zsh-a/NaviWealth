@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../theme/semantic_colors.dart';
 import '../tokens/glass_tokens.dart';
@@ -225,25 +224,24 @@ class _ToastWidgetState extends State<_ToastWidget>
             label: widget.message,
             child: Material(
               color: Colors.transparent,
-              child: DecoratedBox(
+              child: Container(
                 decoration: BoxDecoration(
+                  color: tokens.surfaceColor,
                   border: Border.all(color: tokens.hairlineColor, width: 1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: lgw.GlassContainer(
-                  shape: const lgw.LiquidRoundedRectangle(borderRadius: 12),
-                  clipBehavior: Clip.antiAlias,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        left: BorderSide(color: accent, width: 3),
-                      ),
+                clipBehavior: Clip.antiAlias,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: accent, width: 3),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.s12,
-                      vertical: Spacing.s12,
-                    ),
-                    child: Row(
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.s12,
+                    vertical: Spacing.s12,
+                  ),
+                  child: Row(
                       children: [
                         Icon(_icon(), color: accent, size: 20),
                         const SizedBox(width: Spacing.s8),
@@ -284,7 +282,6 @@ class _ToastWidgetState extends State<_ToastWidget>
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

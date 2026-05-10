@@ -24,11 +24,12 @@ dependencies:
   flutter_svg: ^2.0.16
   flutter_web_plugins:
     sdk: flutter
+  forui: ^0.21.3
+  forui_assets: ^0.21.0
   freezed_annotation: ^3.1.0
   go_router: ^17.2.2
   intl: ^0.20.2
   json_annotation: ^4.11.0
-  liquid_glass_widgets: ^0.10.1
   package_info_plus: ^8.1.2
   path: ^1.9.0
   path_provider: ^2.1.4

@@ -1,38 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
+import '../tokens/glass_tokens.dart';
 import 'app_ink_well.dart';
-import 'scroll_state.dart';
 
-/// Glass hierarchy levels mapping to package quality tiers.
-enum GlassLayer {
-  /// Hero / focal surfaces (e.g. landing-page summary cards, modals,
-  /// nav bars) — full shader pipeline (premium).
-  primary,
+/// Layer hint retained from the glass era. After the Forui migration the
+/// three values render the same flat card; the enum is kept so existing
+/// call sites compile without per-file edits. Future feature PRs can drop
+/// the parameter and inline `FCard` directly.
+enum GlassLayer { primary, secondary, tertiary }
 
-  /// Dashboard cards — blur only (minimal). Cheap on shader-dense pages
-  /// like the FIRE dashboard or sync status. Promote to [primary] when
-  /// the refraction shader is visually load-bearing.
-  secondary,
-
-  /// Inline chips, badges — blur only, no shader.
-  tertiary,
-}
-
-/// A card with iOS 26 Liquid Glass rendering.
-///
-/// Replaces Material [Card] for surfaces that should show content beneath
-/// them through a frosted glass effect. Falls back to the package's
-/// adaptive quality system automatically.
-///
-/// Use [GlassLayer] to control the rendering quality:
-/// - [GlassLayer.primary] for nav bars and modals (premium quality)
-/// - [GlassLayer.secondary] for dashboard cards (standard quality)
-/// - [GlassLayer.tertiary] for chips and badges (minimal quality)
-///
-/// During active scrolling the card automatically downgrades to
-/// [GlassLayer.tertiary] to avoid per-frame BackdropFilter cost, then
-/// restores the requested quality once scrolling stops.
+/// Flat surface card with a 1-px hairline border, replacing the previous
+/// liquid-glass implementation. Keeps the original constructor surface so
+/// the 46+ callers continue to compile; visual is now Forui-aligned (zinc
+/// surface + hairline border + 12-px radius).
 class LiquidGlassCard extends StatelessWidget {
   const LiquidGlassCard({
     super.key,
@@ -52,49 +32,31 @@ class LiquidGlassCard extends StatelessWidget {
   final double? borderRadius;
   final VoidCallback? onTap;
 
-  /// When `true`, the card captures its own backdrop and shader pass
-  /// instead of sharing them with sibling glass surfaces. Defaults to
-  /// `false`: the app installs an `AdaptiveLiquidGlassLayer` plus
-  /// `GlassBackdropScope` near the root, so all glass surfaces share a
-  /// single layer + framebuffer capture across the screen. Set to `true`
-  /// only for surfaces rendered outside any layer (rare).
+  /// Retained for binary compatibility with the glass-era API. No-op.
   final bool useOwnLayer;
-
-  lgw.GlassQuality _quality({required bool isScrolling}) {
-    // During scroll, always use minimal quality to avoid GPU blur cost.
-    if (isScrolling && layer != GlassLayer.tertiary) {
-      return lgw.GlassQuality.minimal;
-    }
-    return switch (layer) {
-      GlassLayer.primary => lgw.GlassQuality.premium,
-      // Dashboard cards default to minimal — README's "shader-dense
-      // screens" recommendation. Promote a hero card to GlassLayer.primary
-      // when the refraction shader is visually load-bearing.
-      GlassLayer.secondary => lgw.GlassQuality.minimal,
-      GlassLayer.tertiary => lgw.GlassQuality.minimal,
-    };
-  }
 
   @override
   Widget build(BuildContext context) {
-    final radius = borderRadius ?? 16;
-    final isScrolling = ScrollingScope.of(context);
-    Widget card = RepaintBoundary(
-      child: lgw.GlassContainer(
-        useOwnLayer: useOwnLayer,
-        quality: _quality(isScrolling: isScrolling),
-        padding: padding,
-        margin: margin,
-        shape: lgw.LiquidRoundedSuperellipse(borderRadius: radius),
-        clipBehavior: Clip.antiAlias,
-        child: child,
+    final tokens = GlassTokens.of(context);
+    final radius = borderRadius ?? tokens.borderRadius;
+    final shape = BorderRadius.circular(radius);
+
+    Widget card = Container(
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: tokens.surfaceColor,
+        borderRadius: shape,
+        border: Border.all(color: tokens.hairlineColor, width: 1),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
     );
 
     if (onTap != null) {
       card = AppInkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: shape,
         child: card,
       );
     }

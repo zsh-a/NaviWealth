@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../tokens/radius_tokens.dart';
 
-/// Show a modal bottom sheet with iOS 26 Liquid Glass rendering.
+/// Flat-styled modal bottom sheet (post-glass migration).
 ///
-/// Functionally identical to [showModalBottomSheet] — same generic return,
-/// same builder contract — except the resulting sheet is wrapped in a
-/// [lgw.GlassContainer] with premium quality for the full shader pipeline.
-///
-/// Top corners use [Radii.brXl] (20-px) to match the rest of the design
-/// system's "tray" tier; bottom corners are square so the sheet still
-/// snaps cleanly to the screen edge.
+/// Same call signature as `showModalBottomSheet` so existing call sites
+/// (31 of them across the app) continue to compile. The previous
+/// implementation wrapped the content in a glass shader; this version
+/// renders a plain rounded surface using the active theme.
 Future<T?> showGlassModalBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -24,6 +20,7 @@ Future<T?> showGlassModalBottomSheet<T>({
   Color? barrierColor,
   RouteSettings? routeSettings,
 }) {
+  final scheme = Theme.of(context).colorScheme;
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
@@ -33,7 +30,7 @@ Future<T?> showGlassModalBottomSheet<T>({
     enableDrag: enableDrag,
     useRootNavigator: useRootNavigator,
     barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.5),
-    backgroundColor: Colors.transparent,
+    backgroundColor: scheme.surface,
     elevation: 0,
     routeSettings: routeSettings,
     shape: const RoundedRectangleBorder(
@@ -42,11 +39,6 @@ Future<T?> showGlassModalBottomSheet<T>({
         topRight: Radii.rXl,
       ),
     ),
-    builder: (ctx) => lgw.GlassContainer(
-      quality: lgw.GlassQuality.premium,
-      shape: const lgw.LiquidRoundedRectangle(borderRadius: 20),
-      clipBehavior: Clip.antiAlias,
-      child: builder(ctx),
-    ),
+    builder: builder,
   );
 }
