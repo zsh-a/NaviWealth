@@ -1,0 +1,274 @@
+//! Top-level [`ContextPack`] and its components.
+//!
+//! Money-shaped values ride as `String` decimal in **minor units** of
+//! the relevant currency. Strings preserve exact precision across the
+//! Rust ↔ Dart boundary; `f64` is only used for unitless ratios
+//! (`progress_fraction`, `score`, `years_remaining_estimate`).
+
+use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ContextPackVersion {
+    pub major: u32,
+    pub minor: u32,
+}
+
+pub const CURRENT_CONTEXT_PACK_VERSION: ContextPackVersion =
+    ContextPackVersion { major: 1, minor: 0 };
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum BudgetTier {
+    Small,
+    Standard,
+    Large,
+}
+
+impl BudgetTier {
+    /// Hard JSON byte cap. The planner refuses to admit a pack whose
+    /// serialized form exceeds this — code-level, not prompt-level.
+    pub const fn byte_cap(self) -> usize {
+        match self {
+            Self::Small => 4 * 1024,
+            Self::Standard => 16 * 1024,
+            Self::Large => 64 * 1024,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PrivacyBudget {
+    pub tier: BudgetTier,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum AnonymizationLevel {
+    None,
+    Bucket,
+    Hash,
+    Redact,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Capability {
+    Classify,
+    Search,
+    Summarize,
+    Plan,
+    Analyze,
+    Write,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RiskLevel {
+    Info,
+    Suggest,
+    Propose,
+    Commit,
+}
+
+/// See `apps/mobile/lib/core/ai/contracts/intent.dart`. `null` for
+/// read-only intents; required for `Capability::Write`.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SideEffectScope {
+    Local,
+    CrossCutting,
+    External,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct IntentHint {
+    pub capability: Capability,
+    pub risk: RiskLevel,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub side_effect: Option<SideEffectScope>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RiskPreference {
+    Conservative,
+    Moderate,
+    Aggressive,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum CashflowTrend {
+    Improving,
+    Stable,
+    Worsening,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AccountSummary {
+    pub total_count: u32,
+    /// Bucket count by coarse account kind. `BTreeMap` rather than
+    /// `HashMap` so JSON output is order-stable for goldens.
+    pub by_kind: BTreeMap<String, u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CashflowSummary {
+    pub base_currency: String,
+    pub months_covered: u32,
+    pub average_inflow_minor: String,
+    pub average_outflow_minor: String,
+    pub trend: CashflowTrend,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FireGoalSummary {
+    pub target_minor: String,
+    pub currency: String,
+    pub progress_fraction: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub years_remaining_estimate: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BaseContext {
+    pub preferred_currency: String,
+    pub risk_preference: RiskPreference,
+    pub accounts: AccountSummary,
+    pub cashflow: CashflowSummary,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fire_goal: Option<FireGoalSummary>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RouteContext {
+    pub path: String,
+    pub area: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SignalKind {
+    SpendingSpike,
+    SubscriptionPriceUp,
+    RefundUnmatched,
+    DepositMaturing,
+    FireMilestone,
+    CashflowAnomaly,
+    Other,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SignalSeverity {
+    Info,
+    Warn,
+    Critical,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RecentSignal {
+    pub kind: SignalKind,
+    pub severity: SignalSeverity,
+    pub summary_zh: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail_ref: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SemanticHit {
+    pub source: String,
+    pub title: String,
+    pub excerpt: String,
+    pub score: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DateRange {
+    pub from_inclusive: String,
+    pub to_exclusive: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ScopedAggregate {
+    pub label: String,
+    pub amount_minor: String,
+    pub currency: String,
+    pub range: DateRange,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub row_count: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct TaskContext {
+    pub route: RouteContext,
+    pub intent: IntentHint,
+    #[serde(default)]
+    pub signals: Vec<RecentSignal>,
+    #[serde(default)]
+    pub retrieved: Vec<SemanticHit>,
+    #[serde(default)]
+    pub aggregates: Vec<ScopedAggregate>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ContextPack {
+    pub version: ContextPackVersion,
+    pub base: BaseContext,
+    pub task: TaskContext,
+    pub budget: PrivacyBudget,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ContextPackError {
+    #[error("context pack oversize: tier={tier:?}, actual={actual}, cap={cap}")]
+    Oversize {
+        tier: BudgetTier,
+        actual: usize,
+        cap: usize,
+    },
+    #[error("context pack version unsupported: client={client_major}.{client_minor}, server={server_major}.{server_minor}")]
+    VersionUnsupported {
+        client_major: u32,
+        client_minor: u32,
+        server_major: u32,
+        server_minor: u32,
+    },
+    #[error("context pack json error: {0}")]
+    Json(#[from] serde_json::Error),
+}
+
+impl ContextPack {
+    /// Major-version compatibility against the running server. Minor
+    /// mismatches are accepted (forward-compatible additive fields).
+    pub fn assert_version(&self, server: &ContextPackVersion) -> Result<(), ContextPackError> {
+        if self.version.major != server.major {
+            return Err(ContextPackError::VersionUnsupported {
+                client_major: self.version.major,
+                client_minor: self.version.minor,
+                server_major: server.major,
+                server_minor: server.minor,
+            });
+        }
+        Ok(())
+    }
+
+    /// Reject packs whose serialized JSON exceeds the budget cap.
+    pub fn assert_budget(&self) -> Result<(), ContextPackError> {
+        let bytes = serde_json::to_vec(self)?;
+        let cap = self.budget.tier.byte_cap();
+        if bytes.len() > cap {
+            return Err(ContextPackError::Oversize {
+                tier: self.budget.tier,
+                actual: bytes.len(),
+                cap,
+            });
+        }
+        Ok(())
+    }
+}

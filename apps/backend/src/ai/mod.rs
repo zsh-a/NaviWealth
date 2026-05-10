@@ -24,6 +24,10 @@
 //! `guardrails::SYSTEM_PROMPT`.
 
 pub mod anthropic;
+// Phase 1 contracts: types are defined ahead of consumers. The
+// allow lifts when the routes/policy/tools modules start using them.
+#[allow(dead_code, unused_imports)]
+pub mod context;
 pub mod guardrails;
 pub mod proposals;
 pub mod sse;
