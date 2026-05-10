@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -83,8 +84,7 @@ class PlanOverview extends ConsumerWidget {
         ];
 
         if (isWide) {
-          return ScrollNotificationHandler(
-            child: ListView(
+          return ListView(
               padding: padding,
               children: [
                 Row(
@@ -98,12 +98,10 @@ class PlanOverview extends ConsumerWidget {
                 const SizedBox(height: Spacing.s16),
                 cards[2],
               ],
-            ),
-          );
+            );
         }
 
-        return ScrollNotificationHandler(
-          child: ListView(
+        return ListView(
             padding: padding.copyWith(
               bottom:
                   padding.bottom +
@@ -116,8 +114,7 @@ class PlanOverview extends ConsumerWidget {
                 if (i < cards.length - 1) const SizedBox(height: Spacing.s12),
               ],
             ],
-          ),
-        );
+          );
       },
     );
   }
@@ -200,12 +197,14 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return LiquidGlassCard(
-      padding: EdgeInsets.zero,
-      onTap: onTap,
-      child: Padding(
-        padding: Spacing.card,
-        child: Row(
+    return FCard.raw(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: Spacing.card,
+            child: Row(
           children: [
             Container(
               width: 44,
@@ -247,6 +246,8 @@ class _PlanCard extends StatelessWidget {
               size: 20,
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

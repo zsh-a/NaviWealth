@@ -182,7 +182,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showGlassModalBottomSheet<bool>(
+    final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),
@@ -288,17 +288,18 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
-                  AppDropdown<AccountType>(
-                    label: l10n.accountFormTypeLabel,
-                    value: _type,
-                    items: [
+                  DropdownButtonFormField<AccountType>(
+  isExpanded: true,
+                    initialValue: _type,
+  decoration: InputDecoration(labelText: l10n.accountFormTypeLabel),
+  items: [
                       for (final t in AccountType.values)
                         DropdownMenuItem(
                           value: t,
                           child: Text(accountTypeLabel(l10n, t)),
                         ),
                     ],
-                    onChanged: (v) {
+  onChanged: (v) {
                       if (v == null) return;
                       setState(() {
                         _type = v;
@@ -307,27 +308,27 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         }
                       });
                     },
-                  ),
+),
                   const SizedBox(height: Spacing.s12),
-                  AppDropdown<AccountCategory>(
-                    label: l10n.accountFormCategoryLabel,
-                    value: _category,
-                    helperText: l10n.accountFormCategoryHelper,
-                    items: [
+                  DropdownButtonFormField<AccountCategory>(
+  isExpanded: true,
+                    initialValue: _category,
+  decoration: InputDecoration(labelText: l10n.accountFormCategoryLabel, helperText: l10n.accountFormCategoryHelper),
+  items: [
                       for (final c in AccountCategory.values)
                         DropdownMenuItem(
                           value: c,
                           child: Text(accountCategoryLabel(l10n, c)),
                         ),
                     ],
-                    onChanged: (v) {
+  onChanged: (v) {
                       if (v == null) return;
                       setState(() {
                         _category = v;
                         _categoryUserPicked = true;
                       });
                     },
-                  ),
+),
                   const SizedBox(height: Spacing.s12),
                   TextFormField(
                     controller: _nameController,

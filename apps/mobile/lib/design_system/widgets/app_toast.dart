@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../theme/semantic_colors.dart';
-import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 
@@ -207,9 +206,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top + Spacing.s16;
-    final tokens = GlassTokens.of(context);
     final accent = _accentColor(context);
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return Positioned(
       top: topPadding,
@@ -226,8 +225,11 @@ class _ToastWidgetState extends State<_ToastWidget>
               color: Colors.transparent,
               child: Container(
                 decoration: BoxDecoration(
-                  color: tokens.surfaceColor,
-                  border: Border.all(color: tokens.hairlineColor, width: 1),
+                  color: scheme.surface,
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 clipBehavior: Clip.antiAlias,

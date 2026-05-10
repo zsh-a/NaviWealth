@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/master_detail_layout.dart';
@@ -194,8 +195,7 @@ class _AccountsByType extends StatelessWidget {
         .where((t) => grouped.containsKey(t))
         .toList(growable: false);
 
-    return ScrollNotificationHandler(
-      child: ListView.builder(
+    return ListView.builder(
         padding: Spacing.pageMobile,
         itemCount: order.length,
         itemBuilder: (context, i) {
@@ -214,8 +214,7 @@ class _AccountsByType extends StatelessWidget {
                   style: theme.textTheme.titleMedium,
                 ),
               ),
-              LiquidGlassCard(
-                child: Column(
+              FCard.raw(child: Column(
                   children: [
                     for (final a in group)
                       _AccountTile(
@@ -224,14 +223,12 @@ class _AccountsByType extends StatelessWidget {
                         heroEnabled: !inMasterDetail,
                       ),
                   ],
-                ),
-              ),
+                )),
               const SizedBox(height: Spacing.s12),
             ],
           );
         },
-      ),
-    );
+      );
   }
 }
 

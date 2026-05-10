@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../design_system/design_system.dart';
@@ -59,10 +60,6 @@ class TertiaryRowSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: EdgeInsets.zero,
-      child: child,
-    );
+    return FCard.raw(child: child);
   }
 }

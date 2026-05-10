@@ -105,7 +105,7 @@ class _RangeChips extends ConsumerWidget {
           for (final preset in DashboardRangePreset.values)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.s8),
-              child: AppChoiceChip(
+              child: ChoiceChip(
                 label: Text(_rangeLabel(l10n, preset)),
                 selected: preset == selected,
                 onSelected: (_) => _select(context, ref, preset),

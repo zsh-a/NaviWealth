@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
@@ -72,7 +73,7 @@ class _RangeChips extends ConsumerWidget {
           for (final preset in ExpenseReportRangePreset.values)
             Padding(
               padding: const EdgeInsets.only(right: Spacing.s8),
-              child: AppChoiceChip(
+              child: ChoiceChip(
                 label: Text(_label(preset, l10n)),
                 selected: preset == selected,
                 onSelected: (_) => _select(context, ref, preset),
@@ -142,9 +143,10 @@ class _SummaryCard extends StatelessWidget {
     final avgDecimal = (report.total.amount / divisor).toDecimal(
       scaleOnInfinitePrecision: 2,
     );
-    return LiquidGlassCard(
-      padding: Spacing.cardHero,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.cardHero,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -204,7 +206,8 @@ class _SummaryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

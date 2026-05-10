@@ -172,13 +172,6 @@ Future<void> _drainTimers(WidgetTester tester) async {
 }
 
 void main() {
-  // Disable the SuperFab pulse animation globally to avoid pending timer
-  // assertions from the looping animation controller.
-  setUp(() {
-    SuperFab.disablePulseGlobally = true;
-    addTearDown(() => SuperFab.disablePulseGlobally = false);
-  });
-
   // Ignore rendering overflow errors from compact navigation at the smallest
   // test viewport.
   setUp(() {

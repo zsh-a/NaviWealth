@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
@@ -150,8 +151,7 @@ class _AggregateList extends StatelessWidget {
     if (rows.isEmpty) {
       return Center(child: Text(l10n.assetsEmptyHint));
     }
-    return ScrollNotificationHandler(
-      child: ListView.separated(
+    return ListView.separated(
         padding: Spacing.pageMobile.copyWith(
           top: Spacing.s8,
           bottom:
@@ -162,8 +162,7 @@ class _AggregateList extends StatelessWidget {
         itemCount: rows.length,
         separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
         itemBuilder: (context, index) => _AggregateTile(row: rows[index]),
-      ),
-    );
+      );
   }
 }
 
@@ -175,10 +174,7 @@ class _AggregateTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: EdgeInsets.zero,
-      child: ListTile(
+    return FCard.raw(child: ListTile(
         leading: Icon(row.icon),
         title: Text(row.title),
         subtitle: Text(row.subtitle),
@@ -186,8 +182,7 @@ class _AggregateTile extends StatelessWidget {
           formatter.compactCurrency(row.value, code: row.currency),
           style: Theme.of(context).textTheme.titleSmall,
         ),
-      ),
-    );
+      ));
   }
 }
 

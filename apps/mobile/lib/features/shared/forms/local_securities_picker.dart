@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/enums.dart';
 import '../../../data/securities_catalog/asset_search_hit.dart';
 import '../../../data/securities_catalog/securities_search_service.dart';
-import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'manual_security_sheet.dart';
@@ -162,7 +162,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
   }
 
   Future<void> _openManualSheet({String? prefillSymbol}) async {
-    final result = await showGlassModalBottomSheet<LocalSecurityChoice>(
+    final result = await showModalBottomSheet<LocalSecurityChoice>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => ManualSecuritySheet(prefillSymbol: prefillSymbol),
@@ -221,9 +221,10 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
           validator: (_) => _selected == null ? l10n.localSecuritiesValidationRequired : null,
         ),
         if (showDropdown)
-          LiquidGlassCard(
-            margin: const EdgeInsets.only(top: 4),
-            child: ConstrainedBox(
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: FCard.raw(
+              child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 320),
               child: ListView(
                 key: const Key('local-securities-picker-results'),
@@ -255,6 +256,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
                   ),
                 ],
               ),
+            ),
             ),
           ),
       ],

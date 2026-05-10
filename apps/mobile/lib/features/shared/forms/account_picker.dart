@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Drop-down picker over the user's existing accounts.
@@ -40,14 +39,14 @@ class AccountPicker extends StatelessWidget {
         ? accounts
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
     // Null out value if it doesn't exist in the filtered list to avoid
-    // AppDropdown assertion errors.
+    // DropdownButtonFormField assertion errors.
     final effectiveValue =
         filtered.any((a) => a.id == value) ? value : null;
-    return AppDropdown<String>(
-      label: label ?? l10n.formAccountPickerLabelDefault,
-      value: effectiveValue,
-      enabled: filtered.isNotEmpty,
-      items: [
+    return DropdownButtonFormField<String>(
+  isExpanded: true,
+                    initialValue: effectiveValue,
+  decoration: InputDecoration(labelText: label ?? l10n.formAccountPickerLabelDefault),
+  items: [
         for (final a in filtered)
           DropdownMenuItem(
             value: a.id,
@@ -57,9 +56,9 @@ class AccountPicker extends StatelessWidget {
             ),
           ),
       ],
-      onChanged: filtered.isEmpty ? null : onChanged,
-      validator: (v) =>
+  onChanged: filtered.isEmpty ? null : onChanged,
+  validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,
-    );
+);
   }
 }

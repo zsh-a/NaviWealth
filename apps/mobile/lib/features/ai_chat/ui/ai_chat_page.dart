@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../app/master_detail_layout.dart';
 import '../../../app/route_paths.dart';
@@ -449,7 +450,7 @@ class _EmptyConversation extends StatelessWidget {
                     style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: Spacing.s8),
-                  GlassSectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
+                  SectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
                   for (var i = 0; i < suggestions.length; i++) ...[
                     if (i > 0) const SizedBox(height: Spacing.s8),
                     _SuggestionTile(
@@ -484,14 +485,17 @@ class _SuggestionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s12,
-      ),
-      child: Row(
+    return FCard.raw(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.s16,
+              vertical: Spacing.s12,
+            ),
+            child: Row(
         children: [
           Container(
             width: 32,
@@ -515,6 +519,9 @@ class _SuggestionTile extends StatelessWidget {
             color: cs.onSurfaceVariant,
           ),
         ],
+      ),
+          ),
+        ),
       ),
     );
   }

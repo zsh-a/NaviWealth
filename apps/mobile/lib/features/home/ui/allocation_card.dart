@@ -169,7 +169,7 @@ class AllocationCard extends StatelessWidget {
       onSliceTap!(context, alloc);
       return;
     }
-    showGlassModalBottomSheet<void>(
+    showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,

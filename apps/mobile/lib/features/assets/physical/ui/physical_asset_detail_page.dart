@@ -63,7 +63,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     String assetId,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showGlassModalBottomSheet<bool>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),
@@ -123,7 +123,8 @@ class _DetailBody extends ConsumerWidget {
     return ListView(
       padding: Spacing.pageMobile,
       children: [
-        LiquidGlassCard(
+        FCard.raw(
+        child: Padding(
           padding: Spacing.cardHero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,10 +171,12 @@ class _DetailBody extends ConsumerWidget {
             ],
           ),
         ),
+      ),
         const SizedBox(height: Spacing.s12),
         _FactsCard(asset: asset, dateFormat: dateFormat),
         const SizedBox(height: Spacing.s12),
-        LiquidGlassCard(
+        FCard.raw(
+        child: Padding(
           padding: Spacing.card,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,6 +215,7 @@ class _DetailBody extends ConsumerWidget {
             ],
           ),
         ),
+      ),
       ],
     );
   }
@@ -291,9 +295,10 @@ class _FactsCard extends StatelessWidget {
           asset.linkedLiabilityId!.isNotEmpty)
         (l10n.physicalAssetFieldLinkedLiability, asset.linkedLiabilityId!),
     ];
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final (label, value) in entries) ...[
@@ -326,7 +331,8 @@ class _FactsCard extends StatelessWidget {
           ],
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

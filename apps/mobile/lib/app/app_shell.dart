@@ -167,7 +167,7 @@ class _MobileShell extends StatelessWidget {
         platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
     final scheme = Theme.of(context).colorScheme;
-    final tokens = GlassTokens.of(context);
+    final hairline = scheme.outlineVariant.withValues(alpha: 0.5);
 
     return Stack(
       children: [
@@ -190,7 +190,7 @@ class _MobileShell extends StatelessWidget {
               decoration: BoxDecoration(
                 color: scheme.surface,
                 border: Border(
-                  top: BorderSide(color: tokens.hairlineColor, width: 1),
+                  top: BorderSide(color: hairline, width: 1),
                 ),
               ),
               child: NavigationBar(
@@ -220,7 +220,7 @@ class _MobileShell extends StatelessWidget {
           bottom: sysBottom + barHeight + Spacing.s16,
           child: Material(
             type: MaterialType.transparency,
-            child: AppFab(
+            child: FloatingActionButton(
               tooltip: AppLocalizations.of(context).assetsAddAction,
               onPressed: () => showGlobalActionPanel(context),
               child: const Icon(Icons.add),
@@ -247,7 +247,8 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = GlassTokens.of(context);
+    final hairline =
+        Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5);
     return Scaffold(
       body: SafeArea(
         child: Row(
@@ -255,7 +256,7 @@ class _TabletShell extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 border: Border(
-                  right: BorderSide(color: tokens.hairlineColor, width: 1),
+                  right: BorderSide(color: hairline, width: 1),
                 ),
               ),
               child: NavigationRail(
@@ -296,7 +297,7 @@ class _DesktopShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Width capping is delegated to `PageScaffold`: single-pane pages
+    // Width capping is delegated to feature pages: single-pane pages
     // center their content at `Spacing.contentMaxWidth`, master-detail
     // pages (Accounts / Assets / AI Chat) intentionally fill the full
     // remaining width to give the splitter room to breathe.
@@ -340,7 +341,7 @@ class _GlobalActionHost extends StatelessWidget {
           bottom: Spacing.s24,
           child: Material(
             type: MaterialType.transparency,
-            child: AppFab(
+            child: FloatingActionButton(
               tooltip: AppLocalizations.of(context).assetsAddAction,
               onPressed: () => showGlobalActionPanel(context),
               child: const Icon(Icons.add),

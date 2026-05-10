@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/domain/asset.dart';
@@ -63,9 +64,10 @@ class AssetPnLCard extends ConsumerWidget {
         ? null
         : dailyChangeFromHistory(historyAsync, snap.quantity);
 
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.assetDetailPnLTitle, style: theme.textTheme.titleSmall),
@@ -122,7 +124,8 @@ class AssetPnLCard extends ConsumerWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 
   static String _formatBaseAmount(Decimal amount) {

@@ -12,7 +12,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
   const ActivityFeedFilterSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showGlassModalBottomSheet<void>(
+    return showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
@@ -49,7 +49,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: Spacing.s12),
-            GlassSectionHeader(title: l10n.activityFeedFilterKind),
+            SectionHeader(title: l10n.activityFeedFilterKind),
             Wrap(
               spacing: Spacing.s8,
               runSpacing: Spacing.s8,
@@ -69,7 +69,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: Spacing.s16),
-            GlassSectionHeader(title: l10n.activityFeedFilterAccount),
+            SectionHeader(title: l10n.activityFeedFilterAccount),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 240),
               child: ListView(

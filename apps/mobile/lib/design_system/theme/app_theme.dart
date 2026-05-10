@@ -216,8 +216,19 @@ class AppTheme {
       dialogTheme: const DialogThemeData(
         surfaceTintColor: Colors.transparent,
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
+      bottomSheetTheme: BottomSheetThemeData(
         surfaceTintColor: Colors.transparent,
+        backgroundColor: scheme.surface,
+        elevation: 0,
+        modalBackgroundColor: scheme.surface,
+        modalElevation: 0,
+        modalBarrierColor: Colors.black.withValues(alpha: 0.5),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radii.rXl,
+            topRight: Radii.rXl,
+          ),
+        ),
       ),
       navigationRailTheme: const NavigationRailThemeData(
         selectedLabelTextStyle: TextStyle(

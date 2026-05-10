@@ -77,12 +77,11 @@ class AccountTreePicker extends StatelessWidget {
     final entries = _buildEntries();
     final effectiveValue =
         entries.any((e) => e.account.id == value) ? value : null;
-    return AppDropdown<String>(
-      label: label ?? 'Account',
-      value: effectiveValue,
-      helperText: helperText,
-      enabled: entries.isNotEmpty,
-      items: entries.map((e) {
+    return DropdownButtonFormField<String>(
+  isExpanded: true,
+                    initialValue: effectiveValue,
+  decoration: InputDecoration(labelText: label ?? 'Account', helperText: helperText),
+  items: entries.map((e) {
         final iconData = resolveAccountIcon(e.account.icon);
         final iconColor = _parseHexColor(e.account.color);
         final prefix = e.account.parentId == null ? '• ' : '› ';
@@ -115,9 +114,9 @@ class AccountTreePicker extends StatelessWidget {
           ),
         );
       }).toList(),
-      onChanged: entries.isEmpty ? null : onChanged,
-      validator: validator,
-    );
+  onChanged: entries.isEmpty ? null : onChanged,
+  validator: validator,
+);
   }
 
   List<_PickerEntry> _buildEntries() {

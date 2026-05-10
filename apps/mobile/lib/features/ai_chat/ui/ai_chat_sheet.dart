@@ -28,7 +28,7 @@ Future<void> showAiChatSheet(BuildContext context, {String? prefill}) {
 }
 
 Future<void> _showMobileSheet(BuildContext context, {String? prefill}) {
-  return showGlassModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     builder: (_) => _SheetSized(child: AiChatSheetBody(prefill: prefill)),
@@ -133,7 +133,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
             decoration: BoxDecoration(
               borderRadius: Radii.brXl,
               border: Border.all(
-                color: GlassTokens.of(context).hairlineColor,
+                color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
                 width: 1,
               ),
               boxShadow: AppElevations.of(context).level3,

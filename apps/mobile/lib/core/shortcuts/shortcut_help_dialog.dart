@@ -10,7 +10,7 @@ import 'shortcut_bindings.dart';
 Future<void> showShortcutHelpDialog(BuildContext context) {
   if (_isOpen) return Future<void>.value();
   _isOpen = true;
-  return showGlassModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     builder: (BuildContext ctx) => const _ShortcutHelpSheet(),

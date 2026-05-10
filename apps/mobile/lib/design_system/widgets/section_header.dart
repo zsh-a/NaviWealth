@@ -3,14 +3,9 @@ import 'package:flutter/material.dart';
 import '../tokens/spacing_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
-/// Accent-colored section header (Apple News style).
-///
-/// Replaces the various `_SectionHeader` implementations across pages
-/// with a single design-system widget. The title defaults to the theme's
-/// primary color; pass [titleColor] to override (e.g. `ColorPalette.red500`
-/// for a danger section).
-class GlassSectionHeader extends StatelessWidget {
-  const GlassSectionHeader({
+/// Accent-coloured section header used above grouped cards / lists.
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({
     super.key,
     required this.title,
     this.subtitle,

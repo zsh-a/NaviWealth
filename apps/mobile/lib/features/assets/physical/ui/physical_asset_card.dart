@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/route_paths.dart';
@@ -16,13 +17,17 @@ class PhysicalAssetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      onTap: () => context.goNamed(
-        AppRouteNames.physicalAssetDetail,
-        pathParameters: {'id': asset.id},
-      ),
-      child: Row(
+    return FCard.raw(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.goNamed(
+            AppRouteNames.physicalAssetDetail,
+            pathParameters: {'id': asset.id},
+          ),
+          child: Padding(
+            padding: Spacing.card,
+            child: Row(
         children: [
           Icon(_iconForType(asset.type), color: theme.colorScheme.primary),
           const SizedBox(width: Spacing.s12),
@@ -55,6 +60,9 @@ class PhysicalAssetCard extends StatelessWidget {
             style: theme.textTheme.titleMedium,
           ),
         ],
+      ),
+          ),
+        ),
       ),
     );
   }

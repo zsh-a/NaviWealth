@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/haptics/haptics.dart';
@@ -78,7 +79,7 @@ class ExpenseFiltersBar extends StatelessWidget {
                       onChanged(filters.copyWith(expenseAccountId: null)),
                   onPick: () async {
                     final expenseAccounts = expenseAccountById.values.toList();
-                    final picked = await showGlassModalBottomSheet<String?>(
+                    final picked = await showModalBottomSheet<String?>(
                       context: context,
                       builder: (ctx) => SafeArea(
                         child: ListView(
@@ -123,11 +124,10 @@ class _GroupingChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      borderRadius: Radii.lg.toDouble(),
-      padding: const EdgeInsets.all(Spacing.s4),
-      child: Row(
+    return FCard.raw(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.s4),
+        child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final g in ExpenseGrouping.values)
@@ -142,6 +142,7 @@ class _GroupingChips extends StatelessWidget {
               },
             ),
         ],
+      ),
       ),
     );
   }
@@ -241,8 +242,7 @@ class ExpenseGroupedList extends StatelessWidget {
       items.add(const _ExpenseListDivider());
     }
 
-    return ScrollNotificationHandler(
-      child: ListView.builder(
+    return ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
         itemCount: items.length,
         itemBuilder: (context, i) {
@@ -280,8 +280,7 @@ class ExpenseGroupedList extends StatelessWidget {
             _ExpenseListDivider() => const Divider(height: 0),
           };
         },
-      ),
-    );
+      );
   }
 }
 

@@ -35,8 +35,9 @@ void main() {
         MarketColorMode.colorblind,
         brightness: Brightness.light,
       );
-      expect(cb.up, ColorPalette.cbBlue);
-      expect(cb.down, ColorPalette.cbOrange);
+      // Wong colorblind palette: blue up, orange down.
+      expect(cb.up, const Color(0xFF2271B3));
+      expect(cb.down, const Color(0xFFE69F00));
     });
 
     test('Dark variants differ from light variants', () {

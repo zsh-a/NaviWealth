@@ -89,7 +89,7 @@ class _ChatComposerState extends State<ChatComposer> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: GlassTokens.of(context).hairlineColor),
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)),
         ),
       ),
       child: Padding(

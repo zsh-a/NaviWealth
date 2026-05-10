@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/domain/asset.dart';
@@ -50,15 +51,17 @@ class AssetDetailErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Text(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Text(
         message,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.error,
         ),
       ),
-    );
+        ),
+      );
   }
 }
 

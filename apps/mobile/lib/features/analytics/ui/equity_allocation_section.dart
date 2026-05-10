@@ -30,7 +30,7 @@ class AnalyticsEquityColumn extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GlassSectionHeader(
+        SectionHeader(
           title: l10n.analyticsEquityTitle,
           subtitle: l10n.analyticsEquitySubtitle,
         ),
@@ -112,9 +112,7 @@ class EquityAllocationContent extends ConsumerWidget {
         if (view.unclassifiedCount > 0)
           _UnclassifiedBanner(count: view.unclassifiedCount),
         if (view.unclassifiedCount > 0) const SizedBox(height: Spacing.s12),
-        LiquidGlassCard(
-          layer: GlassLayer.tertiary,
-          padding: EdgeInsets.zero,
+        FCard.raw(
           child: Column(
             children: [
               for (final bucket in view.buckets)
@@ -138,7 +136,7 @@ class EquityAllocationContent extends ConsumerWidget {
     EquityAllocationBucket bucket,
     String baseCurrency,
   ) {
-    showGlassModalBottomSheet<void>(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -251,20 +249,21 @@ class _UnclassifiedBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: const EdgeInsets.symmetric(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
         horizontal: Spacing.s12,
         vertical: Spacing.s12,
       ),
-      child: Row(
+          child: Row(
         children: [
           Icon(Icons.warning_amber_outlined, color: theme.colorScheme.tertiary),
           const SizedBox(width: Spacing.s8),
           Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
         ],
       ),
-    );
+        ),
+      );
   }
 }
 

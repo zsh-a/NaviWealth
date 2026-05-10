@@ -120,7 +120,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   runSpacing: Spacing.s4,
                   children: [
                     for (final jump in jumps)
-                      AppChoiceChip(
+                      ChoiceChip(
                         avatar: Icon(jump.icon, size: 16),
                         label: Text(jump.label),
                         selected: false,

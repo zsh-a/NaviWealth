@@ -281,17 +281,17 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
             // Asset picker.
-            AppDropdown<CorporateActionAsset>(
-              key: const Key('corp-action-asset'),
-              label: l10n.corpActionSelectAsset,
-              value: asset,
-              helperText: l10n.corpActionSelectAssetHint,
-              items: [
+            DropdownButtonFormField<CorporateActionAsset>(
+  isExpanded: true,
+                    key: const Key('corp-action-asset'),
+  initialValue: asset,
+  decoration: InputDecoration(labelText: l10n.corpActionSelectAsset, helperText: l10n.corpActionSelectAssetHint),
+  items: [
                 for (final a in widget.assets)
                   DropdownMenuItem(value: a, child: Text(a.displayName)),
               ],
-              onChanged: _onAssetChanged,
-            ),
+  onChanged: _onAssetChanged,
+),
             const SizedBox(height: 16),
             // Effective date row.
             ListTile(
@@ -337,19 +337,25 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             ),
             if (_previewError != null) ...[
               const SizedBox(height: 16),
-              LiquidGlassCard(
-                padding: const EdgeInsets.all(12),
-                child: Text(
+              FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
                   _previewError!,
                   style: TextStyle(
                     color: theme.colorScheme.onErrorContainer,
                   ),
                 ),
-              ),
+        ),
+      ),
             ],
             if (_preview != null) ...[
               const SizedBox(height: 16),
-              _PreviewCard(preview: _preview!, l10n: l10n),
+              _PreviewCard(
+                key: const Key('corp-action-preview-card'),
+                preview: _preview!,
+                l10n: l10n,
+              ),
             ],
           ],
           ),
@@ -540,7 +546,7 @@ class _TypeSelector extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final (type, label) in entries)
-          AppChoiceChip(
+          ChoiceChip(
             key: Key('corp-action-type-${type.name}'),
             label: Text(label),
             selected: selected == type,
@@ -552,7 +558,11 @@ class _TypeSelector extends StatelessWidget {
 }
 
 class _PreviewCard extends StatelessWidget {
-  const _PreviewCard({required this.preview, required this.l10n});
+  const _PreviewCard({
+    super.key,
+    required this.preview,
+    required this.l10n,
+  });
 
   final CorporateActionPreview preview;
   final AppLocalizations l10n;
@@ -561,10 +571,10 @@ class _PreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dividend = preview.cashDividend;
-    return LiquidGlassCard(
-      key: const Key('corp-action-preview-card'),
-      padding: const EdgeInsets.all(16),
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -618,7 +628,8 @@ class _PreviewCard extends StatelessWidget {
             ),
         ],
       ),
-    );
+        ),
+      );
   }
 
   Widget _kv(String label, String value) => Padding(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// ISO-4217 codes the app surfaces in the picker by default.
@@ -61,7 +60,7 @@ String currencyDisplayLabel(AppLocalizations l10n, String code) {
 
 /// Form-friendly currency dropdown.
 ///
-/// Backed by [AppDropdown] so it composes with [Form] +
+/// Backed by [DropdownButtonFormField] so it composes with [Form] +
 /// [Form.validate] the same way the other shared widgets do.
 class CurrencyPicker extends StatelessWidget {
   const CurrencyPicker({
@@ -87,20 +86,20 @@ class CurrencyPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AppDropdown<String>(
-      label: label ?? l10n.formCurrencyPickerLabelDefault,
-      value: value,
-      enabled: enabled,
-      items: [
+    return DropdownButtonFormField<String>(
+  isExpanded: true,
+                    initialValue: value,
+  decoration: InputDecoration(labelText: label ?? l10n.formCurrencyPickerLabelDefault),
+  items: [
         for (final code in options)
           DropdownMenuItem(
             value: code,
             child: Text(currencyDisplayLabel(l10n, code)),
           ),
       ],
-      onChanged: enabled ? onChanged : null,
-      validator: (v) =>
+  onChanged: enabled ? onChanged : null,
+  validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formCurrencyPickerRequired : null,
-    );
+);
   }
 }

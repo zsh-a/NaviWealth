@@ -183,7 +183,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showGlassModalBottomSheet<bool>(
+    final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(Spacing.s16),
@@ -382,9 +382,7 @@ class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      child: ListTile(
+    return FCard.raw(child: ListTile(
         leading: Icon(
           Icons.warning_amber_outlined,
           color: Theme.of(context).colorScheme.error,
@@ -396,7 +394,6 @@ class _NoAccountsHint extends StatelessWidget {
           onPress: () => GoRouter.of(context).go(AppRoutes.accountNew),
           child: Text(l10n.expenseFormNoAccountsCta),
         ),
-      ),
-    );
+      ));
   }
 }

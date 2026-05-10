@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/asset.dart';
 import '../../../design_system/design_system.dart';
@@ -13,9 +14,10 @@ class AssetSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return LiquidGlassCard(
-      padding: Spacing.card,
-      child: Column(
+    return FCard.raw(
+        child: Padding(
+          padding: Spacing.card,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(asset.symbol, style: theme.textTheme.titleMedium),
@@ -32,6 +34,7 @@ class AssetSummaryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+        ),
+      );
   }
 }

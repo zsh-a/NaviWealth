@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 
@@ -25,14 +26,17 @@ class InsightChip extends StatelessWidget {
     final theme = Theme.of(context);
     final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
 
-    return LiquidGlassCard(
-      layer: GlassLayer.tertiary,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s12,
-        vertical: Spacing.s8,
-      ),
-      onTap: onTap,
-      child: Row(
+    return FCard.raw(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.s12,
+              vertical: Spacing.s8,
+            ),
+            child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: effectiveIconColor),
@@ -70,6 +74,9 @@ class InsightChip extends StatelessWidget {
             ),
           ],
         ],
+      ),
+          ),
+        ),
       ),
     );
   }
