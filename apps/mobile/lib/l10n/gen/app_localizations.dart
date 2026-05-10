@@ -368,17 +368,53 @@ abstract class AppLocalizations {
   /// **'Liabilities'**
   String get portfolioLiabilitiesTab;
 
-  /// Title of the global '+' action sheet
+  /// Title of the Activity-page '+' action sheet — only flow entries (expense/trade/transfer/convert)
   ///
   /// In en, this message translates to:
-  /// **'Quick add'**
-  String get globalActionPanelTitle;
+  /// **'Record activity'**
+  String get activityActionsTitle;
 
-  /// Title of the Asset action sheet (sub-panel of the global +)
+  /// Affordance under Expense in the Activity actions sheet
   ///
   /// In en, this message translates to:
-  /// **'Add asset'**
-  String get assetsAddSheetTitle;
+  /// **'Cash out for goods or services'**
+  String get activityActionExpenseHint;
+
+  /// Affordance under Trade in the Activity actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Buy or sell a security'**
+  String get activityActionTradeHint;
+
+  /// Affordance under Transfer in the Activity actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Move funds between two accounts'**
+  String get activityActionTransferHint;
+
+  /// Affordance under Convert in the Activity actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange currency inside one account'**
+  String get activityActionConvertHint;
+
+  /// Title of the Accounts-page '+' action sheet — only structural creation (account/asset/liability)
+  ///
+  /// In en, this message translates to:
+  /// **'Add wealth container'**
+  String get accountsActionsTitle;
+
+  /// Affordance under New account in the Accounts actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Bank, brokerage or crypto account'**
+  String get accountsActionAccountHint;
+
+  /// Affordance under New liability in the Accounts actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Mortgage, loan or credit balance'**
+  String get accountsActionLiabilityHint;
 
   /// No description provided for @superFabTrade.
   ///
@@ -6189,6 +6225,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account'**
   String get activityFeedFilterAccount;
+
+  /// Empty state under the account multi-select when the user has no accounts
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts yet — add one from the Accounts tab.'**
+  String get activityFeedFilterAccountEmpty;
+
+  /// Activity feed filter date range section header
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get activityFeedFilterDateRange;
+
+  /// Date range pill — current week (Mon → today)
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get activityFeedFilterRangeThisWeek;
+
+  /// Date range pill — current calendar month
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get activityFeedFilterRangeThisMonth;
+
+  /// Date range pill — previous calendar month
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get activityFeedFilterRangeLastMonth;
+
+  /// Date range pill — current calendar year
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get activityFeedFilterRangeThisYear;
+
+  /// Date range pill that opens the platform date range picker
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get activityFeedFilterRangeCustom;
 
   /// Activity feed filter date shortcut
   ///

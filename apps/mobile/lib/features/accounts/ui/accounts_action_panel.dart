@@ -3,70 +3,75 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/domain/enums.dart';
-import '../design_system/design_system.dart';
-import '../features/assets/physical/ui/physical_asset_create_sheet.dart';
-import '../l10n/gen/app_localizations.dart';
-import 'route_paths.dart';
+import '../../../app/route_paths.dart';
+import '../../../data/domain/enums.dart';
+import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../assets/physical/ui/physical_asset_create_sheet.dart';
 
-/// Global "+" action panel — surfaced from every page-level header.
-/// Routes through [showAppSheet] so the chrome (drag handle, title row,
-/// padding) matches every other modal sheet in the app.
-Future<void> showGlobalActionPanel(BuildContext context) {
+/// Accounts-scoped quick-add panel.
+///
+/// Surfaced from the Accounts hub's "+" header action. Lists only the
+/// **structural** entries — anything that creates a new wealth
+/// container or asset / liability instance. Activities (record an
+/// expense, log a trade, transfer cash) live on the Activity page's
+/// action panel instead, so this menu reads as "what kind of thing am
+/// I adding to my net worth?".
+Future<void> showAccountsActionPanel(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
     context: context,
-    title: l10n.globalActionPanelTitle,
+    title: l10n.accountsActionsTitle,
     builder: (sheetContext) => Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SheetTile(
-          icon: Icons.add_card_outlined,
-          title: l10n.superFabExpense,
-          onTap: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.expenseNew),
-        ),
-        _SheetTile(
-          icon: Icons.add_chart_outlined,
-          title: l10n.superFabTrade,
-          onTap: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.tradeEntry),
-        ),
-        _SheetTile(
-          icon: Icons.account_balance_wallet_outlined,
-          title: l10n.superFabAsset,
-          onTap: () {
-            Navigator.of(sheetContext).pop();
-            showAssetActionPanel(context);
-          },
-        ),
-        _SheetTile(
-          icon: Icons.swap_horiz,
-          title: l10n.superFabTransfer,
-          subtitle: l10n.superFabTransferSubtitle,
-          onTap: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.transfer),
-        ),
-        _SheetTile(
-          icon: Icons.currency_exchange,
-          title: l10n.superFabConvert,
-          subtitle: l10n.superFabConvertSubtitle,
-          onTap: () => _closeAndPush(
-            sheetContext,
-            context,
-            '${AppRoutes.transfer}?convert=1',
-          ),
-        ),
-        _SheetTile(
-          icon: Icons.add_card_outlined,
+        _ActionTile(
+          icon: Icons.account_balance_outlined,
           title: l10n.accountFormCreateTitle,
+          subtitle: l10n.accountsActionAccountHint,
           onTap: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountListNew),
         ),
-        _SheetTile(
+        _ActionTile(
+          icon: Icons.account_balance_wallet_outlined,
+          title: l10n.assetsAddCashTitle,
+          subtitle: l10n.assetsAddCashSubtitle,
+          onTap: () =>
+              _closeAndPush(sheetContext, context, AppRoutes.accountNewCash),
+        ),
+        _ActionTile(
+          icon: Icons.savings_outlined,
+          title: l10n.assetsAddDepositTitle,
+          subtitle: l10n.assetsAddDepositSubtitle,
+          onTap: () =>
+              _closeAndPush(sheetContext, context, AppRoutes.accountNewDeposit),
+        ),
+        _ActionTile(
+          icon: Icons.auto_graph_outlined,
+          title: l10n.assetsAddWealthTitle,
+          subtitle: l10n.assetsAddWealthSubtitle,
+          onTap: () =>
+              _closeAndPush(sheetContext, context, AppRoutes.accountNewWealth),
+        ),
+        _ActionTile(
+          icon: Icons.home_outlined,
+          title: l10n.physicalAssetAddRealEstate,
+          subtitle: l10n.assetsAddRealEstateSubtitle,
+          onTap: () =>
+              _closeAndOpenPhysical(sheetContext, context, AssetType.realEstate),
+        ),
+        _ActionTile(
+          icon: Icons.directions_car_outlined,
+          title: l10n.physicalAssetAddVehicle,
+          subtitle: l10n.assetsAddVehicleSubtitle,
+          onTap: () =>
+              _closeAndOpenPhysical(sheetContext, context, AssetType.vehicle),
+        ),
+        _ActionTile(
           icon: Icons.payments_outlined,
           title: l10n.superFabLiability,
+          subtitle: l10n.accountsActionLiabilityHint,
           onTap: () =>
               _closeAndPush(sheetContext, context, AppRoutes.liabilityNew),
         ),
@@ -75,69 +80,17 @@ Future<void> showGlobalActionPanel(BuildContext context) {
   );
 }
 
-Future<void> showAssetActionPanel(BuildContext context) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<void>(
-    context: context,
-    title: l10n.assetsAddSheetTitle,
-    builder: (sheetContext) => Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SheetTile(
-          icon: Icons.account_balance_wallet_outlined,
-          title: l10n.assetsAddCashTitle,
-          subtitle: l10n.assetsAddCashSubtitle,
-          onTap: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountNewCash),
-        ),
-        _SheetTile(
-          icon: Icons.savings_outlined,
-          title: l10n.assetsAddDepositTitle,
-          subtitle: l10n.assetsAddDepositSubtitle,
-          onTap: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountNewDeposit),
-        ),
-        _SheetTile(
-          icon: Icons.auto_graph_outlined,
-          title: l10n.assetsAddWealthTitle,
-          subtitle: l10n.assetsAddWealthSubtitle,
-          onTap: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountNewWealth),
-        ),
-        _SheetTile(
-          icon: Icons.home_outlined,
-          title: l10n.physicalAssetAddRealEstate,
-          subtitle: l10n.assetsAddRealEstateSubtitle,
-          onTap: () =>
-              _closeAndOpenPhysical(sheetContext, context, AssetType.realEstate),
-        ),
-        _SheetTile(
-          icon: Icons.directions_car_outlined,
-          title: l10n.physicalAssetAddVehicle,
-          subtitle: l10n.assetsAddVehicleSubtitle,
-          onTap: () =>
-              _closeAndOpenPhysical(sheetContext, context, AssetType.vehicle),
-        ),
-      ],
-    ),
-  );
-}
-
-/// One row in a sheet menu — single-line layout with optional subtitle
-/// rendered as a muted second line. Lighter than `FTile` (no border /
-/// elevation) so the rows dissolve into the AppSheet surface.
-class _SheetTile extends StatelessWidget {
-  const _SheetTile({
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
     required this.icon,
     required this.title,
+    required this.subtitle,
     required this.onTap,
-    this.subtitle,
   });
 
   final IconData icon;
   final String title;
-  final String? subtitle;
+  final String subtitle;
   final VoidCallback onTap;
 
   @override
@@ -171,16 +124,15 @@ class _SheetTile extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (subtitle != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Text(
-                        subtitle!,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text(
+                      subtitle,
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
                       ),
                     ),
+                  ),
                 ],
               ),
             ),

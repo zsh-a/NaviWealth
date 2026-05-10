@@ -155,10 +155,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioLiabilitiesTab => 'Liabilities';
 
   @override
-  String get globalActionPanelTitle => 'Quick add';
+  String get activityActionsTitle => 'Record activity';
 
   @override
-  String get assetsAddSheetTitle => 'Add asset';
+  String get activityActionExpenseHint => 'Cash out for goods or services';
+
+  @override
+  String get activityActionTradeHint => 'Buy or sell a security';
+
+  @override
+  String get activityActionTransferHint => 'Move funds between two accounts';
+
+  @override
+  String get activityActionConvertHint =>
+      'Exchange currency inside one account';
+
+  @override
+  String get accountsActionsTitle => 'Add wealth container';
+
+  @override
+  String get accountsActionAccountHint => 'Bank, brokerage or crypto account';
+
+  @override
+  String get accountsActionLiabilityHint => 'Mortgage, loan or credit balance';
 
   @override
   String get superFabTrade => 'Trade';
@@ -3469,6 +3488,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityFeedFilterAccount => 'Account';
+
+  @override
+  String get activityFeedFilterAccountEmpty =>
+      'No accounts yet — add one from the Accounts tab.';
+
+  @override
+  String get activityFeedFilterDateRange => 'Date range';
+
+  @override
+  String get activityFeedFilterRangeThisWeek => 'This week';
+
+  @override
+  String get activityFeedFilterRangeThisMonth => 'This month';
+
+  @override
+  String get activityFeedFilterRangeLastMonth => 'Last month';
+
+  @override
+  String get activityFeedFilterRangeThisYear => 'This year';
+
+  @override
+  String get activityFeedFilterRangeCustom => 'Custom…';
 
   @override
   String get activityFeedFilterThisMonth => 'This month';

@@ -153,10 +153,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioLiabilitiesTab => '负债';
 
   @override
-  String get globalActionPanelTitle => '快速添加';
+  String get activityActionsTitle => '记录活动';
 
   @override
-  String get assetsAddSheetTitle => '添加资产';
+  String get activityActionExpenseHint => '记一笔支出';
+
+  @override
+  String get activityActionTradeHint => '买入或卖出证券';
+
+  @override
+  String get activityActionTransferHint => '在两个账户间转账';
+
+  @override
+  String get activityActionConvertHint => '在同一账户内换汇';
+
+  @override
+  String get accountsActionsTitle => '添加财富容器';
+
+  @override
+  String get accountsActionAccountHint => '银行、券商或加密账户';
+
+  @override
+  String get accountsActionLiabilityHint => '房贷、车贷或信用余额';
 
   @override
   String get superFabTrade => '交易';
@@ -3354,6 +3372,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityFeedFilterAccount => '账户';
+
+  @override
+  String get activityFeedFilterAccountEmpty => '还没有账户 — 请到「账户」标签创建。';
+
+  @override
+  String get activityFeedFilterDateRange => '日期范围';
+
+  @override
+  String get activityFeedFilterRangeThisWeek => '本周';
+
+  @override
+  String get activityFeedFilterRangeThisMonth => '本月';
+
+  @override
+  String get activityFeedFilterRangeLastMonth => '上月';
+
+  @override
+  String get activityFeedFilterRangeThisYear => '今年';
+
+  @override
+  String get activityFeedFilterRangeCustom => '自定义…';
 
   @override
   String get activityFeedFilterThisMonth => '本月';
