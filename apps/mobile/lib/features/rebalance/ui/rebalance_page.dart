@@ -20,8 +20,13 @@ class RebalancePage extends ConsumerWidget {
     final plan = ref.watch(rebalancePlanProvider);
     final scheme = ref.watch(selectedSchemeProvider);
 
-    return PageScaffold(
-      appBar: GlassAppBar(
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.rebalanceTitle),
         actions: [
           IconButton(
@@ -31,7 +36,6 @@ class RebalancePage extends ConsumerWidget {
           ),
         ],
       ),
-      padding: EdgeInsets.zero,
       body: plan == null
           ? _EmptyState()
           : _RebalanceBody(plan: plan, scheme: scheme),

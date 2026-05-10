@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/shell_preferences.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../assets/assets_page.dart';
 import 'ui/portfolio_aggregate_views.dart';
@@ -19,7 +18,14 @@ class PortfolioPage extends ConsumerWidget {
     final view = ref.watch(portfolioViewProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.navPortfolio)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.navPortfolio),
+      ),
       body: Column(
         children: [
           const PortfolioViewSwitcher(),

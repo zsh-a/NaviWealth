@@ -112,7 +112,11 @@ lib/
     rebalance/    Rebalancing engine, allocation schemes
     settings/     Settings page
     shared/       Shared form widgets
-  design_system/  W3C Design Tokens, themes, charts, reusable widgets
+  design_system/  W3C Design Tokens, themes, charts, reusable widgets.
+                  Main app uses Forui (FCard/FButton/etc.) under FTheme(zinc);
+                  AI panel uses custom shadcn-style primitives in
+                  `lib/features/ai_chat/ui/shadcn/` for visual differentiation
+                  (SCard/SButton/SAvatar/SCodeBlock/SCollapsible etc.).
   l10n/           Localization (en + zh, ARB files)
 ```
 

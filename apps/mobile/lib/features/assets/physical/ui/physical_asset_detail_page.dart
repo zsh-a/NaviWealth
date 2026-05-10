@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../design_system/design_system.dart';
@@ -20,7 +21,12 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final assetAsync = ref.watch(physicalAssetDetailProvider(id));
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: assetAsync.maybeWhen(
           data: (a) => Text(a?.name ?? l10n.physicalAssetNotFound),
           orElse: () => const SizedBox.shrink(),
@@ -72,14 +78,16 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  label: l10n.commonCancel,
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.secondary(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  label: l10n.physicalAssetDeleteAction,
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.physicalAssetDeleteAction),
                 ),
               ],
             ),
@@ -152,11 +160,12 @@ class _DetailBody extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: Spacing.s16),
-              AppButton.primary(
-                onPressed: () =>
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: () =>
                     ValuationUpdateSheet.show(context, asset: asset),
-                icon: Icons.edit_outlined,
-                label: l10n.physicalAssetUpdateValuationAction,
+                prefix: const Icon(Icons.edit_outlined, size: 16),
+                child: Text(l10n.physicalAssetUpdateValuationAction),
               ),
             ],
           ),

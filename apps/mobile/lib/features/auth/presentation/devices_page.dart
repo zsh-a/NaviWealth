@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/auth/auth_api_client.dart';
 import '../../../core/auth/auth_errors.dart';
@@ -62,7 +63,12 @@ class DevicesPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(devicesProvider);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.authDevicesTitle),
         actions: [
           IconButton(
@@ -104,14 +110,16 @@ class DevicesPage extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  label: l10n.commonCancel,
-                  onPressed: () => Navigator.of(ctx).pop(false),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.primary(
-                  label: l10n.authLogoutDialogConfirm,
-                  onPressed: () => Navigator.of(ctx).pop(true),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.authLogoutDialogConfirm),
                 ),
               ],
             ),
@@ -206,14 +214,16 @@ class _DevicesList extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  label: l10n.commonCancel,
-                  onPressed: () => Navigator.of(ctx).pop(false),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.primary(
-                  label: l10n.authDeviceRevokeConfirm,
-                  onPressed: () => Navigator.of(ctx).pop(true),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.authDeviceRevokeConfirm),
                 ),
               ],
             ),
@@ -263,9 +273,10 @@ class _ErrorView extends StatelessWidget {
           ],
           if (onRetry != null) ...[
             const SizedBox(height: Spacing.s16),
-            AppButton.secondary(
-              label: AppLocalizations.of(context).commonRetry,
-              onPressed: onRetry,
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: onRetry,
+              child: Text(AppLocalizations.of(context).commonRetry),
             ),
           ],
         ],

@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/haptics/haptics.dart';
@@ -263,7 +264,14 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final asset = _selectedAsset;
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.corpActionTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.corpActionTitle),
+      ),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -312,16 +320,18 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             // Action buttons.
             Row(
               children: [
-                AppButton.secondary(
+                FButton(
                   key: const Key('corp-action-preview'),
-                  label: l10n.corpActionPreviewAction,
-                  onPressed: asset == null ? null : _runPreview,
+                  variant: FButtonVariant.outline,
+                  onPress: asset == null ? null : _runPreview,
+                  child: Text(l10n.corpActionPreviewAction),
                 ),
                 const SizedBox(width: 12),
-                AppButton.primary(
+                FButton(
                   key: const Key('corp-action-submit'),
-                  label: l10n.corpActionSubmitAction,
-                  onPressed: _preview == null ? null : _submit,
+                  variant: FButtonVariant.primary,
+                  onPress: _preview == null ? null : _submit,
+                  child: Text(l10n.corpActionSubmitAction),
                 ),
               ],
             ),

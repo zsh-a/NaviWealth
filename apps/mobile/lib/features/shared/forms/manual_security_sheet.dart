@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
@@ -300,11 +301,14 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               const SizedBox(height: Spacing.s8),
               Align(
                 alignment: Alignment.centerLeft,
-                child: AppButton.tertiary(
+                child: FButton(
                   key: const Key('manual-security-import'),
-                  label: _importing ? l10n.manualSecurityImporting : l10n.manualSecurityImportAction,
-                  icon: Icons.cloud_download_outlined,
-                  onPressed: _importing ? null : _importFromNetwork,
+                  variant: FButtonVariant.ghost,
+                  onPress: _importing ? null : _importFromNetwork,
+                  prefix: const Icon(Icons.cloud_download_outlined, size: 16),
+                  child: Text(_importing
+                      ? l10n.manualSecurityImporting
+                      : l10n.manualSecurityImportAction),
                 ),
               ),
               const SizedBox(height: Spacing.s12),
@@ -379,17 +383,19 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               Row(
                 children: [
                   Expanded(
-                    child: AppButton.secondary(
-                      label: l10n.commonCancel,
-                      onPressed: () => Navigator.of(context).pop(),
+                    child: FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: () => Navigator.of(context).pop(),
+                      child: Text(l10n.commonCancel),
                     ),
                   ),
                   const SizedBox(width: Spacing.s12),
                   Expanded(
-                    child: AppButton.primary(
+                    child: FButton(
                       key: const Key('manual-security-submit'),
-                      label: l10n.manualSecurityAddAction,
-                      onPressed: _submit,
+                      variant: FButtonVariant.primary,
+                      onPress: _submit,
+                      child: Text(l10n.manualSecurityAddAction),
                     ),
                   ),
                 ],

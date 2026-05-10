@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -123,7 +124,12 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
           return Scaffold(body: Center(child: Text(l10n.assetDetailNotFound)));
         }
         return Scaffold(
-          appBar: GlassAppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
             title: OptionalHero(
               tag: 'asset-${asset.id}-name',
               child: Text(asset.name ?? asset.symbol),
@@ -154,11 +160,12 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               const SizedBox(height: Spacing.s12),
               AssetTrendMiniChartCard(asset: asset),
               const SizedBox(height: Spacing.s16),
-              AppButton.primary(
-                icon: Icons.add,
-                label: l10n.assetDetailNewTradeLabel,
-                onPressed: () =>
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: () =>
                     context.push(AppRoutes.tradeForAsset(asset.id)),
+                prefix: const Icon(Icons.add, size: 16),
+                child: Text(l10n.assetDetailNewTradeLabel),
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/auth/auth_errors.dart';
 import '../../../design_system/design_system.dart';
@@ -192,10 +193,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     const SizedBox(height: Spacing.s24),
-                    AppButton.primary(
+                    FButton(
                       key: const ValueKey('login.submit'),
-                      label: _submitting ? '' : l10n.authLoginSubmit,
-                      onPressed: _submitting ? null : _submit,
+                      variant: FButtonVariant.primary,
+                      onPress: _submitting ? null : _submit,
+                      child: Text(_submitting ? '' : l10n.authLoginSubmit),
                     ),
                   ],
                 ),

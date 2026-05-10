@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
@@ -126,16 +127,18 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 Row(
                   children: [
                     Expanded(
-                      child: AppButton.secondary(
-                        label: l10n.fireGoalSheetCancel,
-                        onPressed: () => Navigator.of(context).pop(),
+                      child: FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: () => Navigator.of(context).pop(),
+                        child: Text(l10n.fireGoalSheetCancel),
                       ),
                     ),
                     const SizedBox(width: Spacing.s12),
                     Expanded(
-                      child: AppButton.primary(
-                        label: l10n.fireGoalSheetSave,
-                        onPressed: _submit,
+                      child: FButton(
+                        variant: FButtonVariant.primary,
+                        onPress: _submit,
+                        child: Text(l10n.fireGoalSheetSave),
                       ),
                     ),
                   ],

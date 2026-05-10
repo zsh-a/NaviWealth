@@ -55,7 +55,14 @@ class AssetDetailPage extends ConsumerWidget {
               AssetType.crypto ||
               AssetType.mutualFund => EquityAssetDetailPage(assetId: asset.id),
               _ => Scaffold(
-                appBar: GlassAppBar(title: Text(asset.name ?? asset.symbol)),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                appBar: AppBar(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  title: Text(asset.name ?? asset.symbol),
+                ),
                 body: Center(child: Text(l10n.assetDetailUnsupportedType)),
               ),
             };

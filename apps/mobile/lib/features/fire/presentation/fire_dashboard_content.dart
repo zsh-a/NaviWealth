@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -44,10 +45,11 @@ class FireUnconfiguredBody extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: Spacing.s24),
-            AppButton.primary(
-              label: l10n.fireEmptySetGoalCta,
-              icon: Icons.add,
-              onPressed: () => showFireGoalSheet(context),
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: () => showFireGoalSheet(context),
+              prefix: const Icon(Icons.add, size: 16),
+              child: Text(l10n.fireEmptySetGoalCta),
             ),
           ],
         ),
@@ -95,10 +97,11 @@ class FireConfiguredBody extends ConsumerWidget {
           children: [
             ResponsiveTwoColumn(left: left, right: right),
             const SizedBox(height: Spacing.s16),
-            AppButton.secondary(
-              label: l10n.fireEditGoal,
-              icon: Icons.edit_outlined,
-              onPressed: () => showFireGoalSheet(context),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => showFireGoalSheet(context),
+              prefix: const Icon(Icons.edit_outlined, size: 16),
+              child: Text(l10n.fireEditGoal),
             ),
           ],
         );

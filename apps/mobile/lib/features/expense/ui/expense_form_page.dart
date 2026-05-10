@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -200,14 +201,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  label: l10n.commonCancel,
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.secondary(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  label: l10n.commonDelete,
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.commonDelete),
                 ),
               ],
             ),
@@ -244,7 +247,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final allAccountsAsync = ref.watch(allAccountsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(
           widget.isEdit
               ? l10n.expenseFormEditTitle
@@ -358,9 +366,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                   const SizedBox(height: Spacing.s12),
                   NoteField(controller: _noteController, focusNode: _noteFocus),
                   const SizedBox(height: Spacing.s24),
-                  AppButton.primary(
-                    onPressed: _busy ? null : _save,
-                    label: _busy ? l10n.commonSaving : l10n.commonSave,
+                  FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: _busy ? null : _save,
+                    child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
                   ),
                 ],
               ),
@@ -382,9 +391,10 @@ class _NoAccountsHint extends StatelessWidget {
         ),
         title: Text(l10n.expenseFormNoAccountsTitle),
         subtitle: Text(l10n.expenseFormNoAccountsBody),
-        trailing: AppButton.tertiary(
-          onPressed: () => GoRouter.of(context).go(AppRoutes.accountNew),
-          label: l10n.expenseFormNoAccountsCta,
+        trailing: FButton(
+          variant: FButtonVariant.ghost,
+          onPress: () => GoRouter.of(context).go(AppRoutes.accountNew),
+          child: Text(l10n.expenseFormNoAccountsCta),
         ),
       ),
     );

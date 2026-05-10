@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
@@ -86,12 +87,21 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.liabilitiesAddAction),
         actions: [
-          AppButton.tertiary(
-            label: l10n.liabilitySaveAction,
-            onPressed: _saving ? null : _save,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: _saving ? null : _save,
+              child: Text(l10n.liabilitySaveAction),
+            ),
           ),
         ],
       ),

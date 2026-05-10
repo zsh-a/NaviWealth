@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -14,9 +15,15 @@ class FirePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final viewAsync = ref.watch(fireDashboardViewProvider);
-    return PageScaffold(
-      appBar: GlassAppBar(title: Text(l10n.fireAppBarTitle), actions: const []),
-      padding: EdgeInsets.zero,
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.fireAppBarTitle),
+      ),
       body: PageSkeletonShell<FireDashboardView>(
         skeleton: const FireSkeleton(),
         isLoading: viewAsync.isLoading,
@@ -53,7 +60,11 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: Spacing.s8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: Spacing.s8),
-          AppButton.tertiary(label: l10n.fireRetry, onPressed: onRetry),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onRetry,
+            child: Text(l10n.fireRetry),
+          ),
         ],
       ),
     );

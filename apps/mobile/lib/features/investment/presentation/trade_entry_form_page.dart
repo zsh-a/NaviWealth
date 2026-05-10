@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
@@ -205,14 +206,16 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    AppButton.tertiary(
-                      label: l10n.commonCancel,
-                      onPressed: () => Navigator.of(ctx).pop(false),
+                    FButton(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => Navigator.of(ctx).pop(false),
+                      child: Text(l10n.commonCancel),
                     ),
                     const SizedBox(width: Spacing.s8),
-                    AppButton.primary(
-                      label: l10n.tradeEntryCashOverdrawProceed,
-                      onPressed: () => Navigator.of(ctx).pop(true),
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      onPress: () => Navigator.of(ctx).pop(true),
+                      child: Text(l10n.tradeEntryCashOverdrawProceed),
                     ),
                   ],
                 ),
@@ -401,7 +404,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.tradeEntryAppBarTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.tradeEntryAppBarTitle),
+      ),
       body: accountsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
@@ -537,10 +547,11 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           NoteField(controller: _noteController, focusNode: _noteFocus),
           const SizedBox(height: Spacing.s24),
 
-          AppButton.primary(
+          FButton(
             key: const Key('trade-entry-submit'),
-            label: _busy ? l10n.commonSaving : l10n.commonSave,
-            onPressed: _busy ? null : _submit,
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _submit,
+            child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
           ),
         ],
       ),
