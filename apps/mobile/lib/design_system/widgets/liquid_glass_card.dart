@@ -52,12 +52,12 @@ class LiquidGlassCard extends StatelessWidget {
   final double? borderRadius;
   final VoidCallback? onTap;
 
-  /// When `true`, the card captures its own backdrop instead of sharing
-  /// one with sibling glass surfaces in the enclosing `GlassBackdropScope`.
-  /// Defaults to `false`: the app installs a root scope via
-  /// [LiquidGlassWidgets.wrap] and per-route scopes via [PageScaffold], so
-  /// cards share the GPU framebuffer capture across a screen. Set this to
-  /// `true` only for surfaces rendered outside any scope (rare).
+  /// When `true`, the card captures its own backdrop and shader pass
+  /// instead of sharing them with sibling glass surfaces. Defaults to
+  /// `false`: the app installs an `AdaptiveLiquidGlassLayer` plus
+  /// `GlassBackdropScope` near the root, so all glass surfaces share a
+  /// single layer + framebuffer capture across the screen. Set to `true`
+  /// only for surfaces rendered outside any layer (rare).
   final bool useOwnLayer;
 
   lgw.GlassQuality _quality({required bool isScrolling}) {

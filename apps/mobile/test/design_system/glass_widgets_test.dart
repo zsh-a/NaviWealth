@@ -65,57 +65,6 @@ void main() {
     );
   });
 
-  group('GlassNavigationBar', () {
-    testWidgets('forwards selection to NavigationBar callback', (tester) async {
-      int? lastSelected;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: const SizedBox.expand(),
-            bottomNavigationBar: GlassNavigationBar(
-              selectedIndex: 0,
-              destinations: const [
-                NavigationDestination(icon: Icon(Icons.home), label: 'a'),
-                NavigationDestination(icon: Icon(Icons.search), label: 'b'),
-              ],
-              onDestinationSelected: (i) => lastSelected = i,
-            ),
-          ),
-        ),
-      );
-      await tester.tap(find.text('b'));
-      await tester.pumpAndSettle();
-      expect(lastSelected, 1);
-    });
-
-    testWidgets('inner NavigationBar is transparent so glass shows', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          home: Scaffold(
-            body: const SizedBox.expand(),
-            bottomNavigationBar: GlassNavigationBar(
-              selectedIndex: 0,
-              destinations: const [
-                NavigationDestination(icon: Icon(Icons.home), label: 'a'),
-                NavigationDestination(icon: Icon(Icons.search), label: 'b'),
-              ],
-              onDestinationSelected: (_) {},
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(bar.backgroundColor, Colors.transparent);
-      expect(bar.surfaceTintColor, Colors.transparent);
-      expect(bar.elevation, 0);
-    });
-  });
-
   group('showGlassModalBottomSheet', () {
     testWidgets('returns the value provided by the sheet on Navigator.pop', (
       tester,

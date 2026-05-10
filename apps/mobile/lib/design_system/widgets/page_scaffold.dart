@@ -72,10 +72,11 @@ class PageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Per-route GlassBackdropScope: the AppBar, body cards, and any
-    // floating shell glass surfaces inside this Scaffold share a single
-    // GPU framebuffer capture instead of each capturing the backdrop
-    // independently. On Skia/web this is a cheap no-op.
+    // Per-route `GlassBackdropScope` lets the page's BackdropFilter
+    // surfaces share a single GPU framebuffer capture. Premium glass
+    // cards (currently only the dashboard hero cards) provision their
+    // own LiquidGlassLayer via `useOwnLayer: true`, applied
+    // automatically by `LiquidGlassCard` for `GlassLayer.primary`.
     return lgw.GlassBackdropScope(
       child: Scaffold(
         backgroundColor: background,

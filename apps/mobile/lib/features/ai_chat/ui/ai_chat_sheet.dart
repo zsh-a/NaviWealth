@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../../../app/route_paths.dart';
 import '../../../core/auth/providers.dart';
@@ -132,6 +133,10 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: Radii.brXl,
+              border: Border.all(
+                color: GlassTokens.of(context).hairlineColor,
+                width: 1,
+              ),
               boxShadow: AppElevations.of(context).level3,
             ),
             child: Material(
@@ -139,13 +144,11 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
               borderRadius: Radii.brXl,
               child: ClipRRect(
                 borderRadius: Radii.brXl,
-                child: GlassSurface(
-                  sigma: 20,
-                  borderRadius: Radii.brXl,
-                  border: Border.all(
-                    color: GlassTokens.of(context).hairlineColor,
-                    width: 1,
+                child: lgw.GlassContainer(
+                  shape: const lgw.LiquidRoundedRectangle(
+                    borderRadius: Radii.xl,
                   ),
+                  clipBehavior: Clip.antiAlias,
                   child: SizedBox(
                     width: _sheetW,
                     height: _sheetH,
@@ -214,9 +217,7 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
   Future<void> _ensureSession(String ownerUserId) async {
     if (_sessionId != null) return;
     final repo = await ref.read(chatRepositoryProvider.future);
-    final existing = await ref.read(
-      chatSessionsStreamProvider(ownerUserId).future,
-    );
+    final existing = await repo.listSessions(ownerUserId);
     if (!mounted) return;
     if (existing.isNotEmpty) {
       setState(() {

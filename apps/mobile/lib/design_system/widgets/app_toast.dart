@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../theme/semantic_colors.dart';
 import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/spacing_tokens.dart';
-import 'glass_surface.dart';
 
 /// Toast severity levels.
 enum ToastKind {
@@ -225,53 +225,59 @@ class _ToastWidgetState extends State<_ToastWidget>
             label: widget.message,
             child: Material(
               color: Colors.transparent,
-              child: GlassSurface(
-                sigma: tokens.blurSigma,
-                border: Border.all(color: tokens.hairlineColor, width: 1),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(color: accent, width: 3),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.s12,
-                    vertical: Spacing.s12,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(_icon(), color: accent, size: 20),
-                      const SizedBox(width: Spacing.s8),
-                      Expanded(
-                        child: Text(
-                          widget.message,
-                          style: theme.textTheme.bodyMedium,
-                        ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: tokens.hairlineColor, width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: lgw.GlassContainer(
+                  shape: const lgw.LiquidRoundedRectangle(borderRadius: 12),
+                  clipBehavior: Clip.antiAlias,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: accent, width: 3),
                       ),
-                      if (widget.actionLabel != null && widget.onAction != null)
-                        GestureDetector(
-                          onTap: () {
-                            widget.onAction?.call();
-                            widget.onDismiss();
-                          },
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.s12,
+                      vertical: Spacing.s12,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(_icon(), color: accent, size: 20),
+                        const SizedBox(width: Spacing.s8),
+                        Expanded(
                           child: Text(
-                            widget.actionLabel!,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.primary,
-                            ),
+                            widget.message,
+                            style: theme.textTheme.bodyMedium,
                           ),
                         ),
-                      const SizedBox(width: Spacing.s4),
-                      GestureDetector(
-                        onTap: widget.onDismiss,
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 18,
-                          color: theme.colorScheme.onSurfaceVariant,
+                        if (widget.actionLabel != null &&
+                            widget.onAction != null)
+                          GestureDetector(
+                            onTap: () {
+                              widget.onAction?.call();
+                              widget.onDismiss();
+                            },
+                            child: Text(
+                              widget.actionLabel!,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: Spacing.s4),
+                        GestureDetector(
+                          onTap: widget.onDismiss,
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 18,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
