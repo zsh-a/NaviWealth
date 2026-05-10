@@ -39,7 +39,11 @@ class ChartPalette {
         colors.brightness == Brightness.dark;
     return ChartPalette(
       accentSequence: _accentSequence(isDark: isDark),
-      gridLine: colors.border,
+      // Ultra-low-opacity grid — visible enough to anchor the eye when
+      // a chart explicitly opts into showGrid, but never competes with
+      // the data trace. Replaces the old `colors.border` (~10–15%) which
+      // turned the chart into a graph-paper grid.
+      gridLine: colors.foreground.withValues(alpha: isDark ? 0.06 : 0.04),
       axisLabel: colors.mutedForeground,
       tooltipBackground: colors.foreground,
       tooltipForeground: colors.background,

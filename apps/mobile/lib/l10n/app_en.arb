@@ -71,16 +71,26 @@
   "@activityEntryDetailAiExplanation": { "description": "Section header for the AI-generated explanation block in the activity entry detail page" },
   "activityEntryDetailNoExplanation": "No insight available for this entry.",
   "@activityEntryDetailNoExplanation": { "description": "Empty state when no AI explanation is available" },
-  "aiContextSummaryThisMonth": "This month",
-  "@aiContextSummaryThisMonth": { "description": "AI context summary header eyebrow" },
-  "aiContextSummaryNetWorthDelta": "Net worth Δ",
-  "@aiContextSummaryNetWorthDelta": { "description": "AI context summary cell label: month-to-date net worth change" },
-  "aiContextSummaryTodayDelta": "Today",
-  "@aiContextSummaryTodayDelta": { "description": "AI context summary cell label: today's net worth change" },
-  "aiContextSummaryUnusualExpenses": "Unusual expenses",
-  "@aiContextSummaryUnusualExpenses": { "description": "AI context summary cell label: number of unusual expense events" },
-  "aiContextSummaryUpcoming": "Upcoming maturities",
-  "@aiContextSummaryUpcoming": { "description": "AI context summary cell label: upcoming deposit maturities count" },
+  "aiContextSummaryThisMonth": "Monthly summary",
+  "@aiContextSummaryThisMonth": { "description": "AI context summary section eyebrow" },
+  "aiContextSummaryNetWorthLine": "Net worth {pct} this month",
+  "@aiContextSummaryNetWorthLine": {
+    "description": "AI summary line — month-to-date net worth direction. {pct} carries the sign and percent (e.g. \"+2.3%\").",
+    "placeholders": { "pct": { "type": "String" } }
+  },
+  "aiContextSummaryUnusualLine": "{count, plural, =1{1 unusual expense flagged} other{{count} unusual expenses flagged}}",
+  "@aiContextSummaryUnusualLine": {
+    "description": "AI summary line — number of unusual expense events the assistant noticed",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiContextSummaryUpcomingLine": "{count, plural, =1{1 deposit matures in {days}d} other{{count} deposits mature in {days}d}}",
+  "@aiContextSummaryUpcomingLine": {
+    "description": "AI summary line — upcoming deposit maturities. {days} is the closest maturity horizon in days.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
   "aiActionCardsTitle": "Suggested actions",
   "@aiActionCardsTitle": { "description": "Section header for the AI action cards rail" },
   "aiActionCardsOpen": "Open →",

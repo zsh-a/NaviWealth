@@ -53,22 +53,30 @@ class _SoftCardState extends State<SoftCard> {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
+    // Surface tint reads as "this is a slightly raised area" against
+    // the cool-gray page background, without imitating a Material card.
+    // Light mode: card is the brighter surface (background is cool
+    // gray, card lifts toward white). Dark mode: card is the darker
+    // surface (a touch deeper than the page).
     final baseTint = widget.tinted
         ? (isDark
-              ? colors.foreground.withValues(alpha: 0.04)
-              : colors.foreground.withValues(alpha: 0.02))
+              ? colors.foreground.withValues(alpha: 0.05)
+              : Colors.white.withValues(alpha: 0.85))
         : Colors.transparent;
-    final hoverBoost = isDark ? 0.025 : 0.015;
+    final hoverBoost = isDark ? 0.03 : 0.05;
     final tint = !widget.onPress.isNull && (_hovered || _pressed)
-        ? colors.foreground.withValues(
-            alpha:
-                (widget.tinted ? (isDark ? 0.04 : 0.02) : 0) + hoverBoost,
-          )
+        ? (widget.tinted
+              ? (isDark
+                    ? colors.foreground.withValues(alpha: 0.05 + hoverBoost)
+                    : Colors.white.withValues(alpha: 0.92))
+              : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
+    // Ultra-soft hairline — 4% in light, 6% in dark. Cards now read as
+    // floating surfaces rather than outlined components.
     final borderColor = widget.borderless
         ? Colors.transparent
-        : colors.foreground.withValues(alpha: isDark ? 0.08 : 0.06);
+        : colors.foreground.withValues(alpha: isDark ? 0.06 : 0.04);
 
     final card = AnimatedContainer(
       duration: Motion.fast,

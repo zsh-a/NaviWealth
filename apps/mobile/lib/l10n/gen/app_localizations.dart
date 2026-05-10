@@ -284,35 +284,29 @@ abstract class AppLocalizations {
   /// **'No insight available for this entry.'**
   String get activityEntryDetailNoExplanation;
 
-  /// AI context summary header eyebrow
+  /// AI context summary section eyebrow
   ///
   /// In en, this message translates to:
-  /// **'This month'**
+  /// **'Monthly summary'**
   String get aiContextSummaryThisMonth;
 
-  /// AI context summary cell label: month-to-date net worth change
+  /// AI summary line — month-to-date net worth direction. {pct} carries the sign and percent (e.g. "+2.3%").
   ///
   /// In en, this message translates to:
-  /// **'Net worth Δ'**
-  String get aiContextSummaryNetWorthDelta;
+  /// **'Net worth {pct} this month'**
+  String aiContextSummaryNetWorthLine(String pct);
 
-  /// AI context summary cell label: today's net worth change
+  /// AI summary line — number of unusual expense events the assistant noticed
   ///
   /// In en, this message translates to:
-  /// **'Today'**
-  String get aiContextSummaryTodayDelta;
+  /// **'{count, plural, =1{1 unusual expense flagged} other{{count} unusual expenses flagged}}'**
+  String aiContextSummaryUnusualLine(int count);
 
-  /// AI context summary cell label: number of unusual expense events
+  /// AI summary line — upcoming deposit maturities. {days} is the closest maturity horizon in days.
   ///
   /// In en, this message translates to:
-  /// **'Unusual expenses'**
-  String get aiContextSummaryUnusualExpenses;
-
-  /// AI context summary cell label: upcoming deposit maturities count
-  ///
-  /// In en, this message translates to:
-  /// **'Upcoming maturities'**
-  String get aiContextSummaryUpcoming;
+  /// **'{count, plural, =1{1 deposit matures in {days}d} other{{count} deposits mature in {days}d}}'**
+  String aiContextSummaryUpcomingLine(int count, int days);
 
   /// Section header for the AI action cards rail
   ///

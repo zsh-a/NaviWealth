@@ -121,18 +121,18 @@ class _PreviewRow extends StatelessWidget {
     return FTappable(
       onPress: () => context.go(AppRoutes.activity),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(10),
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
-              child: Icon(iconData, size: 18, color: iconColor),
+              child: Icon(iconData, size: 16, color: iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(

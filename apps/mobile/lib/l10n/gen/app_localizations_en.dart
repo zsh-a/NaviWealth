@@ -113,19 +113,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'No insight available for this entry.';
 
   @override
-  String get aiContextSummaryThisMonth => 'This month';
+  String get aiContextSummaryThisMonth => 'Monthly summary';
 
   @override
-  String get aiContextSummaryNetWorthDelta => 'Net worth Δ';
+  String aiContextSummaryNetWorthLine(String pct) {
+    return 'Net worth $pct this month';
+  }
 
   @override
-  String get aiContextSummaryTodayDelta => 'Today';
+  String aiContextSummaryUnusualLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unusual expenses flagged',
+      one: '1 unusual expense flagged',
+    );
+    return '$_temp0';
+  }
 
   @override
-  String get aiContextSummaryUnusualExpenses => 'Unusual expenses';
-
-  @override
-  String get aiContextSummaryUpcoming => 'Upcoming maturities';
+  String aiContextSummaryUpcomingLine(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count deposits mature in ${days}d',
+      one: '1 deposit matures in ${days}d',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get aiActionCardsTitle => 'Suggested actions';

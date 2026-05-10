@@ -30,6 +30,10 @@ class AppTheme {
     // matching FColors.copyWith on the forui surface.
     final accent = AccentColors.primary(brightness);
     final onAccent = AccentColors.onPrimary(brightness);
+    // Off-white page background — pure white reads as bare canvas and
+    // washes out the SoftCard tint. Mirror app.dart's FColors override.
+    final pageBackground =
+        isDark ? f.background : const Color(0xFFF5F7F9);
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,
@@ -40,9 +44,9 @@ class AppTheme {
       onTertiary: f.background,
       error: f.destructive,
       onError: f.destructiveForeground,
-      surface: f.background,
+      surface: pageBackground,
       onSurface: f.foreground,
-      surfaceContainerLowest: f.background,
+      surfaceContainerLowest: pageBackground,
       surfaceContainerLow: f.card,
       surfaceContainer: f.muted,
       surfaceContainerHigh: f.muted,
@@ -64,7 +68,7 @@ class AppTheme {
       brightness: brightness,
       colorScheme: scheme,
       textTheme: textTheme,
-      scaffoldBackgroundColor: f.background,
+      scaffoldBackgroundColor: pageBackground,
       visualDensity: compact
           ? VisualDensity.compact
           : VisualDensity.adaptivePlatformDensity,

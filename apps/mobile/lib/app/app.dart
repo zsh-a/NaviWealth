@@ -63,13 +63,18 @@ class NaviWealthApp extends ConsumerWidget {
                 defaultTargetPlatform == TargetPlatform.android);
         final baseFTheme = isTouch ? platform.touch : platform.desktop;
         // Layer teal accent over Slate so the brand interaction color reads
-        // calm-finance-teal instead of slate-grey, while keeping the rest of
-        // Slate's neutral surfaces / borders / typography intact.
+        // calm-finance-teal instead of slate-grey. Also nudge the page
+        // background off pure white into a cool gray (#F5F7F9) so soft
+        // cards feel "lifted" against it — the previous near-white
+        // background read as a bare canvas, washing out the SoftCard tint.
         final brightness = isDark ? Brightness.dark : Brightness.light;
         final fTheme = baseFTheme.copyWith(
           colors: baseFTheme.colors.copyWith(
             primary: AccentColors.primary(brightness),
             primaryForeground: AccentColors.onPrimary(brightness),
+            background: isDark
+                ? baseFTheme.colors.background
+                : const Color(0xFFF5F7F9),
           ),
         );
         // Sync brightnessProvider so marketColorsProvider derives correctly.

@@ -111,19 +111,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDetailNoExplanation => '暂无该笔记录的 AI 洞察。';
 
   @override
-  String get aiContextSummaryThisMonth => '本月';
+  String get aiContextSummaryThisMonth => '本月概览';
 
   @override
-  String get aiContextSummaryNetWorthDelta => '净值变化';
+  String aiContextSummaryNetWorthLine(String pct) {
+    return '本月净值 $pct';
+  }
 
   @override
-  String get aiContextSummaryTodayDelta => '今日';
+  String aiContextSummaryUnusualLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '发现 $count 笔异常支出',
+    );
+    return '$_temp0';
+  }
 
   @override
-  String get aiContextSummaryUnusualExpenses => '异常支出';
-
-  @override
-  String get aiContextSummaryUpcoming => '即将到期';
+  String aiContextSummaryUpcomingLine(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔存款将在 $days 天内到期',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get aiActionCardsTitle => '建议操作';

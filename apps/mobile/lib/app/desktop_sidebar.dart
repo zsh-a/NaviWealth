@@ -105,14 +105,16 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isAccent = destination.isAccent;
-    // Accent (AI) tab gets the inverse treatment so it pops: a filled
-    // teal disc behind the icon when active, a soft teal tint otherwise.
+    // Accent (AI) tab uses a teal-tinted halo + teal-tinted glyph
+    // (matching the mobile bottom-nav treatment) instead of a solid
+    // accent fill — keeps the sidebar reading as one consistent
+    // navigation surface rather than a primary CTA in disguise.
     final iconColor = isAccent
-        ? (selected ? colors.primaryForeground : colors.primary)
+        ? colors.primary
         : (selected ? colors.primary : colors.mutedForeground);
     final labelStyle = context.theme.typography.sm.copyWith(
-      color: isAccent && selected
-          ? colors.primaryForeground
+      color: isAccent
+          ? colors.primary
           : (selected ? colors.primary : colors.foreground),
       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
     );
@@ -139,7 +141,7 @@ class _SidebarItem extends StatelessWidget {
 
     final Color background;
     if (isAccent) {
-      background = colors.primary.withValues(alpha: selected ? 1.0 : 0.12);
+      background = colors.primary.withValues(alpha: selected ? 0.18 : 0.08);
     } else if (selected) {
       background = colors.primary.withValues(alpha: 0.10);
     } else {
@@ -170,6 +172,12 @@ class _SidebarItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: background,
             borderRadius: BorderRadius.circular(12),
+            border: isAccent && selected
+                ? Border.all(
+                    color: colors.primary.withValues(alpha: 0.35),
+                    width: 1,
+                  )
+                : null,
           ),
           alignment: Alignment.centerLeft,
           child: row,
