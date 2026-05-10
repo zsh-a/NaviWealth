@@ -48,7 +48,7 @@ class _AlertList extends StatelessWidget {
             Icon(
               Icons.shield_outlined,
               size: 20,
-              color: Theme.of(context).colorScheme.error,
+              color: context.theme.colors.destructive,
             ),
             const SizedBox(width: Spacing.s8),
             Text(

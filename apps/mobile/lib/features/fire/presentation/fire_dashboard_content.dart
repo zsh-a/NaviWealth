@@ -612,7 +612,7 @@ Color _colorForTier(
     case FireScenarioTier.aggressive:
       return palette.accentAt(2);
     case FireScenarioTier.live:
-      return Theme.of(context).colorScheme.primary;
+      return context.theme.colors.primary;
   }
 }
 

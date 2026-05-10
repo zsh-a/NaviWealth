@@ -653,7 +653,7 @@ class _Legend extends StatelessWidget {
           const FDivider(),
           const SizedBox(height: Spacing.s8),
           _LegendRow(
-            color: Theme.of(context).colorScheme.error,
+            color: context.theme.colors.destructive,
             label: AssetCategoryVisuals.label(l10n, liabilityAlloc!.category),
             icon: AssetCategoryVisuals.icon(liabilityAlloc!.category),
             valueInBase: -liabilityAlloc!.totalInBase.amount.toDouble(),

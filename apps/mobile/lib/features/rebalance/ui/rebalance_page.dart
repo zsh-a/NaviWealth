@@ -432,28 +432,30 @@ class _SettingsSheet extends ConsumerWidget {
               l10n.rebalanceWarningThreshold,
               style: theme.textTheme.bodyMedium,
             ),
-            Slider(
-              value: warning,
-              min: 0.01,
-              max: 0.20,
-              divisions: 19,
-              label: '${(warning * 100).toStringAsFixed(0)}%',
-              onChanged: (v) =>
-                  ref.read(warningThresholdProvider.notifier).set(v),
+            FSlider(
+              control: FSliderControl.managedContinuous(
+                initial: FSliderValue(max: (warning - 0.01) / 0.19),
+                onChange: (v) => ref
+                    .read(warningThresholdProvider.notifier)
+                    .set(0.01 + v.max * 0.19),
+              ),
+              tooltipBuilder: (_, v) =>
+                  Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),
             ),
             const SizedBox(height: Spacing.s8),
             Text(
               l10n.rebalanceCriticalThreshold,
               style: theme.textTheme.bodyMedium,
             ),
-            Slider(
-              value: critical,
-              min: 0.05,
-              max: 0.30,
-              divisions: 25,
-              label: '${(critical * 100).toStringAsFixed(0)}%',
-              onChanged: (v) =>
-                  ref.read(criticalThresholdProvider.notifier).set(v),
+            FSlider(
+              control: FSliderControl.managedContinuous(
+                initial: FSliderValue(max: (critical - 0.05) / 0.25),
+                onChange: (v) => ref
+                    .read(criticalThresholdProvider.notifier)
+                    .set(0.05 + v.max * 0.25),
+              ),
+              tooltipBuilder: (_, v) =>
+                  Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),
             ),
           ],
         ),

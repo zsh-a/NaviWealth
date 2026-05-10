@@ -76,16 +76,13 @@ class AssetDetailPage extends ConsumerWidget {
               AssetType.etf ||
               AssetType.crypto ||
               AssetType.mutualFund => EquityAssetDetailPage(assetId: asset.id),
-              _ => Scaffold(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                appBar: AppBar(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  surfaceTintColor: Colors.transparent,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  title: Text(asset.name ?? asset.symbol),
+              _ => FScaffold(
+                header: FHeader.nested(title: Text(asset.name ?? asset.symbol)),
+                childPad: false,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Center(child: Text(l10n.assetDetailUnsupportedType)),
                 ),
-                body: Center(child: Text(l10n.assetDetailUnsupportedType)),
               ),
             };
           },

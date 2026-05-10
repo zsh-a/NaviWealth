@@ -78,7 +78,7 @@ class EquityAllocationContent extends ConsumerWidget {
     for (var i = 0; i < view.buckets.length; i++) {
       final bucket = view.buckets[i];
       final color = bucket.isUnclassified
-          ? Theme.of(context).colorScheme.outlineVariant
+          ? context.theme.colors.border
           : palette.accentAt(i);
       colorByKey[bucket.key] = color;
       slices.add(

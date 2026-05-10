@@ -90,7 +90,7 @@ class _ChatComposerState extends State<ChatComposer> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: context.theme.colors.background,
         border: Border(
           top: BorderSide(
             color: Theme.of(

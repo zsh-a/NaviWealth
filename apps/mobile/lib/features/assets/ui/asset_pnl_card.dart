@@ -171,7 +171,7 @@ class _DailyChangeView extends StatelessWidget {
       return Text(
         isStale ? l10n.assetDetailQuoteStale : l10n.assetDetailQuoteUnavailable,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          color: context.theme.colors.mutedForeground,
         ),
       );
     }

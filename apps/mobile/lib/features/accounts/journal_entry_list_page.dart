@@ -64,14 +64,14 @@ class _EmptyJournal extends StatelessWidget {
             Icon(
               Icons.history,
               size: 48,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(height: Spacing.s12),
             Text(
               l10n.journalEmptyHint,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],

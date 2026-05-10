@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -100,9 +101,7 @@ class AccountTreePicker extends StatelessWidget {
                   Icon(
                     iconData,
                     size: 16,
-                    color:
-                        iconColor ??
-                        Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: iconColor ?? context.theme.colors.mutedForeground,
                   ),
                   const SizedBox(width: Spacing.s4),
                   Text(e.path, overflow: TextOverflow.ellipsis),

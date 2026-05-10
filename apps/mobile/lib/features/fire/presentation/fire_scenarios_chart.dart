@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/charts/charts.dart';
 import '../domain/fire_projection.dart';
@@ -121,7 +122,7 @@ class FireScenariosChart extends StatelessWidget {
       case FireScenarioTier.aggressive:
         return palette.accentAt(2); // orange
       case FireScenarioTier.live:
-        return Theme.of(context).colorScheme.primary;
+        return context.theme.colors.primary;
     }
   }
 }
