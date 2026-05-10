@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
@@ -41,7 +42,7 @@ class ActivityFeed extends ConsumerWidget {
           hasMore: page.hasMore,
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => Center(child: Text(l10n.activityFeedLoadError('$e'))),
     );
   }
@@ -74,35 +75,35 @@ class _FeedList extends StatelessWidget {
     items.add(_FeedItem.footer(hasMore));
 
     return ListView.builder(
-        padding: Spacing.pageMobile.copyWith(
-          bottom:
-              Spacing.pageMobile.bottom +
-              Spacing.floatingBarClearance +
-              MediaQuery.paddingOf(context).bottom,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return switch (item) {
-            _FeedItemHeader(:final group) => _DateSectionHeader(
-              group: group,
-              l10n: l10n,
+      padding: Spacing.pageMobile.copyWith(
+        bottom:
+            Spacing.pageMobile.bottom +
+            Spacing.floatingBarClearance +
+            MediaQuery.paddingOf(context).bottom,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return switch (item) {
+          _FeedItemHeader(:final group) => _DateSectionHeader(
+            group: group,
+            l10n: l10n,
+          ),
+          _FeedItemEntry(:final entry) => Padding(
+            padding: const EdgeInsets.only(bottom: Spacing.s8),
+            child: ActivityFeedEntryRow(
+              entry: entry,
+              accountsById: accountsById,
+              formatter: formatter,
             ),
-            _FeedItemEntry(:final entry) => Padding(
-              padding: const EdgeInsets.only(bottom: Spacing.s8),
-              child: ActivityFeedEntryRow(
-                entry: entry,
-                accountsById: accountsById,
-                formatter: formatter,
-              ),
-            ),
-            _FeedItemFooter(:final canLoadMore) => _FeedFooter(
-              canLoadMore: canLoadMore,
-              l10n: l10n,
-            ),
-          };
-        },
-      );
+          ),
+          _FeedItemFooter(:final canLoadMore) => _FeedFooter(
+            canLoadMore: canLoadMore,
+            l10n: l10n,
+          ),
+        };
+      },
+    );
   }
 }
 

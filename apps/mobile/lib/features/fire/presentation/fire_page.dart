@@ -15,16 +15,12 @@ class FirePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final viewAsync = ref.watch(fireDashboardViewProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.fireAppBarTitle),
-      ),
-      body: PageSkeletonShell<FireDashboardView>(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.fireAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: PageSkeletonShell<FireDashboardView>(
         skeleton: const FireSkeleton(),
         isLoading: viewAsync.isLoading,
         child: viewAsync.when(
@@ -38,6 +34,7 @@ class FirePage extends ConsumerWidget {
               : const FireUnconfiguredBody(),
         ),
       ),
+        ),
     );
   }
 }

@@ -21,9 +21,7 @@ Future<void> showCommandPalette(
   return showDialog<void>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: MaterialLocalizations.of(
-      context,
-    ).modalBarrierDismissLabel,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     builder: (BuildContext ctx) =>
         _CommandPaletteDialog(commands: commands, onAskAi: onAskAi),
   ).whenComplete(() => _isOpen = false);
@@ -274,7 +272,9 @@ class _CommandRow extends StatelessWidget {
                       entry.label,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: labelColor,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

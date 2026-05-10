@@ -263,16 +263,12 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final dateFmt = DateFormat.yMd(Localizations.localeOf(context).toString());
     final asset = _selectedAsset;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.corpActionTitle),
-      ),
-      body: Form(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.corpActionTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
@@ -280,87 +276,95 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            // Asset picker.
-            DropdownButtonFormField<CorporateActionAsset>(
-  isExpanded: true,
-                    key: const Key('corp-action-asset'),
-  initialValue: asset,
-  decoration: InputDecoration(labelText: l10n.corpActionSelectAsset, helperText: l10n.corpActionSelectAssetHint),
-  items: [
-                for (final a in widget.assets)
-                  DropdownMenuItem(value: a, child: Text(a.displayName)),
-              ],
-  onChanged: _onAssetChanged,
-),
-            const SizedBox(height: 16),
-            // Effective date row.
-            ListTile(
-              key: const Key('corp-action-date'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.event),
-              title: Text(l10n.corpActionEffectiveDate),
-              subtitle: Text(dateFmt.format(_effectiveDate)),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit_calendar),
-                onPressed: _pickEffectiveDate,
+              // Asset picker.
+              DropdownButtonFormField<CorporateActionAsset>(
+                isExpanded: true,
+                key: const Key('corp-action-asset'),
+                initialValue: asset,
+                decoration: InputDecoration(
+                  labelText: l10n.corpActionSelectAsset,
+                  helperText: l10n.corpActionSelectAssetHint,
+                ),
+                items: [
+                  for (final a in widget.assets)
+                    DropdownMenuItem(value: a, child: Text(a.displayName)),
+                ],
+                onChanged: _onAssetChanged,
               ),
-            ),
-            const Divider(height: 32),
-            // Event type selector.
-            Text(
-              l10n.corpActionEventTypeTitle,
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            _TypeSelector(selected: _type, onChanged: _onTypeChanged, l10n: l10n),
-            const SizedBox(height: 16),
-            // Type-specific fields.
-            ..._fieldsForType(l10n),
-            const SizedBox(height: 24),
-            // Action buttons.
-            Row(
-              children: [
-                FButton(
-                  key: const Key('corp-action-preview'),
-                  variant: FButtonVariant.outline,
-                  onPress: asset == null ? null : _runPreview,
-                  child: Text(l10n.corpActionPreviewAction),
-                ),
-                const SizedBox(width: 12),
-                FButton(
-                  key: const Key('corp-action-submit'),
-                  variant: FButtonVariant.primary,
-                  onPress: _preview == null ? null : _submit,
-                  child: Text(l10n.corpActionSubmitAction),
-                ),
-              ],
-            ),
-            if (_previewError != null) ...[
               const SizedBox(height: 16),
-              FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-                  _previewError!,
-                  style: TextStyle(
-                    color: theme.colorScheme.onErrorContainer,
-                  ),
+              // Effective date row.
+              ListTile(
+                key: const Key('corp-action-date'),
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event),
+                title: Text(l10n.corpActionEffectiveDate),
+                subtitle: Text(dateFmt.format(_effectiveDate)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.edit_calendar),
+                  onPressed: _pickEffectiveDate,
                 ),
-        ),
-      ),
-            ],
-            if (_preview != null) ...[
-              const SizedBox(height: 16),
-              _PreviewCard(
-                key: const Key('corp-action-preview-card'),
-                preview: _preview!,
+              ),
+              const FDivider(),
+              // Event type selector.
+              Text(
+                l10n.corpActionEventTypeTitle,
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              _TypeSelector(
+                selected: _type,
+                onChanged: _onTypeChanged,
                 l10n: l10n,
               ),
+              const SizedBox(height: 16),
+              // Type-specific fields.
+              ..._fieldsForType(l10n),
+              const SizedBox(height: 24),
+              // Action buttons.
+              Row(
+                children: [
+                  FButton(
+                    key: const Key('corp-action-preview'),
+                    variant: FButtonVariant.outline,
+                    onPress: asset == null ? null : _runPreview,
+                    child: Text(l10n.corpActionPreviewAction),
+                  ),
+                  const SizedBox(width: 12),
+                  FButton(
+                    key: const Key('corp-action-submit'),
+                    variant: FButtonVariant.primary,
+                    onPress: _preview == null ? null : _submit,
+                    child: Text(l10n.corpActionSubmitAction),
+                  ),
+                ],
+              ),
+              if (_previewError != null) ...[
+                const SizedBox(height: 16),
+                FCard.raw(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      _previewError!,
+                      style: TextStyle(
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              if (_preview != null) ...[
+                const SizedBox(height: 16),
+                _PreviewCard(
+                  key: const Key('corp-action-preview-card'),
+                  preview: _preview!,
+                  l10n: l10n,
+                ),
+              ],
             ],
-          ],
           ),
         ),
       ),
+        ),
     );
   }
 
@@ -483,9 +487,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
         signed: true,
         decimal: true,
       ),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-      ],
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]'))],
       decoration: InputDecoration(labelText: label, helperText: helper),
       validator: (value) =>
           _validateDecimal(value, requirePositive: requirePositive, l10n: l10n),
@@ -558,11 +560,7 @@ class _TypeSelector extends StatelessWidget {
 }
 
 class _PreviewCard extends StatelessWidget {
-  const _PreviewCard({
-    super.key,
-    required this.preview,
-    required this.l10n,
-  });
+  const _PreviewCard({super.key, required this.preview, required this.l10n});
 
   final CorporateActionPreview preview;
   final AppLocalizations l10n;
@@ -572,64 +570,67 @@ class _PreviewCard extends StatelessWidget {
     final theme = Theme.of(context);
     final dividend = preview.cashDividend;
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.corpActionPreviewHeading,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 12),
-          if (dividend != null) ...[
-            _kv(l10n.corpActionPreviewSharesOnRecord, '${dividend.shareCount}'),
-            _kv(
-              l10n.corpActionPreviewGross,
-              '${dividend.grossAmount} ${dividend.currency}',
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.corpActionPreviewHeading,
+              style: theme.textTheme.titleMedium,
             ),
-            _kv(
-              l10n.corpActionPreviewTax,
-              '${dividend.withholdingTax} ${dividend.currency}',
-            ),
-            _kv(
-              l10n.corpActionPreviewNet,
-              '${dividend.netAmount} ${dividend.currency}',
-            ),
-          ] else if (preview.action is CashDividendAction)
-            Text(l10n.corpActionNoEligibleHolding),
-          if (preview.cashFlow != Decimal.zero)
-            _kv(
-              l10n.corpActionPreviewCashFlow,
-              '${preview.cashFlow} ${preview.cashFlowCurrency}',
-            ),
-          for (final delta in preview.lotDeltas)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                l10n.corpActionPreviewLotChange(
-                  delta.before.id,
-                  '${delta.before.remainingQuantity}',
-                  '${delta.after.remainingQuantity}',
-                  '${delta.before.costPerUnit}',
-                  '${delta.after.costPerUnit}',
+            const SizedBox(height: 12),
+            if (dividend != null) ...[
+              _kv(
+                l10n.corpActionPreviewSharesOnRecord,
+                '${dividend.shareCount}',
+              ),
+              _kv(
+                l10n.corpActionPreviewGross,
+                '${dividend.grossAmount} ${dividend.currency}',
+              ),
+              _kv(
+                l10n.corpActionPreviewTax,
+                '${dividend.withholdingTax} ${dividend.currency}',
+              ),
+              _kv(
+                l10n.corpActionPreviewNet,
+                '${dividend.netAmount} ${dividend.currency}',
+              ),
+            ] else if (preview.action is CashDividendAction)
+              Text(l10n.corpActionNoEligibleHolding),
+            if (preview.cashFlow != Decimal.zero)
+              _kv(
+                l10n.corpActionPreviewCashFlow,
+                '${preview.cashFlow} ${preview.cashFlowCurrency}',
+              ),
+            for (final delta in preview.lotDeltas)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  l10n.corpActionPreviewLotChange(
+                    delta.before.id,
+                    '${delta.before.remainingQuantity}',
+                    '${delta.after.remainingQuantity}',
+                    '${delta.before.costPerUnit}',
+                    '${delta.after.costPerUnit}',
+                  ),
                 ),
               ),
-            ),
-          for (final newLot in preview.newLots)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                l10n.corpActionPreviewNewLot(
-                  '${newLot.originalQuantity}',
-                  '${newLot.costPerUnit}',
+            for (final newLot in preview.newLots)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  l10n.corpActionPreviewNewLot(
+                    '${newLot.originalQuantity}',
+                    '${newLot.costPerUnit}',
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
+          ],
         ),
-      );
+      ),
+    );
   }
 
   Widget _kv(String label, String value) => Padding(

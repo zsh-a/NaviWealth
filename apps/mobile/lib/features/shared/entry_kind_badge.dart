@@ -44,7 +44,9 @@ class EntryKindBadge extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: l10n.entryKindSemanticLabel(_localizeKind(classification.kind, l10n)),
+      label: l10n.entryKindSemanticLabel(
+        _localizeKind(classification.kind, l10n),
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: visuals.background,
@@ -112,10 +114,7 @@ String _localizeKind(EntryKind kind, AppLocalizations l10n) {
   }
 }
 
-_BadgeVisuals _entryKindVisuals(
-  EntryKindClassification c,
-  ColorScheme scheme,
-) {
+_BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
   switch (c.kind) {
     case EntryKind.trade:
       // Direction-aware icon. `null` (no cash leg) falls back to the

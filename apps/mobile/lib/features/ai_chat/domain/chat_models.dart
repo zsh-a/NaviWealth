@@ -229,10 +229,7 @@ class ChatMessage {
   List<String> get displaySegments {
     final expected = toolCalls.length + 1;
     if (textSegments.length == expected) return textSegments;
-    return <String>[
-      for (var i = 0; i < expected - 1; i++) '',
-      content,
-    ];
+    return <String>[for (var i = 0; i < expected - 1; i++) '', content];
   }
 
   ChatMessage copyWith({

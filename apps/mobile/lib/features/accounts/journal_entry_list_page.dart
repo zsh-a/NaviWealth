@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/format/formatters.dart';
 import '../../data/domain/account.dart';
@@ -27,16 +28,12 @@ class JournalEntryListPage extends ConsumerWidget {
     final journalAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.journalTitle),
-      ),
-      body: journalAsync.when(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.journalTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: journalAsync.when(
         data: (entries) {
           if (entries.isEmpty) return const _EmptyJournal();
           final accountsById = <String, Account>{
@@ -44,9 +41,10 @@ class JournalEntryListPage extends ConsumerWidget {
           };
           return _JournalList(entries: entries, accountsById: accountsById);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text(l10n.journalLoadError('$e'))),
       ),
+        ),
     );
   }
 }

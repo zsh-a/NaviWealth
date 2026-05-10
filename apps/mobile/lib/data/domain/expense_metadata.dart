@@ -17,9 +17,7 @@ class ExpenseMetadata {
   ExpenseMetadata copyWith({List<String>? tags}) =>
       ExpenseMetadata(tags: tags ?? this.tags);
 
-  Map<String, Object?> toJson() => {
-    if (tags.isNotEmpty) 'tags': tags,
-  };
+  Map<String, Object?> toJson() => {if (tags.isNotEmpty) 'tags': tags};
 
   String encode() => jsonEncode(toJson());
 

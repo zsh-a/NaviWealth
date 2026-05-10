@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -28,16 +29,12 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.analyticsAppBarTitle),
-      ),
-      body: LayoutBuilder(
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.analyticsAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = !Breakpoints.isMobile(constraints.maxWidth);
           final basePadding = isWide ? Spacing.pageWide : Spacing.pageMobile;
@@ -60,6 +57,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           );
         },
       ),
+        ),
     );
   }
 }

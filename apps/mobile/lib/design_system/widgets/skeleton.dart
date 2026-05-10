@@ -163,8 +163,9 @@ class _ShimmerPainter extends CustomPainter {
 
     final bandWidth = size.width * 0.5;
     final dx = -bandWidth + (size.width + bandWidth) * progress;
-    _shaderPaint.shader =
-        _gradient.createShader(Rect.fromLTWH(dx, 0, bandWidth, size.height));
+    _shaderPaint.shader = _gradient.createShader(
+      Rect.fromLTWH(dx, 0, bandWidth, size.height),
+    );
     canvas.drawRect(rect, _shaderPaint);
   }
 
@@ -198,10 +199,7 @@ class SkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: padding,
-        child: child,
-      ),
+      child: Padding(padding: padding, child: child),
     );
   }
 }

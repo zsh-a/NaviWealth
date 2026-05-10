@@ -42,11 +42,15 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   void initState() {
     super.initState();
     final goal = ref.read(fireGoalProvider);
-    _targetCtrl = TextEditingController(text: _decimalToText(goal.targetAmount));
-    _expensesCtrl =
-        TextEditingController(text: _decimalToText(goal.monthlyExpenses));
-    _surplusCtrl =
-        TextEditingController(text: _decimalToText(goal.monthlySurplus));
+    _targetCtrl = TextEditingController(
+      text: _decimalToText(goal.targetAmount),
+    );
+    _expensesCtrl = TextEditingController(
+      text: _decimalToText(goal.monthlyExpenses),
+    );
+    _surplusCtrl = TextEditingController(
+      text: _decimalToText(goal.monthlySurplus),
+    );
     _inflation = goal.inflationRate;
   }
 
@@ -85,9 +89,8 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 Text(
                   l10n.fireGoalSheetSubtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: Spacing.s16),
                 _MoneyField(
@@ -197,9 +200,7 @@ class _MoneyField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-      ],
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
       decoration: InputDecoration(
         labelText: label,
         helperText: helper,

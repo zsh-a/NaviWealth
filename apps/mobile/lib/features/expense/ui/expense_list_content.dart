@@ -128,21 +128,21 @@ class _GroupingChips extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(Spacing.s4),
         child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final g in ExpenseGrouping.values)
-            _SegmentChip(
-              label: g == ExpenseGrouping.month
-                  ? l10n.expenseListGroupMonth
-                  : l10n.expenseListGroupWeek,
-              selected: g == selected,
-              onTap: () {
-                Haptics.selection();
-                onChanged(g);
-              },
-            ),
-        ],
-      ),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final g in ExpenseGrouping.values)
+              _SegmentChip(
+                label: g == ExpenseGrouping.month
+                    ? l10n.expenseListGroupMonth
+                    : l10n.expenseListGroupWeek,
+                selected: g == selected,
+                onTap: () {
+                  Haptics.selection();
+                  onChanged(g);
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -243,44 +243,44 @@ class ExpenseGroupedList extends StatelessWidget {
     }
 
     return ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
-        itemCount: items.length,
-        itemBuilder: (context, i) {
-          final item = items[i];
-          return switch (item) {
-            _ExpenseGroupHeader(:final group) => Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s16,
-                Spacing.s12,
-                Spacing.s16,
-                Spacing.s8,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    group.label,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    l10n.expenseListTotal(formatter.currency(group.total)),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFeatures: TypographyTokens.tabularFigures,
-                    ),
-                  ),
-                ],
-              ),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+      itemCount: items.length,
+      itemBuilder: (context, i) {
+        final item = items[i];
+        return switch (item) {
+          _ExpenseGroupHeader(:final group) => Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.s16,
+              Spacing.s12,
+              Spacing.s16,
+              Spacing.s8,
             ),
-            _ExpenseListRow(:final expense) => _ExpenseRow(
-              expense: expense,
-              account: expenseAccountById[expense.expenseAccountId],
-              formatter: formatter,
-              onTap: () => onTap(expense),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  group.label,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                Text(
+                  l10n.expenseListTotal(formatter.currency(group.total)),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontFeatures: TypographyTokens.tabularFigures,
+                  ),
+                ),
+              ],
             ),
-            _ExpenseListDivider() => const Divider(height: 0),
-          };
-        },
-      );
+          ),
+          _ExpenseListRow(:final expense) => _ExpenseRow(
+            expense: expense,
+            account: expenseAccountById[expense.expenseAccountId],
+            formatter: formatter,
+            onTap: () => onTap(expense),
+          ),
+          _ExpenseListDivider() => const FDivider(),
+        };
+      },
+    );
   }
 }
 

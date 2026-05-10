@@ -87,19 +87,21 @@ class CurrencyPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return DropdownButtonFormField<String>(
-  isExpanded: true,
-                    initialValue: value,
-  decoration: InputDecoration(labelText: label ?? l10n.formCurrencyPickerLabelDefault),
-  items: [
+      isExpanded: true,
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: label ?? l10n.formCurrencyPickerLabelDefault,
+      ),
+      items: [
         for (final code in options)
           DropdownMenuItem(
             value: code,
             child: Text(currencyDisplayLabel(l10n, code)),
           ),
       ],
-  onChanged: enabled ? onChanged : null,
-  validator: (v) =>
+      onChanged: enabled ? onChanged : null,
+      validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formCurrencyPickerRequired : null,
-);
+    );
   }
 }

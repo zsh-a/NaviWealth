@@ -30,8 +30,7 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
       return widget.child;
     }
     final asyncAvailable = ref.watch(pwaUpdateAvailableProvider);
-    final available =
-        asyncAvailable.value ?? controller.isUpdateAvailableNow;
+    final available = asyncAvailable.value ?? controller.isUpdateAvailableNow;
     final showBanner = available && !_dismissed;
     final l10n = AppLocalizations.of(context);
 

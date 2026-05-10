@@ -19,8 +19,8 @@ import '../db/app_database.dart';
 /// of `INSERT OR REPLACE` keyed on the natural key.
 class FxRateRepository {
   FxRateRepository({required AppDatabase db, Uuid uuid = const Uuid()})
-      : _db = db,
-        _uuid = uuid;
+    : _db = db,
+      _uuid = uuid;
 
   final AppDatabase _db;
   final Uuid _uuid;
@@ -34,9 +34,9 @@ class FxRateRepository {
   }
 
   Future<List<dom.FxRate>> listAll() async {
-    final rows = await (_db.select(_db.fxRates)
-          ..orderBy([(t) => OrderingTerm(expression: t.asOf)]))
-        .get();
+    final rows = await (_db.select(
+      _db.fxRates,
+    )..orderBy([(t) => OrderingTerm(expression: t.asOf)])).get();
     return rows.map(_toDomain).toList();
   }
 
@@ -53,7 +53,8 @@ class FxRateRepository {
     final quote = _normalize(quoteCurrency, 'quoteCurrency');
     if (base == quote) {
       throw ArgumentError(
-          'baseCurrency and quoteCurrency must differ; got both = $base');
+        'baseCurrency and quoteCurrency must differ; got both = $base',
+      );
     }
     if (rate <= Decimal.zero) {
       throw ArgumentError.value(rate, 'rate', 'must be positive');
@@ -63,14 +64,17 @@ class FxRateRepository {
     return _db.transaction(() async {
       // Manual upsert: drop any existing same-day row so callers don't
       // accumulate duplicates when re-entering the rate.
-      await (_db.delete(_db.fxRates)
-            ..where((t) =>
+      await (_db.delete(_db.fxRates)..where(
+            (t) =>
                 t.baseCurrency.equals(base) &
                 t.quoteCurrency.equals(quote) &
-                t.asOf.equals(day)))
+                t.asOf.equals(day),
+          ))
           .go();
       final id = _uuid.v4();
-      await _db.into(_db.fxRates).insert(
+      await _db
+          .into(_db.fxRates)
+          .insert(
             FxRatesCompanion.insert(
               id: id,
               baseCurrency: base,
@@ -106,11 +110,12 @@ class FxRateRepository {
     final b = _normalize(base, 'base');
     final q = _normalize(quote, 'quote');
     final day = DateTime.utc(date.year, date.month, date.day);
-    await (_db.delete(_db.fxRates)
-          ..where((t) =>
+    await (_db.delete(_db.fxRates)..where(
+          (t) =>
               t.baseCurrency.equals(b) &
               t.quoteCurrency.equals(q) &
-              t.asOf.equals(day)))
+              t.asOf.equals(day),
+        ))
         .go();
   }
 
@@ -123,10 +128,10 @@ class FxRateRepository {
   }
 
   dom.FxRate _toDomain(FxRateRow row) => dom.FxRate(
-        base: row.baseCurrency,
-        quote: row.quoteCurrency,
-        date: row.asOf,
-        rate: row.rate,
-        source: row.source ?? 'manual',
-      );
+    base: row.baseCurrency,
+    quote: row.quoteCurrency,
+    date: row.asOf,
+    rate: row.rate,
+    source: row.source ?? 'manual',
+  );
 }

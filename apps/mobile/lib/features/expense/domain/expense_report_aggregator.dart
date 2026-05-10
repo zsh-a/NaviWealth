@@ -55,12 +55,15 @@ class ExpenseReportAggregator {
       grandTotal += delta;
 
       final localTradeDate = expense.tradeDate.toUtc();
-      final monthKey = '${localTradeDate.year.toString().padLeft(4, '0')}-'
+      final monthKey =
+          '${localTradeDate.year.toString().padLeft(4, '0')}-'
           '${localTradeDate.month.toString().padLeft(2, '0')}';
-      monthlyTotals[monthKey] = (monthlyTotals[monthKey] ?? Decimal.zero) + delta;
+      monthlyTotals[monthKey] =
+          (monthlyTotals[monthKey] ?? Decimal.zero) + delta;
 
       final accountId = expense.expenseAccountId;
-      accountTotals[accountId] = (accountTotals[accountId] ?? Decimal.zero) + delta;
+      accountTotals[accountId] =
+          (accountTotals[accountId] ?? Decimal.zero) + delta;
       accountItems.putIfAbsent(accountId, () => <Expense>[]).add(expense);
     }
 
@@ -72,8 +75,7 @@ class ExpenseReportAggregator {
         month: int.parse(parts[1]),
         total: Money(entry.value, baseCurrency),
       );
-    }).toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+    }).toList()..sort((a, b) => a.key.compareTo(b.key));
 
     final breakdowns = accountTotals.entries.map((entry) {
       return CategoryBreakdown(
@@ -81,8 +83,7 @@ class ExpenseReportAggregator {
         total: Money(entry.value, baseCurrency),
         items: accountItems[entry.key] ?? const <Expense>[],
       );
-    }).toList()
-      ..sort((a, b) => b.total.amount.compareTo(a.total.amount));
+    }).toList()..sort((a, b) => b.total.amount.compareTo(a.total.amount));
 
     return ExpenseReport(
       range: range,
@@ -104,7 +105,8 @@ class ExpenseReportAggregator {
     final endYear = lastIncluded.year;
     final endMonth = lastIncluded.month;
     while (year < endYear || (year == endYear && month <= endMonth)) {
-      final key = '${year.toString().padLeft(4, '0')}-'
+      final key =
+          '${year.toString().padLeft(4, '0')}-'
           '${month.toString().padLeft(2, '0')}';
       out[key] = Decimal.zero;
       month++;

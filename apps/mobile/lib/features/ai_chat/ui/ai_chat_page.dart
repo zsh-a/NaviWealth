@@ -116,16 +116,13 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final l10n = AppLocalizations.of(context);
     final session = ref.watch(authSessionProvider);
     if (session == null) {
-      return Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: Text(l10n.aiChatAppBarTitle),
+      return FScaffold(
+        header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
+        childPad: false,
+        child: const Material(
+          color: Colors.transparent,
+          child: _LoginRequired(),
         ),
-        body: const _LoginRequired(),
       );
     }
 
@@ -166,16 +163,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               );
 
         if (isDesktop) {
-          return Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              title: Text(l10n.aiChatAppBarTitle),
-            ),
-            body: MasterDetailLayout(
+          return FScaffold(
+            header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
+            childPad: false,
+            child: Material(
+          color: Colors.transparent,
+          child: MasterDetailLayout(
               master: SessionsPanel(
                 activeSessionId: desktopActiveId,
                 onSelect: (id) {
@@ -192,51 +185,36 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   ? pendingPane
                   : _ChatPane(sessionId: desktopActiveId),
             ),
+        ),
           );
         }
 
         // mobile + tablet: drawer for sessions.
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
+        return FScaffold(
+          header: FHeader.nested(
             title: Text(_titleForActive(session.userId, activeId, l10n)),
-            actions: [
+            suffixes: [
               Builder(
-                builder: (ctx) => IconButton(
-                  tooltip: l10n.aiChatHistoryTooltip,
+                builder: (ctx) => FHeaderAction(
                   icon: const Icon(Icons.history),
-                  onPressed: () {
+                  onPress: () {
                     Scaffold.of(ctx).openEndDrawer();
                   },
                 ),
               ),
-              IconButton(
-                tooltip: l10n.aiChatNewSessionTooltip,
+              FHeaderAction(
                 icon: const Icon(Icons.add),
-                onPressed: () => _newSession(session.userId),
+                onPress: () => _newSession(session.userId),
               ),
             ],
           ),
-          endDrawer: Drawer(
-            child: SafeArea(
-              child: SessionsPanel(
-                activeSessionId: activeId,
-                onSelect: (id) {
-                  setState(() => _activeSessionId = id);
-                  Navigator.of(context).pop();
-                },
-                onNew: () {
-                  Navigator.of(context).pop();
-                  _newSession(session.userId);
-                },
-              ),
-            ),
-          ),
-          body: activeId == null ? pendingPane : _ChatPane(sessionId: activeId),
+          childPad: false,
+          child: Material(
+          color: Colors.transparent,
+          child: activeId == null
+              ? pendingPane
+              : _ChatPane(sessionId: activeId),
+        ),
         );
       },
     );
@@ -496,30 +474,30 @@ class _SuggestionTile extends StatelessWidget {
               vertical: Spacing.s12,
             ),
             child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: cs.primaryContainer.withValues(alpha: 0.6),
-              shape: BoxShape.circle,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 16, color: cs.onPrimaryContainer),
+                ),
+                const SizedBox(width: Spacing.s12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
+                  color: cs.onSurfaceVariant,
+                ),
+              ],
             ),
-            child: Icon(icon, size: 16, color: cs.onPrimaryContainer),
-          ),
-          const SizedBox(width: Spacing.s12),
-          Expanded(
-            child: Text(
-              label,
-              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-            ),
-          ),
-          Icon(
-            Icons.arrow_forward_ios,
-            size: 12,
-            color: cs.onSurfaceVariant,
-          ),
-        ],
-      ),
           ),
         ),
       ),
@@ -539,11 +517,7 @@ class _BootstrappingPane extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
-          ),
+          const SizedBox(width: 28, height: 28, child: FCircularProgress()),
           const SizedBox(height: Spacing.s12),
           Text(
             l10n.aiChatBootstrappingLabel,

@@ -81,8 +81,8 @@ class FormDefaults {
 /// to migrate or wipe them.
 final formDefaultsProvider =
     StateNotifierProvider<FormDefaultsController, FormDefaults>((ref) {
-  return FormDefaultsController(ref.watch(sharedPreferencesProvider));
-});
+      return FormDefaultsController(ref.watch(sharedPreferencesProvider));
+    });
 
 class FormDefaultsController extends StateNotifier<FormDefaults> {
   FormDefaultsController(this._prefs) : super(_load(_prefs));
@@ -99,15 +99,15 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
   static const _kAssetCurrency = 'naviwealth.forms.asset.currency';
 
   static FormDefaults _load(SharedPreferences p) => FormDefaults(
-        tradeAccountId: _read(p, _kTradeAccount),
-        tradeCashAccountId: _read(p, _kTradeCashAccount),
-        tradeCurrency: _read(p, _kTradeCurrency),
-        expenseAccountId: _read(p, _kExpenseAccount),
-        expenseCategoryId: _read(p, _kExpenseCategory),
-        expenseCurrency: _read(p, _kExpenseCurrency),
-        assetAccountId: _read(p, _kAssetAccount),
-        assetCurrency: _read(p, _kAssetCurrency),
-      );
+    tradeAccountId: _read(p, _kTradeAccount),
+    tradeCashAccountId: _read(p, _kTradeCashAccount),
+    tradeCurrency: _read(p, _kTradeCurrency),
+    expenseAccountId: _read(p, _kExpenseAccount),
+    expenseCategoryId: _read(p, _kExpenseCategory),
+    expenseCurrency: _read(p, _kExpenseCurrency),
+    assetAccountId: _read(p, _kAssetAccount),
+    assetCurrency: _read(p, _kAssetCurrency),
+  );
 
   static String? _read(SharedPreferences p, String key) {
     final raw = p.getString(key);

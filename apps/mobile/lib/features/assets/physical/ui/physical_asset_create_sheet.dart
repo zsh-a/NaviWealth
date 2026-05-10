@@ -36,9 +36,7 @@ class PhysicalAssetCreateSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: PhysicalAssetCreateSheet(type: type),
       ),
     );
@@ -209,8 +207,9 @@ class _PhysicalAssetCreateSheetState
                   decoration: InputDecoration(
                     labelText: l10n.physicalAssetFieldPurchasePrice,
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: _positiveDecimal(l10n),
                 ),
                 const SizedBox(height: Spacing.s12),
@@ -224,8 +223,9 @@ class _PhysicalAssetCreateSheetState
                   decoration: InputDecoration(
                     labelText: l10n.physicalAssetFieldCurrentValuation,
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return null;
                     return _positiveDecimal(l10n)(v);
@@ -242,8 +242,9 @@ class _PhysicalAssetCreateSheetState
                       labelText: l10n.physicalAssetFieldAnnualResidualRate,
                       helperText: '0.85',
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     validator: (v) {
                       if (v == null || v.isEmpty) {
                         return l10n.physicalAssetValidationRequired;
@@ -307,8 +308,7 @@ class _PhysicalAssetCreateSheetState
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
     try {
-      final repo =
-          await ref.read(physicalAssetRepositoryProvider.future);
+      final repo = await ref.read(physicalAssetRepositoryProvider.future);
       final purchasePrice = Decimal.parse(_purchasePriceCtrl.text.trim());
       final currentValuation = _currentValuationCtrl.text.trim().isEmpty
           ? null
@@ -320,8 +320,7 @@ class _PhysicalAssetCreateSheetState
               purchaseDate: _purchaseDate,
               purchasePrice: purchasePrice,
               currentValuation: currentValuation,
-              annualResidualRate:
-                  Decimal.parse(_residualRateCtrl.text.trim()),
+              annualResidualRate: Decimal.parse(_residualRateCtrl.text.trim()),
               autoDepreciation: _autoDepreciation,
             )
           : await repo.createRealEstate(
@@ -337,9 +336,11 @@ class _PhysicalAssetCreateSheetState
                   ? null
                   : _linkedLiabilityCtrl.text.trim(),
             );
-      unawaited(ref.read(formDefaultsProvider.notifier).rememberAsset(
-            currency: _currencyCtrl.text.trim().toUpperCase(),
-          ));
+      unawaited(
+        ref
+            .read(formDefaultsProvider.notifier)
+            .rememberAsset(currency: _currencyCtrl.text.trim().toUpperCase()),
+      );
       if (!mounted) return;
       Haptics.success();
       Navigator.of(context).pop(created);

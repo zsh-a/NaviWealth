@@ -180,11 +180,7 @@ class DefaultEquityClassifier implements EquityClassifier {
     final override = _overrides.findFor(asset.id);
 
     final sector = _resolve(override?.sector, _normalizeSector(asset.industry));
-    final region = _resolveRegion(
-      override?.region,
-      asset.region,
-      asset.market,
-    );
+    final region = _resolveRegion(override?.region, asset.region, asset.market);
     final cap = _resolve(override?.marketCap, _autoMarketCap(asset));
 
     final ClassifiedField<MarketCapBucket> bucket;
@@ -231,8 +227,8 @@ class DefaultEquityClassifier implements EquityClassifier {
         source: ClassificationSource.manual,
       );
     }
-    final auto = assetMarketFromHint(regionHint) ??
-        assetMarketFromHint(marketHint);
+    final auto =
+        assetMarketFromHint(regionHint) ?? assetMarketFromHint(marketHint);
     if (auto != null && auto != AssetMarket.unknown) {
       return ClassifiedField(value: auto, source: ClassificationSource.auto);
     }

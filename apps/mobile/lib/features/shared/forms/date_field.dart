@@ -107,7 +107,9 @@ class _DateFieldState extends State<DateField> {
         border: const OutlineInputBorder(),
       ),
       validator: (_) {
-        if (widget.required && _value == null) return l10n.formDateFieldRequired;
+        if (widget.required && _value == null) {
+          return l10n.formDateFieldRequired;
+        }
         return null;
       },
     );

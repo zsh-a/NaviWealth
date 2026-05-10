@@ -27,10 +27,8 @@ class LiabilityBalance {
 
 /// One row of an amortization schedule used by [LiabilitySnapshot].
 class AmortizationPoint {
-  AmortizationPoint({
-    required DateTime dueDate,
-    required this.remainingBalance,
-  }) : dueDate = DateTime.utc(dueDate.year, dueDate.month, dueDate.day);
+  AmortizationPoint({required DateTime dueDate, required this.remainingBalance})
+    : dueDate = DateTime.utc(dueDate.year, dueDate.month, dueDate.day);
 
   final DateTime dueDate;
   final Decimal remainingBalance;

@@ -77,8 +77,7 @@ final syncOpApplierProvider = Provider<OpApplier>((ref) {
   ];
   final handlers = <String, OpApplier>{
     'accounts': AccountOpApplier(db),
-    for (final t in genericTables)
-      t: GenericLwwApplier(db: db, tableName: t),
+    for (final t in genericTables) t: GenericLwwApplier(db: db, tableName: t),
     // `settings` uses `user_id` as its primary key on the local Drift
     // schema (per-user singleton), unlike everything else that uses `id`.
     'settings': GenericLwwApplier(

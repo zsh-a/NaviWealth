@@ -27,7 +27,7 @@ abstract class BenchmarkHistorySource {
 /// foreign indices) and falling back to `close`.
 class MarketDataBenchmarkHistorySource implements BenchmarkHistorySource {
   MarketDataBenchmarkHistorySource({required MarketDataService marketData})
-      : _marketData = marketData;
+    : _marketData = marketData;
 
   final MarketDataService _marketData;
 
@@ -64,9 +64,7 @@ class MarketDataBenchmarkHistorySource implements BenchmarkHistorySource {
     final out = <TimeSeriesPoint>[];
     for (final bar in bars) {
       final close = bar.adjustedClose ?? bar.close;
-      out.add(
-        TimeSeriesPoint(asOf: bar.asOf, value: close.toDouble()),
-      );
+      out.add(TimeSeriesPoint(asOf: bar.asOf, value: close.toDouble()));
     }
     return out;
   }

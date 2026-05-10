@@ -57,7 +57,8 @@ class NaviWealthApp extends ConsumerWidget {
         // FTheme while Material widgets keep reading Theme.of(context).
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final platform = isDark ? FThemes.zinc.dark : FThemes.zinc.light;
-        final isTouch = !kIsWeb &&
+        final isTouch =
+            !kIsWeb &&
             (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.android);
         final fTheme = isTouch ? platform.touch : platform.desktop;

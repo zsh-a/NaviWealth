@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -66,11 +67,13 @@ class _ChatComposerState extends State<ChatComposer> {
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    final isEnter = event.logicalKey == LogicalKeyboardKey.enter ||
+    final isEnter =
+        event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.numpadEnter;
     if (!isEnter) return KeyEventResult.ignored;
     final pressed = HardwareKeyboard.instance.logicalKeysPressed;
-    final modifierHeld = pressed.contains(LogicalKeyboardKey.metaLeft) ||
+    final modifierHeld =
+        pressed.contains(LogicalKeyboardKey.metaLeft) ||
         pressed.contains(LogicalKeyboardKey.metaRight) ||
         pressed.contains(LogicalKeyboardKey.controlLeft) ||
         pressed.contains(LogicalKeyboardKey.controlRight);
@@ -89,7 +92,11 @@ class _ChatComposerState extends State<ChatComposer> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)),
+          top: BorderSide(
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
       ),
       child: Padding(
@@ -120,8 +127,8 @@ class _ChatComposerState extends State<ChatComposer> {
                       hintText: widget.isFlushing
                           ? l10n.aiChatComposerHintFlushing
                           : widget.isStreaming
-                              ? l10n.aiChatComposerHintStreaming
-                              : l10n.aiChatComposerHintIdle,
+                          ? l10n.aiChatComposerHintStreaming
+                          : l10n.aiChatComposerHintIdle,
                       filled: true,
                       fillColor: cs.surfaceContainerHighest.withValues(
                         alpha: 0.6,
@@ -178,11 +185,7 @@ class _ChatComposerState extends State<ChatComposer> {
       return const Padding(
         key: ValueKey('flushing'),
         padding: EdgeInsets.all(Spacing.s8),
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        child: SizedBox(width: 20, height: 20, child: FCircularProgress()),
       );
     }
     return IconButton.filled(

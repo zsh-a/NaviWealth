@@ -111,20 +111,12 @@ class SType {
 
   static TextStyle bodySm(BuildContext context) {
     final tokens = STokens.of(context);
-    return TextStyle(
-      fontSize: 13,
-      height: 1.4,
-      color: tokens.foreground,
-    );
+    return TextStyle(fontSize: 13, height: 1.4, color: tokens.foreground);
   }
 
   static TextStyle muted(BuildContext context) {
     final tokens = STokens.of(context);
-    return TextStyle(
-      fontSize: 12,
-      height: 1.4,
-      color: tokens.mutedForeground,
-    );
+    return TextStyle(fontSize: 12, height: 1.4, color: tokens.mutedForeground);
   }
 
   static TextStyle label(BuildContext context) {

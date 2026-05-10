@@ -83,10 +83,7 @@ class _PageSkeletonShellState<T> extends State<PageSkeletonShell<T>> {
               key: const ValueKey('page-skeleton'),
               child: widget.skeleton,
             )
-          : KeyedSubtree(
-              key: const ValueKey('page-data'),
-              child: widget.child,
-            ),
+          : KeyedSubtree(key: const ValueKey('page-data'), child: widget.child),
     );
   }
 }
@@ -113,11 +110,7 @@ class HomeSkeleton extends StatelessWidget {
               SkeletonBox(width: 120, height: 18, radius: Radii.xs),
               SizedBox(height: Spacing.s16),
               Center(
-                child: SkeletonBox(
-                  width: 200,
-                  height: 200,
-                  radius: Radii.full,
-                ),
+                child: SkeletonBox(width: 200, height: 200, radius: Radii.full),
               ),
               SizedBox(height: Spacing.s16),
               SkeletonBox(height: 14),
@@ -243,13 +236,7 @@ class AssetsListSkeleton extends StatelessWidget {
         ),
         Card(
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              _row(),
-              const Divider(height: 1),
-              _row(),
-            ],
-          ),
+          child: Column(children: [_row(), const Divider(height: 1), _row()]),
         ),
       ],
     );
@@ -376,9 +363,7 @@ class AnalyticsSkeleton extends StatelessWidget {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
           padding: isWide ? Spacing.pageWide : Spacing.pageMobile,
-          children: const [
-            ResponsiveTwoColumn(left: left, right: right),
-          ],
+          children: const [ResponsiveTwoColumn(left: left, right: right)],
         );
       },
     );
@@ -402,11 +387,7 @@ class FireSkeleton extends StatelessWidget {
               SkeletonBox(width: 120, height: 18),
               SizedBox(height: Spacing.s12),
               Center(
-                child: SkeletonBox(
-                  width: 200,
-                  height: 200,
-                  radius: Radii.full,
-                ),
+                child: SkeletonBox(width: 200, height: 200, radius: Radii.full),
               ),
               SizedBox(height: Spacing.s16),
               SkeletonBox(height: 14),
@@ -507,10 +488,7 @@ class _ChatBubbleSkeleton extends StatelessWidget {
             children: [
               for (var i = 0; i < lines; i++) ...[
                 if (i != 0) const SizedBox(height: Spacing.s6),
-                SkeletonBox(
-                  width: 200.0 - (i * 24),
-                  height: 12,
-                ),
+                SkeletonBox(width: 200.0 - (i * 24), height: 12),
               ],
             ],
           ),

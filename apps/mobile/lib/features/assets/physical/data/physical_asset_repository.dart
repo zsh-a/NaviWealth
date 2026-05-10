@@ -30,12 +30,12 @@ class PhysicalAssetRepository {
     required PriceRepository priceRepo,
     JournalEntryRepository? journalEntryRepo,
     Uuid uuid = const Uuid(),
-  })  : _db = db,
-        _outbox = outbox,
-        _stamper = stamper,
-        _priceRepo = priceRepo,
-        _journalEntryRepo = journalEntryRepo,
-        _uuid = uuid;
+  }) : _db = db,
+       _outbox = outbox,
+       _stamper = stamper,
+       _priceRepo = priceRepo,
+       _journalEntryRepo = journalEntryRepo,
+       _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
@@ -52,17 +52,20 @@ class PhysicalAssetRepository {
   // ---------- Reads ----------
 
   Future<List<PhysicalAsset>> listAll() async {
-    final rows = await (_db.select(_db.assets)
-          ..where(
-            (t) =>
-                t.deletedAt.isNull() &
-                t.type.isInValues(_physicalTypes.toList()),
-          )
-          ..orderBy([
-            (t) =>
-                OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
-          ]))
-        .get();
+    final rows =
+        await (_db.select(_db.assets)
+              ..where(
+                (t) =>
+                    t.deletedAt.isNull() &
+                    t.type.isInValues(_physicalTypes.toList()),
+              )
+              ..orderBy([
+                (t) => OrderingTerm(
+                  expression: t.updatedAt,
+                  mode: OrderingMode.desc,
+                ),
+              ]))
+            .get();
     return rows.map(_wrap).whereType<PhysicalAsset>().toList(growable: false);
   }
 
@@ -76,17 +79,15 @@ class PhysicalAssetRepository {
         (t) => OrderingTerm(expression: t.updatedAt, mode: OrderingMode.desc),
       ]);
     return query.watch().map(
-          (rows) => rows
-              .map(_wrap)
-              .whereType<PhysicalAsset>()
-              .toList(growable: false),
-        );
+      (rows) =>
+          rows.map(_wrap).whereType<PhysicalAsset>().toList(growable: false),
+    );
   }
 
   Future<PhysicalAsset?> getById(String id) async {
-    final row = await (_db.select(_db.assets)
-          ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.assets,
+    )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).getSingleOrNull();
     if (row == null) return null;
     return _wrap(row);
   }
@@ -99,12 +100,13 @@ class PhysicalAssetRepository {
     final asset = await getById(assetId);
     if (asset == null) return const [];
 
-    final prices = await (_db.select(_db.prices)
-          ..where((t) => t.unit.equals(assetId))
-          ..where((t) => t.quoteCurrency.equals(asset.currency))
-          ..where((t) => t.deletedAt.isNull())
-          ..orderBy([(t) => OrderingTerm(expression: t.observedOn)]))
-        .get();
+    final prices =
+        await (_db.select(_db.prices)
+              ..where((t) => t.unit.equals(assetId))
+              ..where((t) => t.quoteCurrency.equals(asset.currency))
+              ..where((t) => t.deletedAt.isNull())
+              ..orderBy([(t) => OrderingTerm(expression: t.observedOn)]))
+            .get();
 
     final points = <ValuationPoint>[
       ValuationPoint(
@@ -285,7 +287,9 @@ class PhysicalAssetRepository {
       // `symbol` is required on the Assets table but only meaningful for
       // securities. We reuse the row id as the symbol so it's stable and
       // unique without leaking PII into a fielded column.
-      await _db.into(_db.assets).insert(
+      await _db
+          .into(_db.assets)
+          .insert(
             AssetsCompanion.insert(
               id: id,
               type: type,

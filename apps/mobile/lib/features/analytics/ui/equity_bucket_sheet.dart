@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -66,7 +67,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: bucket.holdings.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const FDivider(),
                 itemBuilder: (context, index) {
                   final h = bucket.holdings[index];
                   return ListTile(

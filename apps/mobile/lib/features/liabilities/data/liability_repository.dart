@@ -70,10 +70,9 @@ class LiabilityRepository {
   /// One-shot read of a single liability by id. Returns null if missing or
   /// tombstoned, so the UI can show a "not found" state without throwing.
   Future<Liability?> findById(String id) async {
-    final row =
-        await (_db.select(_db.liabilities)
-              ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
-            .getSingleOrNull();
+    final row = await (_db.select(
+      _db.liabilities,
+    )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).getSingleOrNull();
     return row == null ? null : _toLiability(row);
   }
 
@@ -81,9 +80,7 @@ class LiabilityRepository {
   /// Empty for revolving credit (no schedule generated at create).
   Stream<List<AmortizationEntry>> watchSchedule(String liabilityId) {
     final q = _db.select(_db.amortizationEntries)
-      ..where(
-        (t) => t.liabilityId.equals(liabilityId) & t.deletedAt.isNull(),
-      )
+      ..where((t) => t.liabilityId.equals(liabilityId) & t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm.asc(t.periodIndex)]);
     return q.watch().map((rows) => rows.map(_toAmort).toList());
   }
@@ -92,8 +89,7 @@ class LiabilityRepository {
     final rows =
         await (_db.select(_db.amortizationEntries)
               ..where(
-                (t) =>
-                    t.liabilityId.equals(liabilityId) & t.deletedAt.isNull(),
+                (t) => t.liabilityId.equals(liabilityId) & t.deletedAt.isNull(),
               )
               ..orderBy([(t) => OrderingTerm.asc(t.periodIndex)]))
             .get();
@@ -224,13 +220,12 @@ class LiabilityRepository {
       throw StateError('Liability $liabilityId not found');
     }
     final entry =
-        await (_db.select(_db.amortizationEntries)
-              ..where(
-                (t) =>
-                    t.liabilityId.equals(liabilityId) &
-                    t.periodIndex.equals(periodIndex) &
-                    t.deletedAt.isNull(),
-              ))
+        await (_db.select(_db.amortizationEntries)..where(
+              (t) =>
+                  t.liabilityId.equals(liabilityId) &
+                  t.periodIndex.equals(periodIndex) &
+                  t.deletedAt.isNull(),
+            ))
             .getSingleOrNull();
     if (entry == null) {
       throw StateError(
@@ -256,16 +251,16 @@ class LiabilityRepository {
     String? journalEntryId;
 
     await _db.transaction(() async {
-      await (_db.update(_db.amortizationEntries)
-            ..where((t) => t.id.equals(entry.id)))
-          .write(
-            AmortizationEntriesCompanion(
-              paidAt: Value(whenPaid),
-              updatedAt: Value(stamp.now),
-              updatedByDevice: Value(stamp.deviceId),
-              hlc: Value(stamp.hlc),
-            ),
-          );
+      await (_db.update(
+        _db.amortizationEntries,
+      )..where((t) => t.id.equals(entry.id))).write(
+        AmortizationEntriesCompanion(
+          paidAt: Value(whenPaid),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
+          hlc: Value(stamp.hlc),
+        ),
+      );
       await _enqueue(
         table: _amortTable,
         opType: OpType.update,
@@ -283,8 +278,7 @@ class LiabilityRepository {
         'liability:${liability.id}',
         ownerUserId: stamp.ownerUserId,
       );
-      final interestExpenseAccountId =
-          AccountRepository.systemAccountIdForPath(
+      final interestExpenseAccountId = AccountRepository.systemAccountIdForPath(
         'expense:trading:interest',
         ownerUserId: stamp.ownerUserId,
       );

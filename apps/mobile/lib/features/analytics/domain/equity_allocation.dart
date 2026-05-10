@@ -221,23 +221,25 @@ class EquityAllocationService {
       agg.add(snapshot, asset, classification);
     }
 
-    final buckets = byKey.values
-        .map(
-          (a) => EquityAllocationBucket(
-            dimension: dimension,
-            key: a.key,
-            label: a.label,
-            totalValueInBase: a.total,
-            weight: portfolioTotal.sign == 0
-                ? Decimal.zero
-                : (a.total / portfolioTotal)
-                    .toDecimal(scaleOnInfinitePrecision: 12),
-            holdings: a.buildHoldings(portfolioTotal),
-            isUnclassified: a.isUnclassified,
-          ),
-        )
-        .toList()
-      ..sort(_compareBuckets);
+    final buckets =
+        byKey.values
+            .map(
+              (a) => EquityAllocationBucket(
+                dimension: dimension,
+                key: a.key,
+                label: a.label,
+                totalValueInBase: a.total,
+                weight: portfolioTotal.sign == 0
+                    ? Decimal.zero
+                    : (a.total / portfolioTotal).toDecimal(
+                        scaleOnInfinitePrecision: 12,
+                      ),
+                holdings: a.buildHoldings(portfolioTotal),
+                isUnclassified: a.isUnclassified,
+              ),
+            )
+            .toList()
+          ..sort(_compareBuckets);
 
     return EquityAllocationView(
       dimension: dimension,
@@ -302,24 +304,24 @@ class _BucketAggregate {
   }
 
   List<EquityHoldingRow> buildHoldings(Decimal portfolioTotal) {
-    final rows = _parts.map((p) {
-      final weight = portfolioTotal.sign == 0
-          ? Decimal.zero
-          : (p.snapshot.marketValueInBase / portfolioTotal)
-              .toDecimal(scaleOnInfinitePrecision: 12);
-      return EquityHoldingRow(
-        assetId: p.asset.id,
-        symbol: p.asset.symbol,
-        name: p.asset.name,
-        assetType: p.asset.type,
-        marketValueInBase: p.snapshot.marketValueInBase,
-        weight: weight,
-        classification: p.classification,
-      );
-    }).toList()
-      ..sort(
-        (a, b) => b.marketValueInBase.compareTo(a.marketValueInBase),
-      );
+    final rows =
+        _parts.map((p) {
+            final weight = portfolioTotal.sign == 0
+                ? Decimal.zero
+                : (p.snapshot.marketValueInBase / portfolioTotal).toDecimal(
+                    scaleOnInfinitePrecision: 12,
+                  );
+            return EquityHoldingRow(
+              assetId: p.asset.id,
+              symbol: p.asset.symbol,
+              name: p.asset.name,
+              assetType: p.asset.type,
+              marketValueInBase: p.snapshot.marketValueInBase,
+              weight: weight,
+              classification: p.classification,
+            );
+          }).toList()
+          ..sort((a, b) => b.marketValueInBase.compareTo(a.marketValueInBase));
     return List.unmodifiable(rows);
   }
 }

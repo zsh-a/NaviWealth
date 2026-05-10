@@ -30,10 +30,10 @@ class SecuritiesAssetRepository {
     required OutboxStore outbox,
     required MutationStamper stamper,
     Uuid uuid = const Uuid(),
-  })  : _db = db,
-        _outbox = outbox,
-        _stamper = stamper,
-        _uuid = uuid;
+  }) : _db = db,
+       _outbox = outbox,
+       _stamper = stamper,
+       _uuid = uuid;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
@@ -45,21 +45,25 @@ class SecuritiesAssetRepository {
   // ---------- Reads ----------
 
   Future<Asset?> findById(String id) async {
-    final row = await (_db.select(_db.assets)
-          ..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.assets,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     return row == null ? null : _toAsset(row);
   }
 
   /// Resolves a security by its (market, symbol) natural key, ignoring
   /// soft-deleted rows. Lookup is by deterministic id rather than by
   /// scanning `(market, symbol)` so we hit the primary key index.
-  Future<Asset?> findBySymbolAndMarket(String symbol, AssetMarket market) async {
+  Future<Asset?> findBySymbolAndMarket(
+    String symbol,
+    AssetMarket market,
+  ) async {
     final id = Asset.idFor(market, symbol);
-    final row = await (_db.select(_db.assets)
-          ..where((t) => t.id.equals(id))
-          ..where((t) => t.deletedAt.isNull()))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.assets)
+              ..where((t) => t.id.equals(id))
+              ..where((t) => t.deletedAt.isNull()))
+            .getSingleOrNull();
     return row == null ? null : _toAsset(row);
   }
 
@@ -175,9 +179,7 @@ class SecuritiesAssetRepository {
       pending = pending.copyWith(isin: Value(isin));
       diff['isin'] = isin;
     }
-    if (industry != null &&
-        industry.isNotEmpty &&
-        existing.industry == null) {
+    if (industry != null && industry.isNotEmpty && existing.industry == null) {
       pending = pending.copyWith(industry: Value(industry));
       diff['industry'] = industry;
     }
@@ -185,9 +187,7 @@ class SecuritiesAssetRepository {
       pending = pending.copyWith(region: Value(region));
       diff['region'] = region;
     }
-    if (logoUrl != null &&
-        logoUrl.isNotEmpty &&
-        existing.logoUrl == null) {
+    if (logoUrl != null && logoUrl.isNotEmpty && existing.logoUrl == null) {
       pending = pending.copyWith(logoUrl: Value(logoUrl));
       diff['logo_url'] = logoUrl;
     }
@@ -205,8 +205,9 @@ class SecuritiesAssetRepository {
     diff['hlc'] = stamp.hlc.toString();
 
     await _db.transaction(() async {
-      await (_db.update(_db.assets)..where((t) => t.id.equals(existing.id)))
-          .write(pending);
+      await (_db.update(
+        _db.assets,
+      )..where((t) => t.id.equals(existing.id))).write(pending);
       await _enqueue(
         opType: OpType.update,
         rowId: existing.id,
@@ -228,8 +229,9 @@ class SecuritiesAssetRepository {
       deletedAt: Value(stamp.now),
     );
     await _db.transaction(() async {
-      await (_db.update(_db.assets)..where((t) => t.id.equals(id)))
-          .write(companion);
+      await (_db.update(
+        _db.assets,
+      )..where((t) => t.id.equals(id))).write(companion);
       await _enqueue(
         opType: OpType.delete,
         rowId: id,
@@ -357,8 +359,9 @@ class SecuritiesAssetRepository {
     diff['hlc'] = stamp.hlc.toString();
 
     await _db.transaction(() async {
-      await (_db.update(_db.assets)..where((t) => t.id.equals(existing.id)))
-          .write(pending);
+      await (_db.update(
+        _db.assets,
+      )..where((t) => t.id.equals(existing.id))).write(pending);
       await _enqueue(
         opType: OpType.update,
         rowId: existing.id,

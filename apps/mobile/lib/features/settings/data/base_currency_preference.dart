@@ -18,8 +18,8 @@ const String kDefaultBaseCurrency = 'CNY';
 /// fast-path read so a cold start never paints with the wrong currency.
 final baseCurrencyProvider =
     StateNotifierProvider<BaseCurrencyController, String>((ref) {
-  return BaseCurrencyController(ref.watch(sharedPreferencesProvider));
-});
+      return BaseCurrencyController(ref.watch(sharedPreferencesProvider));
+    });
 
 class BaseCurrencyController extends StateNotifier<String> {
   BaseCurrencyController(this._prefs) : super(_load(_prefs));

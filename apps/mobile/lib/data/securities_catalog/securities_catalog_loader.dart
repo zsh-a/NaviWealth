@@ -115,9 +115,9 @@ class SecuritiesCatalogLoader {
     required AppDatabase db,
     Future<String> Function() bundleReader = _defaultBundleReader,
     AppLogger? logger,
-  })  : _db = db,
-        _bundleReader = bundleReader,
-        _logger = logger;
+  }) : _db = db,
+       _bundleReader = bundleReader,
+       _logger = logger;
 
   final AppDatabase _db;
   final Future<String> Function() _bundleReader;
@@ -179,9 +179,9 @@ class SecuritiesCatalogLoader {
   }
 
   Future<SecuritiesCatalogMetaRow?> _readMeta() async {
-    final row = await (_db.select(_db.securitiesCatalogMeta)
-          ..where((t) => t.id.equals(1)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.securitiesCatalogMeta,
+    )..where((t) => t.id.equals(1))).getSingleOrNull();
     return row;
   }
 
@@ -248,7 +248,9 @@ class SecuritiesCatalogLoader {
       // Meta row is written last: a crash before this point leaves the
       // catalog in an old state but the meta unchanged, so the next
       // [load] call simply reruns the rewrite.
-      await _db.into(_db.securitiesCatalogMeta).insertOnConflictUpdate(
+      await _db
+          .into(_db.securitiesCatalogMeta)
+          .insertOnConflictUpdate(
             SecuritiesCatalogMetaCompanion.insert(
               id: const Value(1),
               version: bundle.version,
@@ -345,8 +347,11 @@ SecuritiesCatalogEntry _decodeEntry(Map<String, Object?> json) {
   final marketWire = json['m'] as String?;
   final typeName = json['t'] as String?;
   final currency = json['c'] as String?;
-  if (symbol == null || symbol.isEmpty ||
-      marketWire == null || typeName == null || currency == null) {
+  if (symbol == null ||
+      symbol.isEmpty ||
+      marketWire == null ||
+      typeName == null ||
+      currency == null) {
     throw FormatException('catalog row missing required field: $json');
   }
   final market = assetMarketFromWire(marketWire);

@@ -36,7 +36,12 @@ class Spacing {
   static const EdgeInsets cardHero = EdgeInsets.all(s20);
 
   /// Padding for section header labels (Apple News style).
-  static const EdgeInsets sectionHeader = EdgeInsets.fromLTRB(s16, s20, s16, s8);
+  static const EdgeInsets sectionHeader = EdgeInsets.fromLTRB(
+    s16,
+    s20,
+    s16,
+    s8,
+  );
 
   /// Extra bottom clearance for scrollable content behind a floating
   /// glass bottom bar (Scaffold.extendBody = true).

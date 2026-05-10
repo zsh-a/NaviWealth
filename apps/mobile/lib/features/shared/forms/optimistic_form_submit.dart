@@ -112,11 +112,7 @@ Future<void> runOptimisticWrite({
   try {
     await write();
   } catch (error, stack) {
-    logger.e(
-      'optimistic-$tag write failed',
-      error: error,
-      stackTrace: stack,
-    );
+    logger.e('optimistic-$tag write failed', error: error, stackTrace: stack);
     Haptics.error();
     if (context == null) return;
     AppMessenger.show(
@@ -128,13 +124,13 @@ Future<void> runOptimisticWrite({
       onAction: retryLabel == null
           ? null
           : () => runOptimisticWrite(
-                write: write,
-                failureMessage: failureMessage,
-                logger: logger,
-                context: context,
-                retryLabel: retryLabel,
-                tag: tag,
-              ),
+              write: write,
+              failureMessage: failureMessage,
+              logger: logger,
+              context: context,
+              retryLabel: retryLabel,
+              tag: tag,
+            ),
     );
   }
 }

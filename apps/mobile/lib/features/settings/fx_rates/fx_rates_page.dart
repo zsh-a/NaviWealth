@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/repositories/providers.dart';
@@ -22,27 +23,25 @@ class FxRatesPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final ratesAsync = ref.watch(fxRatesStreamProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.fxRatesAppBarTitle),
-        actions: [
-          IconButton(
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.sync),
-            tooltip: l10n.fxRatesRefreshing,
-            onPressed: () => _refresh(context, ref),
+            onPress: () => _refresh(context, ref),
           ),
         ],
       ),
-      body: ratesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: ratesAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text('$e')),
         data: (rates) => _RateList(rates: rates),
       ),
+        ),
     );
   }
 
@@ -56,7 +55,10 @@ class FxRatesPage extends ConsumerWidget {
       final base = ref.read(baseCurrencyProvider);
       final accounts = await ref.read(accountsStreamProvider.future);
       final currencies = accounts.map((a) => a.currency).toSet();
-      await service.syncRates(baseCurrency: base, accountCurrencies: currencies);
+      await service.syncRates(
+        baseCurrency: base,
+        accountCurrencies: currencies,
+      );
     } catch (_) {
       // Errors are logged; the user sees whatever rates are already stored.
     }
@@ -79,8 +81,8 @@ class _RateList extends ConsumerWidget {
             l10n.fxRatesEmpty,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -90,7 +92,7 @@ class _RateList extends ConsumerWidget {
     final ordered = [...rates]..sort((a, b) => b.date.compareTo(a.date));
     return ListView.separated(
       itemCount: ordered.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const FDivider(),
       itemBuilder: (ctx, i) {
         final r = ordered[i];
         return Dismissible(

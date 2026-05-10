@@ -34,26 +34,23 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     final l10n = AppLocalizations.of(context);
     final talker = ref.watch(talkerProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.settingsLogsTitle),
-        actions: [
-          IconButton(
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.delete_outline),
-            tooltip: l10n.logViewerClearTooltip,
-            onPressed: () {
+            onPress: () {
               talker.cleanHistory();
               setState(() {});
             },
           ),
         ],
       ),
-      body: StreamBuilder<TalkerData>(
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: StreamBuilder<TalkerData>(
         stream: talker.stream,
         builder: (context, _) {
           final logs = talker.history;
@@ -68,6 +65,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
           );
         },
       ),
+        ),
     );
   }
 }
@@ -88,52 +86,49 @@ class _LogTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  log.title ?? log.logLevel?.name ?? 'log',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      log.title ?? log.logLevel?.name ?? 'log',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    log.displayTime(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(log.message ?? '', style: theme.textTheme.bodySmall),
+              if (log.error != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${log.error}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                log.displayTime(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            log.message ?? '',
-            style: theme.textTheme.bodySmall,
-          ),
-          if (log.error != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              '${log.error}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-          ],
-        ],
-      ),
         ),
       ),
     );

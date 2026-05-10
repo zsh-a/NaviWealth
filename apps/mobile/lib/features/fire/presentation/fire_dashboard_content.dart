@@ -130,51 +130,51 @@ class _ProgressHeaderCard extends StatelessWidget {
     final gap = target - current;
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.fireProgressTitle, style: theme.textTheme.titleMedium),
-          const SizedBox(height: Spacing.s12),
-          Center(
-            child: FireProgressGauge(
-              progress: ratio,
-              centerLabel: percentLabel,
-              caption: l10n.fireProgressGaugeCaption,
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.fireProgressTitle, style: theme.textTheme.titleMedium),
+            const SizedBox(height: Spacing.s12),
+            Center(
+              child: FireProgressGauge(
+                progress: ratio,
+                centerLabel: percentLabel,
+                caption: l10n.fireProgressGaugeCaption,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s16),
-          _LabelValueRow(
-            label: l10n.fireProgressCurrent,
-            child: AnimatedMoneyText(
-              amount: current,
-              currencyCode: view.baseCurrency,
-              style: theme.textTheme.titleSmall,
+            const SizedBox(height: Spacing.s16),
+            _LabelValueRow(
+              label: l10n.fireProgressCurrent,
+              child: AnimatedMoneyText(
+                amount: current,
+                currencyCode: view.baseCurrency,
+                style: theme.textTheme.titleSmall,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s4),
-          _LabelValueRow(
-            label: l10n.fireProgressTarget,
-            child: AnimatedMoneyText(
-              amount: target,
-              currencyCode: view.baseCurrency,
-              style: theme.textTheme.titleSmall,
+            const SizedBox(height: Spacing.s4),
+            _LabelValueRow(
+              label: l10n.fireProgressTarget,
+              child: AnimatedMoneyText(
+                amount: target,
+                currencyCode: view.baseCurrency,
+                style: theme.textTheme.titleSmall,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s4),
-          _LabelValueRow(
-            label: l10n.fireProgressGap,
-            child: AnimatedMoneyText(
-              amount: gap > 0 ? gap : 0,
-              currencyCode: view.baseCurrency,
-              style: theme.textTheme.titleSmall,
+            const SizedBox(height: Spacing.s4),
+            _LabelValueRow(
+              label: l10n.fireProgressGap,
+              child: AnimatedMoneyText(
+                amount: gap > 0 ? gap : 0,
+                currencyCode: view.baseCurrency,
+                style: theme.textTheme.titleSmall,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -230,21 +230,21 @@ class _CountdownCard extends StatelessWidget {
           );
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.fireCountdownTitle(referenceLabel),
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: Spacing.s8),
-          body,
-        ],
-      ),
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.fireCountdownTitle(referenceLabel),
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: Spacing.s8),
+            body,
+          ],
         ),
-      );
+      ),
+    );
   }
 
   static FireScenarioTier _baselineTier(FireDashboardView view) {
@@ -266,35 +266,35 @@ class _ProjectionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.fireProjectionTitle, style: theme.textTheme.titleMedium),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            l10n.fireProjectionSubtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.fireProjectionTitle, style: theme.textTheme.titleMedium),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              l10n.fireProjectionSubtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s12),
-          LayoutBuilder(
-            builder: (context, c) => FireScenariosChart(
-              scenarios: view.scenarios,
-              baseCurrency: view.baseCurrency,
-              locale: Localizations.localeOf(context).toString(),
-              scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
-              aspectRatio: chartAspectFor(c.maxWidth),
+            const SizedBox(height: Spacing.s12),
+            LayoutBuilder(
+              builder: (context, c) => FireScenariosChart(
+                scenarios: view.scenarios,
+                baseCurrency: view.baseCurrency,
+                locale: Localizations.localeOf(context).toString(),
+                scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
+                aspectRatio: chartAspectFor(c.maxWidth),
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s8),
-          _ScenarioLegend(view: view),
-        ],
-      ),
+            const SizedBox(height: Spacing.s8),
+            _ScenarioLegend(view: view),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -412,51 +412,51 @@ class _SafeWithdrawalCard extends StatelessWidget {
           );
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.fireSafeWithdrawalTitle,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            l10n.fireSafeWithdrawalSubtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.fireSafeWithdrawalTitle,
+              style: theme.textTheme.titleMedium,
             ),
-          ),
-          const SizedBox(height: Spacing.s12),
-          _LabelValueRow(
-            label: l10n.fireSafeWithdrawalMonthly,
-            value: formatters.currency(
-              _toFixedDecimal(monthly),
-              code: view.baseCurrency,
+            const SizedBox(height: Spacing.s4),
+            Text(
+              l10n.fireSafeWithdrawalSubtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s4),
-          _LabelValueRow(
-            label: l10n.fireSafeWithdrawalAnnual,
-            value: formatters.currency(
-              _toFixedDecimal(monthly * 12),
-              code: view.baseCurrency,
+            const SizedBox(height: Spacing.s12),
+            _LabelValueRow(
+              label: l10n.fireSafeWithdrawalMonthly,
+              value: formatters.currency(
+                _toFixedDecimal(monthly),
+                code: view.baseCurrency,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s8),
-          Text(
-            coverageHint,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: surplus >= 0 || monthlyExpenses == 0
-                  ? theme.colorScheme.onSurfaceVariant
-                  : theme.colorScheme.error,
+            const SizedBox(height: Spacing.s4),
+            _LabelValueRow(
+              label: l10n.fireSafeWithdrawalAnnual,
+              value: formatters.currency(
+                _toFixedDecimal(monthly * 12),
+                code: view.baseCurrency,
+              ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: Spacing.s8),
+            Text(
+              coverageHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: surplus >= 0 || monthlyExpenses == 0
+                    ? theme.colorScheme.onSurfaceVariant
+                    : theme.colorScheme.error,
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -472,38 +472,38 @@ class _SensitivityCard extends StatelessWidget {
     final s = view.sensitivity;
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.fireSensitivityTitle, style: theme.textTheme.titleMedium),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            l10n.fireSensitivitySubtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.fireSensitivityTitle, style: theme.textTheme.titleMedium),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              l10n.fireSensitivitySubtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.s12),
-          _LabelValueRow(
-            label: l10n.fireSensitivityHigherSurplus,
-            value: _formatOptionalMonths(l10n, s.highSurplusMonths),
-          ),
-          const SizedBox(height: Spacing.s4),
-          _LabelValueRow(
-            label: l10n.fireSensitivityBaseline,
-            value: _formatOptionalMonths(l10n, s.baselineMonths),
-          ),
-          const SizedBox(height: Spacing.s4),
-          _LabelValueRow(
-            label: l10n.fireSensitivityLowerSurplus,
-            value: _formatOptionalMonths(l10n, s.lowSurplusMonths),
-          ),
-        ],
-      ),
+            const SizedBox(height: Spacing.s12),
+            _LabelValueRow(
+              label: l10n.fireSensitivityHigherSurplus,
+              value: _formatOptionalMonths(l10n, s.highSurplusMonths),
+            ),
+            const SizedBox(height: Spacing.s4),
+            _LabelValueRow(
+              label: l10n.fireSensitivityBaseline,
+              value: _formatOptionalMonths(l10n, s.baselineMonths),
+            ),
+            const SizedBox(height: Spacing.s4),
+            _LabelValueRow(
+              label: l10n.fireSensitivityLowerSurplus,
+              value: _formatOptionalMonths(l10n, s.lowSurplusMonths),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 

@@ -107,10 +107,7 @@ class HoldingReportService {
     required String baseCurrency,
     required this.prices,
   }) : baseCurrency = baseCurrency.trim().toUpperCase(),
-       _fx = FxPnLCalculator(
-         converter: converter,
-         baseCurrency: baseCurrency,
-       );
+       _fx = FxPnLCalculator(converter: converter, baseCurrency: baseCurrency);
 
   final CurrencyConverter converter;
   final HoldingPriceSource prices;

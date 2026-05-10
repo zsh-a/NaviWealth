@@ -113,7 +113,10 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 200), () => _search(trimmed));
+    _debounce = Timer(
+      const Duration(milliseconds: 200),
+      () => _search(trimmed),
+    );
   }
 
   Future<void> _search(String query) async {
@@ -175,8 +178,12 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final effectiveLabel = widget.label.isEmpty ? l10n.localSecuritiesSearchLabel : widget.label;
-    final effectiveHint = widget.hintText.isEmpty ? l10n.localSecuritiesSearchHint : widget.hintText;
+    final effectiveLabel = widget.label.isEmpty
+        ? l10n.localSecuritiesSearchLabel
+        : widget.label;
+    final effectiveHint = widget.hintText.isEmpty
+        ? l10n.localSecuritiesSearchHint
+        : widget.hintText;
     final owned = _results
         .where((h) => h.source == AssetSearchHitSource.owned)
         .toList(growable: false);
@@ -200,63 +207,61 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.search),
             suffixIcon: _selected != null
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: _clear,
-                  )
+                ? IconButton(icon: const Icon(Icons.clear), onPressed: _clear)
                 : _loading
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : null,
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: FCircularProgress(),
+                    ),
+                  )
+                : null,
           ),
           onChanged: _onChanged,
           // Re-render so focus changes flip the dropdown.
           onTap: () => setState(() {}),
-          validator: (_) => _selected == null ? l10n.localSecuritiesValidationRequired : null,
+          validator: (_) =>
+              _selected == null ? l10n.localSecuritiesValidationRequired : null,
         ),
         if (showDropdown)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: FCard.raw(
               child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 320),
-              child: ListView(
-                key: const Key('local-securities-picker-results'),
-                shrinkWrap: true,
-                children: [
-                  if (owned.isNotEmpty) ...[
-                    _SectionHeader(text: l10n.localSecuritiesMyAssets),
-                    for (final hit in owned)
-                      _HitTile(hit: hit, onTap: () => _select(hit)),
+                constraints: const BoxConstraints(maxHeight: 320),
+                child: ListView(
+                  key: const Key('local-securities-picker-results'),
+                  shrinkWrap: true,
+                  children: [
+                    if (owned.isNotEmpty) ...[
+                      _SectionHeader(text: l10n.localSecuritiesMyAssets),
+                      for (final hit in owned)
+                        _HitTile(hit: hit, onTap: () => _select(hit)),
+                    ],
+                    if (catalog.isNotEmpty) ...[
+                      _SectionHeader(text: l10n.localSecuritiesCatalog),
+                      for (final hit in catalog)
+                        _HitTile(hit: hit, onTap: () => _select(hit)),
+                    ],
+                    const FDivider(),
+                    ListTile(
+                      key: const Key('local-securities-picker-manual'),
+                      leading: const Icon(Icons.add),
+                      title: Text(l10n.localSecuritiesManualAdd),
+                      subtitle: _lastQuery.isEmpty
+                          ? null
+                          : Text(
+                              l10n.localSecuritiesUseQueryAsCode(_lastQuery),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                      onTap: () => _openManualSheet(prefillSymbol: _lastQuery),
+                    ),
                   ],
-                  if (catalog.isNotEmpty) ...[
-                    _SectionHeader(text: l10n.localSecuritiesCatalog),
-                    for (final hit in catalog)
-                      _HitTile(hit: hit, onTap: () => _select(hit)),
-                  ],
-                  const Divider(height: 1),
-                  ListTile(
-                    key: const Key('local-securities-picker-manual'),
-                    leading: const Icon(Icons.add),
-                    title: Text(l10n.localSecuritiesManualAdd),
-                    subtitle: _lastQuery.isEmpty
-                        ? null
-                        : Text(
-                            l10n.localSecuritiesUseQueryAsCode(_lastQuery),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                    onTap: () => _openManualSheet(prefillSymbol: _lastQuery),
-                  ),
-                ],
+                ),
               ),
-            ),
             ),
           ),
       ],
@@ -276,9 +281,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -301,11 +306,7 @@ class _HitTile extends StatelessWidget {
       ),
       subtitle: display == null
           ? null
-          : Text(
-              display,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+          : Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: Text(
         hit.currency,
         style: Theme.of(context).textTheme.bodySmall,

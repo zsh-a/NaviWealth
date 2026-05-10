@@ -65,67 +65,67 @@ class AssetPnLCard extends ConsumerWidget {
         : dailyChangeFromHistory(historyAsync, snap.quantity);
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.assetDetailPnLTitle, style: theme.textTheme.titleSmall),
-          const SizedBox(height: Spacing.s12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.assetDetailUnrealizedPnL,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.assetDetailPnLTitle, style: theme.textTheme.titleSmall),
+            const SizedBox(height: Spacing.s12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.assetDetailUnrealizedPnL,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: Spacing.s4),
-                    DeltaText(
-                      value: unrealizedAsset?.toDouble(),
-                      currencyCode: asset.currency,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ],
+                      const SizedBox(height: Spacing.s4),
+                      DeltaText(
+                        value: unrealizedAsset?.toDouble(),
+                        currencyCode: asset.currency,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                DeltaChip(
+                  value: unrealizedPct == null ? null : unrealizedPct * 100,
+                  fractionDigits: 2,
+                ),
+              ],
+            ),
+            if (snap != null) ...[
+              const SizedBox(height: Spacing.s8),
+              Text(
+                '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
+                '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              DeltaChip(
-                value: unrealizedPct == null ? null : unrealizedPct * 100,
-                fractionDigits: 2,
-              ),
             ],
-          ),
-          if (snap != null) ...[
-            const SizedBox(height: Spacing.s8),
-            Text(
-              '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
-              '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            const FDivider(),
+            AssetDetailMetricRow(
+              label: l10n.assetDetailTodayChange,
+              trailing: _DailyChangeView(
+                value: dailyChange,
+                currency: asset.currency,
+                isLoading: historyAsync?.isLoading ?? false,
+                isStale: historyAsync?.value?.isStale ?? false,
+                hasHistory: marketKey != null,
+                hasPosition: hasPosition,
               ),
             ),
           ],
-          const Divider(height: Spacing.s24),
-          AssetDetailMetricRow(
-            label: l10n.assetDetailTodayChange,
-            trailing: _DailyChangeView(
-              value: dailyChange,
-              currency: asset.currency,
-              isLoading: historyAsync?.isLoading ?? false,
-              isStale: historyAsync?.value?.isStale ?? false,
-              hasHistory: marketKey != null,
-              hasPosition: hasPosition,
-            ),
-          ),
-        ],
-      ),
         ),
-      );
+      ),
+    );
   }
 
   static String _formatBaseAmount(Decimal amount) {

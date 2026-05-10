@@ -93,7 +93,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final authState = ref.watch(authControllerProvider).value;
     // Banner is purely informational — once the user types anything we
     // suppress it (cleared on submit) so the form doesn't keep nagging.
-    final showExpiredBanner = _lastErrorKind == null &&
+    final showExpiredBanner =
+        _lastErrorKind == null &&
         authState is AuthLoggedOut &&
         authState.reason == LoggedOutReason.sessionExpired;
     return Scaffold(
@@ -157,8 +158,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       decoration: InputDecoration(
                         labelText: l10n.authEmailLabel,
                       ),
-                      validator: (value) =>
-                          _validateEmail(value, l10n: l10n),
+                      validator: (value) => _validateEmail(value, l10n: l10n),
                       onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
                     ),
                     const SizedBox(height: Spacing.s16),
@@ -231,11 +231,7 @@ final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 enum _BannerKind { info, error }
 
 class _Banner extends StatelessWidget {
-  const _Banner({
-    required this.kind,
-    required this.message,
-    this.details,
-  });
+  const _Banner({required this.kind, required this.message, this.details});
 
   final _BannerKind kind;
   final String message;
@@ -259,10 +255,7 @@ class _Banner extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.all(Spacing.s12),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: Radii.brSm,
-      ),
+      decoration: BoxDecoration(color: background, borderRadius: Radii.brSm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

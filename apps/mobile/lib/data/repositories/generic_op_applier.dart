@@ -114,10 +114,7 @@ class GenericLwwApplier implements OpApplier {
     if (cols.isEmpty) return;
     final setClause = cols.map((c) => '$c = ?').join(', ');
     final sql = 'UPDATE $_tableName SET $setClause WHERE $_pkColumn = ?';
-    final args = <Object?>[
-      ...cols.map((c) => _coerce(c, fields[c])),
-      op.rowId,
-    ];
+    final args = <Object?>[...cols.map((c) => _coerce(c, fields[c])), op.rowId];
     await _db.customStatement(sql, args);
   }
 

@@ -52,16 +52,16 @@ class AssetDetailErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Text(
-        message,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.error,
+      child: Padding(
+        padding: Spacing.card,
+        child: Text(
+          message,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.error,
+          ),
         ),
       ),
-        ),
-      );
+    );
   }
 }
 

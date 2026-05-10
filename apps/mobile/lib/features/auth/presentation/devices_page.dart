@@ -50,10 +50,9 @@ class DevicesNotifier extends AsyncNotifier<DevicesResponse> {
   }
 }
 
-final devicesProvider =
-    AsyncNotifierProvider<DevicesNotifier, DevicesResponse>(
-      DevicesNotifier.new,
-    );
+final devicesProvider = AsyncNotifierProvider<DevicesNotifier, DevicesResponse>(
+  DevicesNotifier.new,
+);
 
 class DevicesPage extends ConsumerWidget {
   const DevicesPage({super.key});
@@ -62,31 +61,29 @@ class DevicesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(devicesProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.authDevicesTitle),
-        actions: [
-          IconButton(
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.logout),
-            tooltip: l10n.authLogoutCurrentTooltip,
-            onPressed: () => _confirmLogoutCurrent(context, ref),
+            onPress: () => _confirmLogoutCurrent(context, ref),
           ),
         ],
       ),
-      body: state.when(
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: state.when(
         data: (data) => _DevicesList(response: data),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (error, _) => _ErrorView(
           message: l10n.authDevicesLoadError,
           details: error is AuthException ? error.message : '$error',
           onRetry: () => ref.invalidate(devicesProvider),
         ),
       ),
+        ),
     );
   }
 
@@ -103,7 +100,10 @@ class DevicesPage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.authLogoutDialogTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.authLogoutDialogTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
             Text(l10n.authLogoutDialogBody),
             const SizedBox(height: Spacing.s16),
@@ -152,7 +152,7 @@ class _DevicesList extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
         itemCount: devices.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
+        separatorBuilder: (_, _) => const FDivider(),
         itemBuilder: (context, i) {
           final device = devices[i];
           final isCurrent = device.id == response.currentDeviceId;
@@ -201,7 +201,10 @@ class _DevicesList extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.authDeviceRevokeDialogTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l10n.authDeviceRevokeDialogTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.s8),
             Text(
               l10n.authDeviceRevokeDialogBody(

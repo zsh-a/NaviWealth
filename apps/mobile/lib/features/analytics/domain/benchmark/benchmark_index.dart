@@ -9,12 +9,7 @@ import '../../../../domain/values/asset_market.dart';
 /// the rest of the app still flows through [MarketDataService].
 ///
 /// Order matters: it doubles as the default chip ordering shown in the UI.
-enum BenchmarkIndex {
-  hs300,
-  sp500,
-  nasdaq,
-  hsi,
-}
+enum BenchmarkIndex { hs300, sp500, nasdaq, hsi }
 
 /// Static metadata for a [BenchmarkIndex]. Symbol values are the ones that
 /// resolve through the production provider chain (yfinance + sina), so the

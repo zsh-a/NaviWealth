@@ -21,24 +21,21 @@ class SyncStatusPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final eventAsync = ref.watch(syncStatusEventStreamProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(l10n.syncStatusTitle),
-        actions: [
-          IconButton(
-            tooltip: l10n.syncStatusRefreshNow,
+        suffixes: [
+          FHeaderAction(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _triggerSyncNow(ref),
+            onPress: () => _triggerSyncNow(ref),
           ),
         ],
       ),
-      body: eventAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: eventAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(Spacing.s24),
@@ -47,6 +44,7 @@ class SyncStatusPage extends ConsumerWidget {
         ),
         data: (event) => _Body(event: event),
       ),
+        ),
     );
   }
 }
@@ -76,8 +74,7 @@ class _Body extends ConsumerWidget {
     final session = ref.watch(authSessionProvider);
     final config = ref.watch(appConfigProvider);
 
-    final localTotal = countsAsync.value?.values
-        .fold<int>(0, (a, b) => a + b);
+    final localTotal = countsAsync.value?.values.fold<int>(0, (a, b) => a + b);
 
     return ListView(
       padding: Spacing.pageMobile.copyWith(
@@ -135,49 +132,49 @@ class _HeroCard extends StatelessWidget {
     final syncing = event.status == SyncStatus.syncing;
 
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-        Spacing.s20,
-        Spacing.s20,
-        Spacing.s12,
-        Spacing.s20,
-      ),
-          child: Row(
-        children: [
-          _StatusOrb(palette: palette, status: event.status),
-          const SizedBox(width: Spacing.s16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _statusHeadline(l10n, event.status),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: Spacing.s2),
-                Text(
-                  _heroSubtitle(l10n, event),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (onSyncNow != null && !syncing) ...[
-            const SizedBox(width: Spacing.s8),
-            FButton(
-              variant: FButtonVariant.ghost,
-              onPress: onSyncNow,
-              child: Text(l10n.syncStatusActionSyncNow),
-            ),
-          ],
-        ],
-      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.s20,
+          Spacing.s20,
+          Spacing.s12,
+          Spacing.s20,
         ),
-      );
+        child: Row(
+          children: [
+            _StatusOrb(palette: palette, status: event.status),
+            const SizedBox(width: Spacing.s16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _statusHeadline(l10n, event.status),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.s2),
+                  Text(
+                    _heroSubtitle(l10n, event),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (onSyncNow != null && !syncing) ...[
+              const SizedBox(width: Spacing.s8),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: onSyncNow,
+                child: Text(l10n.syncStatusActionSyncNow),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -286,41 +283,37 @@ class _StatTile extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-        Spacing.s12,
-        Spacing.s12,
-        Spacing.s12,
-        Spacing.s12,
-      ),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: accent ?? scheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: Spacing.s8),
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontFeatures: const [FontFeature.tabularFigures()],
-              color: accent ?? scheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: Spacing.s2),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.s12,
+          Spacing.s12,
+          Spacing.s12,
+          Spacing.s12,
         ),
-      );
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: accent ?? scheme.onSurfaceVariant),
+            const SizedBox(height: Spacing.s8),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: accent ?? scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: Spacing.s2),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -338,26 +331,26 @@ class _ErrorCard extends StatelessWidget {
     final theme = Theme.of(context);
     final semantic = SemanticColors.of(context);
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.s12),
-          child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
-          const SizedBox(width: Spacing.s8),
-          Expanded(
-            child: SelectableText(
-              message,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: semantic.onDangerContainer,
-                fontFeatures: const [FontFeature.tabularFigures()],
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.s12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
+            const SizedBox(width: Spacing.s8),
+            Expanded(
+              child: SelectableText(
+                message,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: semantic.onDangerContainer,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -381,26 +374,24 @@ class _DiagnosticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(child: Column(
+    return FCard.raw(
+      child: Column(
         children: [
-          _Row(
-            label: l10n.syncStatusDetailState,
-            value: event.status.name,
-          ),
-          const Divider(height: 1),
+          _Row(label: l10n.syncStatusDetailState, value: event.status.name),
+          const FDivider(),
           _Row(
             label: l10n.syncStatusDetailUpdatedAt,
             value: _relativeTime(l10n, event.at),
           ),
           if (deviceId != null) ...[
-            const Divider(height: 1),
+            const FDivider(),
             _Row(
               label: l10n.syncStatusDetailDevice,
               value: _shortDeviceId(deviceId!),
               monospace: true,
             ),
           ],
-          const Divider(height: 1),
+          const FDivider(),
           _Row(
             label: l10n.syncStatusDetailCursor,
             value: cursor == null
@@ -409,7 +400,7 @@ class _DiagnosticsCard extends StatelessWidget {
             monospace: cursor != null,
           ),
           if (apiBaseUrl != null) ...[
-            const Divider(height: 1),
+            const FDivider(),
             _Row(
               label: l10n.syncStatusDetailEndpoint,
               value: apiBaseUrl!,
@@ -418,7 +409,8 @@ class _DiagnosticsCard extends StatelessWidget {
             ),
           ],
         ],
-      ));
+      ),
+    );
   }
 }
 
@@ -446,7 +438,7 @@ class _LocalCountsCard extends StatelessWidget {
       return const FCard.raw(
         child: Padding(
           padding: EdgeInsets.all(Spacing.s12),
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          child: Center(child: FCircularProgress()),
         ),
       );
     }
@@ -481,41 +473,41 @@ class _LocalCountsCard extends StatelessWidget {
     }
 
     return FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.s12,
-              Spacing.s8,
-              Spacing.s12,
-              Spacing.s4,
-            ),
-            child: Text(
-              l10n.syncStatusLocalCountsHeader,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 0.4,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.s12,
+                Spacing.s8,
+                Spacing.s12,
+                Spacing.s4,
+              ),
+              child: Text(
+                l10n.syncStatusLocalCountsHeader,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  letterSpacing: 0.4,
+                ),
               ),
             ),
-          ),
-          for (var i = 0; i < kSyncLocalCountIds.length; i += 2)
-            Row(
-              children: [
-                Expanded(child: cell(kSyncLocalCountIds[i])),
-                Expanded(
-                  child: i + 1 < kSyncLocalCountIds.length
-                      ? cell(kSyncLocalCountIds[i + 1])
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-        ],
-      ),
+            for (var i = 0; i < kSyncLocalCountIds.length; i += 2)
+              Row(
+                children: [
+                  Expanded(child: cell(kSyncLocalCountIds[i])),
+                  Expanded(
+                    child: i + 1 < kSyncLocalCountIds.length
+                        ? cell(kSyncLocalCountIds[i + 1])
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 

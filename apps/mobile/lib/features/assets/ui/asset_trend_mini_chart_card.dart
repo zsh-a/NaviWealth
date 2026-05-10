@@ -27,18 +27,18 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
         child: Padding(
           padding: Spacing.card,
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s8),
-            Text(
-              l10n.assetDetailNoMarketLinked,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
+              const SizedBox(height: Spacing.s8),
+              Text(
+                l10n.assetDetailNoMarketLinked,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       );
     }
@@ -47,32 +47,32 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
 
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.card,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.assetDetailTrend30d,
-                  style: theme.textTheme.titleSmall,
+      child: Padding(
+        padding: Spacing.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.assetDetailTrend30d,
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
-              ),
-              if (historyAsync.value?.isStale == true) const _StaleBadge(),
-            ],
-          ),
-          const SizedBox(height: Spacing.s12),
-          _ChartBody(
-            history: historyAsync,
-            snapshot: snapshotAsync.value,
-            currency: asset.currency,
-          ),
-        ],
-      ),
+                if (historyAsync.value?.isStale == true) const _StaleBadge(),
+              ],
+            ),
+            const SizedBox(height: Spacing.s12),
+            _ChartBody(
+              history: historyAsync,
+              snapshot: snapshotAsync.value,
+              currency: asset.currency,
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 

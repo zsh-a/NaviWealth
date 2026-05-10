@@ -60,14 +60,16 @@ class _AlertList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Spacing.s12),
-        FCard.raw(child: Column(
+        FCard.raw(
+          child: Column(
             children: [
               for (var i = 0; i < alerts.length; i++) ...[
-                if (i > 0) const Divider(height: 1),
+                if (i > 0) const FDivider(),
                 _AlertRow(alert: alerts[i]),
               ],
             ],
-          )),
+          ),
+        ),
       ],
     );
   }

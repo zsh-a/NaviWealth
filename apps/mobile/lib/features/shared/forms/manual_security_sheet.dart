@@ -124,7 +124,11 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     final query = _symbolCtl.text.trim();
     if (query.isEmpty) {
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.manualSecurityEnterCodeOrName);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.manualSecurityEnterCodeOrName,
+      );
       return;
     }
 
@@ -147,7 +151,11 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       // and let the user fall through to manual entry.
       if (!mounted) return;
       Haptics.error();
-      AppMessenger.show(context, ToastKind.error, l10n.manualSecurityNetworkUnavailable);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.manualSecurityNetworkUnavailable,
+      );
       setState(() => _importing = false);
       return;
     }
@@ -196,10 +204,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               subtitle: Text(
-                [
-                  hit.name,
-                  if (hit.exchange != null) hit.exchange!,
-                ].join(' · '),
+                [hit.name, if (hit.exchange != null) hit.exchange!].join(' · '),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -306,9 +311,11 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   variant: FButtonVariant.ghost,
                   onPress: _importing ? null : _importFromNetwork,
                   prefix: const Icon(Icons.cloud_download_outlined, size: 16),
-                  child: Text(_importing
-                      ? l10n.manualSecurityImporting
-                      : l10n.manualSecurityImportAction),
+                  child: Text(
+                    _importing
+                        ? l10n.manualSecurityImporting
+                        : l10n.manualSecurityImportAction,
+                  ),
                 ),
               ),
               const SizedBox(height: Spacing.s12),
@@ -322,18 +329,20 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               ),
               const SizedBox(height: Spacing.s12),
               DropdownButtonFormField<AssetMarket>(
-  isExpanded: true,
-                    key: const Key('manual-security-market'),
-  initialValue: _market,
-  decoration: InputDecoration(labelText: l10n.manualSecurityMarketLabel),
-  items: [
+                isExpanded: true,
+                key: const Key('manual-security-market'),
+                initialValue: _market,
+                decoration: InputDecoration(
+                  labelText: l10n.manualSecurityMarketLabel,
+                ),
+                items: [
                   for (final m in _supportedMarkets)
                     DropdownMenuItem(
                       value: m,
                       child: Text(marketLabels[m] ?? m.wire),
                     ),
                 ],
-  onChanged: (m) {
+                onChanged: (m) {
                   if (m == null) return;
                   setState(() {
                     _market = m;
@@ -345,25 +354,27 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                     }
                   });
                 },
-),
+              ),
               const SizedBox(height: Spacing.s12),
               DropdownButtonFormField<AssetType>(
-  isExpanded: true,
-                    key: const Key('manual-security-type'),
-  initialValue: _type,
-  decoration: InputDecoration(labelText: l10n.manualSecurityTypeLabel),
-  items: [
+                isExpanded: true,
+                key: const Key('manual-security-type'),
+                initialValue: _type,
+                decoration: InputDecoration(
+                  labelText: l10n.manualSecurityTypeLabel,
+                ),
+                items: [
                   for (final t in _supportedTypes)
                     DropdownMenuItem(
                       value: t,
                       child: Text(typeLabels[t] ?? t.name),
                     ),
                 ],
-  onChanged: (t) {
+                onChanged: (t) {
                   if (t == null) return;
                   setState(() => _type = t);
                 },
-),
+              ),
               const SizedBox(height: Spacing.s12),
               CurrencyPicker(
                 value: _currency,

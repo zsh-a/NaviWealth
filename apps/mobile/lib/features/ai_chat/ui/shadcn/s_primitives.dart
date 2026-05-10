@@ -56,10 +56,7 @@ class SBadge extends StatelessWidget {
     final tokens = STokens.of(context);
     final fg = foreground ?? tokens.mutedForeground;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: SSpace.sm,
-        vertical: 2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: SSpace.sm, vertical: 2),
       decoration: BoxDecoration(
         color: background ?? tokens.accent,
         borderRadius: SRadius.brMd,
@@ -163,25 +160,25 @@ class SButton extends StatelessWidget {
 
     final (Color bg, Color fg, Color border) = switch (variant) {
       SButtonVariant.primary => (
-          tokens.primary,
-          tokens.primaryForeground,
-          tokens.primary,
-        ),
+        tokens.primary,
+        tokens.primaryForeground,
+        tokens.primary,
+      ),
       SButtonVariant.outline => (
-          tokens.background,
-          tokens.foreground,
-          tokens.border,
-        ),
+        tokens.background,
+        tokens.foreground,
+        tokens.border,
+      ),
       SButtonVariant.ghost => (
-          Colors.transparent,
-          tokens.foreground,
-          Colors.transparent,
-        ),
+        Colors.transparent,
+        tokens.foreground,
+        Colors.transparent,
+      ),
       SButtonVariant.destructive => (
-          tokens.destructive,
-          Colors.white,
-          tokens.destructive,
-        ),
+        tokens.destructive,
+        Colors.white,
+        tokens.destructive,
+      ),
     };
 
     final effectiveBg = disabled ? bg.withValues(alpha: 0.5) : bg;
@@ -386,11 +383,7 @@ class _SCollapsibleState extends State<SCollapsible>
 
 /// SCodeBlock — monospace block for JSON / code with subtle muted fill.
 class SCodeBlock extends StatelessWidget {
-  const SCodeBlock({
-    super.key,
-    required this.text,
-    this.maxLines,
-  });
+  const SCodeBlock({super.key, required this.text, this.maxLines});
 
   final String text;
   final int? maxLines;

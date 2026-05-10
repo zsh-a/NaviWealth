@@ -51,9 +51,6 @@ class OptionalHero extends StatelessWidget {
     BuildContext toHeroContext,
   ) {
     final toHero = toHeroContext.widget as Hero;
-    return Material(
-      type: MaterialType.transparency,
-      child: toHero.child,
-    );
+    return Material(type: MaterialType.transparency, child: toHero.child);
   }
 }

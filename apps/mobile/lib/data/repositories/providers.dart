@@ -151,12 +151,13 @@ final eventLogReaderProvider = FutureProvider<EventLogReader>((ref) async {
 /// matching the storage shape, so e.g. asset detail pages call
 /// `eventTimelineProvider((entityTable: 'assets', entityId: assetId))`.
 final eventTimelineProvider = StreamProvider.autoDispose
-    .family<List<DomainEvent>, ({String entityTable, String entityId})>(
-  (ref, key) async* {
-    final reader = await ref.watch(eventLogReaderProvider.future);
-    yield* reader.watchByEntity(
-      entityTable: key.entityTable,
-      entityId: key.entityId,
-    );
-  },
-);
+    .family<List<DomainEvent>, ({String entityTable, String entityId})>((
+      ref,
+      key,
+    ) async* {
+      final reader = await ref.watch(eventLogReaderProvider.future);
+      yield* reader.watchByEntity(
+        entityTable: key.entityTable,
+        entityId: key.entityId,
+      );
+    });

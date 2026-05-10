@@ -34,8 +34,7 @@ class VehicleDepreciation {
     // 365.2425 ≈ Gregorian average year length, scaled by 10000 so we can
     // do all the arithmetic in integers and stay bit-stable across devices.
     const int daysPerYearTimes10000 = 3652425;
-    final fullYears =
-        (daysSincePurchase * 10000) ~/ daysPerYearTimes10000;
+    final fullYears = (daysSincePurchase * 10000) ~/ daysPerYearTimes10000;
     final dayWithinYear =
         (daysSincePurchase * 10000) - fullYears * daysPerYearTimes10000;
 
@@ -50,7 +49,8 @@ class VehicleDepreciation {
     // Linear interpolation between the two anniversary points. The
     // intermediate `Decimal / Decimal` returns a `Rational`; converting back
     // with a fixed scale keeps the result bit-stable across devices.
-    final delta = (valueAtNextAnniversary - valueAtAnniversary) *
+    final delta =
+        (valueAtNextAnniversary - valueAtAnniversary) *
         Decimal.fromInt(dayWithinYear);
     final fraction = delta / Decimal.fromInt(daysPerYearTimes10000);
     final result =

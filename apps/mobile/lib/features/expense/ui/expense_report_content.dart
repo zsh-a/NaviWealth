@@ -144,70 +144,73 @@ class _SummaryCard extends StatelessWidget {
       scaleOnInfinitePrecision: 2,
     );
     return FCard.raw(
-        child: Padding(
-          padding: Spacing.cardHero,
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.expenseReportTotalExpenses,
-            style: theme.textTheme.titleSmall,
-          ),
-          const SizedBox(height: Spacing.s4),
-          Text(
-            formatter.currency(report.total.amount, code: report.baseCurrency),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontFeatures: TypographyTokens.tabularFigures,
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.expenseReportTotalExpenses,
+              style: theme.textTheme.titleSmall,
             ),
-          ),
-          const SizedBox(height: Spacing.s8),
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  label: l10n.expenseReportMonthlyAverage,
-                  value: formatter.compactCurrency(
-                    avgDecimal,
-                    code: report.baseCurrency,
+            const SizedBox(height: Spacing.s4),
+            Text(
+              formatter.currency(
+                report.total.amount,
+                code: report.baseCurrency,
+              ),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontFeatures: TypographyTokens.tabularFigures,
+              ),
+            ),
+            const SizedBox(height: Spacing.s8),
+            Row(
+              children: [
+                Expanded(
+                  child: _Metric(
+                    label: l10n.expenseReportMonthlyAverage,
+                    value: formatter.compactCurrency(
+                      avgDecimal,
+                      code: report.baseCurrency,
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: _Metric(
-                  label: l10n.expenseReportEntryCount,
-                  value: report.byCategory
-                      .fold<int>(0, (a, c) => a + c.items.length)
-                      .toString(),
+                Expanded(
+                  child: _Metric(
+                    label: l10n.expenseReportEntryCount,
+                    value: report.byCategory
+                        .fold<int>(0, (a, c) => a + c.items.length)
+                        .toString(),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _Metric(
-                  label: l10n.expenseReportCategoryCount,
-                  value: report.byCategory.length.toString(),
+                Expanded(
+                  child: _Metric(
+                    label: l10n.expenseReportCategoryCount,
+                    value: report.byCategory.length.toString(),
+                  ),
+                ),
+              ],
+            ),
+            if (report.skippedFxCount > 0) ...[
+              const SizedBox(height: Spacing.s8),
+              Text(
+                l10n.expenseReportSkippedFx(report.skippedFxCount),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
                 ),
               ),
             ],
-          ),
-          if (report.skippedFxCount > 0) ...[
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: Spacing.s4),
             Text(
-              l10n.expenseReportSkippedFx(report.skippedFxCount),
+              l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
-          const SizedBox(height: Spacing.s4),
-          Text(
-            l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
         ),
-      );
+      ),
+    );
   }
 }
 

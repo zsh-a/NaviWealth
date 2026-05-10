@@ -93,16 +93,17 @@ class ManualAssetRepository {
     if (assetRow == null) return null;
     final meta = ManualAssetMetadata.decode(assetRow.metadataJson);
     if (meta == null) return null;
-    final rows = await (_db.select(_db.postings).join([
-      innerJoin(
-        _db.journalEntries,
-        _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
-      ),
-    ])
-          ..where(_db.postings.accountId.equals(meta.accountId))
-          ..where(_db.postings.deletedAt.isNull())
-          ..where(_db.journalEntries.deletedAt.isNull()))
-        .get();
+    final rows =
+        await (_db.select(_db.postings).join([
+                innerJoin(
+                  _db.journalEntries,
+                  _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+                ),
+              ])
+              ..where(_db.postings.accountId.equals(meta.accountId))
+              ..where(_db.postings.deletedAt.isNull())
+              ..where(_db.journalEntries.deletedAt.isNull()))
+            .get();
     if (rows.isEmpty) return null;
     var sum = Decimal.zero;
     for (final row in rows) {
@@ -117,10 +118,11 @@ class ManualAssetRepository {
   /// the create flow to enforce the double-entry invariant that each
   /// ledger account has at most one cash asset.
   Future<Asset?> findCashByAccountId(String accountId) async {
-    final rows = await (_db.select(_db.assets)
-          ..where((t) => t.type.equalsValue(AssetType.cash))
-          ..where((t) => t.deletedAt.isNull()))
-        .get();
+    final rows =
+        await (_db.select(_db.assets)
+              ..where((t) => t.type.equalsValue(AssetType.cash))
+              ..where((t) => t.deletedAt.isNull()))
+            .get();
     for (final row in rows) {
       final meta = ManualAssetMetadata.decode(row.metadataJson);
       if (meta is CashMetadata && meta.accountId == accountId) {

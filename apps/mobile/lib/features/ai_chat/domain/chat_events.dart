@@ -12,7 +12,11 @@ sealed class AiChatEvent {
 /// Model sent a `tool_use` block this round; the worker is about to
 /// execute it.
 class ToolCallEvent extends AiChatEvent {
-  const ToolCallEvent({required this.id, required this.name, required this.input});
+  const ToolCallEvent({
+    required this.id,
+    required this.name,
+    required this.input,
+  });
 
   final String id;
   final String name;

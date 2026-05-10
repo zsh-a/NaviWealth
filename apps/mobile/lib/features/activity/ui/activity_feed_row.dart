@@ -35,7 +35,8 @@ class ActivityFeedEntryRow extends StatelessWidget {
     final summary = _summariseAmount(entry.postings, accountsById);
     final timeStr = _formatTime(entry.entry.date);
 
-    return FCard.raw(child: Theme(
+    return FCard.raw(
+      child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(
@@ -103,7 +104,8 @@ class ActivityFeedEntryRow extends StatelessWidget {
             PostingsPreview(postings: entry.postings, accounts: accountsById),
           ],
         ),
-      ));
+      ),
+    );
   }
 }
 

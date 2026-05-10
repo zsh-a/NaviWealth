@@ -403,20 +403,17 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.tradeEntryAppBarTitle),
-      ),
-      body: accountsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.tradeEntryAppBarTitle)),
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
         data: (accounts) => _buildForm(accounts),
       ),
+        ),
     );
   }
 

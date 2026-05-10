@@ -29,9 +29,7 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: ValuationUpdateSheet(asset: asset),
       ),
     );
@@ -104,8 +102,9 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 decoration: InputDecoration(
                   labelText: l10n.physicalAssetUpdateValuationAmount,
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
                     return l10n.physicalAssetValidationRequired;

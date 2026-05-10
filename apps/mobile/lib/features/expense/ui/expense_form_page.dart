@@ -246,29 +246,26 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final loadingExisting = widget.isEdit && _initial == null;
     final allAccountsAsync = ref.watch(allAccountsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+    return FScaffold(
+      header: FHeader.nested(
         title: Text(
           widget.isEdit
               ? l10n.expenseFormEditTitle
               : l10n.expenseFormCreateTitle,
         ),
-        actions: [
+        suffixes: [
           if (widget.isEdit)
-            IconButton(
+            FHeaderAction(
               icon: const Icon(Icons.delete_outline),
-              tooltip: l10n.expenseFormDeleteTooltip,
-              onPressed: _busy ? null : _delete,
+              onPress: _busy ? null : _delete,
             ),
         ],
       ),
-      body: loadingExisting
-          ? const Center(child: CircularProgressIndicator())
+      childPad: false,
+      child: Material(
+          color: Colors.transparent,
+          child: loadingExisting
+          ? const Center(child: FCircularProgress())
           : Form(
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -374,6 +371,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                 ],
               ),
             ),
+        ),
     );
   }
 }
@@ -382,7 +380,8 @@ class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(child: ListTile(
+    return FCard.raw(
+      child: ListTile(
         leading: Icon(
           Icons.warning_amber_outlined,
           color: Theme.of(context).colorScheme.error,
@@ -394,6 +393,7 @@ class _NoAccountsHint extends StatelessWidget {
           onPress: () => GoRouter.of(context).go(AppRoutes.accountNew),
           child: Text(l10n.expenseFormNoAccountsCta),
         ),
-      ));
+      ),
+    );
   }
 }

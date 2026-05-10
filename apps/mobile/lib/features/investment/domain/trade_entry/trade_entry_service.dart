@@ -28,5 +28,4 @@ abstract class TradeEntryService {
     TradeDraft draft, {
     required List<Lot> openLots,
   });
-
 }

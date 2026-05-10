@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../data/domain/account.dart';
 import '../../data/domain/posting.dart';
@@ -73,14 +74,11 @@ class PostingsPreview extends StatelessWidget {
             const SizedBox(height: Spacing.s8),
           ],
           for (final p in postings) ...[
-            _PostingRow(
-              posting: p,
-              accounts: accounts,
-            ),
+            _PostingRow(posting: p, accounts: accounts),
             const SizedBox(height: Spacing.s4),
           ],
           if (showUnitBalanceTotals && unitTotals.isNotEmpty) ...[
-            Divider(color: scheme.outlineVariant, height: Spacing.s16),
+            const FDivider(),
             ...unitTotals.entries.map(
               (e) => _UnitBalanceRow(unit: e.key, total: e.value),
             ),
