@@ -1,16 +1,8 @@
 # Multi-device Sync — Manual E2E Checklist (FIR-61)
 
-These flows complement the automated suites
-(`apps/mobile/test/e2e/sync_e2e_test.dart` and
-`apps/mobile/web_smoke/tests/multi_tab.spec.ts`) and the protocol-level
-catalogue in [`sync-protocol-tests.md`](./sync-protocol-tests.md). They
-exist for things automation can't credibly cover: real OS background
-schedulers, real network jitter, real human-eye latency, and Flutter UI
-flows that aren't reachable from Playwright (canvas, no semantics).
+Complements the automated suites (`apps/mobile/test/e2e/sync_e2e_test.dart`, `apps/mobile/web_smoke/tests/multi_tab.spec.ts`) and the protocol catalogue in [`sync-protocol-tests.md`](./sync-protocol-tests.md). Covers what automation can't: real OS background schedulers, real network jitter, real human-eye latency, and Flutter UI flows unreachable from Playwright (canvas, no semantics).
 
-Run before each release tagged `*-rc.*`. File a bug for any "FAIL" or
-"DEGRADED"; mark "PASS" or "SKIP (reason)" inline in the run log on the
-release ticket.
+Run before each release tagged `*-rc.*`. File a bug for any FAIL / DEGRADED; mark PASS or SKIP (reason) inline in the run log on the release ticket.
 
 ## Pre-flight (once per run)
 
@@ -120,9 +112,7 @@ NaviWealth tab. (Means the SW is not backing up the foreground polling.)
 
 Spec coverage: 1000+ op batch over real network.
 
-1. Generate a CSV of ~1000 transactions (use
-   `apps/mobile/tool/seed_bulk_csv.py` if available, or an existing
-   export from another instance).
+1. Generate a CSV of ~1000 transactions (a prior export from another instance, or any ad-hoc generator).
 2. Import on **Mac (web)**. Watch **Sync → Outbox depth** drop in waves
    of ≤ 500 (the spec batch cap).
 3. After outbox is 0, on **iPhone** run **Sync now**. iPad pulls in

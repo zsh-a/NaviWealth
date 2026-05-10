@@ -1,15 +1,15 @@
 # NaviWealth — Agent Guide
 
-Personal finance management app: all asset classes, investment tracking, portfolio analysis, FIRE dashboard, rebalancing, AI assistant. Cross-platform: iOS / Android / Web. Local-first + cloud sync.
+Personal finance app: all asset classes, investment tracking, portfolio analysis, FIRE dashboard, rebalancing, AI assistant. Cross-platform iOS / Android / Web. Local-first + cloud sync.
 
 ## Quick Reference
 
 | Area | Path | Language |
 |------|------|----------|
 | Mobile app | `apps/mobile/` | Dart (Flutter) |
-| Backend | `apps/backend/` | Rust (Cloudflare Workers) |
+| Backend | `apps/backend/` | Rust (Cloudflare Workers + D1) |
+| Securities catalog build | `tool/asset_catalog/` | Python |
 | Docs | `docs/` | Markdown |
-| Build tools | `tool/` | Shell |
 | CI/CD | `.github/workflows/` | GitHub Actions |
 
 ---
@@ -20,20 +20,20 @@ Personal finance management app: all asset classes, investment tracking, portfol
 
 ```bash
 cd apps/mobile
-flutter pub get                              # install deps
+flutter pub get
 flutter test                                 # unit + widget tests
 flutter analyze --fatal-infos                # static analysis
 flutter run                                  # default device
 flutter run -d chrome                        # web dev
-flutter build web --release --pwa-strategy=none  # web production
-flutter build apk --debug                    # android
-flutter build ios --debug --no-codesign      # iOS (macOS only)
+flutter build web --release --pwa-strategy=none
+flutter build apk --debug
+flutter build ios --debug --no-codesign      # macOS only
 ```
 
-One-time web setup:
+One-time web setup (scripts live under the mobile app):
 ```bash
-tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
-tool/build-cn-fonts.sh     # CN font subsets (app-cn-base.woff2, app-cn-ext.woff2)
+apps/mobile/tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
+apps/mobile/tool/build-cn-fonts.sh     # CN font subsets (app-cn-base/ext.woff2)
 ```
 
 ### Rust Backend
@@ -41,11 +41,18 @@ tool/build-cn-fonts.sh     # CN font subsets (app-cn-base.woff2, app-cn-ext.woff
 ```bash
 # prerequisites: rustup target add wasm32-unknown-unknown && npm i -g wrangler
 cd apps/backend
-cargo check --target wasm32-unknown-unknown  # type check
-cargo fmt --all -- --check                   # format check
+cargo check --target wasm32-unknown-unknown
+cargo fmt --all -- --check
 cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
 wrangler dev                                 # local dev
-wrangler deploy                              # deploy to production
+wrangler deploy                              # production
+```
+
+### Securities Catalog
+
+```bash
+tool/build-asset-catalog.sh           # rebuilds bundled NDJSON consumed by mobile FTS5
+                                       # see tool/asset_catalog/README.md (full ingest is manual)
 ```
 
 ### Web Smoke Tests
@@ -55,187 +62,154 @@ cd apps/mobile && flutter build web --release
 cd web_smoke && npm install && npm test
 ```
 
-### Versioning & Release
+### Versioning, Release & Hooks
 
 ```bash
-./tool/bump-version.sh 0.2.0           # stamps both mobile + backend, commit, tag v0.2.0
-git push origin HEAD --follow-tags      # triggers release.yml (mobile + backend)
+./tool/bump-version.sh 0.2.0           # stamp mobile + backend, commit, tag v0.2.0
+git push origin HEAD --follow-tags     # triggers release.yml
+./tool/install-hooks.sh                # pre-commit: dart format + analyze on staged .dart
 ```
 
 Build number = `git rev-list --count <tag>` (monotonic, reproducible).
-
-### Git Hooks
-
-```bash
-./tool/install-hooks.sh   # pre-commit: dart format + flutter analyze on staged .dart
-```
 
 ---
 
 ## Architecture
 
-### Monorepo Structure
+### Monorepo Layout
 
 ```
-apps/
-  mobile/         Flutter app (iOS / Android / Web)
-  backend/        Cloudflare Workers + Rust + D1
-docs/             Protocol specs, compat matrix, monitoring
-tool/             Hooks, scripts, versioning
+apps/mobile/      Flutter app (iOS / Android / Web)
+apps/backend/     Cloudflare Workers + Rust + D1
+tool/             Versioning, hooks, securities catalog build, dev utilities
+docs/             Protocol specs, roadmap, monitoring, compat matrix
 ```
 
-No workspace-level build tool. Each app is self-contained. CI uses path filters to run only relevant workflows.
+No workspace-level build tool. Each app is self-contained. CI uses path filters.
 
-### Mobile Architecture (Feature-First Clean Architecture)
+### Mobile (Feature-First Clean Architecture)
 
 ```
 lib/
-  app/            MaterialApp, router, bootstrap, route guards
-  core/           Cross-cutting: auth, config, sync, logging, security, PWA, shortcuts, backup
+  app/            MaterialApp, go_router, bootstrap, route guards, master/detail layout
+  core/           Cross-cutting:
+                    async/            ConventionalAsyncNotifier base, isolate runner
+                    auth/             Auth controller, providers
+                    backup/           Encrypted local backup
+                    command_palette/  Cmd-K palette + default commands
+                    config/           Compile-time config (AppConfig)
+                    format/           Number/date/currency formatting
+                    haptics/          Platform haptic feedback
+                    logging/          Structured logging
+                    perf/             Performance instrumentation
+                    pwa/              Web PWA install/update
+                    security/         SQLCipher key handling
+                    shortcuts/        Keyboard shortcuts
+                    sync/             OpLog, push/pull engine, providers
   data/
-    db/           Drift ORM (app_database, tables, converters, connection variants)
-    domain/       Domain model classes (freezed): Account, Asset, JournalEntry, Posting, Liability, Expense...
-    market/       Market data providers (Yahoo Finance, CoinGecko, Sina), cache, rate limiter
-    repositories/ Data repositories
-  domain/         Pure domain services: net worth, currency converter, market data, quotes
-  features/       Feature modules (feature-first):
-    accounts/     Account management
-    ai_chat/      AI chat (SSE streaming, proposal/confirm cards, tool visualization)
-    analytics/    Analytics, benchmark comparison, concentration risk
-    assets/       Asset pages (cash, deposit, wealth product, physical)
-    auth/         Login, devices, auth controller
-    expense/      Expense tracking, categories, monthly reports
-    fire/         FIRE dashboard (goal, projection, scenarios)
-    home/         Dashboard, allocation, trend cards
-    investment/   Trade entry, cost basis (FIFO/LIFO/avg), holdings, FX PnL, tax
-    liabilities/  Liabilities, amortization
-    rebalance/    Rebalancing engine, allocation schemes
-    settings/     Settings page
-    shared/       Shared form widgets
+    audit/             Domain event log (writer/reader)
+    db/                Drift ORM: app_database, tables, converters, connection variants
+    domain/            Freezed models: Account, Asset, JournalEntry, Posting, Liability, Expense...
+    market/            Market-data providers (Yahoo, CoinGecko, Sina), cache, rate limiter
+    repositories/      Data repositories
+    securities_catalog/ Bundled FTS5 catalog loader + search
+  domain/         Pure domain layer:
+                    entities/  fx_rate, quote, historical_bar, symbol_info
+                    services/  net worth, currency converter, market data, price/balance sources
+                    values/    Money, asset_market
+  features/       Feature modules (each: ui/, data/, domain/):
+                    accounts, activity, ai_chat, analytics, assets, auth,
+                    expense, fire, home, investment, liabilities, rebalance,
+                    settings, shared
   design_system/  W3C Design Tokens, themes, charts, reusable widgets.
-                  Main app uses Forui (FCard/FButton/etc.) under FTheme(zinc);
-                  AI panel uses custom shadcn-style primitives in
-                  `lib/features/ai_chat/ui/shadcn/` for visual differentiation
-                  (SCard/SButton/SAvatar/SCodeBlock/SCollapsible etc.).
+                  UI is built on Forui (FCard / FButton / FTheme(zinc)).
   l10n/           Localization (en + zh, ARB files)
 ```
 
-Each feature module internal structure: `ui/` (or `presentation/`), `data/`, `domain/`.
-
-### Backend Architecture
+### Backend
 
 ```
 src/
-  lib.rs          Worker Router (main entry)
+  lib.rs          Worker Router (entry point)
   error.rs        AppError enum with coded JSON responses
-  hlc.rs          Hybrid Logical Clock implementation
-  ai/             Anthropic Claude proxy, SSE streaming, guardrails, tools
-  auth/           JWT (HS256, hmac+sha2), Argon2 password hashing, middleware
+  hlc.rs          Hybrid Logical Clock
+  ai/             Anthropic Claude proxy: anthropic, sse, tools, proposals, guardrails
+  auth/           JWT (HS256), Argon2 password hashing, middleware
   routes/         HTTP handlers: health, auth, me, sync, ai
-  sync/           OpLog, materialise, state management
+  sync/           OpLog (op), materialise, state
 migrations/       D1 SQL migrations
 ```
 
 ### Key Architectural Decisions
 
-- **Local-first**: client is source of truth; server is durable storage + fan-out
-- **Sync**: eventual consistency via polling (30s), HLC-ordered OpLog, row-level LWW conflict resolution, tombstones for deletes
-- **Sync protocol**: Frozen v1.0 — see `docs/sync-protocol.md`
-- **Monetary types**: `Decimal` (not `double`) everywhere, enforced by `Money` value object
-- **Database**: Drift ORM + SQLCipher encryption (native), sqlite3 WASM (web)
-- **Auth**: single-user JWT (HS256), no registration endpoint, `BYPASS_AUTH` flag for dev
-- **Routing**: go_router with Path URL strategy, deferred imports for web code-splitting
-- **AI**: Anthropic Claude API via backend proxy, SSE streaming
+- **Local-first**: client is source of truth; server is durable storage + fan-out.
+- **Sync**: eventual consistency via 30s polling, HLC-ordered OpLog, row-level LWW, tombstones for deletes. Protocol frozen at v1.0 — see `docs/sync-protocol.md`.
+- **Money**: `Decimal` (not `double`) everywhere; `Money` value object rejects cross-currency ops at the type boundary; FX through explicit converter service.
+- **Database**: Drift ORM; SQLCipher (native), sqlite3 WASM (web).
+- **Auth**: single-user JWT (HS256), no registration endpoint; `BYPASS_AUTH` for dev.
+- **Routing**: go_router with Path URL strategy; deferred imports for web code-splitting.
+- **AI**: Anthropic Claude API via backend proxy with SSE streaming.
 
 ---
 
 ## Code Conventions
 
 ### Dart / Flutter
+- **Linting**: strict-casts, strict-inference, strict-raw-types (`apps/mobile/analysis_options.yaml`).
+- Files `snake_case.dart`; classes `PascalCase`; private widgets `_PrefixName`.
+- Providers: `camelCase` + `Provider` suffix (e.g. `appRouterProvider`).
+- Constants: `k` prefix (e.g. `kPrimaryTabPaths`, `kPushBatchMaxOps`).
+- Single quotes; trailing commas required.
+- `*.g.dart` / `*.freezed.dart` are generated — never edit.
 
-- **Linting**: strict-casts, strict-inference, strict-raw-types. See `apps/mobile/analysis_options.yaml`
-- **File naming**: `snake_case.dart`
-- **Classes**: `PascalCase`; private widgets: `_PrefixName`
-- **Providers**: `camelCase` + `Provider` suffix (e.g., `appRouterProvider`, `dashboardSnapshotProvider`)
-- **Constants**: `k` prefix (e.g., `kPrimaryTabPaths`, `kPushBatchMaxOps`)
-- **Quotes**: single quotes enforced
-- **Trailing commas**: required
-- **Generated files**: `*.g.dart`, `*.freezed.dart` — excluded from lint, do not edit manually
-
-### State Management (Riverpod)
-
-- `Provider<T>` — singletons, sync derivations
-- `FutureProvider<T>` — async one-shot reads
-- `StreamProvider<T>` — live database streams
-- `StateProvider<T>` — simple mutable UI state
-- `AsyncNotifierProvider` — complex async state, uses `ConventionalAsyncNotifier<T>` base with `fetch()`, `refresh()`, `mutate()` (see `core/async/async_notifier_convention.dart`)
-- Provider files per layer: `data/db/providers.dart`, `data/repositories/providers.dart`, `core/sync/providers.dart`, etc.
+### Riverpod
+- Use `Provider`, `FutureProvider`, `StreamProvider`, `StateProvider` for the obvious cases.
+- Complex async state extends `ConventionalAsyncNotifier<T>` (`fetch / refresh / mutate`) — see `core/async/async_notifier_convention.dart`.
+- Group provider declarations per layer (`data/db/providers.dart`, `core/sync/providers.dart`, ...).
 
 ### Rust
-
-- Standard Rust 2021 conventions: `snake_case` functions, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants
-- Centralized `AppError` enum with `thiserror::Error` derive and factory methods
-- Handler pattern: `pub async fn push(...)` with inner `_inner` function for error/metrics handling
-- Formatting enforced by `cargo fmt` in CI
-
-### Money / Currency
-
-- Use `Decimal` type, never `double` for monetary values
-- `Money` value object rejects cross-currency operations at the type boundary
-- FX conversion goes through explicit currency converter service
+- Standard Rust 2021. `cargo fmt` enforced in CI.
+- Centralized `AppError` (`thiserror`) with factory methods.
+- Handler pattern: public `pub async fn name(...)` wrapping an inner `_inner` for error/metrics handling.
 
 ---
 
 ## Testing
 
-### Test Structure
-
 ```
 test/
-  app/            Router, route guards, deferred routes
-  core/           Sync engine, auth, format, security, shortcuts, backup
-  data/           Database, repositories, HLC
-  domain/         Money, currency converter, net worth, FX rate
-  design_system/  Theme, tokens, widgets
-  features/       Per-feature: home, expense, auth, fire, ai_chat
-  e2e/            Sync end-to-end with virtual device clusters
+  app/, core/, data/, domain/, design_system/, features/, l10n/, golden/
+  e2e/            Multi-device sync via SyncCluster / VirtualDevice harness
 ```
 
-### Key Testing Patterns
-
-- **In-memory databases**: `makeTestDatabase()` — Drift in-memory, bypasses SQLCipher
-- **Deterministic fakes**: `makeStubStamper()`, `InMemoryOutboxStore`, `InMemoryCursorStore`, `FakeSyncApiClient`
-- **E2E sync**: `SyncCluster` / `VirtualDevice` harness simulates multi-device with explicit clock control
-- **Widget tests**: `testWidgets` with `MaterialApp` wrappers for theme resolution
-- **Convention**: override data layer, not providers with static `AsyncValue`
-
-### Coverage
-
-- Project target: 60%, patch target: 70% (see `codecov.yml`)
-- Generated files excluded
+- **In-memory DB**: `makeTestDatabase()` (Drift in-memory, bypasses SQLCipher).
+- **Deterministic fakes**: `makeStubStamper()`, `InMemoryOutboxStore`, `InMemoryCursorStore`, `FakeSyncApiClient`.
+- **Widget tests**: wrap in `MaterialApp` so theme resolves.
+- **Convention**: override the data layer in tests, not providers with static `AsyncValue`.
+- **Coverage targets** (`codecov.yml`): project 60%, patch 70%; generated files excluded.
 
 ---
 
 ## CI/CD
 
-| Workflow | Trigger | Steps |
-|----------|---------|-------|
-| `mobile.yml` | `apps/mobile/**` changes | format, analyze, build_runner check, test+coverage, web+android+ios build |
-| `backend.yml` | `apps/backend/**` changes | fmt, clippy, check (wasm32), cargo audit, deploy/preview |
-| `security.yml` | Weekly Monday + lockfile changes | dart pub outdated, cargo audit, Trivy scan |
-| `release.yml` | Tag `vX.Y.Z` + manual dispatch | Version stamp, build mobile + backend (optional), GitHub Release, deploy backend |
-| `web-smoke.yml` | Nightly + manual | Playwright smoke tests (Chromium, Firefox, WebKit) |
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `mobile.yml` | `apps/mobile/**` | format, analyze, build_runner check, test+coverage, web/android/iOS build |
+| `backend.yml` | `apps/backend/**` | fmt, clippy, wasm32 check, cargo audit, deploy/preview |
+| `asset-catalog.yml` | `tool/asset_catalog/**`, `tool/build-asset-catalog.sh` | offline pytest + stub bake (full ingest is manual / self-hosted) |
+| `security.yml` | weekly + lockfile changes | dart pub outdated, cargo audit, Trivy |
+| `release.yml` | tag `vX.Y.Z` + manual | version stamp, build mobile+backend, GitHub Release, deploy backend |
+| `web-smoke.yml` | nightly + manual | Playwright (Chromium / Firefox / WebKit) |
 
 ---
 
 ## Environment & Config
 
-- **No `.env` files committed.** Compile-time config via `--dart-define`:
-  - `API_BASE_URL` (default: `http://127.0.0.1:8787`)
-  - `BYPASS_AUTH` (default: `true` in dev)
-  - Defined in `apps/mobile/lib/core/config/app_config.dart`
-- **Wrangler secrets**: `JWT_SECRET`, `ANTHROPIC_API_KEY` (set via `wrangler secret put`)
-- **GitHub secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CODECOV_TOKEN`, `KEYSTORE_BASE64` + signing keys
+- **No `.env` files committed.** Compile-time config via `--dart-define` (see `apps/mobile/lib/core/config/app_config.dart`):
+  - `API_BASE_URL` (default `http://127.0.0.1:8787`)
+  - `BYPASS_AUTH` (default `true` in dev)
+- **Wrangler secrets**: `JWT_SECRET`, `ANTHROPIC_API_KEY` (`wrangler secret put`).
+- **GitHub secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CODECOV_TOKEN`, `KEYSTORE_BASE64` + signing keys.
 
 ---
 
@@ -243,15 +217,19 @@ test/
 
 | Doc | Description |
 |-----|-------------|
-| `docs/sync-protocol.md` | Sync protocol spec (Frozen v1.0): HLC, OpLog, push/pull API, conflict resolution |
+| `docs/sync-protocol.md` | Sync protocol spec (Frozen v1.0): HLC, OpLog, push/pull, conflict resolution |
 | `docs/sync-protocol-tests.md` | 50+ protocol test cases |
 | `docs/sync-e2e-manual.md` | Manual E2E checklist for multi-device sync |
-| `docs/sync-monitoring.md` | Monitoring baseline: latency targets, alert tiers, D1 sampling |
-| `docs/web-compat-matrix.md` | Cross-browser compatibility matrix and known issues |
+| `docs/sync-monitoring.md` | Latency targets, alert tiers, D1 sampling |
+| `docs/local-development.md` | Local dev setup walkthrough |
+| `docs/market-data-providers.md` | Market-data provider matrix and limits |
+| `docs/web-compat-matrix.md` | Cross-browser compatibility and known issues |
 | `docs/web-routing.md` | Web routing verification checklist |
-| `docs/visual-baseline/README.md` | FIR-113 visual baseline: golden suite, Figma sync contract, FIR-103 §10 walkthrough |
-| `docs/branch-protection.md` | Branch protection rules for main |
+| `docs/visual-baseline/README.md` | Golden suite + Figma sync contract |
+| `docs/branch-protection.md` | Branch protection rules for `main` |
+| `docs/roadmap.md` (+ `roadmap-phase1.md`, `roadmap-midterm-execution.md`) | Product roadmap |
 | `apps/mobile/README.md` | Mobile engineering baseline |
 | `apps/mobile/design_tokens/README.md` | W3C Design Token system |
-| `apps/mobile/web_smoke/README.md` | Playwright smoke test docs |
-| `apps/mobile/docs/web-bundle.md` | Web bundle size baseline and regression policy |
+| `apps/mobile/web_smoke/README.md` | Playwright smoke tests |
+| `apps/mobile/docs/web-bundle.md` | Web bundle size baseline + regression policy |
+| `tool/asset_catalog/README.md` | Securities catalog build pipeline |

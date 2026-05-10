@@ -11,26 +11,29 @@
 ```
 naviwealth/
 ├── apps/
-│   ├── mobile/      # Flutter 三端 App（FIR-2 / FIR-14 ...）
-│   └── backend/     # Cloudflare Workers + Rust（FIR-28 / FIR-32 / FIR-36 ...）
+│   ├── mobile/              Flutter 三端 App
+│   └── backend/             Cloudflare Workers + Rust
+├── tool/                    版本工具、git hooks、证券目录构建
+├── docs/                    协议、监控、路线图、兼容矩阵
 └── .github/
     ├── workflows/
-    │   ├── mobile.yml     # analyze / test / 覆盖率 / build (web/android/ios)
-    │   ├── backend.yml    # cargo fmt / clippy / check / cargo audit
-    │   ├── security.yml   # 每周扫描：dart pub outdated / cargo audit / trivy fs
-    │   └── release.yml    # 标签触发：mobile-vX.Y.Z / backend-vX.Y.Z
-    ├── dependabot.yml     # Actions / pub / cargo 依赖自动更新
-    └── CODEOWNERS         # 默认评审人
-└── .github/workflows/
-    ├── mobile.yml   # Flutter analyze + test + web build
-    └── backend.yml  # cargo fmt / clippy / check + wrangler deploy（PR preview / main prod）
+    │   ├── mobile.yml          analyze + test (coverage) / golden regression / build web
+    │   ├── backend.yml         fmt + clippy + check (wasm32) / deploy / preview
+    │   ├── asset-catalog.yml   pytest 解析器 + stub bake
+    │   ├── security.yml        每周：dart pub outdated / cargo audit / Trivy
+    │   ├── release.yml         tag vX.Y.Z 触发：版本写入 + 构建 + GH Release + 后端部署
+    │   └── web-smoke.yml       每夜 + 手动：Playwright (Chromium / Firefox / WebKit)
+    ├── dependabot.yml          Actions / pub / cargo 依赖自动更新
+    └── CODEOWNERS              默认评审人
 ```
 
-任务编号 `FIR-N` 对应 Multica 看板上的 issue。
+任务编号 `FIR-N` 对应 Multica 看板。详细架构见 [`CLAUDE.md`](CLAUDE.md)。
 
 ---
 
 ## 本地开发
+
+完整步骤见 [`docs/local-development.md`](docs/local-development.md)；以下是速通版本。
 
 ### Flutter
 
@@ -38,12 +41,16 @@ naviwealth/
 cd apps/mobile
 flutter pub get
 flutter test
-flutter run                   # 默认设备
-tool/setup-drift-web.sh       # Web 端运行前一次：拉取 sqlite3.wasm + 编译 drift worker
-flutter run -d chrome         # Web
+flutter run                            # 默认设备
+flutter run -d chrome                  # Web
 ```
 
-`tool/setup-drift-web.sh` 把 `sqlite3.wasm`（与 pubspec.lock 中 `sqlite3` 版本对齐）和编译好的 `drift_worker.dart.js` 落到 `apps/mobile/web/`。两个产物都被 `.gitignore`，CI 在 `build-web` 任务里会自动重新生成。
+仅 Web 端需要的一次性资源准备（产物在 `.gitignore`，CI 在 `build web` 任务里会自动重建）：
+
+```bash
+apps/mobile/tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
+apps/mobile/tool/build-cn-fonts.sh     # CN font 子集
+```
 
 ### 后端（Cloudflare Workers + Rust）
 
@@ -52,39 +59,37 @@ flutter run -d chrome         # Web
 ```bash
 cd apps/backend
 cargo check --target wasm32-unknown-unknown
-wrangler dev                  # 本地 + D1 模拟
-wrangler deploy               # 推到 *.workers.dev
+wrangler dev                           # 本地 + D1 模拟
+wrangler deploy                        # 生产
 ```
 
-健康检查：
+健康检查：`GET /health`、`GET /health/db`。
 
-- `GET /health`     — 服务存活
-- `GET /health/db`  — D1 绑定可达
+#### Secrets
 
-Worker 端的运行时 secret：
+Worker 运行时（`wrangler secret put`）：
 
-```bash
-cd apps/backend
-wrangler secret put JWT_SECRET   # HS256 签名 key（FIR-37 鉴权用）
-```
+- `JWT_SECRET` — HS256 签名 key
+- `ANTHROPIC_API_KEY` — AI 代理
 
-CI / 部署所需的 GitHub 仓库 Secrets（在 `Settings → Secrets and variables → Actions` 配置；未配置时 CI 仍通过，deploy job 自动跳过）：
+GitHub Actions（`Settings → Secrets and variables → Actions`）：
 
-- `CLOUDFLARE_API_TOKEN` — 具备 Workers Deploy 权限的 API token
-- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare 账户 ID
+- `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` — Workers 部署（未配置时 deploy job 自动跳过）
+- `CODECOV_TOKEN` — 覆盖率上传（私有仓库必填）
+- `KEYSTORE_BASE64` + 签名 key — Android 签名
 
-PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流量）；合并到 `main` 会跑 `wrangler deploy`（生产）。
+PR 推送 → `wrangler versions upload`（生成 preview URL，不接管流量）；合并 `main` → `wrangler deploy`（生产）。
 
 ---
 
-## 技术决策（来自 FIR-1 讨论）
+## 技术决策
 
 - 三端：iOS / Android / Web
 - 同步：最终一致性（前台立即拉取 + 30s 轮询，无 WebSocket）
 - 后端：Cloudflare Workers + Rust（workers-rs），D1 存储
 - 加密：暂不做端到端加密（仅个人使用）
-- 认证：单用户 JWT，无注册端点
-- 不上架：Web 走 Cloudflare Pages，移动端 sideload / TestFlight 内部组
+- 认证：单用户 JWT（HS256），无注册端点
+- 不上架：Web 走 Cloudflare Pages，移动端 sideload / TestFlight
 
 ---
 
@@ -94,7 +99,7 @@ PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流�
 ./tool/install-hooks.sh
 ```
 
-安装一次后，提交时会对暂存的 `apps/mobile/**.dart` 跑 `dart format --set-exit-if-changed` 与 `flutter analyze --fatal-infos`。
+提交时对暂存的 `apps/mobile/**.dart` 跑 `dart format --set-exit-if-changed` 与 `flutter analyze --fatal-infos`。
 
 ## 贡献流程
 
@@ -102,32 +107,34 @@ PR 推送会跑 `wrangler versions upload`（生成 preview URL，不接管流�
 2. 从 `main` 拉分支：`feature/fir-<N>-<short>`。
 3. 提交并推送，CI 通过后开 PR。
 
-`main` 分支的保护规则与必需检查见 [`docs/branch-protection.md`](docs/branch-protection.md)。
+`main` 的保护规则与必需检查见 [`docs/branch-protection.md`](docs/branch-protection.md)。
 
 ---
 
 ## CI / 质量门禁
 
-| 流水线 | 触发条件 | 关键步骤 |
-| --- | --- | --- |
-| `mobile` | 修改 `apps/mobile/**` 或 workflow | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / web+android+ios 构建 |
-| `backend` | 修改 `apps/backend/**` 或 workflow | cargo fmt / clippy / check (wasm32) / **cargo audit** |
-| `security` | 每周一 03:17 UTC + 手动 + lockfile 变更 | `dart pub outdated` / `cargo audit` / Trivy 文件系统扫描 |
-| `release` | tag 推送 `mobile-vX.Y.Z` / `backend-vX.Y.Z` | 版本号写入源文件 → 构建 → 创建 GitHub Release |
+| 流水线 | 触发 | 关键步骤 |
+|--------|------|----------|
+| `mobile` | `apps/mobile/**` | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / golden regression / web 构建 |
+| `backend` | `apps/backend/**` | fmt / clippy / check (wasm32) / deploy 或 PR preview |
+| `asset-catalog` | `tool/asset_catalog/**`、`tool/build-asset-catalog.sh` | offline pytest + stub bake |
+| `security` | 每周一 + lockfile 变更 | `dart pub outdated` / `cargo audit` / Trivy |
+| `release` | `vX.Y.Z` tag + 手动 dispatch | 版本写入 → 构建 mobile + backend → GitHub Release → 后端部署 |
+| `web-smoke` | 每夜 + 手动 | Playwright（Chromium / Firefox / WebKit） |
 
-覆盖率阈值在 [`codecov.yml`](codecov.yml) 中配置：项目目标 60%（mobile flag），diff（patch）目标 70%。`*.g.dart` / `*.freezed.dart` 不计入。
+覆盖率阈值（[`codecov.yml`](codecov.yml)）：项目 60%、patch 70%。`*.g.dart` / `*.freezed.dart` 不计入。
 
-依赖更新由 Dependabot 周一自动开 PR，见 [`.github/dependabot.yml`](.github/dependabot.yml)。
+依赖更新由 Dependabot 周一自动开 PR（[`.github/dependabot.yml`](.github/dependabot.yml)）。
 
-### 版本号约定
+### 版本号
 
 - **语义化版本** + **构建号**：`SEMVER+BUILD`
-- 构建号 = 该 tag 在 git 历史上的提交计数（`git rev-list --count <tag>`），保证单调递增、可从历史复现
-- 发版示例：
+- 构建号 = 该 tag 在 git 历史上的提交计数（`git rev-list --count <tag>`），单调递增、可从历史复现
+- 发版：
 
   ```bash
-  ./tool/bump-version.sh 0.2.0           # stamps both mobile + backend, tags v0.2.0
-  git push origin HEAD --follow-tags
+  ./tool/bump-version.sh 0.4.1           # 同时改 pubspec.yaml + Cargo.toml，提交并打 tag v0.4.1
+  git push origin HEAD --follow-tags     # 触发 release.yml
   ```
 
-  会同时修改 `pubspec.yaml` 和 `Cargo.toml`、提交、打 tag `v0.2.0`，并由 `release.yml` 在构建时把版本号重写成 `0.2.0+<commit-count>`。
+  `release.yml` 在构建时把版本号重写成 `0.4.1+<commit-count>`。

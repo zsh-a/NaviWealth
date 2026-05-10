@@ -1,242 +1,119 @@
 # Local Development Guide
 
-Setup guide for running NaviWealth locally (backend + Flutter app).
+End-to-end setup for running NaviWealth locally (backend + Flutter app).
 
 ---
 
 ## Prerequisites
 
-- Rust + `wasm32-unknown-unknown` target: `rustup target add wasm32-unknown-unknown`
-- Wrangler CLI: `npm i -g wrangler`
+- Rust + `wasm32-unknown-unknown`: `rustup target add wasm32-unknown-unknown`
+- Wrangler: `npm i -g wrangler`
 - Flutter SDK
-- Xcode (for iOS/macOS), Android Studio (for Android)
+- Xcode (iOS / macOS), Android Studio (Android)
 
 ---
 
-## 1. Backend Setup
-
-### 1.1 Install dependencies & build
+## 1. Backend
 
 ```bash
 cd apps/backend
-cargo check --target wasm32-unknown-unknown
-```
-
-### 1.2 Create local secrets
-
-Create `.dev.vars` in `apps/backend/` (already gitignored):
-
-```
-JWT_SECRET=<any-dev-secret>
-```
-
-### 1.3 Initialize local database
-
-```bash
-cd apps/backend
-wrangler d1 migrations apply naviwealth --local
-```
-
-This creates the local SQLite database with all tables (users, devices, sync, ai_rate_limit).
-
-### 1.4 Register a local user
-
-```bash
+cargo check --target wasm32-unknown-unknown          # build check
+echo "JWT_SECRET=$(openssl rand -hex 32)" > .dev.vars # local secret (gitignored)
+wrangler d1 migrations apply naviwealth --local      # init local SQLite
 tool/register-user/register.sh --email you@example.com --execute --local
+wrangler dev                                         # serves http://127.0.0.1:8787
 ```
 
-### 1.5 Start the backend
-
-```bash
-cd apps/backend
-wrangler dev
-```
-
-Backend runs at `http://127.0.0.1:8787`. Verify: `curl http://127.0.0.1:8787/health`.
+Verify: `curl http://127.0.0.1:8787/health`.
 
 ---
 
-## 2. Flutter App Setup
-
-### 2.1 Install dependencies
+## 2. Flutter app
 
 ```bash
 cd apps/mobile
 flutter pub get
 ```
 
-### 2.2 One-time web setup (if targeting web)
+One-time web setup (only if targeting `-d chrome` / building web):
 
 ```bash
-tool/setup-drift-web.sh
-tool/build-cn-fonts.sh
+apps/mobile/tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
+apps/mobile/tool/build-cn-fonts.sh     # CN font subsets
 ```
 
 ---
 
-## 3. Platform-Specific Configuration
+## 3. Platform-specific config
 
-### 3.1 macOS
+### macOS — App Sandbox blocks network and Keychain by default
 
-**Network entitlement** — macOS App Sandbox blocks outbound network by default.
-
-File: `macos/Runner/DebugProfile.entitlements` must include:
+`macos/Runner/{DebugProfile,Release}.entitlements` must include:
 
 ```xml
-<key>com.apple.security.network.client</key>
-<true/>
-```
-
-**Keychain entitlement** — `flutter_secure_storage` needs Keychain access:
-
-```xml
+<key>com.apple.security.network.client</key><true/>
 <key>com.apple.security.keychain-access-groups</key>
-<array>
-    <string>$(AppIdentifierPrefix)*</string>
-</array>
+<array><string>$(AppIdentifierPrefix)*</string></array>
 ```
 
-Both entitlements are required in `DebugProfile.entitlements` and `Release.entitlements`.
+Entitlement changes require a full rebuild (`flutter clean && flutter run`); hot restart won't pick them up.
 
-### 3.2 iOS
+### iOS — allow HTTP for local backend
 
-**Allow HTTP (non-HTTPS)** — Required for local dev against `http://` backend.
-
-File: `ios/Runner/Info.plist` must include:
+`ios/Runner/Info.plist`:
 
 ```xml
 <key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-</dict>
+<dict><key>NSAllowsArbitraryLoads</key><true/></dict>
 ```
 
-> Note: For production, replace with `NSExceptionDomains` to restrict to specific hosts.
+> Production: replace with `NSExceptionDomains` to whitelist specific hosts.
 
-### 3.3 Android
+### Android — internet permission
 
-**Internet permission** — Required for all network access.
-
-File: `android/app/src/main/AndroidManifest.xml` must include (before `<application>`):
+`android/app/src/main/AndroidManifest.xml` (before `<application>`):
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET"/>
 ```
 
-### 3.4 Web
-
-No additional configuration needed. CORS on the backend handles cross-origin requests.
-
-For different ports (e.g. `localhost:50507` → `127.0.0.1:8787`), the backend's CORS headers allow the request.
+### Web — none. Backend CORS handles cross-origin.
 
 ---
 
-## 4. Run the App
+## 4. Run
 
-### macOS desktop
+| Target | Command |
+|--------|---------|
+| macOS desktop | `flutter run -d macos` |
+| iOS Simulator | `flutter run -d iPhone` |
+| Android emulator | `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8787` |
+| Physical device | `flutter run --dart-define=API_BASE_URL=http://<LAN-IP>:8787` |
+| Web (Chrome) | `flutter run -d chrome` |
 
-```bash
-cd apps/mobile
-flutter run -d macos
-```
+`API_BASE_URL` defaults to `http://127.0.0.1:8787` (see `apps/mobile/lib/core/config/app_config.dart`). `BYPASS_AUTH` defaults to `true` in dev.
 
-### iOS Simulator
-
-```bash
-flutter run -d iPhone
-```
-
-### Android Emulator
-
-Android emulator uses `10.0.2.2` to reach the host machine's localhost:
-
-```bash
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8787
-```
-
-### Physical Device (iOS/Android)
-
-Use your computer's LAN IP:
-
-```bash
-flutter run --dart-define=API_BASE_URL=http://192.168.x.x:8787
-```
-
-### Web (Chrome)
-
-```bash
-flutter run -d chrome
-```
+After login, the debug console should show `Backend health check: 200 OK` and `NaviWealth bootstrap complete (dev)`.
 
 ---
 
-## 5. Verifying the Setup
+## 5. Common issues
 
-After login, the debug console should show:
-
-```
-API_BASE_URL: http://127.0.0.1:8787
-Backend health check: 200 OK
-NaviWealth bootstrap complete (dev)
-```
-
-If you see connection errors, see troubleshooting below.
-
----
-
-## 6. Common Issues
-
-### "Connection failed" / "Operation not permitted"
-
-- **macOS**: Missing `com.apple.security.network.client` entitlement. Add it and do a full rebuild (`flutter clean && flutter run`).
-- **Android emulator**: Using `127.0.0.1` instead of `10.0.2.2`.
-- **Physical device**: Using `127.0.0.1` instead of LAN IP.
-
-### "Keychain error -34018"
-
-- **macOS**: Missing `com.apple.security.keychain-access-groups` entitlement. Add it and do a full rebuild (`flutter clean && flutter run`). Hot restart does not refresh entitlements.
-
-### "JWT_SECRET unbound"
-
-- `apps/backend/.dev.vars` is missing. Create it with `JWT_SECRET=<value>` and restart `wrangler dev`.
-
-### "no such table: users"
-
-- Local D1 database not initialized. Run: `wrangler d1 migrations apply naviwealth --local`
-
-### CORS error (web)
-
-- Backend is not running, or running an old version without CORS headers. Restart `wrangler dev`.
-
-### "A required entitlement isn't present" (Keychain)
-
-- Entitlements changes require a **full rebuild**, not hot restart:
-  ```bash
-  flutter clean
-  flutter run -d macos
-  ```
+| Symptom | Cause / Fix |
+|---------|-------------|
+| `Connection failed` / `Operation not permitted` (macOS) | Missing `network.client` entitlement → add it, `flutter clean && flutter run`. |
+| `Connection failed` (Android emulator) | Using `127.0.0.1` — use `10.0.2.2`. |
+| `Connection failed` (physical device) | Using `127.0.0.1` — use the host's LAN IP. |
+| `Keychain error -34018` (macOS) | Missing `keychain-access-groups` entitlement → add and full rebuild. |
+| `JWT_SECRET unbound` | `apps/backend/.dev.vars` missing → recreate, restart `wrangler dev`. |
+| `no such table: users` | Run `wrangler d1 migrations apply naviwealth --local`. |
+| CORS error (web) | Backend not running, or stale build → restart `wrangler dev`. |
 
 ---
 
-## 7. Useful Commands
+## 6. Local DB inspection
 
 ```bash
-# Backend
 cd apps/backend
-wrangler dev                                    # start local backend
-wrangler d1 migrations apply naviwealth --local # apply migrations
 wrangler d1 execute naviwealth --local --command "SELECT * FROM users;"
-
-# Register user
-tool/register-user/register.sh --email you@example.com --execute --local
-
-# Flutter
-cd apps/mobile
-flutter pub get
-flutter test                                    # unit + widget tests
-flutter analyze --fatal-infos                   # static analysis
-flutter run -d macos                            # macOS desktop
-flutter run -d chrome                           # web dev
-flutter clean                                   # clean build cache
 ```
