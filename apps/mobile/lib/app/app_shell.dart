@@ -223,20 +223,32 @@ class _MobileNavIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (destination.isAccent) {
+      // Calm-finance AI tab: subtle teal halo + tinted glyph rather
+      // than a 100%-filled accent disc. The previous fill made AI read
+      // as a floating CTA / FAB and pulled attention away from
+      // whatever page the user was actually on. The new treatment
+      // still distinguishes AI as the centered accent tab — selected
+      // state deepens the halo and adds a hairline ring — but it
+      // sits flush with its peer tabs.
+      final haloAlpha = selected ? 0.22 : 0.10;
       return Container(
-        width: 36,
-        height: 36,
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
-          color: accentColor.withValues(alpha: selected ? 1.0 : 0.14),
-          borderRadius: BorderRadius.circular(12),
+          color: accentColor.withValues(alpha: haloAlpha),
+          borderRadius: BorderRadius.circular(8),
+          border: selected
+              ? Border.all(
+                  color: accentColor.withValues(alpha: 0.45),
+                  width: 1,
+                )
+              : null,
         ),
         alignment: Alignment.center,
         child: Icon(
           selected ? destination.selectedIcon : destination.icon,
-          size: 20,
-          color: selected
-              ? context.theme.colors.primaryForeground
-              : accentColor,
+          size: 16,
+          color: accentColor,
         ),
       );
     }
@@ -294,19 +306,32 @@ class _TabletRailItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isAiTab = destination.isAccent;
+    // AI tab no longer fills with solid accent — it gets a tinted halo
+    // matching the mobile bottom nav so it reads as "noteworthy" but
+    // not "primary CTA".
     final iconColor = isAiTab
-        ? (selected ? colors.primaryForeground : colors.primary)
+        ? colors.primary
         : (selected ? colors.primary : colors.mutedForeground);
+    final fillAlpha = isAiTab
+        ? (selected ? 0.20 : 0.10)
+        : (selected ? 1.0 : 0.0);
+    final fill = isAiTab
+        ? colors.primary.withValues(alpha: fillAlpha)
+        : (selected ? colors.muted : Colors.transparent);
     return FTappable(
       onPress: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isAiTab
-              ? colors.primary.withValues(alpha: selected ? 1.0 : 0.12)
-              : (selected ? colors.muted : Colors.transparent),
+          color: fill,
           borderRadius: BorderRadius.circular(10),
+          border: isAiTab && selected
+              ? Border.all(
+                  color: colors.primary.withValues(alpha: 0.40),
+                  width: 1,
+                )
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -321,8 +346,8 @@ class _TabletRailItem extends StatelessWidget {
               destination.label,
               style: context.theme.typography.xs.copyWith(
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: isAiTab && selected
-                    ? colors.primaryForeground
+                color: isAiTab
+                    ? colors.primary
                     : (selected ? colors.primary : colors.foreground),
               ),
               textAlign: TextAlign.center,

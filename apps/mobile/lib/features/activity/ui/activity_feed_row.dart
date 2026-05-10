@@ -54,18 +54,18 @@ class ActivityFeedEntryRow extends StatelessWidget {
           ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: iconTint.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(10),
+                  color: iconTint.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
-                child: Icon(iconData, size: 18, color: iconTint),
+                child: Icon(iconData, size: 16, color: iconTint),
               ),
               const SizedBox(width: 12),
               Expanded(

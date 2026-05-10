@@ -301,8 +301,7 @@ class _LineChartBody extends StatelessWidget {
       xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
       yAxis: ValueAxis.currency(
         currencyCode: trend.baseCurrency,
-        maxLabels: 4,
-        showGrid: true,
+        maxLabels: 3,
       ),
       filled: true,
       heroDots: true,
