@@ -32,8 +32,6 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     final invocation = widget.invocation;
     final pending = invocation.output == null;
@@ -53,9 +51,8 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => setState(() => _expanded = !_expanded),
+            FTappable(
+              onPress: () => setState(() => _expanded = !_expanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -68,7 +65,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                           ? Icons.hourglass_empty
                           : Icons.check_circle_outline,
                       size: 16,
-                      color: pending ? cs.tertiary : cs.primary,
+                      color: pending ? colors.mutedForeground : colors.primary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -77,21 +74,21 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                           children: [
                             TextSpan(
                               text: friendlyName,
-                              style: tt.labelLarge?.copyWith(
-                                color: cs.onSurface,
+                              style: context.theme.typography.sm.copyWith(
+                                color: context.theme.colors.foreground,
                               ),
                             ),
                             if (summary != null) ...[
                               TextSpan(
                                 text: '  ·  ',
-                                style: tt.bodySmall?.copyWith(
-                                  color: cs.onSurfaceVariant,
+                                style: context.theme.typography.xs.copyWith(
+                                  color: context.theme.colors.mutedForeground,
                                 ),
                               ),
                               TextSpan(
                                 text: summary,
-                                style: tt.bodySmall?.copyWith(
-                                  color: cs.onSurfaceVariant,
+                                style: context.theme.typography.xs.copyWith(
+                                  color: context.theme.colors.mutedForeground,
                                 ),
                               ),
                             ],
@@ -104,7 +101,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                     Icon(
                       _expanded ? Icons.expand_less : Icons.expand_more,
                       size: 18,
-                      color: cs.onSurfaceVariant,
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ],
                 ),
@@ -171,8 +168,6 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     AppLocalizations l10n,
     ToolInvocation invocation,
   ) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final oversized = isOversizedToolPayload(
       invocation.name,
       invocation.output,
@@ -188,13 +183,14 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
           children: [
             Text(
               l10n.aiChatToolOutputLabel,
-              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              style: context.theme.typography.xs2.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             ),
             const Spacer(),
             if (body != null)
-              InkWell(
-                borderRadius: BorderRadius.circular(4),
-                onTap: () => setState(() => _showRawJson = true),
+              FTappable(
+                onPress: () => setState(() => _showRawJson = true),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
@@ -202,16 +198,17 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   ),
                   child: Text(
                     l10n.aiChatToolShowRawJson,
-                    style: tt.labelSmall?.copyWith(color: cs.primary),
+                    style: context.theme.typography.xs2.copyWith(
+                      color: context.theme.colors.primary,
+                    ),
                   ),
                 ),
               )
             else if (_showRawJson &&
                 renderToolOutput(context, invocation.name, invocation.output) !=
                     null)
-              InkWell(
-                borderRadius: BorderRadius.circular(4),
-                onTap: () => setState(() => _showRawJson = false),
+              FTappable(
+                onPress: () => setState(() => _showRawJson = false),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
@@ -219,7 +216,9 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   ),
                   child: Text(
                     l10n.aiChatToolShowCompactView,
-                    style: tt.labelSmall?.copyWith(color: cs.primary),
+                    style: context.theme.typography.xs2.copyWith(
+                      color: context.theme.colors.primary,
+                    ),
                   ),
                 ),
               ),
@@ -231,10 +230,10 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             width: double.infinity,
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: cs.surface,
+              color: context.theme.colors.background,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: cs.outlineVariant.withValues(alpha: 0.4),
+                color: context.theme.colors.border.withValues(alpha: 0.4),
               ),
             ),
             child: body,

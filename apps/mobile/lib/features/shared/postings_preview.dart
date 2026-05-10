@@ -48,15 +48,13 @@ class PostingsPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final unitTotals = _computeUnitTotals(postings);
 
     return Container(
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: context.theme.colors.muted,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(color: context.theme.colors.border),
       ),
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -66,7 +64,7 @@ class PostingsPreview extends StatelessWidget {
           if (title != null && title!.isNotEmpty) ...[
             Text(
               title!,
-              style: theme.textTheme.titleSmall,
+              style: context.theme.typography.sm,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
@@ -95,16 +93,15 @@ class _PostingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
     final account = accounts[posting.accountId];
     final accountLabel = account == null
         ? posting.accountId
         : _accountPath(account, accounts);
 
     final isDebit = posting.units >= Decimal.zero;
-    final amountColor = isDebit ? scheme.onSurface : scheme.error;
+    final amountColor = isDebit
+        ? context.theme.colors.foreground
+        : context.theme.colors.destructive;
 
     final cost = posting.cost;
     final price = posting.price;
@@ -118,22 +115,22 @@ class _PostingRow extends StatelessWidget {
             children: [
               Text(
                 accountLabel,
-                style: theme.textTheme.bodyMedium,
+                style: context.theme.typography.sm,
                 overflow: TextOverflow.ellipsis,
               ),
               if (cost != null)
                 Text(
                   _costLabel(cost),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               if (price != null)
                 Text(
                   '@ ${price.perUnit} ${price.currency}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
             ],
@@ -142,7 +139,7 @@ class _PostingRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${_format(posting.units)} ${posting.unit}',
-          style: theme.textTheme.bodyMedium?.copyWith(
+          style: context.theme.typography.sm.copyWith(
             color: amountColor,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -160,10 +157,9 @@ class _UnitBalanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final balanced = total == Decimal.zero;
-    final tone = balanced ? scheme.tertiary : scheme.error;
+    final tone = balanced ? scheme.tertiary : context.theme.colors.destructive;
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Row(
@@ -177,12 +173,12 @@ class _UnitBalanceRow extends StatelessWidget {
           Expanded(
             child: Text(
               'Σ $unit',
-              style: theme.textTheme.labelSmall?.copyWith(color: tone),
+              style: context.theme.typography.xs2.copyWith(color: tone),
             ),
           ),
           Text(
             _format(total),
-            style: theme.textTheme.labelSmall?.copyWith(
+            style: context.theme.typography.xs2.copyWith(
               color: tone,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),

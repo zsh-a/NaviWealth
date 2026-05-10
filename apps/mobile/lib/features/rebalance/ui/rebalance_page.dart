@@ -55,7 +55,6 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -65,19 +64,19 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.balance,
               size: 48,
-              color: theme.colorScheme.onSurfaceVariant,
+              color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(height: 12),
             Text(
               l10n.rebalanceEmptyTitle,
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
               l10n.rebalanceEmptyHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
               textAlign: TextAlign.center,
             ),
@@ -126,14 +125,13 @@ class _SchemeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.rebalanceSchemeTitle, style: theme.textTheme.titleSmall),
+            Text(l10n.rebalanceSchemeTitle, style: context.theme.typography.sm),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -177,8 +175,8 @@ class _DriftOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return FCard.raw(
       child: Padding(
@@ -191,7 +189,7 @@ class _DriftOverview extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceDriftTitle,
-                    style: theme.textTheme.titleSmall,
+                    style: context.theme.typography.sm,
                   ),
                 ),
                 if (plan.isBalanced)
@@ -206,7 +204,7 @@ class _DriftOverview extends StatelessWidget {
                     ),
                     child: Text(
                       l10n.rebalanceBalanced,
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: context.theme.typography.xs2.copyWith(
                         color: theme.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
                       ),
@@ -219,8 +217,8 @@ class _DriftOverview extends StatelessWidget {
               l10n.rebalanceOverallDrift(
                 '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
               ),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 8),
@@ -247,7 +245,6 @@ class _TradeList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     if (plan.isBalanced) {
       return FCard.raw(
@@ -258,10 +255,10 @@ class _TradeList extends StatelessWidget {
               Icon(
                 Icons.check_circle_outline,
                 size: 40,
-                color: theme.colorScheme.primary,
+                color: context.theme.colors.primary,
               ),
               const SizedBox(height: 8),
-              Text(l10n.rebalanceBalanced, style: theme.textTheme.titleSmall),
+              Text(l10n.rebalanceBalanced, style: context.theme.typography.sm),
             ],
           ),
         ),
@@ -274,7 +271,7 @@ class _TradeList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.rebalanceTradeTitle, style: theme.textTheme.titleSmall),
+            Text(l10n.rebalanceTradeTitle, style: context.theme.typography.sm),
             const SizedBox(height: 8),
             for (final trade in plan.trades) _TradeRow(trade: trade),
             const FDivider(),
@@ -283,8 +280,8 @@ class _TradeList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceEstimatedFees,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ),
@@ -292,7 +289,7 @@ class _TradeList extends StatelessWidget {
                   amount: plan.estimatedFees.amount.toDouble(),
                   currencyCode: plan.estimatedFees.currency,
                   compact: true,
-                  style: theme.textTheme.bodySmall,
+                  style: context.theme.typography.xs,
                 ),
               ],
             ),
@@ -302,8 +299,8 @@ class _TradeList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceEstimatedTaxes,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ),
@@ -311,7 +308,7 @@ class _TradeList extends StatelessWidget {
                   amount: plan.estimatedTaxes.amount.toDouble(),
                   currencyCode: plan.estimatedTaxes.currency,
                   compact: true,
-                  style: theme.textTheme.bodySmall,
+                  style: context.theme.typography.xs,
                 ),
               ],
             ),
@@ -321,14 +318,14 @@ class _TradeList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceDriftAfter,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ),
                 Text(
                   '${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: context.theme.typography.xs.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -348,13 +345,12 @@ class _TradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final isBuy = trade.isBuy;
     final directionLabel = isBuy ? l10n.rebalanceBuy : l10n.rebalanceSell;
     final directionColor = isBuy
-        ? theme.colorScheme.primary
-        : theme.colorScheme.tertiary;
+        ? context.theme.colors.primary
+        : context.theme.colors.mutedForeground;
     final icon = AssetCategoryVisuals.icon(trade.category);
     final catLabel = AssetCategoryVisuals.label(l10n, trade.category);
 
@@ -371,7 +367,7 @@ class _TradeRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+          Icon(icon, size: 18, color: context.theme.colors.mutedForeground),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -379,13 +375,13 @@ class _TradeRow extends StatelessWidget {
               children: [
                 Text(
                   '$directionLabel $catLabel',
-                  style: theme.textTheme.bodyMedium,
+                  style: context.theme.typography.sm,
                 ),
                 if (trade.description != null)
                   Text(
                     trade.description!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
               ],
@@ -409,7 +405,6 @@ class _SettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final warning = ref.watch(warningThresholdProvider);
     final critical = ref.watch(criticalThresholdProvider);
 
@@ -422,12 +417,12 @@ class _SettingsSheet extends ConsumerWidget {
           children: [
             Text(
               l10n.rebalanceSettingsTitle,
-              style: theme.textTheme.titleLarge,
+              style: context.theme.typography.lg,
             ),
             const SizedBox(height: 16),
             Text(
               l10n.rebalanceWarningThreshold,
-              style: theme.textTheme.bodyMedium,
+              style: context.theme.typography.sm,
             ),
             FSlider(
               control: FSliderControl.managedContinuous(
@@ -442,7 +437,7 @@ class _SettingsSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               l10n.rebalanceCriticalThreshold,
-              style: theme.textTheme.bodyMedium,
+              style: context.theme.typography.sm,
             ),
             FSlider(
               control: FSliderControl.managedContinuous(

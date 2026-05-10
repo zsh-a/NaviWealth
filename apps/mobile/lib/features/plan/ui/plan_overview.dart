@@ -213,19 +213,23 @@ class _PlanCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(icon, color: theme.colorScheme.primary, size: 22),
+                  child: Icon(
+                    icon,
+                    color: context.theme.colors.primary,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: theme.textTheme.titleMedium),
+                      Text(title, style: context.theme.typography.md),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                       ),
                       if (summary.isNotEmpty) ...[
@@ -237,7 +241,7 @@ class _PlanCard extends StatelessWidget {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: context.theme.colors.mutedForeground,
                   size: 20,
                 ),
               ],
@@ -256,18 +260,17 @@ class _SummaryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: context.theme.colors.secondary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Text(
           label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: context.theme.typography.xs2.copyWith(
+            color: context.theme.colors.mutedForeground,
           ),
         ),
       ),

@@ -72,7 +72,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
           children: [
             Text(
               l10n.physicalAssetDeleteConfirmTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             Text(l10n.physicalAssetDeleteConfirmBody),
@@ -113,7 +113,6 @@ class _DetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
@@ -134,7 +133,7 @@ class _DetailBody extends ConsumerWidget {
               children: [
                 Text(
                   l10n.physicalAssetDetailValuationTitle,
-                  style: theme.textTheme.titleMedium,
+                  style: context.theme.typography.md,
                 ),
                 const SizedBox(height: 8),
                 AnimatedMoneyText(
@@ -149,8 +148,8 @@ class _DetailBody extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     dateFormat.format(asset.lastValuationAt!),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ],
@@ -158,8 +157,8 @@ class _DetailBody extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     l10n.physicalAssetDetailEstimatedToday(estimatedToday),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.tertiary,
+                    style: context.theme.typography.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
                 ],
@@ -186,7 +185,7 @@ class _DetailBody extends ConsumerWidget {
               children: [
                 Text(
                   l10n.physicalAssetDetailHistoryTitle,
-                  style: theme.textTheme.titleMedium,
+                  style: context.theme.typography.md,
                 ),
                 const SizedBox(height: 12),
                 historyAsync.when(
@@ -272,7 +271,6 @@ class _FactsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final entries = <(String, String)>[
       (
         l10n.physicalAssetFieldPurchaseDate,
@@ -310,8 +308,8 @@ class _FactsCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: context.theme.typography.sm.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                       ),
                     ),
@@ -319,7 +317,7 @@ class _FactsCard extends StatelessWidget {
                       flex: 2,
                       child: Text(
                         value,
-                        style: theme.textTheme.bodyMedium,
+                        style: context.theme.typography.sm,
                         textAlign: TextAlign.end,
                       ),
                     ),
@@ -348,7 +346,6 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final label = switch (point.kind) {
       ValuationPointKind.purchase => l10n.physicalAssetDetailPurchaseLabel,
       ValuationPointKind.manual => l10n.physicalAssetDetailManualUpdateLabel,
@@ -362,16 +359,16 @@ class _HistoryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: theme.textTheme.bodySmall),
+                Text(label, style: context.theme.typography.xs),
                 Text(
                   dateFormat.format(point.asOf),
-                  style: theme.textTheme.bodyMedium,
+                  style: context.theme.typography.sm,
                 ),
                 if (point.note != null && point.note!.isNotEmpty)
                   Text(
                     point.note!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
                   ),
               ],
@@ -380,7 +377,7 @@ class _HistoryRow extends StatelessWidget {
           MoneyText(
             amount: point.value.toDouble(),
             currencyCode: currency,
-            style: theme.textTheme.titleSmall,
+            style: context.theme.typography.sm,
           ),
         ],
       ),

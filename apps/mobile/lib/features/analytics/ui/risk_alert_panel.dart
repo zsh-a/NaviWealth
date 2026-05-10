@@ -50,10 +50,7 @@ class _AlertList extends StatelessWidget {
               color: context.theme.colors.destructive,
             ),
             const SizedBox(width: 8),
-            Text(
-              l10n.riskAlertTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(l10n.riskAlertTitle, style: context.theme.typography.md),
             const SizedBox(width: 8),
             _AlertCountBadge(count: alerts.length),
           ],
@@ -89,7 +86,7 @@ class _AlertCountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: context.theme.typography.xs2.copyWith(
           color: theme.colorScheme.onErrorContainer,
           fontWeight: FontWeight.w600,
         ),
@@ -114,7 +111,7 @@ class _AlertRow extends ConsumerWidget {
     final dimensionLabel = _dimensionLabel(l10n, alert.dimension);
 
     return FTile(
-      title: Text(_alertTitle(l10n, alert), style: theme.textTheme.titleSmall),
+      title: Text(_alertTitle(l10n, alert), style: context.theme.typography.sm),
       prefix: Container(
         width: 14,
         height: 14,
@@ -125,8 +122,8 @@ class _AlertRow extends ConsumerWidget {
           dimensionLabel,
           formatters.percent(alert.threshold, decimalDigits: 0),
         ),
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
         ),
       ),
       suffix: SizedBox(
@@ -137,15 +134,15 @@ class _AlertRow extends ConsumerWidget {
           children: [
             Text(
               formatters.percent(alert.weight, decimalDigits: 1),
-              style: theme.textTheme.titleSmall?.copyWith(
+              style: context.theme.typography.sm.copyWith(
                 color: severityColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
               formatters.currency(alert.valueInBase, code: _baseCurrency(ref)),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

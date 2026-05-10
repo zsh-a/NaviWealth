@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/master_detail_layout.dart';
@@ -28,7 +29,6 @@ class ManualAssetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final chips = _chipsFor(asset, l10n);
     return MergeSemantics(
@@ -38,7 +38,7 @@ class ManualAssetTile extends StatelessWidget {
           onTap: () => _onTap(context),
           child: Container(
             color: selected
-                ? theme.colorScheme.primary.withValues(alpha: 0.10)
+                ? context.theme.colors.primary.withValues(alpha: 0.10)
                 : null,
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(
@@ -55,7 +55,7 @@ class ManualAssetTile extends StatelessWidget {
                           enabled: heroEnabled,
                           child: Text(
                             asset.name ?? asset.symbol,
-                            style: theme.textTheme.bodyLarge,
+                            style: context.theme.typography.md,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -156,16 +156,15 @@ class _MetaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isNumeric = RegExp(r'\d').hasMatch(label);
-    final base = theme.textTheme.labelSmall ?? TypographyTokens.labelSmall;
+    final base = context.theme.typography.xs2;
     final textStyle = base.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
+      color: context.theme.colors.mutedForeground,
       fontFeatures: isNumeric ? TypographyTokens.tabularFigures : null,
     );
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: context.theme.colors.secondary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(

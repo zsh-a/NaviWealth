@@ -176,7 +176,6 @@ class _AccountsByType extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final grouped = <AccountType, List<Account>>{};
     for (final a in accounts) {
       grouped.putIfAbsent(a.type, () => []).add(a);
@@ -198,7 +197,7 @@ class _AccountsByType extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8, bottom: 8),
               child: Text(
                 accountTypeLabel(l10n, type),
-                style: theme.textTheme.titleMedium,
+                style: context.theme.typography.md,
               ),
             ),
             FCard.raw(
@@ -234,10 +233,9 @@ class _AccountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       color: selected
-          ? theme.colorScheme.primary.withValues(alpha: 0.10)
+          ? context.theme.colors.primary.withValues(alpha: 0.10)
           : null,
       child: FTile(
         title: OptionalHero(

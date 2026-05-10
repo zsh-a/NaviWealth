@@ -63,7 +63,6 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
@@ -82,14 +81,14 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
+                    color: context.theme.colors.border,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
               Text(
                 l10n.physicalAssetUpdateValuationTitle,
-                style: theme.textTheme.titleLarge,
+                style: context.theme.typography.lg,
               ),
               const SizedBox(height: 16),
               FTextFormField(

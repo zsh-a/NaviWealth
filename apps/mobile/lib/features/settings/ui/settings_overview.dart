@@ -84,12 +84,13 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
       child: Text(
         title,
-        style: TypographyTokens.sectionHeaderTitle(scheme.primary),
+        style: TypographyTokens.sectionHeaderTitle(
+          context.theme.colors.primary,
+        ),
       ),
     );
   }
@@ -100,9 +101,8 @@ class _AccountHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -118,7 +118,7 @@ class _AccountHeader extends StatelessWidget {
             alignment: Alignment.center,
             child: Icon(
               Icons.account_circle_outlined,
-              color: scheme.primary,
+              color: context.theme.colors.primary,
               size: 28,
             ),
           ),
@@ -129,13 +129,13 @@ class _AccountHeader extends StatelessWidget {
               children: [
                 Text(
                   l10n.settingsAccountTitle,
-                  style: theme.textTheme.headlineSmall,
+                  style: context.theme.typography.xl,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   l10n.settingsAccountSubtitle,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                  style: context.theme.typography.sm.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
               ],
@@ -383,7 +383,7 @@ class _CompactDensityTile extends ConsumerWidget {
                 Text(l10n.settingsCompactDensityTitle),
                 Text(
                   l10n.settingsCompactDensitySubtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  style: context.theme.typography.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                 ),
@@ -500,7 +500,6 @@ class _ThresholdSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FTile(
       title: Text(label),
       prefix: Icon(icon),
@@ -524,7 +523,7 @@ class _ThresholdSlider extends StatelessWidget {
                 width: 48,
                 child: Text(
                   '${(value * 100).round()}%',
-                  style: theme.textTheme.titleSmall,
+                  style: context.theme.typography.sm,
                   textAlign: TextAlign.end,
                 ),
               ),

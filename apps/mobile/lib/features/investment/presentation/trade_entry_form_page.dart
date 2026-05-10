@@ -194,7 +194,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               children: [
                 Text(
                   l10n.tradeEntryCashOverdrawTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: context.theme.typography.md,
                 ),
                 const SizedBox(height: 8),
                 Text(

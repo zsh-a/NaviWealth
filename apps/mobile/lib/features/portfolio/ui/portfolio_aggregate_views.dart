@@ -180,7 +180,7 @@ class _AggregateTile extends StatelessWidget {
         subtitle: Text(row.subtitle),
         suffix: Text(
           formatter.compactCurrency(row.value, code: row.currency),
-          style: Theme.of(context).textTheme.titleSmall,
+          style: context.theme.typography.sm,
         ),
       ),
     );

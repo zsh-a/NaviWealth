@@ -25,18 +25,17 @@ class AssetDetailMetricRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: context.theme.typography.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
           ),
         ),
-        trailing ?? Text(value ?? '\u2014', style: theme.textTheme.bodyMedium),
+        trailing ?? Text(value ?? '\u2014', style: context.theme.typography.sm),
       ],
     );
   }
@@ -49,14 +48,13 @@ class AssetDetailErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
           message,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.error,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.destructive,
           ),
         ),
       ),

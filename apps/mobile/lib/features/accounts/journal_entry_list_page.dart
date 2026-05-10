@@ -69,7 +69,7 @@ class _EmptyJournal extends StatelessWidget {
             Text(
               l10n.journalEmptyHint,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: context.theme.typography.sm.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
@@ -118,7 +118,6 @@ class _JournalEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
@@ -127,9 +126,9 @@ class _JournalEntryRow extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: context.theme.colors.muted,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(color: context.theme.colors.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: FAccordion(
@@ -143,7 +142,7 @@ class _JournalEntryRow extends StatelessWidget {
                     Expanded(
                       child: Text(
                         entry.entry.narration,
-                        style: Theme.of(context).textTheme.titleSmall,
+                        style: context.theme.typography.sm,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -152,13 +151,10 @@ class _JournalEntryRow extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 8),
                         child: Text(
                           summary,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                                color: scheme.onSurface,
-                              ),
+                          style: context.theme.typography.sm.copyWith(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                            color: context.theme.colors.foreground,
+                          ),
                         ),
                       ),
                   ],
@@ -174,8 +170,8 @@ class _JournalEntryRow extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         dateLabel,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                        style: context.theme.typography.xs2.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                       ),
                       if (entry.entry.payee != null) ...[
@@ -183,8 +179,9 @@ class _JournalEntryRow extends StatelessWidget {
                         Flexible(
                           child: Text(
                             '· ${entry.entry.payee}',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            style: context.theme.typography.xs2.copyWith(
+                              color: context.theme.colors.mutedForeground,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),

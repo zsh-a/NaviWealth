@@ -15,7 +15,6 @@ class PhysicalAssetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Material(
@@ -31,7 +30,7 @@ class PhysicalAssetCard extends StatelessWidget {
               children: [
                 Icon(
                   _iconForType(asset.type),
-                  color: theme.colorScheme.primary,
+                  color: context.theme.colors.primary,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -40,15 +39,15 @@ class PhysicalAssetCard extends StatelessWidget {
                     children: [
                       Text(
                         asset.name,
-                        style: theme.textTheme.titleMedium,
+                        style: context.theme.typography.md,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _subtitleFor(asset, l10n),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -60,7 +59,7 @@ class PhysicalAssetCard extends StatelessWidget {
                 MoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,
-                  style: theme.textTheme.titleMedium,
+                  style: context.theme.typography.md,
                 ),
               ],
             ),

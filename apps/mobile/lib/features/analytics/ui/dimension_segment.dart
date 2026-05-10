@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
@@ -19,8 +20,8 @@ class DimensionSegment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
     const selectedColor = ColorPalette.brand500;
 
@@ -39,7 +40,7 @@ class DimensionSegment extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFF2C2C2E)
-            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            : context.theme.colors.secondary.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(9999),
       ),
       padding: const EdgeInsets.all(2),
@@ -81,8 +82,6 @@ class _DimensionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -90,7 +89,9 @@ class _DimensionChip extends StatelessWidget {
         curve: Motion.emphasizedDecelerate,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? theme.colorScheme.surface : Colors.transparent,
+          color: selected
+              ? context.theme.colors.background
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(9999),
           boxShadow: selected
               ? const [
@@ -111,17 +112,17 @@ class _DimensionChip extends StatelessWidget {
               size: 18,
               color: selected
                   ? selectedColor
-                  : theme.colorScheme.onSurfaceVariant,
+                  : context.theme.colors.mutedForeground,
             ),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
+                style: context.theme.typography.xs.copyWith(
                   color: selected
                       ? selectedColor
-                      : theme.colorScheme.onSurfaceVariant,
+                      : context.theme.colors.mutedForeground,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),

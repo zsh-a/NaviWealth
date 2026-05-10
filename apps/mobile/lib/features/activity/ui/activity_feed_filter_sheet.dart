@@ -40,7 +40,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     l10n.activityFeedFilterTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: context.theme.typography.md,
                   ),
                 ),
                 TextButton(

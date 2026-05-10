@@ -18,7 +18,6 @@ class TrendCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final trendAsync = ref.watch(dashboardTrendProvider);
 
@@ -33,7 +32,7 @@ class TrendCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     l10n.dashboardTrendTitle,
-                    style: theme.textTheme.titleMedium,
+                    style: context.theme.typography.md,
                   ),
                 ),
                 trendAsync.maybeWhen(
@@ -195,7 +194,6 @@ class _TrendChart extends StatelessWidget {
         final allFlat = trend.points.every(
           (p) => p.netWorth.amount == trend.points.first.netWorth.amount,
         );
-        final theme = Theme.of(context);
         final points = [
           for (final p in trend.points)
             ChartPoint(
@@ -227,8 +225,8 @@ class _TrendChart extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   AppLocalizations.of(context).dashboardTrendFlatHint,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
               ),
@@ -286,14 +284,13 @@ class _TrendError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: Text(
           l10n.dashboardTrendError('$error'),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.error,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.destructive,
           ),
         ),
       ),

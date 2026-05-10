@@ -27,7 +27,6 @@ class AllocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
     final assetAllocs = snapshot.allocations
@@ -65,7 +64,7 @@ class AllocationCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         l10n.dashboardAllocationTitle,
-                        style: theme.textTheme.titleMedium,
+                        style: context.theme.typography.md,
                       ),
                     ),
                     FTooltip(
@@ -691,7 +690,6 @@ class _LegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final pctText = percent == null
         ? null
         : '${(percent! * 100).toStringAsFixed(1)}%';
@@ -716,18 +714,22 @@ class _LegendRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                Icon(
+                  icon,
+                  size: 16,
+                  color: context.theme.colors.mutedForeground,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: theme.textTheme.bodyMedium),
+                      Text(label, style: context.theme.typography.sm),
                       if (pctText != null)
                         Text(
                           pctText,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          style: context.theme.typography.xs.copyWith(
+                            color: context.theme.colors.mutedForeground,
                           ),
                         ),
                     ],
@@ -743,7 +745,7 @@ class _LegendRow extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: context.theme.colors.mutedForeground,
                 ),
               ],
             ),
@@ -769,7 +771,6 @@ class CategoryDrillDownSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final isLiability = allocation.isLiability;
     final total = isLiability
@@ -786,13 +787,13 @@ class CategoryDrillDownSheet extends StatelessWidget {
               children: [
                 Icon(
                   AssetCategoryVisuals.icon(allocation.category),
-                  color: theme.colorScheme.primary,
+                  color: context.theme.colors.primary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     AssetCategoryVisuals.label(l10n, allocation.category),
-                    style: theme.textTheme.titleLarge,
+                    style: context.theme.typography.lg,
                   ),
                 ),
                 MoneyText(
@@ -805,8 +806,8 @@ class CategoryDrillDownSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.dashboardDrillDownItemCount(allocation.items.length),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 8),
@@ -822,12 +823,11 @@ class CategoryDrillDownSheet extends StatelessWidget {
                   return FTile(
                     title: Text(item.name),
                     prefix: CircleAvatar(
-                      backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
+                      backgroundColor: context.theme.colors.secondary,
                       child: Icon(
                         AssetCategoryVisuals.icon(allocation.category),
                         size: 18,
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                     subtitle: _itemSubtitle(l10n, item) == null
@@ -849,8 +849,8 @@ class CategoryDrillDownSheet extends StatelessWidget {
                             currencyCode: item.nativeCurrency,
                             compact: true,
                             symbolStyle: MoneySymbolStyle.isoCode,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                            style: context.theme.typography.xs.copyWith(
+                              color: context.theme.colors.mutedForeground,
                             ),
                           ),
                       ],

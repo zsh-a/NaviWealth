@@ -12,7 +12,7 @@ class AssetSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
-      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      child: Text(title, style: context.theme.typography.md),
     );
   }
 }
@@ -30,18 +30,17 @@ class CashAccountGroupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final subtitle = account?.institution;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      color: context.theme.colors.secondary.withValues(alpha: 0.3),
       child: Text(
         subtitle != null && subtitle.isNotEmpty
             ? '${account!.name} \u00B7 $subtitle'
             : account?.name ?? accountId,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
           fontWeight: FontWeight.w500,
         ),
       ),

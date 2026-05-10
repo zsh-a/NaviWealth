@@ -258,8 +258,8 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final dateFmt = DateFormat.yMd(Localizations.localeOf(context).toString());
     final asset = _selectedAsset;
 
@@ -304,7 +304,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 // Event type selector.
                 Text(
                   l10n.corpActionEventTypeTitle,
-                  style: theme.textTheme.titleMedium,
+                  style: context.theme.typography.md,
                 ),
                 const SizedBox(height: 8),
                 _TypeSelector(
@@ -566,7 +566,6 @@ class _PreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final dividend = preview.cashDividend;
     return FCard.raw(
       child: Padding(
@@ -576,7 +575,7 @@ class _PreviewCard extends StatelessWidget {
           children: [
             Text(
               l10n.corpActionPreviewHeading,
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 12),
             if (dividend != null) ...[

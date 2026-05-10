@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/master_detail_layout.dart';
@@ -25,7 +26,6 @@ class SecurityAssetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final qty = snapshot?.quantity;
     final displayValue = snapshot?.marketValueInAssetCurrency;
@@ -41,7 +41,7 @@ class SecurityAssetTile extends StatelessWidget {
           onTap: () => _onTap(context),
           child: Container(
             color: selected
-                ? theme.colorScheme.primary.withValues(alpha: 0.10)
+                ? context.theme.colors.primary.withValues(alpha: 0.10)
                 : null,
             constraints: const BoxConstraints(minHeight: 56),
             child: Padding(
@@ -60,7 +60,7 @@ class SecurityAssetTile extends StatelessWidget {
                             asset.name == null || asset.name!.isEmpty
                                 ? asset.symbol
                                 : '${asset.symbol} \u00B7 ${asset.name}',
-                            style: theme.textTheme.bodyLarge,
+                            style: context.theme.typography.md,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -68,8 +68,8 @@ class SecurityAssetTile extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           qtyLabel,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          style: context.theme.typography.xs.copyWith(
+                            color: context.theme.colors.mutedForeground,
                             fontFeatures: hasQty
                                 ? TypographyTokens.tabularFigures
                                 : null,

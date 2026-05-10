@@ -17,7 +17,6 @@ class FireUnconfiguredBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -28,19 +27,19 @@ class FireUnconfiguredBody extends StatelessWidget {
             Icon(
               Icons.flag_outlined,
               size: 64,
-              color: theme.colorScheme.primary,
+              color: context.theme.colors.primary,
             ),
             const SizedBox(height: 16),
             Text(
               l10n.fireEmptyTitle,
-              style: theme.textTheme.titleLarge,
+              style: context.theme.typography.lg,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               l10n.fireEmptyHint,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
               textAlign: TextAlign.center,
             ),
@@ -118,7 +117,6 @@ class _ProgressHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final ratio = view.progressRatio ?? 0;
     final percentLabel = formatters.percent(
@@ -135,7 +133,7 @@ class _ProgressHeaderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.fireProgressTitle, style: theme.textTheme.titleMedium),
+            Text(l10n.fireProgressTitle, style: context.theme.typography.md),
             const SizedBox(height: 12),
             Center(
               child: FireProgressGauge(
@@ -150,7 +148,7 @@ class _ProgressHeaderCard extends StatelessWidget {
               child: AnimatedMoneyText(
                 amount: current,
                 currencyCode: view.baseCurrency,
-                style: theme.textTheme.titleSmall,
+                style: context.theme.typography.sm,
               ),
             ),
             const SizedBox(height: 4),
@@ -159,7 +157,7 @@ class _ProgressHeaderCard extends StatelessWidget {
               child: AnimatedMoneyText(
                 amount: target,
                 currencyCode: view.baseCurrency,
-                style: theme.textTheme.titleSmall,
+                style: context.theme.typography.sm,
               ),
             ),
             const SizedBox(height: 4),
@@ -168,7 +166,7 @@ class _ProgressHeaderCard extends StatelessWidget {
               child: AnimatedMoneyText(
                 amount: gap > 0 ? gap : 0,
                 currencyCode: view.baseCurrency,
-                style: theme.textTheme.titleSmall,
+                style: context.theme.typography.sm,
               ),
             ),
           ],
@@ -186,7 +184,6 @@ class _CountdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final months = view.sensitivity.baselineMonths;
     final referenceLabel = _baselineTier(view) == FireScenarioTier.live
@@ -194,20 +191,23 @@ class _CountdownCard extends StatelessWidget {
         : l10n.fireScenarioNeutral;
 
     final body = months == null
-        ? Text(l10n.fireCountdownUnreachable, style: theme.textTheme.bodyMedium)
+        ? Text(
+            l10n.fireCountdownUnreachable,
+            style: context.theme.typography.sm,
+          )
         : months == 0
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 l10n.fireCountdownReachedTitle,
-                style: theme.textTheme.headlineSmall,
+                style: context.theme.typography.xl,
               ),
               const SizedBox(height: 4),
               Text(
                 l10n.fireCountdownReachedSubtitle,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ],
@@ -217,13 +217,13 @@ class _CountdownCard extends StatelessWidget {
             children: [
               Text(
                 _formatYearsMonths(l10n, months),
-                style: theme.textTheme.headlineSmall,
+                style: context.theme.typography.xl,
               ),
               const SizedBox(height: 4),
               Text(
                 l10n.fireCountdownDaysAprox(_approxDays(months)),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: context.theme.typography.sm.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
               ),
             ],
@@ -237,7 +237,7 @@ class _CountdownCard extends StatelessWidget {
           children: [
             Text(
               l10n.fireCountdownTitle(referenceLabel),
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             body,
@@ -263,7 +263,6 @@ class _ProjectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Padding(
@@ -271,12 +270,12 @@ class _ProjectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.fireProjectionTitle, style: theme.textTheme.titleMedium),
+            Text(l10n.fireProjectionTitle, style: context.theme.typography.md),
             const SizedBox(height: 4),
             Text(
               l10n.fireProjectionSubtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 12),
@@ -305,7 +304,6 @@ class _ScenarioLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final palette = ChartPalette.of(context);
     return Wrap(
@@ -320,7 +318,7 @@ class _ScenarioLegend extends StatelessWidget {
                 '(${(s.annualReturn * 100).toStringAsFixed(1)}%)',
           ),
         _LegendDot(
-          color: theme.colorScheme.onSurfaceVariant,
+          color: context.theme.colors.mutedForeground,
           label: l10n.fireProjectionTargetLineLegend,
           dashed: true,
         ),
@@ -336,7 +334,6 @@ class _ScenariosTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Column(
@@ -347,7 +344,7 @@ class _ScenariosTable extends StatelessWidget {
               alignment: AlignmentDirectional.centerStart,
               child: Text(
                 l10n.fireScenariosTableTitle,
-                style: theme.textTheme.titleMedium,
+                style: context.theme.typography.md,
               ),
             ),
           ),
@@ -366,7 +363,7 @@ class _ScenariosTable extends StatelessWidget {
                       ? l10n.fireCountdownUnreachableShort
                       : _formatYearsMonths(l10n, scenario.monthsToTarget!),
                   textAlign: TextAlign.end,
-                  style: theme.textTheme.titleSmall,
+                  style: context.theme.typography.sm,
                 ),
               ),
             ),
@@ -384,7 +381,6 @@ class _SafeWithdrawalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final monthly = view.safeMonthlyWithdrawalAmount;
     final surplus = view.safeWithdrawalSurplus;
@@ -414,13 +410,13 @@ class _SafeWithdrawalCard extends StatelessWidget {
           children: [
             Text(
               l10n.fireSafeWithdrawalTitle,
-              style: theme.textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 4),
             Text(
               l10n.fireSafeWithdrawalSubtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 12),
@@ -442,10 +438,10 @@ class _SafeWithdrawalCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               coverageHint,
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: context.theme.typography.xs.copyWith(
                 color: surplus >= 0 || monthlyExpenses == 0
-                    ? theme.colorScheme.onSurfaceVariant
-                    : theme.colorScheme.error,
+                    ? context.theme.colors.mutedForeground
+                    : context.theme.colors.destructive,
               ),
             ),
           ],
@@ -462,7 +458,6 @@ class _SensitivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final s = view.sensitivity;
 
@@ -472,12 +467,12 @@ class _SensitivityCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.fireSensitivityTitle, style: theme.textTheme.titleMedium),
+            Text(l10n.fireSensitivityTitle, style: context.theme.typography.md),
             const SizedBox(height: 4),
             Text(
               l10n.fireSensitivitySubtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: 12),
@@ -515,20 +510,19 @@ class _LabelValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
             label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
           ),
         ),
         const SizedBox(width: 8),
-        child ?? Text(value!, style: theme.textTheme.titleSmall),
+        child ?? Text(value!, style: context.theme.typography.sm),
       ],
     );
   }
@@ -547,7 +541,6 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -561,7 +554,7 @@ class _LegendDot extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(label, style: theme.textTheme.bodySmall),
+        Text(label, style: context.theme.typography.xs),
       ],
     );
   }

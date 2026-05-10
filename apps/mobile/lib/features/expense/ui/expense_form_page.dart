@@ -194,7 +194,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           children: [
             Text(
               l10n.expenseFormDeleteDialogTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: context.theme.typography.md,
             ),
             const SizedBox(height: 8),
             Text(l10n.expenseFormDeleteDialogBody),

@@ -163,7 +163,6 @@ class _SegmentChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -171,16 +170,16 @@ class _SegmentChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: selected
             ? BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                color: context.theme.colors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               )
             : null,
         child: Text(
           label,
-          style: theme.textTheme.labelLarge?.copyWith(
+          style: context.theme.typography.sm.copyWith(
             color: selected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurfaceVariant,
+                ? context.theme.colors.primary
+                : context.theme.colors.mutedForeground,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
@@ -259,13 +258,10 @@ class ExpenseGroupedList extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  group.label,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                Text(group.label, style: context.theme.typography.sm),
                 Text(
                   l10n.expenseListTotal(formatter.currency(group.total)),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: context.theme.typography.sm.copyWith(
                     fontFeatures: TypographyTokens.tabularFigures,
                   ),
                 ),
@@ -338,7 +334,7 @@ class _ExpenseRow extends StatelessWidget {
       ),
       suffix: Text(
         formatter.currency(expense.amount, code: expense.currency),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        style: context.theme.typography.md.copyWith(
           fontFeatures: TypographyTokens.tabularFigures,
         ),
       ),

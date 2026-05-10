@@ -12,23 +12,22 @@ class AssetSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(asset.symbol, style: theme.textTheme.titleMedium),
+            Text(asset.symbol, style: context.theme.typography.md),
             if (asset.name != null) ...[
               const SizedBox(height: 4),
-              Text(asset.name!, style: theme.textTheme.bodyMedium),
+              Text(asset.name!, style: context.theme.typography.sm),
             ],
             const SizedBox(height: 8),
             Text(
               '${asset.market ?? l10n.assetDetailUnknown} \u00B7 ${asset.currency}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ],

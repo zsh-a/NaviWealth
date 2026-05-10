@@ -26,7 +26,6 @@ class _ShortcutHelpSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final ThemeData theme = Theme.of(context);
 
     // Deduplicate by descriptionKey so the meta/control variants of the same
     // intent show as a single row.
@@ -72,13 +71,13 @@ class _ShortcutHelpSheet extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(
+                color: context.theme.colors.mutedForeground.withValues(
                   alpha: 0.4,
                 ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Text(l10n.shortcutsHelpTitle, style: theme.textTheme.titleLarge),
+            Text(l10n.shortcutsHelpTitle, style: context.theme.typography.lg),
             const SizedBox(height: 16),
             Flexible(
               child: SingleChildScrollView(
@@ -157,7 +156,6 @@ class _ActivatorBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final List<String> labels = _labelsFor(activator);
     return Wrap(
       spacing: 4,
@@ -166,13 +164,13 @@ class _ActivatorBadge extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
+              color: context.theme.colors.secondary,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: theme.colorScheme.outlineVariant),
+              border: Border.all(color: context.theme.colors.border),
             ),
             child: Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(
+              style: context.theme.typography.xs2.copyWith(
                 fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
               ),
             ),
@@ -210,17 +208,16 @@ class _KeyLabelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: context.theme.colors.secondary,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: context.theme.colors.border),
       ),
       child: Text(
         label,
-        style: theme.textTheme.labelSmall?.copyWith(
+        style: context.theme.typography.xs2.copyWith(
           fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
         ),
       ),

@@ -454,7 +454,6 @@ class _DepositKindChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -462,7 +461,7 @@ class _DepositKindChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: selected
             ? BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                color: context.theme.colors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               )
             : null,
@@ -473,16 +472,16 @@ class _DepositKindChip extends StatelessWidget {
               icon,
               size: 18,
               color: selected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
+                  ? context.theme.colors.primary
+                  : context.theme.colors.mutedForeground,
             ),
             const SizedBox(width: 4),
             Text(
               label,
-              style: theme.textTheme.labelLarge?.copyWith(
+              style: context.theme.typography.sm.copyWith(
                 color: selected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
+                    ? context.theme.colors.primary
+                    : context.theme.colors.mutedForeground,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
