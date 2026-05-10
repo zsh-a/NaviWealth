@@ -5,7 +5,10 @@
 library;
 
 export 'context_compressor.dart';
+export 'finance_query_plan.dart';
 export 'merchant_key.dart';
+export 'nl_to_query_plan.dart';
+export 'query_plan_executor.dart';
 export 'recurring_detector.dart';
 export 'refund_matcher.dart';
 export 'transaction_input.dart';
