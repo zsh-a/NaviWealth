@@ -12,7 +12,7 @@ import 'activity_feed_grouping.dart';
 import 'activity_feed_row.dart';
 
 /// Timeline feed that groups journal entries by date and renders each
-/// as an expandable glass row.
+/// as an expandable row.
 class ActivityFeed extends ConsumerWidget {
   const ActivityFeed({super.key});
 

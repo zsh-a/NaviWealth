@@ -141,7 +141,9 @@ class _ChatComposerState extends State<ChatComposer> {
                         borderSide: BorderSide.none,
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: const BorderRadius.all(Radius.circular(20)),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(20),
+                        ),
                         borderSide: BorderSide(color: cs.primary, width: 1.5),
                       ),
                     ),

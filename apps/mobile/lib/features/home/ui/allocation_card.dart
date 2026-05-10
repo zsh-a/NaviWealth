@@ -169,10 +169,10 @@ class AllocationCard extends StatelessWidget {
       onSliceTap!(context, alloc);
       return;
     }
-    showModalBottomSheet<void>(
+    showFSheet<void>(
+      side: FLayout.btt,
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       builder: (ctx) => CategoryDrillDownSheet(
         allocation: alloc,
         baseCurrency: snapshot.baseCurrency,

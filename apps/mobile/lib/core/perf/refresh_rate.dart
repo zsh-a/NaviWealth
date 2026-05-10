@@ -10,15 +10,13 @@ double primaryRefreshRate() {
   return views.first.display.refreshRate;
 }
 
-/// The target FPS used to size the GlassPerformanceMonitor budget and the
-/// GlassAdaptiveScope `targetFrameMs`. ProMotion / 120 Hz panels stay at
-/// 120; everything else falls back to 60 to avoid permanent
+/// The target FPS used to size frame budgets. ProMotion / 120 Hz panels
+/// stay at 120; everything else falls back to 60 to avoid permanent
 /// "over-budget" misclassification.
 int targetFps() => primaryRefreshRate() >= 90 ? 120 : 60;
 
 /// Frame budget in microseconds matching [targetFps].
 int targetFrameBudgetUs() => (1000000 / targetFps()).round();
 
-/// Frame budget in milliseconds (rounded), suitable for
-/// `GlassAdaptiveScopeConfig.targetFrameMs`.
+/// Frame budget in milliseconds (rounded).
 int targetFrameBudgetMs() => (1000 / targetFps()).round();

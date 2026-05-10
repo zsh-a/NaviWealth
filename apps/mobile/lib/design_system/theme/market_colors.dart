@@ -1,25 +1,20 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../tokens/color_palette.dart';
 import 'market_color_mode.dart';
 
-/// Direction-sensitive color tokens (gain / loss / flat) carried on the
-/// active [ThemeData].
+/// Direction-sensitive color tokens (gain / loss / flat).
 ///
 /// The actual colors swap when the user changes [MarketColorMode] in
-/// settings. Widgets should ask `MarketColors.of(context).up` rather than
-/// hard-coding "green" or "red" — the whole point of this extension is that
+/// settings. Widgets read `MarketColors.of(context).up` rather than
+/// hard-coding "green" or "red" — the whole point of this object is that
 /// "up" is wired to the user's preferred convention.
 ///
-/// FIR-104: profit migrated to emerald, loss to soft crimson, and two new
-/// fields were added so dense lists can read calmly:
-///
-/// - [upMuted] / [downMuted] — 80%-saturation pair, used by in-row delta
-///   text so a long list doesn't look like fireworks.
-/// - [profitGlow] — radial-gradient inner color for the hero number on the
-///   home dashboard (40% alpha emerald, fading out around 30% radius).
+/// Carried through the tree by [MarketColorsScope] (sourced from the
+/// `marketColorsProvider` at the root). Forui owns the rest of the visual
+/// system; this is the one set of color tokens forui doesn't model.
 @immutable
-class MarketColors extends ThemeExtension<MarketColors> {
+class MarketColors {
   const MarketColors({
     required this.mode,
     required this.up,
@@ -37,9 +32,6 @@ class MarketColors extends ThemeExtension<MarketColors> {
     required this.profitGlow,
   });
 
-  /// The mode this set of colors was built from. Stored for debug tooling
-  /// and for code that needs to render an icon hint (e.g. arrows next to a
-  /// number) for color-blind users.
   final MarketColorMode mode;
 
   final Color up;
@@ -70,16 +62,12 @@ class MarketColors extends ThemeExtension<MarketColors> {
   final Color profitGlow;
 
   /// Pick the foreground color for a delta value.
-  ///
-  /// `delta == 0` (or null) renders as `flat` so widgets can pass
-  /// "no-change" cleanly.
   Color forDelta(num? delta) {
     if (delta == null || delta == 0) return flat;
     return delta > 0 ? up : down;
   }
 
-  /// Muted variant of [forDelta] — pick the 80%-saturation tone so list-row
-  /// deltas don't compete with hero numbers.
+  /// Muted variant of [forDelta].
   Color mutedForDelta(num? delta) {
     if (delta == null || delta == 0) return flat;
     return delta > 0 ? upMuted : downMuted;
@@ -99,12 +87,17 @@ class MarketColors extends ThemeExtension<MarketColors> {
     return delta > 0 ? onUpContainer : onDownContainer;
   }
 
-  static MarketColors of(BuildContext context) =>
-      Theme.of(context).extension<MarketColors>() ??
-      MarketColors.fromMode(
-        MarketColorMode.redUpGreenDown,
-        brightness: Brightness.light,
-      );
+  /// Reads the active [MarketColors] from the nearest [MarketColorsScope].
+  /// Returns a fallback (red-up, light brightness) if none is found.
+  static MarketColors of(BuildContext context) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<MarketColorsScope>();
+    return scope?.colors ??
+        MarketColors.fromMode(
+          MarketColorMode.redUpGreenDown,
+          brightness: Brightness.light,
+        );
+  }
 
   /// Build a [MarketColors] for a given user mode + theme brightness.
   factory MarketColors.fromMode(
@@ -120,12 +113,7 @@ class MarketColors extends ThemeExtension<MarketColors> {
     final blue = _BlueTone.forBrightness(isDark);
     final orange = _OrangeTone.forBrightness(isDark);
 
-    // Profit glow is hue-locked to emerald regardless of red/green swap so
-    // the home-dashboard hero treatment doesn't invert under the CN
-    // red-up convention.
-    final glow = isDark
-        ? const Color(0x6610B981) // emerald 500 @ 40% alpha
-        : const Color(0x66059669); // emerald 600 @ 40% alpha
+    final glow = isDark ? const Color(0x6610B981) : const Color(0x66059669);
 
     switch (mode) {
       case MarketColorMode.redUpGreenDown:
@@ -181,62 +169,24 @@ class MarketColors extends ThemeExtension<MarketColors> {
         );
     }
   }
+}
+
+/// Inherited scope that carries the active [MarketColors] for the subtree.
+///
+/// Installed once at the root by `lib/app/app.dart`, sourced from the
+/// `marketColorsProvider` in `market_colors_provider.dart`.
+class MarketColorsScope extends InheritedWidget {
+  const MarketColorsScope({
+    required this.colors,
+    required super.child,
+    super.key,
+  });
+
+  final MarketColors colors;
 
   @override
-  MarketColors copyWith({
-    MarketColorMode? mode,
-    Color? up,
-    Color? upMuted,
-    Color? onUp,
-    Color? upContainer,
-    Color? onUpContainer,
-    Color? down,
-    Color? downMuted,
-    Color? onDown,
-    Color? downContainer,
-    Color? onDownContainer,
-    Color? flat,
-    Color? onFlat,
-    Color? profitGlow,
-  }) {
-    return MarketColors(
-      mode: mode ?? this.mode,
-      up: up ?? this.up,
-      upMuted: upMuted ?? this.upMuted,
-      onUp: onUp ?? this.onUp,
-      upContainer: upContainer ?? this.upContainer,
-      onUpContainer: onUpContainer ?? this.onUpContainer,
-      down: down ?? this.down,
-      downMuted: downMuted ?? this.downMuted,
-      onDown: onDown ?? this.onDown,
-      downContainer: downContainer ?? this.downContainer,
-      onDownContainer: onDownContainer ?? this.onDownContainer,
-      flat: flat ?? this.flat,
-      onFlat: onFlat ?? this.onFlat,
-      profitGlow: profitGlow ?? this.profitGlow,
-    );
-  }
-
-  @override
-  MarketColors lerp(ThemeExtension<MarketColors>? other, double t) {
-    if (other is! MarketColors) return this;
-    return MarketColors(
-      mode: t < 0.5 ? mode : other.mode,
-      up: Color.lerp(up, other.up, t)!,
-      upMuted: Color.lerp(upMuted, other.upMuted, t)!,
-      onUp: Color.lerp(onUp, other.onUp, t)!,
-      upContainer: Color.lerp(upContainer, other.upContainer, t)!,
-      onUpContainer: Color.lerp(onUpContainer, other.onUpContainer, t)!,
-      down: Color.lerp(down, other.down, t)!,
-      downMuted: Color.lerp(downMuted, other.downMuted, t)!,
-      onDown: Color.lerp(onDown, other.onDown, t)!,
-      downContainer: Color.lerp(downContainer, other.downContainer, t)!,
-      onDownContainer: Color.lerp(onDownContainer, other.onDownContainer, t)!,
-      flat: Color.lerp(flat, other.flat, t)!,
-      onFlat: Color.lerp(onFlat, other.onFlat, t)!,
-      profitGlow: Color.lerp(profitGlow, other.profitGlow, t)!,
-    );
-  }
+  bool updateShouldNotify(MarketColorsScope oldWidget) =>
+      oldWidget.colors != colors;
 }
 
 class _ToneSet {
@@ -254,9 +204,6 @@ class _ToneSet {
   final Color onContainer;
 }
 
-/// 80%-saturation HSL nudge of [c]. Caches no result — the call sites
-/// build a single [MarketColors] per theme so this runs at most twice per
-/// rebuild.
 Color _muted(Color c) {
   final hsl = HSLColor.fromColor(c);
   return hsl.withSaturation((hsl.saturation * 0.8).clamp(0.0, 1.0)).toColor();
@@ -266,10 +213,10 @@ class _LossTone {
   static _ToneSet forBrightness(bool isDark) {
     if (isDark) {
       return _ToneSet(
-        fg: ColorPalette.red500, // rose 500 — emerald's loss counterpart
+        fg: ColorPalette.red500,
         mutedFg: _muted(ColorPalette.red500),
         onFg: ColorPalette.neutral0,
-        container: const Color(0xFF3F0A1A), // dark rose container
+        container: const Color(0xFF3F0A1A),
         onContainer: ColorPalette.red100,
       );
     }
@@ -287,10 +234,10 @@ class _ProfitTone {
   static _ToneSet forBrightness(bool isDark) {
     if (isDark) {
       return _ToneSet(
-        fg: ColorPalette.green500, // emerald 500
+        fg: ColorPalette.green500,
         mutedFg: _muted(ColorPalette.green500),
         onFg: ColorPalette.neutral0,
-        container: const Color(0xFF053527), // dark emerald container
+        container: const Color(0xFF053527),
         onContainer: ColorPalette.green100,
       );
     }

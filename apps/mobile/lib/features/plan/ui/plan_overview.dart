@@ -30,7 +30,9 @@ class PlanOverview extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16);
+        final padding = isWide
+            ? const EdgeInsets.all(24)
+            : const EdgeInsets.all(16);
 
         final cards = <Widget>[
           _PlanCard(

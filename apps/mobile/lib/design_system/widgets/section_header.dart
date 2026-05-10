@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../tokens/typography_tokens.dart';
 
@@ -17,8 +18,8 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final accent = titleColor ?? theme.colorScheme.primary;
+    final colors = context.theme.colors;
+    final accent = titleColor ?? colors.primary;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Column(
@@ -30,7 +31,7 @@ class SectionHeader extends StatelessWidget {
             Text(
               subtitle!,
               style: TypographyTokens.sectionHeaderSubtitle(
-                theme.colorScheme.onSurfaceVariant,
+                colors.mutedForeground,
               ),
             ),
           ],

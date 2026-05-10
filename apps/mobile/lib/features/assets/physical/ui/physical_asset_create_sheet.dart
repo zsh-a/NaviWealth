@@ -30,9 +30,10 @@ class PhysicalAssetCreateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required AssetType type,
   }) {
-    return showModalBottomSheet<PhysicalAsset>(
+    return showFSheet<PhysicalAsset>(
+      side: FLayout.btt,
       context: context,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       useSafeArea: true,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),

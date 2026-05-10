@@ -183,7 +183,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       if (!mounted) return;
       final resulting = currentBalance - cashOut;
       if (resulting < Decimal.zero) {
-        final confirmed = await showModalBottomSheet<bool>(
+        final confirmed = await showFSheet<bool>(
+          side: FLayout.btt,
           context: context,
           builder: (ctx) => Padding(
             padding: const EdgeInsets.all(16),

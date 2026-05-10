@@ -183,7 +183,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showModalBottomSheet<bool>(
+    final ok = await showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(16),

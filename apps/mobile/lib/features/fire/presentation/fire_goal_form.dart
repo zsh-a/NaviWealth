@@ -15,10 +15,10 @@ import '../domain/fire_goal.dart';
 /// [fireGoalProvider], lets the user edit it, and persists via
 /// [FireGoalController.save] on submit. Cancellation discards changes.
 Future<void> showFireGoalSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
+  return showFSheet<void>(
+    side: FLayout.btt,
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
+    mainAxisMaxRatio: null,
     builder: (_) => const _FireGoalSheet(),
   );
 }

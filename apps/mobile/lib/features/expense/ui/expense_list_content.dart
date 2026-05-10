@@ -74,7 +74,8 @@ class ExpenseFiltersBar extends StatelessWidget {
                       onChanged(filters.copyWith(expenseAccountId: null)),
                   onPick: () async {
                     final expenseAccounts = expenseAccountById.values.toList();
-                    final picked = await showModalBottomSheet<String?>(
+                    final picked = await showFSheet<String?>(
+                      side: FLayout.btt,
                       context: context,
                       builder: (ctx) => SafeArea(
                         child: ListView(

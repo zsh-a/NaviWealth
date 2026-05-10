@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
-/// Design tokens for the shadcn-flavoured AI Agent surface.
-///
-/// These values are intentionally independent of the main app's
-/// `MaterialColorScheme` and Forui `FThemeData` — the AI panel uses a
-/// distinct visual language (dense, modern, slightly higher contrast) to
-/// signal "you are now in a different mode" relative to the calm financial
-/// pages outside it.
+/// Tokens for the AI Agent surface, delegating to the active forui slate
+/// theme. Historically these duplicated zinc; now they alias forui colors
+/// so the chat panel renders in step with the rest of the app.
 @immutable
 class STokens {
   const STokens._({
@@ -31,45 +28,24 @@ class STokens {
   final Color primaryForeground;
   final Color destructive;
 
-  /// Dark-mode shadcn New-York palette: zinc-950 / zinc-50 with a slight
-  /// blue tint on the primary accent.
-  static const STokens dark = STokens._(
-    background: Color(0xFF09090B), // zinc-950
-    muted: Color(0xFF18181B), // zinc-900
-    border: Color(0xFF27272A), // zinc-800
-    foreground: Color(0xFFFAFAFA), // zinc-50
-    mutedForeground: Color(0xFFA1A1AA), // zinc-400
-    accent: Color(0xFF27272A), // zinc-800
-    primary: Color(0xFFFAFAFA),
-    primaryForeground: Color(0xFF18181B),
-    destructive: Color(0xFFEF4444), // red-500
-  );
-
-  /// Light-mode shadcn New-York palette: white background with deep zinc
-  /// text. Even on the light app theme the AI panel keeps the inverted
-  /// shadcn look to preserve the visual mode shift.
-  static const STokens light = STokens._(
-    background: Color(0xFFFFFFFF),
-    muted: Color(0xFFF4F4F5), // zinc-100
-    border: Color(0xFFE4E4E7), // zinc-200
-    foreground: Color(0xFF09090B),
-    mutedForeground: Color(0xFF71717A), // zinc-500
-    accent: Color(0xFFF4F4F5),
-    primary: Color(0xFF18181B),
-    primaryForeground: Color(0xFFFAFAFA),
-    destructive: Color(0xFFEF4444),
-  );
-
-  /// Returns the variant matching the active Material brightness.
+  /// Resolve from the active [FTheme] colors. Both light and dark fall out
+  /// of the active palette automatically.
   static STokens of(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark
-        ? STokens.dark
-        : STokens.light;
+    final c = context.theme.colors;
+    return STokens._(
+      background: c.background,
+      muted: c.muted,
+      border: c.border,
+      foreground: c.foreground,
+      mutedForeground: c.mutedForeground,
+      accent: c.secondary,
+      primary: c.primary,
+      primaryForeground: c.primaryForeground,
+      destructive: c.destructive,
+    );
   }
 }
 
-/// Spacing scale used by shadcn primitives. Tighter than the financial
-/// pages on purpose — chat surfaces want higher information density.
 class SSpace {
   const SSpace._();
 
@@ -80,7 +56,6 @@ class SSpace {
   static const double xl = 24;
 }
 
-/// Corner radii used by shadcn primitives.
 class SRadius {
   const SRadius._();
 
@@ -93,51 +68,33 @@ class SRadius {
   static const BorderRadius brLg = BorderRadius.all(Radius.circular(lg));
 }
 
-/// Type scale tuned for chat content: compact, monospace where helpful.
+/// Type scale tuned for chat content. Pulled from forui's typography so
+/// the chat panel doesn't drift from the rest of the app.
 class SType {
   const SType._();
 
-  static const String monoFamily = 'AppCnSans'; // monospace fallback retained
+  static TextStyle body(BuildContext context) => context.theme.typography.sm
+      .copyWith(height: 1.5, color: context.theme.colors.foreground);
 
-  static TextStyle body(BuildContext context) {
-    final tokens = STokens.of(context);
-    return TextStyle(
-      fontSize: 14,
-      height: 1.5,
-      color: tokens.foreground,
-      fontFamilyFallback: const ['Inter'],
-    );
-  }
+  static TextStyle bodySm(BuildContext context) => context.theme.typography.xs
+      .copyWith(height: 1.4, color: context.theme.colors.foreground);
 
-  static TextStyle bodySm(BuildContext context) {
-    final tokens = STokens.of(context);
-    return TextStyle(fontSize: 13, height: 1.4, color: tokens.foreground);
-  }
+  static TextStyle muted(BuildContext context) => context.theme.typography.xs
+      .copyWith(height: 1.4, color: context.theme.colors.mutedForeground);
 
-  static TextStyle muted(BuildContext context) {
-    final tokens = STokens.of(context);
-    return TextStyle(fontSize: 12, height: 1.4, color: tokens.mutedForeground);
-  }
+  static TextStyle label(BuildContext context) => TextStyle(
+    fontSize: 11,
+    height: 1.2,
+    fontWeight: FontWeight.w500,
+    color: context.theme.colors.mutedForeground,
+    letterSpacing: 0.2,
+  );
 
-  static TextStyle label(BuildContext context) {
-    final tokens = STokens.of(context);
-    return TextStyle(
-      fontSize: 11,
-      height: 1.2,
-      fontWeight: FontWeight.w500,
-      color: tokens.mutedForeground,
-      letterSpacing: 0.2,
-    );
-  }
-
-  static TextStyle code(BuildContext context) {
-    final tokens = STokens.of(context);
-    return TextStyle(
-      fontFamily: 'monospace',
-      fontFamilyFallback: const ['Menlo', 'Consolas', 'Courier'],
-      fontSize: 12,
-      height: 1.45,
-      color: tokens.foreground,
-    );
-  }
+  static TextStyle code(BuildContext context) => TextStyle(
+    fontFamily: 'monospace',
+    fontFamilyFallback: const ['Menlo', 'Consolas', 'Courier'],
+    fontSize: 12,
+    height: 1.45,
+    color: context.theme.colors.foreground,
+  );
 }

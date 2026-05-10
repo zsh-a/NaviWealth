@@ -69,9 +69,9 @@ class CurrencyMismatchBanner extends ConsumerWidget {
     String baseCurrency,
   ) {
     final l10n = AppLocalizations.of(context);
-    showModalBottomSheet<void>(
+    showFSheet<void>(
+      side: FLayout.btt,
       context: context,
-      showDragHandle: true,
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

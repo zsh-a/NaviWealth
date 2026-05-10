@@ -36,7 +36,6 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
       parent: _controller,
       curve: Motion.emphasizedDecelerate,
     );
-    // Start fully opaque; the fade only triggers on subsequent tab switches.
     _controller.value = 1.0;
   }
 
@@ -159,63 +158,34 @@ class _MobileShell extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
-  static const double barHeight = 64;
-
   @override
   Widget build(BuildContext context) {
-    final platform = Theme.of(context).platform;
-    final isIOS =
-        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
-    final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
-    final scheme = Theme.of(context).colorScheme;
-    final hairline = scheme.outlineVariant.withValues(alpha: 0.5);
-
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     return Stack(
       children: [
-        Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: barHeight + sysBottom),
-            child: child,
+        FScaffold(
+          childPad: false,
+          footer: FBottomNavigationBar(
+            index: selectedIndex,
+            onChange: onDestinationSelected,
+            safeAreaBottom: true,
+            children: [
+              for (var i = 0; i < destinations.length; i++)
+                FBottomNavigationBarItem(
+                  icon: Icon(
+                    i == selectedIndex
+                        ? destinations[i].selectedIcon
+                        : destinations[i].icon,
+                  ),
+                  label: Text(destinations[i].label),
+                ),
+            ],
           ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: sysBottom,
-          child: DefaultTextStyle(
-            style: DefaultTextStyle.of(
-              context,
-            ).style.copyWith(decoration: TextDecoration.none),
-            child: Container(
-              height: barHeight,
-              decoration: BoxDecoration(
-                color: scheme.surface,
-                border: Border(top: BorderSide(color: hairline, width: 1)),
-              ),
-              child: NavigationBar(
-                height: barHeight,
-                backgroundColor: Colors.transparent,
-                indicatorColor: Colors.transparent,
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: [
-                  for (final d in destinations)
-                    NavigationDestination(
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.selectedIcon),
-                      label: d.label,
-                    ),
-                ],
-              ),
-            ),
-          ),
+          child: child,
         ),
         Positioned(
           right: 16,
-          bottom: sysBottom + barHeight + 16,
+          bottom: bottomInset + 80,
           child: SizedBox(
             width: 56,
             height: 56,
@@ -245,33 +215,67 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hairline = Theme.of(
-      context,
-    ).colorScheme.outlineVariant.withValues(alpha: 0.5);
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
+    return FScaffold(
+      childPad: false,
+      sidebar: SizedBox(
+        width: 80,
+        child: FSidebar(
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(right: BorderSide(color: hairline, width: 1)),
+            for (var i = 0; i < destinations.length; i++)
+              _TabletRailItem(
+                destination: destinations[i],
+                selected: i == selectedIndex,
+                onTap: () => onDestinationSelected(i),
               ),
-              child: NavigationRail(
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
-                labelType: NavigationRailLabelType.all,
-                backgroundColor: context.theme.colors.background,
-                destinations: [
-                  for (final d in destinations)
-                    NavigationRailDestination(
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.selectedIcon),
-                      label: Text(d.label),
-                    ),
-                ],
-              ),
+          ],
+        ),
+      ),
+      child: _GlobalActionHost(child: child),
+    );
+  }
+}
+
+class _TabletRailItem extends StatelessWidget {
+  const _TabletRailItem({
+    required this.destination,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavDestination destination;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? colors.muted : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? destination.selectedIcon : destination.icon,
+              color: selected ? colors.primary : colors.mutedForeground,
+              size: 22,
             ),
-            Expanded(child: _GlobalActionHost(child: child)),
+            const SizedBox(height: 4),
+            Text(
+              destination.label,
+              style: context.theme.typography.xs.copyWith(
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? colors.primary : colors.foreground,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
@@ -294,31 +298,21 @@ class _DesktopShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Width capping is delegated to feature pages: single-pane pages
-    // center their content at `1200`, master-detail
-    // pages (Accounts / Assets / AI Chat) intentionally fill the full
-    // remaining width to give the splitter room to breathe.
-    //
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            DesktopSidebar(
-              destinations: [
-                for (final d in destinations)
-                  DesktopSidebarDestination(
-                    icon: d.icon,
-                    selectedIcon: d.selectedIcon,
-                    label: d.label,
-                  ),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
+    return FScaffold(
+      childPad: false,
+      sidebar: DesktopSidebar(
+        destinations: [
+          for (final d in destinations)
+            DesktopSidebarDestination(
+              icon: d.icon,
+              selectedIcon: d.selectedIcon,
+              label: d.label,
             ),
-            Expanded(child: _GlobalActionHost(child: child)),
-          ],
-        ),
+        ],
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onDestinationSelected,
       ),
+      child: _GlobalActionHost(child: child),
     );
   }
 }

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/proposal_applier.dart';
 import '../data/providers.dart';
@@ -211,9 +210,10 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onEdit(ReadyProposalPlan plan) async {
-    final result = await showModalBottomSheet<Map<String, Object?>>(
+    final result = await showFSheet<Map<String, Object?>>(
       context: context,
-      isScrollControlled: true,
+      side: FLayout.btt,
+      mainAxisMaxRatio: null,
       builder: (ctx) => ProposalEditSheet(plan: plan, initial: _overrides),
     );
     if (result == null || !mounted) return;
@@ -255,7 +255,6 @@ class _ExpandedView extends StatelessWidget {
         color: cs.tertiaryContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cs.tertiary.withValues(alpha: 0.45)),
-        boxShadow: AppElevations.of(context).level1,
       ),
       padding: const EdgeInsets.all(12),
       child: Column(

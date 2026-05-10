@@ -208,10 +208,10 @@ class _Pie extends StatelessWidget {
         drillDown: SliceDrillDown((slice) {
           final breakdown = slice.meta;
           if (breakdown is! CategoryBreakdown) return;
-          showModalBottomSheet<void>(
+          showFSheet<void>(
+            side: FLayout.btt,
             context: context,
-            showDragHandle: true,
-            isScrollControlled: true,
+            mainAxisMaxRatio: null,
             builder: (ctx) => _CategoryDrillDown(
               breakdown: breakdown,
               categoryById: categoryById,
@@ -251,10 +251,10 @@ class _PieLegend extends StatelessWidget {
             percent: total == 0
                 ? 0
                 : report.byCategory[i].total.amount.toDouble() / total,
-            onTap: () => showModalBottomSheet<void>(
+            onTap: () => showFSheet<void>(
+              side: FLayout.btt,
               context: context,
-              showDragHandle: true,
-              isScrollControlled: true,
+              mainAxisMaxRatio: null,
               builder: (ctx) => _CategoryDrillDown(
                 breakdown: report.byCategory[i],
                 categoryById: categoryById,
@@ -368,10 +368,10 @@ class _CategoryTile extends StatelessWidget {
         currencyCode: baseCurrency,
         compact: true,
       ),
-      onPress: () => showModalBottomSheet<void>(
+      onPress: () => showFSheet<void>(
+        side: FLayout.btt,
         context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
+        mainAxisMaxRatio: null,
         builder: (ctx) => _CategoryDrillDown(
           breakdown: breakdown,
           categoryById: categoryById,

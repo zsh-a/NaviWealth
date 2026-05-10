@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 /// Pulsing placeholder rectangle for skeleton screens.
 ///
@@ -95,10 +95,10 @@ class _SkeletonBoxState extends State<SkeletonBox>
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final base = scheme.surfaceContainerHighest;
+    final colors = context.theme.colors;
+    final base = colors.muted;
     final highlight = Color.alphaBlend(
-      scheme.onSurface.withValues(alpha: 0.08),
+      colors.foreground.withValues(alpha: 0.08),
       base,
     );
 
@@ -196,7 +196,7 @@ class SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return FCard.raw(
       child: Padding(padding: padding, child: child),
     );
   }

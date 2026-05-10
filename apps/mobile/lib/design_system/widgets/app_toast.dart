@@ -1,14 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-
-import '../theme/semantic_colors.dart';
-import '../tokens/motion_tokens.dart';
+import 'package:forui/forui.dart';
 
 /// Toast severity levels.
 enum ToastKind { success, warning, error, info }
 
-/// Top-anchored glass toast that replaces Material's bottom SnackBar.
+/// Thin facade over forui's [FToaster] / [showFToast].
 ///
 /// Usage:
 /// ```dart
@@ -16,37 +12,34 @@ enum ToastKind { success, warning, error, info }
 /// ```
 ///
 /// Call [AppMessenger.init] once in the [MaterialApp.builder] to install
-/// the overlay host. Then use [AppMessenger.show] from anywhere.
+/// the toaster host. Then use [AppMessenger.show] from anywhere.
 class AppMessenger {
   AppMessenger._();
 
   static final AppMessenger _instance = AppMessenger._();
   static AppMessenger get instance => _instance;
 
-  OverlayEntry? _currentEntry;
-  Timer? _dismissTimer;
+  /// Cached toaster state — set on first [show] call with a valid context
+  /// or via [cacheOverlay]. Survives after the originating context has
+  /// been popped so optimistic-form failures can still surface.
+  FToasterState? _cachedToaster;
 
-  /// Cached overlay reference. On first [show] call with a valid context
-  /// the overlay is captured; subsequent calls reuse it even when the
-  /// originating context has been disposed (e.g. after Navigator.pop).
-  OverlayState? _cachedOverlay;
+  /// Install the toaster host. Call in [MaterialApp.builder].
+  static Widget init({required Widget child}) =>
+      _ToasterHost(child: FToaster(child: child));
 
-  /// Install the toast overlay host. Call in [MaterialApp.builder].
-  static Widget init({required Widget child}) {
-    return _ToastHost(child: child);
-  }
-
-  /// Caches the overlay found via [context] so that [show] can insert
-  /// toasts even after the context is unmounted (e.g. after a pop).
+  /// Cache the surrounding [FToaster] state so that [show] can post toasts
+  /// even after the calling [context] is unmounted (e.g. after a pop).
   static void cacheOverlay(BuildContext context) {
     try {
-      _instance._cachedOverlay ??= Overlay.maybeOf(context);
+      _instance._cachedToaster ??= context
+          .findAncestorStateOfType<FToasterState>();
     } catch (_) {
       // Context may already be unmounted.
     }
   }
 
-  /// Show a toast. Automatically dismisses after [duration].
+  /// Show a toast.
   static void show(
     BuildContext context,
     ToastKind kind,
@@ -66,212 +59,67 @@ class AppMessenger {
     String? actionLabel,
     VoidCallback? onAction,
   ) {
-    _dismissTimer?.cancel();
-    _currentEntry?.remove();
-    _currentEntry = null;
-
-    // Try the caller's context first; fall back to the cached overlay
-    // (which survives after the originating widget is popped).
-    OverlayState? overlay;
+    FToasterState? state;
     try {
-      overlay = Overlay.maybeOf(context);
+      state = context.findAncestorStateOfType<FToasterState>();
     } catch (_) {
       // Context may be unmounted after a Navigator.pop.
     }
-    overlay ??= _cachedOverlay;
-    if (overlay == null) return;
-    _cachedOverlay = overlay;
+    state ??= _cachedToaster;
+    if (state == null) return;
+    _cachedToaster = state;
 
-    final entry = OverlayEntry(
-      builder: (_) => _ToastWidget(
-        kind: kind,
-        message: message,
-        actionLabel: actionLabel,
-        onAction: onAction,
-        onDismiss: () {
-          _dismissTimer?.cancel();
-          _currentEntry?.remove();
-          _currentEntry = null;
-        },
-      ),
-    );
-
-    _currentEntry = entry;
-    overlay.insert(entry);
-
-    _dismissTimer = Timer(duration, () {
-      entry.remove();
-      if (_currentEntry == entry) _currentEntry = null;
+    final variant = switch (kind) {
+      ToastKind.error => FToastVariant.destructive,
+      ToastKind.warning => FToastVariant.destructive,
+      ToastKind.success => FToastVariant.primary,
+      ToastKind.info => FToastVariant.primary,
+    };
+    final icon = Icon(switch (kind) {
+      ToastKind.success => Icons.check_circle_outline_rounded,
+      ToastKind.warning => Icons.warning_amber_rounded,
+      ToastKind.error => Icons.error_outline_rounded,
+      ToastKind.info => Icons.info_outline_rounded,
     });
+
+    state.show(
+      context: context,
+      builder: (ctx, entry) => FToast(
+        variant: variant,
+        icon: icon,
+        title: Text(message),
+        suffix: actionLabel != null && onAction != null
+            ? FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () {
+                  onAction();
+                  entry.dismiss();
+                },
+                child: Text(actionLabel),
+              )
+            : null,
+      ),
+      duration: duration,
+    );
   }
 }
 
-class _ToastHost extends StatefulWidget {
-  const _ToastHost({required this.child});
+class _ToasterHost extends StatefulWidget {
+  const _ToasterHost({required this.child});
 
   final Widget child;
 
   @override
-  State<_ToastHost> createState() => _ToastHostState();
+  State<_ToasterHost> createState() => _ToasterHostState();
 }
 
-class _ToastHostState extends State<_ToastHost> {
+class _ToasterHostState extends State<_ToasterHost> {
   @override
   void dispose() {
-    AppMessenger._instance._cachedOverlay = null;
+    AppMessenger._instance._cachedToaster = null;
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => widget.child;
-}
-
-class _ToastWidget extends StatefulWidget {
-  const _ToastWidget({
-    required this.kind,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-    required this.onDismiss,
-  });
-
-  final ToastKind kind;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-  final VoidCallback onDismiss;
-
-  @override
-  State<_ToastWidget> createState() => _ToastWidgetState();
-}
-
-class _ToastWidgetState extends State<_ToastWidget>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: Motion.medium);
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Motion.emphasizedDecelerate,
-    );
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: Motion.emphasizedDecelerate,
-          ),
-        );
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Color _accentColor(BuildContext context) {
-    final semantic = SemanticColors.of(context);
-    return switch (widget.kind) {
-      ToastKind.success => semantic.success,
-      ToastKind.warning => semantic.warning,
-      ToastKind.error => semantic.danger,
-      ToastKind.info => semantic.info,
-    };
-  }
-
-  IconData _icon() {
-    return switch (widget.kind) {
-      ToastKind.success => Icons.check_circle_outline_rounded,
-      ToastKind.warning => Icons.warning_amber_rounded,
-      ToastKind.error => Icons.error_outline_rounded,
-      ToastKind.info => Icons.info_outline_rounded,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final topPadding = MediaQuery.paddingOf(context).top + 16;
-    final accent = _accentColor(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Positioned(
-      top: topPadding,
-      left: 16,
-      right: 16,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Semantics(
-            liveRegion: true,
-            label: widget.message,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  border: Border.all(
-                    color: scheme.outlineVariant.withValues(alpha: 0.5),
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(left: BorderSide(color: accent, width: 3)),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(_icon(), color: accent, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          widget.message,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                      if (widget.actionLabel != null && widget.onAction != null)
-                        GestureDetector(
-                          onTap: () {
-                            widget.onAction?.call();
-                            widget.onDismiss();
-                          },
-                          child: Text(
-                            widget.actionLabel!,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: widget.onDismiss,
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 18,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

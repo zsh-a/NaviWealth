@@ -13,7 +13,8 @@
 /// and the [AsyncValue]; the shell handles the timing.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../tokens/breakpoints.dart';
 import '../responsive_two_column.dart';
@@ -100,7 +101,9 @@ class HomeSkeleton extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16);
+        final padding = isWide
+            ? const EdgeInsets.all(24)
+            : const EdgeInsets.all(16);
         const allocation = SkeletonCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,13 +214,12 @@ class AssetsListSkeleton extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 8),
           child: SkeletonBox(width: 100, height: 18),
         ),
-        Card(
-          clipBehavior: Clip.antiAlias,
+        FCard.raw(
           child: Column(
             children: [
               for (var i = 0; i < rowCount; i++) ...[
                 _row(),
-                if (i != rowCount - 1) const Divider(height: 1),
+                if (i != rowCount - 1) const FDivider(),
               ],
             ],
           ),
@@ -227,10 +229,7 @@ class AssetsListSkeleton extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 8),
           child: SkeletonBox(width: 120, height: 18),
         ),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: [_row(), const Divider(height: 1), _row()]),
-        ),
+        FCard.raw(child: Column(children: [_row(), const FDivider(), _row()])),
       ],
     );
   }
@@ -465,7 +464,7 @@ class _ChatBubbleSkeleton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: context.theme.colors.muted,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(

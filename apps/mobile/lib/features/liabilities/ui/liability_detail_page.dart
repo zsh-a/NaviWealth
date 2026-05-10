@@ -292,7 +292,8 @@ class _AmortizationTable extends ConsumerWidget {
       row.principalPayment + row.interestPayment,
       code: liability.currency,
     );
-    final confirmed = await showModalBottomSheet<bool>(
+    final confirmed = await showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(16),

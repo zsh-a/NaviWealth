@@ -23,9 +23,10 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required PhysicalAsset asset,
   }) {
-    return showModalBottomSheet<bool>(
+    return showFSheet<bool>(
+      side: FLayout.btt,
       context: context,
-      isScrollControlled: true,
+      mainAxisMaxRatio: null,
       useSafeArea: true,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
