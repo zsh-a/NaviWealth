@@ -8,6 +8,8 @@ import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
 import 'propose_card.dart';
+import 'shadcn/s_primitives.dart';
+import 'shadcn/s_tokens.dart';
 import 'tool_invocation_card.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
@@ -63,10 +65,9 @@ class _UserBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final tokens = STokens.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s6),
+      padding: const EdgeInsets.symmetric(vertical: SSpace.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -75,22 +76,23 @@ class _UserBubble extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 640),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s12,
-                  vertical: Spacing.s8,
+                  horizontal: SSpace.md,
+                  vertical: SSpace.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: cs.primaryContainer,
+                  color: tokens.primary,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radii.rLg,
-                    topRight: Radii.rXs,
-                    bottomLeft: Radii.rLg,
-                    bottomRight: Radii.rLg,
+                    topLeft: Radius.circular(SRadius.lg),
+                    topRight: Radius.circular(SRadius.sm),
+                    bottomLeft: Radius.circular(SRadius.lg),
+                    bottomRight: Radius.circular(SRadius.lg),
                   ),
-                  boxShadow: AppElevations.of(context).level1,
                 ),
                 child: SelectableText(
                   message.content,
-                  style: tt.bodyMedium?.copyWith(color: cs.onPrimaryContainer),
+                  style: SType.body(context).copyWith(
+                    color: tokens.primaryForeground,
+                  ),
                 ),
               ),
             ),
@@ -114,7 +116,8 @@ class _AssistantBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final textColor = _isError ? cs.onErrorContainer : cs.onSurface;
+    final tokens = STokens.of(context);
+    final textColor = _isError ? cs.onErrorContainer : tokens.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
     final showTruncation = !isStreaming &&
@@ -149,37 +152,35 @@ class _AssistantBubble extends StatelessWidget {
     final bubble = _isError
         ? Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s12,
-              vertical: Spacing.s8,
+              horizontal: SSpace.md,
+              vertical: SSpace.sm,
             ),
             decoration: BoxDecoration(
               color: cs.errorContainer,
               borderRadius: const BorderRadius.only(
-                topLeft: Radii.rXs,
-                topRight: Radii.rLg,
-                bottomLeft: Radii.rLg,
-                bottomRight: Radii.rLg,
+                topLeft: Radius.circular(SRadius.sm),
+                topRight: Radius.circular(SRadius.lg),
+                bottomLeft: Radius.circular(SRadius.lg),
+                bottomRight: Radius.circular(SRadius.lg),
               ),
             ),
             child: body,
           )
-        : LiquidGlassCard(
-            layer: GlassLayer.tertiary,
-            borderRadius: Radii.lg,
+        : SCard(
             padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s12,
-              vertical: Spacing.s8,
+              horizontal: SSpace.md,
+              vertical: SSpace.sm,
             ),
             child: body,
           );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s6),
+      padding: const EdgeInsets.symmetric(vertical: SSpace.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AssistantAvatar(),
-          const SizedBox(width: Spacing.s8),
+          const SAvatar(initial: 'A', icon: Icons.auto_awesome),
+          const SizedBox(width: SSpace.sm),
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
@@ -280,30 +281,6 @@ class _AssistantBubble extends StatelessWidget {
       );
     }
     return ToolInvocationCard(invocation: invocation);
-  }
-}
-
-class _AssistantAvatar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            cs.primary.withValues(alpha: 0.85),
-            cs.tertiary.withValues(alpha: 0.85),
-          ],
-        ),
-        shape: BoxShape.circle,
-        boxShadow: AppElevations.of(context).level1,
-      ),
-      child: Icon(Icons.auto_awesome, size: 14, color: cs.onPrimary),
-    );
   }
 }
 

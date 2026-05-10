@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -21,13 +22,13 @@ class TrendCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final trendAsync = ref.watch(dashboardTrendProvider);
 
-    return LiquidGlassCard(
-      layer: GlassLayer.primary,
-      padding: Spacing.cardHero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return FCard.raw(
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
             children: [
               Expanded(
                 child: Text(
@@ -59,6 +60,7 @@ class TrendCard extends ConsumerWidget {
             data: (trend) => _TrendChart(trend: trend),
           ),
         ],
+      ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -26,8 +27,13 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    return PageScaffold(
-      appBar: GlassAppBar(
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.homeAppBarTitle),
         actions: [
           IconButton(
@@ -42,7 +48,6 @@ class HomePage extends ConsumerWidget {
           ),
         ],
       ),
-      padding: EdgeInsets.zero,
       body: PageSkeletonShell<DashboardSnapshot>(
         skeleton: const HomeSkeleton(),
         isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
@@ -141,13 +146,13 @@ class _NetWorthHeader extends ConsumerWidget {
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
-    return LiquidGlassCard(
-      layer: GlassLayer.primary,
-      padding: Spacing.cardHero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
+    return FCard.raw(
+      child: Padding(
+        padding: Spacing.cardHero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.homeNetWorthTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: Spacing.s8),
           // Cap dynamic-text scaling on the 32dp hero number so users on
           // 200% system font size don't blow the card out of its row.
@@ -186,6 +191,7 @@ class _NetWorthHeader extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

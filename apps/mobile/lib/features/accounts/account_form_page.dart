@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -199,14 +200,16 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  label: l10n.accountFormCancelAction,
-                  onPressed: () => Navigator.of(ctx).pop(false),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.accountFormCancelAction),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.secondary(
-                  label: l10n.accountFormDeleteAction,
-                  onPressed: () => Navigator.of(ctx).pop(true),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.accountFormDeleteAction),
                 ),
               ],
             ),
@@ -259,7 +262,12 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
               : Text(l10n.accountFormEditTitle))
         : Text(l10n.accountFormCreateTitle);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: title,
         actions: [
           if (widget.isEdit)
@@ -392,11 +400,12 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     ),
                   ],
                   const SizedBox(height: Spacing.s24),
-                  AppButton.primary(
-                    label: _busy
+                  FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: _busy ? null : _save,
+                    child: Text(_busy
                         ? l10n.accountFormSaving
-                        : l10n.accountFormSave,
-                    onPressed: _busy ? null : _save,
+                        : l10n.accountFormSave),
                   ),
                 ],
               ),

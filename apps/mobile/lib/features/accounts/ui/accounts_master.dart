@@ -88,7 +88,14 @@ class AccountsDetailEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.accountsAppBarTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.accountsAppBarTitle),
+      ),
       body: MasterDetailEmpty(
         icon: Icons.account_balance_outlined,
         message: l10n.accountsDetailEmpty,
@@ -106,7 +113,12 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.accountsAppBarTitle),
         actions: [
           IconButton(
