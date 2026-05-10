@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import 'command_palette_entry.dart';
@@ -178,18 +179,19 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
           children: <Widget>[
             Focus(
               onKeyEvent: _onKey,
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocus,
-                autofocus: true,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: l10n.commandPaletteSearchHint,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: FTextField(
+                  control: FTextFieldControl.managed(
+                    controller: _searchController,
+                  ),
+                  focusNode: _searchFocus,
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
+                  hint: l10n.commandPaletteSearchHint,
+                  prefixBuilder: (ctx, style, variants) => const Padding(
+                    padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+                    child: Icon(Icons.search, size: 18),
                   ),
                 ),
               ),

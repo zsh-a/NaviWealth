@@ -34,24 +34,29 @@ class ExpenseFiltersBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         children: [
-          TextField(
-            controller: keywordController,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: l10n.expenseListSearchHint,
-              border: const OutlineInputBorder(),
-              isDense: true,
-              suffixIcon: keywordController.text.isEmpty
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
+          FTextField(
+            control: FTextFieldControl.managed(
+              controller: keywordController,
+              onChange: (v) => onChanged(filters.copyWith(keyword: v.text)),
+            ),
+            hint: l10n.expenseListSearchHint,
+            prefixBuilder: (ctx, style, variants) => const Padding(
+              padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+              child: Icon(Icons.search, size: 18),
+            ),
+            suffixBuilder: keywordController.text.isEmpty
+                ? null
+                : (ctx, style, variants) => Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 4),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () {
                         keywordController.clear();
                         onChanged(filters.copyWith(keyword: ''));
                       },
+                      child: const Icon(Icons.clear, size: 18),
                     ),
-            ),
-            onChanged: (v) => onChanged(filters.copyWith(keyword: v)),
+                  ),
           ),
           const SizedBox(height: 8),
           SizedBox(

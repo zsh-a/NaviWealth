@@ -6,7 +6,6 @@ import '../../../core/auth/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
-import 'shadcn/s_primitives.dart';
 
 /// List of past chat sessions. Used as a permanent sidebar on
 /// tablet/desktop, and shown inside a [Drawer] on mobile.
@@ -61,11 +60,11 @@ class SessionsPanel extends ConsumerWidget {
             return _PanelMessage(
               icon: Icons.chat_bubble_outline,
               message: l10n.aiChatSessionsEmpty,
-              action: SButton(
-                variant: SButtonVariant.primary,
-                onPressed: onNew,
-                icon: Icons.add,
-                label: l10n.aiChatNewSessionTooltip,
+              action: FButton(
+                variant: FButtonVariant.primary,
+                onPress: onNew,
+                prefix: const Icon(Icons.add, size: 14),
+                child: Text(l10n.aiChatNewSessionTooltip),
               ),
             );
           }
@@ -115,16 +114,16 @@ class SessionsPanel extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SButton(
-                  variant: SButtonVariant.ghost,
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  label: l10n.commonCancel,
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: 8),
-                SButton(
-                  variant: SButtonVariant.outline,
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  label: l10n.commonDelete,
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.commonDelete),
                 ),
               ],
             ),
@@ -168,31 +167,26 @@ class SessionsPanel extends ConsumerWidget {
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
+                FTextField(
+                  control: FTextFieldControl.managed(controller: controller),
                   autofocus: true,
                   maxLength: 60,
-                  decoration: InputDecoration(
-                    labelText: l10n.aiChatSessionTitleLabel,
-                    border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                  ),
+                  label: Text(l10n.aiChatSessionTitleLabel),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    SButton(
-                      variant: SButtonVariant.ghost,
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      label: l10n.commonCancel,
+                    FButton(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => Navigator.of(ctx).pop(),
+                      child: Text(l10n.commonCancel),
                     ),
                     const SizedBox(width: 8),
-                    SButton(
-                      variant: SButtonVariant.primary,
-                      onPressed: () =>
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      onPress: () =>
                           Navigator.of(ctx).pop(controller.text.trim()),
-                      label: l10n.commonSave,
+                      child: Text(l10n.commonSave),
                     ),
                   ],
                 ),

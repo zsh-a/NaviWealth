@@ -84,7 +84,6 @@ class _ChatComposerState extends State<ChatComposer> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final canSend = !widget._busy && _controller.text.trim().isNotEmpty;
 
@@ -109,44 +108,22 @@ class _ChatComposerState extends State<ChatComposer> {
               Expanded(
                 child: Focus(
                   onKeyEvent: _onKey,
-                  child: TextField(
-                    controller: _controller,
+                  child: FTextField(
+                    control: FTextFieldControl.managed(
+                      controller: _controller,
+                      onChange: (_) => setState(() {}),
+                    ),
                     focusNode: _focusNode,
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
                     minLines: 1,
                     maxLines: 6,
                     enabled: !widget._busy,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: widget.isFlushing
-                          ? l10n.aiChatComposerHintFlushing
-                          : widget.isStreaming
-                          ? l10n.aiChatComposerHintStreaming
-                          : l10n.aiChatComposerHintIdle,
-                      filled: true,
-                      fillColor: cs.surfaceContainerHighest.withValues(
-                        alpha: 0.6,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(20),
-                        ),
-                        borderSide: BorderSide(color: cs.primary, width: 1.5),
-                      ),
-                    ),
+                    hint: widget.isFlushing
+                        ? l10n.aiChatComposerHintFlushing
+                        : widget.isStreaming
+                        ? l10n.aiChatComposerHintStreaming
+                        : l10n.aiChatComposerHintIdle,
                   ),
                 ),
               ),

@@ -11,7 +11,6 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
-import 'shadcn/s_primitives.dart';
 
 String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
     switch (kind) {
@@ -324,25 +323,27 @@ class _ExpandedView extends StatelessWidget {
             spacing: 8,
             runSpacing: 4,
             children: [
-              SButton(
-                variant: SButtonVariant.primary,
-                onPressed: isApplying ? null : onConfirm,
-                icon: Icons.check,
-                label: isApplying
-                    ? l10n.aiChatProposalApplying
-                    : l10n.aiChatProposalConfirm,
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: isApplying ? null : onConfirm,
+                prefix: const Icon(Icons.check, size: 14),
+                child: Text(
+                  isApplying
+                      ? l10n.aiChatProposalApplying
+                      : l10n.aiChatProposalConfirm,
+                ),
               ),
-              SButton(
-                variant: SButtonVariant.outline,
-                onPressed: isApplying ? null : onCancel,
-                icon: Icons.close,
-                label: l10n.commonCancel,
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: isApplying ? null : onCancel,
+                prefix: const Icon(Icons.close, size: 14),
+                child: Text(l10n.commonCancel),
               ),
-              SButton(
-                variant: SButtonVariant.ghost,
-                onPressed: isApplying ? null : onEdit,
-                icon: Icons.edit_outlined,
-                label: l10n.aiChatProposalEdit,
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: isApplying ? null : onEdit,
+                prefix: const Icon(Icons.edit_outlined, size: 14),
+                child: Text(l10n.aiChatProposalEdit),
               ),
             ],
           ),
@@ -411,12 +412,11 @@ class _CollapsedView extends StatelessWidget {
                 ),
               ),
               if (onUndo != null && secondsLeft > 0)
-                SButton(
-                  variant: SButtonVariant.ghost,
-                  onPressed: onUndo,
-                  icon: Icons.undo,
-                  label: l10n.aiChatProposalUndoCountdown(secondsLeft),
-                  dense: true,
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: onUndo,
+                  prefix: const Icon(Icons.undo, size: 12),
+                  child: Text(l10n.aiChatProposalUndoCountdown(secondsLeft)),
                 ),
             ],
           ),
@@ -635,30 +635,31 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
+                FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.close, size: 18),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             for (final f in _fields) ...[
-              TextField(
-                controller: _controllers[f.payloadKey],
+              FTextField(
+                control: FTextFieldControl.managed(
+                  controller: _controllers[f.payloadKey],
+                ),
                 keyboardType: f.numeric
                     ? const TextInputType.numberWithOptions(decimal: true)
                     : TextInputType.text,
-                decoration: InputDecoration(
-                  labelText: f.label,
-                  hintText: f.hint,
-                ),
+                label: Text(f.label),
+                hint: f.hint,
               ),
               const SizedBox(height: 12),
             ],
-            SButton(
-              variant: SButtonVariant.primary,
-              onPressed: () => Navigator.of(context).pop(_collect()),
-              label: l10n.aiChatProposalSaveEdits,
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: () => Navigator.of(context).pop(_collect()),
+              child: Text(l10n.aiChatProposalSaveEdits),
             ),
           ],
         ),
@@ -935,11 +936,11 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
               style: tt.labelMedium?.copyWith(color: cs.onPrimaryContainer),
             ),
           ),
-          SButton(
-            variant: SButtonVariant.primary,
-            onPressed: _busy ? null : _confirmAll,
-            icon: Icons.done_all,
-            label: l10n.aiChatProposalBatchConfirmAll,
+          FButton(
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _confirmAll,
+            prefix: const Icon(Icons.done_all, size: 14),
+            child: Text(l10n.aiChatProposalBatchConfirmAll),
           ),
         ],
       ),
