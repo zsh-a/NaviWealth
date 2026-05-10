@@ -76,7 +76,7 @@ class AccountsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: AppRoutes.activityAccounts,
+      path: AppRoutes.accountsList,
       selected: allIds[nextIndex],
     );
   }
@@ -116,15 +116,15 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.add_card_outlined),
-            onPress: () => context.go(AppRoutes.accountNew),
+            onPress: () => context.go(AppRoutes.accountListNew),
           ),
           FHeaderAction(
             icon: const Icon(Icons.history),
-            onPress: () => context.go(AppRoutes.accountJournal),
+            onPress: () => context.go(AppRoutes.journalEntries),
           ),
           FHeaderAction(
             icon: const Icon(Icons.swap_horiz),
-            onPress: () => context.go(AppRoutes.accountTransfer),
+            onPress: () => context.go(AppRoutes.transfer),
           ),
         ],
       ),
@@ -153,7 +153,7 @@ class _EmptyAccounts extends StatelessWidget {
             FilledButton.icon(
               icon: const Icon(Icons.add_card_outlined),
               label: Text(l10n.accountFormCreateTitle),
-              onPressed: () => context.go(AppRoutes.accountNew),
+              onPressed: () => context.go(AppRoutes.accountListNew),
             ),
           ],
         ),
@@ -255,11 +255,11 @@ class _AccountTile extends StatelessWidget {
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
       replaceSelectedQuery(
         context,
-        path: AppRoutes.activityAccounts,
+        path: AppRoutes.accountsList,
         selected: account.id,
       );
     } else {
-      context.go(AppRoutes.account(account.id));
+      context.go(AppRoutes.accountListItem(account.id));
     }
   }
 

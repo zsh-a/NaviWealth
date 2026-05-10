@@ -15,12 +15,14 @@ import 'router.dart';
 import 'shell_preferences.dart';
 
 /// Vim-style `g`+key → route path mapping.
+///
+/// Mnemonics align with the 5-tab IA:
+///   g h → Home, g a → Activity, g i → AI, g n → Accounts, g s → Settings.
 const Map<String, String> _kVimGotoRoutes = <String, String>{
   'home': AppRoutes.home,
-  'portfolio': AppRoutes.portfolio,
   'activity': AppRoutes.activity,
-  'plan': AppRoutes.plan,
   'ai': AppRoutes.ai,
+  'accounts': AppRoutes.accounts,
   'settings': AppRoutes.settings,
 };
 
@@ -59,7 +61,17 @@ class NaviWealthApp extends ConsumerWidget {
             !kIsWeb &&
             (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.android);
-        final fTheme = isTouch ? platform.touch : platform.desktop;
+        final baseFTheme = isTouch ? platform.touch : platform.desktop;
+        // Layer teal accent over Slate so the brand interaction color reads
+        // calm-finance-teal instead of slate-grey, while keeping the rest of
+        // Slate's neutral surfaces / borders / typography intact.
+        final brightness = isDark ? Brightness.dark : Brightness.light;
+        final fTheme = baseFTheme.copyWith(
+          colors: baseFTheme.colors.copyWith(
+            primary: AccentColors.primary(brightness),
+            primaryForeground: AccentColors.onPrimary(brightness),
+          ),
+        );
         // Sync brightnessProvider so marketColorsProvider derives correctly.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final current = ref.read(brightnessProvider);

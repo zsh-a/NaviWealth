@@ -8,7 +8,7 @@ GoRouter _router(String initialLocation) {
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
-      GoRoute(path: AppRoutes.portfolio, builder: (_, _) => const _Host()),
+      GoRoute(path: AppRoutes.accounts, builder: (_, _) => const _Host()),
     ],
   );
 }
@@ -28,7 +28,7 @@ class _Host extends StatelessWidget {
               onPressed: () {
                 replaceSelectedQuery(
                   context,
-                  path: AppRoutes.portfolio,
+                  path: AppRoutes.accounts,
                   selected: 'asset-2',
                 );
               },
@@ -38,7 +38,7 @@ class _Host extends StatelessWidget {
               onPressed: () {
                 replaceSelectedQuery(
                   context,
-                  path: AppRoutes.portfolio,
+                  path: AppRoutes.accounts,
                   selected: null,
                 );
               },
@@ -59,7 +59,7 @@ void main() {
   testWidgets('selectedQueryOf reads the selected query parameter', (
     tester,
   ) async {
-    final router = _router('${AppRoutes.portfolio}?selected=asset-1');
+    final router = _router('${AppRoutes.accounts}?selected=asset-1');
     addTearDown(router.dispose);
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
@@ -71,7 +71,7 @@ void main() {
   testWidgets('empty selected query is treated as no selection', (
     tester,
   ) async {
-    final router = _router('${AppRoutes.portfolio}?selected=');
+    final router = _router('${AppRoutes.accounts}?selected=');
     addTearDown(router.dispose);
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
@@ -83,7 +83,7 @@ void main() {
   testWidgets('replaceSelectedQuery preserves unrelated query parameters', (
     tester,
   ) async {
-    final router = _router('${AppRoutes.portfolio}?range=1y&selected=asset-1');
+    final router = _router('${AppRoutes.accounts}?range=1y&selected=asset-1');
     addTearDown(router.dispose);
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
@@ -94,7 +94,7 @@ void main() {
 
     expect(
       _location(router),
-      '${AppRoutes.portfolio}?range=1y&selected=asset-2',
+      '${AppRoutes.accounts}?range=1y&selected=asset-2',
     );
   });
 
@@ -102,7 +102,7 @@ void main() {
     'replaceSelectedQuery removes selected without dropping filters',
     (tester) async {
       final router = _router(
-        '${AppRoutes.portfolio}?range=1y&selected=asset-1',
+        '${AppRoutes.accounts}?range=1y&selected=asset-1',
       );
       addTearDown(router.dispose);
 
@@ -112,7 +112,7 @@ void main() {
       await tester.tap(find.text('clear'));
       await tester.pumpAndSettle();
 
-      expect(_location(router), '${AppRoutes.portfolio}?range=1y');
+      expect(_location(router), '${AppRoutes.accounts}?range=1y');
     },
   );
 }

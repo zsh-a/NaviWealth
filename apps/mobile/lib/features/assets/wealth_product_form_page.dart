@@ -155,7 +155,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       );
       if (!mounted) return;
       Haptics.success();
-      context.go(AppRoutes.portfolio);
+      context.go(AppRoutes.accounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -207,7 +207,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.portfolio);
+      context.go(AppRoutes.accounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -285,7 +285,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
               const SizedBox(height: 12),
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.go(AppRoutes.accountNew),
+                onPress: () => context.go(AppRoutes.accountListNew),
                 prefix: const Icon(Icons.add, size: 16),
                 child: Text(l10n.wealthProductCreateAccountAction),
               ),

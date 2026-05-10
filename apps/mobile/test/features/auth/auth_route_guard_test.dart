@@ -49,7 +49,7 @@ GoRouter _buildRouter(ProviderContainer container, String initial) {
     routes: <RouteBase>[
       GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
       GoRoute(
-        path: AppRoutes.portfolio,
+        path: AppRoutes.accounts,
         builder: (_, _) => const _Marker('portfolio'),
       ),
       GoRoute(path: '/login', builder: (_, _) => const _Marker('login')),
@@ -88,7 +88,7 @@ void main() {
     // Force AuthController build to settle on AuthLoggedOut.
     await container.read(authControllerProvider.future);
 
-    final router = await _pump(tester, container, initial: AppRoutes.portfolio);
+    final router = await _pump(tester, container, initial: AppRoutes.accounts);
 
     expect(_path(router), '/login?next=%2Fportfolio');
     expect(find.text('login'), findsOneWidget);
@@ -132,10 +132,10 @@ void main() {
       final router = await _pump(
         tester,
         container,
-        initial: '/login?next=${AppRoutes.portfolio}',
+        initial: '/login?next=${AppRoutes.accounts}',
       );
 
-      expect(_path(router), AppRoutes.portfolio);
+      expect(_path(router), AppRoutes.accounts);
       expect(find.text('portfolio'), findsOneWidget);
     },
   );
@@ -147,9 +147,9 @@ void main() {
     addTearDown(container.dispose);
     await container.read(authControllerProvider.future);
 
-    final router = await _pump(tester, container, initial: AppRoutes.portfolio);
+    final router = await _pump(tester, container, initial: AppRoutes.accounts);
 
-    expect(_path(router), AppRoutes.portfolio);
+    expect(_path(router), AppRoutes.accounts);
     expect(find.text('portfolio'), findsOneWidget);
   });
 

@@ -17,11 +17,11 @@ GoRouter _router({required bool assetPanel}) {
       for (final path in const [
         AppRoutes.expenseNew,
         AppRoutes.tradeEntry,
-        AppRoutes.accountTransfer,
+        AppRoutes.transfer,
         AppRoutes.liabilityNew,
-        AppRoutes.portfolioNewCash,
-        AppRoutes.portfolioNewDeposit,
-        AppRoutes.portfolioNewWealth,
+        AppRoutes.accountNewCash,
+        AppRoutes.accountNewDeposit,
+        AppRoutes.accountNewWealth,
       ])
         GoRoute(path: path, builder: (_, _) => _Marker(path)),
     ],
@@ -103,7 +103,7 @@ void main() {
   for (final target in const [
     ('Expense', AppRoutes.expenseNew),
     ('Trade', AppRoutes.tradeEntry),
-    ('Transfer', AppRoutes.accountTransfer),
+    ('Transfer', AppRoutes.transfer),
     ('Liability', AppRoutes.liabilityNew),
   ]) {
     testWidgets('${target.$1} action pushes ${target.$2}', (tester) async {
@@ -136,9 +136,9 @@ void main() {
   });
 
   for (final target in const [
-    ('Cash / multi-currency balance', AppRoutes.portfolioNewCash),
-    ('Deposit (term / demand)', AppRoutes.portfolioNewDeposit),
-    ('Wealth product', AppRoutes.portfolioNewWealth),
+    ('Cash / multi-currency balance', AppRoutes.accountNewCash),
+    ('Deposit (term / demand)', AppRoutes.accountNewDeposit),
+    ('Wealth product', AppRoutes.accountNewWealth),
   ]) {
     testWidgets('${target.$1} asset action pushes ${target.$2}', (
       tester,

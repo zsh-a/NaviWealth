@@ -12,6 +12,9 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
 import '../state/route_context_provider.dart';
+import 'ai_action_cards_rail.dart';
+import 'ai_context_summary_header.dart';
+import 'ai_insights_panel.dart';
 import 'chat_composer.dart';
 import 'message_bubble.dart';
 import 'sessions_panel.dart';
@@ -293,6 +296,8 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
         constraints: const BoxConstraints(maxWidth: 960),
         child: Column(
           children: [
+            const AiContextSummaryHeader(),
+            const AiActionCardsRail(),
             Expanded(
               child: messagesAsync.when(
                 loading: () => const AiChatSkeleton(),
@@ -312,6 +317,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
                 ),
               ),
             ),
+            const AiInsightsPanel(),
             ChatComposer(
               isStreaming: turn.isStreaming,
               isFlushing: turn.isFlushing,

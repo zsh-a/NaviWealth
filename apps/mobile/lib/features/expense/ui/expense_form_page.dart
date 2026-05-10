@@ -392,7 +392,7 @@ class _NoAccountsHint extends StatelessWidget {
         subtitle: Text(l10n.expenseFormNoAccountsBody),
         suffix: FButton(
           variant: FButtonVariant.ghost,
-          onPress: () => GoRouter.of(context).go(AppRoutes.accountNew),
+          onPress: () => GoRouter.of(context).go(AppRoutes.accountListNew),
           child: Text(l10n.expenseFormNoAccountsCta),
         ),
       ),

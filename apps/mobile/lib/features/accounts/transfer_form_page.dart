@@ -468,7 +468,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       narration: note.isEmpty ? null : note,
     );
     await submitOptimistic(
-      pop: () => context.go(AppRoutes.activityAccounts),
+      pop: () => context.go(AppRoutes.accountsList),
       write: () => repo.create(entry: build.entry, postings: build.postings),
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>

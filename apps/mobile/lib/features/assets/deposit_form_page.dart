@@ -159,7 +159,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       );
       if (!mounted) return;
       Haptics.success();
-      context.go(AppRoutes.portfolio);
+      context.go(AppRoutes.accounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -211,7 +211,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.portfolio);
+      context.go(AppRoutes.accounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -266,7 +266,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         .toList(growable: false);
     if (eligible.isEmpty) {
       return _PromptCreateAccount(
-        onTap: () => context.go(AppRoutes.accountNew),
+        onTap: () => context.go(AppRoutes.accountListNew),
       );
     }
     if (!_hydratedFromList && !widget.isEdit) {

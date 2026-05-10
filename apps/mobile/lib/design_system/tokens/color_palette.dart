@@ -8,7 +8,23 @@ import 'package:flutter/material.dart';
 class ColorPalette {
   const ColorPalette._();
 
+  // ── Accent (Tailwind teal) — primary interaction color over Slate base ──
+  // Adopted as the brand interaction hue to give NaviWealth a calm
+  // blue-green identity (vs. generic SaaS blue). Pairs well against Slate
+  // grayscale surfaces and stays distinct from MarketColors.profit emerald.
+  static const Color teal50 = Color(0xFFF0FDFA);
+  static const Color teal100 = Color(0xFFCCFBF1);
+  static const Color teal200 = Color(0xFF99F6E4);
+  static const Color teal300 = Color(0xFF5EEAD4);
+  static const Color teal400 = Color(0xFF2DD4BF); // dark mode primary fg
+  static const Color teal500 = Color(0xFF14B8A6);
+  static const Color teal600 = Color(0xFF0D9488); // light mode primary fg
+  static const Color teal700 = Color(0xFF0F766E);
+  static const Color teal800 = Color(0xFF115E59);
+  static const Color teal900 = Color(0xFF134E4A);
+
   // ── Brand (NaviWealth blue, derived from legacy seed 0xFF1F6FEB) ────────
+  // Retained as info / secondary accent (Sync banner, FxRate badges, etc.).
   static const Color brand50 = Color(0xFFEFF5FF);
   static const Color brand100 = Color(0xFFDBE8FE);
   static const Color brand200 = Color(0xFFBFD5FD);

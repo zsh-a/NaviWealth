@@ -122,35 +122,197 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// Bottom nav: portfolio tab (assets + liabilities)
-  ///
-  /// In en, this message translates to:
-  /// **'Portfolio'**
-  String get navPortfolio;
-
-  /// Bottom nav: AI assistant tab
+  /// Bottom nav: AI assistant tab (centered accent)
   ///
   /// In en, this message translates to:
   /// **'AI'**
   String get navAI;
 
-  /// Bottom nav: activity tab (expenses, accounts, trades)
+  /// Bottom nav: activity tab (single timeline)
   ///
   /// In en, this message translates to:
   /// **'Activity'**
   String get navActivity;
-
-  /// Bottom nav: plan tab (FIRE, rebalance, analytics)
-  ///
-  /// In en, this message translates to:
-  /// **'Plan'**
-  String get navPlan;
 
   /// Bottom nav / More hub: accounts tab
   ///
   /// In en, this message translates to:
   /// **'Accounts'**
   String get navAccounts;
+
+  /// Accounts hub section header for cash + deposit + bonds & funds
+  ///
+  /// In en, this message translates to:
+  /// **'Cash & Deposits'**
+  String get accountsHubSectionCashDeposits;
+
+  /// Accounts hub section header for stocks / ETFs / crypto
+  ///
+  /// In en, this message translates to:
+  /// **'Investments'**
+  String get accountsHubSectionInvestments;
+
+  /// Accounts hub section header for real estate / vehicles
+  ///
+  /// In en, this message translates to:
+  /// **'Physical'**
+  String get accountsHubSectionPhysical;
+
+  /// Accounts hub section header for debts / mortgages / loans
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get accountsHubSectionLiabilities;
+
+  /// Accounts hub link row that opens the bank-accounts list
+  ///
+  /// In en, this message translates to:
+  /// **'Manage bank accounts'**
+  String get accountsHubManageBankAccounts;
+
+  /// Section header above the home AI Insight Feed
+  ///
+  /// In en, this message translates to:
+  /// **'Insights for you'**
+  String get dashboardAiInsightsTitle;
+
+  /// Section header above the home recent-activity timeline preview
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get dashboardActivityPreviewTitle;
+
+  /// Link at the bottom of the home recent-activity preview
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get dashboardActivityPreviewViewAll;
+
+  /// Section header above the home compact allocation summary
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get dashboardAllocationSummaryTitle;
+
+  /// Link from the home allocation summary into the Accounts hub
+  ///
+  /// In en, this message translates to:
+  /// **'View breakdown'**
+  String get dashboardAllocationViewBreakdown;
+
+  /// Activity timeline filter chip: clear all kind filters
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get activityFilterChipAll;
+
+  /// Activity timeline filter chip: income
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get activityFilterChipIncome;
+
+  /// Activity timeline filter chip: expense
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get activityFilterChipExpense;
+
+  /// Activity timeline filter chip: transfer
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get activityFilterChipTransfer;
+
+  /// Activity timeline filter chip: trade
+  ///
+  /// In en, this message translates to:
+  /// **'Trade'**
+  String get activityFilterChipTrade;
+
+  /// Title of the activity entry detail page
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get activityEntryDetailTitle;
+
+  /// Section header for the AI-generated explanation block in the activity entry detail page
+  ///
+  /// In en, this message translates to:
+  /// **'AI insight'**
+  String get activityEntryDetailAiExplanation;
+
+  /// Empty state when no AI explanation is available
+  ///
+  /// In en, this message translates to:
+  /// **'No insight available for this entry.'**
+  String get activityEntryDetailNoExplanation;
+
+  /// AI context summary header eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get aiContextSummaryThisMonth;
+
+  /// AI context summary cell label: month-to-date net worth change
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth Δ'**
+  String get aiContextSummaryNetWorthDelta;
+
+  /// AI context summary cell label: today's net worth change
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get aiContextSummaryTodayDelta;
+
+  /// AI context summary cell label: number of unusual expense events
+  ///
+  /// In en, this message translates to:
+  /// **'Unusual expenses'**
+  String get aiContextSummaryUnusualExpenses;
+
+  /// AI context summary cell label: upcoming deposit maturities count
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming maturities'**
+  String get aiContextSummaryUpcoming;
+
+  /// Section header for the AI action cards rail
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested actions'**
+  String get aiActionCardsTitle;
+
+  /// Affordance label on each action card to deep-link into the detail flow
+  ///
+  /// In en, this message translates to:
+  /// **'Open →'**
+  String get aiActionCardsOpen;
+
+  /// Collapsible section title under the AI chat that links to FIRE / Rebalance / Analytics
+  ///
+  /// In en, this message translates to:
+  /// **'Insights'**
+  String get aiInsightsPanelTitle;
+
+  /// Insights panel link label for the Rebalance detail page
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get aiInsightsRebalanceTitle;
+
+  /// Net-worth breakdown stat: assets total
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get dashboardNetWorthAssetsLabel;
+
+  /// Net-worth breakdown stat: liabilities total
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get dashboardNetWorthLiabilitiesLabel;
 
   /// Portfolio segmented control: assets sub-tab
   ///

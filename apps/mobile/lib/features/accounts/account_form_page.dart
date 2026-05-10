@@ -135,7 +135,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     await submitOptimistic(
       pop: () {
         Haptics.success();
-        context.go(AppRoutes.activityAccounts);
+        context.go(AppRoutes.accountsList);
       },
       tag: 'account',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -225,7 +225,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       final repo = await ref.read(accountRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.activityAccounts);
+      context.go(AppRoutes.accountsList);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -41,14 +41,14 @@ class _ShortcutHelpSheet extends StatelessWidget {
         keys: 'g h',
       ),
       _ManualShortcutEntry(
-        label: l10n.shortcutVimGoto(l10n.navPortfolio),
-        keys: 'g p',
-      ),
-      _ManualShortcutEntry(
         label: l10n.shortcutVimGoto(l10n.navActivity),
         keys: 'g a',
       ),
-      _ManualShortcutEntry(label: l10n.shortcutVimGoto('AI'), keys: 'g i'),
+      _ManualShortcutEntry(label: l10n.shortcutVimGoto(l10n.navAI), keys: 'g i'),
+      _ManualShortcutEntry(
+        label: l10n.shortcutVimGoto(l10n.navAccounts),
+        keys: 'g n',
+      ),
       _ManualShortcutEntry(
         label: l10n.shortcutVimGoto(l10n.navSettings),
         keys: 'g s',
@@ -133,11 +133,13 @@ class _ShortcutHelpSheet extends StatelessWidget {
       case 'shortcutSwitchTab0':
         return l10n.shortcutSwitchTab(1, l10n.navHome);
       case 'shortcutSwitchTab1':
-        return l10n.shortcutSwitchTab(2, l10n.navPortfolio);
+        return l10n.shortcutSwitchTab(2, l10n.navActivity);
       case 'shortcutSwitchTab2':
-        return l10n.shortcutSwitchTab(3, l10n.navActivity);
+        return l10n.shortcutSwitchTab(3, l10n.navAI);
       case 'shortcutSwitchTab3':
-        return l10n.shortcutSwitchTab(4, l10n.navPlan);
+        return l10n.shortcutSwitchTab(4, l10n.navAccounts);
+      case 'shortcutSwitchTab4':
+        return l10n.shortcutSwitchTab(5, l10n.navSettings);
     }
     return key;
   }

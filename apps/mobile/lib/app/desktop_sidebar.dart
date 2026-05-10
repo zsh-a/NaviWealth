@@ -76,11 +76,16 @@ class DesktopSidebarDestination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.isAccent = false,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+
+  /// True for the AI tab; rendered with a teal accent disc so the assistant
+  /// stands out as the primary action layer in the sidebar too.
+  final bool isAccent;
 }
 
 class _SidebarItem extends StatelessWidget {
@@ -99,9 +104,16 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
+    final isAccent = destination.isAccent;
+    // Accent (AI) tab gets the inverse treatment so it pops: a filled
+    // teal disc behind the icon when active, a soft teal tint otherwise.
+    final iconColor = isAccent
+        ? (selected ? colors.primaryForeground : colors.primary)
+        : (selected ? colors.primary : colors.mutedForeground);
     final labelStyle = context.theme.typography.sm.copyWith(
-      color: selected ? colors.primary : colors.foreground,
+      color: isAccent && selected
+          ? colors.primaryForeground
+          : (selected ? colors.primary : colors.foreground),
       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
     );
     final row = Row(
@@ -125,9 +137,18 @@ class _SidebarItem extends StatelessWidget {
       ],
     );
 
+    final Color background;
+    if (isAccent) {
+      background = colors.primary.withValues(alpha: selected ? 1.0 : 0.12);
+    } else if (selected) {
+      background = colors.primary.withValues(alpha: 0.10);
+    } else {
+      background = const Color(0x00000000);
+    }
+
     final content = Stack(
       children: [
-        if (selected)
+        if (selected && !isAccent)
           Positioned(
             left: 0,
             top: 4,
@@ -147,9 +168,7 @@ class _SidebarItem extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 2),
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: selected
-                ? colors.primary.withValues(alpha: 0.10)
-                : const Color(0x00000000),
+            color: background,
             borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.centerLeft,

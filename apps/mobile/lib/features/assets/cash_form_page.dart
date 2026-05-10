@@ -133,7 +133,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             ),
           );
           if (goEdit == true && mounted) {
-            context.go(AppRoutes.portfolioAsset(existing.id));
+            context.go(AppRoutes.accountAsset(existing.id));
           }
           setState(() => _busy = false);
           return;
@@ -165,7 +165,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       );
       if (!mounted) return;
       Haptics.success();
-      context.go(AppRoutes.portfolio);
+      context.go(AppRoutes.accounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -180,7 +180,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.portfolio);
+      context.go(AppRoutes.accounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -239,7 +239,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
               const SizedBox(height: 12),
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.go(AppRoutes.accountNew),
+                onPress: () => context.go(AppRoutes.accountListNew),
                 prefix: const Icon(Icons.add, size: 16),
                 child: Text(l10n.cashFormCreateAccountAction),
               ),

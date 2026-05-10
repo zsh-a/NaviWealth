@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/typography_tokens.dart';
+import 'accent_colors.dart';
 
 /// Minimal Material [ThemeData] that mirrors the active forui slate palette
 /// so any residual Material widget in the tree (charts, etc.) renders in
@@ -23,10 +24,16 @@ class AppTheme {
   static ThemeData _build(Brightness brightness, bool compact) {
     final isDark = brightness == Brightness.dark;
     final f = isDark ? FColors.slateDark : FColors.slateLight;
+    // Override Slate's slate-grey primary with teal so the Material side of
+    // the tree (residual MaterialButton / Switch / etc.) reads the same
+    // brand interaction color as the forui side. See app.dart for the
+    // matching FColors.copyWith on the forui surface.
+    final accent = AccentColors.primary(brightness);
+    final onAccent = AccentColors.onPrimary(brightness);
     final scheme = ColorScheme(
       brightness: brightness,
-      primary: f.primary,
-      onPrimary: f.primaryForeground,
+      primary: accent,
+      onPrimary: onAccent,
       secondary: f.secondary,
       onSecondary: f.secondaryForeground,
       tertiary: f.mutedForeground,
@@ -63,8 +70,8 @@ class AppTheme {
           : VisualDensity.adaptivePlatformDensity,
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
-      hoverColor: f.primary.withValues(alpha: 0.04),
-      focusColor: f.primary.withValues(alpha: 0.06),
+      hoverColor: accent.withValues(alpha: 0.04),
+      focusColor: accent.withValues(alpha: 0.06),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),

@@ -88,7 +88,7 @@ class AssetsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: AppRoutes.portfolio,
+      path: AppRoutes.accounts,
       selected: allIds[nextIndex],
     );
   }
