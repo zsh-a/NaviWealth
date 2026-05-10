@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/contracts.dart';
+import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/core/ai/trace/trace.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
@@ -16,6 +19,7 @@ class _FakeApi implements AiChatApiClient {
 
   final List<AiChatEvent> script = <AiChatEvent>[];
   List<WireMessage>? lastMessages;
+  ContextPack? lastContextPack;
   Object? errorToThrow;
   Object? cancelBeforeThrow;
 
@@ -24,10 +28,12 @@ class _FakeApi implements AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) async* {
     lastMessages = messages;
+    lastContextPack = contextPack;
     if (errorToThrow != null) {
       final reason = cancelBeforeThrow;
       if (reason != null) {
@@ -54,6 +60,7 @@ class _NoDoneApi implements AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) async* {
@@ -486,6 +493,149 @@ void main() {
       // The wire payload for the second turn should contain the prior
       // user / assistant pair plus the new prompt.
       expect(api.lastMessages!.map((m) => m.content), ['Q1', 'A1', 'Q2']);
+    });
+  });
+
+  group('ChatRepository — Phase 2-A trace + context pack', () {
+    late ChatHistoryStore store;
+    late _FakeApi api;
+    late InMemoryAiTraceStore traceStore;
+    late ChatRepository repo;
+
+    setUp(() async {
+      store = ChatHistoryStore(makeTestDatabase());
+      api = _FakeApi();
+      traceStore = InMemoryAiTraceStore();
+      repo = ChatRepository(
+        store: store,
+        api: api,
+        sessionReader: () => _fakeSession,
+        tracePrep: ({required requestId}) async {
+          const route = RouteContext(path: '/expense', area: 'expense');
+          const intent = IntentHint(
+            capability: Capability.analyze,
+            risk: RiskLevel.suggest,
+            label: 'chat_turn',
+          );
+          final pack = const ContextCompressor().compress(
+            route: route,
+            intent: intent,
+            baseCurrency: 'USD',
+            expenseAnomalyDelta: 0.3,
+          );
+          final seed = AiTrace(
+            requestId: requestId,
+            startedAtIso: '2026-05-10T10:00:00.000Z',
+            intent: intent,
+            backend: Backend.hybrid,
+            budgetTier: pack.budget.tier,
+            routingReason: 'analyze_hybrid',
+            usedCloud: true,
+            usedRawLedger: false,
+            totalDurationMs: 0,
+          );
+          return (pack: pack, traceSeed: seed);
+        },
+        traceStore: traceStore,
+      );
+      await repo.createSession(ownerUserId: 'user-1');
+    });
+
+    tearDown(() => store.dispose());
+
+    Future<String> activeSessionId() async {
+      final sessions = await store.watchSessions('user-1').first;
+      return sessions.single.id;
+    }
+
+    test('passes the prep ContextPack to the API', () async {
+      api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '上月咖啡花了多少？',
+      );
+      expect(api.lastContextPack, isNotNull);
+      expect(api.lastContextPack!.task.intent.label, 'chat_turn');
+      expect(api.lastContextPack!.task.signals, isNotEmpty);
+      expect(api.lastContextPack!.budget.tier, BudgetTier.standard);
+    });
+
+    test('appends a finalised AiTrace to the store with tool calls', () async {
+      api.script.addAll(const <AiChatEvent>[
+        TextEvent('查到了。'),
+        ToolCallEvent(
+          id: 't_1',
+          name: 'list_recent_expenses',
+          input: <String, Object?>{},
+        ),
+        ToolResultEvent(
+          id: 't_1',
+          name: 'list_recent_expenses',
+          output: <String, Object?>{'count': 12},
+        ),
+        DoneEvent(stopReason: 'end_turn', rounds: 1),
+      ]);
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '本月支出明细',
+      );
+
+      final traces = await traceStore.recent();
+      expect(traces, hasLength(1));
+      final trace = traces.single;
+      expect(trace.intent.label, 'chat_turn');
+      expect(trace.backend, Backend.hybrid);
+      expect(trace.usedCloud, isTrue);
+      expect(trace.toolCalls, hasLength(1));
+      expect(trace.toolCalls.single.name, 'list_recent_expenses');
+      expect(trace.toolCalls.single.ok, isTrue);
+    });
+
+    test('flags tool error in trace when output has error field', () async {
+      api.script.addAll(const <AiChatEvent>[
+        ToolCallEvent(
+          id: 't_err',
+          name: 'propose_trade',
+          input: <String, Object?>{},
+        ),
+        ToolResultEvent(
+          id: 't_err',
+          name: 'propose_trade',
+          output: <String, Object?>{
+            'error': 'proposal_cap_exceeded',
+            'code': 'proposal_cap_exceeded',
+          },
+        ),
+        DoneEvent(stopReason: 'end_turn', rounds: 1),
+      ]);
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '买点 AAPL',
+      );
+
+      final trace = (await traceStore.recent()).single;
+      expect(trace.toolCalls.single.ok, isFalse);
+    });
+
+    test('still finalises trace when stream errors mid-flight', () async {
+      api.script.addAll(const <AiChatEvent>[
+        TextEvent('开始回答…'),
+        ErrorEvent('upstream timeout'),
+        DoneEvent(stopReason: 'error', rounds: 1),
+      ]);
+      final id = await activeSessionId();
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'Q',
+      );
+      expect(await traceStore.recent(), hasLength(1));
     });
   });
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/auth/auth_session.dart';
 import '../domain/chat_events.dart';
 import 'sse_parser.dart';
@@ -28,6 +29,7 @@ abstract class AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   });
@@ -86,6 +88,7 @@ class DioAiChatApiClient implements AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) {
@@ -96,6 +99,7 @@ class DioAiChatApiClient implements AiChatApiClient {
       final body = <String, Object?>{
         'messages': messages.map((m) => m.toJson()).toList(),
         'portfolio_snapshot': ?portfolioSnapshot,
+        if (contextPack != null) 'context_pack': contextPack.toJson(),
         if (model != null && model.isNotEmpty) 'model': model,
       };
       final Response<ResponseBody> res;

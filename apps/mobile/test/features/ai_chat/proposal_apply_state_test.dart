@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
@@ -16,6 +17,7 @@ class _NoopApi implements AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) async* {

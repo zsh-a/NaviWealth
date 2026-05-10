@@ -8,6 +8,7 @@ import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
+import 'ai_transparency_badge.dart';
 import 'propose_card.dart';
 import 'tool_invocation_card.dart';
 
@@ -151,6 +152,11 @@ class _AssistantBubble extends StatelessWidget {
         ],
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
+        if (!isStreaming &&
+            !_isError &&
+            message.role == ChatRole.assistant &&
+            message.status == ChatMessageStatus.complete)
+          AiTransparencyBadge(messageId: message.id),
       ],
     );
 

@@ -18,3 +18,13 @@ final aiTraceStoreProvider = Provider<AiTraceStore>(
 final recentAiTracesProvider = FutureProvider<List<AiTrace>>(
   (ref) => ref.watch(aiTraceStoreProvider).recent(),
 );
+
+/// Per-message lookup keyed by `AiTrace.requestId`. The chat surface
+/// uses `ChatMessage.id == requestId`, so any consumer can resolve the
+/// trace for a message directly. Auto-disposed because trace lookups
+/// are typically per-card and short-lived.
+final aiTraceByIdProvider = FutureProvider.autoDispose
+    .family<AiTrace?, String>(
+      (ref, requestId) =>
+          ref.watch(aiTraceStoreProvider).findByRequestId(requestId),
+    );

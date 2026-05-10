@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
@@ -10,6 +12,18 @@ import '../domain/proposal_apply_state.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
+
+/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire and
+/// the seed [AiTrace] that the repository finalises after the stream
+/// closes. Either field may be `null` if the caller chose not to wire
+/// AI tracing for this repository instance (legacy tests, etc.).
+typedef ChatTracePrepResult = ({ContextPack? pack, AiTrace? traceSeed});
+
+/// Closure that builds the per-request ContextPack + AiTrace seed.
+/// Lives in providers.dart so it can capture Riverpod `Ref` without
+/// pulling provider state into the repository's constructor surface.
+typedef ChatTracePrep =
+    Future<ChatTracePrepResult> Function({required String requestId});
 
 /// Sentinel value for new session titles. UI layer should resolve to
 /// localized string when displaying.
@@ -38,17 +52,23 @@ class ChatRepository {
     required AiChatApiClient api,
     required AuthSessionReader sessionReader,
     Future<Map<String, Object?>?> Function()? portfolioSnapshotReader,
+    ChatTracePrep? tracePrep,
+    AiTraceStore? traceStore,
     Uuid? uuid,
   }) : _store = store,
        _api = api,
        _sessionReader = sessionReader,
        _portfolioSnapshotReader = portfolioSnapshotReader,
+       _tracePrep = tracePrep,
+       _traceStore = traceStore,
        _uuid = uuid ?? const Uuid();
 
   final ChatHistoryStore _store;
   final AiChatApiClient _api;
   final AuthSessionReader _sessionReader;
   final Future<Map<String, Object?>?> Function()? _portfolioSnapshotReader;
+  final ChatTracePrep? _tracePrep;
+  final AiTraceStore? _traceStore;
   final Uuid _uuid;
 
   Stream<List<ChatSession>> watchSessions(String ownerUserId) =>
@@ -177,6 +197,20 @@ class ChatRepository {
     }
     final portfolioSnapshot = await _portfolioSnapshotReader?.call();
 
+    // Phase 2-A: build the typed ContextPack + seed an AiTrace keyed by
+    // the assistant message id. Failures here are absorbed: chat must
+    // never break because the AI transparency layer hiccupped, so the
+    // prep closure already returns null on its own errors.
+    final prepResult = _tracePrep == null
+        ? null
+        : await _tracePrep.call(requestId: assistantId);
+    final contextPack = prepResult?.pack;
+    final traceSeed = prepResult?.traceSeed;
+    final traceBuilder = traceSeed == null
+        ? null
+        : AiTraceBuilder.fromSeed(traceSeed);
+    final toolStarts = <String, DateTime>{};
+
     // Interleaved record of the assistant turn. `segments` and
     // `invocationOrder` together rebuild the original
     // text → tool → text → tool sequence the model emitted: each new
@@ -200,6 +234,7 @@ class ChatRepository {
         session: session,
         messages: wireMessages,
         portfolioSnapshot: portfolioSnapshot,
+        contextPack: contextPack,
         model: model,
         cancelToken: localCancel,
       );
@@ -222,6 +257,7 @@ class ChatRepository {
               segments.add('');
             }
             invocations[id] = ToolInvocation(id: id, name: name, input: input);
+            toolStarts[id] = DateTime.now().toUtc();
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
@@ -245,6 +281,17 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
+            if (traceBuilder != null) {
+              final start = toolStarts[id];
+              final duration = start == null
+                  ? Duration.zero
+                  : DateTime.now().toUtc().difference(start);
+              traceBuilder.addToolCall(
+                name: invocations[id]?.name ?? '',
+                duration: duration,
+                ok: !_isToolError(output),
+              );
+            }
           case ErrorEvent(:final message):
             outcome = SendOutcome.errored;
             assistant = assistant.copyWith(
@@ -316,9 +363,30 @@ class ChatRepository {
       }
     } finally {
       await _store.touchSession(sessionId, DateTime.now().toUtc());
+      // Append the trace last so a failure here can never sneak past
+      // and skip session.touch — chat history takes priority over
+      // transparency.
+      if (traceBuilder != null && _traceStore != null) {
+        try {
+          final trace = traceBuilder.finalize(
+            finishedAt: DateTime.now().toUtc(),
+          );
+          await _traceStore.append(trace);
+        } catch (_) {
+          // Tracing is best-effort.
+        }
+      }
     }
 
     return outcome;
+  }
+
+  /// `true` when a tool result payload represents a failure (the
+  /// backend uses a `{ "error": "...", "code": "..." }` shape for
+  /// synthesised errors like the proposal cap or guardrail rejections).
+  static bool _isToolError(Object? output) {
+    if (output is! Map) return false;
+    return output['error'] is String;
   }
 
   /// Mutate the apply state of one tool invocation inside [messageId].

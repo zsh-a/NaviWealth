@@ -2,6 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
+import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/local/skills/skills.dart';
+import '../../../core/ai/router/router.dart';
+import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
@@ -10,11 +14,15 @@ import '../../../data/domain/asset.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
+import '../../assets/data/deposit_maturity_insight_provider.dart';
+import '../../expense/data/expense_anomaly_insight_provider.dart';
+import '../../home/data/dashboard_providers.dart';
 import '../../investment/data/providers.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_sync_gate.dart';
+import '../state/route_context_provider.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'chat_repository.dart';
@@ -58,13 +66,81 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
   final store = await ref.watch(chatHistoryStoreProvider.future);
   final api = ref.watch(aiChatApiClientProvider);
   final reader = ref.watch(authSessionReaderProvider);
+  final traceStore = ref.watch(aiTraceStoreProvider);
   return ChatRepository(
     store: store,
     api: api,
     sessionReader: reader,
     portfolioSnapshotReader: () => _buildPortfolioSnapshot(ref),
+    tracePrep: ({required requestId}) => _prepareChatTrace(ref, requestId),
+    traceStore: traceStore,
   );
 });
+
+/// Build the typed [ContextPack] + seed [AiTrace] for one chat turn.
+///
+/// Captures the current Riverpod state — route, header metrics, anomaly,
+/// maturity — and folds it through [ContextCompressor] and [AiRouter].
+/// Failures are absorbed (returns nulls) so chat itself is never blocked
+/// by the transparency layer hiccupping.
+Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
+  try {
+    final compressor = ref.read(contextCompressorProvider);
+    final router = ref.read(aiRouterProvider);
+    final routeCtx = ref.read(aiRouteContextProvider);
+    final route = RouteContext(
+      path: routeCtx.path,
+      area: _routeAreaFromPath(routeCtx.path),
+    );
+    // Phase 2-A: chat is `analyze × suggest` by default. Phase 3 will
+    // classify per user message via NL→QueryPlan.
+    const intent = IntentHint(
+      capability: Capability.analyze,
+      risk: RiskLevel.suggest,
+      label: 'chat_turn',
+    );
+
+    final metricsAsync = ref.read(dashboardHeaderMetricsProvider);
+    final metrics = metricsAsync.value;
+    final anomaly = ref.read(expenseAnomalyInsightProvider);
+    final maturity = ref.read(depositMaturityInsightProvider);
+
+    final pack = compressor.compress(
+      route: route,
+      intent: intent,
+      baseCurrency: metrics?.baseCurrency,
+      expenseAnomalyDelta: anomaly?.deltaRatio,
+      depositMaturityCount: maturity?.count,
+      depositMaturityDays: maturity?.days,
+    );
+
+    // The chat surface is by definition online here (we are about to
+    // POST to /ai/chat) so the router decides cloud-bound. We capture
+    // the decision regardless so AiTrace records why.
+    final decision = router.decide(
+      const RoutingInputs(intent: intent, online: true),
+    );
+    final seed = router.seedTrace(requestId: requestId, decision: decision);
+
+    return (pack: pack, traceSeed: seed);
+  } catch (_) {
+    return (pack: null, traceSeed: null);
+  }
+}
+
+String _routeAreaFromPath(String path) {
+  if (path.startsWith('/expense')) return 'expense';
+  if (path.startsWith('/investment') || path.startsWith('/portfolio')) {
+    return 'investment';
+  }
+  if (path.startsWith('/fire')) return 'fire';
+  if (path.startsWith('/account')) return 'account';
+  if (path.startsWith('/liabilit')) return 'liability';
+  if (path.startsWith('/asset')) return 'asset';
+  if (path.startsWith('/settings')) return 'settings';
+  if (path == '/' || path.startsWith('/home')) return 'home';
+  return 'unknown';
+}
 
 Future<Map<String, Object?>?> _buildPortfolioSnapshot(Ref ref) async {
   final holdings = await ref.read(holdingsSnapshotProvider.future);
