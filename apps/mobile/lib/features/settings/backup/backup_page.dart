@@ -13,6 +13,7 @@ import '../../../core/logging/app_logger.dart';
 import '../../../core/sync/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../ui/inline_setting_row.dart';
 import 'file_loader.dart';
 import 'file_saver.dart';
 
@@ -24,43 +25,39 @@ class BackupPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.settingsDataTitle)),
+      header: FHeader.nested(title: Text(l10n.settingsDataTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: ListView(
-          padding: const EdgeInsets.all(16).copyWith(
-            bottom:
-                const EdgeInsets.all(16).bottom +
-                64 +
-                MediaQuery.paddingOf(context).bottom,
-          ),
-          children: [
-            if (kIsWeb) ...[
-              _WebBackupSecurityBanner(l10n: l10n),
-              const SizedBox(height: 12),
-            ],
-            FCard.raw(
-              child: FTile(
-                title: Text(l10n.backupExportTitle),
-                prefix: const Icon(Icons.upload_outlined),
-                subtitle: Text(l10n.backupExportSubtitle),
-                suffix: const Icon(Icons.chevron_right),
-                onPress: () => _exportBackup(context, ref),
-              ),
-            ),
-            const SizedBox(height: 12),
-            FCard.raw(
-              child: FTile(
-                title: Text(l10n.backupImportTitle),
-                prefix: const Icon(Icons.download_outlined),
-                subtitle: Text(l10n.backupImportSubtitle),
-                suffix: const Icon(Icons.chevron_right),
-                onPress: () => _importBackup(context, ref),
-              ),
-            ),
-          ],
+      child: ListView(
+        padding: const EdgeInsets.all(16).copyWith(
+          bottom: const EdgeInsets.all(16).bottom +
+              64 +
+              MediaQuery.paddingOf(context).bottom,
         ),
+        children: [
+          if (kIsWeb) ...[
+            _WebBackupSecurityBanner(l10n: l10n),
+            const SizedBox(height: 12),
+          ],
+          SoftCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: InlineLinkRow(
+              icon: Icons.upload_outlined,
+              label: l10n.backupExportTitle,
+              subtitle: l10n.backupExportSubtitle,
+              onTap: () => _exportBackup(context, ref),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SoftCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: InlineLinkRow(
+              icon: Icons.download_outlined,
+              label: l10n.backupImportTitle,
+              subtitle: l10n.backupImportSubtitle,
+              onTap: () => _importBackup(context, ref),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -260,12 +257,10 @@ class BackupPage extends ConsumerWidget {
     required String hint,
     required String confirmLabel,
   }) {
-    return showFSheet<String>(
-      side: FLayout.btt,
+    return showAppSheet<String>(
       context: context,
-      mainAxisMaxRatio: null,
+      title: title,
       builder: (_) => _PassphraseSheet(
-        title: title,
         hint: hint,
         confirmLabel: confirmLabel,
       ),
@@ -273,10 +268,10 @@ class BackupPage extends ConsumerWidget {
   }
 
   Future<String?> _showRestoreConfirmSheet(BuildContext context) {
-    return showFSheet<String>(
-      side: FLayout.btt,
+    final l10n = AppLocalizations.of(context);
+    return showAppSheet<String>(
       context: context,
-      mainAxisMaxRatio: null,
+      title: l10n.backupConfirmRestoreTitle,
       builder: (_) => const _RestoreConfirmSheet(),
     );
   }
@@ -316,22 +311,20 @@ class _WebBackupSecurityBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.security_outlined, color: context.theme.colors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                l10n.backupWebSecurityWarning,
-                style: context.theme.typography.sm,
-              ),
+    return SoftCard(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.security_outlined, color: context.theme.colors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.backupWebSecurityWarning,
+              style: context.theme.typography.sm,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -342,13 +335,8 @@ class _WebBackupSecurityBanner extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _PassphraseSheet extends StatefulWidget {
-  const _PassphraseSheet({
-    required this.title,
-    required this.hint,
-    required this.confirmLabel,
-  });
+  const _PassphraseSheet({required this.hint, required this.confirmLabel});
 
-  final String title;
   final String hint;
   final String confirmLabel;
 
@@ -374,45 +362,41 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(widget.title, style: context.theme.typography.lg),
-            const SizedBox(height: 16),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _controller),
-              label: Text(l10n.backupPassphraseLabel),
-              hint: widget.hint,
-              obscureText: true,
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => Navigator.of(context).pop(),
-                    child: Text(l10n.backupCancelAction),
-                  ),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _controller),
+            label: Text(l10n.backupPassphraseLabel),
+            hint: widget.hint,
+            obscureText: true,
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: Text(l10n.backupCancelAction),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FButton(
-                    variant: FButtonVariant.primary,
-                    onPress: _submit,
-                    child: Text(widget.confirmLabel),
-                  ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FButton(
+                  onPress: _submit,
+                  child: Text(widget.confirmLabel),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -456,55 +440,49 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.backupConfirmRestoreTitle,
-              style: context.theme.typography.lg,
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.backupConfirmRestoreMessage,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+              height: 1.4,
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.backupConfirmRestoreMessage,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
+          ),
+          const SizedBox(height: 16),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _controller),
+            label: Text(l10n.backupPassphraseLabel),
+            hint: l10n.backupRestorePassphraseHint,
+            obscureText: true,
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).pop(),
+                  child: Text(l10n.backupCancelAction),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _controller),
-              label: Text(l10n.backupPassphraseLabel),
-              hint: l10n.backupRestorePassphraseHint,
-              obscureText: true,
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => Navigator.of(context).pop(),
-                    child: Text(l10n.backupCancelAction),
-                  ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FButton(
+                  onPress: _submit,
+                  child: Text(l10n.backupConfirmRestoreAction),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FButton(
-                    variant: FButtonVariant.primary,
-                    onPress: _submit,
-                    child: Text(l10n.backupConfirmRestoreAction),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

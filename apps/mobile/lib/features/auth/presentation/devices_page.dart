@@ -64,6 +64,7 @@ class DevicesPage extends ConsumerWidget {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.authDevicesTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.logout),

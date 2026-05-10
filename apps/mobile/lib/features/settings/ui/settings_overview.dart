@@ -12,7 +12,14 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
 import '../../shared/forms/currency_picker.dart';
 import '../data/base_currency_preference.dart';
+import 'inline_setting_row.dart';
 
+/// Settings landing page — iOS-style inset-grouped sections.
+///
+/// Every selector is a single-line [InlineSettingRow] (icon + label +
+/// trailing value chip), giving the page roughly half the vertical
+/// footprint of the legacy stacked `FSelect` layout while keeping every
+/// option discoverable. Tap any row to open a dedicated picker sheet.
 class SettingsOverview extends ConsumerWidget {
   const SettingsOverview({super.key});
 
@@ -29,30 +36,43 @@ class SettingsOverview extends ConsumerWidget {
       ),
       children: [
         const _AccountHeader(),
-        const SizedBox(height: 12),
-        const _AccountSection(),
-        _SectionHeader(title: l10n.settingsAppearanceSection),
-        const _AppearanceSection(),
-        _SectionHeader(title: l10n.settingsRiskSection),
-        const SoftCard(child: _RiskThresholdSettings()),
-        _SectionHeader(title: l10n.settingsDataSection),
+        const SizedBox(height: 16),
+        _SectionHeader(title: l10n.settingsAccountSection),
         SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             children: [
-              FTile(
-                title: Text(l10n.settingsSyncTitle),
-                prefix: const Icon(Icons.cloud_sync_outlined),
-                subtitle: Text(l10n.settingsSyncSubtitle),
-                suffix: const Icon(Icons.chevron_right),
-                onPress: () => context.goNamed(AppRouteNames.sync),
+              _AccountSection(),
+            ],
+          ),
+        ),
+        _SectionHeader(title: l10n.settingsAppearanceSection),
+        const SoftCard(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          child: _AppearanceSection(),
+        ),
+        _SectionHeader(title: l10n.settingsRiskSection),
+        const SoftCard(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          child: _RiskThresholdSettings(),
+        ),
+        _SectionHeader(title: l10n.settingsDataSection),
+        SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              InlineLinkRow(
+                icon: Icons.cloud_sync_outlined,
+                label: l10n.settingsSyncTitle,
+                subtitle: l10n.settingsSyncSubtitle,
+                onTap: () => context.goNamed(AppRouteNames.sync),
               ),
-              const FDivider(),
-              FTile(
-                title: Text(l10n.settingsDataTitle),
-                prefix: const Icon(Icons.backup_outlined),
-                subtitle: Text(l10n.settingsDataSubtitle),
-                suffix: const Icon(Icons.chevron_right),
-                onPress: () => context.goNamed(AppRouteNames.backup),
+              _SectionDivider(),
+              InlineLinkRow(
+                icon: Icons.backup_outlined,
+                label: l10n.settingsDataTitle,
+                subtitle: l10n.settingsDataSubtitle,
+                onTap: () => context.goNamed(AppRouteNames.backup),
               ),
             ],
           ),
@@ -60,26 +80,26 @@ class SettingsOverview extends ConsumerWidget {
         if (kDebugMode) ...[
           _SectionHeader(title: l10n.settingsDeveloperSection),
           SoftCard(
-            child: FTile(
-              title: Text(l10n.settingsLogsTitle),
-              prefix: const Icon(Icons.bug_report_outlined),
-              subtitle: Text(l10n.settingsLogsSubtitle),
-              suffix: const Icon(Icons.chevron_right),
-              onPress: () => context.goNamed(AppRouteNames.logs),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: InlineLinkRow(
+              icon: Icons.bug_report_outlined,
+              label: l10n.settingsLogsTitle,
+              subtitle: l10n.settingsLogsSubtitle,
+              onTap: () => context.goNamed(AppRouteNames.logs),
             ),
           ),
         ],
-        const SizedBox(height: 12),
-        const SoftCard(child: _AboutTile()),
+        const SizedBox(height: 16),
+        const SoftCard(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          child: _AboutTile(),
+        ),
       ],
     );
   }
 }
 
-/// iOS-style inset-grouped section header — small, all-caps, muted so it
-/// reads as a "category divider" rather than a content title. Matches
-/// the Apple Settings convention where the section body (the SoftCard
-/// below) carries the visual weight.
+/// iOS-style inset-grouped section header — small, all-caps, muted.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -101,13 +121,29 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Single-pixel divider between adjacent rows in the same SoftCard
+/// section. Matches the divider used elsewhere (alpha 0.05) so the
+/// rows feel ribbon-grouped rather than card-stacked.
+class _SectionDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Container(
+        height: 1,
+        color: context.theme.colors.foreground.withValues(alpha: 0.05),
+      ),
+    );
+  }
+}
+
 class _AccountHeader extends StatelessWidget {
   const _AccountHeader();
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -117,13 +153,17 @@ class _AccountHeader extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: scheme.primaryContainer,
+              // Soft teal disc — matches the icon affordance used in
+              // SoftCard rows / AccountCategoryPicker so the avatar
+              // reads as part of the same visual family rather than a
+              // Material primaryContainer one-off.
+              color: colors.primary.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(16),
             ),
             alignment: Alignment.center,
             child: Icon(
               Icons.account_circle_outlined,
-              color: context.theme.colors.primary,
+              color: colors.primary,
               size: 28,
             ),
           ),
@@ -153,62 +193,39 @@ class _AccountHeader extends StatelessWidget {
 }
 
 class _AccountSection extends ConsumerWidget {
-  const _AccountSection();
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final baseCurrency = ref.watch(baseCurrencyProvider);
 
-    return SoftCard(
-      child: Column(
-        children: [
-          FTile(
-            title: Text(l10n.settingsDevicesTitle),
-            prefix: const Icon(Icons.devices_outlined),
-            subtitle: Text(l10n.settingsDevicesSubtitle),
-            suffix: const Icon(Icons.chevron_right),
-            onPress: () => context.goNamed(AppRouteNames.devices),
-          ),
-          const FDivider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.currency_exchange),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FSelect<String>(
-                    items: {
-                      for (final code in kCommonCurrencies)
-                        currencyDisplayLabel(l10n, code): code,
-                    },
-                    control: FSelectControl<String>.managed(
-                      initial: baseCurrency,
-                      onChange: (picked) async {
-                        if (picked != null && picked != baseCurrency) {
-                          await ref
-                              .read(baseCurrencyProvider.notifier)
-                              .set(picked);
-                        }
-                      },
-                    ),
-                    label: Text(l10n.settingsBaseCurrencyTitle),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const FDivider(),
-          FTile(
-            title: Text(l10n.settingsFxRatesTitle),
-            prefix: const Icon(Icons.published_with_changes_outlined),
-            subtitle: Text(l10n.settingsFxRatesSubtitle),
-            suffix: const Icon(Icons.chevron_right),
-            onPress: () => context.goNamed(AppRouteNames.fxRates),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        InlineLinkRow(
+          icon: Icons.devices_outlined,
+          label: l10n.settingsDevicesTitle,
+          subtitle: l10n.settingsDevicesSubtitle,
+          onTap: () => context.goNamed(AppRouteNames.devices),
+        ),
+        _SectionDivider(),
+        InlineSettingRow<String>(
+          icon: Icons.currency_exchange,
+          label: l10n.settingsBaseCurrencyTitle,
+          value: baseCurrency,
+          options: {
+            for (final code in kCommonCurrencies)
+              currencyDisplayLabel(l10n, code): code,
+          },
+          onChanged: (picked) =>
+              ref.read(baseCurrencyProvider.notifier).set(picked),
+        ),
+        _SectionDivider(),
+        InlineLinkRow(
+          icon: Icons.published_with_changes_outlined,
+          label: l10n.settingsFxRatesTitle,
+          subtitle: l10n.settingsFxRatesSubtitle,
+          onTap: () => context.goNamed(AppRouteNames.fxRates),
+        ),
+      ],
     );
   }
 }
@@ -222,105 +239,65 @@ class _AppearanceSection extends ConsumerWidget {
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final compact = ref.watch(compactDensityProvider);
 
-    return SoftCard(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.brightness_6_outlined),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FSelect<ThemeMode>(
-                    items: {
-                      for (final m in ThemeMode.values)
-                        _themeModeLabel(l10n, m): m,
-                    },
-                    control: FSelectControl<ThemeMode>.managed(
-                      initial: themeMode,
-                      onChange: (m) {
-                        if (m != null) {
-                          Haptics.selection();
-                          ref.read(themeModeProvider.notifier).set(m);
-                        }
-                      },
-                    ),
-                    label: Text(l10n.settingsThemeModeTitle),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const FDivider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.swap_vert),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FSelect<MarketColorMode>(
-                    items: {
-                      for (final m in MarketColorMode.values)
-                        _marketModeLabel(l10n, m): m,
-                    },
-                    control: FSelectControl<MarketColorMode>.managed(
-                      initial: marketMode,
-                      onChange: (m) {
-                        if (m != null) {
-                          ref.read(marketColorModeProvider.notifier).set(m);
-                        }
-                      },
-                    ),
-                    label: Text(l10n.settingsMarketColorTitle),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: _MarketColorPreview(),
-          ),
-          const FDivider(),
-          const _CompactDensityTile(),
-          const FDivider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.translate_outlined),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FSelect<String>(
-                    items: {
-                      l10n.langSystem: '',
-                      l10n.langEnglish: 'en',
-                      l10n.langChinese: 'zh',
-                    },
-                    control: FSelectControl<String>.managed(
-                      initial: locale?.languageCode ?? '',
-                      onChange: (picked) {
-                        Haptics.selection();
-                        ref
-                            .read(localeProvider.notifier)
-                            .set(
-                              (picked == null || picked.isEmpty)
-                                  ? null
-                                  : Locale(picked),
-                            );
-                      },
-                    ),
-                    label: Text(l10n.settingsLanguageTitle),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        InlineSettingRow<ThemeMode>(
+          icon: Icons.brightness_6_outlined,
+          label: l10n.settingsThemeModeTitle,
+          value: themeMode,
+          options: {
+            for (final m in ThemeMode.values) _themeModeLabel(l10n, m): m,
+          },
+          onChanged: (m) {
+            Haptics.selection();
+            ref.read(themeModeProvider.notifier).set(m);
+          },
+        ),
+        _SectionDivider(),
+        InlineSettingRow<MarketColorMode>(
+          icon: Icons.swap_vert,
+          label: l10n.settingsMarketColorTitle,
+          value: marketMode,
+          options: {
+            for (final m in MarketColorMode.values)
+              _marketModeLabel(l10n, m): m,
+          },
+          onChanged: (m) =>
+              ref.read(marketColorModeProvider.notifier).set(m),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(14, 0, 14, 8),
+          child: _MarketColorPreview(),
+        ),
+        _SectionDivider(),
+        InlineSwitchRow(
+          icon: Icons.density_medium_outlined,
+          label: l10n.settingsCompactDensityTitle,
+          subtitle: l10n.settingsCompactDensitySubtitle,
+          value: compact,
+          onChanged: (next) =>
+              ref.read(compactDensityProvider.notifier).set(next),
+        ),
+        _SectionDivider(),
+        InlineSettingRow<String>(
+          icon: Icons.translate_outlined,
+          label: l10n.settingsLanguageTitle,
+          value: locale?.languageCode ?? '',
+          options: {
+            l10n.langSystem: '',
+            l10n.langEnglish: 'en',
+            l10n.langChinese: 'zh',
+          },
+          onChanged: (picked) {
+            Haptics.selection();
+            ref
+                .read(localeProvider.notifier)
+                .set(picked.isEmpty ? null : Locale(picked));
+          },
+        ),
+      ],
     );
   }
 
@@ -346,6 +323,7 @@ class _AboutTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final versionAsync = ref.watch(appVersionProvider);
+    final colors = context.theme.colors;
     final subtitle = versionAsync.when(
       loading: () => l10n.settingsAboutSubtitle('…'),
       error: (_, _) => l10n.settingsAboutSubtitle('?'),
@@ -360,47 +338,27 @@ class _AboutTile extends ConsumerWidget {
         return '$base · $shortSha';
       },
     );
-    return FTile(
-      title: Text(l10n.settingsAboutTitle),
-      prefix: const Icon(Icons.info_outline),
-      subtitle: Text(subtitle),
-    );
-  }
-}
-
-class _CompactDensityTile extends ConsumerWidget {
-  const _CompactDensityTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final compact = ref.watch(compactDensityProvider);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          const Icon(Icons.density_medium_outlined),
-          const SizedBox(width: 16),
+          Icon(Icons.info_outline, size: 18, color: colors.mutedForeground),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(l10n.settingsCompactDensityTitle),
+                Text(l10n.settingsAboutTitle, style: context.theme.typography.sm),
+                const SizedBox(height: 2),
                 Text(
-                  l10n.settingsCompactDensitySubtitle,
+                  subtitle,
                   style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
+                    color: colors.mutedForeground,
                   ),
                 ),
               ],
             ),
-          ),
-          FSwitch(
-            value: compact,
-            onChange: (next) {
-              Haptics.selection();
-              ref.read(compactDensityProvider.notifier).set(next);
-            },
           ),
         ],
       ),
@@ -438,48 +396,58 @@ class _RiskThresholdSettings extends ConsumerWidget {
         _ThresholdSlider(
           icon: Icons.account_balance_wallet_outlined,
           label: l10n.settingsRiskAssetLabel,
-          subtitle: l10n.settingsRiskAssetSubtitle,
           value: thresholds.assetWarning,
           onChanged: (v) =>
               ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
         ),
+        _SectionDivider(),
         _ThresholdSlider(
           icon: Icons.category_outlined,
           label: l10n.settingsRiskSectorLabel,
-          subtitle: l10n.settingsRiskSectorSubtitle,
           value: thresholds.sectorWarning,
           onChanged: (v) => ref
               .read(concentrationThresholdsProvider.notifier)
               .updateSector(v),
         ),
+        _SectionDivider(),
         _ThresholdSlider(
           icon: Icons.public,
           label: l10n.settingsRiskRegionLabel,
-          subtitle: l10n.settingsRiskRegionSubtitle,
           value: thresholds.regionWarning,
           onChanged: (v) => ref
               .read(concentrationThresholdsProvider.notifier)
               .updateRegion(v),
         ),
+        _SectionDivider(),
         _ThresholdSlider(
           icon: Icons.currency_exchange,
           label: l10n.settingsRiskCurrencyLabel,
-          subtitle: l10n.settingsRiskCurrencySubtitle,
           value: thresholds.currencyWarning,
           onChanged: (v) => ref
               .read(concentrationThresholdsProvider.notifier)
               .updateCurrency(v),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: FButton(
+            child: FTappable(
               onPress: () => ref
                   .read(concentrationThresholdsProvider.notifier)
                   .resetToDefaults(),
-              variant: FButtonVariant.ghost,
-              child: Text(l10n.settingsRiskResetDefaults),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 4,
+                ),
+                child: Text(
+                  l10n.settingsRiskResetDefaults,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -488,51 +456,59 @@ class _RiskThresholdSettings extends ConsumerWidget {
   }
 }
 
+/// Compact slider row — icon + label on top of a thin slider + trailing
+/// percent. Single block of vertical real estate per threshold.
 class _ThresholdSlider extends StatelessWidget {
   const _ThresholdSlider({
     required this.icon,
     required this.label,
-    required this.subtitle,
     required this.value,
     required this.onChanged,
   });
 
   final IconData icon;
   final String label;
-  final String subtitle;
   final double value;
   final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return FTile(
-      title: Text(label),
-      prefix: Icon(icon),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
         children: [
-          Text(subtitle),
-          Row(
-            children: [
-              Expanded(
-                child: FSlider(
-                  control: FSliderControl.managedContinuous(
-                    initial: FSliderValue(max: (value - 0.05) / 0.90),
-                    onChange: (v) => onChanged(0.05 + v.max * 0.90),
-                  ),
-                  tooltipBuilder: (_, v) =>
-                      Text('${((0.05 + v * 0.90) * 100).round()}%'),
-                ),
+          Icon(icon, size: 18, color: colors.mutedForeground),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: context.theme.typography.sm,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            child: FSlider(
+              control: FSliderControl.managedContinuous(
+                initial: FSliderValue(max: (value - 0.05) / 0.90),
+                onChange: (v) => onChanged(0.05 + v.max * 0.90),
               ),
-              SizedBox(
-                width: 48,
-                child: Text(
-                  '${(value * 100).round()}%',
-                  style: context.theme.typography.sm,
-                  textAlign: TextAlign.end,
-                ),
+              tooltipBuilder: (_, v) =>
+                  Text('${((0.05 + v * 0.90) * 100).round()}%'),
+            ),
+          ),
+          SizedBox(
+            width: 44,
+            child: Text(
+              '${(value * 100).round()}%',
+              style: context.theme.typography.sm.copyWith(
+                color: colors.mutedForeground,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
-            ],
+              textAlign: TextAlign.end,
+            ),
           ),
         ],
       ),

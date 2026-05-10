@@ -8,6 +8,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/liability_summary.dart';
@@ -61,7 +62,7 @@ class LiabilitiesPage extends ConsumerWidget {
     if (embedded) return body;
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle)),
+      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(color: Colors.transparent, child: body),
     );

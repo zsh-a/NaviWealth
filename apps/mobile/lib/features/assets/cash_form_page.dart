@@ -14,6 +14,7 @@ import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
@@ -204,6 +205,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
         title: Text(
           widget.isEdit ? l10n.cashFormEditTitle : l10n.cashFormCreateTitle,
         ),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           if (widget.isEdit)
             FHeaderAction(

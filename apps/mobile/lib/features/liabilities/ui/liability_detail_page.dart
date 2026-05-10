@@ -24,7 +24,7 @@ class LiabilityDetailPage extends ConsumerWidget {
     final summaryAsync = ref.watch(liabilitySummaryProvider(id));
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle)),
+      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(
         color: Colors.transparent,

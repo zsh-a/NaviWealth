@@ -9,6 +9,7 @@ import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'expense_list_content.dart';
 import 'expense_list_models.dart';
@@ -80,6 +81,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.navExpenses),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.insights_outlined),

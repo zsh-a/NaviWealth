@@ -24,6 +24,7 @@ class SyncStatusPage extends ConsumerWidget {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.syncStatusTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.refresh),
@@ -32,18 +33,15 @@ class SyncStatusPage extends ConsumerWidget {
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: eventAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(l10n.syncStatusBusError(e.toString())),
-            ),
+      child: eventAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(l10n.syncStatusBusError(e.toString())),
           ),
-          data: (event) => _Body(event: event),
         ),
+        data: (event) => _Body(event: event),
       ),
     );
   }
@@ -130,43 +128,41 @@ class _HeroCard extends StatelessWidget {
     final palette = _palette(context, event.status);
     final syncing = event.status == SyncStatus.syncing;
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
-        child: Row(
-          children: [
-            _StatusOrb(palette: palette, status: event.status),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _statusHeadline(l10n, event.status),
-                    style: context.theme.typography.lg.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
+      child: Row(
+        children: [
+          _StatusOrb(palette: palette, status: event.status),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _statusHeadline(l10n, event.status),
+                  style: context.theme.typography.lg.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _heroSubtitle(l10n, event),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _heroSubtitle(l10n, event),
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            if (onSyncNow != null && !syncing) ...[
-              const SizedBox(width: 8),
-              FButton(
-                variant: FButtonVariant.ghost,
-                onPress: onSyncNow,
-                child: Text(l10n.syncStatusActionSyncNow),
-              ),
-            ],
+          ),
+          if (onSyncNow != null && !syncing) ...[
+            const SizedBox(width: 8),
+            FButton(
+              variant: FButtonVariant.ghost,
+              onPress: onSyncNow,
+              child: Text(l10n.syncStatusActionSyncNow),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -273,35 +269,33 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: accent ?? context.theme.colors.mutedForeground,
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: accent ?? context.theme.colors.mutedForeground,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: context.theme.typography.lg.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              color: accent ?? context.theme.colors.foreground,
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: context.theme.typography.lg.copyWith(
-                fontWeight: FontWeight.w600,
-                fontFeatures: const [FontFeature.tabularFigures()],
-                color: accent ?? context.theme.colors.foreground,
-              ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -319,25 +313,23 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final semantic = SemanticColors.of(context);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SelectableText(
-                message,
-                style: context.theme.typography.xs.copyWith(
-                  color: semantic.onDangerContainer,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+    return SoftCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SelectableText(
+              message,
+              style: context.theme.typography.xs.copyWith(
+                color: semantic.onDangerContainer,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -363,7 +355,7 @@ class _DiagnosticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
+    return SoftCard(
       child: Column(
         children: [
           _Row(label: l10n.syncStatusDetailState, value: event.status.name),
@@ -422,11 +414,9 @@ class _LocalCountsCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     if (counts == null) {
-      return const FCard.raw(
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: Center(child: FCircularProgress()),
-        ),
+      return const SoftCard(
+        padding: EdgeInsets.all(12),
+        child: Center(child: FCircularProgress()),
       );
     }
 
@@ -458,35 +448,33 @@ class _LocalCountsCard extends StatelessWidget {
       );
     }
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              child: Text(
-                l10n.syncStatusLocalCountsHeader,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                  letterSpacing: 0.4,
-                ),
+    return SoftCard(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Text(
+              l10n.syncStatusLocalCountsHeader,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+                letterSpacing: 0.4,
               ),
             ),
-            for (var i = 0; i < kSyncLocalCountIds.length; i += 2)
-              Row(
-                children: [
-                  Expanded(child: cell(kSyncLocalCountIds[i])),
-                  Expanded(
-                    child: i + 1 < kSyncLocalCountIds.length
-                        ? cell(kSyncLocalCountIds[i + 1])
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-          ],
-        ),
+          ),
+          for (var i = 0; i < kSyncLocalCountIds.length; i += 2)
+            Row(
+              children: [
+                Expanded(child: cell(kSyncLocalCountIds[i])),
+                Expanded(
+                  child: i + 1 < kSyncLocalCountIds.length
+                      ? cell(kSyncLocalCountIds[i + 1])
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

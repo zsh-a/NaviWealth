@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/expense_report_providers.dart';
 import 'expense_report_content.dart';
@@ -14,7 +15,7 @@ class ExpenseReportPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final reportAsync = ref.watch(expenseReportProvider);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.expenseReportAppBarTitle)),
+      header: FHeader.nested(title: Text(l10n.expenseReportAppBarTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(
         color: Colors.transparent,

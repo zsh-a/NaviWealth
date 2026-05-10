@@ -24,6 +24,7 @@ class RebalancePage extends ConsumerWidget {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.rebalanceTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.tune),

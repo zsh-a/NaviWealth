@@ -26,6 +26,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
           data: (a) => Text(a?.name ?? l10n.physicalAssetNotFound),
           orElse: () => const SizedBox.shrink(),
         ),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           assetAsync.maybeWhen(
             data: (a) => a == null

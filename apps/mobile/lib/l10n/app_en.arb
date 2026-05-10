@@ -89,6 +89,8 @@
   "@aiInsightsPanelTitle": { "description": "Collapsible section title under the AI chat that links to FIRE / Rebalance / Analytics" },
   "aiInsightsRebalanceTitle": "Rebalance",
   "@aiInsightsRebalanceTitle": { "description": "Insights panel link label for the Rebalance detail page" },
+  "aiChatSessionActionsTitle": "Conversation",
+  "@aiChatSessionActionsTitle": { "description": "Title shown on the AI chat session more-actions sheet" },
   "dashboardNetWorthAssetsLabel": "Assets",
   "@dashboardNetWorthAssetsLabel": { "description": "Net-worth breakdown stat: assets total" },
   "dashboardNetWorthLiabilitiesLabel": "Liabilities",
@@ -97,6 +99,10 @@
   "@portfolioAssetsTab": { "description": "Portfolio segmented control: assets sub-tab" },
   "portfolioLiabilitiesTab": "Liabilities",
   "@portfolioLiabilitiesTab": { "description": "Portfolio segmented control: liabilities sub-tab" },
+  "globalActionPanelTitle": "Quick add",
+  "@globalActionPanelTitle": { "description": "Title of the global '+' action sheet" },
+  "assetsAddSheetTitle": "Add asset",
+  "@assetsAddSheetTitle": { "description": "Title of the Asset action sheet (sub-panel of the global +)" },
   "superFabTrade": "Trade",
   "superFabExpense": "Expense",
   "superFabAsset": "Asset",
@@ -1359,6 +1365,8 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
+  "settingsAccountSection": "Account",
+  "@settingsAccountSection": { "description": "Settings section header for account-level preferences" },
   "settingsDataSection": "Data",
   "@settingsDataSection": { "description": "Settings section header for backup/restore" },
   "settingsDataTitle": "Backup & Restore",

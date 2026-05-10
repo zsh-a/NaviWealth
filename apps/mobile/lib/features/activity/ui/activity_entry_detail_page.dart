@@ -37,7 +37,7 @@ class ActivityEntryDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.activityEntryDetailTitle)),
+      header: FHeader.nested(title: Text(l10n.activityEntryDetailTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(
         color: Colors.transparent,

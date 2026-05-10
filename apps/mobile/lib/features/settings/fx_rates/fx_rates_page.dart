@@ -26,6 +26,7 @@ class FxRatesPage extends ConsumerWidget {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.fxRatesAppBarTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.sync),
@@ -34,13 +35,10 @@ class FxRatesPage extends ConsumerWidget {
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: ratesAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text('$e')),
-          data: (rates) => _RateList(rates: rates),
-        ),
+      child: ratesAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (rates) => _RateList(rates: rates),
       ),
     );
   }
@@ -90,22 +88,25 @@ class _RateList extends ConsumerWidget {
     final dateFmt = DateFormat.yMMMd();
     // Most-recent first.
     final ordered = [...rates]..sort((a, b) => b.date.compareTo(a.date));
+    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
     return ListView.separated(
+      padding: const EdgeInsets.all(16),
       itemCount: ordered.length,
-      separatorBuilder: (_, _) => const FDivider(),
+      separatorBuilder: (_, _) => const SizedBox(height: 6),
       itemBuilder: (ctx, i) {
         final r = ordered[i];
         return Dismissible(
           key: ValueKey('${r.base}-${r.quote}-${r.date.toIso8601String()}'),
           direction: DismissDirection.endToStart,
           background: Container(
-            color: Theme.of(ctx).colorScheme.errorContainer,
+            decoration: BoxDecoration(
+              color: semantic.dangerContainer,
+              borderRadius: BorderRadius.circular(14),
+            ),
             alignment: AlignmentDirectional.centerEnd,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(
-              Icons.delete_outline,
-              color: Theme.of(ctx).colorScheme.onErrorContainer,
-            ),
+            child: Icon(Icons.delete_outline, color: semantic.danger),
           ),
           confirmDismiss: (_) async {
             final repo = await ref.read(fxRateRepositoryProvider.future);
@@ -116,10 +117,49 @@ class _RateList extends ConsumerWidget {
             );
             return true;
           },
-          child: FTile(
-            title: Text('1 ${r.base} = ${r.rate} ${r.quote}'),
-            prefix: const Icon(Icons.currency_exchange),
-            subtitle: Text('${dateFmt.format(r.date)} · ${r.source}'),
+          child: SoftCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: colors.foreground.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.currency_exchange,
+                    size: 18,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '1 ${r.base} = ${r.rate} ${r.quote}',
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w500,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${dateFmt.format(r.date)} · ${r.source}',
+                        style: context.theme.typography.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

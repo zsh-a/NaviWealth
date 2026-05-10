@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
@@ -13,10 +13,7 @@ class SettingsPage extends StatelessWidget {
     return FScaffold(
       header: FHeader.nested(title: Text(l10n.settingsAppBarTitle)),
       childPad: false,
-      child: const Material(
-        color: Colors.transparent,
-        child: SettingsOverview(),
-      ),
+      child: const SettingsOverview(),
     );
   }
 }

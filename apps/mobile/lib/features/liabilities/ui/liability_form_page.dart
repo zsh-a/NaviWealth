@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
@@ -87,6 +88,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.liabilitiesAddAction),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

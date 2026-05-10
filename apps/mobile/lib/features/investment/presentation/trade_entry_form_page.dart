@@ -14,6 +14,7 @@ import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../data/securities_catalog/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
@@ -404,7 +405,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.tradeEntryAppBarTitle)),
+      header: FHeader.nested(title: Text(l10n.tradeEntryAppBarTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(
         color: Colors.transparent,

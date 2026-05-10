@@ -254,6 +254,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
               ? l10n.expenseFormEditTitle
               : l10n.expenseFormCreateTitle,
         ),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           if (widget.isEdit)
             FHeaderAction(
