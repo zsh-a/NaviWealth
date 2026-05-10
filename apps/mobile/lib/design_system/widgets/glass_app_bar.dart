@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
-import 'scroll_state.dart';
-
-/// Drop-in [AppBar] replacement with iOS 26 Liquid Glass rendering.
-///
-/// Delegates to the package's `GlassAppBar` from `liquid_glass_widgets`,
-/// which provides shader-based glassmorphism plus automatic accessibility
-/// fallbacks (Reduce Transparency, Reduce Motion). The app's root
-/// `AdaptiveLiquidGlassLayer` (installed in `app.dart`) supplies the
-/// shader render link, so individual app bars share that layer instead
-/// of capturing their own backdrop.
+/// Flat AppBar replacement. The original wrapper rendered a frosted-glass
+/// surface via `liquid_glass_widgets`; after the Forui migration this is
+/// a plain Material `AppBar` whose styling is provided by `AppTheme`
+/// (transparent surface tint, no elevation, hairline divider implied by
+/// the page padding). Public API unchanged so existing call sites compile.
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GlassAppBar({
     super.key,
@@ -20,7 +14,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
     this.automaticallyImplyLeading = true,
     this.centerTitle,
-    this.quality,
+    this.quality, // retained for binary compat; ignored
   });
 
   final Widget? title;
@@ -29,7 +23,9 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final PreferredSizeWidget? bottom;
   final bool automaticallyImplyLeading;
   final bool? centerTitle;
-  final lgw.GlassQuality? quality;
+
+  /// Glass-era quality knob. No-op now; keeps the call sites unchanged.
+  final Object? quality;
 
   @override
   Size get preferredSize {
@@ -39,32 +35,17 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isScrolling = ScrollingScope.of(context);
-    final effectiveLeading =
-        leading ??
-        (automaticallyImplyLeading && Navigator.canPop(context)
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null);
-    final effectiveQuality =
-        quality ?? (isScrolling ? lgw.GlassQuality.minimal : null);
-
-    final appBar = lgw.GlassAppBar(
+    return AppBar(
       title: title,
-      leading: effectiveLeading,
+      leading: leading,
       actions: actions,
-      centerTitle: centerTitle ?? true,
-      preferredSize: const Size.fromHeight(kToolbarHeight),
-      quality: effectiveQuality,
-    );
-
-    if (bottom == null) return appBar;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [appBar, bottom!],
+      bottom: bottom,
+      automaticallyImplyLeading: automaticallyImplyLeading,
+      centerTitle: centerTitle ?? false,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
     );
   }
 }

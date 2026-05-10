@@ -1,10 +1,10 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../../core/haptics/haptics.dart';
 import '../tokens/color_palette.dart';
+import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
@@ -309,15 +309,19 @@ class _GlassActionChip extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final tokens = GlassTokens.of(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: lgw.GlassContainer(
-        quality: lgw.GlassQuality.minimal,
+      child: Container(
         height: height,
         margin: const EdgeInsets.symmetric(horizontal: Spacing.s24),
         padding: const EdgeInsets.symmetric(horizontal: _actionHorizontalPadding),
-        shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.full),
+        decoration: BoxDecoration(
+          color: tokens.surfaceColor,
+          borderRadius: BorderRadius.circular(Radii.full),
+          border: Border.all(color: tokens.hairlineColor, width: 1),
+        ),
         clipBehavior: Clip.antiAlias,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

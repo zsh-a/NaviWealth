@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -235,8 +234,7 @@ class _PanelShell extends StatelessWidget {
                 ),
               ),
             ),
-            child: lgw.GlassContainer(
-              child: Padding(
+            child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   Spacing.s16,
                   Spacing.s16,
@@ -276,7 +274,6 @@ class _PanelShell extends StatelessWidget {
                 ),
               ),
             ),
-          ),
           Expanded(child: child),
         ],
       ),

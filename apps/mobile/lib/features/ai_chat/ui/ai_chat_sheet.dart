@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../../../app/route_paths.dart';
 import '../../../core/auth/providers.dart';
@@ -140,19 +139,14 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
               boxShadow: AppElevations.of(context).level3,
             ),
             child: Material(
-              color: Colors.transparent,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: Radii.brXl,
               child: ClipRRect(
                 borderRadius: Radii.brXl,
-                child: lgw.GlassContainer(
-                  shape: const lgw.LiquidRoundedRectangle(
-                    borderRadius: Radii.xl,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: SizedBox(
-                    width: _sheetW,
-                    height: _sheetH,
-                    child: Column(
+                child: SizedBox(
+                  width: _sheetW,
+                  height: _sheetH,
+                  child: Column(
                       children: [
                         // Drag handle — only this area initiates drag.
                         GestureDetector(
@@ -192,9 +186,8 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
               ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
   }
 }
 

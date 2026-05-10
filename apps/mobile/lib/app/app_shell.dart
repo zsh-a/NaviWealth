@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../design_system/design_system.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
@@ -163,21 +162,14 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glowColors = lgw.GlassThemeData.of(context).glowColorsFor(context);
-
     final platform = Theme.of(context).platform;
     final isIOS =
         platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = GlassTokens.of(context);
 
-    // Per-shell `GlassBackdropScope` forces a fresh backdrop capture when
-    // the shell first mounts. Without it, premium glass surfaces inside
-    // the shell (notably `GlassBottomBar` below) can sample a stale or
-    // uninitialised root backdrop on the very first frame — visible on
-    // Android as a black screen that only clears once a scroll triggers
-    // invalidation. See liquid_glass_widgets README §"Backdrop Isolation".
-    return lgw.GlassBackdropScope(
-      child: Stack(
+    return Stack(
       children: [
         Positioned.fill(
           child: Padding(
@@ -193,30 +185,33 @@ class _MobileShell extends StatelessWidget {
             style: DefaultTextStyle.of(
               context,
             ).style.copyWith(decoration: TextDecoration.none),
-            child: Builder(
-              builder: (context) {
-                final isScrolling = ScrollingScope.of(context);
-                return lgw.GlassBottomBar(
-                  barHeight: barHeight,
-                  verticalPadding: 0,
-                  labelFontSize: 10,
-                  iconLabelSpacing: 0,
-                  quality: isScrolling
-                      ? lgw.GlassQuality.minimal
-                      : lgw.GlassQuality.premium,
-                  selectedIndex: selectedIndex,
-                  onTabSelected: onDestinationSelected,
-                  tabs: [
-                    for (final d in destinations)
-                      lgw.GlassBottomBarTab(
-                        label: d.label,
-                        icon: Icon(d.icon),
-                        activeIcon: Icon(d.selectedIcon),
-                        glowColor: glowColors.primary,
-                      ),
-                  ],
-                );
-              },
+            child: Container(
+              height: barHeight,
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                border: Border(
+                  top: BorderSide(color: tokens.hairlineColor, width: 1),
+                ),
+              ),
+              child: NavigationBar(
+                height: barHeight,
+                backgroundColor: Colors.transparent,
+                indicatorColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onDestinationSelected,
+                labelBehavior:
+                    NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: [
+                  for (final d in destinations)
+                    NavigationDestination(
+                      icon: Icon(d.icon),
+                      selectedIcon: Icon(d.selectedIcon),
+                      label: d.label,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -233,7 +228,6 @@ class _MobileShell extends StatelessWidget {
           ),
         ),
       ],
-      ),
     );
   }
 }
@@ -253,31 +247,34 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // See `_MobileShell` for why this scope wraps the shell.
-    return lgw.GlassBackdropScope(
-      child: Scaffold(
-        body: SafeArea(
-          child: Row(
-            children: [
-              lgw.GlassSideBar(
-                width: 128,
-                children: [
-                  for (var i = 0; i < destinations.length; i++)
-                    lgw.GlassSideBarItem(
-                      icon: Icon(
-                        i == selectedIndex
-                            ? destinations[i].selectedIcon
-                            : destinations[i].icon,
-                      ),
-                      label: destinations[i].label,
-                      isSelected: i == selectedIndex,
-                      onTap: () => onDestinationSelected(i),
+    final tokens = GlassTokens.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  right: BorderSide(color: tokens.hairlineColor, width: 1),
+                ),
+              ),
+              child: NavigationRail(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onDestinationSelected,
+                labelType: NavigationRailLabelType.all,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                destinations: [
+                  for (final d in destinations)
+                    NavigationRailDestination(
+                      icon: Icon(d.icon),
+                      selectedIcon: Icon(d.selectedIcon),
+                      label: Text(d.label),
                     ),
                 ],
               ),
-              Expanded(child: _GlobalActionHost(child: child)),
-            ],
-          ),
+            ),
+            Expanded(child: _GlobalActionHost(child: child)),
+          ],
         ),
       ),
     );
@@ -304,13 +301,11 @@ class _DesktopShell extends StatelessWidget {
     // pages (Accounts / Assets / AI Chat) intentionally fill the full
     // remaining width to give the splitter room to breathe.
     //
-    // See `_MobileShell` for why this scope wraps the shell.
-    return lgw.GlassBackdropScope(
-      child: Scaffold(
-        body: SafeArea(
-          child: Row(
-            children: [
-              DesktopSidebar(
+    return Scaffold(
+      body: SafeArea(
+        child: Row(
+          children: [
+            DesktopSidebar(
                 destinations: [
                   for (final d in destinations)
                     DesktopSidebarDestination(
@@ -322,9 +317,8 @@ class _DesktopShell extends StatelessWidget {
                 selectedIndex: selectedIndex,
                 onDestinationSelected: onDestinationSelected,
               ),
-              Expanded(child: _GlobalActionHost(child: child)),
-            ],
-          ),
+            Expanded(child: _GlobalActionHost(child: child)),
+          ],
         ),
       ),
     );

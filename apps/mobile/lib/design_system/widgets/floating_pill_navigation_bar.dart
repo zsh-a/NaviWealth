@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 
 import '../tokens/color_palette.dart';
+import '../tokens/glass_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
@@ -60,13 +60,17 @@ class FloatingPillNavigationBar extends StatelessWidget {
     final mid = destinations.length ~/ 2;
     final leftDests = destinations.sublist(0, mid);
     final rightDests = destinations.sublist(mid);
+    final tokens = GlassTokens.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _horizontalMargin),
-      child: lgw.GlassContainer(
-        quality: lgw.GlassQuality.premium,
+      child: Container(
         height: _barHeight,
-        shape: const lgw.LiquidRoundedSuperellipse(borderRadius: Radii.xxl),
+        decoration: BoxDecoration(
+          color: tokens.surfaceColor,
+          borderRadius: BorderRadius.circular(Radii.xxl),
+          border: Border.all(color: tokens.hairlineColor, width: 1),
+        ),
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
