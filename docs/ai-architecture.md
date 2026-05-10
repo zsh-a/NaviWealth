@@ -191,59 +191,155 @@ Worker 工具返回 tool_result 时附带 freshness 元数据
 
 ### 4.3 Cloud AI Read Models（主通道，★ 待建）
 
-NaviWealth 当前缺少这一层 — 现在 `tools.rs` 的 `get_holdings` / `compute_net_worth` / `get_industry_breakdown` 都是每次调用从 `journal_entries` 现算。这在小账本上工作但不可持续：
+NaviWealth 当前缺少这一层。现状：
 
-- 浪费 D1 CPU（每次 chat 重算所有持仓）
-- 复杂查询（XIRR / 跨期 cashflow）每次重做
-- 没有 `last_updated_at` → 无法做 freshness gate
-- 难以做版本化（算法变了，历史缓存不知道是新还是旧）
+- `get_holdings` / `compute_net_worth` / `get_industry_breakdown` 每次从 `journal_entries` 现算 — 浪费 D1 CPU，无 freshness 元数据，无版本化
+- `get_journal_entries` 接受较宽 filter（unit / account_id / 日期 / limit≤200），实质上是受限度但**仍偏向 raw ledger scan** 的接口
 
-#### Read Model 表 schema 要求
+目标不是「snapshot only」也不是「直接查 journal_entries」，而是 **三层访问模型**。
+
+#### 4.3.1 三层访问模型
+
+```text
+┌──────────────────────────────────────────┐
+│ Layer 1 — Snapshot                       │ ← AI 默认入口
+│   小、快、稳定、跨期增量更新                │   90% chat 流量
+│   holdings / net_worth / monthly_spend...│
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│ Layer 2 — Analytical                     │ ← AI 最爱消费
+│   预分析的结构化中间结果                    │   token 密度高
+│   recurring / anomaly / xirr / cluster   │   语义清晰
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│ Layer 3 — Scoped Detail                  │ ← drill-down 才启用
+│   必填 filter + 硬限额 + 预聚合 summary    │   答 "为什么/哪些"
+│   read_transaction_slice / window_*      │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│ Raw Write-side Truth (D1)                │
+│ journal_entries / postings               │   ★ AI 永远不能直接访问
+└──────────────────────────────────────────┘
+```
+
+**强制访问规则**:
+
+| 场景 | 允许哪一层 | 工具示例 |
+|------|----------|---------|
+| AI 默认（routine chat） | Snapshot + Analytical | `get_holdings` / `get_anomaly_flags` |
+| Drill-down（"为什么餐饮暴涨"） | + Scoped Detail | `read_transaction_slice(category=Dining, range=...)` |
+| 自由 SQL / `SELECT * FROM journal_entries` | **永远禁止** | — |
+
+为什么不能只有 Snapshot：AI 看不到 detail 时只能胡猜「为什么」。
+为什么不能直接 raw ledger：token 爆炸 / prompt injection（恶意 memo 可能改 LLM 行为）/ 隐私边界失控 / planner 自由 scan 成本失控。
+
+#### 4.3.2 Layer 1 — Snapshot
+
+特点: 小、快、稳定、跨期增量更新。
+
+| 表 | 业务定义 | 优先级 |
+|----|---------|-------|
+| `holdings_snapshot` | per-asset 净持仓 + 市值 + 成本基础 | P0 |
+| `net_worth_snapshot` | per-day 净资产单值 | P0 |
+| `monthly_spend_by_category` | 月 × 类目 的总额 + 笔数 | P0 |
+| `cashflow_buckets_6m` | 近 6 月 inflow/outflow 桶 | P1 |
+| `asset_allocation_snapshot` | 当前类别 / 地理 / 市值分布 | P1 |
+
+适合的查询: "本月支出多少" / "净资产趋势" / "股票占比" / "现金流"。
+
+#### 4.3.3 Layer 2 — Analytical
+
+特点: 预分析的结构化中间结果。**AI 最适合消费的层** —— 比 snapshot 更有解释力，比 raw ledger 更安全。
+
+| 模型 | 结构示例 | 优先级 |
+|-----|---------|-------|
+| `recurring_patterns` | `{ merchant, frequency, last_amount, trend }` | P1 |
+| `anomaly_flags` | `{ category, delta_pct, reason_hint }` | P1 |
+| `investment_performance` | `{ ticker, xirr, holding_days }` | P1 |
+| `subscription_changes` | `{ merchant, prev_amount, new_amount, since }` | P1 |
+| `spending_clusters` | `{ cluster, transactions, total }` (e.g. "Japan Trip") | P2 |
+| `goal_progress_projection` | FIRE 进度 + 残余年数预测 | P2 |
+| `tax_lot_analysis` | per-lot 实/未实现盈亏 | P2 |
+| `financial_behavior_profile` | 储蓄率 / 风险偏好 / 节奏 | P2 |
+
+注：`recurring_patterns` / `anomaly_flags` 在端侧也有同名 detector（rules 实现）。**端侧是唯一的计算者**；云端 read model 是端侧上报后的快照投影而非重算结果，避免 Dart/Rust 两份启发式漂移。同步路径：端侧 detector 跑 → ContextPack 上报 → backend 写入 read model 表（带 `source_device_id`）。
+
+#### 4.3.4 Layer 3 — Scoped Detail
+
+> 这是 raw ledger scan 的唯一替代。`get_journal_entries` 应被废弃。
+
+特点: 仅在 drill-down 触发时启用；必填 filter、硬限额、与预聚合 summary 同发、字段 sanitised。
+
+工具示例:
+
+```rust
+read_transaction_slice(
+    category: String,                // 必填
+    range: DateRange,                // 必填，最大 31 天窗口
+    limit: u8,                       // 1..=50
+    merchant: Option<String>,
+    account_id: Option<AccountId>,
+    purpose: DisclosurePurpose,      // drill_down_anomaly / cluster_explain / refund_check / ...
+)
+```
+
+返回:
+
+```json
+{
+  "summary": { "count": 34, "total_minor": 120000, "currency": "USD" },
+  "transactions": [
+    { "merchant_hashed": "h_xxx", "amount_minor": 1250, "date": "2026-04-02" }
+  ],
+  "freshness": { "read_model_hlc": "01939...", "schema_version": 1 }
+}
+```
+
+铁律:
+
+- **必填 filter** —— 没有 category/range 就拒绝调用
+- **硬限额** —— 一次返回 ≤ 50 行；分页必须新 tool_call
+- **预聚合 summary 优先** —— 即便明细给了，先给 summary 让 LLM 优先消费聚合
+- **sanitised 字段** —— `merchant_hashed` / `account_kind` 而非名字
+- **purpose-bound** —— 每次调用必须声明 `purpose`，写入 AiTrace
+- **policy 强制** —— `risk_policy` 在 enforced 模式下检查 purpose 与意图匹配
+
+工具栈替换关系:
+
+| 旧 | 新 | 说明 |
+|----|----|------|
+| `get_journal_entries(unit, account_id, from, to, limit≤200)` | `read_transaction_slice` 系列 | 旧工具的"按 unit 过滤"等用法分别落到 `read_asset_window` / `read_account_window` / `read_category_window` |
+
+#### 4.3.5 Schema 公约（三层共享）
 
 每个 read model 表必须有：
 
 ```sql
-CREATE TABLE read_model_<name> (
-  user_id TEXT NOT NULL,
-  -- domain columns（按 read model 各自定义）
-  ...
-  -- ★ 通用列
-  source_hlc_watermark TEXT NOT NULL,    -- 该行依据的 OpLog 最高 HLC
-  refreshed_at TEXT NOT NULL,            -- ISO 时间戳，仅做 debug
-  schema_version INTEGER NOT NULL,        -- 列结构版本
-  calculation_version INTEGER NOT NULL,   -- 算法版本，改算法就 +1
-  PRIMARY KEY (user_id, /* domain key */)
-);
+source_hlc_watermark TEXT NOT NULL,    -- freshness gate 真值（HLC，非 wall-clock）
+refreshed_at TEXT NOT NULL,            -- ISO 时间戳，仅做 debug
+schema_version INTEGER NOT NULL,        -- 列结构版本
+calculation_version INTEGER NOT NULL,   -- 算法版本，改算法就 +1
 ```
 
-`source_hlc_watermark` 是 freshness gate 的真值依据（HLC 已是 NaviWealth 同步的真值时序，比 wall-clock 可靠）。
+`source_hlc_watermark` 用 HLC（NaviWealth 同步真值时序）—— wall-clock 在多设备场景容易被时钟漂移误导。
 
-#### 三档刷新策略
+#### 4.3.6 三档刷新策略
 
-不是所有 read model 都需要写后立即刷新。按对应业务的「容忍 stale 程度」分档：
+不是所有 read model 都需要写后立即刷新：
 
-| 档 | 触发 | 适用 read models |
-|----|------|----------------|
-| **同步刷新** (write 路径里直接更新对应行) | journal_entries / postings 写入 | `holdings_snapshot`、`monthly_spend_by_category` 当前月、`net_worth_snapshot` 当前日 |
-| **异步队列** (Worker queue 触发) | 批写后异步重算 | `cashflow_buckets_6m`、`xirr_snapshot`、`asset_allocation_snapshot` |
-| **夜间/低频** (cron) | 定时任务 | `recurring_patterns`、`anomaly_flags`、`refund_links` |
+| 档 | 触发 | 适用 |
+|----|------|------|
+| **同步刷新**（write 路径直接更新行） | journal_entries / postings 写入 | Snapshot 层 hot rows（当前月 / 当前日 / 持仓） |
+| **异步队列**（Worker queue 触发） | 批写后异步重算 | Snapshot 冷区 + Analytical 大部分（recurring / anomaly / subscription_changes） |
+| **夜间 cron** | 定时任务 | Analytical 重算成本高的（cluster / tax_lot / behavior_profile） |
 
-**关键**: write 路径不能被 AI projection 拖慢；允许短暂 stale，由 freshness gate 兜底。
-
-#### Read Model 优先级清单
-
-| 优先级 | Read Model | 为什么 |
-|--------|-----------|--------|
-| **P0** | `holdings_snapshot` | 每次 `get_holdings` 都需要 |
-| **P0** | `net_worth_snapshot` | dashboard 主指标 |
-| **P0** | `monthly_spend_by_category` | spending 类查询主力 |
-| P1 | `cashflow_buckets_6m` | 跨期 cashflow 分析 |
-| P1 | `asset_allocation_snapshot` | 类目/地理/市值分布 |
-| P2 | `xirr_snapshot` | XIRR 不变常常 stale 也 OK |
-| P2 | `recurring_patterns` | 端侧 detector 已有，云端是「同步快照」 |
-| P2 | `anomaly_flags` | 同上 |
-
-注：P2 的三个端侧 detector 仍由端侧负责，云端 read model 是端侧上报后的同步快照而非重算结果 — 避免 Dart/Rust 两份启发式逻辑漂移。
+**关键**: write 路径不能被 AI projection 拖慢。允许短暂 stale，由 freshness gate 兜底。
 
 ### 4.4 Runtime 抽象（可插拔执行层，★ 待重构）
 
@@ -481,12 +577,14 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | **Phase 2-C** | ToolDescriptor 元数据 + risk_policy（advisory） | ✅ |
 | **Phase 3** | NL→QueryPlan + 5 类 plan + InMemoryExecutor | ✅ |
 | **Phase 4** | Embedder 抽象 + InMemoryVectorStore + SemanticMemory（StubEmbedder） | ✅ |
-| **★ Cloud AI Read Models 层** | holdings_snapshot / net_worth_snapshot / monthly_spend_by_category | ❌ **缺失（主通道未建）** |
+| **★ Read Models — Snapshot 层** | holdings / net_worth / monthly_spend / cashflow_buckets / asset_allocation | ❌ **缺失（主通道未建）** |
+| **★ Read Models — Analytical 层** | recurring / anomaly / xirr / subscription_changes / cluster / behavior | ❌ 缺失 |
+| **★ Read Models — Scoped Detail 层** | `read_transaction_slice` 等受控 detail 工具 | ❌ 缺失（当前 `get_journal_entries` 是半受控 raw scan，需废弃） |
 | **★ Runtime 抽象层** | `AiRuntime` interface + `RuntimeRegistry` | ❌ 当前 `Backend` 枚举写死 |
 | **★ Freshness gate 协议** | tool_result 带 read_model_hlc + 端侧比对 + request_freshness_refresh | ❌ 类型已定义、协议未实现 |
 | **Phase 5** | 端侧真实 LLM runtime + 模型下载/校验 | ❌ 未实现 |
 
-**测试覆盖**: 153 mobile + 53 backend，全绿。`flutter analyze --fatal-infos` 与 `cargo clippy -D warnings` 均干净 — 但这只覆盖了已实现的 5/8 个层。
+**测试覆盖**: 153 mobile + 53 backend，全绿。`flutter analyze --fatal-infos` 与 `cargo clippy -D warnings` 均干净 — 但只覆盖已实现的层；Read Models 三层、Runtime 抽象、Freshness 协议尚未触及。
 
 ## 8. TODO
 
@@ -494,27 +592,30 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 
 ### P0 — 主通道缺失，启用云端 AI 的前置条件
 
-- [ ] **AI Read Models — P0 三表** (`apps/backend/src/ai/read_models/`)
+- [ ] **Read Models — Snapshot 层 P0 三表** (`apps/backend/src/ai/read_models/`)
   - [ ] `holdings_snapshot` — write-side 同步刷新
   - [ ] `net_worth_snapshot` — write-side 同步刷新（当前日）
   - [ ] `monthly_spend_by_category` — write-side 同步刷新（当前月）
 - [ ] **Read Model schema 公约** — 每表含 `source_hlc_watermark` + `refreshed_at` + `schema_version` + `calculation_version`
-- [ ] **`tools.rs` facade 改造** — `get_holdings` / `compute_net_worth` / `get_industry_breakdown` 从现算改读 `read_models::*::get(user_id)`，每次返回带 freshness 元数据
+- [ ] **`tools.rs` facade 改造** — `get_holdings` / `compute_net_worth` / `get_industry_breakdown` / `get_geo_breakdown` / `get_market_cap_breakdown` 从现算改读 `read_models::*::get(user_id)`，每次返回带 freshness 元数据
 - [ ] **Freshness gate 协议** — SSE `tool_result` 帧加 freshness 字段；端侧 SSE 解析比对 `lastLocalHlc`；命中时发起 `request_freshness_refresh`
+- [ ] **废弃 `get_journal_entries`** — 改造为 Scoped Detail 工具族（`read_transaction_slice` / `read_account_window` / `read_category_window`），必填 filter + 硬限额 ≤ 50 + 预聚合 summary + sanitised 字段 + 必填 `purpose`
 
 ### P1 — 现有路径稳定 + 启用生产
 
+- [ ] **Read Models — Snapshot 层 P1 二表** — `cashflow_buckets_6m`、`asset_allocation_snapshot`，async queue 刷新
+- [ ] **Read Models — Analytical 层 P1 四模型** — `recurring_patterns` / `anomaly_flags` / `investment_performance` / `subscription_changes`
+  - 端侧 detector 仍是唯一计算者；read model 表订阅 ContextPack 上报，写入带 `source_device_id`
 - [ ] **`AiRuntime` 抽象 + RuntimeRegistry** — 把现有路径包装为 `RulesDeviceRuntime` + `CloudAnthropicRuntime`，router 改成 registry 查询。`Backend` 枚举降级为 trace label。
 - [ ] **AiTraceStore 持久化** — Drift 表 + 30 天滚动清理。接口已稳定。  *入口*: `lib/core/ai/trace/ai_trace_store.dart`
 - [ ] **LocalImmediateWriteExecutor 持久化** — undo 栈 Drift 表按 token 索引。  *入口*: `lib/core/ai/write/local_immediate_executor.dart`
 - [ ] **risk_policy advisory → enforced** — 生产数据验证后，dispatcher 在 denied 分支返回合成的 `tool_result { error: "policy_denied" }`。  *入口*: `apps/backend/src/ai/tools.rs::dispatch`
 - [ ] **`tools.rs` 文件拆分** — `tools/{read,propose,external}/`，元数据已在 `policy/tool_policy.rs`，机械工作不影响行为。
-- [ ] **`ToolDescriptor` 加 `allowed_runtimes` + `side_effect`** — 端云同构契约。
+- [ ] **`ToolDescriptor` 加 `allowed_runtimes` + `side_effect` + `read_model_layer`** — 端云同构契约；`read_model_layer` 让 policy 强制 routine chat 不调 Layer 3。
 
 ### P2 — 增强
 
-- [ ] **AI Read Models — P1 表** — `cashflow_buckets_6m`、`asset_allocation_snapshot`，async queue 刷新
-- [ ] **AiTrace 审计页** — Settings → AI 透明度 → 翻历史。`recentAiTracesProvider` 已就绪。
+- [ ] **AI 透明度审计页** — Settings → AI 透明度 → 翻历史。`recentAiTracesProvider` 已就绪。
 - [ ] **ContextPack 进 system prompt** — 后端把派生信号（signals / preferences / route）编进 Anthropic system prompt（不替代 SYSTEM_PROMPT，而是 append）
 - [ ] **Drift-backed QueryPlanExecutor** — 生产侧 features 适配器。  *入口*: `lib/core/ai/local/skills/query_plan_executor.dart`
 - [ ] **`NetWorthTrendPlan` 适配器** — 端侧桥接 read_models 或 dashboard providers
@@ -524,7 +625,8 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 
 ### P3 — Phase 5 / 长期 / 未来 feature
 
-- [ ] **AI Read Models — P2 表** — `xirr_snapshot`、`recurring_patterns`、`anomaly_flags`，nightly cron
+- [ ] **Read Models — Analytical 层 P2 四模型** — `spending_clusters` / `goal_progress_projection` / `tax_lot_analysis` / `financial_behavior_profile`，nightly cron
+- [ ] **Read Models — Scoped Detail 层完善** — purpose-bound 工具族补齐（`read_trip_cluster` / `read_subscription_history` 等），与 Analytical 层 drill-down 链路打通
 - [ ] **Phase 5 — 端侧 LLM runtime**:
   - [ ] 平台通道 / `onnxruntime` 包装
   - [ ] 模型下载 + 校验和 + opt-in 设置
@@ -582,7 +684,10 @@ packages/ai_contracts/
 ## 10. 关键设计取舍（非显然的决定）
 
 - **为什么主通道是 Read Models 而不是 ContextPack** — 同步已经把数据搬到 D1，让 cloud 绕回端侧拿数据是绕远路。ContextPack 退到「端侧独有的派生信号 + 偏好 + 路由 + freshness hint」更合理。
-- **为什么端侧 detector 不复制成云端 read model** — recurring / refund / anomaly 是启发式 + 个性化逻辑，Dart 一份 Rust 一份必然漂移。让端做唯一计算者，云端订阅结果（通过 ContextPack 或纯快照同步）。
+- **为什么 Read Models 分三层而不是 snapshot only / 也不是开放 raw ledger** — 只有 snapshot 时 AI 答不出「为什么」只能胡猜；开放 raw ledger 会触发 token 爆炸 / prompt injection（恶意 memo 改 LLM 行为）/ 隐私边界失控 / planner 自由 scan 成本失控。三层各取所长：Snapshot 答聚合事实，Analytical 提供可解释的中间结论，Scoped Detail 在 drill-down 时给受控明细。
+- **为什么 Analytical 层比 Snapshot 更值钱** — `{merchant: "Netflix", trend: "up"}` 这种结构化中间结果对 LLM 来说 token 密度远高于一堆 raw rows，且语义清晰；snapshot 偏「数」，analytical 偏「事」，AI 更适合后者。
+- **为什么 `get_journal_entries` 必须废弃而不是收紧** — 它的 schema 允许 `unit + account + 日期 + limit≤200`，已经偏 raw scan 心智；保留它会让 LLM 默认走它而非 Snapshot。改成 `read_transaction_slice` 系列后必填 `purpose` + 写 AiTrace，policy 可在 enforced 模式下检查 purpose 与意图匹配。
+- **为什么端侧 detector 不复制成云端 Analytical 层重算** — recurring / refund / anomaly 是启发式 + 个性化逻辑，Dart 一份 Rust 一份必然漂移。让端做唯一计算者，云端订阅结果（通过 ContextPack 或纯快照同步）。
 - **为什么 freshness gate 用 HLC 而不是 wall-clock** — NaviWealth 已有 HLC 基础设施，wall-clock 在多设备场景容易被时钟漂移误导。
 - **为什么 read model 不全部写后立即刷新** — D1 / Worker 环境下，每次 journal_entries 写入触发全部 projection 重算会拖慢 sync push。允许短暂 stale + freshness gate 兜底是更工程化的选择。
 - **为什么 `AiRuntime` 不一开始就上** — Phase 1–4 用 `Backend` 枚举写死成本最低；现在 stage 1 只有两个 runtime，registry 是过度设计。但元数据先到位（ToolDescriptor 加 `allowed_runtimes`），让 Phase 5 平滑切换。
@@ -608,5 +713,7 @@ packages/ai_contracts/
 | 修改 wire 契约 | `lib/core/ai/contracts/` + 对应 Rust mirror，需要双侧改动 + roundtrip test |
 | 看 AI 透明度徽章 | `lib/features/ai_chat/ui/ai_transparency_badge.dart` |
 | 跑测试 | `flutter test test/core/ai/` + `cargo test --lib` |
-| **新增 Read Model**（★ 待建） | `apps/backend/src/ai/read_models/` + `tools.rs` facade 改造 + `read_models/projection.rs` 选档 |
+| **新增 Snapshot Read Model**（★ 待建） | `apps/backend/src/ai/read_models/` + `tools.rs` facade 改造 + `read_models/projection.rs` 选 sync/async/nightly 档 |
+| **新增 Analytical Read Model**（★ 待建） | 同上，但订阅端侧 ContextPack 上报，写入带 `source_device_id` |
+| **新增 Scoped Detail 工具**（★ 待建，替代 `get_journal_entries`） | `tools.rs` 中加 `read_transaction_slice` 等；必填 filter + purpose + 硬限额 |
 | **新增 AiRuntime**（★ 待建） | `lib/core/ai/runtime/` 实现 `AiRuntime` + 在 `RuntimeRegistry.register()` |
