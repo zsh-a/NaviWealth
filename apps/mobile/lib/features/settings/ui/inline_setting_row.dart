@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
@@ -7,14 +5,14 @@ import 'package:forui/forui.dart';
 /// Single-line setting row in iOS-style inset-grouped lists.
 ///
 /// Layout: leading icon · label (Expanded) · trailing value chip · chevron.
-/// Tap opens a [_SettingPickerSheet] with the candidate values; the
-/// selection is committed via [onChanged]. Replaces the legacy
-/// stacked layout (`FSelect` with its label rendered above the field)
-/// which doubled the row height for every selector.
+/// Tap opens an anchored Forui [FPopover] right under the row with the
+/// candidate values — proper dropdown affordance, not a bottom sheet
+/// (which felt heavy for a 3-option theme switcher). The selection is
+/// committed via [onChanged].
 ///
 /// Use [InlineSwitchRow] when the trailing control is an on/off toggle —
 /// same row chrome, no popup.
-class InlineSettingRow<T> extends StatelessWidget {
+class InlineSettingRow<T> extends StatefulWidget {
   const InlineSettingRow({
     super.key,
     required this.icon,
@@ -33,141 +31,191 @@ class InlineSettingRow<T> extends StatelessWidget {
   final String? subtitle;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final selectedLabel = options.entries
-        .firstWhere(
-          (e) => e.value == value,
-          orElse: () => MapEntry(value.toString(), value),
-        )
-        .key;
-    return FTappable(
-      onPress: () {
-        unawaited(_openPicker(context));
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: colors.mutedForeground),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: context.theme.typography.sm,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                selectedLabel,
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right,
-              size: 16,
-              color: colors.mutedForeground.withValues(alpha: 0.6),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openPicker(BuildContext context) async {
-    unawaited(HapticFeedback.selectionClick());
-    final picked = await showFSheet<T>(
-      context: context,
-      side: FLayout.btt,
-      builder: (sheetContext) => _SettingPickerSheet<T>(
-        title: label,
-        value: value,
-        options: options,
-      ),
-    );
-    if (picked != null && picked != value) onChanged(picked);
-  }
+  State<InlineSettingRow<T>> createState() => _InlineSettingRowState<T>();
 }
 
-class _SettingPickerSheet<T> extends StatelessWidget {
-  const _SettingPickerSheet({
-    required this.title,
-    required this.value,
-    required this.options,
-  });
+class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
+    with SingleTickerProviderStateMixin {
+  late final FPopoverController _popover;
 
-  final String title;
-  final T value;
-  final Map<String, T> options;
+  @override
+  void initState() {
+    super.initState();
+    _popover = FPopoverController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _popover.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return SafeArea(
+    final selectedLabel = widget.options.entries
+        .firstWhere(
+          (e) => e.value == widget.value,
+          orElse: () => MapEntry(widget.value.toString(), widget.value),
+        )
+        .key;
+
+    return FPopover(
+      control: FPopoverControl.managed(controller: _popover),
+      popoverAnchor: AlignmentDirectional.topEnd,
+      childAnchor: AlignmentDirectional.bottomEnd,
+      // Bound the portal so the popover always has a finite layout box.
+      // Without explicit constraints, the inner Column.stretch + scroll
+      // view chain leaves the portal child unsized and the first hit
+      // test against it crashes.
+      constraints: const FPortalConstraints(
+        minWidth: 200,
+        maxWidth: 320,
+        maxHeight: 360,
+      ),
+      popoverBuilder: (popoverContext, _) => _PopoverContent<T>(
+        options: widget.options,
+        selected: widget.value,
+        onPick: (picked) async {
+          await _popover.hide();
+          if (picked != widget.value) widget.onChanged(picked);
+        },
+      ),
+      child: FTappable(
+        onPress: () {
+          HapticFeedback.selectionClick();
+          _popover.toggle();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Icon(widget.icon, size: 18, color: colors.mutedForeground),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: context.theme.typography.sm,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  selectedLabel,
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.unfold_more,
+                size: 16,
+                color: colors.mutedForeground.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Anchored option list rendered inside [FPopover]. Mirrors the visual
+/// language of Forui's `FSelect` popover content (tight rows, check
+/// icon on selected, hover tint), but built atop our own primitives so
+/// the styling stays under our control.
+class _PopoverContent<T> extends StatelessWidget {
+  const _PopoverContent({
+    required this.options,
+    required this.selected,
+    required this.onPick,
+  });
+
+  final Map<String, T> options;
+  final T selected;
+  final ValueChanged<T> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    // The outer FPortalConstraints already caps min/max width + height.
+    // Here we just need a min-sized scroll view holding the rows; the
+    // Column wraps naturally because the parent gives a bounded width.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              decoration: BoxDecoration(
-                color: colors.mutedForeground.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(2),
-              ),
+          for (final entry in options.entries)
+            _OptionRow<T>(
+              label: entry.key,
+              value: entry.value,
+              isSelected: entry.value == selected,
+              onTap: () => onPick(entry.value),
+              accentColor: colors.primary,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
-            child: Text(
-              title,
-              style: context.theme.typography.lg.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          for (final entry in options.entries) ...[
-            FTappable(
-              onPress: () => Navigator.of(context).pop(entry.value),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry.key,
-                        style: context.theme.typography.sm,
-                      ),
-                    ),
-                    if (entry.value == value)
-                      Icon(Icons.check, size: 18, color: colors.primary),
-                  ],
-                ),
-              ),
-            ),
-            if (entry.key != options.entries.last.key)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Container(
-                  height: 1,
-                  color: colors.foreground.withValues(alpha: 0.05),
-                ),
-              ),
-          ],
-          const SizedBox(height: 12),
         ],
+      ),
+    );
+  }
+}
+
+/// One option inside the popover content. Stateless — the hover /
+/// press feedback is delegated to [FTappable] which routes through
+/// Forui's mouse-region handling. Doing the hover state ourselves with
+/// a plain MouseRegion + setState raced against the mouse tracker
+/// when the popover dismissed mid-frame.
+class _OptionRow<T> extends StatelessWidget {
+  const _OptionRow({
+    required this.label,
+    required this.value,
+    required this.isSelected,
+    required this.onTap,
+    required this.accentColor,
+  });
+
+  final String label;
+  final T value;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              child: isSelected
+                  ? Icon(Icons.check, size: 16, color: accentColor)
+                  : null,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: context.theme.typography.sm.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? accentColor : colors.foreground,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -308,4 +356,3 @@ class InlineLinkRow extends StatelessWidget {
     );
   }
 }
-

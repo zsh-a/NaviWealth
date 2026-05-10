@@ -456,9 +456,18 @@ class _RiskThresholdSettings extends ConsumerWidget {
   }
 }
 
-/// Compact slider row — icon + label on top of a thin slider + trailing
-/// percent. Single block of vertical real estate per threshold.
-class _ThresholdSlider extends StatelessWidget {
+/// Compact slider row — icon + label · slider · trailing percent.
+///
+/// Owns its own [FContinuousSliderController] across rebuilds so a
+/// LayoutBuilder rebuild (e.g. window resize) doesn't make Forui call
+/// `attach` and synchronously fire `onChange` during the layout pass —
+/// which would crash with `StateNotifier.state= called during build`
+/// when the callback writes back into a Riverpod controller.
+///
+/// External `value` updates (e.g. from "Reset to defaults") are
+/// applied through `didUpdateWidget` only when they actually differ
+/// from the controller's current value.
+class _ThresholdSlider extends StatefulWidget {
   const _ThresholdSlider({
     required this.icon,
     required this.label,
@@ -472,18 +481,75 @@ class _ThresholdSlider extends StatelessWidget {
   final ValueChanged<double> onChanged;
 
   @override
+  State<_ThresholdSlider> createState() => _ThresholdSliderState();
+}
+
+class _ThresholdSliderState extends State<_ThresholdSlider> {
+  late FContinuousSliderController _controller;
+  bool _suppressOnChange = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FContinuousSliderController(
+      value: FSliderValue(max: _toFraction(widget.value)),
+    )..addListener(_onSliderChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ThresholdSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value == oldWidget.value) return;
+    final next = _toFraction(widget.value);
+    if ((next - _controller.value.max).abs() < 0.0001) return;
+    // Push the new external value into the controller without
+    // re-invoking onChanged — otherwise we'd loop back into the parent
+    // notifier from inside a layout pass.
+    _suppressOnChange = true;
+    try {
+      _controller.value = FSliderValue(max: next);
+    } finally {
+      // Reset on the next microtask so the legitimate user-driven
+      // notification immediately after still fires.
+      Future.microtask(() => _suppressOnChange = false);
+    }
+  }
+
+  void _onSliderChanged() {
+    if (_suppressOnChange) return;
+    final next = 0.05 + _controller.value.max * 0.90;
+    if ((next - widget.value).abs() < 0.0001) return;
+    // Defer the parent notifier write to a microtask. FSliderController
+    // sometimes notifies during layout (attach/didUpdateWidget); pushing
+    // out of the layout phase keeps the StateNotifier guard happy.
+    Future.microtask(() {
+      if (!mounted) return;
+      widget.onChanged(next);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onSliderChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _toFraction(double v) => ((v - 0.05) / 0.90).clamp(0.0, 1.0);
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: colors.mutedForeground),
+          Icon(widget.icon, size: 18, color: colors.mutedForeground),
           const SizedBox(width: 12),
           SizedBox(
             width: 72,
             child: Text(
-              label,
+              widget.label,
               style: context.theme.typography.sm,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -491,10 +557,7 @@ class _ThresholdSlider extends StatelessWidget {
           ),
           Expanded(
             child: FSlider(
-              control: FSliderControl.managedContinuous(
-                initial: FSliderValue(max: (value - 0.05) / 0.90),
-                onChange: (v) => onChanged(0.05 + v.max * 0.90),
-              ),
+              control: FSliderControl.managedContinuous(controller: _controller),
               tooltipBuilder: (_, v) =>
                   Text('${((0.05 + v * 0.90) * 100).round()}%'),
             ),
@@ -502,7 +565,7 @@ class _ThresholdSlider extends StatelessWidget {
           SizedBox(
             width: 44,
             child: Text(
-              '${(value * 100).round()}%',
+              '${(widget.value * 100).round()}%',
               style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,
                 fontFeatures: const [FontFeature.tabularFigures()],
