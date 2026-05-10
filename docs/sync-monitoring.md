@@ -1,9 +1,6 @@
 # Sync Monitoring Baseline (FIR-61)
 
-What we expect the sync API to look like in production, where to watch
-it, and what should page someone. Companion to
-[`sync-protocol.md`](./sync-protocol.md) (the contract) and
-[`sync-e2e-manual.md`](./sync-e2e-manual.md) (the manual flows).
+What the sync API should look like in production, where to watch it, and what should page someone. Companion to [`sync-protocol.md`](./sync-protocol.md) (contract) and [`sync-e2e-manual.md`](./sync-e2e-manual.md) (manual flows).
 
 ## Where the data comes from
 
@@ -14,8 +11,7 @@ it, and what should page someone. Companion to
 | D1 query metrics | Per-statement read/write counts and rows-scanned, surfaced by Workers Analytics Engine when the DB is bound. | Workers dashboard → D1 → `naviwealth` → Metrics |
 | Mobile `sync_status` table | Client-side status bus events (online / offline / failed) and last error string. Useful to correlate "I had no sync for 3 h" complaints with server-side events. | Settings → Diagnostics → Export sync log |
 
-The structured server log line is the fastest way to see what's
-happening *now*. It looks like:
+The structured server log line is the fastest way to see what's happening *now*:
 
 ```
 [SYNC] op=push status=200 code=ok dur_ms=12 batch=487 acc=487 rej=0 slow=false
@@ -23,15 +19,11 @@ happening *now*. It looks like:
 [SYNC] op=push status=413 code=payload_too_large dur_ms=2 batch=0 acc=0 rej=0 slow=false
 ```
 
-Fields are stable; downstream parsers (Logpush JSON sink, the
-`workers-analytics-engine` adapter, scratch awk one-liners) should match
-on `op=` / `status=` / `code=` literally.
+Field names are stable; downstream parsers should match on `op=` / `status=` / `code=` literally.
 
 ## Baseline targets — v1.0 (single user, polling)
 
-These are the "is the system OK?" thresholds. They're set generously
-because we're a 1-user app on the free tier, not an SLA-bearing service.
-Tighten as we learn the real distribution.
+Set generously for a 1-user app on the free tier. Tighten as the real distribution emerges.
 
 | Metric | Target | Definition |
 |--------|--------|------------|
@@ -46,8 +38,7 @@ Tighten as we learn the real distribution.
 
 ## Alerts
 
-We don't want to wake anyone up over a single 503; we want to wake
-someone up when the system is broken for a noticeable window.
+Page on sustained breakage, not single 503s.
 
 | Page | Condition | Why |
 |------|-----------|-----|
@@ -58,71 +49,47 @@ someone up when the system is broken for a noticeable window.
 | **P3** — protocol skew | `protocol_version` 426 rate ≥ 0.1 % over 24 h | Old client out there; remind via in-app banner |
 | **P3** — slow query stragglers | `dur_ms > 100` rate ≥ 1 % over 24 h | Tail latency creeping up; investigate before it crosses the P1 line |
 
-P1 routes to the on-call number; P2/P3 file Linear tickets in the `OPS`
-project (see [the project reference](#references)). Alert wiring lives
-outside this repo — Cloudflare Workers Logpush → Logflare or a similar
-log-based alerting bus. Set it up before we onboard a second user.
+P1 routes to on-call; P2/P3 file Linear tickets in the `OPS` project. Alert wiring lives outside this repo — Cloudflare Workers Logpush → Logflare or similar. Set it up before onboarding a second user.
 
 ## D1 slow-query sampling
 
-We don't yet have per-query timing on D1 — Cloudflare exposes only
-aggregate read/write counts. The structured request log is the proxy:
-`dur_ms` includes everything the handler did in D1 (multiple queries
-per push). The `slow=true` flag is set when `dur_ms > 30`, which leaves
-20 ms of headroom under the platform isolate cap.
+D1 doesn't expose per-query timing — only aggregate read/write counts. The structured request log is our proxy: `dur_ms` covers everything the handler did in D1, and `slow=true` fires at `dur_ms > 30` (20 ms headroom under the 50 ms isolate cap).
 
-When you see a sustained spike of `slow=true`:
+On a sustained `slow=true` spike:
 
-1. Check Workers dashboard → D1 → query stats. Look for queries with
-   abnormally high `rows_read`. The pull's `MAX(hlc_text)` and the
-   `op_log_row` index probe are the prime suspects.
-2. Compare `EXPLAIN QUERY PLAN` against
-   `apps/backend/src/sync/materialise.rs` — drift between expected
-   index and observed scan path is the most common root cause.
-3. If it's a push hot-row (one row updated thousands of times), the LWW
-   `SELECT current` becomes O(N log N) on op_log scan unless the
-   `op_log_row` index is healthy. Re-index the table from a Wrangler
-   shell.
+1. Workers dashboard → D1 → query stats. Look for queries with abnormally high `rows_read`. Pull's `MAX(hlc_text)` and the `op_log_row` index probe are prime suspects.
+2. Diff `EXPLAIN QUERY PLAN` against `apps/backend/src/sync/materialise.rs` — index drift is the most common root cause.
+3. Push hot-row (one row updated thousands of times): LWW `SELECT current` degrades to O(N log N) on op_log scan if `op_log_row` isn't healthy — re-index from a Wrangler shell.
 
 ## Tail-spotting playbook
 
 When something is wrong but no alert fired:
 
 ```bash
-# In a real outage, this is the first thing oncall does. Run for 60 s,
-# look for clusters of `status>=500` or `slow=true` on adjacent log lines.
-cd apps/backend
-wrangler tail naviwealth-backend --format pretty | grep '\[SYNC\]'
+# Live tail — first thing oncall runs. Look for clusters of status>=500 or slow=true.
+cd apps/backend && wrangler tail naviwealth-backend --format pretty | grep '\[SYNC\]'
 
-# Per-error-code breakdown over the last hour (requires Logpush sink).
-# If Logpush isn't wired up yet, fall back to wrangler tail + awk.
-cat ~/logpush-naviwealth-*.log | \
-  awk '/\[SYNC\]/ {for (i=1;i<=NF;i++) if ($i ~ /^code=/) print $i}' | \
-  sort | uniq -c | sort -rn
+# Per-code breakdown over the last hour (Logpush sink).
+awk '/\[SYNC\]/ {for (i=1;i<=NF;i++) if ($i ~ /^code=/) print $i}' ~/logpush-naviwealth-*.log \
+  | sort | uniq -c | sort -rn
 
-# Slow-request distribution — sanity-check before declaring D1 trouble.
-cat ~/logpush-naviwealth-*.log | \
-  awk '/\[SYNC\]/ {for (i=1;i<=NF;i++) if ($i ~ /^dur_ms=/) {sub("dur_ms=","",$i); print $i}}' | \
-  sort -n | awk '{a[NR]=$1} END {print "p50="a[int(NR*0.5)] " p95="a[int(NR*0.95)] " p99="a[int(NR*0.99)]}'
+# Latency distribution from logs.
+awk '/\[SYNC\]/ {for (i=1;i<=NF;i++) if ($i ~ /^dur_ms=/) {sub("dur_ms=","",$i); print $i}}' \
+  ~/logpush-naviwealth-*.log | sort -n \
+  | awk '{a[NR]=$1} END {print "p50="a[int(NR*0.5)] " p95="a[int(NR*0.95)] " p99="a[int(NR*0.99)]}'
 ```
 
-## Promotion checklist before onboarding a 2nd user
+## Promotion checklist (before onboarding a 2nd user)
 
-- [ ] All P1 alerts wired and a real test page received
-- [ ] `wrangler tail --format json` piped to durable log storage (Logpush
-      → R2 / Logflare) so awk one-liners work after the fact
-- [ ] D1 slow-query baseline captured for a known-good 1-week window
-      and stashed in this doc for diff reference
-- [ ] Manual checklist (`sync-e2e-manual.md`) green on the most recent
-      release tag
-- [ ] On-call rotation has at least one person other than the original
-      author
+- [ ] All P1 alerts wired; real test page received.
+- [ ] `wrangler tail --format json` piped to durable log storage (Logpush → R2 / Logflare).
+- [ ] D1 slow-query baseline captured for a known-good 1-week window and stashed here for diff reference.
+- [ ] `sync-e2e-manual.md` green on the most recent release tag.
+- [ ] On-call rotation has at least one person other than the original author.
 
 ## References
 
-- `apps/backend/src/routes/sync.rs::log_request` — emitter of the
-  `[SYNC] …` line. Bump its tag if the format changes.
+- `apps/backend/src/routes/sync.rs::log_request` — emitter of the `[SYNC] …` line. Bump its tag if format changes.
 - `docs/sync-protocol.md` §1 (D1 50 ms budget), §5.5 (rate limits).
-- `docs/sync-e2e-manual.md` — what to run if a metric goes red.
-- `docs/sync-protocol-tests.md` §I — error-code semantics; the alert
-  table above maps each code to a severity.
+- `docs/sync-e2e-manual.md` — what to run when a metric goes red.
+- `docs/sync-protocol-tests.md` §I — error-code semantics mapped to severities above.
