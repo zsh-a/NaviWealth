@@ -170,7 +170,14 @@ class _MobileShell extends StatelessWidget {
         platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final sysBottom = isIOS ? 0.0 : MediaQuery.viewPaddingOf(context).bottom;
 
-    return Stack(
+    // Per-shell `GlassBackdropScope` forces a fresh backdrop capture when
+    // the shell first mounts. Without it, premium glass surfaces inside
+    // the shell (notably `GlassBottomBar` below) can sample a stale or
+    // uninitialised root backdrop on the very first frame — visible on
+    // Android as a black screen that only clears once a scroll triggers
+    // invalidation. See liquid_glass_widgets README §"Backdrop Isolation".
+    return lgw.GlassBackdropScope(
+      child: Stack(
       children: [
         Positioned.fill(
           child: Padding(
@@ -226,6 +233,7 @@ class _MobileShell extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 }
@@ -245,28 +253,31 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            lgw.GlassSideBar(
-              width: 128,
-              children: [
-                for (var i = 0; i < destinations.length; i++)
-                  lgw.GlassSideBarItem(
-                    icon: Icon(
-                      i == selectedIndex
-                          ? destinations[i].selectedIcon
-                          : destinations[i].icon,
+    // See `_MobileShell` for why this scope wraps the shell.
+    return lgw.GlassBackdropScope(
+      child: Scaffold(
+        body: SafeArea(
+          child: Row(
+            children: [
+              lgw.GlassSideBar(
+                width: 128,
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    lgw.GlassSideBarItem(
+                      icon: Icon(
+                        i == selectedIndex
+                            ? destinations[i].selectedIcon
+                            : destinations[i].icon,
+                      ),
+                      label: destinations[i].label,
+                      isSelected: i == selectedIndex,
+                      onTap: () => onDestinationSelected(i),
                     ),
-                    label: destinations[i].label,
-                    isSelected: i == selectedIndex,
-                    onTap: () => onDestinationSelected(i),
-                  ),
-              ],
-            ),
-            Expanded(child: _GlobalActionHost(child: child)),
-          ],
+                ],
+              ),
+              Expanded(child: _GlobalActionHost(child: child)),
+            ],
+          ),
         ),
       ),
     );
@@ -292,24 +303,28 @@ class _DesktopShell extends StatelessWidget {
     // center their content at `Spacing.contentMaxWidth`, master-detail
     // pages (Accounts / Assets / AI Chat) intentionally fill the full
     // remaining width to give the splitter room to breathe.
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            DesktopSidebar(
-              destinations: [
-                for (final d in destinations)
-                  DesktopSidebarDestination(
-                    icon: d.icon,
-                    selectedIcon: d.selectedIcon,
-                    label: d.label,
-                  ),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-            ),
-            Expanded(child: _GlobalActionHost(child: child)),
-          ],
+    //
+    // See `_MobileShell` for why this scope wraps the shell.
+    return lgw.GlassBackdropScope(
+      child: Scaffold(
+        body: SafeArea(
+          child: Row(
+            children: [
+              DesktopSidebar(
+                destinations: [
+                  for (final d in destinations)
+                    DesktopSidebarDestination(
+                      icon: d.icon,
+                      selectedIcon: d.selectedIcon,
+                      label: d.label,
+                    ),
+                ],
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onDestinationSelected,
+              ),
+              Expanded(child: _GlobalActionHost(child: child)),
+            ],
+          ),
         ),
       ),
     );
