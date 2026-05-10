@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../core/command_palette/command_palette.dart';
+import '../core/perf/glass_quality_persistence.dart';
 import '../core/perf/refresh_rate.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
@@ -35,6 +36,13 @@ class NaviWealthApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final compact = ref.watch(compactDensityProvider);
     final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
+    final prefs = ref.watch(sharedPreferencesProvider);
+    // Restoring the previously settled quality lets the AdaptiveScope skip
+    // its 3-second warm-up benchmark on every cold start. Without this, the
+    // benchmark runs on each launch and starves frame budget — on Android
+    // that surfaces as a black-screen first frame that recovers once
+    // scrolling forces invalidation.
+    final initialQuality = loadSavedGlassQuality(prefs);
     return LiquidGlassWidgets.wrap(
       adaptiveQuality: true,
       respectSystemAccessibility: true,
@@ -46,6 +54,8 @@ class NaviWealthApp extends ConsumerWidget {
       adaptiveConfig: GlassAdaptiveScopeConfig( // ignore: experimental_member_use
         targetFrameMs: targetFrameBudgetMs(),
         allowStepUp: true,
+        initialQuality: initialQuality,
+        onQualityChanged: (_, to) => persistGlassQuality(prefs, to),
       ),
       child: ScrollingScope(
         child: GlassTheme(
