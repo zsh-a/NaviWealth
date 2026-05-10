@@ -286,51 +286,43 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   children: [
-                    DropdownButtonFormField<AccountType>(
-                      isExpanded: true,
-                      initialValue: _type,
-                      decoration: InputDecoration(
-                        labelText: l10n.accountFormTypeLabel,
-                      ),
-                      items: [
+                    FSelect<AccountType>(
+                      items: {
                         for (final t in AccountType.values)
-                          DropdownMenuItem(
-                            value: t,
-                            child: Text(accountTypeLabel(l10n, t)),
-                          ),
-                      ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() {
-                          _type = v;
-                          if (!_categoryUserPicked) {
-                            _category = defaultCategoryForAccountType(v);
-                          }
-                        });
+                          accountTypeLabel(l10n, t): t,
                       },
+                      control: FSelectControl<AccountType>.managed(
+                        initial: _type,
+                        onChange: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _type = v;
+                            if (!_categoryUserPicked) {
+                              _category = defaultCategoryForAccountType(v);
+                            }
+                          });
+                        },
+                      ),
+                      label: Text(l10n.accountFormTypeLabel),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<AccountCategory>(
-                      isExpanded: true,
-                      initialValue: _category,
-                      decoration: InputDecoration(
-                        labelText: l10n.accountFormCategoryLabel,
-                        helperText: l10n.accountFormCategoryHelper,
-                      ),
-                      items: [
+                    FSelect<AccountCategory>(
+                      items: {
                         for (final c in AccountCategory.values)
-                          DropdownMenuItem(
-                            value: c,
-                            child: Text(accountCategoryLabel(l10n, c)),
-                          ),
-                      ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() {
-                          _category = v;
-                          _categoryUserPicked = true;
-                        });
+                          accountCategoryLabel(l10n, c): c,
                       },
+                      control: FSelectControl<AccountCategory>.managed(
+                        initial: _category,
+                        onChange: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _category = v;
+                            _categoryUserPicked = true;
+                          });
+                        },
+                      ),
+                      label: Text(l10n.accountFormCategoryLabel),
+                      description: Text(l10n.accountFormCategoryHelper),
                     ),
                     const SizedBox(height: 12),
                     FTextFormField(
@@ -457,10 +449,13 @@ class _ParentAccountPickerSection extends ConsumerWidget {
           ),
         ),
         if (parentId != null)
-          IconButton(
-            icon: const Icon(Icons.clear),
-            tooltip: l10n.accountFormMakeTopLevelTooltip,
-            onPressed: () => onChanged(null),
+          FTooltip(
+            tipBuilder: (_, _) => Text(l10n.accountFormMakeTopLevelTooltip),
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: () => onChanged(null),
+              child: const Icon(Icons.clear, size: 18),
+            ),
           ),
       ],
     );
@@ -587,12 +582,11 @@ class _IconChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+    final colors = context.theme.colors;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: FTappable(
+        onPress: onTap,
         child: Container(
           width: 48,
           height: 48,
@@ -600,9 +594,9 @@ class _IconChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             color: isSelected
                 ? selectionTint.withValues(alpha: 0.1)
-                : scheme.surfaceContainerLow,
+                : colors.muted,
             border: Border.all(
-              color: isSelected ? selectionTint : scheme.outlineVariant,
+              color: isSelected ? selectionTint : colors.border,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -687,11 +681,10 @@ class _ColorSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: FTappable(
+        onPress: onTap,
         child: Container(
           width: 32,
           height: 32,

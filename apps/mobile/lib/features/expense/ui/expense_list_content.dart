@@ -204,11 +204,18 @@ class _FilterChip<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InputChip(
-      label: Text(label),
-      onPressed: onPick,
-      avatar: active ? const Icon(Icons.check, size: 18) : null,
-      onDeleted: active ? onClear : null,
+    return FButton(
+      variant: active ? FButtonVariant.secondary : FButtonVariant.outline,
+      onPress: onPick,
+      prefix: active ? const Icon(Icons.check, size: 14) : null,
+      suffix: active
+          ? FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: onClear,
+              child: const Icon(Icons.close, size: 14),
+            )
+          : null,
+      child: Text(label),
     );
   }
 }

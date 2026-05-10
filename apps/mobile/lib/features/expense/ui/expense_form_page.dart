@@ -315,7 +315,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       },
                       loading: () => const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        child: LinearProgressIndicator(),
+                        child: FProgress(),
                       ),
                       error: (e, _) =>
                           Text(l10n.expenseFormCategoriesLoadError('$e')),
@@ -346,7 +346,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           label: l10n.expenseFormAccountLabel,
                         );
                       },
-                      loading: () => const LinearProgressIndicator(),
+                      loading: () => const FProgress(),
                       error: (e, _) =>
                           Text(l10n.expenseFormAccountsLoadError('$e')),
                     ),

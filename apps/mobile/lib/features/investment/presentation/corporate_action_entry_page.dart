@@ -277,19 +277,15 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Asset picker.
-                DropdownButtonFormField<CorporateActionAsset>(
-                  isExpanded: true,
+                FSelect<CorporateActionAsset>(
                   key: const Key('corp-action-asset'),
-                  initialValue: asset,
-                  decoration: InputDecoration(
-                    labelText: l10n.corpActionSelectAsset,
-                    helperText: l10n.corpActionSelectAssetHint,
+                  items: {for (final a in widget.assets) a.displayName: a},
+                  control: FSelectControl<CorporateActionAsset>.managed(
+                    initial: asset,
+                    onChange: _onAssetChanged,
                   ),
-                  items: [
-                    for (final a in widget.assets)
-                      DropdownMenuItem(value: a, child: Text(a.displayName)),
-                  ],
-                  onChanged: _onAssetChanged,
+                  label: Text(l10n.corpActionSelectAsset),
+                  description: Text(l10n.corpActionSelectAssetHint),
                 ),
                 const SizedBox(height: 16),
                 // Effective date row.
@@ -298,9 +294,10 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                   title: Text(l10n.corpActionEffectiveDate),
                   prefix: const Icon(Icons.event),
                   subtitle: Text(dateFmt.format(_effectiveDate)),
-                  suffix: IconButton(
-                    icon: const Icon(Icons.edit_calendar),
-                    onPressed: _pickEffectiveDate,
+                  suffix: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: _pickEffectiveDate,
+                    child: const Icon(Icons.edit_calendar, size: 20),
                   ),
                 ),
                 const FDivider(),

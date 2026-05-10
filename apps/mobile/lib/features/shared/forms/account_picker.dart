@@ -1,14 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-/// Drop-down picker over the user's existing accounts.
-///
-/// The asset entry forms need to associate the new holding with one of
-/// the user's accounts; this widget centralises the rendering so all of
-/// them stay consistent.
+/// Drop-down picker over the user's existing accounts, built on [FSelect].
 class AccountPicker extends StatelessWidget {
   const AccountPicker({
     super.key,
@@ -22,14 +19,7 @@ class AccountPicker extends StatelessWidget {
   final List<Account> accounts;
   final String? value;
   final ValueChanged<String?> onChanged;
-
-  /// Override the label. When null the localised default
-  /// (`formAccountPickerLabelDefault`) is used.
   final String? label;
-
-  /// If non-null, only accounts whose [AccountType] is in this set are
-  /// shown. Asset forms restrict by appropriate account family — e.g.
-  /// cash flows are only meaningful in bank/cash accounts.
   final Set<AccountType>? allowedTypes;
 
   @override
@@ -38,26 +28,18 @@ class AccountPicker extends StatelessWidget {
     final filtered = allowedTypes == null
         ? accounts
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
-    // Null out value if it doesn't exist in the filtered list to avoid
-    // DropdownButtonFormField assertion errors.
     final effectiveValue = filtered.any((a) => a.id == value) ? value : null;
-    return DropdownButtonFormField<String>(
-      isExpanded: true,
-      initialValue: effectiveValue,
-      decoration: InputDecoration(
-        labelText: label ?? l10n.formAccountPickerLabelDefault,
+    final items = <String, String>{
+      for (final a in filtered) '${a.name} · ${a.currency}': a.id,
+    };
+    return FSelect<String>(
+      items: items,
+      control: FSelectControl<String>.managed(
+        initial: effectiveValue,
+        onChange: onChanged,
       ),
-      items: [
-        for (final a in filtered)
-          DropdownMenuItem(
-            value: a.id,
-            child: Text(
-              '${a.name} · ${a.currency}',
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-      ],
-      onChanged: filtered.isEmpty ? null : onChanged,
+      label: Text(label ?? l10n.formAccountPickerLabelDefault),
+      enabled: filtered.isNotEmpty,
       validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,
     );

@@ -180,7 +180,9 @@ class _LiabilitySummaryCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             if (summary.totalPeriods > 0) ...[
-              LinearProgressIndicator(value: summary.progressFraction),
+              FDeterminateProgress(
+                value: summary.progressFraction.clamp(0.0, 1.0),
+              ),
               const SizedBox(height: 4),
               Text(
                 l10n.liabilitySummaryProgress(

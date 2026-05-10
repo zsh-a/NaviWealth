@@ -108,18 +108,16 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
             padding: const EdgeInsets.all(16),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: [
-              DropdownButtonFormField<LiabilityType>(
-                isExpanded: true,
-                initialValue: _type,
-                decoration: InputDecoration(labelText: l10n.liabilityFieldType),
-                items: [
+              FSelect<LiabilityType>(
+                items: {
                   for (final t in LiabilityType.values)
-                    DropdownMenuItem(
-                      value: t,
-                      child: Text(liabilityTypeLabel(l10n, t)),
-                    ),
-                ],
-                onChanged: (v) => setState(() => _type = v ?? _type),
+                    liabilityTypeLabel(l10n, t): t,
+                },
+                control: FSelectControl<LiabilityType>.managed(
+                  initial: _type,
+                  onChange: (v) => setState(() => _type = v ?? _type),
+                ),
+                label: Text(l10n.liabilityFieldType),
               ),
               const SizedBox(height: 12),
               FTextFormField(
@@ -166,20 +164,16 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 onSubmit: (_) => _currencyFocus.requestFocus(),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<LiabilityRateType>(
-                isExpanded: true,
-                initialValue: _rateType,
-                decoration: InputDecoration(
-                  labelText: l10n.liabilityFieldRateType,
-                ),
-                items: [
+              FSelect<LiabilityRateType>(
+                items: {
                   for (final r in LiabilityRateType.values)
-                    DropdownMenuItem(
-                      value: r,
-                      child: Text(rateTypeLabel(l10n, r)),
-                    ),
-                ],
-                onChanged: (v) => setState(() => _rateType = v ?? _rateType),
+                    rateTypeLabel(l10n, r): r,
+                },
+                control: FSelectControl<LiabilityRateType>.managed(
+                  initial: _rateType,
+                  onChange: (v) => setState(() => _rateType = v ?? _rateType),
+                ),
+                label: Text(l10n.liabilityFieldRateType),
               ),
               const SizedBox(height: 12),
               FTextFormField(
@@ -221,20 +215,16 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   onChanged: (v) => setState(() => _startDate = v),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<RepaymentMethod>(
-                  isExpanded: true,
-                  initialValue: _method,
-                  decoration: InputDecoration(
-                    labelText: l10n.liabilityFieldMethod,
-                  ),
-                  items: [
+                FSelect<RepaymentMethod>(
+                  items: {
                     for (final m in RepaymentMethod.values)
-                      DropdownMenuItem(
-                        value: m,
-                        child: Text(repaymentMethodLabel(l10n, m)),
-                      ),
-                  ],
-                  onChanged: (v) => setState(() => _method = v ?? _method),
+                      repaymentMethodLabel(l10n, m): m,
+                  },
+                  control: FSelectControl<RepaymentMethod>.managed(
+                    initial: _method,
+                    onChange: (v) => setState(() => _method = v ?? _method),
+                  ),
+                  label: Text(l10n.liabilityFieldMethod),
                 ),
               ] else ...[
                 const SizedBox(height: 12),

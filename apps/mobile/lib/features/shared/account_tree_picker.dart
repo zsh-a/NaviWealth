@@ -22,10 +22,8 @@ import '../accounts/account_icon_catalog.dart';
 /// itself.
 ///
 /// FIR-133 children carry [Account.icon] / [Account.color]; rendering
-/// them inside [DropdownMenuItem] is a deliberate next-step (it requires
-/// a Material icon name → [IconData] resolver that is itself a small
-/// project) — the leading affordance is a single bullet glyph today so
-/// the picker's text content stays the source of truth.
+/// them inside the picker uses [FSelectItem]'s prefix slot so the leading
+/// glyph + breadcrumb path stay legible.
 class AccountTreePicker extends StatelessWidget {
   const AccountTreePicker({
     super.key,
@@ -78,41 +76,27 @@ class AccountTreePicker extends StatelessWidget {
     final effectiveValue = entries.any((e) => e.account.id == value)
         ? value
         : null;
-    return DropdownButtonFormField<String>(
-      isExpanded: true,
-      initialValue: effectiveValue,
-      decoration: InputDecoration(
-        labelText: label ?? 'Account',
-        helperText: helperText,
+    final pathById = <String, String>{
+      for (final e in entries) e.account.id: e.path,
+    };
+    return FSelect<String>.rich(
+      format: (id) => pathById[id] ?? '',
+      control: FSelectControl<String>.managed(
+        initial: effectiveValue,
+        onChange: onChanged,
       ),
-      items: entries.map((e) {
-        final iconData = resolveAccountIcon(e.account.icon);
-        final iconColor = _parseHexColor(e.account.color);
-        final prefix = e.account.parentId == null ? '• ' : '› ';
-        return DropdownMenuItem<String>(
-          value: e.account.id,
-          child: Padding(
-            padding: EdgeInsets.only(left: e.depth * 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (iconData != null) ...[
-                  Icon(
-                    iconData,
-                    size: 16,
-                    color: iconColor ?? context.theme.colors.mutedForeground,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(e.path, overflow: TextOverflow.ellipsis),
-                ] else
-                  Text('$prefix${e.path}', overflow: TextOverflow.ellipsis),
-              ],
-            ),
+      label: Text(label ?? 'Account'),
+      description: helperText == null ? null : Text(helperText!),
+      enabled: entries.isNotEmpty,
+      validator: validator ?? FFormFieldProperties.defaultValidator,
+      children: [
+        for (final e in entries)
+          FSelectItem<String>(
+            value: e.account.id,
+            title: Text(e.path, overflow: TextOverflow.ellipsis),
+            prefix: _LeadingGlyph(account: e.account),
           ),
-        );
-      }).toList(),
-      onChanged: entries.isEmpty ? null : onChanged,
-      validator: validator,
+      ],
     );
   }
 
@@ -168,6 +152,29 @@ class _PickerEntry {
   final Account account;
   final int depth;
   final String path;
+}
+
+class _LeadingGlyph extends StatelessWidget {
+  const _LeadingGlyph({required this.account});
+
+  final Account account;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconData = resolveAccountIcon(account.icon);
+    final iconColor = _parseHexColor(account.color);
+    if (iconData != null) {
+      return Icon(
+        iconData,
+        size: 16,
+        color: iconColor ?? context.theme.colors.mutedForeground,
+      );
+    }
+    return Text(
+      account.parentId == null ? '•' : '›',
+      style: TextStyle(color: context.theme.colors.mutedForeground),
+    );
+  }
 }
 
 /// `#RRGGBB` (with or without leading `#`) → [Color]; returns `null`
