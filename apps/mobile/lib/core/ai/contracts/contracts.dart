@@ -6,6 +6,7 @@ library;
 export 'ai_trace.dart';
 export 'base_context.dart';
 export 'context_pack.dart';
+export 'freshness.dart';
 export 'intent.dart';
 export 'privacy_budget.dart';
 export 'proposal_envelope.dart';

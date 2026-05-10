@@ -37,5 +37,7 @@ pub mod guardrails;
 #[allow(dead_code)]
 pub mod policy;
 pub mod proposals;
+// AI Read Models — 主通道（docs/ai-architecture.md §4.3）
+pub mod read_models;
 pub mod sse;
 pub mod tools;
