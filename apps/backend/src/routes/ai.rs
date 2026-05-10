@@ -15,6 +15,8 @@
 
 use chrono::Utc;
 use futures_channel::mpsc;
+use futures_util::future::{select, Either};
+use gloo_timers::future::TimeoutFuture;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use worker::{Headers, Request, Response, Result as WorkerResult, RouteContext};
@@ -26,11 +28,24 @@ use crate::ai::guardrails::{
     self, ANTHROPIC_MAX_OUTPUT_TOKENS, MAX_PROPOSALS_PER_CONVERSATION, MAX_REQUEST_BODY_BYTES,
     MAX_TOOL_ROUNDS, SYSTEM_PROMPT,
 };
-use crate::ai::sse::encode_event;
+use crate::ai::sse::{encode_comment, encode_event};
 use crate::ai::tools::{self, ToolCtx};
 use crate::auth::middleware::require_auth;
 use crate::error::AppError;
 use crate::routes::common::check_protocol_version;
+
+/// Hard cap on a single chat turn (model rounds + tool dispatches combined).
+/// If hit, the SSE stream is closed with a synthesized `error` + `done` so
+/// the client never sits on a hung connection. 60s comfortably covers
+/// healthy multi-tool turns; anything longer almost always means an
+/// upstream call is stuck.
+const CHAT_TURN_BUDGET_MS: u32 = 60_000;
+
+/// Keepalive cadence on the SSE channel. Comment frames (no event name) keep
+/// proxies / mobile radios from dropping the connection for being idle and
+/// reset the client's idle watchdog. Should be well below the client's
+/// idle timeout and any reverse-proxy idle drop.
+const SSE_KEEPALIVE_MS: u32 = 10_000;
 
 #[derive(Deserialize)]
 struct ChatRequest {
@@ -118,8 +133,33 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
     let user_id = auth.user_id.clone();
     let initial_messages = body.messages;
     let portfolio_snapshot = body.portfolio_snapshot;
+
+    // Keepalive ticker — emits a `:` comment frame every SSE_KEEPALIVE_MS
+    // so proxies / mobile radios don't drop the connection during slow
+    // tool dispatches and the client's idle watchdog stays satisfied.
+    // Lives in its own spawned task; cancelled when the work future
+    // wins the `select` below (the receiver dropping closes the stream
+    // and the next ticker iteration's `unbounded_send` becomes a no-op).
+    let keepalive_tx = tx.clone();
     wasm_bindgen_futures::spawn_local(async move {
-        run_tool_loop(
+        loop {
+            TimeoutFuture::new(SSE_KEEPALIVE_MS).await;
+            if keepalive_tx
+                .unbounded_send(Ok(encode_comment("keepalive")))
+                .is_err()
+            {
+                break;
+            }
+        }
+    });
+
+    // Run the tool loop with an absolute time budget. If the loop
+    // outlives CHAT_TURN_BUDGET_MS — almost always because an upstream
+    // D1 read or Anthropic call is stuck inside the spawned-task
+    // context — we synthesize an `error` + `done` so the client can
+    // clean up the streaming row instead of hanging forever.
+    wasm_bindgen_futures::spawn_local(async move {
+        let work = Box::pin(run_tool_loop(
             &tx,
             llm_config,
             &model,
@@ -127,8 +167,27 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
             &user_id,
             initial_messages,
             portfolio_snapshot,
-        )
-        .await;
+        ));
+        let budget = Box::pin(TimeoutFuture::new(CHAT_TURN_BUDGET_MS));
+        match select(work, budget).await {
+            Either::Left(_) => { /* normal completion — done already sent */ }
+            Either::Right(_) => {
+                send_event(
+                    &tx,
+                    "error",
+                    &json!({"message": "chat turn timed out", "code": "chat_timeout"}),
+                )
+                .await;
+                send_event(
+                    &tx,
+                    "done",
+                    &json!({"stop_reason": "error", "rounds": 0}),
+                )
+                .await;
+            }
+        }
+        // `tx` drops here; receiver sees end-of-stream and the SSE body
+        // closes, which also breaks the keepalive ticker on its next tick.
     });
 
     let headers = Headers::new();

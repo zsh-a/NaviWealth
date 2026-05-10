@@ -37,6 +37,12 @@ futures-channel = "0.3"
 futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
 wasm-bindgen = "0.2.121"
 wasm-bindgen-futures = "0.4"
+# WASM-friendly timers backed by `setTimeout`. We use it to drive the SSE
+# keepalive heartbeat and the per-tool / overall conversation timeouts that
+# stop the long-poll from hanging when an upstream call (D1 / Anthropic)
+# stalls inside `spawn_local`. The `futures` feature exposes
+# `TimeoutFuture` so we can `select` it against work futures.
+gloo-timers = { version = "0.3", features = ["futures"] }
 
 [profile.release]
 opt-level = "s"
