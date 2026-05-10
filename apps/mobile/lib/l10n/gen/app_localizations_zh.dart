@@ -138,6 +138,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiInsightsRebalanceTitle => '再平衡';
 
   @override
+  String get aiChatSessionActionsTitle => '会话操作';
+
+  @override
   String get dashboardNetWorthAssetsLabel => '资产';
 
   @override
@@ -148,6 +151,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioLiabilitiesTab => '负债';
+
+  @override
+  String get globalActionPanelTitle => '快速添加';
+
+  @override
+  String get assetsAddSheetTitle => '添加资产';
 
   @override
   String get superFabTrade => '交易';
@@ -2560,6 +2569,9 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get settingsAccountSection => '账户';
 
   @override
   String get settingsDataSection => '数据';

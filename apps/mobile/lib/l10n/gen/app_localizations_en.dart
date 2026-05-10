@@ -140,6 +140,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiInsightsRebalanceTitle => 'Rebalance';
 
   @override
+  String get aiChatSessionActionsTitle => 'Conversation';
+
+  @override
   String get dashboardNetWorthAssetsLabel => 'Assets';
 
   @override
@@ -150,6 +153,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioLiabilitiesTab => 'Liabilities';
+
+  @override
+  String get globalActionPanelTitle => 'Quick add';
+
+  @override
+  String get assetsAddSheetTitle => 'Add asset';
 
   @override
   String get superFabTrade => 'Trade';
@@ -2656,6 +2665,9 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get settingsAccountSection => 'Account';
 
   @override
   String get settingsDataSection => 'Data';

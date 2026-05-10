@@ -15,6 +15,7 @@ import '../../data/repositories/journal_entry_builders.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/journal_entry_repository.dart';
 import '../../data/repositories/providers.dart';
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
@@ -104,6 +105,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     return FScaffold(
       header: FHeader.nested(
         title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
+        prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
       child: Material(

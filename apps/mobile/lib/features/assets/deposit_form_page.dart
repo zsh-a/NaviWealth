@@ -239,6 +239,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         title: Text(
           widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle,
         ),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           if (widget.isEdit)
             FHeaderAction(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/auth/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
@@ -93,43 +94,41 @@ class SessionsPanel extends ConsumerWidget {
     ChatSession session,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showAppSheet<bool>(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.aiChatSessionDeleteTitle,
-              style: context.theme.typography.md.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+      title: l10n.aiChatSessionDeleteTitle,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.aiChatSessionDeleteBody(session.title),
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+              height: 1.4,
             ),
-            const SizedBox(height: 8),
-            Text(l10n.aiChatSessionDeleteBody(session.title)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: 8),
-                FButton(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FButton(
                   variant: FButtonVariant.destructive,
                   onPress: () => Navigator.of(ctx).pop(true),
                   child: Text(l10n.commonDelete),
                 ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
     if (ok != true) return;
@@ -144,59 +143,41 @@ class SessionsPanel extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: session.title);
-    final result = await showFSheet<String>(
-      side: FLayout.btt,
+    final result = await showAppSheet<String>(
       context: context,
-      mainAxisMaxRatio: null,
-      builder: (ctx) {
-        final padding = MediaQuery.viewInsetsOf(ctx).bottom;
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 12,
-              bottom: padding + 16,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l10n.aiChatSessionRenameTitle,
-                  style: ctx.theme.typography.md.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FTextField(
-                  control: FTextFieldControl.managed(controller: controller),
-                  autofocus: true,
-                  maxLength: 60,
-                  label: Text(l10n.aiChatSessionTitleLabel),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FButton(
-                      variant: FButtonVariant.ghost,
-                      onPress: () => Navigator.of(ctx).pop(),
-                      child: Text(l10n.commonCancel),
-                    ),
-                    const SizedBox(width: 8),
-                    FButton(
-                      variant: FButtonVariant.primary,
-                      onPress: () =>
-                          Navigator.of(ctx).pop(controller.text.trim()),
-                      child: Text(l10n.commonSave),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      title: l10n.aiChatSessionRenameTitle,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextField(
+            control: FTextFieldControl.managed(controller: controller),
+            autofocus: true,
+            maxLength: 60,
+            label: Text(l10n.aiChatSessionTitleLabel),
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(ctx).pop(),
+                  child: Text(l10n.commonCancel),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FButton(
+                  onPress: () =>
+                      Navigator.of(ctx).pop(controller.text.trim()),
+                  child: Text(l10n.commonSave),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
     if (result == null || result.isEmpty || result == session.title) return;
     final repo = await ref.read(chatRepositoryProvider.future);
@@ -388,36 +369,32 @@ class _SessionTile extends StatelessWidget {
   }
 
   Future<void> _showActions(BuildContext context, AppLocalizations l10n) {
-    return showFSheet<void>(
-      side: FLayout.btt,
+    return showAppSheet<void>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActionRow(
-                icon: Icons.edit_outlined,
-                label: l10n.aiChatSessionRenameAction,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  onRename();
-                },
-              ),
-              const SizedBox(height: 4),
-              _ActionRow(
-                icon: Icons.delete_outline,
-                label: l10n.commonDelete,
-                color: ctx.theme.colors.destructive,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  onDelete();
-                },
-              ),
-            ],
+      title: l10n.aiChatSessionActionsTitle,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ActionRow(
+            icon: Icons.edit_outlined,
+            label: l10n.aiChatSessionRenameAction,
+            onTap: () {
+              Navigator.of(ctx).pop();
+              onRename();
+            },
           ),
-        ),
+          const SizedBox(height: 4),
+          _ActionRow(
+            icon: Icons.delete_outline,
+            label: l10n.commonDelete,
+            color: ctx.theme.colors.destructive,
+            onTap: () {
+              Navigator.of(ctx).pop();
+              onDelete();
+            },
+          ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:talker/talker.dart';
 
 import '../../core/logging/providers.dart';
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 
 /// Debug-only page that displays Talker's log history in real time.
@@ -37,6 +38,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.settingsLogsTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.delete_outline),
@@ -48,23 +50,20 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: StreamBuilder<TalkerData>(
-          stream: talker.stream,
-          builder: (context, _) {
-            final logs = talker.history;
-            return ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(8),
-              itemCount: logs.length,
-              itemBuilder: (context, index) {
-                final log = logs[index];
-                return _LogTile(log: log);
-              },
-            );
-          },
-        ),
+      child: StreamBuilder<TalkerData>(
+        stream: talker.stream,
+        builder: (context, _) {
+          final logs = talker.history;
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(8),
+            itemCount: logs.length,
+            itemBuilder: (context, index) {
+              final log = logs[index];
+              return _LogTile(log: log);
+            },
+          );
+        },
       ),
     );
   }
@@ -81,53 +80,51 @@ class _LogTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      log.title ?? log.logLevel?.name ?? 'log',
-                      style: context.theme.typography.xs2.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+      child: SoftCard(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    log.displayTime(),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    log.title ?? log.logLevel?.name ?? 'log',
                     style: context.theme.typography.xs2.copyWith(
-                      color: context.theme.colors.mutedForeground,
+                      color: color,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(log.message ?? '', style: context.theme.typography.xs),
-              if (log.error != null) ...[
-                const SizedBox(height: 4),
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  '${log.error}',
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.destructive,
+                  log.displayTime(),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(log.message ?? '', style: context.theme.typography.xs),
+            if (log.error != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '${log.error}',
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.destructive,
+                ),
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );

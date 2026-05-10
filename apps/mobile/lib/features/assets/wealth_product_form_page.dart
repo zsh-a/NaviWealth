@@ -14,6 +14,7 @@ import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
@@ -246,6 +247,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
               ? l10n.wealthProductEditTitle
               : l10n.wealthProductCreateTitle,
         ),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           if (widget.isEdit)
             FHeaderAction(

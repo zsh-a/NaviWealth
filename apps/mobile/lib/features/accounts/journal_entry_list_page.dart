@@ -11,6 +11,7 @@ import '../../data/domain/posting.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/journal_entry_repository.dart';
 import '../../data/repositories/providers.dart';
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/entry_kind_badge.dart';
 import '../shared/postings_preview.dart';
@@ -28,7 +29,7 @@ class JournalEntryListPage extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.journalTitle)),
+      header: FHeader.nested(title: Text(l10n.journalTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(
         color: Colors.transparent,

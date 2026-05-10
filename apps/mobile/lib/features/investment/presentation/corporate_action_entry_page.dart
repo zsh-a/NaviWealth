@@ -264,7 +264,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final asset = _selectedAsset;
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.corpActionTitle)),
+      header: FHeader.nested(title: Text(l10n.corpActionTitle), prefixes: [backHeaderAction(context)]),
       childPad: false,
       child: Material(
         color: Colors.transparent,

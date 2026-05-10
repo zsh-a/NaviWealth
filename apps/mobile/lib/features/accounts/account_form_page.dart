@@ -257,6 +257,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     return FScaffold(
       header: FHeader.nested(
         title: title,
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           if (widget.isEdit)
             FHeaderAction(

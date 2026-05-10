@@ -338,6 +338,12 @@ abstract class AppLocalizations {
   /// **'Rebalance'**
   String get aiInsightsRebalanceTitle;
 
+  /// Title shown on the AI chat session more-actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation'**
+  String get aiChatSessionActionsTitle;
+
   /// Net-worth breakdown stat: assets total
   ///
   /// In en, this message translates to:
@@ -361,6 +367,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Liabilities'**
   String get portfolioLiabilitiesTab;
+
+  /// Title of the global '+' action sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Quick add'**
+  String get globalActionPanelTitle;
+
+  /// Title of the Asset action sheet (sub-panel of the global +)
+  ///
+  /// In en, this message translates to:
+  /// **'Add asset'**
+  String get assetsAddSheetTitle;
 
   /// No description provided for @superFabTrade.
   ///
@@ -4745,6 +4763,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1 {1 trade} other {{count} trades}}'**
   String planSummaryTrades(int count);
+
+  /// Settings section header for account-level preferences
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccountSection;
 
   /// Settings section header for backup/restore
   ///
