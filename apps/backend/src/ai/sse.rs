@@ -19,6 +19,22 @@ pub fn encode_event(event: &str, payload: &str) -> Vec<u8> {
     buf.into_bytes()
 }
 
+/// Encode an SSE comment frame. Per the SSE spec a line starting with `:` is
+/// a comment and silently discarded by the EventSource parser, but it still
+/// counts as activity on the connection — proxies / load balancers won't
+/// drop the long-poll for being idle, and the client's idle-timeout watchdog
+/// resets each time one of these arrives.
+///
+/// Used by the AI relay's keepalive ticker (every 10s) so a slow tool
+/// dispatch doesn't look like a dropped connection.
+pub fn encode_comment(text: &str) -> Vec<u8> {
+    let mut buf = String::with_capacity(text.len() + 4);
+    buf.push_str(": ");
+    buf.push_str(text);
+    buf.push_str("\n\n");
+    buf.into_bytes()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

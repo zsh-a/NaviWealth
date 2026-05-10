@@ -48,6 +48,23 @@ class AiChatRequestException implements Exception {
   String toString() => 'AiChatRequestException($statusCode): $message';
 }
 
+/// Sentinel error injected into the SSE stream when no bytes arrive
+/// for [kSseIdleTimeout]. The backend's `:keepalive\n\n` comment
+/// frames refresh the watchdog every 10s, so this only fires when
+/// bytes really stop flowing — almost always the spawn_local task
+/// being reclaimed mid-flight.
+class SseIdleTimeout implements Exception {
+  const SseIdleTimeout();
+
+  @override
+  String toString() => 'SseIdleTimeout';
+}
+
+/// Maximum gap between SSE bytes before the watchdog gives up. Sized
+/// 3× the backend keepalive cadence so a single missed tick doesn't
+/// trip the alarm.
+const Duration kSseIdleTimeout = Duration(seconds: 30);
+
 /// Dio-backed implementation. Streams the SSE body via
 /// `ResponseType.stream` so the caller gets `text` / `tool_call` events
 /// as they arrive on native targets.
@@ -149,7 +166,21 @@ class DioAiChatApiClient implements AiChatApiClient {
         return;
       }
 
-      sub = decodeSseEvents(raw.stream).listen(
+      // Watchdog runs against the *byte* stream so the backend's
+      // `:keepalive\n\n` comment frames count as activity even though
+      // `decodeSseEvents` strips them. Without this we'd false-trip
+      // every time the model is busy mid-round (no real events for
+      // >30s) even though the connection is fine.
+      final guarded = raw.stream.timeout(
+        kSseIdleTimeout,
+        onTimeout: (sink) {
+          if (cancelToken != null && !cancelToken.isCancelled) {
+            cancelToken.cancel('idle timeout');
+          }
+          sink.addError(const SseIdleTimeout());
+        },
+      );
+      sub = decodeSseEvents(guarded).listen(
         controller.add,
         onError: controller.addError,
         onDone: controller.close,

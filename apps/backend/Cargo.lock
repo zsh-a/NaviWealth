@@ -305,6 +305,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -555,7 +567,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "naviwealth-backend"
-version = "0.3.4"
+version = "0.3.7"
 dependencies = [
  "argon2",
  "base64",
@@ -564,6 +576,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "getrandom 0.2.17",
+ "gloo-timers",
  "hmac",
  "serde",
  "serde_json",

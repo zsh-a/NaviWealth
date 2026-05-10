@@ -270,24 +270,47 @@ pub fn schemas() -> Vec<ToolSchema> {
 /// the next `tool_result` block. Errors here surface to the model as a
 /// `tool_result` with `is_error=true` rather than a 500 — the conversation
 /// can recover.
+///
+/// Each individual tool is bounded by [`PER_TOOL_TIMEOUT_MS`]. If the inner
+/// future doesn't complete in time (D1 read stuck, JS micro-task starved,
+/// upstream call hung) we synthesize a structured `tool_timeout` error so
+/// the model sees a parseable failure and can retry / wrap up rather than
+/// the entire SSE stream stalling at the route layer.
 pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
     use super::proposals;
-    let result = match name {
-        "get_holdings" => get_holdings(ctx, input).await,
-        "get_journal_entries" => get_journal_entries(ctx, input).await,
-        "compute_xirr" => compute_xirr(ctx, input).await,
-        "compute_net_worth" => compute_net_worth(ctx, input).await,
-        "get_industry_breakdown" => get_breakdown(ctx, BreakdownDim::Industry).await,
-        "get_geo_breakdown" => get_breakdown(ctx, BreakdownDim::Region).await,
-        "get_market_cap_breakdown" => get_breakdown(ctx, BreakdownDim::MarketCap).await,
-        "get_risk_alerts" => get_risk_alerts(ctx).await,
-        // FIR-66 write proposals — never persist; always return a plan.
-        "propose_trade" => proposals::propose_trade(ctx, input).await,
-        "propose_expense" => proposals::propose_expense(ctx, input).await,
-        "propose_liability_payment" => proposals::propose_liability_payment(ctx, input).await,
-        "propose_account_create" => proposals::propose_account_create(ctx, input).await,
-        "propose_asset_valuation" => proposals::propose_asset_valuation(ctx, input).await,
-        _ => Err(AppError::BadRequest(format!("unknown tool: {name}"))),
+    use futures_util::future::{select, Either};
+    use gloo_timers::future::TimeoutFuture;
+
+    let work = async {
+        match name {
+            "get_holdings" => get_holdings(ctx, input).await,
+            "get_journal_entries" => get_journal_entries(ctx, input).await,
+            "compute_xirr" => compute_xirr(ctx, input).await,
+            "compute_net_worth" => compute_net_worth(ctx, input).await,
+            "get_industry_breakdown" => get_breakdown(ctx, BreakdownDim::Industry).await,
+            "get_geo_breakdown" => get_breakdown(ctx, BreakdownDim::Region).await,
+            "get_market_cap_breakdown" => get_breakdown(ctx, BreakdownDim::MarketCap).await,
+            "get_risk_alerts" => get_risk_alerts(ctx).await,
+            // FIR-66 write proposals — never persist; always return a plan.
+            "propose_trade" => proposals::propose_trade(ctx, input).await,
+            "propose_expense" => proposals::propose_expense(ctx, input).await,
+            "propose_liability_payment" => proposals::propose_liability_payment(ctx, input).await,
+            "propose_account_create" => proposals::propose_account_create(ctx, input).await,
+            "propose_asset_valuation" => proposals::propose_asset_valuation(ctx, input).await,
+            _ => Err(AppError::BadRequest(format!("unknown tool: {name}"))),
+        }
+    };
+    let work = Box::pin(work);
+    let timeout = Box::pin(TimeoutFuture::new(PER_TOOL_TIMEOUT_MS));
+    let result = match select(work, timeout).await {
+        Either::Left((result, _)) => result,
+        Either::Right(_) => {
+            return json!({
+                "error":   format!("tool '{name}' timed out after {}ms", PER_TOOL_TIMEOUT_MS),
+                "code":    "tool_timeout",
+                "tool":    name,
+            });
+        }
     };
     match result {
         Ok(v) => v,
@@ -297,6 +320,12 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
         }),
     }
 }
+
+/// Per-tool timeout. Sized so a healthy D1 read of the user's full ledger
+/// (under 100k rows) plus any in-process JSON crunching always fits, while
+/// catching the pathological "D1 hang under spawn_local context" case
+/// before it stalls the whole conversation.
+const PER_TOOL_TIMEOUT_MS: u32 = 15_000;
 
 // ---------------------------------------------------------------------------
 // D1 row helpers — we read the materialised tables directly. The protocol
