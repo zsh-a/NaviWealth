@@ -58,7 +58,7 @@ class _EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -67,13 +67,13 @@ class _EmptyState extends StatelessWidget {
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               l10n.rebalanceEmptyTitle,
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.rebalanceEmptyHint,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -99,12 +99,12 @@ class _RebalanceBody extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isMobile ? Spacing.pageMobile : Spacing.pageWide;
+        final padding = isMobile ? const EdgeInsets.all(16) : const EdgeInsets.all(24);
         return ListView(
           padding: padding,
           children: [
             _SchemeSelector(current: scheme),
-            SizedBox(height: isMobile ? Spacing.s12 : Spacing.s16),
+            SizedBox(height: isMobile ? 12 : 16),
             ResponsiveTwoColumn(
               left: _DriftOverview(plan: plan),
               right: _TradeList(plan: plan),
@@ -127,14 +127,14 @@ class _SchemeSelector extends ConsumerWidget {
     final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.rebalanceSchemeTitle, style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Wrap(
-              spacing: Spacing.s8,
+              spacing: 8,
               children: [
                 for (final preset in AllocationSchemePreset.values)
                   FButton(
@@ -180,7 +180,7 @@ class _DriftOverview extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -195,12 +195,12 @@ class _DriftOverview extends StatelessWidget {
                 if (plan.isBalanced)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.s8,
-                      vertical: Spacing.s2,
+                      horizontal: 8,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(Radii.sm),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       l10n.rebalanceBalanced,
@@ -212,7 +212,7 @@ class _DriftOverview extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.rebalanceOverallDrift(
                 '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
@@ -221,7 +221,7 @@ class _DriftOverview extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             for (final drift in plan.drifts)
               DeviationBar(
                 label: AssetCategoryVisuals.label(l10n, drift.category),
@@ -250,7 +250,7 @@ class _TradeList extends StatelessWidget {
     if (plan.isBalanced) {
       return FCard.raw(
         child: Padding(
-          padding: Spacing.card,
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Icon(
@@ -258,7 +258,7 @@ class _TradeList extends StatelessWidget {
                 size: 40,
                 color: theme.colorScheme.primary,
               ),
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Text(l10n.rebalanceBalanced, style: theme.textTheme.titleSmall),
             ],
           ),
@@ -268,12 +268,12 @@ class _TradeList extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.rebalanceTradeTitle, style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             for (final trade in plan.trades) _TradeRow(trade: trade),
             const FDivider(),
             Row(
@@ -294,7 +294,7 @@ class _TradeList extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Row(
               children: [
                 Expanded(
@@ -313,7 +313,7 @@ class _TradeList extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Row(
               children: [
                 Expanded(
@@ -357,7 +357,7 @@ class _TradeRow extends StatelessWidget {
     final catLabel = AssetCategoryVisuals.label(l10n, trade.category);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Container(
@@ -368,9 +368,9 @@ class _TradeRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,12 +413,7 @@ class _SettingsSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s16,
-          Spacing.s8,
-          Spacing.s16,
-          Spacing.s24,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +422,7 @@ class _SettingsSheet extends ConsumerWidget {
               l10n.rebalanceSettingsTitle,
               style: theme.textTheme.titleLarge,
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Text(
               l10n.rebalanceWarningThreshold,
               style: theme.textTheme.bodyMedium,
@@ -442,7 +437,7 @@ class _SettingsSheet extends ConsumerWidget {
               tooltipBuilder: (_, v) =>
                   Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               l10n.rebalanceCriticalThreshold,
               style: theme.textTheme.bodyMedium,

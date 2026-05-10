@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
 
 /// A single insight pill showing an icon, label, and value.
 /// Used in the [InsightStrip] on the dashboard.
@@ -32,15 +31,12 @@ class InsightChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s12,
-              vertical: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(icon, size: 16, color: effectiveIconColor),
-                const SizedBox(width: Spacing.s6),
+                const SizedBox(width: 6),
                 Flexible(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +62,7 @@ class InsightChip extends StatelessWidget {
                   ),
                 ),
                 if (onTap != null) ...[
-                  const SizedBox(width: Spacing.s4),
+                  const SizedBox(width: 4),
                   Icon(
                     Icons.chevron_right,
                     size: 14,

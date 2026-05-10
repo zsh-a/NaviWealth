@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../../data/domain/account.dart';
-import '../../../design_system/design_system.dart';
 
 class AssetSectionHeader extends StatelessWidget {
   const AssetSectionHeader({super.key, required this.title});
@@ -12,7 +11,7 @@ class AssetSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s8, bottom: Spacing.s8),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
       child: Text(title, style: Theme.of(context).textTheme.titleMedium),
     );
   }
@@ -35,10 +34,7 @@ class CashAccountGroupHeader extends StatelessWidget {
     final subtitle = account?.institution;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Text(
         subtitle != null && subtitle.isNotEmpty

@@ -186,7 +186,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,9 +195,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
               l10n.expenseFormDeleteDialogTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.expenseFormDeleteDialogBody),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -206,7 +206,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -270,7 +270,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: ListView(
-                  padding: Spacing.pageMobile,
+                  padding: const EdgeInsets.all(16),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   children: [
@@ -281,12 +281,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       focusNode: _amountFocus,
                       onFieldSubmitted: (_) => _noteFocus.requestFocus(),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     CurrencyPicker(
                       value: _currency,
                       onChanged: (v) => setState(() => _currency = v),
                     ),
-                    const SizedBox(height: Spacing.s8),
+                    const SizedBox(height: 8),
                     allAccountsAsync.when(
                       data: (allAccounts) {
                         final expenseAccounts = allAccounts
@@ -294,9 +294,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                             .toList(growable: false);
                         if (expenseAccounts.isEmpty) {
                           return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: Spacing.s12,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Text(l10n.expenseFormCategoriesLoading),
                           );
                         }
@@ -315,13 +313,13 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         );
                       },
                       loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: Spacing.s12),
+                        padding: EdgeInsets.symmetric(vertical: 12),
                         child: LinearProgressIndicator(),
                       ),
                       error: (e, _) =>
                           Text(l10n.expenseFormCategoriesLoadError('$e')),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     accountsAsync.when(
                       data: (accounts) {
                         final fromAccounts = accounts
@@ -351,7 +349,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       error: (e, _) =>
                           Text(l10n.expenseFormAccountsLoadError('$e')),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     DateField(
                       label: l10n.expenseFormDateLabel,
                       initialValue: _date,
@@ -360,12 +358,12 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         if (v != null) setState(() => _date = v);
                       },
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     NoteField(
                       controller: _noteController,
                       focusNode: _noteFocus,
                     ),
-                    const SizedBox(height: Spacing.s24),
+                    const SizedBox(height: 24),
                     FButton(
                       variant: FButtonVariant.primary,
                       onPress: _busy ? null : _save,

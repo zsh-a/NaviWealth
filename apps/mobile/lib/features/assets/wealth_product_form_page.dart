@@ -14,7 +14,6 @@ import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
@@ -168,7 +167,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,9 +176,9 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
               l10n.wealthProductDeleteTitle,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.wealthProductDeleteBody),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -188,7 +187,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -274,7 +273,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     if (eligible.isEmpty) {
       return Center(
         child: Padding(
-          padding: Spacing.pageMobile,
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -282,7 +281,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
                 l10n.wealthProductNoAccountHint,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.go(AppRoutes.accountNew),
@@ -306,7 +305,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           AccountPicker(
@@ -314,7 +313,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             value: _accountId,
             onChanged: (v) => setState(() => _accountId = v),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nameController),
             label: Text(l10n.wealthProductNameLabel),
@@ -325,7 +324,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
                 : null,
             onSubmit: (_) => _issuerFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _issuerController),
             label: Text(l10n.wealthProductIssuerLabel),
@@ -333,7 +332,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             textInputAction: TextInputAction.next,
             onSubmit: (_) => _productCodeFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(
               controller: _productCodeController,
@@ -343,12 +342,12 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             textInputAction: TextInputAction.next,
             onSubmit: (_) => _principalFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           CurrencyPicker(
             value: _currency,
             onChanged: (v) => setState(() => _currency = v),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           AmountField(
             label: l10n.wealthProductAmountLabel,
             controller: _principalController,
@@ -356,7 +355,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             focusNode: _principalFocus,
             onFieldSubmitted: (_) => _returnFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(
               controller: _expectedReturnPctController,
@@ -377,19 +376,19 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             },
             onSubmit: (_) => _valuationFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           DateField(
             label: l10n.wealthProductValueDateLabel,
             initialValue: _startDate,
             onChanged: (d) => setState(() => _startDate = d),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           DateField(
             label: l10n.wealthProductMaturityDateLabel,
             initialValue: _maturityDate,
             onChanged: (d) => setState(() => _maturityDate = d),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           AmountField(
             label: l10n.wealthProductValuationLabel,
             controller: _valuationController,
@@ -400,7 +399,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
-          const SizedBox(height: Spacing.s24),
+          const SizedBox(height: 24),
           FButton(
             variant: FButtonVariant.primary,
             onPress: _busy ? null : _save,

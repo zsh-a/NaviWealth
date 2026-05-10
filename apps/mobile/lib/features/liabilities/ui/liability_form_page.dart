@@ -7,7 +7,6 @@ import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
@@ -106,7 +105,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: Spacing.pageMobile,
+            padding: const EdgeInsets.all(16),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: [
               DropdownButtonFormField<LiabilityType>(
@@ -122,7 +121,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 ],
                 onChanged: (v) => setState(() => _type = v ?? _type),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _name),
                 label: Text(l10n.liabilityFieldName),
@@ -133,7 +132,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                     : null,
                 onSubmit: (_) => _principalFocus.requestFocus(),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _principal),
                 label: Text(l10n.liabilityFieldPrincipal),
@@ -145,7 +144,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 validator: _validatePositive(l10n),
                 onSubmit: (_) => _rateFocus.requestFocus(),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _rate),
                 label: Text(l10n.liabilityFieldInterestRate),
@@ -166,7 +165,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 },
                 onSubmit: (_) => _currencyFocus.requestFocus(),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               DropdownButtonFormField<LiabilityRateType>(
                 isExpanded: true,
                 initialValue: _rateType,
@@ -182,7 +181,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 ],
                 onChanged: (v) => setState(() => _rateType = v ?? _rateType),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _currency),
                 label: Text(l10n.liabilityFieldCurrency),
@@ -199,7 +198,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                     : _termFocus.requestFocus(),
               ),
               if (!_isCreditCard) ...[
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _term),
                   label: Text(l10n.liabilityFieldTerm),
@@ -215,13 +214,13 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   },
                   onSubmit: (_) => _saving ? null : _save(),
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 _DateField(
                   label: l10n.liabilityFieldStartDate,
                   value: _startDate,
                   onChanged: (v) => setState(() => _startDate = v),
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<RepaymentMethod>(
                   isExpanded: true,
                   initialValue: _method,
@@ -238,7 +237,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   onChanged: (v) => setState(() => _method = v ?? _method),
                 ),
               ] else ...[
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _statementDay),
                   label: Text(l10n.liabilityFieldStatementDay),
@@ -248,7 +247,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   validator: _validateOptionalDay(l10n),
                   onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 FTextFormField(
                   control: FTextFieldControl.managed(
                     controller: _paymentDueDay,

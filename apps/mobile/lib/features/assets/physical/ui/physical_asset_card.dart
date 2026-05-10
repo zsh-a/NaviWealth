@@ -26,14 +26,14 @@ class PhysicalAssetCard extends StatelessWidget {
             pathParameters: {'id': asset.id},
           ),
           child: Padding(
-            padding: Spacing.card,
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Icon(
                   _iconForType(asset.type),
                   color: theme.colorScheme.primary,
                 ),
-                const SizedBox(width: Spacing.s12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +44,7 @@ class PhysicalAssetCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: Spacing.s2),
+                      const SizedBox(height: 2),
                       Text(
                         _subtitleFor(asset, l10n),
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -56,7 +56,7 @@ class PhysicalAssetCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: Spacing.s12),
+                const SizedBox(width: 12),
                 MoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,

@@ -214,8 +214,8 @@ class _MobileShell extends StatelessWidget {
           ),
         ),
         Positioned(
-          right: Spacing.s16,
-          bottom: sysBottom + barHeight + Spacing.s16,
+          right: 16,
+          bottom: sysBottom + barHeight + 16,
           child: SizedBox(
             width: 56,
             height: 56,
@@ -295,7 +295,7 @@ class _DesktopShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Width capping is delegated to feature pages: single-pane pages
-    // center their content at `Spacing.contentMaxWidth`, master-detail
+    // center their content at `1200`, master-detail
     // pages (Accounts / Assets / AI Chat) intentionally fill the full
     // remaining width to give the splitter room to breathe.
     //
@@ -334,8 +334,8 @@ class _GlobalActionHost extends StatelessWidget {
       children: [
         Positioned.fill(child: child),
         Positioned(
-          right: Spacing.s24,
-          bottom: Spacing.s24,
+          right: 24,
+          bottom: 24,
           child: SizedBox(
             width: 56,
             height: 56,

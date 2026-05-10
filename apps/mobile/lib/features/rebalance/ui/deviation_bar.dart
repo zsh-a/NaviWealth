@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../design_system/design_system.dart';
 import '../domain/rebalance_models.dart';
 
 /// A horizontal bar showing actual vs target allocation for a single
@@ -33,7 +32,7 @@ class DeviationBar extends StatelessWidget {
     final bgBarColor = colorScheme.surfaceContainerHighest;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s6),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -52,11 +51,11 @@ class DeviationBar extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               _DeviationChip(deviation: deviation, severity: severity),
             ],
           ),
-          const SizedBox(height: Spacing.s4),
+          const SizedBox(height: 4),
           Stack(
             children: [
               // Background bar.
@@ -123,13 +122,10 @@ class _DeviationChip extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(Radii.sm),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         text,

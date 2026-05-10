@@ -100,12 +100,7 @@ class _ChatComposerState extends State<ChatComposer> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s12,
-          Spacing.s8,
-          Spacing.s12,
-          Spacing.s12,
-        ),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         child: SafeArea(
           top: false,
           child: Row(
@@ -134,26 +129,26 @@ class _ChatComposerState extends State<ChatComposer> {
                         alpha: 0.6,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.s16,
-                        vertical: Spacing.s12,
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                       border: const OutlineInputBorder(
-                        borderRadius: Radii.brXl,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
                         borderSide: BorderSide.none,
                       ),
                       enabledBorder: const OutlineInputBorder(
-                        borderRadius: Radii.brXl,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
                         borderSide: BorderSide.none,
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: Radii.brXl,
+                        borderRadius: const BorderRadius.all(Radius.circular(20)),
                         borderSide: BorderSide(color: cs.primary, width: 1.5),
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               AnimatedSwitcher(
                 duration: Motion.fast,
                 transitionBuilder: (child, anim) =>
@@ -184,7 +179,7 @@ class _ChatComposerState extends State<ChatComposer> {
     if (widget.isFlushing) {
       return const Padding(
         key: ValueKey('flushing'),
-        padding: EdgeInsets.all(Spacing.s8),
+        padding: EdgeInsets.all(8),
         child: SizedBox(width: 20, height: 20, child: FCircularProgress()),
       );
     }

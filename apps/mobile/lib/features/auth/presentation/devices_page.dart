@@ -95,7 +95,7 @@ class DevicesPage extends ConsumerWidget {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,9 +104,9 @@ class DevicesPage extends ConsumerWidget {
               l10n.authLogoutDialogTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.authLogoutDialogBody),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -115,7 +115,7 @@ class DevicesPage extends ConsumerWidget {
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -150,7 +150,7 @@ class _DevicesList extends ConsumerWidget {
       onRefresh: () async => ref.invalidate(devicesProvider),
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: devices.length,
         separatorBuilder: (_, _) => const FDivider(),
         itemBuilder: (context, i) {
@@ -191,7 +191,7 @@ class _DevicesList extends ConsumerWidget {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +200,7 @@ class _DevicesList extends ConsumerWidget {
               l10n.authDeviceRevokeDialogTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               l10n.authDeviceRevokeDialogBody(
                 device.name?.isNotEmpty == true
@@ -208,7 +208,7 @@ class _DevicesList extends ConsumerWidget {
                     : l10n.authDeviceUnnamed,
               ),
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -217,7 +217,7 @@ class _DevicesList extends ConsumerWidget {
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -252,15 +252,15 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(Spacing.s24),
+      padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.error_outline, size: 40, color: theme.colorScheme.error),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           if (details != null && details!.isNotEmpty) ...[
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               details!,
               textAlign: TextAlign.center,
@@ -270,7 +270,7 @@ class _ErrorView extends StatelessWidget {
             ),
           ],
           if (onRetry != null) ...[
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             FButton(
               variant: FButtonVariant.outline,
               onPress: onRetry,

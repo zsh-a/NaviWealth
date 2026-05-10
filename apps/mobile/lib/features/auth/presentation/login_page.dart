@@ -107,8 +107,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               constraints: const BoxConstraints(maxWidth: 420),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s24,
-                  vertical: Spacing.s32,
+                  horizontal: 24,
+                  vertical: 32,
                 ),
                 child: Form(
                   key: _formKey,
@@ -120,33 +120,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         width: 80,
                         height: 80,
                       ),
-                      const SizedBox(height: Spacing.s16),
+                      const SizedBox(height: 16),
                       Text(
                         l10n.appTitle,
                         style: Theme.of(context).textTheme.headlineSmall,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: Spacing.s8),
+                      const SizedBox(height: 8),
                       Text(
                         l10n.authLoginTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: Spacing.s24),
+                      const SizedBox(height: 24),
                       if (showExpiredBanner)
                         _Banner(
                           kind: _BannerKind.info,
                           message: l10n.authLoginNoticeSessionExpired,
                         ),
                       if (_lastErrorKind != null) ...[
-                        const SizedBox(height: Spacing.s8),
+                        const SizedBox(height: 8),
                         _Banner(
                           kind: _BannerKind.error,
                           message: _errorMessage(l10n, _lastErrorKind!),
                           details: _lastErrorMessage,
                         ),
                       ],
-                      const SizedBox(height: Spacing.s16),
+                      const SizedBox(height: 16),
                       FTextFormField(
                         key: const ValueKey('login.email'),
                         control: FTextFieldControl.managed(
@@ -164,7 +164,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         validator: (value) => _validateEmail(value, l10n: l10n),
                         onSubmit: (_) => _passwordFocus.requestFocus(),
                       ),
-                      const SizedBox(height: Spacing.s16),
+                      const SizedBox(height: 16),
                       FTextFormField(
                         key: const ValueKey('login.password'),
                         control: FTextFieldControl.managed(
@@ -180,7 +180,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             _validatePassword(value, l10n: l10n),
                         onSubmit: (_) => _submit(),
                       ),
-                      const SizedBox(height: Spacing.s24),
+                      const SizedBox(height: 24),
                       FButton(
                         key: const ValueKey('login.submit'),
                         variant: FButtonVariant.primary,
@@ -243,13 +243,16 @@ class _Banner extends StatelessWidget {
       ),
     };
     return Container(
-      padding: const EdgeInsets.all(Spacing.s12),
-      decoration: BoxDecoration(color: background, borderRadius: Radii.brSm),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: foreground, size: 20),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

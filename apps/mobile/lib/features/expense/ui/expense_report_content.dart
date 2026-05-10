@@ -31,24 +31,19 @@ class ExpenseReportBody extends ConsumerWidget {
     };
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.s12,
-        Spacing.s8,
-        Spacing.s12,
-        Spacing.s24,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
       children: [
         const _RangeChips(),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _SummaryCard(report: report),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         ExpenseCategoryPieCard(
           report: report,
           categoryById: expenseAccountById,
         ),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         ExpenseTrendCard(report: report),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         ExpenseCategoryListCard(
           report: report,
           categoryById: expenseAccountById,
@@ -72,7 +67,7 @@ class _RangeChips extends ConsumerWidget {
         children: [
           for (final preset in ExpenseReportRangePreset.values)
             Padding(
-              padding: const EdgeInsets.only(right: Spacing.s8),
+              padding: const EdgeInsets.only(right: 8),
               child: FButton(
                 variant: (preset == selected)
                     ? FButtonVariant.primary
@@ -147,7 +142,7 @@ class _SummaryCard extends StatelessWidget {
     );
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -155,7 +150,7 @@ class _SummaryCard extends StatelessWidget {
               l10n.expenseReportTotalExpenses,
               style: theme.textTheme.titleSmall,
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               formatter.currency(
                 report.total.amount,
@@ -165,7 +160,7 @@ class _SummaryCard extends StatelessWidget {
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -194,7 +189,7 @@ class _SummaryCard extends StatelessWidget {
               ],
             ),
             if (report.skippedFxCount > 0) ...[
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Text(
                 l10n.expenseReportSkippedFx(report.skippedFxCount),
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -202,7 +197,7 @@ class _SummaryCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
               style: theme.textTheme.bodySmall?.copyWith(

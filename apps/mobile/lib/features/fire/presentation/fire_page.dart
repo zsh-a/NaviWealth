@@ -50,13 +50,13 @@ class _ErrorState extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s32),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
           Icon(Icons.error_outline, color: theme.colorScheme.error, size: 32),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           FButton(
             variant: FButtonVariant.ghost,
             onPress: onRetry,

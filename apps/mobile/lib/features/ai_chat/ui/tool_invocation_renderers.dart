@@ -126,10 +126,7 @@ class _HoldingsTable extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s8,
-            vertical: Spacing.s4,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             children: [
               Expanded(
@@ -161,7 +158,7 @@ class _HoldingsTable extends StatelessWidget {
         for (final row in visible) _holdingRowTile(context, row),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: Spacing.s4, left: Spacing.s8),
+            padding: const EdgeInsets.only(top: 4, left: 8),
             child: Text(
               '还有 $hidden 项未展示',
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -178,10 +175,7 @@ class _HoldingsTable extends StatelessWidget {
     final primary = row.symbol ?? row.name ?? row.assetId;
     final secondary = row.symbol != null && row.name != null ? row.name! : null;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3)),
@@ -289,10 +283,7 @@ class _XirrSummary extends StatelessWidget {
         : '全部历史';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -300,7 +291,7 @@ class _XirrSummary extends StatelessWidget {
             scopeLabel,
             style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
           ),
-          const SizedBox(height: Spacing.s4),
+          const SizedBox(height: 4),
           if (rate == null)
             Text(
               '无法计算（现金流方向单一或样本不足）',
@@ -313,7 +304,7 @@ class _XirrSummary extends StatelessWidget {
               fractionDigits: 2,
               style: TypographyTokens.numericTitle,
             ),
-          const SizedBox(height: Spacing.s4),
+          const SizedBox(height: 4),
           Text(
             '$rangeLabel · ${flows.length} 条现金流',
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -366,10 +357,7 @@ class _NetWorthSparkline extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -398,7 +386,7 @@ class _NetWorthSparkline extends StatelessWidget {
               DeltaChip(value: delta, format: DeltaFormat.currency),
             ],
           ),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           SizedBox(
             height: 40,
             child: NwLineChart(
@@ -417,7 +405,7 @@ class _NetWorthSparkline extends StatelessWidget {
               downsample: false,
             ),
           ),
-          const SizedBox(height: Spacing.s4),
+          const SizedBox(height: 4),
           Text(
             '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${points.length} 个采样点',
             style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
@@ -478,10 +466,7 @@ class _BreakdownView extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -494,7 +479,7 @@ class _BreakdownView extends StatelessWidget {
               minLabelPercent: 100, // hide in-slice labels for mini view
             ),
           ),
-          const SizedBox(width: Spacing.s12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,7 +497,7 @@ class _BreakdownView extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: Spacing.s6),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             top[i].label,
@@ -535,7 +520,7 @@ class _BreakdownView extends StatelessWidget {
                   ),
                 if (buckets.length > top.length)
                   Padding(
-                    padding: const EdgeInsets.only(top: Spacing.s4),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       '其他 ${buckets.length - top.length} 类共 '
                       '${NumberFormat.percentPattern().format(buckets.skip(top.length).fold<double>(0, (s, b) => s + b.share).clamp(0.0, 1.0))}',
@@ -613,7 +598,7 @@ class _RiskAlertList extends StatelessWidget {
         for (final a in visible) _alertTile(context, a),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: Spacing.s4, left: Spacing.s8),
+            padding: const EdgeInsets.only(top: 4, left: 8),
             child: Text(
               '还有 $hidden 项未展示',
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -644,17 +629,17 @@ class _RiskAlertList extends StatelessWidget {
       ),
     };
     return Container(
-      margin: const EdgeInsets.only(top: Spacing.s4),
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s6,
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
       ),
-      decoration: BoxDecoration(color: bg, borderRadius: Radii.brXs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 16, color: fg),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,7 +654,7 @@ class _RiskAlertList extends StatelessWidget {
           ),
           if (alert.share != null)
             Padding(
-              padding: const EdgeInsets.only(left: Spacing.s8),
+              padding: const EdgeInsets.only(left: 8),
               child: Text(
                 NumberFormat.percentPattern().format(
                   alert.share!.clamp(0.0, 1.0),
@@ -713,10 +698,7 @@ class _EmptyResult extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         children: [
           Icon(
@@ -724,7 +706,7 @@ class _EmptyResult extends StatelessWidget {
             size: 16,
             color: cs.onSurfaceVariant,
           ),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Text(
             message,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),

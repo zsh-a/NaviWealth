@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
@@ -62,7 +61,7 @@ class InsightStrip extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
         itemCount: insights.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Spacing.s8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final item = insights[i];
           final l10n = AppLocalizations.of(context);

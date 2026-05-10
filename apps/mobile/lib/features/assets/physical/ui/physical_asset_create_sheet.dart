@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/haptics/haptics.dart';
 import '../../../../data/domain/enums.dart';
-import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../shared/forms/forms.dart';
 import '../data/physical_asset.dart';
@@ -109,12 +108,7 @@ class _PhysicalAssetCreateSheetState
     );
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s16,
-          Spacing.s12,
-          Spacing.s16,
-          Spacing.s24,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -128,10 +122,10 @@ class _PhysicalAssetCreateSheetState
                   child: Container(
                     width: 32,
                     height: 4,
-                    margin: const EdgeInsets.only(bottom: Spacing.s12),
+                    margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.outlineVariant,
-                      borderRadius: Radii.brXs,
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
@@ -141,7 +135,7 @@ class _PhysicalAssetCreateSheetState
                       : l10n.physicalAssetAddRealEstate,
                   style: theme.textTheme.titleLarge,
                 ),
-                const SizedBox(height: Spacing.s16),
+                const SizedBox(height: 16),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _nameCtrl),
                   label: Text(l10n.physicalAssetFieldName),
@@ -152,7 +146,7 @@ class _PhysicalAssetCreateSheetState
                       ? _currencyFocus.requestFocus()
                       : _addressFocus.requestFocus(),
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 if (!_isVehicle) ...[
                   FTextFormField(
                     control: FTextFieldControl.managed(
@@ -163,7 +157,7 @@ class _PhysicalAssetCreateSheetState
                     textInputAction: TextInputAction.next,
                     onSubmit: (_) => _currencyFocus.requestFocus(),
                   ),
-                  const SizedBox(height: Spacing.s12),
+                  const SizedBox(height: 12),
                 ],
                 Row(
                   children: [
@@ -180,7 +174,7 @@ class _PhysicalAssetCreateSheetState
                         onSubmit: (_) => _purchasePriceFocus.requestFocus(),
                       ),
                     ),
-                    const SizedBox(width: Spacing.s12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: InkWell(
                         onTap: _saving ? null : _pickPurchaseDate,
@@ -194,7 +188,7 @@ class _PhysicalAssetCreateSheetState
                     ),
                   ],
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 FTextFormField(
                   control: FTextFieldControl.managed(
                     controller: _purchasePriceCtrl,
@@ -208,7 +202,7 @@ class _PhysicalAssetCreateSheetState
                   validator: _positiveDecimal(l10n),
                   onSubmit: (_) => _currentValuationFocus.requestFocus(),
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 FTextFormField(
                   control: FTextFieldControl.managed(
                     controller: _currentValuationCtrl,
@@ -228,7 +222,7 @@ class _PhysicalAssetCreateSheetState
                       : _linkedLiabilityFocus.requestFocus(),
                 ),
                 if (_isVehicle) ...[
-                  const SizedBox(height: Spacing.s12),
+                  const SizedBox(height: 12),
                   FTextFormField(
                     control: FTextFieldControl.managed(
                       controller: _residualRateCtrl,
@@ -254,7 +248,7 @@ class _PhysicalAssetCreateSheetState
                     },
                     onSubmit: (_) => _saving ? null : _submit(),
                   ),
-                  const SizedBox(height: Spacing.s4),
+                  const SizedBox(height: 4),
                   SwitchListTile.adaptive(
                     title: Text(l10n.physicalAssetFieldAutoDepreciation),
                     value: _autoDepreciation,
@@ -265,7 +259,7 @@ class _PhysicalAssetCreateSheetState
                   ),
                 ],
                 if (!_isVehicle) ...[
-                  const SizedBox(height: Spacing.s12),
+                  const SizedBox(height: 12),
                   FTextFormField(
                     control: FTextFieldControl.managed(
                       controller: _linkedLiabilityCtrl,
@@ -276,7 +270,7 @@ class _PhysicalAssetCreateSheetState
                     onSubmit: (_) => _saving ? null : _submit(),
                   ),
                 ],
-                const SizedBox(height: Spacing.s24),
+                const SizedBox(height: 24),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: _saving ? null : _submit,

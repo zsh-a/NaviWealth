@@ -171,7 +171,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,9 +180,9 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               l10n.depositDeleteTitle,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.depositDeleteBody),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -191,7 +191,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -280,12 +280,12 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           FCard.raw(
             child: Padding(
-              padding: const EdgeInsets.all(Spacing.s4),
+              padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
                   Expanded(
@@ -314,13 +314,13 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               ),
             ),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           AccountPicker(
             accounts: eligible,
             value: _accountId,
             onChanged: (v) => setState(() => _accountId = v),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nameController),
             label: Text(l10n.depositNameLabel),
@@ -332,12 +332,12 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
                 : null,
             onSubmit: (_) => _principalFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           CurrencyPicker(
             value: _currency,
             onChanged: (v) => setState(() => _currency = v),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           AmountField(
             label: l10n.depositPrincipalLabel,
             controller: _principalController,
@@ -345,7 +345,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             focusNode: _principalFocus,
             onFieldSubmitted: (_) => _rateFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(
               controller: _ratePercentController,
@@ -365,20 +365,20 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             },
             onSubmit: (_) => _valuationFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           DateField(
             label: l10n.depositValueDateLabel,
             initialValue: _startDate,
             onChanged: (d) => setState(() => _startDate = d),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           DateField(
             label: l10n.depositMaturityDateLabel,
             initialValue: _maturityDate,
             required: _kind == AssetType.bankDepositTerm,
             onChanged: (d) => setState(() => _maturityDate = d),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           AmountField(
             label: l10n.depositCurrentValuationLabel,
             controller: _valuationController,
@@ -389,7 +389,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           if (_kind == AssetType.bankDepositTerm)
             FSwitch(
               label: Text(l10n.depositAutoRenewTitle),
@@ -397,7 +397,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
               value: _autoRenew,
               onChange: (v) => setState(() => _autoRenew = v),
             ),
-          const SizedBox(height: Spacing.s24),
+          const SizedBox(height: 24),
           FButton(
             variant: FButtonVariant.primary,
             onPress: _busy ? null : _save,
@@ -419,12 +419,12 @@ class _PromptCreateAccount extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l10n.depositNoAccountHint, textAlign: TextAlign.center),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             FButton(
               variant: FButtonVariant.outline,
               onPress: onTap,
@@ -458,14 +458,11 @@ class _DepositKindChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s12,
-          vertical: Spacing.s8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: selected
             ? BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(Radii.md),
+                borderRadius: BorderRadius.circular(12),
               )
             : null,
         child: Row(
@@ -478,7 +475,7 @@ class _DepositKindChip extends StatelessWidget {
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(width: Spacing.s4),
+            const SizedBox(width: 4),
             Text(
               label,
               style: theme.textTheme.labelLarge?.copyWith(

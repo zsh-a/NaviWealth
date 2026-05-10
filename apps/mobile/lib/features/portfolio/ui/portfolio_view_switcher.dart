@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/shell_preferences.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 class PortfolioViewSwitcher extends ConsumerWidget {
@@ -13,12 +12,7 @@ class PortfolioViewSwitcher extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final current = ref.watch(portfolioViewProvider);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.s16,
-        Spacing.s12,
-        Spacing.s16,
-        Spacing.s8,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: SegmentedButton<PortfolioViewMode>(
         showSelectedIcon: false,
         segments: [

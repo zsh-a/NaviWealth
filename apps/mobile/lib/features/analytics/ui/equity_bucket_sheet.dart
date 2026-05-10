@@ -32,12 +32,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s16,
-          0,
-          Spacing.s16,
-          Spacing.s16,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -46,7 +41,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
               l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
               style: theme.textTheme.titleLarge,
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.analyticsHoldingsCount(bucket.holdings.length),
               style: theme.textTheme.bodySmall?.copyWith(
@@ -54,7 +49,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
               ),
             ),
             if (bucket.isUnclassified) ...[
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Text(
                 l10n.analyticsUnclassifiedRowCta,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -62,7 +57,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                 ),
               ),
             ],
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,

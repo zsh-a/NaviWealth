@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_goal_preferences.dart';
 import '../domain/fire_goal.dart';
@@ -68,12 +67,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          Spacing.s16,
-          0,
-          Spacing.s16,
-          Spacing.s16 + viewInsets.bottom,
-        ),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + viewInsets.bottom),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -85,33 +79,33 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                   l10n.fireGoalSheetTitle,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const SizedBox(height: Spacing.s4),
+                const SizedBox(height: 4),
                 Text(
                   l10n.fireGoalSheetSubtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                 ),
-                const SizedBox(height: Spacing.s16),
+                const SizedBox(height: 16),
                 _MoneyField(
                   controller: _targetCtrl,
                   label: l10n.fireGoalFieldTarget,
                   helper: l10n.fireGoalFieldTargetHelper,
                   required: true,
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 _MoneyField(
                   controller: _expensesCtrl,
                   label: l10n.fireGoalFieldMonthlyExpenses,
                   helper: l10n.fireGoalFieldMonthlyExpensesHelper,
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 _MoneyField(
                   controller: _surplusCtrl,
                   label: l10n.fireGoalFieldMonthlySurplus,
                   helper: l10n.fireGoalFieldMonthlySurplusHelper,
                 ),
-                const SizedBox(height: Spacing.s16),
+                const SizedBox(height: 16),
                 Text(
                   l10n.fireGoalFieldInflation(
                     (_inflation * 100).toStringAsFixed(1),
@@ -126,7 +120,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                   label: '${(_inflation * 100).toStringAsFixed(1)}%',
                   onChanged: (v) => setState(() => _inflation = v),
                 ),
-                const SizedBox(height: Spacing.s8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -136,7 +130,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                         child: Text(l10n.fireGoalSheetCancel),
                       ),
                     ),
-                    const SizedBox(width: Spacing.s12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: FButton(
                         variant: FButtonVariant.primary,

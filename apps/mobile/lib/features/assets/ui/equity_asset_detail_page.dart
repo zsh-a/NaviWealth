@@ -156,16 +156,16 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
           child: Material(
             color: Colors.transparent,
             child: ListView(
-              padding: const EdgeInsets.all(Spacing.s16),
+              padding: const EdgeInsets.all(16),
               children: [
                 AssetSummaryCard(asset: asset),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 AssetHoldingCard(asset: asset),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 AssetPnLCard(asset: asset),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 AssetTrendMiniChartCard(asset: asset),
-                const SizedBox(height: Spacing.s16),
+                const SizedBox(height: 16),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () =>

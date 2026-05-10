@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/domain/account.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'expense_category_visuals.dart';
 
@@ -29,7 +28,7 @@ class CategoryGridPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             label ?? l10n.expenseCategoryPickerLabelDefault,
             style: theme.textTheme.labelLarge,
@@ -54,8 +53,8 @@ class CategoryGridPicker extends StatelessWidget {
                       crossAxisCount: crossAxisCount,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: Spacing.s8,
-                      crossAxisSpacing: Spacing.s8,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
                       childAspectRatio: 0.85,
                       children: [
                         for (final account in accounts)
@@ -73,7 +72,7 @@ class CategoryGridPicker extends StatelessWidget {
                 ),
                 if (state.hasError)
                   Padding(
-                    padding: const EdgeInsets.only(top: Spacing.s8, left: 4),
+                    padding: const EdgeInsets.only(top: 8, left: 4),
                     child: Text(
                       state.errorText!,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -107,20 +106,20 @@ class _AccountTile extends StatelessWidget {
     final accent = account.accentColor ?? theme.colorScheme.primary;
     return InkWell(
       onTap: onTap,
-      borderRadius: Radii.brMd,
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         decoration: BoxDecoration(
           color: selected
               ? accent.withValues(alpha: 0.12)
               : theme.colorScheme.surfaceContainerHighest,
-          borderRadius: Radii.brMd,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? accent : Colors.transparent,
             width: 1.5,
           ),
         ),
-        padding: const EdgeInsets.all(Spacing.s8),
+        padding: const EdgeInsets.all(8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -129,7 +128,7 @@ class _AccountTile extends StatelessWidget {
               backgroundColor: accent.withValues(alpha: 0.15),
               child: Icon(account.iconData, color: accent, size: 20),
             ),
-            const SizedBox(height: Spacing.s6),
+            const SizedBox(height: 6),
             Text(
               account.name,
               style: theme.textTheme.labelMedium,

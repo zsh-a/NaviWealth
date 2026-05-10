@@ -30,7 +30,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
     final controller = ref.read(activityFeedQueryProvider.notifier);
     return SafeArea(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,11 +49,11 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             SectionHeader(title: l10n.activityFeedFilterKind),
             Wrap(
-              spacing: Spacing.s8,
-              runSpacing: Spacing.s8,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final kind in ActivityKind.values)
                   FButton(
@@ -72,7 +72,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                   ),
               ],
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             SectionHeader(title: l10n.activityFeedFilterAccount),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 240),
@@ -97,7 +97,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -116,7 +116,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(),

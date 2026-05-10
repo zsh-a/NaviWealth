@@ -111,7 +111,7 @@ class MasterDetailEmpty extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -120,7 +120,7 @@ class MasterDetailEmpty extends StatelessWidget {
               size: 36,
               color: cs.onSurfaceVariant,
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,

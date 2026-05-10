@@ -31,12 +31,7 @@ class ExpenseFiltersBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.s16,
-        Spacing.s12,
-        Spacing.s16,
-        0,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         children: [
           TextField(
@@ -58,7 +53,7 @@ class ExpenseFiltersBar extends StatelessWidget {
             ),
             onChanged: (v) => onChanged(filters.copyWith(keyword: v)),
           ),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           SizedBox(
             height: 36,
             child: ListView(
@@ -127,7 +122,7 @@ class _GroupingChips extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s4),
+        padding: const EdgeInsets.all(4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -167,14 +162,11 @@ class _SegmentChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s12,
-          vertical: Spacing.s6,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: selected
             ? BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(Radii.md),
+                borderRadius: BorderRadius.circular(12),
               )
             : null,
         child: Text(
@@ -244,18 +236,13 @@ class ExpenseGroupedList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: items.length,
       itemBuilder: (context, i) {
         final item = items[i];
         return switch (item) {
           _ExpenseGroupHeader(:final group) => Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.s16,
-              Spacing.s12,
-              Spacing.s16,
-              Spacing.s8,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -357,12 +344,12 @@ class EmptyExpenseList extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.receipt_long_outlined, size: 48),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               filtered
                   ? l10n.expenseListEmptyFiltered

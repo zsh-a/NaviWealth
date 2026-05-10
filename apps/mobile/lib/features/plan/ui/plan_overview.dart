@@ -30,7 +30,7 @@ class PlanOverview extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isWide ? Spacing.pageWide : Spacing.pageMobile;
+        final padding = isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16);
 
         final cards = <Widget>[
           _PlanCard(
@@ -91,11 +91,11 @@ class PlanOverview extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(child: cards[0]),
-                  const SizedBox(width: Spacing.s16),
+                  const SizedBox(width: 16),
                   Expanded(child: cards[1]),
                 ],
               ),
-              const SizedBox(height: Spacing.s16),
+              const SizedBox(height: 16),
               cards[2],
             ],
           );
@@ -103,15 +103,12 @@ class PlanOverview extends ConsumerWidget {
 
         return ListView(
           padding: padding.copyWith(
-            bottom:
-                padding.bottom +
-                Spacing.floatingBarClearance +
-                MediaQuery.paddingOf(context).bottom,
+            bottom: padding.bottom + 64 + MediaQuery.paddingOf(context).bottom,
           ),
           children: [
             for (int i = 0; i < cards.length; i++) ...[
               cards[i],
-              if (i < cards.length - 1) const SizedBox(height: Spacing.s12),
+              if (i < cards.length - 1) const SizedBox(height: 12),
             ],
           ],
         );
@@ -203,7 +200,7 @@ class _PlanCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: Spacing.card,
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
@@ -211,18 +208,18 @@ class _PlanCard extends StatelessWidget {
                   height: 44,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
-                    borderRadius: Radii.brMd,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
                   child: Icon(icon, color: theme.colorScheme.primary, size: 22),
                 ),
-                const SizedBox(width: Spacing.s16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, style: theme.textTheme.titleMedium),
-                      const SizedBox(height: Spacing.s4),
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -230,12 +227,8 @@ class _PlanCard extends StatelessWidget {
                         ),
                       ),
                       if (summary.isNotEmpty) ...[
-                        const SizedBox(height: Spacing.s8),
-                        Wrap(
-                          spacing: Spacing.s6,
-                          runSpacing: Spacing.s6,
-                          children: summary,
-                        ),
+                        const SizedBox(height: 8),
+                        Wrap(spacing: 6, runSpacing: 6, children: summary),
                       ],
                     ],
                   ),
@@ -265,13 +258,10 @@ class _SummaryChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s8,
-          vertical: Spacing.s2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Text(
           label,
           style: theme.textTheme.labelSmall?.copyWith(
@@ -288,6 +278,6 @@ class _SummarySkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SkeletonBox(width: 80, height: 20, radius: Radii.sm);
+    return const SkeletonBox(width: 80, height: 20, radius: 8);
   }
 }

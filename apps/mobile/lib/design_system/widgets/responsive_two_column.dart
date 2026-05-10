@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/spacing_tokens.dart';
 
 /// Switches between a two-column [Row] (wide) and a stacked [Column]
 /// (narrow) at [breakpoint].
@@ -21,7 +20,7 @@ class ResponsiveTwoColumn extends StatelessWidget {
     required this.left,
     required this.right,
     this.breakpoint = 1024,
-    this.gap = Spacing.s16,
+    this.gap = 16,
   });
 
   final Widget left;

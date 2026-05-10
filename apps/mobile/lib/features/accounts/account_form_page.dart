@@ -185,7 +185,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,9 +194,9 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
               l10n.accountFormDeleteTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.accountFormDeleteContent(_initial!.name)),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -205,7 +205,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.accountFormCancelAction),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -281,7 +281,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: ListView(
-                  padding: Spacing.pageMobile,
+                  padding: const EdgeInsets.all(16),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   children: [
@@ -308,7 +308,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         });
                       },
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<AccountCategory>(
                       isExpanded: true,
                       initialValue: _category,
@@ -331,7 +331,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         });
                       },
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _nameController,
@@ -344,30 +344,30 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                           : null,
                       onSubmit: (_) => _institutionFocus.requestFocus(),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     _ParentAccountPickerSection(
                       currentAccountId: _initial?.id,
                       category: _category,
                       parentId: _parentId,
                       onChanged: (v) => setState(() => _parentId = v),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     _IconPickerSection(
                       selected: _icon,
                       color: _color,
                       onChanged: (v) => setState(() => _icon = v),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     _ColorPickerSection(
                       selected: _color,
                       onChanged: (v) => setState(() => _color = v),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     CurrencyPicker(
                       value: _currency,
                       onChanged: (v) => setState(() => _currency = v),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _institutionController,
@@ -378,7 +378,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       textInputAction: TextInputAction.next,
                       onSubmit: (_) => _accountNumberFocus.requestFocus(),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _accountNumberController,
@@ -388,13 +388,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       textInputAction: TextInputAction.next,
                       onSubmit: (_) => _noteFocus.requestFocus(),
                     ),
-                    const SizedBox(height: Spacing.s12),
+                    const SizedBox(height: 12),
                     NoteField(
                       controller: _noteController,
                       focusNode: _noteFocus,
                     ),
                     if (widget.isEdit) ...[
-                      const SizedBox(height: Spacing.s12),
+                      const SizedBox(height: 12),
                       FSwitch(
                         label: Text(l10n.accountFormArchivedTitle),
                         description: Text(l10n.accountFormArchivedSubtitle),
@@ -402,7 +402,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         onChange: (v) => setState(() => _archived = v),
                       ),
                     ],
-                    const SizedBox(height: Spacing.s24),
+                    const SizedBox(height: 24),
                     FButton(
                       variant: FButtonVariant.primary,
                       onPress: _busy ? null : _save,
@@ -528,13 +528,13 @@ class _IconPickerSection extends StatelessWidget {
           l10n.accountFormIconHeading,
           style: Theme.of(context).textTheme.labelMedium,
         ),
-        const SizedBox(height: Spacing.s4),
+        const SizedBox(height: 4),
         SizedBox(
           height: 56,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: kAccountIconCatalogue.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(width: Spacing.s8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               if (index == 0) {
                 final isSelected = selected == null;
@@ -591,12 +591,12 @@ class _IconChip extends StatelessWidget {
       message: tooltip,
       child: InkWell(
         onTap: onTap,
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            borderRadius: Radii.brSm,
+            borderRadius: BorderRadius.circular(8),
             color: isSelected
                 ? selectionTint.withValues(alpha: 0.1)
                 : scheme.surfaceContainerLow,
@@ -633,10 +633,10 @@ class _ColorPickerSection extends StatelessWidget {
           l10n.accountFormColorHeading,
           style: Theme.of(context).textTheme.labelMedium,
         ),
-        const SizedBox(height: Spacing.s4),
+        const SizedBox(height: 4),
         Wrap(
-          spacing: Spacing.s8,
-          runSpacing: Spacing.s8,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             _ColorSwatch(
               isSelected: selected == null,

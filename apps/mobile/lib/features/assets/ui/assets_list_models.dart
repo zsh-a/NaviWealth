@@ -4,7 +4,6 @@ import '../../../data/domain/account.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/manual_asset_metadata.dart';
-import '../../../design_system/design_system.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../physical/data/physical_asset.dart';
 
@@ -90,7 +89,7 @@ List<AssetListRow> buildAssetRows({
         rows.add(ManualAssetTileRow(asset, valuationMap[asset.id]));
       }
     }
-    rows.add(const GapRow(Spacing.s12));
+    rows.add(const GapRow(12));
   }
 
   final securitiesGrouped = <AssetType, List<Asset>>{};
@@ -105,16 +104,16 @@ List<AssetListRow> buildAssetRows({
     for (final asset in securitiesGrouped[type]!) {
       rows.add(SecurityAssetTileRow(asset, holdings[asset.id]));
     }
-    rows.add(const GapRow(Spacing.s12));
+    rows.add(const GapRow(12));
   }
 
   if (physical.isNotEmpty) {
     rows.add(const PhysicalHeaderRow());
     for (final asset in physical) {
       rows.add(PhysicalAssetTileRow(asset));
-      rows.add(const GapRow(Spacing.s8));
+      rows.add(const GapRow(8));
     }
-    rows.add(const GapRow(Spacing.s12));
+    rows.add(const GapRow(12));
   }
 
   return rows;

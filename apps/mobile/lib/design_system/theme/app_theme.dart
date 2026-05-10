@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/color_palette.dart';
-import '../tokens/radius_tokens.dart';
-import '../tokens/spacing_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'app_elevations.dart';
 import 'market_color_mode.dart';
@@ -116,7 +114,7 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: Radii.brLg,
+          borderRadius: const BorderRadius.all(Radius.circular(16)),
           side: BorderSide(
             color: isDark
                 ? const Color(0x0FFFFFFF) // rgba(255,255,255,0.06)
@@ -130,22 +128,20 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s16,
-            vertical: Spacing.s12,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           textStyle: textTheme.labelLarge,
         ).copyWith(side: WidgetStateProperty.resolveWith(focusBorder)),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style:
             OutlinedButton.styleFrom(
-              shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.s16,
-                vertical: Spacing.s12,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               textStyle: textTheme.labelLarge,
             ).copyWith(
               side: WidgetStateProperty.resolveWith((states) {
@@ -159,16 +155,17 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s8,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           textStyle: textTheme.labelLarge,
         ).copyWith(side: WidgetStateProperty.resolveWith(focusBorder)),
       ),
       chipTheme: ChipThemeData(
-        shape: const RoundedRectangleBorder(borderRadius: Radii.brSm),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
         side: BorderSide(color: semantic.divider),
         labelStyle: textTheme.labelMedium,
       ),
@@ -189,10 +186,7 @@ class AppTheme {
         focusedErrorBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: ColorPalette.red500, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.only(
-          top: Spacing.s8,
-          bottom: Spacing.s8,
-        ),
+        contentPadding: const EdgeInsets.only(top: 8, bottom: 8),
         isDense: true,
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -220,8 +214,8 @@ class AppTheme {
         modalBarrierColor: Colors.black.withValues(alpha: 0.5),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
-            topLeft: Radii.rXl,
-            topRight: Radii.rXl,
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
         ),
       ),

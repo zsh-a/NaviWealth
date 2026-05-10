@@ -8,7 +8,6 @@ import '../../../data/domain/entry_kind.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
-import '../../../design_system/design_system.dart';
 import '../../shared/entry_kind_badge.dart';
 import '../../shared/postings_preview.dart';
 
@@ -39,16 +38,8 @@ class ActivityFeedEntryRow extends StatelessWidget {
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s4,
-          ),
-          childrenPadding: const EdgeInsets.fromLTRB(
-            Spacing.s8,
-            0,
-            Spacing.s8,
-            Spacing.s8,
-          ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
           leading: EntryKindBadge(
             classification: classification,
             compact: true,
@@ -59,7 +50,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: Spacing.s2),
+            padding: const EdgeInsets.only(top: 2),
             child: Row(
               children: [
                 if (entry.entry.payee != null) ...[
@@ -73,7 +64,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Spacing.s4),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text(
                       '\u00B7',
                       style: theme.textTheme.labelSmall?.copyWith(

@@ -142,14 +142,14 @@ class _EmptyAccounts extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.account_balance_outlined, size: 48),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             FilledButton.icon(
               icon: const Icon(Icons.add_card_outlined),
               label: Text(l10n.accountFormCreateTitle),
@@ -186,7 +186,7 @@ class _AccountsByType extends StatelessWidget {
         .toList(growable: false);
 
     return ListView.builder(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       itemCount: order.length,
       itemBuilder: (context, i) {
         final type = order[i];
@@ -195,10 +195,7 @@ class _AccountsByType extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(
-                top: Spacing.s8,
-                bottom: Spacing.s8,
-              ),
+              padding: const EdgeInsets.only(top: 8, bottom: 8),
               child: Text(
                 accountTypeLabel(l10n, type),
                 style: theme.textTheme.titleMedium,
@@ -216,7 +213,7 @@ class _AccountsByType extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
           ],
         );
       },

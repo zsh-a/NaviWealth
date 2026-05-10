@@ -268,12 +268,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.s16,
-            Spacing.s16,
-            Spacing.s16,
-            Spacing.s24,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -282,12 +277,12 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 l10n.manualSecuritySheetTitle,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               Text(
                 l10n.manualSecuritySheetDescription,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: Spacing.s16),
+              const SizedBox(height: 16),
               TextFormField(
                 key: const Key('manual-security-symbol'),
                 controller: _symbolCtl,
@@ -303,7 +298,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   return null;
                 },
               ),
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
                 child: FButton(
@@ -318,7 +313,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               TextFormField(
                 key: const Key('manual-security-name'),
                 controller: _nameCtl,
@@ -327,7 +322,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               DropdownButtonFormField<AssetMarket>(
                 isExpanded: true,
                 key: const Key('manual-security-market'),
@@ -355,7 +350,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   });
                 },
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               DropdownButtonFormField<AssetType>(
                 isExpanded: true,
                 key: const Key('manual-security-type'),
@@ -375,14 +370,14 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   setState(() => _type = t);
                 },
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               CurrencyPicker(
                 value: _currency,
                 onChanged: (v) {
                   if (v != null) setState(() => _currency = v);
                 },
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               TextFormField(
                 key: const Key('manual-security-isin'),
                 controller: _isinCtl,
@@ -392,7 +387,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 ),
                 textCapitalization: TextCapitalization.characters,
               ),
-              const SizedBox(height: Spacing.s24),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
@@ -402,7 +397,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                       child: Text(l10n.commonCancel),
                     ),
                   ),
-                  const SizedBox(width: Spacing.s12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: FButton(
                       key: const Key('manual-security-submit'),

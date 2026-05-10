@@ -42,10 +42,7 @@ class ManualAssetTile extends StatelessWidget {
                 : null,
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.s16,
-                vertical: Spacing.s12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -64,17 +61,13 @@ class ManualAssetTile extends StatelessWidget {
                           ),
                         ),
                         if (chips.isNotEmpty) ...[
-                          const SizedBox(height: Spacing.s6),
-                          Wrap(
-                            spacing: Spacing.s6,
-                            runSpacing: Spacing.s4,
-                            children: chips,
-                          ),
+                          const SizedBox(height: 6),
+                          Wrap(spacing: 6, runSpacing: 4, children: chips),
                         ],
                       ],
                     ),
                   ),
-                  const SizedBox(width: Spacing.s12),
+                  const SizedBox(width: 12),
                   if (value != null)
                     MoneyText(
                       amount: value!.toDouble(),
@@ -173,13 +166,10 @@ class _MetaChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s8,
-          vertical: Spacing.s2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Text(label, style: textStyle),
       ),
     );

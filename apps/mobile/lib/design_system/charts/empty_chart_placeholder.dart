@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../theme/semantic_colors.dart';
-import '../tokens/spacing_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
 /// Standard empty-state for any chart. Used by [Nw*Chart] when the data is
@@ -28,13 +27,13 @@ class EmptyChartPlaceholder extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s24),
+        padding: const EdgeInsets.all(24),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: scheme.onSurfaceVariant, size: 32),
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Text(
                 message ?? l10n.chartEmptyDefault,
                 style: TypographyTokens.bodyMedium.copyWith(
