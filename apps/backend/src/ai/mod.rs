@@ -29,6 +29,13 @@ pub mod anthropic;
 #[allow(dead_code, unused_imports)]
 pub mod context;
 pub mod guardrails;
+// Phase 2-C: descriptor metadata is consulted by the dispatcher but
+// fields like `risk` / `requires_confirmation` and the `Typed` /
+// `ExternalWrite` variants exist for forward compatibility — they're
+// referenced from review-only sites today. The allow lifts in Phase 3
+// when the policy flips from advisory to enforced.
+#[allow(dead_code)]
+pub mod policy;
 pub mod proposals;
 pub mod sse;
 pub mod tools;

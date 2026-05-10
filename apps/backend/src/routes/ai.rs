@@ -154,6 +154,7 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
     let user_id = auth.user_id.clone();
     let initial_messages = body.messages;
     let portfolio_snapshot = body.portfolio_snapshot;
+    let context_tier = body.context_pack.as_ref().map(|p| p.budget.tier);
 
     // Keepalive ticker — emits a `:` comment frame every SSE_KEEPALIVE_MS
     // so proxies / mobile radios don't drop the connection during slow
@@ -188,6 +189,7 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
             &user_id,
             initial_messages,
             portfolio_snapshot,
+            context_tier,
         ));
         let budget = Box::pin(TimeoutFuture::new(CHAT_TURN_BUDGET_MS));
         match select(work, budget).await {
@@ -236,6 +238,10 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
 /// - `event: done`        — `{ "stop_reason": "...", "rounds": n }`
 ///
 /// The task must close `tx` (drop) when done so the client connection ends.
+// 8 args is one over clippy's default but we deliberately keep the
+// ownership story flat here — bundling into a struct would force a
+// borrow lifetime onto the spawned task that doesn't pull its weight.
+#[allow(clippy::too_many_arguments)]
 async fn run_tool_loop(
     tx: &mpsc::UnboundedSender<Result<Vec<u8>, worker::Error>>,
     llm_config: LlmConfig,
@@ -244,6 +250,7 @@ async fn run_tool_loop(
     user_id: &str,
     initial_messages: Vec<ChatMessage>,
     portfolio_snapshot: Option<Value>,
+    context_tier: Option<crate::ai::context::BudgetTier>,
 ) {
     // Inject "current time" as a synthetic system suffix; the model is told
     // to rely on this rather than guess.
@@ -317,6 +324,7 @@ async fn run_tool_loop(
             user_id,
             db: &db,
             portfolio_snapshot: portfolio_snapshot.as_ref(),
+            context_tier,
         };
         let mut tool_results: Vec<Value> = Vec::with_capacity(tool_uses.len());
         let mut proposals_this_turn: u8 = 0;
