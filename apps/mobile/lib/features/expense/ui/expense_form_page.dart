@@ -264,18 +264,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: loadingExisting
-            ? const Center(child: FCircularProgress())
-            : Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  children: [
+      child: loadingExisting
+          ? const Center(child: FCircularProgress())
+          : Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                children: [
                     AmountField(
                       label: l10n.expenseFormAmountLabel,
                       controller: _amountController,
@@ -366,15 +364,14 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       focusNode: _noteFocus,
                     ),
                     const SizedBox(height: 24),
-                    FButton(
-                      variant: FButtonVariant.primary,
-                      onPress: _busy ? null : _save,
-                      child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
-                    ),
-                  ],
-                ),
+                  FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: _busy ? null : _save,
+                    child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
+                  ),
+                ],
               ),
-      ),
+            ),
     );
   }
 }
@@ -383,19 +380,58 @@ class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
-      child: FTile(
-        title: Text(l10n.expenseFormNoAccountsTitle),
-        prefix: Icon(
-          Icons.warning_amber_outlined,
-          color: context.theme.colors.destructive,
-        ),
-        subtitle: Text(l10n.expenseFormNoAccountsBody),
-        suffix: FButton(
-          variant: FButtonVariant.ghost,
-          onPress: () => GoRouter.of(context).go(AppRoutes.accountListNew),
-          child: Text(l10n.expenseFormNoAccountsCta),
-        ),
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: semantic.warning.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 18,
+              color: semantic.warning,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.expenseFormNoAccountsTitle,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.expenseFormNoAccountsBody,
+                  style: context.theme.typography.xs.copyWith(
+                    color: colors.mutedForeground,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () =>
+                      GoRouter.of(context).go(AppRoutes.accountListNew),
+                  child: Text(l10n.expenseFormNoAccountsCta),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
