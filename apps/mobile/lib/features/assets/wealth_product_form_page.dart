@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -182,14 +183,16 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  label: l10n.commonCancel,
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.secondary(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  label: l10n.commonDelete,
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.commonDelete),
                 ),
               ],
             ),
@@ -237,7 +240,12 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return Scaffold(
-      appBar: GlassAppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(
           widget.isEdit
               ? l10n.wealthProductEditTitle
@@ -277,10 +285,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: Spacing.s12),
-              AppButton.secondary(
-                icon: Icons.add,
-                label: l10n.wealthProductCreateAccountAction,
-                onPressed: () => context.go(AppRoutes.accountNew),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => context.go(AppRoutes.accountNew),
+                prefix: const Icon(Icons.add, size: 16),
+                child: Text(l10n.wealthProductCreateAccountAction),
               ),
             ],
           ),
@@ -402,9 +411,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
           const SizedBox(height: Spacing.s24),
-          AppButton.primary(
-            onPressed: _busy ? null : _save,
-            label: _busy ? l10n.formSaving : l10n.formSave,
+          FButton(
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _save,
+            child: Text(_busy ? l10n.formSaving : l10n.formSave),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/haptics/haptics.dart';
@@ -279,9 +280,10 @@ class _PhysicalAssetCreateSheetState
                   ),
                 ],
                 const SizedBox(height: Spacing.s24),
-                AppButton.primary(
-                  onPressed: _saving ? null : _submit,
-                  label: l10n.physicalAssetCreateSubmit,
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: _saving ? null : _submit,
+                  child: Text(l10n.physicalAssetCreateSubmit),
                 ),
               ],
             ),

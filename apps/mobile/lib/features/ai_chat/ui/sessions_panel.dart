@@ -6,6 +6,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
+import 'shadcn/s_primitives.dart';
 
 /// List of past chat sessions. Used as a permanent sidebar on
 /// tablet/desktop, and shown inside a [Drawer] on mobile.
@@ -64,7 +65,8 @@ class SessionsPanel extends ConsumerWidget {
             return _PanelMessage(
               icon: Icons.chat_bubble_outline,
               message: l10n.aiChatSessionsEmpty,
-              action: AppButton.primary(
+              action: SButton(
+                variant: SButtonVariant.primary,
                 onPressed: onNew,
                 icon: Icons.add,
                 label: l10n.aiChatNewSessionTooltip,
@@ -119,12 +121,14 @@ class SessionsPanel extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
+                SButton(
+                  variant: SButtonVariant.ghost,
                   onPressed: () => Navigator.of(ctx).pop(false),
                   label: l10n.commonCancel,
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.secondary(
+                SButton(
+                  variant: SButtonVariant.outline,
                   onPressed: () => Navigator.of(ctx).pop(true),
                   label: l10n.commonDelete,
                 ),
@@ -183,12 +187,14 @@ class SessionsPanel extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    AppButton.tertiary(
+                    SButton(
+                      variant: SButtonVariant.ghost,
                       onPressed: () => Navigator.of(ctx).pop(),
                       label: l10n.commonCancel,
                     ),
                     const SizedBox(width: Spacing.s8),
-                    AppButton.primary(
+                    SButton(
+                      variant: SButtonVariant.primary,
                       onPressed: () =>
                           Navigator.of(ctx).pop(controller.text.trim()),
                       label: l10n.commonSave,

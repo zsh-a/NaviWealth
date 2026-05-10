@@ -14,6 +14,7 @@ import '../state/route_context_provider.dart';
 import 'chat_composer.dart';
 import 'message_bubble.dart';
 import 'sessions_panel.dart';
+import 'shadcn/s_primitives.dart';
 
 /// Top-level "AI 助手" surface (FIR-60).
 ///
@@ -115,7 +116,14 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final session = ref.watch(authSessionProvider);
     if (session == null) {
       return Scaffold(
-        appBar: GlassAppBar(title: Text(l10n.aiChatAppBarTitle)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(l10n.aiChatAppBarTitle),
+        ),
         body: const _LoginRequired(),
       );
     }
@@ -158,7 +166,14 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
         if (isDesktop) {
           return Scaffold(
-            appBar: GlassAppBar(title: Text(l10n.aiChatAppBarTitle)),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              title: Text(l10n.aiChatAppBarTitle),
+            ),
             body: MasterDetailLayout(
               master: SessionsPanel(
                 activeSessionId: desktopActiveId,
@@ -181,7 +196,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
         // mobile + tablet: drawer for sessions.
         return Scaffold(
-          appBar: GlassAppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
             title: Text(_titleForActive(session.userId, activeId, l10n)),
             actions: [
               Builder(
@@ -553,7 +573,8 @@ class _BootstrapErrorPane extends StatelessWidget {
               style: tt.bodyMedium?.copyWith(color: cs.onSurface),
             ),
             const SizedBox(height: Spacing.s16),
-            AppButton.primary(
+            SButton(
+              variant: SButtonVariant.primary,
               onPressed: onRetry,
               icon: Icons.refresh,
               label: l10n.commonRetry,

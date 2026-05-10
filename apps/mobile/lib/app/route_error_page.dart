@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
 
@@ -61,10 +61,11 @@ class RouteErrorPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                AppButton.primary(
-                  label: l10n.routeGoHome,
-                  icon: Icons.home_outlined,
-                  onPressed: () => context.go(AppRoutes.home),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: () => context.go(AppRoutes.home),
+                  prefix: const Icon(Icons.home_outlined, size: 16),
+                  child: Text(l10n.routeGoHome),
                 ),
               ],
             ),

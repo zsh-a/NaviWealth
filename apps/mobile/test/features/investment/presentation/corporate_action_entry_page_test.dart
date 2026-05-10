@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/design_system/design_system.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/features/investment/domain/corporate_action_preview.dart';
 import 'package:naviwealth/features/investment/domain/cost_basis/fifo_strategy.dart';
 import 'package:naviwealth/features/investment/domain/cost_basis_engine.dart';
@@ -226,10 +226,10 @@ void main() {
       );
 
       // Submit button disabled while preview is null.
-      final submit = tester.widget<AppButton>(
+      final submit = tester.widget<FButton>(
         find.byKey(const Key('corp-action-submit')),
       );
-      expect(submit.onPressed, isNull);
+      expect(submit.onPress, isNull);
       expect(submitted, 0);
     });
 

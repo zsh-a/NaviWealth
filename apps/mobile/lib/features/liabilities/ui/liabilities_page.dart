@@ -62,12 +62,15 @@ class LiabilitiesPage extends ConsumerWidget {
 
     if (embedded) return body;
 
-    return PageScaffold(
-      appBar: GlassAppBar(
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.liabilitiesAppBarTitle),
-        actions: const [],
       ),
-      padding: EdgeInsets.zero,
       body: body,
     );
   }

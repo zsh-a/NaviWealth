@@ -8,7 +8,6 @@ import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/providers.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'expense_list_content.dart';
 import 'expense_list_models.dart';
@@ -77,8 +76,13 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     );
 
     if (widget.embedded) return body;
-    return PageScaffold(
-      appBar: GlassAppBar(
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.navExpenses),
         actions: [
           IconButton(
@@ -88,7 +92,6 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.zero,
       body: body,
     );
   }

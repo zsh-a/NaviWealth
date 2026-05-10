@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -347,7 +348,11 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: Spacing.s8),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: Spacing.s8),
-          AppButton.tertiary(label: l10n.analyticsRetry, onPressed: onRetry),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onRetry,
+            child: Text(l10n.analyticsRetry),
+          ),
         ],
       ),
     );

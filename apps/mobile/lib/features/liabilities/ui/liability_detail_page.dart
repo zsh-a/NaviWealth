@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -23,7 +24,14 @@ class LiabilityDetailPage extends ConsumerWidget {
     final summaryAsync = ref.watch(liabilitySummaryProvider(id));
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.liabilitiesAppBarTitle)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(l10n.liabilitiesAppBarTitle),
+      ),
       body: summaryAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
@@ -304,14 +312,16 @@ class _AmortizationTable extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppButton.tertiary(
-                  label: l10n.commonCancel,
-                  onPressed: () => Navigator.of(ctx).pop(false),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.commonCancel),
                 ),
                 const SizedBox(width: Spacing.s8),
-                AppButton.tertiary(
-                  label: l10n.commonConfirm,
-                  onPressed: () => Navigator.of(ctx).pop(true),
+                FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.commonConfirm),
                 ),
               ],
             ),
@@ -449,9 +459,10 @@ class _AmortizationDataRow extends StatelessWidget {
                     label: Text(l10n.liabilityScheduleStatusPaid),
                     backgroundColor: theme.colorScheme.secondaryContainer,
                   )
-                : AppButton.tertiary(
-                    label: l10n.liabilityScheduleMarkPaid,
-                    onPressed: onMarkPaid,
+                : FButton(
+                    variant: FButtonVariant.ghost,
+                    onPress: onMarkPaid,
+                    child: Text(l10n.liabilityScheduleMarkPaid),
                   ),
           ),
         ],

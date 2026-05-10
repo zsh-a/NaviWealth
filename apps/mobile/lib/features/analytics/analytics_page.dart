@@ -28,12 +28,15 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return PageScaffold(
-      appBar: GlassAppBar(
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.analyticsAppBarTitle),
-        actions: const [],
       ),
-      padding: EdgeInsets.zero,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = !Breakpoints.isMobile(constraints.maxWidth);

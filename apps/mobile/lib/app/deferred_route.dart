@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
-import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 
 /// Wraps a route whose page widget lives in a `deferred as` library.
@@ -104,10 +104,11 @@ class _DeferredError extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              AppButton.primary(
-                label: l10n.deferredLoadRetry,
-                icon: Icons.refresh,
-                onPressed: onRetry,
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: onRetry,
+                prefix: const Icon(Icons.refresh, size: 16),
+                child: Text(l10n.deferredLoadRetry),
               ),
             ],
           ),
