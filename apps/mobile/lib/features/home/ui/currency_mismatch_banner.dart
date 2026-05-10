@@ -4,7 +4,6 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_models.dart';
@@ -34,17 +33,14 @@ class CurrencyMismatchBanner extends ConsumerWidget {
       child: InkWell(
         onTap: () => _showDetails(context, mismatches, base),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s16,
-            vertical: Spacing.s8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
               Icon(
                 Icons.warning_amber_rounded,
                 color: theme.colorScheme.onErrorContainer,
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
@@ -53,7 +49,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               Text(
                 l10n.dashboardCurrencyMismatchAction,
                 style: theme.textTheme.labelLarge?.copyWith(
@@ -78,12 +74,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
       showDragHandle: true,
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.s16,
-            Spacing.s8,
-            Spacing.s16,
-            Spacing.s16,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +83,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
                 l10n.dashboardCurrencyMismatchSheetTitle,
                 style: Theme.of(ctx).textTheme.titleMedium,
               ),
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               for (final m in mismatches)
                 FTile(
                   title: Text('${m.currency} → $baseCurrency'),

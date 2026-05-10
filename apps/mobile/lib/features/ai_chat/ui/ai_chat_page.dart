@@ -281,7 +281,7 @@ class _ChatPaneState extends ConsumerState<_ChatPane> {
     final systemContext = routeCtx.toSystemContext();
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: Spacing.chatPaneMaxWidth),
+        constraints: const BoxConstraints(maxWidth: 960),
         child: Column(
           children: [
             Expanded(
@@ -348,10 +348,7 @@ class _MessagesList extends StatelessWidget {
     }
     return ListView.builder(
       controller: scroll,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: messages.length,
       itemBuilder: (_, i) =>
           MessageBubble(sessionId: sessionId, message: messages[i]),
@@ -378,7 +375,7 @@ class _EmptyConversation extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
-        final outerPadding = isMobile ? Spacing.pageMobile : Spacing.pageWide;
+        final outerPadding = isMobile ? const EdgeInsets.all(16) : const EdgeInsets.all(24);
         return SingleChildScrollView(
           padding: outerPadding,
           child: Center(
@@ -388,7 +385,7 @@ class _EmptyConversation extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: Spacing.s24),
+                  const SizedBox(height: 24),
                   Center(
                     child: Container(
                       width: 64,
@@ -412,7 +409,7 @@ class _EmptyConversation extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: Spacing.s16),
+                  const SizedBox(height: 16),
                   Text(
                     l10n.aiChatEmptyTitle,
                     textAlign: TextAlign.center,
@@ -421,23 +418,23 @@ class _EmptyConversation extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: Spacing.s8),
+                  const SizedBox(height: 8),
                   Text(
                     l10n.aiChatEmptyBody,
                     textAlign: TextAlign.center,
                     style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                   ),
-                  const SizedBox(height: Spacing.s8),
+                  const SizedBox(height: 8),
                   SectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
                   for (var i = 0; i < suggestions.length; i++) ...[
-                    if (i > 0) const SizedBox(height: Spacing.s8),
+                    if (i > 0) const SizedBox(height: 8),
                     _SuggestionTile(
                       label: suggestions[i].$1,
                       icon: suggestions[i].$2,
                       onTap: () => onSuggest(suggestions[i].$1),
                     ),
                   ],
-                  const SizedBox(height: Spacing.s24),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -469,10 +466,7 @@ class _SuggestionTile extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Container(
@@ -484,7 +478,7 @@ class _SuggestionTile extends StatelessWidget {
                   ),
                   child: Icon(icon, size: 16, color: cs.onPrimaryContainer),
                 ),
-                const SizedBox(width: Spacing.s12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     label,
@@ -518,7 +512,7 @@ class _BootstrappingPane extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(width: 28, height: 28, child: FCircularProgress()),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           Text(
             l10n.aiChatBootstrappingLabel,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -542,18 +536,18 @@ class _BootstrapErrorPane extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.error_outline, size: 36, color: cs.error),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               l10n.commonLoadError(error.toString()),
               textAlign: TextAlign.center,
               style: tt.bodyMedium?.copyWith(color: cs.onSurface),
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             SButton(
               variant: SButtonVariant.primary,
               onPressed: onRetry,
@@ -577,12 +571,12 @@ class _LoginRequired extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.lock_outline, size: 36, color: cs.onSurfaceVariant),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               l10n.aiChatLoginRequired,
               style: tt.titleMedium?.copyWith(color: cs.onSurface),

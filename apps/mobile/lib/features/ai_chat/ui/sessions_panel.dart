@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/auth/providers.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
@@ -71,12 +70,9 @@ class SessionsPanel extends ConsumerWidget {
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s8,
-              vertical: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             itemCount: sessions.length,
-            separatorBuilder: (_, _) => const SizedBox(height: Spacing.s4),
+            separatorBuilder: (_, _) => const SizedBox(height: 4),
             itemBuilder: (context, i) {
               final s = sessions[i];
               final selected = s.id == activeSessionId;
@@ -103,7 +99,7 @@ class SessionsPanel extends ConsumerWidget {
     final ok = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,9 +108,9 @@ class SessionsPanel extends ConsumerWidget {
               l10n.aiChatSessionDeleteTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.aiChatSessionDeleteBody(session.title)),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -123,7 +119,7 @@ class SessionsPanel extends ConsumerWidget {
                   onPressed: () => Navigator.of(ctx).pop(false),
                   label: l10n.commonCancel,
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 SButton(
                   variant: SButtonVariant.outline,
                   onPressed: () => Navigator.of(ctx).pop(true),
@@ -156,10 +152,10 @@ class SessionsPanel extends ConsumerWidget {
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
-              left: Spacing.s16,
-              right: Spacing.s16,
-              top: Spacing.s12,
-              bottom: padding + Spacing.s16,
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: padding + 16,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -169,14 +165,16 @@ class SessionsPanel extends ConsumerWidget {
                   l10n.aiChatSessionRenameTitle,
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 TextField(
                   controller: controller,
                   autofocus: true,
                   maxLength: 60,
                   decoration: InputDecoration(
                     labelText: l10n.aiChatSessionTitleLabel,
-                    border: const OutlineInputBorder(borderRadius: Radii.brMd),
+                    border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
                   ),
                 ),
                 Row(
@@ -187,7 +185,7 @@ class SessionsPanel extends ConsumerWidget {
                       onPressed: () => Navigator.of(ctx).pop(),
                       label: l10n.commonCancel,
                     ),
-                    const SizedBox(width: Spacing.s8),
+                    const SizedBox(width: 8),
                     SButton(
                       variant: SButtonVariant.primary,
                       onPressed: () =>
@@ -238,16 +236,11 @@ class _PanelShell extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s16,
-                Spacing.s16,
-                Spacing.s8,
-                Spacing.s12,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
               child: Row(
                 children: [
                   Icon(Icons.history, size: 18, color: cs.onSurfaceVariant),
-                  const SizedBox(width: Spacing.s8),
+                  const SizedBox(width: 8),
                   Text(
                     l10n.aiChatSessionsHeader,
                     style: tt.titleMedium?.copyWith(
@@ -299,21 +292,18 @@ class _PanelMessage extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 36, color: iconColor ?? cs.onSurfaceVariant),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
-            if (action != null) ...[
-              const SizedBox(height: Spacing.s16),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),
@@ -346,15 +336,12 @@ class _SessionTile extends StatelessWidget {
       color: selected
           ? cs.primaryContainer.withValues(alpha: 0.45)
           : Colors.transparent,
-      borderRadius: Radii.brMd,
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: Radii.brMd,
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
               Container(
@@ -362,16 +349,16 @@ class _SessionTile extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: selected ? cs.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: const BorderRadius.all(Radius.circular(2)),
                 ),
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               Icon(
                 Icons.chat_bubble_outline,
                 size: 18,
                 color: selected ? cs.primary : cs.onSurfaceVariant,
               ),
-              const SizedBox(width: Spacing.s12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,10 +410,7 @@ class _SessionTile extends StatelessWidget {
       context: context,
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s8,
-            vertical: Spacing.s12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -438,7 +422,7 @@ class _SessionTile extends StatelessWidget {
                   onRename();
                 },
               ),
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               _ActionRow(
                 icon: Icons.delete_outline,
                 label: l10n.commonDelete,
@@ -476,19 +460,16 @@ class _ActionRow extends StatelessWidget {
     final fg = color ?? cs.onSurface;
     return Material(
       color: Colors.transparent,
-      borderRadius: Radii.brMd,
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: Radii.brMd,
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
               Icon(icon, size: 20, color: fg),
-              const SizedBox(width: Spacing.s12),
+              const SizedBox(width: 12),
               Text(label, style: tt.bodyLarge?.copyWith(color: fg)),
             ],
           ),

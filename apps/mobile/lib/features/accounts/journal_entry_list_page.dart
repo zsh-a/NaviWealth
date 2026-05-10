@@ -11,7 +11,6 @@ import '../../data/domain/posting.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/journal_entry_repository.dart';
 import '../../data/repositories/providers.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/entry_kind_badge.dart';
 import '../shared/postings_preview.dart';
@@ -57,7 +56,7 @@ class _EmptyJournal extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -66,7 +65,7 @@ class _EmptyJournal extends StatelessWidget {
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               l10n.journalEmptyHint,
               textAlign: TextAlign.center,
@@ -91,9 +90,9 @@ class _JournalList extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     return ListView.separated(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       itemCount: entries.length,
-      separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final je = entries[index];
         return _JournalEntryRow(
@@ -129,7 +128,7 @@ class _JournalEntryRow extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: scheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
@@ -139,16 +138,8 @@ class _JournalEntryRow extends StatelessWidget {
         // visual work.
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s4,
-          ),
-          childrenPadding: const EdgeInsets.fromLTRB(
-            Spacing.s8,
-            0,
-            Spacing.s8,
-            Spacing.s8,
-          ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
           title: Row(
             children: [
               Expanded(
@@ -160,7 +151,7 @@ class _JournalEntryRow extends StatelessWidget {
               ),
               if (summary != null)
                 Padding(
-                  padding: const EdgeInsets.only(left: Spacing.s8),
+                  padding: const EdgeInsets.only(left: 8),
                   child: Text(
                     summary,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -172,11 +163,11 @@ class _JournalEntryRow extends StatelessWidget {
             ],
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: Spacing.s4),
+            padding: const EdgeInsets.only(top: 4),
             child: Row(
               children: [
                 EntryKindBadge(classification: classification, compact: true),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 Text(
                   dateLabel,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -184,7 +175,7 @@ class _JournalEntryRow extends StatelessWidget {
                   ),
                 ),
                 if (entry.entry.payee != null) ...[
-                  const SizedBox(width: Spacing.s8),
+                  const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       '· ${entry.entry.payee}',

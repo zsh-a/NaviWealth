@@ -57,31 +57,29 @@ class _LiabilityDetailBody extends ConsumerWidget {
     );
 
     return ListView(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       children: [
         _LiabilityHeaderCard(summary: summary),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _LiabilitySummaryCard(summary: summary),
-        const SizedBox(height: Spacing.s16),
+        const SizedBox(height: 16),
         Text(
           l10n.liabilityScheduleHeading,
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(height: Spacing.s8),
+        const SizedBox(height: 8),
         scheduleAsync.when(
           loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: Spacing.s24),
+            padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(child: FCircularProgress()),
           ),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.all(Spacing.s16),
-            child: Text('$e'),
-          ),
+          error: (e, _) =>
+              Padding(padding: const EdgeInsets.all(16), child: Text('$e')),
           data: (schedule) {
             if (schedule.isEmpty) {
               return FCard.raw(
                 child: Padding(
-                  padding: const EdgeInsets.all(Spacing.s16),
+                  padding: const EdgeInsets.all(16),
                   child: Text(l10n.liabilityRevolvingNoSchedule),
                 ),
               );
@@ -107,12 +105,12 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final l = summary.liability;
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l.name, style: theme.textTheme.titleLarge),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               '${liabilityTypeLabel(l10n, l.type)} · '
               '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
@@ -121,12 +119,12 @@ class _LiabilityHeaderCard extends ConsumerWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(
               formatters.currency(l.principal, code: l.currency),
               style: theme.textTheme.headlineSmall,
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               formatters.percent(l.interestRate.toDouble()),
               style: theme.textTheme.bodyMedium,
@@ -151,7 +149,7 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final l = summary.liability;
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -180,10 +178,10 @@ class _LiabilitySummaryCard extends ConsumerWidget {
               label: l10n.liabilitySummaryInterestRatio,
               value: formatters.percent(summary.interestRatio.toDouble()),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             if (summary.totalPeriods > 0) ...[
               LinearProgressIndicator(value: summary.progressFraction),
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               Text(
                 l10n.liabilitySummaryProgress(
                   summary.paidPeriods,
@@ -211,7 +209,7 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -297,7 +295,7 @@ class _AmortizationTable extends ConsumerWidget {
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,9 +304,9 @@ class _AmortizationTable extends ConsumerWidget {
               l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex),
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.liabilityScheduleMarkPaidConfirmBody(amount)),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -317,7 +315,7 @@ class _AmortizationTable extends ConsumerWidget {
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -347,10 +345,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.labelSmall;
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           SizedBox(
@@ -413,10 +408,7 @@ class _AmortizationDataRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = theme.textTheme.bodySmall;
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
           SizedBox(

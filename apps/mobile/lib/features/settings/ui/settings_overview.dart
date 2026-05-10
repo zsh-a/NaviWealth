@@ -21,15 +21,15 @@ class SettingsOverview extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return ListView(
-      padding: Spacing.pageMobile.copyWith(
+      padding: const EdgeInsets.all(16).copyWith(
         bottom:
-            Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
+            const EdgeInsets.all(16).bottom +
+            64 +
             MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         const _AccountHeader(),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         const _AccountSection(),
         _SectionHeader(title: l10n.settingsAppearanceSection),
         const _AppearanceSection(),
@@ -69,7 +69,7 @@ class SettingsOverview extends ConsumerWidget {
             ),
           ),
         ],
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         const FCard.raw(child: _AboutTile()),
       ],
     );
@@ -105,7 +105,7 @@ class _AccountHeader extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s8),
+      padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
           Container(
@@ -113,7 +113,7 @@ class _AccountHeader extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               color: scheme.primaryContainer,
-              borderRadius: Radii.brLg,
+              borderRadius: BorderRadius.circular(16),
             ),
             alignment: Alignment.center,
             child: Icon(
@@ -122,7 +122,7 @@ class _AccountHeader extends StatelessWidget {
               size: 28,
             ),
           ),
-          const SizedBox(width: Spacing.s16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +131,7 @@ class _AccountHeader extends StatelessWidget {
                   l10n.settingsAccountTitle,
                   style: theme.textTheme.headlineSmall,
                 ),
-                const SizedBox(height: Spacing.s2),
+                const SizedBox(height: 2),
                 Text(
                   l10n.settingsAccountSubtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -167,14 +167,11 @@ class _AccountSection extends ConsumerWidget {
           ),
           const FDivider(),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const Icon(Icons.currency_exchange),
-                const SizedBox(width: Spacing.s16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     isExpanded: true,
@@ -236,14 +233,11 @@ class _AppearanceSection extends ConsumerWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const Icon(Icons.brightness_6_outlined),
-                const SizedBox(width: Spacing.s16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<ThemeMode>(
                     isExpanded: true,
@@ -271,14 +265,11 @@ class _AppearanceSection extends ConsumerWidget {
           ),
           const FDivider(),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const Icon(Icons.swap_vert),
-                const SizedBox(width: Spacing.s16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<MarketColorMode>(
                     isExpanded: true,
@@ -311,14 +302,11 @@ class _AppearanceSection extends ConsumerWidget {
           const _CompactDensityTile(),
           const FDivider(),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.s16,
-              vertical: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const Icon(Icons.translate_outlined),
-                const SizedBox(width: Spacing.s16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<Locale?>(
                     isExpanded: true,
@@ -406,14 +394,11 @@ class _CompactDensityTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final compact = ref.watch(compactDensityProvider);
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           const Icon(Icons.density_medium_outlined),
-          const SizedBox(width: Spacing.s16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,8 +432,8 @@ class _MarketColorPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Wrap(
-      spacing: Spacing.s8,
-      runSpacing: Spacing.s8,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         DeltaChip(value: 1.23, format: DeltaFormat.percent),
         DeltaChip(value: -0.42, format: DeltaFormat.percent),

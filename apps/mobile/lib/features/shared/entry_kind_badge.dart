@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../data/domain/entry_kind.dart';
-import '../../design_system/tokens/radius_tokens.dart';
-import '../../design_system/tokens/spacing_tokens.dart';
 import '../../l10n/gen/app_localizations.dart';
 
 /// FIR-128 §1.1 — pill-shaped badge that surfaces the derived
@@ -50,19 +48,19 @@ class EntryKindBadge extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: visuals.background,
-          borderRadius: Radii.brSm,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: showLabel ? Spacing.s8 : Spacing.s4,
-            vertical: Spacing.s2,
+            horizontal: showLabel ? 8 : 4,
+            vertical: 2,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(visuals.icon, size: 14, color: visuals.foreground),
               if (showLabel) ...[
-                const SizedBox(width: Spacing.s4),
+                const SizedBox(width: 4),
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(

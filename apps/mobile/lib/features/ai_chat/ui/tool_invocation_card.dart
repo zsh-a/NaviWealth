@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import 'shadcn/s_primitives.dart';
@@ -52,12 +51,12 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InkWell(
-              borderRadius: Radii.brMd,
+              borderRadius: BorderRadius.circular(12),
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s12,
-                  vertical: Spacing.s8,
+                  horizontal: 12,
+                  vertical: 8,
                 ),
                 child: Row(
                   children: [
@@ -68,7 +67,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       size: 16,
                       color: pending ? cs.tertiary : cs.primary,
                     ),
-                    const SizedBox(width: Spacing.s8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text.rich(
                         TextSpan(
@@ -110,15 +109,10 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             ),
             if (jumps.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.s12,
-                  0,
-                  Spacing.s12,
-                  Spacing.s8,
-                ),
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 child: Wrap(
-                  spacing: Spacing.s8,
-                  runSpacing: Spacing.s4,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     for (final jump in jumps)
                       FButton(
@@ -131,12 +125,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               ),
             if (_expanded)
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.s12,
-                  0,
-                  Spacing.s12,
-                  Spacing.s12,
-                ),
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -146,7 +135,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       invocation.input,
                     ),
                     if (invocation.output != null) ...[
-                      const SizedBox(height: Spacing.s8),
+                      const SizedBox(height: 8),
                       _resultBlock(context, l10n, invocation),
                     ],
                   ],
@@ -201,11 +190,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             const Spacer(),
             if (body != null)
               InkWell(
-                borderRadius: Radii.brXs,
+                borderRadius: BorderRadius.circular(4),
                 onTap: () => setState(() => _showRawJson = true),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.s4,
+                    horizontal: 4,
                     vertical: 2,
                   ),
                   child: Text(
@@ -218,11 +207,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                 renderToolOutput(context, invocation.name, invocation.output) !=
                     null)
               InkWell(
-                borderRadius: Radii.brXs,
+                borderRadius: BorderRadius.circular(4),
                 onTap: () => setState(() => _showRawJson = false),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.s4,
+                    horizontal: 4,
                     vertical: 2,
                   ),
                   child: Text(
@@ -233,14 +222,14 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               ),
           ],
         ),
-        const SizedBox(height: Spacing.s4),
+        const SizedBox(height: 4),
         if (body != null)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(Spacing.s8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: cs.surface,
-              borderRadius: Radii.brXs,
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(
                 color: cs.outlineVariant.withValues(alpha: 0.4),
               ),

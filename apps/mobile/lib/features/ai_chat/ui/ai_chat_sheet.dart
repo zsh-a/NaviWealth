@@ -106,8 +106,8 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
 
   Offset _defaultPosition(Size screenSize) {
     return Offset(
-      screenSize.width - _sheetW - Spacing.s24,
-      screenSize.height - _sheetH - Spacing.s24,
+      screenSize.width - _sheetW - 24,
+      screenSize.height - _sheetH - 24,
     );
   }
 
@@ -132,7 +132,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
           top: pos.dy,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: Radii.brXl,
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: Theme.of(
                   context,
@@ -143,9 +143,9 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
             ),
             child: Material(
               color: context.theme.colors.background,
-              borderRadius: Radii.brXl,
+              borderRadius: BorderRadius.circular(20),
               child: ClipRRect(
-                borderRadius: Radii.brXl,
+                borderRadius: BorderRadius.circular(20),
                 child: SizedBox(
                   width: _sheetW,
                   height: _sheetH,
@@ -165,7 +165,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                           if (_offset != null) _persistPosition(_offset!);
                         },
                         child: Padding(
-                          padding: const EdgeInsets.only(top: Spacing.s8),
+                          padding: const EdgeInsets.only(top: 8),
                           child: Container(
                             width: 36,
                             height: 4,
@@ -237,12 +237,12 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
     if (session == null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(Spacing.s24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.lock_outline, size: 32, color: cs.onSurfaceVariant),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               Text(l10n.aiChatLoginRequired),
             ],
           ),
@@ -294,14 +294,11 @@ class _SheetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           Icon(Icons.auto_awesome, size: 20, color: cs.primary),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(title, style: Theme.of(context).textTheme.titleMedium),
           ),
@@ -367,7 +364,7 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
         if (messages.isEmpty) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(Spacing.s24),
+              padding: const EdgeInsets.all(24),
               child: Text(
                 AppLocalizations.of(context).aiChatSheetEmpty,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -380,10 +377,7 @@ class _SheetMessagesState extends ConsumerState<_SheetMessages> {
         }
         return ListView.builder(
           controller: _scroll,
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           itemCount: messages.length,
           itemBuilder: (_, i) =>
               MessageBubble(sessionId: widget.sessionId, message: messages[i]),

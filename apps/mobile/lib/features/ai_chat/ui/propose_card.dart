@@ -250,14 +250,14 @@ class _ExpandedView extends StatelessWidget {
         : l10n.aiChatProposalSummaryEdited(plan.summaryZh);
 
     return Container(
-      margin: const EdgeInsets.only(top: Spacing.s8),
+      margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: cs.tertiaryContainer.withValues(alpha: 0.35),
-        borderRadius: Radii.brMd,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cs.tertiary.withValues(alpha: 0.45)),
         boxShadow: AppElevations.of(context).level1,
       ),
-      padding: const EdgeInsets.all(Spacing.s12),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -268,7 +268,7 @@ class _ExpandedView extends StatelessWidget {
                 size: 18,
                 color: cs.onTertiaryContainer,
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               Text(
                 l10n.aiChatProposalPendingHeader(
                   proposalKindLabel(l10n, plan.kind),
@@ -277,7 +277,7 @@ class _ExpandedView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: Spacing.s6),
+          const SizedBox(height: 6),
           Text(
             summary,
             style: tt.bodyLarge?.copyWith(
@@ -285,10 +285,10 @@ class _ExpandedView extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           ProposalPayloadDetails(plan: plan, overrides: overrides),
           if (plan.warnings.isNotEmpty) ...[
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             for (final w in plan.warnings)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
@@ -300,7 +300,7 @@ class _ExpandedView extends StatelessWidget {
                       size: 14,
                       color: cs.tertiary,
                     ),
-                    const SizedBox(width: Spacing.s4),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         w,
@@ -314,16 +314,16 @@ class _ExpandedView extends StatelessWidget {
               ),
           ],
           if (isErrored && applyState.errorMessage != null) ...[
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               l10n.aiChatProposalFailure(applyState.errorMessage!),
               style: tt.bodySmall?.copyWith(color: cs.error),
             ),
           ],
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: Spacing.s8,
-            runSpacing: Spacing.s4,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               SButton(
                 variant: SButtonVariant.primary,
@@ -395,17 +395,14 @@ class _CollapsedView extends StatelessWidget {
         : 0;
 
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s8),
+      padding: const EdgeInsets.only(top: 8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
               Icon(icon, size: 16, color: color),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
@@ -441,17 +438,17 @@ class _ClarificationView extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s8),
+      padding: const EdgeInsets.only(top: 8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.all(Spacing.s12),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Icon(Icons.help_outline, size: 18, color: cs.tertiary),
-                  const SizedBox(width: Spacing.s8),
+                  const SizedBox(width: 8),
                   Text(
                     l10n.aiChatProposalNeedsClarificationHeader(
                       proposalKindLabel(l10n, plan.kind),
@@ -460,21 +457,21 @@ class _ClarificationView extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: Spacing.s6),
+              const SizedBox(height: 6),
               Text(
                 plan.reason,
                 style: tt.bodyMedium?.copyWith(color: cs.onSurface),
               ),
               if (plan.candidates.isNotEmpty) ...[
-                const SizedBox(height: Spacing.s8),
+                const SizedBox(height: 8),
                 Text(
                   l10n.aiChatProposalCandidatesHeading,
                   style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
                 ),
-                const SizedBox(height: Spacing.s4),
+                const SizedBox(height: 4),
                 Wrap(
-                  spacing: Spacing.s8,
-                  runSpacing: Spacing.s4,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     for (final c in plan.candidates)
                       FBadge(child: Text(c.label ?? c.id)),
@@ -508,13 +505,10 @@ class ProposalPayloadDetails extends StatelessWidget {
     final rows = _rowsFor(l10n, plan, overrides);
     if (rows.isEmpty) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: cs.surface.withValues(alpha: 0.6),
-        borderRadius: Radii.brXs,
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
       ),
       child: Column(
@@ -535,7 +529,7 @@ class ProposalPayloadDetails extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: Spacing.s8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       r.value,
@@ -624,10 +618,10 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
-          left: Spacing.s16,
-          right: Spacing.s16,
-          top: Spacing.s12,
-          bottom: padding + Spacing.s16,
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: padding + 16,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -648,7 +642,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             for (final f in _fields) ...[
               TextField(
                 controller: _controllers[f.payloadKey],
@@ -660,7 +654,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
                   hintText: f.hint,
                 ),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
             ],
             SButton(
               variant: SButtonVariant.primary,
@@ -926,19 +920,16 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
     final l10n = AppLocalizations.of(context);
     if (widget.pending.length < 2) return const SizedBox.shrink();
     return Container(
-      margin: const EdgeInsets.only(top: Spacing.s8),
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s12,
-        vertical: Spacing.s6,
-      ),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: cs.primaryContainer.withValues(alpha: 0.4),
-        borderRadius: Radii.brMd,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Icon(Icons.layers_outlined, size: 18, color: cs.onPrimaryContainer),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               l10n.aiChatProposalBatchPending(widget.pending.length),

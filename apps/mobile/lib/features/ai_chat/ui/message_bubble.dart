@@ -140,7 +140,7 @@ class _AssistantBubble extends StatelessWidget {
         ),
         if (message.errorMessage != null &&
             message.errorMessage!.isNotEmpty) ...[
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           Text(
             message.errorMessage!,
             style: tt.bodySmall?.copyWith(color: cs.error),
@@ -241,7 +241,7 @@ class _AssistantBubble extends StatelessWidget {
     bool anythingEmittedYet = false;
     void addGapIfNeeded() {
       if (anythingEmittedYet) {
-        blocks.add(const SizedBox(height: Spacing.s8));
+        blocks.add(const SizedBox(height: 8));
       }
     }
 
@@ -305,7 +305,7 @@ class _AssistantBody extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _TypingDots(color: textColor.withValues(alpha: 0.7)),
-          const SizedBox(width: Spacing.s8),
+          const SizedBox(width: 8),
           Text(
             l10n.aiChatThinking,
             style: tt.bodyMedium?.copyWith(
@@ -471,16 +471,16 @@ class _TruncationFooter extends ConsumerWidget {
     final turn = ref.watch(chatControllerProvider(sessionId));
 
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s8),
+      padding: const EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
-          const SizedBox(height: Spacing.s6),
+          const SizedBox(height: 6),
           Row(
             children: [
               Icon(Icons.content_cut, size: 14, color: muted),
-              const SizedBox(width: Spacing.s6),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(label, style: tt.bodySmall?.copyWith(color: muted)),
               ),
@@ -523,12 +523,9 @@ class _ContinueButton extends StatelessWidget {
     final color = enabled ? cs.primary : cs.onSurfaceVariant;
     return InkWell(
       onTap: enabled ? onPressed : null,
-      borderRadius: BorderRadius.circular(Radii.sm),
+      borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s8,
-          vertical: Spacing.s2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -557,16 +554,13 @@ class _SystemNotice extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s6),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s4,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(Radii.full),
+            borderRadius: BorderRadius.circular(9999),
           ),
           child: Text(
             text,

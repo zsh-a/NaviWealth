@@ -25,7 +25,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
     final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,7 +33,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
               l10n.expenseReportCategoryShare,
               style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             if (report.byCategory.isEmpty)
               LayoutBuilder(
                 builder: (context, c) => AspectRatio(
@@ -55,18 +55,14 @@ class ExpenseCategoryPieCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: pie),
-                        const SizedBox(width: Spacing.s24),
+                        const SizedBox(width: 24),
                         Expanded(child: legend),
                       ],
                     );
                   }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      pie,
-                      const SizedBox(height: Spacing.s12),
-                      legend,
-                    ],
+                    children: [pie, const SizedBox(height: 12), legend],
                   );
                 },
               ),
@@ -97,7 +93,7 @@ class ExpenseTrendCard extends StatelessWidget {
     ];
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -105,7 +101,7 @@ class ExpenseTrendCard extends StatelessWidget {
               l10n.expenseReportMonthlyTrend,
               style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, c) {
                 final aspect = chartAspectFor(c.maxWidth);
@@ -160,20 +156,12 @@ class ExpenseCategoryListCard extends StatelessWidget {
     }
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s4,
-          vertical: Spacing.s8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s12,
-                Spacing.s8,
-                Spacing.s12,
-                Spacing.s4,
-              ),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
               child: Text(
                 l10n.expenseReportCategoryDetail,
                 style: theme.textTheme.titleMedium,
@@ -310,10 +298,7 @@ class _LegendRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: Spacing.s6,
-          horizontal: Spacing.s4,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         child: Row(
           children: [
             Container(
@@ -321,7 +306,7 @@ class _LegendRow extends StatelessWidget {
               height: 10,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: Spacing.s8),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +326,7 @@ class _LegendRow extends StatelessWidget {
               currencyCode: currencyCode,
               compact: true,
             ),
-            const SizedBox(width: Spacing.s4),
+            const SizedBox(width: 4),
             Icon(
               Icons.chevron_right,
               size: 16,
@@ -424,12 +409,7 @@ class _CategoryDrillDown extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (ctx, scrollController) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.s16,
-            Spacing.s8,
-            Spacing.s16,
-            Spacing.s24,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -439,7 +419,7 @@ class _CategoryDrillDown extends StatelessWidget {
                     category?.iconData ?? Icons.payment,
                     color: theme.colorScheme.primary,
                   ),
-                  const SizedBox(width: Spacing.s8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       category?.name ?? l10n.expenseReportUncategorized,
@@ -452,14 +432,14 @@ class _CategoryDrillDown extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               Text(
                 l10n.expenseReportItemCount(entries.length),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               const FDivider(),
               Expanded(
                 child: ListView.builder(

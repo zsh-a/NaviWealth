@@ -45,10 +45,7 @@ class SecurityAssetTile extends StatelessWidget {
                 : null,
             constraints: const BoxConstraints(minHeight: 56),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.s16,
-                vertical: Spacing.s12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -68,7 +65,7 @@ class SecurityAssetTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: Spacing.s4),
+                        const SizedBox(height: 4),
                         Text(
                           qtyLabel,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -81,7 +78,7 @@ class SecurityAssetTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: Spacing.s12),
+                  const SizedBox(width: 12),
                   if (displayValue != null)
                     OptionalHero(
                       tag: 'asset-${asset.id}-value',

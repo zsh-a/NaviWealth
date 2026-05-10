@@ -29,16 +29,16 @@ class BackupPage extends ConsumerWidget {
       child: Material(
         color: Colors.transparent,
         child: ListView(
-          padding: Spacing.pageMobile.copyWith(
+          padding: const EdgeInsets.all(16).copyWith(
             bottom:
-                Spacing.pageMobile.bottom +
-                Spacing.floatingBarClearance +
+                const EdgeInsets.all(16).bottom +
+                64 +
                 MediaQuery.paddingOf(context).bottom,
           ),
           children: [
             if (kIsWeb) ...[
               _WebBackupSecurityBanner(l10n: l10n),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
             ],
             FCard.raw(
               child: FTile(
@@ -49,7 +49,7 @@ class BackupPage extends ConsumerWidget {
                 onPress: () => _exportBackup(context, ref),
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             FCard.raw(
               child: FTile(
                 title: Text(l10n.backupImportTitle),
@@ -322,12 +322,12 @@ class _WebBackupSecurityBanner extends StatelessWidget {
     final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(Icons.security_outlined, color: theme.colorScheme.primary),
-            const SizedBox(width: Spacing.s12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 l10n.backupWebSecurityWarning,
@@ -381,18 +381,13 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          Spacing.s16,
-          0,
-          Spacing.s16,
-          Spacing.s16 + viewInsets.bottom,
-        ),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + viewInsets.bottom),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _controller),
               label: Text(l10n.backupPassphraseLabel),
@@ -400,7 +395,7 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
               obscureText: true,
               autofocus: true,
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -410,7 +405,7 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
                     child: Text(l10n.backupCancelAction),
                   ),
                 ),
-                const SizedBox(width: Spacing.s12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: FButton(
                     variant: FButtonVariant.primary,
@@ -468,12 +463,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          Spacing.s16,
-          0,
-          Spacing.s16,
-          Spacing.s16 + viewInsets.bottom,
-        ),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + viewInsets.bottom),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -482,14 +472,14 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
               l10n.backupConfirmRestoreTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               l10n.backupConfirmRestoreMessage,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _controller),
               label: Text(l10n.backupPassphraseLabel),
@@ -497,7 +487,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
               obscureText: true,
               autofocus: true,
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -507,7 +497,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
                     child: Text(l10n.backupCancelAction),
                   ),
                 ),
-                const SizedBox(width: Spacing.s12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: FButton(
                     variant: FButtonVariant.primary,
@@ -570,16 +560,11 @@ class _ProgressSheetState extends State<_ProgressSheet> {
       alignment: Alignment.bottomCenter,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.s16,
-            0,
-            Spacing.s16,
-            Spacing.s24,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Row(
             children: [
               const FCircularProgress(),
-              const SizedBox(width: Spacing.s16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   widget.message,

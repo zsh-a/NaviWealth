@@ -38,7 +38,7 @@ class SyncStatusPage extends ConsumerWidget {
           loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Center(
             child: Padding(
-              padding: const EdgeInsets.all(Spacing.s24),
+              padding: const EdgeInsets.all(24),
               child: Text(l10n.syncStatusBusError(e.toString())),
             ),
           ),
@@ -77,10 +77,10 @@ class _Body extends ConsumerWidget {
     final localTotal = countsAsync.value?.values.fold<int>(0, (a, b) => a + b);
 
     return ListView(
-      padding: Spacing.pageMobile.copyWith(
+      padding: const EdgeInsets.all(16).copyWith(
         bottom:
-            Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
+            const EdgeInsets.all(16).bottom +
+            64 +
             MediaQuery.paddingOf(context).bottom,
       ),
       children: [
@@ -88,17 +88,17 @@ class _Body extends ConsumerWidget {
           event: event,
           onSyncNow: session == null ? null : () => _triggerSyncNow(ref),
         ),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _StatGrid(
           pending: outboxAsync.value,
           localTotal: localTotal,
           lastSyncAt: event.lastSuccessAt,
         ),
         if (event.lastError != null) ...[
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           _ErrorCard(message: event.lastError!),
         ],
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _DiagnosticsCard(
           event: event,
           cursor: cursorAsync.value,
@@ -106,7 +106,7 @@ class _Body extends ConsumerWidget {
           apiBaseUrl: kDebugMode ? config.apiBaseUrl : null,
         ),
         if (kDebugMode) ...[
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           _LocalCountsCard(counts: countsAsync.value),
         ],
       ],
@@ -133,16 +133,11 @@ class _HeroCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s20,
-          Spacing.s20,
-          Spacing.s12,
-          Spacing.s20,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
         child: Row(
           children: [
             _StatusOrb(palette: palette, status: event.status),
-            const SizedBox(width: Spacing.s16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +148,7 @@ class _HeroCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: Spacing.s2),
+                  const SizedBox(height: 2),
                   Text(
                     _heroSubtitle(l10n, event),
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -164,7 +159,7 @@ class _HeroCard extends StatelessWidget {
               ),
             ),
             if (onSyncNow != null && !syncing) ...[
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               FButton(
                 variant: FButtonVariant.ghost,
                 onPress: onSyncNow,
@@ -226,7 +221,7 @@ class _StatGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final wide = c.maxWidth >= 360;
-        final gap = wide ? Spacing.s8 : Spacing.s8;
+        final gap = wide ? 8.0 : 8.0;
         Widget tile(Widget w) => SizedBox(
           width: wide ? (c.maxWidth - gap * 2) / 3 : c.maxWidth,
           child: w,
@@ -284,17 +279,12 @@ class _StatTile extends StatelessWidget {
     final scheme = theme.colorScheme;
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s12,
-          Spacing.s12,
-          Spacing.s12,
-          Spacing.s12,
-        ),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, size: 18, color: accent ?? scheme.onSurfaceVariant),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               value,
               style: theme.textTheme.titleLarge?.copyWith(
@@ -303,7 +293,7 @@ class _StatTile extends StatelessWidget {
                 color: accent ?? scheme.onSurface,
               ),
             ),
-            const SizedBox(height: Spacing.s2),
+            const SizedBox(height: 2),
             Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -332,12 +322,12 @@ class _ErrorCard extends StatelessWidget {
     final semantic = SemanticColors.of(context);
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.all(Spacing.s12),
+        padding: const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
-            const SizedBox(width: Spacing.s8),
+            const SizedBox(width: 8),
             Expanded(
               child: SelectableText(
                 message,
@@ -437,7 +427,7 @@ class _LocalCountsCard extends StatelessWidget {
     if (counts == null) {
       return const FCard.raw(
         child: Padding(
-          padding: EdgeInsets.all(Spacing.s12),
+          padding: EdgeInsets.all(12),
           child: Center(child: FCircularProgress()),
         ),
       );
@@ -446,10 +436,7 @@ class _LocalCountsCard extends StatelessWidget {
     Widget cell(String id) {
       final value = counts![id] ?? 0;
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s12,
-          vertical: Spacing.s8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
             Expanded(
@@ -474,17 +461,12 @@ class _LocalCountsCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s12,
-                Spacing.s8,
-                Spacing.s12,
-                Spacing.s4,
-              ),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
               child: Text(
                 l10n.syncStatusLocalCountsHeader,
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -650,10 +632,7 @@ class _Row extends StatelessWidget {
             );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s12,
-        vertical: Spacing.s8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         crossAxisAlignment: wrap
             ? CrossAxisAlignment.start

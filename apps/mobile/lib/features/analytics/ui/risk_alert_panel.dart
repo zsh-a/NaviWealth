@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/concentration_risk.dart';
@@ -50,16 +49,16 @@ class _AlertList extends StatelessWidget {
               size: 20,
               color: context.theme.colors.destructive,
             ),
-            const SizedBox(width: Spacing.s8),
+            const SizedBox(width: 8),
             Text(
               l10n.riskAlertTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(width: Spacing.s8),
+            const SizedBox(width: 8),
             _AlertCountBadge(count: alerts.length),
           ],
         ),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         FCard.raw(
           child: Column(
             children: [
@@ -83,10 +82,7 @@ class _AlertCountBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s6,
-        vertical: Spacing.s2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(10),

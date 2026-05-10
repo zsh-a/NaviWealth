@@ -20,7 +20,7 @@ class FireUnconfiguredBody extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -30,13 +30,13 @@ class FireUnconfiguredBody extends StatelessWidget {
               size: 64,
               color: theme.colorScheme.primary,
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Text(
               l10n.fireEmptyTitle,
               style: theme.textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               l10n.fireEmptyHint,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -44,7 +44,7 @@ class FireUnconfiguredBody extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: Spacing.s24),
+            const SizedBox(height: 24),
             FButton(
               variant: FButtonVariant.primary,
               onPress: () => showFireGoalSheet(context),
@@ -73,7 +73,7 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ProgressHeaderCard(view: view, formatters: formatters),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _CountdownCard(view: view, formatters: formatters),
       ],
     );
@@ -81,11 +81,11 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ProjectionCard(view: view),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _ScenariosTable(view: view),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _SafeWithdrawalCard(view: view, formatters: formatters),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _SensitivityCard(view: view),
       ],
     );
@@ -93,10 +93,10 @@ class FireConfiguredBody extends ConsumerWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: isWide ? Spacing.pageWide : Spacing.pageMobile,
+          padding: isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16),
           children: [
             ResponsiveTwoColumn(left: left, right: right),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             FButton(
               variant: FButtonVariant.outline,
               onPress: () => showFireGoalSheet(context),
@@ -131,12 +131,12 @@ class _ProgressHeaderCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.fireProgressTitle, style: theme.textTheme.titleMedium),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Center(
               child: FireProgressGauge(
                 progress: ratio,
@@ -144,7 +144,7 @@ class _ProgressHeaderCard extends StatelessWidget {
                 caption: l10n.fireProgressGaugeCaption,
               ),
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             _LabelValueRow(
               label: l10n.fireProgressCurrent,
               child: AnimatedMoneyText(
@@ -153,7 +153,7 @@ class _ProgressHeaderCard extends StatelessWidget {
                 style: theme.textTheme.titleSmall,
               ),
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             _LabelValueRow(
               label: l10n.fireProgressTarget,
               child: AnimatedMoneyText(
@@ -162,7 +162,7 @@ class _ProgressHeaderCard extends StatelessWidget {
                 style: theme.textTheme.titleSmall,
               ),
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             _LabelValueRow(
               label: l10n.fireProgressGap,
               child: AnimatedMoneyText(
@@ -203,7 +203,7 @@ class _CountdownCard extends StatelessWidget {
                 l10n.fireCountdownReachedTitle,
                 style: theme.textTheme.headlineSmall,
               ),
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               Text(
                 l10n.fireCountdownReachedSubtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -219,7 +219,7 @@ class _CountdownCard extends StatelessWidget {
                 _formatYearsMonths(l10n, months),
                 style: theme.textTheme.headlineSmall,
               ),
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               Text(
                 l10n.fireCountdownDaysAprox(_approxDays(months)),
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -231,7 +231,7 @@ class _CountdownCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -239,7 +239,7 @@ class _CountdownCard extends StatelessWidget {
               l10n.fireCountdownTitle(referenceLabel),
               style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             body,
           ],
         ),
@@ -267,19 +267,19 @@ class _ProjectionCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.fireProjectionTitle, style: theme.textTheme.titleMedium),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.fireProjectionSubtitle,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, c) => FireScenariosChart(
                 scenarios: view.scenarios,
@@ -289,7 +289,7 @@ class _ProjectionCard extends StatelessWidget {
                 aspectRatio: chartAspectFor(c.maxWidth),
               ),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             _ScenarioLegend(view: view),
           ],
         ),
@@ -309,8 +309,8 @@ class _ScenarioLegend extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final palette = ChartPalette.of(context);
     return Wrap(
-      spacing: Spacing.s12,
-      runSpacing: Spacing.s8,
+      spacing: 12,
+      runSpacing: 8,
       children: [
         for (final s in view.scenarios)
           _LegendDot(
@@ -342,12 +342,7 @@ class _ScenariosTable extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.s16,
-              Spacing.s16,
-              Spacing.s16,
-              Spacing.s8,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
               child: Text(
@@ -413,7 +408,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -421,14 +416,14 @@ class _SafeWithdrawalCard extends StatelessWidget {
               l10n.fireSafeWithdrawalTitle,
               style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.fireSafeWithdrawalSubtitle,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             _LabelValueRow(
               label: l10n.fireSafeWithdrawalMonthly,
               value: formatters.currency(
@@ -436,7 +431,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
                 code: view.baseCurrency,
               ),
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             _LabelValueRow(
               label: l10n.fireSafeWithdrawalAnnual,
               value: formatters.currency(
@@ -444,7 +439,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
                 code: view.baseCurrency,
               ),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               coverageHint,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -473,29 +468,29 @@ class _SensitivityCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.fireSensitivityTitle, style: theme.textTheme.titleMedium),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.fireSensitivitySubtitle,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             _LabelValueRow(
               label: l10n.fireSensitivityHigherSurplus,
               value: _formatOptionalMonths(l10n, s.highSurplusMonths),
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             _LabelValueRow(
               label: l10n.fireSensitivityBaseline,
               value: _formatOptionalMonths(l10n, s.baselineMonths),
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             _LabelValueRow(
               label: l10n.fireSensitivityLowerSurplus,
               value: _formatOptionalMonths(l10n, s.lowSurplusMonths),
@@ -532,7 +527,7 @@ class _LabelValueRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: Spacing.s8),
+        const SizedBox(width: 8),
         child ?? Text(value!, style: theme.textTheme.titleSmall),
       ],
     );
@@ -565,7 +560,7 @@ class _LegendDot extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: Spacing.s4),
+        const SizedBox(width: 4),
         Text(label, style: theme.textTheme.bodySmall),
       ],
     );

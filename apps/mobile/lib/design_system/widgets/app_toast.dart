@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/semantic_colors.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/spacing_tokens.dart';
 
 /// Toast severity levels.
 enum ToastKind { success, warning, error, info }
@@ -197,15 +196,15 @@ class _ToastWidgetState extends State<_ToastWidget>
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.paddingOf(context).top + Spacing.s16;
+    final topPadding = MediaQuery.paddingOf(context).top + 16;
     final accent = _accentColor(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return Positioned(
       top: topPadding,
-      left: Spacing.s16,
-      right: Spacing.s16,
+      left: 16,
+      right: 16,
       child: SlideTransition(
         position: _slideAnimation,
         child: FadeTransition(
@@ -230,13 +229,13 @@ class _ToastWidgetState extends State<_ToastWidget>
                     border: Border(left: BorderSide(color: accent, width: 3)),
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.s12,
-                    vertical: Spacing.s12,
+                    horizontal: 12,
+                    vertical: 12,
                   ),
                   child: Row(
                     children: [
                       Icon(_icon(), color: accent, size: 20),
-                      const SizedBox(width: Spacing.s8),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           widget.message,
@@ -256,7 +255,7 @@ class _ToastWidgetState extends State<_ToastWidget>
                             ),
                           ),
                         ),
-                      const SizedBox(width: Spacing.s4),
+                      const SizedBox(width: 4),
                       GestureDetector(
                         onTap: widget.onDismiss,
                         child: Icon(

@@ -14,7 +14,6 @@ import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../data/securities_catalog/providers.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
@@ -187,7 +186,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         final confirmed = await showModalBottomSheet<bool>(
           context: context,
           builder: (ctx) => Padding(
-            padding: const EdgeInsets.all(Spacing.s16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,13 +195,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                   l10n.tradeEntryCashOverdrawTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: Spacing.s8),
+                const SizedBox(height: 8),
                 Text(
                   l10n.tradeEntryCashOverdrawMessage(
                     '${resulting.toStringAsFixed(2)} $currency',
                   ),
                 ),
-                const SizedBox(height: Spacing.s16),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -211,7 +210,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                       onPress: () => Navigator.of(ctx).pop(false),
                       child: Text(l10n.commonCancel),
                     ),
-                    const SizedBox(width: Spacing.s8),
+                    const SizedBox(width: 8),
                     FButton(
                       variant: FButtonVariant.primary,
                       onPress: () => Navigator.of(ctx).pop(true),
@@ -444,14 +443,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           _buildAssetSearch(),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           _buildTypeSelector(),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           AccountPicker(
             accounts: eligible.isEmpty ? accounts : eligible,
@@ -459,7 +458,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             onChanged: (v) => setState(() => _accountId = v),
           ),
           if (_type == TradeType.buy || _type == TradeType.sell) ...[
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             AccountPicker(
               key: const Key('trade-entry-cash-account'),
               label: l10n.tradeEntryCashAccountLabel,
@@ -474,7 +473,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               onChanged: (v) => setState(() => _cashAccountId = v),
             ),
           ],
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           AmountField(
             key: const Key('trade-entry-quantity'),
@@ -484,7 +483,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             onFieldSubmitted: (_) => _priceFocus.requestFocus(),
             helperText: _decimalScaleHint(l10n),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           AmountField(
             key: const Key('trade-entry-price'),
@@ -496,7 +495,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             focusNode: _priceFocus,
             onFieldSubmitted: (_) => _feeFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           DateField(
             label: l10n.tradeEntryDateLabel,
@@ -506,13 +505,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               if (d != null) setState(() => _tradeDate = d);
             },
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           CurrencyPicker(
             value: _currency,
             onChanged: (v) => setState(() => _currency = v),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           Row(
             children: [
@@ -526,7 +525,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                   onFieldSubmitted: (_) => _taxFocus.requestFocus(),
                 ),
               ),
-              const SizedBox(width: Spacing.s12),
+              const SizedBox(width: 12),
               Expanded(
                 child: AmountField(
                   label: l10n.tradeEntryTaxLabel,
@@ -539,10 +538,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               ),
             ],
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
 
           NoteField(controller: _noteController, focusNode: _noteFocus),
-          const SizedBox(height: Spacing.s24),
+          const SizedBox(height: 24),
 
           FButton(
             key: const Key('trade-entry-submit'),

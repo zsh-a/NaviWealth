@@ -40,7 +40,7 @@ class DimensionSegment extends StatelessWidget {
         color: isDark
             ? const Color(0xFF2C2C2E)
             : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(Radii.full),
+        borderRadius: BorderRadius.circular(9999),
       ),
       padding: const EdgeInsets.all(2),
       child: Row(
@@ -91,7 +91,7 @@ class _DimensionChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: selected ? theme.colorScheme.surface : Colors.transparent,
-          borderRadius: BorderRadius.circular(Radii.full),
+          borderRadius: BorderRadius.circular(9999),
           boxShadow: selected ? AppElevations.of(context).level1 : null,
         ),
         child: Row(

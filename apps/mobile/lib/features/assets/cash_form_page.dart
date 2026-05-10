@@ -14,7 +14,6 @@ import '../../data/domain/enums.dart';
 import '../../data/domain/manual_asset_metadata.dart';
 import '../../data/repositories/manual_asset_repository.dart';
 import '../../data/repositories/providers.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/forms/forms.dart';
 
@@ -99,7 +98,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
           final goEdit = await showModalBottomSheet<bool>(
             context: context,
             builder: (ctx) => Padding(
-              padding: const EdgeInsets.all(Spacing.s16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,9 +107,9 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
                     l10n.cashFormDuplicateTitle,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: Spacing.s8),
+                  const SizedBox(height: 8),
                   Text(l10n.cashFormDuplicateMessage),
-                  const SizedBox(height: Spacing.s16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -119,7 +118,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
                         onPress: () => Navigator.of(ctx).pop(false),
                         child: Text(l10n.cashFormDuplicateCancel),
                       ),
-                      const SizedBox(width: Spacing.s8),
+                      const SizedBox(width: 8),
                       FButton(
                         variant: FButtonVariant.outline,
                         onPress: () => Navigator.of(ctx).pop(true),
@@ -231,12 +230,12 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     if (eligible.isEmpty) {
       return Center(
         child: Padding(
-          padding: Spacing.pageMobile,
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(l10n.cashFormNeedAccountHint, textAlign: TextAlign.center),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.go(AppRoutes.accountNew),
@@ -263,7 +262,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           AccountPicker(
@@ -277,14 +276,14 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
               if (account != null) _currency = account.currency;
             }),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           CurrencyPicker(
             value: _currency,
             // Disabled — currency is derived from the selected account.
             onChanged: (_) {},
             enabled: false,
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           AmountField(
             label: l10n.cashFormBalanceLabel,
             controller: _balanceController,
@@ -292,7 +291,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             focusNode: _balanceFocus,
             onFieldSubmitted: (_) => _nicknameFocus.requestFocus(),
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nicknameController),
             label: Text(l10n.cashFormNicknameLabel),
@@ -301,7 +300,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             textInputAction: TextInputAction.done,
             onSubmit: (_) => _busy ? null : _save(),
           ),
-          const SizedBox(height: Spacing.s24),
+          const SizedBox(height: 24),
           FButton(
             variant: FButtonVariant.primary,
             onPress: _busy ? null : _save,
@@ -321,7 +320,7 @@ Future<bool?> confirmManualAssetDelete(BuildContext context) {
   return showModalBottomSheet<bool>(
     context: context,
     builder: (ctx) => Padding(
-      padding: const EdgeInsets.all(Spacing.s16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,9 +329,9 @@ Future<bool?> confirmManualAssetDelete(BuildContext context) {
             l10n.manualAssetDeleteTitle,
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           Text(l10n.manualAssetDeleteContent),
-          const SizedBox(height: Spacing.s16),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -341,7 +340,7 @@ Future<bool?> confirmManualAssetDelete(BuildContext context) {
                 onPress: () => Navigator.of(ctx).pop(false),
                 child: Text(l10n.manualAssetDeleteCancel),
               ),
-              const SizedBox(width: Spacing.s8),
+              const SizedBox(width: 8),
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => Navigator.of(ctx).pop(true),

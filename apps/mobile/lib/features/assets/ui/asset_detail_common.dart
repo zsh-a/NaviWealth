@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
-import '../../../design_system/design_system.dart';
 import '../../../domain/entities/historical_bar.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
@@ -53,7 +52,7 @@ class AssetDetailErrorCard extends StatelessWidget {
     final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Text(
           message,
           style: theme.textTheme.bodySmall?.copyWith(

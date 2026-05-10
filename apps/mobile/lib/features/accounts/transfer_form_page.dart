@@ -15,7 +15,6 @@ import '../../data/repositories/journal_entry_builders.dart';
 import '../../data/repositories/journal_entry_providers.dart';
 import '../../data/repositories/journal_entry_repository.dart';
 import '../../data/repositories/providers.dart';
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
@@ -170,7 +169,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         (!isCrossCurrency || (toAmount != null && toAmount > Decimal.zero));
 
     return SingleChildScrollView(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
         child: Column(
@@ -197,7 +196,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                   ? l10n.transferValidationRequired
                   : null,
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             AccountTreePicker(
               accounts: transferable,
               value: _toAccountId,
@@ -221,7 +220,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 return null;
               },
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             AmountField(
               label: fromCurrency == null
                   ? l10n.transferAmountLabel
@@ -242,7 +241,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               },
             ),
             if (isCrossCurrency) ...[
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               AmountField(
                 label: l10n.transferToAmountLabel(toCurrency),
                 controller: _toAmountController,
@@ -256,7 +255,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               ),
               if (amount != null && toAmount != null && amount > Decimal.zero)
                 Padding(
-                  padding: const EdgeInsets.only(top: Spacing.s4),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     _rateLabel(
                       amount: amount,
@@ -270,7 +269,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                   ),
                 ),
             ],
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             DateField(
               label: l10n.transferDateLabel,
               initialValue: _date,
@@ -279,9 +278,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 if (d != null) setState(() => _date = d);
               },
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             NoteField(controller: _noteController, focusNode: _noteFocus),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             if (preview != null)
               PostingsPreview(
                 postings: preview,
@@ -290,7 +289,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                     ? l10n.transferPreviewTitle
                     : _noteController.text,
               ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: canSubmit ? _save : null,
               child: Text(l10n.transferSubmitAction),

@@ -75,7 +75,7 @@ class _RateList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     if (rates.isEmpty) {
       return Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Center(
           child: Text(
             l10n.fxRatesEmpty,

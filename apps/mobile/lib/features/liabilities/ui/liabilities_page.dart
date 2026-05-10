@@ -8,7 +8,6 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/liability.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/liability_summary.dart';
@@ -40,12 +39,12 @@ class LiabilitiesPage extends ConsumerWidget {
         }
         // Standard two-line ListTile height — lets the scroll view skip
         // per-item layout during scroll, critical for 120fps.
-        const itemHeight = 72.0 + Spacing.s8;
+        const itemHeight = 72.0 + 8;
         return ListView.builder(
-          padding: Spacing.pageMobile.copyWith(
+          padding: const EdgeInsets.all(16).copyWith(
             bottom:
-                Spacing.pageMobile.bottom +
-                Spacing.floatingBarClearance +
+                const EdgeInsets.all(16).bottom +
+                64 +
                 MediaQuery.paddingOf(context).bottom,
           ),
           itemCount: items.length,
@@ -79,7 +78,7 @@ class _LiabilitiesEmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.s32),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -88,7 +87,7 @@ class _LiabilitiesEmptyState extends StatelessWidget {
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Text(
               l10n.liabilitiesEmptyHint,
               textAlign: TextAlign.center,

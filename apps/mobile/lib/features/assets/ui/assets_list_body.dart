@@ -100,10 +100,10 @@ class AssetsBody extends StatelessWidget {
       accountById: accountById,
     );
     return ListView.builder(
-      padding: Spacing.pageMobile.copyWith(
+      padding: const EdgeInsets.all(16).copyWith(
         bottom:
-            Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
+            const EdgeInsets.all(16).bottom +
+            64 +
             MediaQuery.paddingOf(context).bottom,
       ),
       itemCount: rows.length,
@@ -124,12 +124,12 @@ class _EmptyHint extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: Spacing.pageMobile,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.account_balance_wallet_outlined, size: 48),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Text(l10n.assetsEmptyHint, textAlign: TextAlign.center),
           ],
         ),

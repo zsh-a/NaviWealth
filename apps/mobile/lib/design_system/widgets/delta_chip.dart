@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/market_colors.dart';
-import '../tokens/radius_tokens.dart';
-import '../tokens/spacing_tokens.dart';
 import 'delta_text.dart';
 
 /// Pill-shaped variant of [DeltaText] — same direction-aware coloring but
@@ -15,10 +13,7 @@ class DeltaChip extends StatelessWidget {
     this.format = DeltaFormat.percent,
     this.currencyCode = 'CNY',
     this.fractionDigits,
-    this.padding = const EdgeInsets.symmetric(
-      horizontal: Spacing.s8,
-      vertical: Spacing.s2,
-    ),
+    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     this.style,
   });
 
@@ -35,7 +30,7 @@ class DeltaChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: market.containerForDelta(value),
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: padding,

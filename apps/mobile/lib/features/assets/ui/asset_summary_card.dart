@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../../data/domain/asset.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 class AssetSummaryCard extends StatelessWidget {
@@ -16,16 +15,16 @@ class AssetSummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(asset.symbol, style: theme.textTheme.titleMedium),
             if (asset.name != null) ...[
-              const SizedBox(height: Spacing.s4),
+              const SizedBox(height: 4),
               Text(asset.name!, style: theme.textTheme.bodyMedium),
             ],
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               '${asset.market ?? l10n.assetDetailUnknown} \u00B7 ${asset.currency}',
               style: theme.textTheme.bodySmall?.copyWith(

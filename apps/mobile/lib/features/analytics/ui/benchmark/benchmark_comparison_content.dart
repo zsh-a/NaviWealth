@@ -25,9 +25,9 @@ class BenchmarkComparisonContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _ComparisonChart(result: result),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _AnnualizedSummary(result: result),
-        const SizedBox(height: Spacing.s8),
+        const SizedBox(height: 8),
         for (final series in result.benchmarks)
           _ExcessRow(result: result, series: series),
       ],
@@ -150,7 +150,7 @@ class _ExcessRow extends StatelessWidget {
     final benchAnn = series.annualizedReturn;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(
@@ -187,18 +187,18 @@ class BenchmarkCardSkeleton extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SkeletonBox(height: 220, radius: Radii.sm),
-        SizedBox(height: Spacing.s12),
+        SkeletonBox(height: 220, radius: 8),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(child: SkeletonBox(height: 14)),
-            SizedBox(width: Spacing.s12),
+            SizedBox(width: 12),
             SkeletonBox(width: 80, height: 18),
           ],
         ),
-        SizedBox(height: Spacing.s8),
+        SizedBox(height: 8),
         SkeletonBox(height: 14),
-        SizedBox(height: Spacing.s4),
+        SizedBox(height: 4),
         SkeletonBox(height: 14, width: 200),
       ],
     );
@@ -215,7 +215,7 @@ class BenchmarkCardError extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s24),
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: Text(
           l10n.benchmarkComparisonError('$error'),

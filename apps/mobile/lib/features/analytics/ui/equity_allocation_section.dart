@@ -34,9 +34,9 @@ class AnalyticsEquityColumn extends ConsumerWidget {
           title: l10n.analyticsEquityTitle,
           subtitle: l10n.analyticsEquitySubtitle,
         ),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         DimensionSegment(value: dimension, onChanged: onDimensionChanged),
-        const SizedBox(height: Spacing.s16),
+        const SizedBox(height: 16),
         PageSkeletonShell<EquityAllocationView>(
           skeleton: const _LoadingState(),
           isLoading: view.isLoading,
@@ -98,7 +98,7 @@ class EquityAllocationContent extends ConsumerWidget {
           baseCurrency: view.baseCurrency,
           totalValueInBase: view.totalValueInBase,
         ),
-        const SizedBox(height: Spacing.s16),
+        const SizedBox(height: 16),
         NwPieChart(
           slices: slices,
           aspectRatio: 1.4,
@@ -108,10 +108,10 @@ class EquityAllocationContent extends ConsumerWidget {
           }),
           semanticLabel: l10n.analyticsEquityTitle,
         ),
-        const SizedBox(height: Spacing.s16),
+        const SizedBox(height: 16),
         if (view.unclassifiedCount > 0)
           _UnclassifiedBanner(count: view.unclassifiedCount),
-        if (view.unclassifiedCount > 0) const SizedBox(height: Spacing.s12),
+        if (view.unclassifiedCount > 0) const SizedBox(height: 12),
         FCard.raw(
           child: Column(
             children: [
@@ -251,17 +251,14 @@ class _UnclassifiedBanner extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.s12,
-          vertical: Spacing.s12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
             Icon(
               Icons.warning_amber_outlined,
               color: theme.colorScheme.tertiary,
             ),
-            const SizedBox(width: Spacing.s8),
+            const SizedBox(width: 8),
             Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
           ],
         ),
@@ -278,7 +275,7 @@ class _EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s32),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
           Icon(
@@ -286,13 +283,13 @@ class _EmptyState extends StatelessWidget {
             size: 48,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(height: Spacing.s12),
+          const SizedBox(height: 12),
           Text(
             l10n.analyticsEmptyTitle,
             style: theme.textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: Spacing.s4),
+          const SizedBox(height: 4),
           Text(
             l10n.analyticsEmptyHint,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -321,12 +318,12 @@ class _LoadingState extends StatelessWidget {
             SkeletonBox(width: 120, height: 18),
           ],
         ),
-        SizedBox(height: Spacing.s16),
-        SkeletonBox(height: 220, radius: Radii.sm),
-        SizedBox(height: Spacing.s16),
-        SkeletonBox(height: 56, radius: Radii.sm),
-        SizedBox(height: Spacing.s8),
-        SkeletonBox(height: 56, radius: Radii.sm),
+        SizedBox(height: 16),
+        SkeletonBox(height: 220, radius: 8),
+        SizedBox(height: 16),
+        SkeletonBox(height: 56, radius: 8),
+        SizedBox(height: 8),
+        SkeletonBox(height: 56, radius: 8),
       ],
     );
   }
@@ -343,13 +340,13 @@ class _ErrorState extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s32),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
           Icon(Icons.error_outline, color: theme.colorScheme.error, size: 32),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           FButton(
             variant: FButtonVariant.ghost,
             onPress: onRetry,

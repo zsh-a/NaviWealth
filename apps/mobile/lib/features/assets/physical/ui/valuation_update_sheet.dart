@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/haptics/haptics.dart';
-import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../shared/forms/forms.dart';
 import '../data/physical_asset.dart';
@@ -69,12 +68,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
     );
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s16,
-          Spacing.s12,
-          Spacing.s16,
-          Spacing.s24,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Form(
           key: _formKey,
           child: Column(
@@ -85,10 +79,10 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 child: Container(
                   width: 32,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: Spacing.s12),
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.outlineVariant,
-                    borderRadius: Radii.brXs,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
@@ -96,7 +90,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 l10n.physicalAssetUpdateValuationTitle,
                 style: theme.textTheme.titleLarge,
               ),
-              const SizedBox(height: Spacing.s16),
+              const SizedBox(height: 16),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _amountCtrl),
                 label: Text(l10n.physicalAssetUpdateValuationAmount),
@@ -114,7 +108,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                   return null;
                 },
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               InkWell(
                 onTap: _saving ? null : _pickDate,
                 child: InputDecorator(
@@ -124,14 +118,14 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                   child: Text(dateFormat.format(_asOf)),
                 ),
               ),
-              const SizedBox(height: Spacing.s12),
+              const SizedBox(height: 12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _noteCtrl),
                 label: Text(l10n.physicalAssetFieldNote),
                 maxLines: 3,
                 minLines: 1,
               ),
-              const SizedBox(height: Spacing.s24),
+              const SizedBox(height: 24),
               FButton(
                 variant: FButtonVariant.primary,
                 onPress: _saving ? null : _submit,

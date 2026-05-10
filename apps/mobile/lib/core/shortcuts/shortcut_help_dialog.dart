@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'shortcut_bindings.dart';
 
@@ -61,12 +60,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s24,
-          Spacing.s12,
-          Spacing.s24,
-          Spacing.s24,
-        ),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -74,7 +68,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
             Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(bottom: Spacing.s16),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.onSurfaceVariant.withValues(
                   alpha: 0.4,
@@ -83,7 +77,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
               ),
             ),
             Text(l10n.shortcutsHelpTitle, style: theme.textTheme.titleLarge),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Flexible(
               child: SingleChildScrollView(
                 child: Column(

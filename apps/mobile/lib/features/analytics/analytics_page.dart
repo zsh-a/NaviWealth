@@ -37,12 +37,14 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-            final basePadding = isWide ? Spacing.pageWide : Spacing.pageMobile;
+            final basePadding = isWide
+                ? const EdgeInsets.all(24)
+                : const EdgeInsets.all(16);
             return ListView(
               padding: basePadding.copyWith(
                 bottom:
                     basePadding.bottom +
-                    Spacing.floatingBarClearance +
+                    64 +
                     MediaQuery.paddingOf(context).bottom,
               ),
               children: [
@@ -71,7 +73,7 @@ class _RiskAndBenchmarkColumn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         RiskAlertPanel(),
-        SizedBox(height: Spacing.s24),
+        SizedBox(height: 24),
         BenchmarkComparisonCard(),
       ],
     );

@@ -4,8 +4,6 @@ import 'package:forui/forui.dart';
 
 import '../../data/domain/account.dart';
 import '../../data/domain/posting.dart';
-import '../../design_system/tokens/radius_tokens.dart';
-import '../../design_system/tokens/spacing_tokens.dart';
 
 /// FIR-128 §1.3 — read-only ledger card that mirrors the Beancount
 /// posting layout: account path on the left, signed `units` and (when
@@ -57,10 +55,10 @@ class PostingsPreview extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: scheme.outlineVariant),
       ),
-      padding: const EdgeInsets.all(Spacing.s8),
+      padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -71,11 +69,11 @@ class PostingsPreview extends StatelessWidget {
               style: theme.textTheme.titleSmall,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
           ],
           for (final p in postings) ...[
             _PostingRow(posting: p, accounts: accounts),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
           ],
           if (showUnitBalanceTotals && unitTotals.isNotEmpty) ...[
             const FDivider(),
@@ -141,7 +139,7 @@ class _PostingRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: Spacing.s8),
+        const SizedBox(width: 8),
         Text(
           '${_format(posting.units)} ${posting.unit}',
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -167,7 +165,7 @@ class _UnitBalanceRow extends StatelessWidget {
     final balanced = total == Decimal.zero;
     final tone = balanced ? scheme.tertiary : scheme.error;
     return Padding(
-      padding: const EdgeInsets.only(top: Spacing.s2),
+      padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
           Icon(
@@ -175,7 +173,7 @@ class _UnitBalanceRow extends StatelessWidget {
             size: 14,
             color: tone,
           ),
-          const SizedBox(width: Spacing.s4),
+          const SizedBox(width: 4),
           Expanded(
             child: Text(
               'Σ $unit',

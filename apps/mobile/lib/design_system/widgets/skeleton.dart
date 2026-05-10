@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/radius_tokens.dart';
-import '../tokens/spacing_tokens.dart';
 
 /// Pulsing placeholder rectangle for skeleton screens.
 ///
@@ -20,7 +18,7 @@ class SkeletonBox extends StatefulWidget {
     super.key,
     this.width,
     this.height = 16,
-    this.radius = Radii.xs,
+    this.radius = 4,
     this.shimmer = true,
   });
 
@@ -32,7 +30,7 @@ class SkeletonBox extends StatefulWidget {
   /// Box height in logical pixels.
   final double height;
 
-  /// Corner radius. Defaults to [Radii.xs] so a row of skeleton text
+  /// Corner radius. Defaults to [4] so a row of skeleton text
   /// reads as text rather than a chip.
   final double radius;
 
@@ -184,15 +182,15 @@ class SkeletonCard extends StatelessWidget {
   const SkeletonCard({
     super.key,
     required this.child,
-    this.padding = Spacing.cardHero,
+    this.padding = const EdgeInsets.all(20),
   });
 
   /// Placeholder layout — typically a [Column] / [Row] of [SkeletonBox]es
   /// roughly mirroring the card's final content.
   final Widget child;
 
-  /// Padding inside the card, defaulting to [Spacing.cardHero] to match
-  /// the hero cards (NetWorth / Allocation / Trend). Pass [Spacing.card]
+  /// Padding inside the card, defaulting to [EdgeInsets.all(20)] to match
+  /// the hero cards (NetWorth / Allocation / Trend). Pass [EdgeInsets.all(16)]
   /// for compact cards.
   final EdgeInsetsGeometry padding;
 

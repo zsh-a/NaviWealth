@@ -27,16 +27,16 @@ class AssetPnLCard extends ConsumerWidget {
 
     if (snapshotAsync.isLoading) {
       return const SkeletonCard(
-        padding: Spacing.card,
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SkeletonBox(width: 80, height: 14, radius: Radii.xs),
-            SizedBox(height: Spacing.s12),
+            SkeletonBox(width: 80, height: 14, radius: 4),
+            SizedBox(height: 12),
             SkeletonBox(height: 22),
-            SizedBox(height: Spacing.s8),
+            SizedBox(height: 8),
             SkeletonBox(height: 14),
-            SizedBox(height: Spacing.s8),
+            SizedBox(height: 8),
             SkeletonBox(height: 14),
           ],
         ),
@@ -66,12 +66,12 @@ class AssetPnLCard extends ConsumerWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.assetDetailPnLTitle, style: theme.textTheme.titleSmall),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -85,7 +85,7 @@ class AssetPnLCard extends ConsumerWidget {
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: Spacing.s4),
+                      const SizedBox(height: 4),
                       DeltaText(
                         value: unrealizedAsset?.toDouble(),
                         currencyCode: asset.currency,
@@ -101,7 +101,7 @@ class AssetPnLCard extends ConsumerWidget {
               ],
             ),
             if (snap != null) ...[
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Text(
                 '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
                 '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
@@ -164,7 +164,7 @@ class _DailyChangeView extends StatelessWidget {
     if (isLoading && value == null) {
       return const SizedBox(
         width: 80,
-        child: SkeletonBox(height: 14, radius: Radii.xs),
+        child: SkeletonBox(height: 14, radius: 4),
       );
     }
     if (value == null) {

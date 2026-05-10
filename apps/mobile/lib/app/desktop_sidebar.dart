@@ -53,13 +53,10 @@ class DesktopSidebar extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.s8,
-                  vertical: Spacing.s4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 itemCount: destinations.length,
                 itemBuilder: (_, i) => _SidebarItem(
                   destination: destinations[i],
@@ -120,7 +117,7 @@ class _SidebarItem extends StatelessWidget {
     final row = Row(
       children: [
         SizedBox(
-          width: kSidebarCollapsedWidth - Spacing.s16,
+          width: kSidebarCollapsedWidth - 16,
           child: Icon(
             selected ? destination.selectedIcon : destination.icon,
             color: iconColor,
@@ -158,7 +155,7 @@ class _SidebarItem extends StatelessWidget {
         Container(
           height: 48,
           margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.s8),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: selected
                 ? cs.primary.withValues(alpha: 0.10)
@@ -201,10 +198,7 @@ class _CollapseToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Tooltip(
         message: collapsed ? 'Expand sidebar  (⌘B)' : 'Collapse sidebar  (⌘B)',
         child: InkWell(

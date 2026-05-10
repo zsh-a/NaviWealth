@@ -15,8 +15,6 @@ export 'theme/semantic_colors.dart';
 export 'tokens/breakpoints.dart';
 export 'tokens/color_palette.dart';
 export 'tokens/motion_tokens.dart';
-export 'tokens/radius_tokens.dart';
-export 'tokens/spacing_tokens.dart';
 export 'tokens/typography_tokens.dart';
 export 'widgets/animated_money_text.dart';
 export 'widgets/app_toast.dart';

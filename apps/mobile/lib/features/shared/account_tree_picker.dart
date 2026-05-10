@@ -3,7 +3,6 @@ import 'package:forui/forui.dart';
 
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
-import '../../design_system/design_system.dart';
 import '../accounts/account_icon_catalog.dart';
 
 /// FIR-128 §1.2 — drop-in replacement for the legacy flat
@@ -93,7 +92,7 @@ class AccountTreePicker extends StatelessWidget {
         return DropdownMenuItem<String>(
           value: e.account.id,
           child: Padding(
-            padding: EdgeInsets.only(left: e.depth * Spacing.s8),
+            padding: EdgeInsets.only(left: e.depth * 8),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -103,7 +102,7 @@ class AccountTreePicker extends StatelessWidget {
                     size: 16,
                     color: iconColor ?? context.theme.colors.mutedForeground,
                   ),
-                  const SizedBox(width: Spacing.s4),
+                  const SizedBox(width: 4),
                   Text(e.path, overflow: TextOverflow.ellipsis),
                 ] else
                   Text('$prefix${e.path}', overflow: TextOverflow.ellipsis),

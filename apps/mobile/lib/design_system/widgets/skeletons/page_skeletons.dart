@@ -16,8 +16,6 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../tokens/breakpoints.dart';
-import '../../tokens/radius_tokens.dart';
-import '../../tokens/spacing_tokens.dart';
 import '../responsive_two_column.dart';
 import '../skeleton.dart';
 
@@ -102,19 +100,17 @@ class HomeSkeleton extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isWide ? Spacing.pageWide : Spacing.pageMobile;
+        final padding = isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16);
         const allocation = SkeletonCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 120, height: 18, radius: Radii.xs),
-              SizedBox(height: Spacing.s16),
-              Center(
-                child: SkeletonBox(width: 200, height: 200, radius: Radii.full),
-              ),
-              SizedBox(height: Spacing.s16),
+              SkeletonBox(width: 120, height: 18, radius: 4),
+              SizedBox(height: 16),
+              Center(child: SkeletonBox(width: 200, height: 200, radius: 9999)),
+              SizedBox(height: 16),
               SkeletonBox(height: 14),
-              SizedBox(height: Spacing.s8),
+              SizedBox(height: 8),
               SkeletonBox(height: 14),
             ],
           ),
@@ -123,11 +119,11 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 140, height: 18, radius: Radii.xs),
-              SizedBox(height: Spacing.s12),
-              SkeletonBox(height: 32, radius: Radii.sm),
-              SizedBox(height: Spacing.s12),
-              SkeletonBox(height: 220, radius: Radii.sm),
+              SkeletonBox(width: 140, height: 18, radius: 4),
+              SizedBox(height: 12),
+              SkeletonBox(height: 32, radius: 8),
+              SizedBox(height: 12),
+              SkeletonBox(height: 220, radius: 8),
             ],
           ),
         );
@@ -135,11 +131,11 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 88, height: 14, radius: Radii.xs),
-              SizedBox(height: Spacing.s8),
-              SkeletonBox(width: 220, height: 36, radius: Radii.sm),
-              SizedBox(height: Spacing.s8),
-              SkeletonBox(width: 180, height: 12, radius: Radii.xs),
+              SkeletonBox(width: 88, height: 14, radius: 4),
+              SizedBox(height: 8),
+              SkeletonBox(width: 220, height: 36, radius: 8),
+              SizedBox(height: 8),
+              SkeletonBox(width: 180, height: 12, radius: 4),
             ],
           ),
         );
@@ -148,12 +144,12 @@ class HomeSkeleton extends StatelessWidget {
             padding: padding,
             children: const [
               header,
-              SizedBox(height: Spacing.s16),
+              SizedBox(height: 16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(child: allocation),
-                  SizedBox(width: Spacing.s16),
+                  SizedBox(width: 16),
                   Expanded(child: trend),
                 ],
               ),
@@ -164,9 +160,9 @@ class HomeSkeleton extends StatelessWidget {
           padding: padding,
           children: const [
             header,
-            SizedBox(height: Spacing.s12),
+            SizedBox(height: 12),
             allocation,
-            SizedBox(height: Spacing.s12),
+            SizedBox(height: 12),
             trend,
           ],
         );
@@ -184,25 +180,22 @@ class AssetsListSkeleton extends StatelessWidget {
 
   Widget _row() {
     return const Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Spacing.s16,
-        vertical: Spacing.s12,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          SkeletonBox(width: 36, height: 36, radius: Radii.full),
-          SizedBox(width: Spacing.s12),
+          SkeletonBox(width: 36, height: 36, radius: 9999),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonBox(width: 140, height: 14),
-                SizedBox(height: Spacing.s6),
+                SizedBox(height: 6),
                 SkeletonBox(width: 88, height: 12),
               ],
             ),
           ),
-          SizedBox(width: Spacing.s12),
+          SizedBox(width: 12),
           SkeletonBox(width: 80, height: 16),
         ],
       ),
@@ -212,10 +205,10 @@ class AssetsListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: Spacing.s8),
+          padding: EdgeInsets.symmetric(vertical: 8),
           child: SkeletonBox(width: 100, height: 18),
         ),
         Card(
@@ -229,9 +222,9 @@ class AssetsListSkeleton extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: Spacing.s8),
+          padding: EdgeInsets.symmetric(vertical: 8),
           child: SkeletonBox(width: 120, height: 18),
         ),
         Card(
@@ -251,44 +244,44 @@ class AssetDetailSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       children: const [
         SkeletonCard(
-          padding: Spacing.cardHero,
+          padding: EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 88, height: 14, radius: Radii.xs),
-              SizedBox(height: Spacing.s8),
-              SkeletonBox(width: 220, height: 32, radius: Radii.sm),
-              SizedBox(height: Spacing.s8),
-              SkeletonBox(width: 160, height: 12, radius: Radii.xs),
+              SkeletonBox(width: 88, height: 14, radius: 4),
+              SizedBox(height: 8),
+              SkeletonBox(width: 220, height: 32, radius: 8),
+              SizedBox(height: 8),
+              SkeletonBox(width: 160, height: 12, radius: 4),
             ],
           ),
         ),
-        SizedBox(height: Spacing.s12),
+        SizedBox(height: 12),
         SkeletonCard(
-          padding: Spacing.card,
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 80, height: 14, radius: Radii.xs),
-              SizedBox(height: Spacing.s12),
+              SkeletonBox(width: 80, height: 14, radius: 4),
+              SizedBox(height: 12),
               SkeletonBox(height: 18),
-              SizedBox(height: Spacing.s8),
+              SizedBox(height: 8),
               SkeletonBox(height: 18),
             ],
           ),
         ),
-        SizedBox(height: Spacing.s12),
+        SizedBox(height: 12),
         SkeletonCard(
-          padding: Spacing.card,
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 120, height: 16, radius: Radii.xs),
-              SizedBox(height: Spacing.s12),
-              SkeletonBox(height: 180, radius: Radii.sm),
+              SkeletonBox(width: 120, height: 16, radius: 4),
+              SizedBox(height: 12),
+              SkeletonBox(height: 180, radius: 8),
             ],
           ),
         ),
@@ -307,12 +300,12 @@ class AnalyticsSkeleton extends StatelessWidget {
     const left = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SkeletonBox(width: 160, height: 20, radius: Radii.xs),
-        SizedBox(height: Spacing.s8),
-        SkeletonBox(width: 240, height: 14, radius: Radii.xs),
-        SizedBox(height: Spacing.s16),
-        SkeletonBox(height: 40, radius: Radii.sm),
-        SizedBox(height: Spacing.s16),
+        SkeletonBox(width: 160, height: 20, radius: 4),
+        SizedBox(height: 8),
+        SkeletonBox(width: 240, height: 14, radius: 4),
+        SizedBox(height: 16),
+        SkeletonBox(height: 40, radius: 8),
+        SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -320,39 +313,39 @@ class AnalyticsSkeleton extends StatelessWidget {
             SkeletonBox(width: 120, height: 18),
           ],
         ),
-        SizedBox(height: Spacing.s16),
-        SkeletonBox(height: 220, radius: Radii.sm),
-        SizedBox(height: Spacing.s16),
-        SkeletonBox(height: 56, radius: Radii.sm),
-        SizedBox(height: Spacing.s8),
-        SkeletonBox(height: 56, radius: Radii.sm),
+        SizedBox(height: 16),
+        SkeletonBox(height: 220, radius: 8),
+        SizedBox(height: 16),
+        SkeletonBox(height: 56, radius: 8),
+        SizedBox(height: 8),
+        SkeletonBox(height: 56, radius: 8),
       ],
     );
     const right = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SkeletonCard(
-          padding: Spacing.card,
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 140, height: 16, radius: Radii.xs),
-              SizedBox(height: Spacing.s8),
+              SkeletonBox(width: 140, height: 16, radius: 4),
+              SizedBox(height: 8),
               SkeletonBox(height: 14),
-              SizedBox(height: Spacing.s4),
+              SizedBox(height: 4),
               SkeletonBox(height: 14),
             ],
           ),
         ),
-        SizedBox(height: Spacing.s24),
+        SizedBox(height: 24),
         SkeletonCard(
-          padding: Spacing.card,
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 160, height: 16, radius: Radii.xs),
-              SizedBox(height: Spacing.s12),
-              SkeletonBox(height: 140, radius: Radii.sm),
+              SkeletonBox(width: 160, height: 16, radius: 4),
+              SizedBox(height: 12),
+              SkeletonBox(height: 140, radius: 8),
             ],
           ),
         ),
@@ -362,7 +355,7 @@ class AnalyticsSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: isWide ? Spacing.pageWide : Spacing.pageMobile,
+          padding: isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16),
           children: const [ResponsiveTwoColumn(left: left, right: right)],
         );
       },
@@ -378,47 +371,45 @@ class FireSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       children: const [
         SkeletonCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkeletonBox(width: 120, height: 18),
-              SizedBox(height: Spacing.s12),
-              Center(
-                child: SkeletonBox(width: 200, height: 200, radius: Radii.full),
-              ),
-              SizedBox(height: Spacing.s16),
+              SizedBox(height: 12),
+              Center(child: SkeletonBox(width: 200, height: 200, radius: 9999)),
+              SizedBox(height: 16),
               SkeletonBox(height: 14),
-              SizedBox(height: Spacing.s4),
+              SizedBox(height: 4),
               SkeletonBox(height: 14, width: 220),
             ],
           ),
         ),
-        SizedBox(height: Spacing.s12),
+        SizedBox(height: 12),
         SkeletonCard(
-          padding: Spacing.card,
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkeletonBox(width: 140, height: 16),
-              SizedBox(height: Spacing.s8),
-              SkeletonBox(width: 200, height: 28, radius: Radii.sm),
-              SizedBox(height: Spacing.s4),
+              SizedBox(height: 8),
+              SkeletonBox(width: 200, height: 28, radius: 8),
+              SizedBox(height: 4),
               SkeletonBox(width: 160, height: 12),
             ],
           ),
         ),
-        SizedBox(height: Spacing.s12),
+        SizedBox(height: 12),
         SkeletonCard(
-          padding: Spacing.card,
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkeletonBox(width: 160, height: 16),
-              SizedBox(height: Spacing.s12),
-              SkeletonBox(height: 180, radius: Radii.sm),
+              SizedBox(height: 12),
+              SkeletonBox(height: 180, radius: 8),
             ],
           ),
         ),
@@ -438,22 +429,19 @@ class AiChatSkeleton extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: Spacing.pageMobile,
+            padding: const EdgeInsets.all(16),
             children: const [
               _ChatBubbleSkeleton(alignEnd: false),
-              SizedBox(height: Spacing.s12),
+              SizedBox(height: 12),
               _ChatBubbleSkeleton(alignEnd: true, lines: 1),
-              SizedBox(height: Spacing.s12),
+              SizedBox(height: 12),
               _ChatBubbleSkeleton(alignEnd: false, lines: 3),
             ],
           ),
         ),
         const Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: Spacing.s12,
-            vertical: Spacing.s8,
-          ),
-          child: SkeletonBox(height: 48, radius: Radii.lg),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: SkeletonBox(height: 48, radius: 16),
         ),
       ],
     );
@@ -475,10 +463,10 @@ class _ChatBubbleSkeleton extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 280),
         child: Container(
-          padding: const EdgeInsets.all(Spacing.s12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(Radii.lg),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             crossAxisAlignment: alignEnd
@@ -487,7 +475,7 @@ class _ChatBubbleSkeleton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (var i = 0; i < lines; i++) ...[
-                if (i != 0) const SizedBox(height: Spacing.s6),
+                if (i != 0) const SizedBox(height: 6),
                 SkeletonBox(width: 200.0 - (i * 24), height: 12),
               ],
             ],

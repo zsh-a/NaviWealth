@@ -40,7 +40,7 @@ class AllocationCard extends StatelessWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= Breakpoints.mobile;
@@ -75,19 +75,19 @@ class AllocationCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: Spacing.s8),
+                const SizedBox(height: 8),
                 if (isWide)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(flex: 6, child: chart),
-                      const SizedBox(width: Spacing.s24),
+                      const SizedBox(width: 24),
                       Expanded(flex: 5, child: legend),
                     ],
                   )
                 else ...[
                   chart,
-                  const SizedBox(height: Spacing.s12),
+                  const SizedBox(height: 12),
                   legend,
                 ],
               ],
@@ -127,7 +127,7 @@ class AllocationCard extends StatelessWidget {
                         onTap: (alloc) => _openDrillDown(context, alloc),
                       ),
                     ),
-                    const SizedBox(width: Spacing.s24),
+                    const SizedBox(width: 24),
                     Expanded(
                       flex: 4,
                       child: SingleChildScrollView(
@@ -150,7 +150,7 @@ class AllocationCard extends StatelessWidget {
                       height: math.max(360, constraints.maxHeight * 0.58),
                       onTap: (alloc) => _openDrillDown(context, alloc),
                     ),
-                    const SizedBox(height: Spacing.s16),
+                    const SizedBox(height: 16),
                     _Legend(
                       assetAllocs: assetAllocs,
                       liabilityAlloc: liabilityAlloc,
@@ -649,9 +649,9 @@ class _Legend extends StatelessWidget {
             onTap: () => onTap(assetAllocs[i]),
           ),
         if (liabilityAlloc != null) ...[
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           const FDivider(),
-          const SizedBox(height: Spacing.s8),
+          const SizedBox(height: 8),
           _LegendRow(
             color: context.theme.colors.destructive,
             label: AssetCategoryVisuals.label(l10n, liabilityAlloc!.category),
@@ -701,10 +701,7 @@ class _LegendRow extends StatelessWidget {
           // than this, so the InkWell pads itself out vertically.
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: Spacing.s12,
-              horizontal: Spacing.s8,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             child: Row(
               children: [
                 Container(
@@ -715,9 +712,9 @@ class _LegendRow extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -739,7 +736,7 @@ class _LegendRow extends StatelessWidget {
                   compact: true,
                   showSign: valueInBase < 0,
                 ),
-                const SizedBox(width: Spacing.s4),
+                const SizedBox(width: 4),
                 Icon(
                   Icons.chevron_right,
                   size: 16,
@@ -777,12 +774,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
         : allocation.totalInBase.amount.toDouble();
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.s16,
-          Spacing.s8,
-          Spacing.s16,
-          Spacing.s24,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -793,7 +785,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                   AssetCategoryVisuals.icon(allocation.category),
                   color: theme.colorScheme.primary,
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     AssetCategoryVisuals.label(l10n, allocation.category),
@@ -807,14 +799,14 @@ class CategoryDrillDownSheet extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(
               l10n.dashboardDrillDownItemCount(allocation.items.length),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,

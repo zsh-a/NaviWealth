@@ -25,12 +25,12 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
     if (marketKey == null) {
       return FCard.raw(
         child: Padding(
-          padding: Spacing.card,
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(l10n.assetDetailTrend30d, style: theme.textTheme.titleSmall),
-              const SizedBox(height: Spacing.s8),
+              const SizedBox(height: 8),
               Text(
                 l10n.assetDetailNoMarketLinked,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -48,7 +48,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -63,7 +63,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                 if (historyAsync.value?.isStale == true) const _StaleBadge(),
               ],
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             _ChartBody(
               history: historyAsync,
               snapshot: snapshotAsync.value,
@@ -93,7 +93,7 @@ class _ChartBody extends StatelessWidget {
     if (history.isLoading && history.value == null) {
       return const SizedBox(
         height: 160,
-        child: SkeletonBox(height: 160, radius: Radii.sm),
+        child: SkeletonBox(height: 160, radius: 8),
       );
     }
     if (history.hasError && history.value == null) {
@@ -162,13 +162,10 @@ class _StaleBadge extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.s8,
-        vertical: Spacing.s2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: Radii.brSm,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         l10n.assetDetailStaleBadge,

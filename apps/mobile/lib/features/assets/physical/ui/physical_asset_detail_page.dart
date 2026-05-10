@@ -64,7 +64,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(Spacing.s16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,9 +73,9 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
               l10n.physicalAssetDeleteConfirmTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s8),
+            const SizedBox(height: 8),
             Text(l10n.physicalAssetDeleteConfirmBody),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -84,7 +84,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
                   onPress: () => Navigator.of(ctx).pop(false),
                   child: Text(l10n.commonCancel),
                 ),
-                const SizedBox(width: Spacing.s8),
+                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => Navigator.of(ctx).pop(true),
@@ -123,11 +123,11 @@ class _DetailBody extends ConsumerWidget {
     final estimatedToday = _estimatedToday(asset);
 
     return ListView(
-      padding: Spacing.pageMobile,
+      padding: const EdgeInsets.all(16),
       children: [
         FCard.raw(
           child: Padding(
-            padding: Spacing.cardHero,
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -135,7 +135,7 @@ class _DetailBody extends ConsumerWidget {
                   l10n.physicalAssetDetailValuationTitle,
                   style: theme.textTheme.titleMedium,
                 ),
-                const SizedBox(height: Spacing.s8),
+                const SizedBox(height: 8),
                 AnimatedMoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,
@@ -145,7 +145,7 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ),
                 if (asset.lastValuationAt != null) ...[
-                  const SizedBox(height: Spacing.s4),
+                  const SizedBox(height: 4),
                   Text(
                     dateFormat.format(asset.lastValuationAt!),
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -154,7 +154,7 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ],
                 if (estimatedToday != null) ...[
-                  const SizedBox(height: Spacing.s8),
+                  const SizedBox(height: 8),
                   Text(
                     l10n.physicalAssetDetailEstimatedToday(estimatedToday),
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -162,7 +162,7 @@ class _DetailBody extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: Spacing.s16),
+                const SizedBox(height: 16),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () =>
@@ -174,12 +174,12 @@ class _DetailBody extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         _FactsCard(asset: asset, dateFormat: dateFormat),
-        const SizedBox(height: Spacing.s12),
+        const SizedBox(height: 12),
         FCard.raw(
           child: Padding(
-            padding: Spacing.card,
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -187,7 +187,7 @@ class _DetailBody extends ConsumerWidget {
                   l10n.physicalAssetDetailHistoryTitle,
                   style: theme.textTheme.titleMedium,
                 ),
-                const SizedBox(height: Spacing.s12),
+                const SizedBox(height: 12),
                 historyAsync.when(
                   loading: () => const Center(child: FCircularProgress()),
                   error: (e, st) => Text('$e'),
@@ -201,7 +201,7 @@ class _DetailBody extends ConsumerWidget {
                           projection: projection,
                           currency: asset.currency,
                         ),
-                        const SizedBox(height: Spacing.s8),
+                        const SizedBox(height: 8),
                         ...history.reversed.map(
                           (p) => _HistoryRow(
                             point: p,
@@ -296,13 +296,13 @@ class _FactsCard extends StatelessWidget {
     ];
     return FCard.raw(
       child: Padding(
-        padding: Spacing.card,
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final (label, value) in entries) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -354,7 +354,7 @@ class _HistoryRow extends StatelessWidget {
       ValuationPointKind.projected => l10n.physicalAssetDetailAutoEstimateLabel,
     };
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.s4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(

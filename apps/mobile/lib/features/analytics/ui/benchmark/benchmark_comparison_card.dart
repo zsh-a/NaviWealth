@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../home/domain/dashboard_time_range.dart';
 import '../../data/benchmark/benchmark_providers.dart';
@@ -25,7 +24,7 @@ class BenchmarkComparisonCard extends ConsumerWidget {
 
     return FCard.raw(
       child: Padding(
-        padding: Spacing.cardHero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,18 +32,18 @@ class BenchmarkComparisonCard extends ConsumerWidget {
               l10n.benchmarkComparisonTitle,
               style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: Spacing.s4),
+            const SizedBox(height: 4),
             Text(
               l10n.benchmarkComparisonSubtitle,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             const _BenchmarkSelectionChips(),
-            const SizedBox(height: Spacing.s12),
+            const SizedBox(height: 12),
             const _BenchmarkRangeChips(),
-            const SizedBox(height: Spacing.s16),
+            const SizedBox(height: 16),
             resultAsync.when(
               loading: () => const BenchmarkCardSkeleton(),
               error: (e, _) => BenchmarkCardError(error: e),
@@ -65,8 +64,8 @@ class _BenchmarkSelectionChips extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final selection = ref.watch(benchmarkComparisonSelectionProvider);
     return Wrap(
-      spacing: Spacing.s8,
-      runSpacing: Spacing.s8,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (final index in BenchmarkIndex.values)
           FButton(
@@ -105,7 +104,7 @@ class _BenchmarkRangeChips extends ConsumerWidget {
         children: [
           for (final preset in DashboardRangePreset.values)
             Padding(
-              padding: const EdgeInsets.only(right: Spacing.s8),
+              padding: const EdgeInsets.only(right: 8),
               child: FButton(
                 variant: (preset == selected)
                     ? FButtonVariant.primary

@@ -8,7 +8,6 @@ import '../../../data/domain/account.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/manual_asset_metadata.dart';
 import '../../../data/repositories/providers.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/ui/asset_category_visuals.dart';
@@ -152,15 +151,15 @@ class _AggregateList extends StatelessWidget {
       return Center(child: Text(l10n.assetsEmptyHint));
     }
     return ListView.separated(
-      padding: Spacing.pageMobile.copyWith(
-        top: Spacing.s8,
+      padding: const EdgeInsets.all(16).copyWith(
+        top: 8,
         bottom:
-            Spacing.pageMobile.bottom +
-            Spacing.floatingBarClearance +
+            const EdgeInsets.all(16).bottom +
+            64 +
             MediaQuery.paddingOf(context).bottom,
       ),
       itemCount: rows.length,
-      separatorBuilder: (_, _) => const SizedBox(height: Spacing.s8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) => _AggregateTile(row: rows[index]),
     );
   }
