@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 18] = [
+const DESCRIPTORS: [ToolDescriptor; 19] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -117,11 +117,18 @@ const DESCRIPTORS: [ToolDescriptor; 18] = [
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Small,
     },
-    // Analytical-layer read model (docs/ai-architecture.md §4.3.3, device-sourced)
+    // Analytical-layer read models (docs/ai-architecture.md §4.3.3, device-sourced)
     ToolDescriptor {
         name: "get_recurring_patterns",
         access: Access::Read,
         risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
+    },
+    ToolDescriptor {
+        name: "get_anomaly_flags",
+        access: Access::Read,
+        risk: RiskLevel::Suggest,
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Small,
     },

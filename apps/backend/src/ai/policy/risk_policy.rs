@@ -158,6 +158,7 @@ mod tests {
             "get_net_worth_summary",
             "get_cashflow_buckets",
             "get_recurring_patterns",
+            "get_anomaly_flags",
             "read_category_window",
             "propose_trade",
             "propose_expense",

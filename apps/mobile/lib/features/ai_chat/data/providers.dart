@@ -140,6 +140,18 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       ref.read(pendingFreshnessHintProvider.notifier).state = <String>{};
     }
 
+    // Snapshot local HLC once: used by both the freshness gate
+    // (tool_result watermark comparison) AND the analytical_uploads
+    // device_hlc tag (§4.3.3).
+    final localHlc = await ref.read(syncLocalHlcProvider.future);
+    final localHlcText = localHlc?.toString();
+
+    // Wave 11 — derive AnalyticalUpload list from end-side detector
+    // outputs. Phase 1 source is the existing anomaly insight; future
+    // waves add recurring_pattern once a canonical TransactionInput
+    // stream is wired.
+    final analyticalUploads = _buildAnalyticalUploads(anomaly: anomaly);
+
     final pack = compressor.compress(
       route: route,
       intent: intent,
@@ -148,6 +160,8 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       depositMaturityCount: maturity?.count,
       depositMaturityDays: maturity?.days,
       freshnessHint: freshnessHint,
+      analyticalUploads: analyticalUploads,
+      deviceHlc: analyticalUploads.isEmpty ? null : localHlcText,
     );
 
     // The chat surface is by definition online here (we are about to
@@ -158,16 +172,45 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     );
     final seed = router.seedTrace(requestId: requestId, decision: decision);
 
-    // Snapshot local HLC at request start — used by the freshness gate
-    // (lib/core/ai/freshness/freshness_gate.dart) to detect when a
-    // tool_result's read-model watermark is behind our local writes.
-    final localHlc = await ref.read(syncLocalHlcProvider.future);
-    final localHlcText = localHlc?.toString();
-
     return (pack: pack, traceSeed: seed, localHlcText: localHlcText);
   } catch (_) {
     return (pack: null, traceSeed: null, localHlcText: null);
   }
+}
+
+/// Map end-side detector outputs into the wire-form
+/// `AnalyticalUpload` list (§4.3.3). Phase 1 only emits anomaly_flag
+/// derived from `expenseAnomalyInsightProvider`; future waves add
+/// recurring_pattern (once we have a TransactionInput stream
+/// adapter) and subscription_changes.
+List<AnalyticalUpload> _buildAnalyticalUploads({
+  ExpenseAnomalySummary? anomaly,
+}) {
+  final out = <AnalyticalUpload>[];
+  if (anomaly != null) {
+    final now = DateTime.now().toUtc();
+    final yearMonth = '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}';
+    final deltaPct = (anomaly.deltaRatio * 100).round();
+    final severity = anomaly.deltaRatio.abs() > 0.5
+        ? 'critical'
+        : (anomaly.deltaRatio.abs() > 0.25 ? 'warn' : 'info');
+    out.add(
+      AnalyticalUpload(
+        kind: 'anomaly_flag',
+        id: 'expense_monthly_spike|$yearMonth',
+        payload: <String, Object?>{
+          'category': 'all_expense',
+          'kind': 'monthly_spike',
+          'delta_pct': deltaPct,
+          'delta_ratio': anomaly.deltaRatio,
+          'severity': severity,
+          'detected_at': now.toIso8601String(),
+        },
+      ),
+    );
+  }
+  return out;
 }
 
 String _routeAreaFromPath(String path) {

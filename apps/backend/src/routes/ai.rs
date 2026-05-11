@@ -190,6 +190,34 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
                     auth.user_id
                 );
             }
+
+            // kind == 'anomaly_flag' (Wave 11)
+            let anomalies: Vec<
+                crate::ai::read_models::anomaly_flags::AnomalyFlagUpload<'_>,
+            > = pack
+                .task
+                .analytical_uploads
+                .iter()
+                .filter(|u| u.kind == "anomaly_flag")
+                .map(|u| crate::ai::read_models::anomaly_flags::AnomalyFlagUpload {
+                    id: &u.id,
+                    payload: &u.payload,
+                    source_device_id: None,
+                })
+                .collect();
+            if !anomalies.is_empty() {
+                let n = crate::ai::read_models::anomaly_flags::ingest(
+                    &db_for_ingest,
+                    &auth.user_id,
+                    device_hlc,
+                    &anomalies,
+                )
+                .await?;
+                worker::console_log!(
+                    "analytical_uploads: ingested {n} anomaly_flags for user={}",
+                    auth.user_id
+                );
+            }
         }
     }
 

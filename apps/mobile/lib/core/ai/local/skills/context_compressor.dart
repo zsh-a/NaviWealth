@@ -54,6 +54,8 @@ class ContextCompressor {
     int? depositMaturityCount,
     int? depositMaturityDays,
     FreshnessHint? freshnessHint,
+    List<AnalyticalUpload> analyticalUploads = const <AnalyticalUpload>[],
+    String? deviceHlc,
   }) {
     final signals = <RecentSignal>[];
     if (expenseAnomalyDelta != null) {
@@ -85,6 +87,8 @@ class ContextCompressor {
       intent: intent,
       signals: List<RecentSignal>.unmodifiable(signals),
       freshnessHint: freshnessHint,
+      analyticalUploads: List<AnalyticalUpload>.unmodifiable(analyticalUploads),
+      deviceHlc: deviceHlc,
     );
   }
 
@@ -99,6 +103,8 @@ class ContextCompressor {
     int? depositMaturityCount,
     int? depositMaturityDays,
     FreshnessHint? freshnessHint,
+    List<AnalyticalUpload> analyticalUploads = const <AnalyticalUpload>[],
+    String? deviceHlc,
     PrivacyBudget budget = PrivacyBudget.standard,
   }) {
     final pack = ContextPack(
@@ -111,6 +117,8 @@ class ContextCompressor {
         depositMaturityCount: depositMaturityCount,
         depositMaturityDays: depositMaturityDays,
         freshnessHint: freshnessHint,
+        analyticalUploads: analyticalUploads,
+        deviceHlc: deviceHlc,
       ),
       budget: budget,
     );

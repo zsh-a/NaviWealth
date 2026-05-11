@@ -195,6 +195,25 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_anomaly_flags".into(),
+            description: "返回端侧 detector 检测到的支出 / 现金流异常。\
+                          数据来自 AI Read Model `anomaly_flags`（Analytical 层 P1）—— \
+                          device-sourced：端侧（如 expenseAnomalyInsightProvider）跑启发式 → \
+                          ContextPack.analytical_uploads 上报 → 后端镜像。\
+                          payload.kind 包含 monthly_spike / subscription_price_up / cashflow_anomaly 等。\
+                          可选 severity_min 过滤（info ≤ warn ≤ critical）。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "severity_min": {
+                        "type": "string",
+                        "enum": ["info", "warn", "critical"],
+                        "description": "最低严重度（含），默认全部。"
+                    }
+                }
+            }),
+        },
+        ToolSchema {
             name: "get_recurring_patterns".into(),
             description: "返回端侧 detector 检测到的周期性支出（月度/周度订阅、定期账单等）。\
                           数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— \
@@ -446,6 +465,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_net_worth_summary" => get_net_worth_summary(ctx, input).await,
             "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
             "get_recurring_patterns" => get_recurring_patterns(ctx, input).await,
+            "get_anomaly_flags" => get_anomaly_flags(ctx, input).await,
             "read_category_window" => read_category_window(ctx, input).await,
             // FIR-66 write proposals — never persist; always return a plan.
             "propose_trade" => proposals::propose_trade(ctx, input).await,
@@ -1553,6 +1573,45 @@ async fn get_net_worth_summary(
 }
 
 // ---------------------------------------------------------------------------
+// get_anomaly_flags — Analytical P1 (§4.3.3, device-sourced)
+// ---------------------------------------------------------------------------
+
+async fn get_anomaly_flags(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::anomaly_flags::{current_freshness, query_all};
+
+    let severity_min = input
+        .get("severity_min")
+        .and_then(|v| v.as_str())
+        .filter(|s| matches!(*s, "info" | "warn" | "critical"));
+
+    let freshness = current_freshness(ctx.db, ctx.user_id).await?;
+    let rows = query_all(ctx.db, ctx.user_id, severity_min).await?;
+
+    let flags: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "id":          r.id,
+                "category":    r.category,
+                "kind":        r.kind,
+                "delta_pct":   r.delta_pct,
+                "severity":    r.severity,
+                "detected_at": r.detected_at,
+                "payload":     r.payload,
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "flags":     flags,
+        "count":     flags.len(),
+        "freshness": freshness,
+        "source":    "device_analytical_read_model",
+        "note":      "device-sourced：端侧 detector 检测，通过 ContextPack.analytical_uploads 上报。空结果可能是端侧还没上报 / 没有异常。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_recurring_patterns — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
@@ -1808,6 +1867,7 @@ mod tests {
             "get_net_worth_summary",
             "get_cashflow_buckets",
             "get_recurring_patterns",
+            "get_anomaly_flags",
             "read_category_window",
             "propose_trade",
             "propose_expense",
