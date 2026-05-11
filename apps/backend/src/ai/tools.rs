@@ -214,6 +214,33 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_refund_links".into(),
+            description: "返回端侧 refundMatcher 检测到的「原交易 ↔ 退款」配对。\
+                          数据来自 AI Read Model `refund_links`（Analytical P1，device-sourced）。\
+                          payload 含 original_txn_id / refund_txn_id / amount_minor / currency。\
+                          典型问题：「哪些退款还在路上」「最近退了多少」「这笔退款对应哪次买入」。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "currency": { "type": "string", "description": "可选；只看某一币种。" }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "get_transfer_links".into(),
+            description: "返回端侧 transferMatcher 检测到的「账户 A → 账户 B」转账配对。\
+                          数据来自 AI Read Model `transfer_links`（Analytical P1，device-sourced）。\
+                          payload 含 from_txn_id / to_txn_id / amount_minor / currency。\
+                          典型问题：「最近转了几笔」「哪些钱在不同账户之间挪动」。\
+                          这些配对是端侧启发式匹配（同币种 + ±2 天窗口 + 50 minor 容差）。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "currency": { "type": "string", "description": "可选；只看某一币种。" }
+                }
+            }),
+        },
+        ToolSchema {
             name: "get_recurring_patterns".into(),
             description: "返回端侧 detector 检测到的周期性支出（月度/周度订阅、定期账单等）。\
                           数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— \
@@ -532,6 +559,8 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
             "get_recurring_patterns" => get_recurring_patterns(ctx, input).await,
             "get_anomaly_flags" => get_anomaly_flags(ctx, input).await,
+            "get_refund_links" => get_refund_links(ctx, input).await,
+            "get_transfer_links" => get_transfer_links(ctx, input).await,
             "get_xirr_summary" => get_xirr_summary(ctx, input).await,
             "read_account_window" => read_account_window(ctx, input).await,
             "read_asset_window" => read_asset_window(ctx, input).await,
@@ -1827,6 +1856,72 @@ async fn get_anomaly_flags(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
 }
 
 // ---------------------------------------------------------------------------
+// get_refund_links / get_transfer_links — Analytical P1 (§4.3.3, device-sourced)
+// ---------------------------------------------------------------------------
+
+async fn get_refund_links(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::refund_links::{current_freshness, query_all};
+    let currency = input
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+    let freshness = current_freshness(ctx.db, ctx.user_id).await?;
+    let rows = query_all(ctx.db, ctx.user_id, currency.as_deref()).await?;
+    let links: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "id":              r.id,
+                "original_txn_id": r.original_txn_id,
+                "refund_txn_id":   r.refund_txn_id,
+                "amount_minor":    r.amount_minor.map(|n| n.to_string()),
+                "currency":        r.currency,
+                "payload":         r.payload,
+            })
+        })
+        .collect();
+    Ok(json!({
+        "links":     links,
+        "count":     links.len(),
+        "freshness": freshness,
+        "source":    "device_analytical_read_model",
+        "note":      "device-sourced：端侧 refundMatcher 检测，通过 ContextPack.analytical_uploads 上报。空结果可能是端侧没检到或没退款。",
+    }))
+}
+
+async fn get_transfer_links(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::transfer_links::{current_freshness, query_all};
+    let currency = input
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+    let freshness = current_freshness(ctx.db, ctx.user_id).await?;
+    let rows = query_all(ctx.db, ctx.user_id, currency.as_deref()).await?;
+    let links: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "id":           r.id,
+                "from_txn_id":  r.from_txn_id,
+                "to_txn_id":    r.to_txn_id,
+                "amount_minor": r.amount_minor.map(|n| n.to_string()),
+                "currency":     r.currency,
+                "payload":      r.payload,
+            })
+        })
+        .collect();
+    Ok(json!({
+        "links":     links,
+        "count":     links.len(),
+        "freshness": freshness,
+        "source":    "device_analytical_read_model",
+        "note":      "device-sourced：端侧 transferMatcher 检测（同币种 + ±2 天窗口 + 50 minor 容差）。空结果可能是端侧没检到。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_recurring_patterns — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
@@ -2101,6 +2196,8 @@ mod tests {
             "get_cashflow_buckets",
             "get_recurring_patterns",
             "get_anomaly_flags",
+            "get_refund_links",
+            "get_transfer_links",
             "get_xirr_summary",
             "read_account_window",
             "read_asset_window",

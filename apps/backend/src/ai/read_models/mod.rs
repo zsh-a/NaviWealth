@@ -24,5 +24,7 @@ pub mod net_worth_daily;
 pub mod net_worth_snapshot;
 pub mod projection;
 pub mod recurring_patterns;
+pub mod refund_links;
 pub mod scoped_detail;
+pub mod transfer_links;
 pub mod xirr_snapshot;

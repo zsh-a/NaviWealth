@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 22] = [
+const DESCRIPTORS: [ToolDescriptor; 24] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -137,6 +137,20 @@ const DESCRIPTORS: [ToolDescriptor; 22] = [
         name: "get_anomaly_flags",
         access: Access::Read,
         risk: RiskLevel::Suggest,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
+    },
+    ToolDescriptor {
+        name: "get_refund_links",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
+    },
+    ToolDescriptor {
+        name: "get_transfer_links",
+        access: Access::Read,
+        risk: RiskLevel::Info,
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Small,
     },

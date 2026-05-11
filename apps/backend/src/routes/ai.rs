@@ -218,6 +218,64 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
                     auth.user_id
                 );
             }
+
+            // kind == 'refund_link' (Wave 16)
+            let refunds: Vec<
+                crate::ai::read_models::refund_links::RefundLinkUpload<'_>,
+            > = pack
+                .task
+                .analytical_uploads
+                .iter()
+                .filter(|u| u.kind == "refund_link")
+                .map(|u| crate::ai::read_models::refund_links::RefundLinkUpload {
+                    id: &u.id,
+                    payload: &u.payload,
+                    source_device_id: None,
+                })
+                .collect();
+            if !refunds.is_empty() {
+                let n = crate::ai::read_models::refund_links::ingest(
+                    &db_for_ingest,
+                    &auth.user_id,
+                    device_hlc,
+                    &refunds,
+                )
+                .await?;
+                worker::console_log!(
+                    "analytical_uploads: ingested {n} refund_links for user={}",
+                    auth.user_id
+                );
+            }
+
+            // kind == 'transfer_link' (Wave 16)
+            let transfers: Vec<
+                crate::ai::read_models::transfer_links::TransferLinkUpload<'_>,
+            > = pack
+                .task
+                .analytical_uploads
+                .iter()
+                .filter(|u| u.kind == "transfer_link")
+                .map(|u| {
+                    crate::ai::read_models::transfer_links::TransferLinkUpload {
+                        id: &u.id,
+                        payload: &u.payload,
+                        source_device_id: None,
+                    }
+                })
+                .collect();
+            if !transfers.is_empty() {
+                let n = crate::ai::read_models::transfer_links::ingest(
+                    &db_for_ingest,
+                    &auth.user_id,
+                    device_hlc,
+                    &transfers,
+                )
+                .await?;
+                worker::console_log!(
+                    "analytical_uploads: ingested {n} transfer_links for user={}",
+                    auth.user_id
+                );
+            }
         }
     }
 
