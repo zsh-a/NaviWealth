@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 16] = [
+const DESCRIPTORS: [ToolDescriptor; 17] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -105,6 +105,13 @@ const DESCRIPTORS: [ToolDescriptor; 16] = [
     },
     ToolDescriptor {
         name: "get_net_worth_summary",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
+    },
+    ToolDescriptor {
+        name: "get_cashflow_buckets",
         access: Access::Read,
         risk: RiskLevel::Info,
         requires_confirmation: Confirmation::None,

@@ -195,6 +195,31 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_cashflow_buckets".into(),
+            description: "返回最近 N 个月的现金 inflow / outflow 分桶。\
+                          数据来自 AI Read Model `cashflow_buckets`（Snapshot 层 P1）—— \
+                          月粒度，每月按币种独立累加 inflow (units > 0) 与 outflow (abs(units < 0))，\
+                          各自带笔数。与 net_worth_snapshot 互补：本工具回答\
+                          「钱从哪来、往哪去」，net_worth 回答「累计净走向」。\
+                          典型问题：「上个月主要支出方向」「每月平均收入多少」「这季度有几次大额支出」。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "months_back": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 24,
+                        "default": 6,
+                        "description": "返回最近多少个月。默认 6。"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "可选；只返回某一币种。默认所有币种。"
+                    }
+                }
+            }),
+        },
+        ToolSchema {
             name: "read_category_window".into(),
             description: "Scoped Detail 工具：返回某一类目在指定时间窗口内的交易明细（drill-down）。\
                           只在用户问「为什么 / 哪些」需要例证时调用 —— 默认应当先用 \
@@ -396,6 +421,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_risk_alerts" => get_risk_alerts(ctx).await,
             "get_monthly_spend_by_category" => get_monthly_spend_by_category(ctx, input).await,
             "get_net_worth_summary" => get_net_worth_summary(ctx, input).await,
+            "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
             "read_category_window" => read_category_window(ctx, input).await,
             // FIR-66 write proposals — never persist; always return a plan.
             "propose_trade" => proposals::propose_trade(ctx, input).await,
@@ -1204,17 +1230,28 @@ fn dim_label(asset: &Value, dim: BreakdownDim) -> String {
 }
 
 async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, AppError> {
-    // Reuse the holdings tool with an empty input; it already sums cost basis.
+    // Reuse the holdings tool with an empty input; it already sums cost basis
+    // off the holdings_snapshot Read Model (Wave 3, docs/ai-architecture.md §4.3.2).
+    // The breakdown is a thin projection over those rows joined with
+    // asset metadata; freshness is shared with the underlying read model
+    // and propagated through to the caller.
     let holdings = get_holdings(ctx, &Value::Object(Map::new())).await?;
     let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
     let asset_lookup: std::collections::HashMap<String, &Value> =
         assets.iter().map(|(k, v)| (k.clone(), v)).collect();
 
+    // Capture freshness + source before we lose ownership at the empty
+    // holdings early return.
+    let inherited_freshness = holdings.get("freshness").cloned();
+    let inherited_source = holdings.get("source").cloned();
+
     let Some(holdings_obj) = holdings.get("holdings").and_then(|v| v.as_object()) else {
-        return Ok(json!({
+        let mut empty = json!({
             "buckets":       [],
             "approximation": true,
-        }));
+        });
+        attach_inherited(&mut empty, inherited_freshness, inherited_source);
+        return Ok(empty);
     };
 
     let mut buckets: std::collections::HashMap<String, (f64, Option<String>)> =
@@ -1266,13 +1303,33 @@ async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, Ap
             .partial_cmp(&a.get("cost_basis").and_then(|v| v.as_f64()).unwrap_or(0.0))
             .unwrap_or(std::cmp::Ordering::Equal)
     });
-    Ok(json!({
+    let mut out = json!({
         "total":         total,
         "base_currency": base_currency,
         "buckets":       items,
         "approximation": true,
         "note":          "占比基于记账成本；有客户端 snapshot base 成本时使用 base 折算，否则使用原币近似。",
-    }))
+    });
+    attach_inherited(&mut out, inherited_freshness, inherited_source);
+    Ok(out)
+}
+
+/// 把 `get_holdings` 透出的 `freshness` + `source` 字段挂回派生工具
+/// 的输出，让 Wave 5/6 的 freshness gate 在 breakdown / risk_alerts
+/// 这类「holdings 投影」工具上同样工作。
+fn attach_inherited(
+    out: &mut Value,
+    freshness: Option<Value>,
+    source: Option<Value>,
+) {
+    if let Value::Object(map) = out {
+        if let Some(f) = freshness {
+            map.insert("freshness".into(), f);
+        }
+        if let Some(s) = source {
+            map.insert("source".into(), s);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1281,6 +1338,10 @@ async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, Ap
 
 async fn get_risk_alerts(ctx: &ToolCtx<'_>) -> Result<Value, AppError> {
     let holdings = get_holdings(ctx, &Value::Object(Map::new())).await?;
+    // Inherit freshness from holdings; risk_alerts is purely derived
+    // (concentration thresholds over the same cost basis).
+    let inherited_freshness = holdings.get("freshness").cloned();
+    let inherited_source = holdings.get("source").cloned();
     let industry = get_breakdown(ctx, BreakdownDim::Industry).await?;
     let mut alerts: Vec<Value> = Vec::new();
     let total: f64 = holdings
@@ -1337,10 +1398,12 @@ async fn get_risk_alerts(ctx: &ToolCtx<'_>) -> Result<Value, AppError> {
             }
         }
     }
-    Ok(json!({
+    let mut out = json!({
         "alerts":        alerts,
         "approximation": true,
-    }))
+    });
+    attach_inherited(&mut out, inherited_freshness, inherited_source);
+    Ok(out)
 }
 
 // ---------------------------------------------------------------------------
@@ -1462,6 +1525,74 @@ async fn get_net_worth_summary(
         "series":    series,
         "freshness": freshness,
         "note":      "月粒度；不减负债，不算资产市值。day/week 粒度或负债 / 市值需要 compute_net_worth.",
+    }))
+}
+
+// ---------------------------------------------------------------------------
+// get_cashflow_buckets — Read Model P1（§4.3.2）
+// ---------------------------------------------------------------------------
+
+async fn get_cashflow_buckets(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::cashflow_buckets::{query_range, CashflowBuckets};
+    use super::read_models::projection::ensure_fresh;
+
+    let months_back = input
+        .get("months_back")
+        .and_then(|v| v.as_u64())
+        .map(|n| n.clamp(1, 24))
+        .unwrap_or(6) as i32;
+    let currency = input
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+
+    let proj = CashflowBuckets;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+
+    let now = Utc::now();
+    let to_ym = format!("{:04}-{:02}", now.year(), now.month());
+    let mut from_y = now.year();
+    let mut from_m = now.month() as i32 - (months_back - 1);
+    while from_m < 1 {
+        from_m += 12;
+        from_y -= 1;
+    }
+    let from_ym = format!("{:04}-{:02}", from_y, from_m);
+
+    let rows = query_range(
+        ctx.db,
+        ctx.user_id,
+        &from_ym,
+        &to_ym,
+        currency.as_deref(),
+    )
+    .await?;
+
+    let series: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            let net = r.inflow_minor - r.outflow_minor;
+            json!({
+                "year_month":     r.year_month,
+                "currency":       r.currency,
+                "inflow_minor":   r.inflow_minor.to_string(),
+                "outflow_minor":  r.outflow_minor.to_string(),
+                "net_minor":      net.to_string(),
+                "inflow_count":   r.inflow_count,
+                "outflow_count":  r.outflow_count,
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "from":      from_ym,
+        "to":        to_ym,
+        "currency":  currency,
+        "series":    series,
+        "freshness": freshness,
+        "source":    "read_model",
+        "note":      "月粒度 inflow / outflow 分桶；net_minor = inflow - outflow（与 net_worth_snapshot.net_flow 同源但形态不同，本工具拆分桶不累计）。",
     }))
 }
 
@@ -1593,6 +1724,7 @@ mod tests {
             "get_risk_alerts",
             "get_monthly_spend_by_category",
             "get_net_worth_summary",
+            "get_cashflow_buckets",
             "read_category_window",
             "propose_trade",
             "propose_expense",
