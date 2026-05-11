@@ -79,20 +79,10 @@ pub fn schemas() -> Vec<ToolSchema> {
                 }
             }),
         },
-        ToolSchema {
-            name: "get_journal_entries".into(),
-            description: "查询复式账本分录，支持按资产/币种 unit、账户、日期范围过滤，并按 date 降序返回。".into(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "unit":       { "type": "string", "description": "资产 id 或币种代码，如 us_stock:AAPL / CNY" },
-                    "account_id": { "type": "string" },
-                    "from":       { "type": "string", "description": "ISO-8601 lower bound (inclusive)" },
-                    "to":         { "type": "string", "description": "ISO-8601 upper bound (inclusive)" },
-                    "limit":      { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
-                }
-            }),
-        },
+        // get_journal_entries 已废弃 (docs/ai-architecture.md §4.3.4)。
+        // 不再向 LLM 暴露 schema —— 新对话不会发起调用；旧 chat 续推时
+        // dispatch 仍处理以保持向后兼容（直到下一个主版本）。改用
+        // Scoped Detail 工具族（read_category_window 等）。
         ToolSchema {
             name: "compute_xirr".into(),
             description: "对指定范围内的现金流计算 XIRR（年化内部收益率）。\
@@ -176,6 +166,76 @@ pub fn schemas() -> Vec<ToolSchema> {
                     "category": {
                         "type": "string",
                         "description": "可选；只看某一类目的数字。"
+                    }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "get_net_worth_summary".into(),
+            description: "返回最近 N 个月的净现金流累计（月度净资产快照）。\
+                          数据来自 AI Read Model `net_worth_snapshot`（Snapshot 层 P0）—— 月粒度，\
+                          每月按币种独立累积。Phase 1 不减负债 / 不算资产市值（这两个走 compute_net_worth）。\
+                          适合场景：「最近半年净现金流趋势」「上半年现金净流入多少」等月度问题。\
+                          需要 day/week 粒度或资产市值时改用 compute_net_worth.".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "months_back": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 60,
+                        "default": 12,
+                        "description": "返回最近多少个月。默认 12。"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "可选；只返回某一币种。默认返回所有币种。"
+                    }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "read_category_window".into(),
+            description: "Scoped Detail 工具：返回某一类目在指定时间窗口内的交易明细（drill-down）。\
+                          只在用户问「为什么 / 哪些」需要例证时调用 —— 默认应当先用 \
+                          get_monthly_spend_by_category 的聚合结果回答。\
+                          硬限额：窗口 ≤ 31 天，limit ≤ 50。明细字段已脱敏：\
+                          merchant_hashed（同用户内稳定，跨用户不可逆）+ account_kind（不返名字）。\
+                          purpose 必填，用于 AiTrace 审计。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["category", "from", "to", "purpose"],
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "description": "类目（如 food / transport / shopping）"
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "ISO 日期或时间，包含；窗口起点"
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "ISO 日期或时间，不包含；窗口终点。to - from ≤ 31 天"
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "enum": [
+                            "drill_down_expense", "drill_down_investment",
+                            "refund_matching", "anomaly_explain",
+                            "recurring_detect", "other"
+                        ],
+                        "description": "调用动机；写入 AiTrace 审计"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 50,
+                        "default": 20
+                    },
+                    "merchant_substring": {
+                        "type": "string",
+                        "description": "可选；按 note 的子串过滤（hash 后明细只能数 distinct 不能搜，所以匹配在原文上做）"
                     }
                 }
             }),
@@ -335,6 +395,8 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_market_cap_breakdown" => get_breakdown(ctx, BreakdownDim::MarketCap).await,
             "get_risk_alerts" => get_risk_alerts(ctx).await,
             "get_monthly_spend_by_category" => get_monthly_spend_by_category(ctx, input).await,
+            "get_net_worth_summary" => get_net_worth_summary(ctx, input).await,
+            "read_category_window" => read_category_window(ctx, input).await,
             // FIR-66 write proposals — never persist; always return a plan.
             "propose_trade" => proposals::propose_trade(ctx, input).await,
             "propose_expense" => proposals::propose_expense(ctx, input).await,
@@ -484,19 +546,18 @@ fn snapshot_total_base(snapshot: Option<&Value>, key: &str, base_currency: &str)
 }
 
 // ---------------------------------------------------------------------------
-// get_holdings — derive open positions from postings.
+// get_holdings — Read Model 主通道入口（§4.3.2）+ client snapshot fast-path
 // ---------------------------------------------------------------------------
 
-#[derive(Default)]
-struct HoldingAcc {
-    asset_id: String,
-    net_qty: f64,
-    cost_basis: f64,
-    currency: Option<String>,
-}
-
 async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::holdings_snapshot::{query_all, HoldingsSnapshot};
+    use super::read_models::projection::ensure_fresh;
+
     let requested_base = requested_base_currency(input, ctx.portfolio_snapshot);
+
+    // Client portfolio_snapshot 是最准的来源（端侧持仓引擎含 FX + 多
+    // lot），优先返回。这是 freshness gate "device 数据更新" 的特殊
+    // 形态：端侧主动上传完整快照，云端无须再算。
     if let Some(snapshot) = ctx.portfolio_snapshot {
         if let Some(holdings) = snapshot.get("holdings").and_then(|v| v.as_object()) {
             let snapshot_base = snapshot_base_currency(Some(snapshot)).map(|s| s.to_string());
@@ -517,97 +578,51 @@ async fn get_holdings(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppErro
         }
     }
 
-    let as_of = input
-        .get("as_of")
-        .and_then(|v| v.as_str())
-        .and_then(parse_iso);
-    let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
-    let entries = load_payloads(ctx.db, ctx.user_id, "journal_entries").await?;
-    let postings = load_payloads(ctx.db, ctx.user_id, "postings").await?;
+    // 没有 client snapshot —— 走 Read Model (主通道, §4.3.2)。
+    // ensure_fresh 在 op_log watermark 推进或 schema/calculation_version
+    // 不匹配时同步重算；否则命中缓存。
+    let proj = HoldingsSnapshot;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+    let holdings_rows = query_all(ctx.db, ctx.user_id).await?;
 
-    let mut accs: Map<String, Value> = Map::new();
-    let mut tracker: std::collections::HashMap<String, HoldingAcc> =
-        std::collections::HashMap::new();
+    // 拿 asset 元数据做 symbol/name/type 注释（不是 read model 一部分；
+    // 名字易变，不进 projection 避免反复刷）。
+    let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
     let asset_lookup: std::collections::HashMap<String, &Value> =
         assets.iter().map(|(k, v)| (k.clone(), v)).collect();
-    let entry_dates: std::collections::HashMap<String, DateTime<Utc>> = entries
-        .iter()
-        .filter_map(|(id, p)| {
-            payload_str(p, "date")
-                .and_then(parse_iso)
-                .map(|d| (id.clone(), d))
-        })
-        .collect();
 
-    for (_, p) in &postings {
-        let Some(asset_id) = payload_str(p, "unit") else {
-            continue;
-        };
-        if !asset_lookup.contains_key(asset_id) {
-            continue;
-        }
-        let Some(journal_entry_id) = payload_str(p, "journal_entry_id") else {
-            continue;
-        };
-        if let (Some(cutoff), Some(date)) = (as_of, entry_dates.get(journal_entry_id)) {
-            if *date > cutoff {
-                continue;
-            }
-        }
-        let Some(units) = payload_num(p, "units") else {
-            continue;
-        };
-        let unit_cost =
-            payload_num(p, "cost_per_unit").or_else(|| payload_num(p, "price_per_unit"));
-        let currency = payload_str(p, "cost_currency")
-            .or_else(|| payload_str(p, "price_currency"))
-            .map(|s| s.to_string());
-        let entry = tracker
-            .entry(asset_id.to_string())
-            .or_insert_with(|| HoldingAcc {
-                asset_id: asset_id.to_string(),
-                ..Default::default()
-            });
-        entry.net_qty += units;
-        if let Some(cost) = unit_cost {
-            entry.cost_basis += units * cost;
-        }
-        if entry.currency.is_none() {
-            entry.currency = currency;
-        }
-    }
-
-    for (id, h) in tracker {
-        if h.net_qty <= 0.0 {
-            continue;
-        }
+    let mut accs: Map<String, Value> = Map::new();
+    for h in &holdings_rows {
+        let cost_basis = (h.cost_basis_minor as f64) / 100.0;
         let avg_cost = if h.net_qty > 0.0 {
-            h.cost_basis / h.net_qty
+            cost_basis / h.net_qty
         } else {
             0.0
         };
-        let asset = asset_lookup.get(&id);
+        let asset = asset_lookup.get(&h.asset_id);
         accs.insert(
-            id.clone(),
+            h.asset_id.clone(),
             json!({
-                "asset_id":     h.asset_id,
-                "symbol":       asset.and_then(|a| payload_str(a, "symbol")),
-                "name":         asset.and_then(|a| payload_str(a, "name")),
-                "type":         asset.and_then(|a| payload_str(a, "type")),
-                "net_quantity": h.net_qty,
+                "asset_id":      h.asset_id,
+                "symbol":        asset.and_then(|a| payload_str(a, "symbol")),
+                "name":          asset.and_then(|a| payload_str(a, "name")),
+                "type":          asset.and_then(|a| payload_str(a, "type")),
+                "net_quantity":  h.net_qty,
                 "avg_unit_cost": avg_cost,
-                "cost_basis":   h.cost_basis,
-                "currency":     h.currency,
+                "cost_basis":    cost_basis,
+                "currency":      h.cost_currency,
             }),
         );
     }
 
     Ok(json!({
-        "as_of":         as_of.map(|d| d.to_rfc3339()).unwrap_or_else(|| Utc::now().to_rfc3339()),
+        "as_of":         freshness.refreshed_at,
         "base_currency": requested_base,
         "holdings":      Value::Object(accs),
         "approximation": true,
-        "note":          "数量与成本来自 postings 的资产腿和 cost/price 注解；精确 lot/FIFO 收益需客户端 read model。"
+        "source":        "read_model",
+        "freshness":     freshness,
+        "note":          "数量与成本来自 holdings_snapshot read model（postings 加权平均）；精确 lot/FIFO 收益请由端侧 portfolio_snapshot 提供。",
     }))
 }
 
@@ -1290,6 +1305,86 @@ async fn get_monthly_spend_by_category(
     }))
 }
 
+// ---------------------------------------------------------------------------
+// get_net_worth_summary — Read Model 月度净现金流（§4.3.2）
+// ---------------------------------------------------------------------------
+
+async fn get_net_worth_summary(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::net_worth_snapshot::{query_range, NetWorthSnapshot};
+    use super::read_models::projection::ensure_fresh;
+
+    let months_back = input
+        .get("months_back")
+        .and_then(|v| v.as_u64())
+        .map(|n| n.clamp(1, 60))
+        .unwrap_or(12) as i32;
+    let currency = input
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+
+    let proj = NetWorthSnapshot;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+
+    // Compute (from_ym, to_ym) inclusive window ending at current month.
+    let now = Utc::now();
+    let to_ym = format!("{:04}-{:02}", now.year(), now.month());
+    let mut from_y = now.year();
+    let mut from_m = now.month() as i32 - (months_back - 1);
+    while from_m < 1 {
+        from_m += 12;
+        from_y -= 1;
+    }
+    let from_ym = format!("{:04}-{:02}", from_y, from_m);
+
+    let rows = query_range(
+        ctx.db,
+        ctx.user_id,
+        &from_ym,
+        &to_ym,
+        currency.as_deref(),
+    )
+    .await?;
+
+    let series: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "year_month":       r.year_month,
+                "currency":         r.currency,
+                "cumulative_minor": r.cumulative_minor.to_string(),
+                "net_flow_minor":   r.net_flow_minor.to_string(),
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "from":      from_ym,
+        "to":        to_ym,
+        "currency":  currency,
+        "series":    series,
+        "freshness": freshness,
+        "note":      "月粒度；不减负债，不算资产市值。day/week 粒度或负债 / 市值需要 compute_net_worth.",
+    }))
+}
+
+// ---------------------------------------------------------------------------
+// read_category_window — Scoped Detail (§4.3.4)
+// ---------------------------------------------------------------------------
+
+async fn read_category_window(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::scoped_detail::category_window;
+    let parsed = category_window::parse_input(input)?;
+    category_window::run(ctx.db, ctx.user_id, &parsed).await
+}
+
 fn summarize_buckets(
     buckets: &[super::read_models::monthly_spend_by_category::Bucket],
 ) -> Value {
@@ -1391,16 +1486,21 @@ mod tests {
 
     #[test]
     fn schemas_advertise_all_dispatch_targets() {
+        // get_journal_entries 已废弃（docs/ai-architecture.md §4.3.4），
+        // 不再 advertise schema —— 但 dispatch 仍处理该名以支持旧 chat
+        // 续推。新 chat 应当走 read_category_window / Snapshot 工具族。
         let names: Vec<String> = schemas().into_iter().map(|s| s.name).collect();
         for expected in [
             "get_holdings",
-            "get_journal_entries",
             "compute_xirr",
             "compute_net_worth",
             "get_industry_breakdown",
             "get_geo_breakdown",
             "get_market_cap_breakdown",
             "get_risk_alerts",
+            "get_monthly_spend_by_category",
+            "get_net_worth_summary",
+            "read_category_window",
             "propose_trade",
             "propose_expense",
             "propose_liability_payment",
@@ -1409,6 +1509,10 @@ mod tests {
         ] {
             assert!(names.iter().any(|n| n == expected), "missing {expected}");
         }
+        assert!(
+            !names.iter().any(|n| n == "get_journal_entries"),
+            "get_journal_entries should be deprecated (no schema)"
+        );
     }
 
     #[test]
