@@ -1103,11 +1103,15 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         .and_then(|v| v.as_str())
         .unwrap_or("month");
 
-    // Granularity=month 走 Read Model 主通道（docs/ai-architecture.md §4.3.2）。
-    // day/week 仍走 inline —— net_worth_snapshot 当前只存月粒度
-    // (Phase 1 简化，§4.3 表脚注)。
-    if granularity == "month" {
-        return compute_net_worth_monthly(ctx, input).await;
+    // Wave 7: month 走 net_worth_snapshot (monthly)
+    // Wave 14: day/week 走 net_worth_daily —— inline path now retired.
+    // 任何其他 granularity 字符串 fall through 到 inline 兜底逻辑。
+    match granularity {
+        "month" => return compute_net_worth_monthly(ctx, input).await,
+        "day" | "week" => {
+            return compute_net_worth_from_daily(ctx, input, granularity).await
+        }
+        _ => {} // fall through to inline
     }
 
     let now = Utc::now();
@@ -1222,6 +1226,113 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         "conversion_gaps": conversion_gaps,
         "approximation": true,
         "note":          "使用累计现金流 - 当前负债余额近似净资产；指定 base_currency 时只汇总同币种现金流，并附带客户端 snapshot 的当前持仓 base 市值。conversion_gaps 列出缺少 FX 的现金流。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
+// compute_net_worth — Read Model 主通道（day / week）
+// ---------------------------------------------------------------------------
+
+async fn compute_net_worth_from_daily(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+    granularity: &str,
+) -> Result<Value, AppError> {
+    use super::read_models::net_worth_daily::{query_range, NetWorthDaily};
+    use super::read_models::projection::ensure_fresh;
+
+    let now = Utc::now();
+    let from = input
+        .get("from")
+        .and_then(|v| v.as_str())
+        .and_then(parse_iso)
+        .unwrap_or(now - Duration::days(90));
+    let to = input
+        .get("to")
+        .and_then(|v| v.as_str())
+        .and_then(parse_iso)
+        .unwrap_or(now);
+    let base_currency = requested_base_currency(input, ctx.portfolio_snapshot);
+
+    let proj = NetWorthDaily;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+
+    let from_str = format!("{:04}-{:02}-{:02}", from.year(), from.month(), from.day());
+    let to_str = format!("{:04}-{:02}-{:02}", to.year(), to.month(), to.day());
+
+    let rows = query_range(
+        ctx.db,
+        ctx.user_id,
+        &from_str,
+        &to_str,
+        base_currency.as_deref(),
+    )
+    .await?;
+
+    // 负债 inline（balance 模型不在 read_model 范围）
+    let liabilities = load_payloads(ctx.db, ctx.user_id, "liabilities").await?;
+    let total_liabilities: f64 = liabilities
+        .iter()
+        .map(|(_, p)| payload_num(p, "principal").unwrap_or(0.0))
+        .sum();
+
+    let current_holdings_base = base_currency
+        .as_deref()
+        .and_then(|base| snapshot_total_base(ctx.portfolio_snapshot, "market_value_base", base));
+
+    // Week granularity: 重采样 —— 选 date 与 `from` 相隔 7n 天的行。
+    // Day granularity: 直接全部输出。
+    let series: Vec<Value> = if granularity == "week" {
+        let mut out: Vec<Value> = Vec::new();
+        let from_naive = from.date_naive();
+        for r in &rows {
+            let Some(d) = chrono::NaiveDate::parse_from_str(&r.yyyy_mm_dd, "%Y-%m-%d").ok() else {
+                continue;
+            };
+            let days = (d - from_naive).num_days();
+            if days < 0 || days % 7 != 0 {
+                continue;
+            }
+            let value = (r.cumulative_minor as f64) / 100.0 - total_liabilities;
+            out.push(json!({
+                "date":          format!("{}T00:00:00+00:00", r.yyyy_mm_dd),
+                "value":         value,
+                "currency":      r.currency,
+                "base_currency": base_currency.as_deref(),
+            }));
+        }
+        out
+    } else {
+        // day
+        rows.iter()
+            .map(|r| {
+                let value = (r.cumulative_minor as f64) / 100.0 - total_liabilities;
+                json!({
+                    "date":          format!("{}T00:00:00+00:00", r.yyyy_mm_dd),
+                    "value":         value,
+                    "currency":      r.currency,
+                    "base_currency": base_currency.as_deref(),
+                })
+            })
+            .collect()
+    };
+
+    Ok(json!({
+        "from":          from.to_rfc3339(),
+        "to":            to.to_rfc3339(),
+        "granularity":   granularity,
+        "series":        series,
+        "base_currency": base_currency.as_deref(),
+        "current_snapshot": current_holdings_base.map(|holdings| json!({
+            "as_of": ctx.portfolio_snapshot.and_then(|s| s.get("as_of")).and_then(|v| v.as_str()),
+            "holdings_market_value_base": holdings,
+            "base_currency": base_currency.as_deref(),
+            "source": "client_portfolio_snapshot",
+        })),
+        "conversion_source": "read_model",
+        "freshness":     freshness,
+        "approximation": true,
+        "note":          "数据源 net_worth_daily Read Model（day 粒度 + week 重采样）；负债仍 inline 算。指定 base_currency 时只取同币种行。",
     }))
 }
 
