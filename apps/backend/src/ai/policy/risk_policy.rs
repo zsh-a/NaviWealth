@@ -156,6 +156,7 @@ mod tests {
             "get_risk_alerts",
             "get_monthly_spend_by_category",
             "get_net_worth_summary",
+            "get_cashflow_buckets",
             "read_category_window",
             "propose_trade",
             "propose_expense",
