@@ -106,6 +106,7 @@ class AiTrace {
     required this.totalDurationMs,
     this.disclosures = const <DisclosureSummary>[],
     this.toolCalls = const <TraceToolCall>[],
+    this.staleReadModels = 0,
   });
 
   final String requestId;
@@ -129,6 +130,12 @@ class AiTrace {
   final List<DisclosureSummary> disclosures;
   final List<TraceToolCall> toolCalls;
 
+  /// Number of read-model-backed tool responses where the local HLC
+  /// was strictly ahead of the cloud `source_hlc_watermark` —— Phase 1
+  /// purely diagnostic (logged + shown in transparency badge). Phase 2
+  /// will use this to trigger `request_freshness_refresh` round-trips.
+  final int staleReadModels;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'request_id': requestId,
     'started_at': startedAtIso,
@@ -141,6 +148,7 @@ class AiTrace {
     'total_duration_ms': totalDurationMs,
     'disclosures': disclosures.map((d) => d.toJson()).toList(growable: false),
     'tool_calls': toolCalls.map((t) => t.toJson()).toList(growable: false),
+    if (staleReadModels > 0) 'stale_read_models': staleReadModels,
   };
 
   factory AiTrace.fromJson(Map<String, Object?> json) {
@@ -153,6 +161,7 @@ class AiTrace {
     final uc = json['used_cloud'];
     final ul = json['used_raw_ledger'];
     final td = json['total_duration_ms'];
+    final stale = json['stale_read_models'];
     return AiTrace(
       requestId: id is String ? id : '',
       startedAtIso: ts is String ? ts : '',
@@ -172,6 +181,7 @@ class AiTrace {
       totalDurationMs: td is int ? td : 0,
       disclosures: _list(json['disclosures'], DisclosureSummary.fromJson),
       toolCalls: _list(json['tool_calls'], TraceToolCall.fromJson),
+      staleReadModels: stale is int ? stale : 0,
     );
   }
 }

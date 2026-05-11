@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/freshness/freshness_gate.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
@@ -13,11 +14,18 @@ import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
 
-/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire and
+/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire,
 /// the seed [AiTrace] that the repository finalises after the stream
-/// closes. Either field may be `null` if the caller chose not to wire
-/// AI tracing for this repository instance (legacy tests, etc.).
-typedef ChatTracePrepResult = ({ContextPack? pack, AiTrace? traceSeed});
+/// closes, and the local HLC snapshot taken at request start (used
+/// by the freshness gate when tool_result frames carry a
+/// [Freshness] watermark). Any field may be `null` if the caller
+/// chose not to wire AI tracing for this repository instance
+/// (legacy tests, etc.).
+typedef ChatTracePrepResult = ({
+  ContextPack? pack,
+  AiTrace? traceSeed,
+  String? localHlcText,
+});
 
 /// Closure that builds the per-request ContextPack + AiTrace seed.
 /// Lives in providers.dart so it can capture Riverpod `Ref` without
@@ -206,6 +214,7 @@ class ChatRepository {
         : await _tracePrep.call(requestId: assistantId);
     final contextPack = prepResult?.pack;
     final traceSeed = prepResult?.traceSeed;
+    final localHlcText = prepResult?.localHlcText;
     final traceBuilder = traceSeed == null
         ? null
         : AiTraceBuilder.fromSeed(traceSeed);
@@ -263,7 +272,7 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
-          case ToolResultEvent(:final id, :final output):
+          case ToolResultEvent(:final id, :final output, :final freshness):
             final existing = invocations[id];
             // A tool_result for an unseen id means the call was
             // synthesised server-side (e.g. proposal cap rejection).
@@ -291,6 +300,19 @@ class ChatRepository {
                 duration: duration,
                 ok: !_isToolError(output),
               );
+              // Freshness gate (docs/ai-architecture.md §4.2): if the
+              // read-model watermark is behind our local HLC, the
+              // device has writes the cloud hasn't yet projected.
+              // Phase 1 just bumps a counter; Phase 2 will trigger
+              // request_freshness_refresh on the next tool_call.
+              if (freshness != null && localHlcText != null) {
+                if (isStale(
+                  cloud: freshness,
+                  localHlcText: localHlcText,
+                )) {
+                  traceBuilder.bumpStaleReadModel();
+                }
+              }
             }
           case ErrorEvent(:final message):
             outcome = SendOutcome.errored;

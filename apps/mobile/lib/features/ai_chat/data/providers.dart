@@ -122,9 +122,15 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     );
     final seed = router.seedTrace(requestId: requestId, decision: decision);
 
-    return (pack: pack, traceSeed: seed);
+    // Snapshot local HLC at request start — used by the freshness gate
+    // (lib/core/ai/freshness/freshness_gate.dart) to detect when a
+    // tool_result's read-model watermark is behind our local writes.
+    final localHlc = await ref.read(syncLocalHlcProvider.future);
+    final localHlcText = localHlc?.toString();
+
+    return (pack: pack, traceSeed: seed, localHlcText: localHlcText);
   } catch (_) {
-    return (pack: null, traceSeed: null);
+    return (pack: null, traceSeed: null, localHlcText: null);
   }
 }
 
