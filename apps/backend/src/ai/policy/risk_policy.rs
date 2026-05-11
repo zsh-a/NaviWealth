@@ -160,6 +160,8 @@ mod tests {
             "get_recurring_patterns",
             "get_anomaly_flags",
             "read_category_window",
+            "read_account_window",
+            "read_asset_window",
             "propose_trade",
             "propose_expense",
             "propose_liability_payment",
