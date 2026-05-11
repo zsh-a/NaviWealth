@@ -24,3 +24,4 @@ pub mod net_worth_snapshot;
 pub mod projection;
 pub mod recurring_patterns;
 pub mod scoped_detail;
+pub mod xirr_snapshot;
