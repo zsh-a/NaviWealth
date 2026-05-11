@@ -195,6 +195,29 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_recurring_patterns".into(),
+            description: "返回端侧 detector 检测到的周期性支出（月度/周度订阅、定期账单等）。\
+                          数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— \
+                          这是 device-sourced read model：端侧 recurring_detector 跑启发式产生，\
+                          通过 ContextPack.analytical_uploads 镜像到云端表（避免 Dart/Rust 双份漂移）。\
+                          典型问题：「我有哪些订阅」「每月定期支出多少」「哪些订阅最近涨价了」（最后这个需配合 subscription_changes，待落）。\
+                          可选 currency / cadence 过滤。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "currency": {
+                        "type": "string",
+                        "description": "可选；只看某一币种。"
+                    },
+                    "cadence": {
+                        "type": "string",
+                        "enum": ["weekly", "monthly"],
+                        "description": "可选；只看某一周期。"
+                    }
+                }
+            }),
+        },
+        ToolSchema {
             name: "get_cashflow_buckets".into(),
             description: "返回最近 N 个月的现金 inflow / outflow 分桶。\
                           数据来自 AI Read Model `cashflow_buckets`（Snapshot 层 P1）—— \
@@ -422,6 +445,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_monthly_spend_by_category" => get_monthly_spend_by_category(ctx, input).await,
             "get_net_worth_summary" => get_net_worth_summary(ctx, input).await,
             "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
+            "get_recurring_patterns" => get_recurring_patterns(ctx, input).await,
             "read_category_window" => read_category_window(ctx, input).await,
             // FIR-66 write proposals — never persist; always return a plan.
             "propose_trade" => proposals::propose_trade(ctx, input).await,
@@ -1529,6 +1553,64 @@ async fn get_net_worth_summary(
 }
 
 // ---------------------------------------------------------------------------
+// get_recurring_patterns — Analytical P1 (§4.3.3, device-sourced)
+// ---------------------------------------------------------------------------
+
+async fn get_recurring_patterns(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::recurring_patterns::{
+        current_freshness, query_all,
+    };
+
+    let currency = input
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+    let cadence = input
+        .get("cadence")
+        .and_then(|v| v.as_str())
+        .filter(|s| matches!(*s, "weekly" | "monthly"));
+
+    // device-sourced：没有 ensure_fresh —— 端侧通过下一次 chat 的
+    // analytical_uploads 上报新结果；本工具只读最新已知的快照。
+    let freshness = current_freshness(ctx.db, ctx.user_id).await?;
+    let rows = query_all(
+        ctx.db,
+        ctx.user_id,
+        currency.as_deref(),
+        cadence,
+    )
+    .await?;
+
+    let patterns: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "id":                  r.id,
+                "merchant_key":        r.merchant_key,
+                "cadence":             r.cadence,
+                "currency":            r.currency,
+                "median_amount_minor": r.median_amount_minor.map(|n| n.to_string()),
+                "occurrences":         r.occurrences,
+                "last_seen_at":        r.last_seen_at,
+                "payload":             r.payload,
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "patterns":  patterns,
+        "count":     patterns.len(),
+        "freshness": freshness,
+        "source":    "device_analytical_read_model",
+        "note":      "device-sourced：端侧 recurring_detector 检测，通过 ContextPack.analytical_uploads 上报。当结果为空时，可能是端侧还没上报过 / 端侧检测不到稳定周期 / 用户没有订阅。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_cashflow_buckets — Read Model P1（§4.3.2）
 // ---------------------------------------------------------------------------
 
@@ -1725,6 +1807,7 @@ mod tests {
             "get_monthly_spend_by_category",
             "get_net_worth_summary",
             "get_cashflow_buckets",
+            "get_recurring_patterns",
             "read_category_window",
             "propose_trade",
             "propose_expense",

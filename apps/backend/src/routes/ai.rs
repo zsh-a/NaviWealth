@@ -146,6 +146,53 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
         }
     }
 
+    // Analytical layer ingest (docs/ai-architecture.md §4.3.3): device
+    // detector output → device-sourced read models. Phase 1 routes
+    // kind=='recurring_pattern' to the recurring_patterns table; other
+    // kinds are silently ignored (next analytical models pick them up).
+    if let Some(ref pack) = body.context_pack {
+        if !pack.task.analytical_uploads.is_empty() {
+            let device_hlc = pack
+                .task
+                .device_hlc
+                .as_deref()
+                .filter(|s| !s.is_empty())
+                .unwrap_or("0.0000-00000000-0000-0000-0000-000000000000");
+            let db_for_ingest = ctx
+                .env
+                .d1("DB")
+                .map_err(|_| AppError::Internal("DB unbound".into()))?;
+            let recurring: Vec<
+                crate::ai::read_models::recurring_patterns::RecurringPatternUpload<'_>,
+            > = pack
+                .task
+                .analytical_uploads
+                .iter()
+                .filter(|u| u.kind == "recurring_pattern")
+                .map(|u| {
+                    crate::ai::read_models::recurring_patterns::RecurringPatternUpload {
+                        id: &u.id,
+                        payload: &u.payload,
+                        source_device_id: None, // device_id is on auth, not per-upload
+                    }
+                })
+                .collect();
+            if !recurring.is_empty() {
+                let n = crate::ai::read_models::recurring_patterns::ingest(
+                    &db_for_ingest,
+                    &auth.user_id,
+                    device_hlc,
+                    &recurring,
+                )
+                .await?;
+                worker::console_log!(
+                    "analytical_uploads: ingested {n} recurring_patterns for user={}",
+                    auth.user_id
+                );
+            }
+        }
+    }
+
     let db = ctx
         .env
         .d1("DB")
@@ -679,6 +726,8 @@ mod tests {
                 retrieved: Vec::new(),
                 aggregates: Vec::new(),
                 freshness_hint: None,
+                analytical_uploads: Vec::new(),
+                device_hlc: None,
             },
             budget: PrivacyBudget {
                 tier: BudgetTier::Standard,

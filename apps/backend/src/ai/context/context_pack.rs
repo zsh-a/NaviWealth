@@ -214,6 +214,17 @@ pub struct FreshnessHint {
     pub force_refresh_read_models: Vec<String>,
 }
 
+/// 端→云单条分析上报（docs/ai-architecture.md §4.3.3 Analytical 层）。
+/// `kind` 决定 payload schema —— 'recurring_pattern' / 'anomaly_flag' /
+/// 'refund_link' / 'subscription_change' 等。后端按 kind 路由到对应
+/// 的 device-sourced read model 表。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AnalyticalUpload {
+    pub kind: String,
+    pub id: String,
+    pub payload: serde_json::Value,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TaskContext {
     pub route: RouteContext,
@@ -226,6 +237,15 @@ pub struct TaskContext {
     pub aggregates: Vec<ScopedAggregate>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub freshness_hint: Option<FreshnessHint>,
+    /// 端侧 detector 产生的分析记录（recurring/anomaly 等）。后端
+    /// 用 `recurring_patterns::ingest` 等镜像到对应 device-sourced
+    /// read model。
+    #[serde(default)]
+    pub analytical_uploads: Vec<AnalyticalUpload>,
+    /// 当存在 `analytical_uploads` 时，端侧的 localHlc 作为这批上报
+    /// 的 watermark。空字符串 = 无 HLC（早期 client）。
+    #[serde(default)]
+    pub device_hlc: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
