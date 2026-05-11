@@ -99,6 +99,9 @@ AiChatEvent? _decodeFrame(_RawSseFrame frame) {
       final id = m['id'];
       final name = m['name'];
       if (id is! String || name is! String) return null;
+      // freshness is a derived getter on ToolResultEvent
+      // (lib/features/ai_chat/domain/chat_events.dart); the parser
+      // doesn't have to extract it explicitly.
       return ToolResultEvent(id: id, name: name, output: m['output']);
     case 'text':
       final text = m['text'];

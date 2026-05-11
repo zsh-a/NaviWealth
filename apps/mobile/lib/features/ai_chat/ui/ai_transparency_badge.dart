@@ -56,6 +56,11 @@ String formatAiTraceBadge(AiTrace trace) {
   if (trace.toolCalls.isNotEmpty) {
     parts.add('${trace.toolCalls.length} 个工具');
   }
+  // 当云端 read model 落后本地写入时，提示数据陈旧（freshness gate
+  // §4.2 兜底通道的轻量级形态：日志 + 用户可见提示，不重发请求）。
+  if (trace.staleReadModels > 0) {
+    parts.add('${trace.staleReadModels} 项数据滞后');
+  }
   parts.add(_formatDuration(trace.totalDurationMs));
   return parts.join(' · ');
 }

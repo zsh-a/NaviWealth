@@ -19,6 +19,7 @@ class AiTraceBuilder {
   final AiTrace _seed;
   final List<TraceToolCall> _tools = <TraceToolCall>[];
   final List<DisclosureSummary> _disclosures = <DisclosureSummary>[];
+  int _staleReadModels = 0;
 
   void addToolCall({
     required String name,
@@ -32,6 +33,13 @@ class AiTraceBuilder {
 
   void addDisclosure(DisclosureSummary summary) {
     _disclosures.add(summary);
+  }
+
+  /// Bump when a tool_result's [Freshness] watermark is behind the
+  /// device's local HLC. Phase 1 diagnostic — Phase 2 wires
+  /// `request_freshness_refresh` round-trips off this signal.
+  void bumpStaleReadModel() {
+    _staleReadModels += 1;
   }
 
   /// Whether any disclosure has been recorded with a non-denied
@@ -55,6 +63,7 @@ class AiTraceBuilder {
       totalDurationMs: durationMs < 0 ? 0 : durationMs,
       disclosures: List<DisclosureSummary>.unmodifiable(_disclosures),
       toolCalls: List<TraceToolCall>.unmodifiable(_tools),
+      staleReadModels: _staleReadModels,
     );
   }
 }

@@ -113,6 +113,15 @@ final syncCursorProvider = FutureProvider<Hlc?>((ref) async {
   return DriftCursorStore(db).readCursor();
 });
 
+/// Latest local HLC used to stamp ops on this device. The freshness gate
+/// (`docs/ai-architecture.md` §4.2) compares this against the cloud
+/// read-model's `source_hlc_watermark` —— device ahead = read model stale.
+final syncLocalHlcProvider = FutureProvider<Hlc?>((ref) async {
+  ref.watch(syncStatusEventStreamProvider);
+  final db = await ref.watch(appDatabaseProvider.future);
+  return DriftCursorStore(db).readLocalHlc();
+});
+
 /// Current outbox depth (pending local ops not yet pushed). Re-runs every
 /// time a status event lands so the count stays in step with the engine.
 final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
