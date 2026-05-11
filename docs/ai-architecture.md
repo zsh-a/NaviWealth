@@ -261,6 +261,8 @@ NaviWealth 当前缺少这一层。现状：
 |-----|---------|-------|
 | `recurring_patterns` | `{ merchant, frequency, last_amount, trend }` | P1 |
 | `anomaly_flags` | `{ category, delta_pct, reason_hint }` | P1 |
+| `refund_links` | `{ original_txn_id, refund_txn_id, amount_minor, currency }` | P1 |
+| `transfer_links` | `{ from_txn_id, to_txn_id, amount_minor, currency }` | P1 |
 | `investment_performance` | `{ ticker, xirr, holding_days }` | P1 |
 | `subscription_changes` | `{ merchant, prev_amount, new_amount, since }` | P1 |
 | `spending_clusters` | `{ cluster, transactions, total }` (e.g. "Japan Trip") | P2 |
@@ -604,7 +606,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 ### P1 — 现有路径稳定 + 启用生产
 
 - [ ] **Read Models — Snapshot 层 P1 二表** — `cashflow_buckets_6m`、`asset_allocation_snapshot`，async queue 刷新
-- [ ] **Read Models — Analytical 层 P1 四模型** — `recurring_patterns` / `anomaly_flags` / `investment_performance` / `subscription_changes`
+- [ ] **Read Models — Analytical 层 P1 六模型** — `recurring_patterns` / `anomaly_flags` / `refund_links` / `transfer_links` / `investment_performance` / `subscription_changes`
   - 端侧 detector 仍是唯一计算者；read model 表订阅 ContextPack 上报，写入带 `source_device_id`
 - [ ] **`AiRuntime` 抽象 + RuntimeRegistry** — 把现有路径包装为 `RulesDeviceRuntime` + `CloudAnthropicRuntime`，router 改成 registry 查询。`Backend` 枚举降级为 trace label。
 - [ ] **AiTraceStore 持久化** — Drift 表 + 30 天滚动清理。接口已稳定。  *入口*: `lib/core/ai/trace/ai_trace_store.dart`

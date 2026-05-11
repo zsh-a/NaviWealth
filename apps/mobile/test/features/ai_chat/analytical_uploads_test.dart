@@ -138,4 +138,82 @@ void main() {
       expect(patterns, isEmpty);
     });
   });
+
+  group('Wave 16: matchRefunds + RefundMatch → AnalyticalUpload payload', () {
+    test('id is "{original}|{refund}"; payload carries amount + currency', () {
+      final txns = <TransactionInput>[
+        TransactionInput(
+          id: 'purchase_1',
+          description: 'AMAZON',
+          amountMinor: '-5000',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 4, 1),
+        ),
+        TransactionInput(
+          id: 'refund_1',
+          description: 'AMAZON',
+          amountMinor: '5000',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 4, 10),
+        ),
+      ];
+      final matches = matchRefunds(txns);
+      expect(matches, hasLength(1));
+      final m = matches.single;
+      final upload = AnalyticalUpload(
+        kind: 'refund_link',
+        id: '${m.originalTxnId}|${m.refundTxnId}',
+        payload: <String, Object?>{
+          'original_txn_id': m.originalTxnId,
+          'refund_txn_id': m.refundTxnId,
+          'amount_minor': m.amountMinor.toString(),
+          'currency': m.currency,
+        },
+      );
+      expect(upload.kind, 'refund_link');
+      expect(upload.id, 'purchase_1|refund_1');
+      expect(upload.payload['amount_minor'], '5000');
+      expect(upload.payload['currency'], 'USD');
+    });
+  });
+
+  group('Wave 16: matchTransfers + TransferMatch → AnalyticalUpload payload', () {
+    test('id is "{from}|{to}"; payload carries amount + currency', () {
+      final txns = <TransactionInput>[
+        TransactionInput(
+          id: 'out_a',
+          description: 'TRANSFER OUT',
+          amountMinor: '-100000',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 4, 1),
+          accountId: 'checking',
+        ),
+        TransactionInput(
+          id: 'in_b',
+          description: 'TRANSFER IN',
+          amountMinor: '100000',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 4, 2),
+          accountId: 'savings',
+        ),
+      ];
+      final matches = matchTransfers(txns);
+      expect(matches, hasLength(1));
+      final m = matches.single;
+      final upload = AnalyticalUpload(
+        kind: 'transfer_link',
+        id: '${m.fromTxnId}|${m.toTxnId}',
+        payload: <String, Object?>{
+          'from_txn_id': m.fromTxnId,
+          'to_txn_id': m.toTxnId,
+          'amount_minor': m.amountMinor.toString(),
+          'currency': m.currency,
+        },
+      );
+      expect(upload.kind, 'transfer_link');
+      expect(upload.id, 'out_a|in_b');
+      expect(upload.payload['amount_minor'], '100000');
+      expect(upload.payload['currency'], 'USD');
+    });
+  });
 }

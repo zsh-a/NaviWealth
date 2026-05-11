@@ -235,6 +235,12 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   }
 
   // Wave 15: run recurring_detector on expenses, convert each pattern.
+  // Wave 16: run matchRefunds / matchTransfers over the same input set —
+  // both detectors are pure functions of TransactionInput and produce
+  // empty output when the input lacks the required pairing (refunds
+  // need an inflow paired with an outflow; transfers need cross-account
+  // flows). They will fire as the device feeds in more transaction
+  // sources in later waves.
   // Empty list when there are no expenses / no detectable cadence.
   if (expenses.isNotEmpty) {
     final transactionInputs = expenses
@@ -243,6 +249,14 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
     final patterns = detectRecurring(transactionInputs);
     for (final p in patterns) {
       out.add(_recurringPatternToUpload(p));
+    }
+    final refunds = matchRefunds(transactionInputs);
+    for (final r in refunds) {
+      out.add(_refundMatchToUpload(r));
+    }
+    final transfers = matchTransfers(transactionInputs);
+    for (final t in transfers) {
+      out.add(_transferMatchToUpload(t));
     }
   }
 
@@ -277,6 +291,32 @@ AnalyticalUpload _recurringPatternToUpload(RecurringPattern p) {
       'currency': p.currency,
       'occurrences': p.occurrenceIds.length,
       'last_seen_at': p.lastSeenAt.toIso8601String(),
+    },
+  );
+}
+
+AnalyticalUpload _refundMatchToUpload(RefundMatch m) {
+  return AnalyticalUpload(
+    kind: 'refund_link',
+    id: '${m.originalTxnId}|${m.refundTxnId}',
+    payload: <String, Object?>{
+      'original_txn_id': m.originalTxnId,
+      'refund_txn_id': m.refundTxnId,
+      'amount_minor': m.amountMinor.toString(),
+      'currency': m.currency,
+    },
+  );
+}
+
+AnalyticalUpload _transferMatchToUpload(TransferMatch m) {
+  return AnalyticalUpload(
+    kind: 'transfer_link',
+    id: '${m.fromTxnId}|${m.toTxnId}',
+    payload: <String, Object?>{
+      'from_txn_id': m.fromTxnId,
+      'to_txn_id': m.toTxnId,
+      'amount_minor': m.amountMinor.toString(),
+      'currency': m.currency,
     },
   );
 }
