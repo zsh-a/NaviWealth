@@ -99,5 +99,7 @@ AiTrace _trace({
       ok: true,
     ),
   ),
-  staleReadModels: staleReadModels,
+  staleReadModelNames: Set<String>.from(
+    List<String>.generate(staleReadModels, (i) => 'rm_$i'),
+  ),
 );

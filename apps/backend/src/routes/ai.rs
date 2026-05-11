@@ -118,6 +118,34 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
         );
     }
 
+    // Freshness gate Phase 2 (docs/ai-architecture.md §4.2): if the
+    // device flagged read models as stale on the previous turn, drop
+    // their freshness_meta rows so this turn's tool dispatch triggers
+    // a fresh `refresh()`. Idempotent + cheap; unknown names ignored.
+    if let Some(ref pack) = body.context_pack {
+        if let Some(ref hint) = pack.task.freshness_hint {
+            let db_for_hint = ctx
+                .env
+                .d1("DB")
+                .map_err(|_| AppError::Internal("DB unbound".into()))?;
+            for name in &hint.force_refresh_read_models {
+                if name.is_empty() {
+                    continue;
+                }
+                crate::ai::read_models::projection::clear_freshness_meta(
+                    &db_for_hint,
+                    &auth.user_id,
+                    name,
+                )
+                .await?;
+                worker::console_log!(
+                    "freshness_hint: cleared read_model={name} for user={}",
+                    auth.user_id
+                );
+            }
+        }
+    }
+
     let db = ctx
         .env
         .d1("DB")
@@ -543,6 +571,79 @@ mod tests {
     }
 
     #[test]
+    fn chat_request_parses_freshness_hint_with_force_refresh() {
+        let raw = r#"{
+            "messages": [{"role": "user", "content": "hi"}],
+            "context_pack": {
+                "version": {"major": 1, "minor": 0},
+                "base": {
+                    "preferred_currency": "USD",
+                    "risk_preference": "moderate",
+                    "accounts": {"total_count": 0, "by_kind": {}},
+                    "cashflow": {
+                        "base_currency": "USD",
+                        "months_covered": 0,
+                        "average_inflow_minor": "0",
+                        "average_outflow_minor": "0",
+                        "trend": "unknown"
+                    }
+                },
+                "task": {
+                    "route": {"path": "/", "area": "home"},
+                    "intent": {"capability": "analyze", "risk": "info"},
+                    "freshness_hint": {
+                        "force_refresh_read_models": [
+                            "monthly_spend_by_category",
+                            "holdings_snapshot"
+                        ]
+                    }
+                },
+                "budget": {"tier": "standard"}
+            }
+        }"#;
+        let body: ChatRequest = serde_json::from_str(raw).expect("parse");
+        let pack = body.context_pack.expect("present");
+        let hint = pack.task.freshness_hint.expect("hint present");
+        assert_eq!(
+            hint.force_refresh_read_models,
+            vec![
+                "monthly_spend_by_category".to_string(),
+                "holdings_snapshot".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn freshness_hint_absent_defaults_to_none() {
+        let raw = r#"{
+            "messages": [{"role": "user", "content": "hi"}],
+            "context_pack": {
+                "version": {"major": 1, "minor": 0},
+                "base": {
+                    "preferred_currency": "USD",
+                    "risk_preference": "moderate",
+                    "accounts": {"total_count": 0, "by_kind": {}},
+                    "cashflow": {
+                        "base_currency": "USD",
+                        "months_covered": 0,
+                        "average_inflow_minor": "0",
+                        "average_outflow_minor": "0",
+                        "trend": "unknown"
+                    }
+                },
+                "task": {
+                    "route": {"path": "/", "area": "home"},
+                    "intent": {"capability": "analyze", "risk": "info"}
+                },
+                "budget": {"tier": "small"}
+            }
+        }"#;
+        let body: ChatRequest = serde_json::from_str(raw).expect("parse");
+        let pack = body.context_pack.expect("present");
+        assert!(pack.task.freshness_hint.is_none());
+    }
+
+    #[test]
     fn context_pack_rejects_incompatible_major_version() {
         use crate::ai::context::*;
         let pack = ContextPack {
@@ -577,6 +678,7 @@ mod tests {
                 signals: Vec::new(),
                 retrieved: Vec::new(),
                 aggregates: Vec::new(),
+                freshness_hint: None,
             },
             budget: PrivacyBudget {
                 tier: BudgetTier::Standard,

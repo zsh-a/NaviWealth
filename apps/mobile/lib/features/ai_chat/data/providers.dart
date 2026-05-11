@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
@@ -74,8 +75,29 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
     portfolioSnapshotReader: () => _buildPortfolioSnapshot(ref),
     tracePrep: ({required requestId}) => _prepareChatTrace(ref, requestId),
     traceStore: traceStore,
+    onTraceFinalized: (trace) {
+      // Phase 2 freshness gate bridge: collect read_model names that
+      // were stale during this turn so the next chat send tells the
+      // cloud to force-refresh them before dispatching.
+      if (trace.staleReadModelNames.isEmpty) return;
+      final pending = ref.read(pendingFreshnessHintProvider);
+      ref.read(pendingFreshnessHintProvider.notifier).state = <String>{
+        ...pending,
+        ...trace.staleReadModelNames,
+      };
+    },
   );
 });
+
+/// Read model names whose `source_hlc_watermark` lagged the device's
+/// local HLC on the last completed chat turn. Consumed (and cleared)
+/// by `_prepareChatTrace` on the next request, injected into the
+/// outgoing `ContextPack.task.freshnessHint.forceRefreshReadModels`.
+///
+/// docs/ai-architecture.md §4.2 (freshness gate Phase 2).
+final pendingFreshnessHintProvider = StateProvider<Set<String>>(
+  (_) => <String>{},
+);
 
 /// Build the typed [ContextPack] + seed [AiTrace] for one chat turn.
 ///
@@ -105,6 +127,19 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     final anomaly = ref.read(expenseAnomalyInsightProvider);
     final maturity = ref.read(depositMaturityInsightProvider);
 
+    // Consume any pending freshness hint from the previous turn's
+    // stale-read-model detection (Phase 2 gate). Clear immediately so
+    // a second concurrent send doesn't double-trigger.
+    final pendingNames = ref.read(pendingFreshnessHintProvider);
+    final freshnessHint = pendingNames.isEmpty
+        ? null
+        : FreshnessHint(
+            forceRefreshReadModels: pendingNames.toList(growable: false),
+          );
+    if (pendingNames.isNotEmpty) {
+      ref.read(pendingFreshnessHintProvider.notifier).state = <String>{};
+    }
+
     final pack = compressor.compress(
       route: route,
       intent: intent,
@@ -112,6 +147,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       expenseAnomalyDelta: anomaly?.deltaRatio,
       depositMaturityCount: maturity?.count,
       depositMaturityDays: maturity?.days,
+      freshnessHint: freshnessHint,
     );
 
     // The chat surface is by definition online here (we are about to

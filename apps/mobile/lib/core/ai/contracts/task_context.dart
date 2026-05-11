@@ -226,6 +226,38 @@ class ScopedAggregate {
   }
 }
 
+/// 端侧主动给云端的「这些 read model 落后我了，dispatch 前请重投」
+/// 提示。docs/ai-architecture.md §4.2 freshness gate Phase 2 闭环。
+///
+/// 触发路径：上一轮 chat 完结时，AiTrace 收集了 stale read_model 名 →
+/// `pendingFreshnessHintProvider` 累计 → 下一次 prep 注入此 hint →
+/// 云端 routes/ai.rs 在 dispatch 前 `clear_freshness_meta` 强制
+/// `ensure_fresh` 重算。Hint 单向、幂等、消费后清空。
+class FreshnessHint {
+  const FreshnessHint({this.forceRefreshReadModels = const <String>[]});
+
+  /// Read model 名（如 `monthly_spend_by_category`）。云端逐一失效
+  /// 对应 freshness_meta 行；不认识的名字直接忽略。
+  final List<String> forceRefreshReadModels;
+
+  bool get isEmpty => forceRefreshReadModels.isEmpty;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'force_refresh_read_models': forceRefreshReadModels,
+  };
+
+  factory FreshnessHint.fromJson(Map<String, Object?> json) {
+    final raw = json['force_refresh_read_models'];
+    final names = <String>[];
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is String && e.isNotEmpty) names.add(e);
+      }
+    }
+    return FreshnessHint(forceRefreshReadModels: names);
+  }
+}
+
 class TaskContext {
   const TaskContext({
     required this.route,
@@ -233,6 +265,7 @@ class TaskContext {
     this.signals = const <RecentSignal>[],
     this.retrieved = const <SemanticHit>[],
     this.aggregates = const <ScopedAggregate>[],
+    this.freshnessHint,
   });
 
   final RouteContext route;
@@ -240,6 +273,7 @@ class TaskContext {
   final List<RecentSignal> signals;
   final List<SemanticHit> retrieved;
   final List<ScopedAggregate> aggregates;
+  final FreshnessHint? freshnessHint;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'route': route.toJson(),
@@ -247,11 +281,14 @@ class TaskContext {
     'signals': signals.map((s) => s.toJson()).toList(growable: false),
     'retrieved': retrieved.map((h) => h.toJson()).toList(growable: false),
     'aggregates': aggregates.map((a) => a.toJson()).toList(growable: false),
+    if (freshnessHint != null && !freshnessHint!.isEmpty)
+      'freshness_hint': freshnessHint!.toJson(),
   };
 
   factory TaskContext.fromJson(Map<String, Object?> json) {
     final route = json['route'];
     final intent = json['intent'];
+    final hint = json['freshness_hint'];
     return TaskContext(
       route: route is Map
           ? RouteContext.fromJson(_strKeyed(route))
@@ -265,6 +302,9 @@ class TaskContext {
       signals: _list(json['signals'], RecentSignal.fromJson),
       retrieved: _list(json['retrieved'], SemanticHit.fromJson),
       aggregates: _list(json['aggregates'], ScopedAggregate.fromJson),
+      freshnessHint: hint is Map
+          ? FreshnessHint.fromJson(_strKeyed(hint))
+          : null,
     );
   }
 }

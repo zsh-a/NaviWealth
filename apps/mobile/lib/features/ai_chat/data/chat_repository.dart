@@ -62,6 +62,7 @@ class ChatRepository {
     Future<Map<String, Object?>?> Function()? portfolioSnapshotReader,
     ChatTracePrep? tracePrep,
     AiTraceStore? traceStore,
+    void Function(AiTrace finalized)? onTraceFinalized,
     Uuid? uuid,
   }) : _store = store,
        _api = api,
@@ -69,6 +70,7 @@ class ChatRepository {
        _portfolioSnapshotReader = portfolioSnapshotReader,
        _tracePrep = tracePrep,
        _traceStore = traceStore,
+       _onTraceFinalized = onTraceFinalized,
        _uuid = uuid ?? const Uuid();
 
   final ChatHistoryStore _store;
@@ -77,6 +79,7 @@ class ChatRepository {
   final Future<Map<String, Object?>?> Function()? _portfolioSnapshotReader;
   final ChatTracePrep? _tracePrep;
   final AiTraceStore? _traceStore;
+  final void Function(AiTrace finalized)? _onTraceFinalized;
   final Uuid _uuid;
 
   Stream<List<ChatSession>> watchSessions(String ownerUserId) =>
@@ -300,17 +303,18 @@ class ChatRepository {
                 duration: duration,
                 ok: !_isToolError(output),
               );
-              // Freshness gate (docs/ai-architecture.md §4.2): if the
-              // read-model watermark is behind our local HLC, the
-              // device has writes the cloud hasn't yet projected.
-              // Phase 1 just bumps a counter; Phase 2 will trigger
-              // request_freshness_refresh on the next tool_call.
+              // Freshness gate (docs/ai-architecture.md §4.2 Phase 2):
+              // when the read-model watermark is behind our local HLC,
+              // record the read_model name. The next prep closure
+              // picks these up off the finalised AiTrace and injects
+              // `force_refresh_read_models` into the next ContextPack
+              // so the cloud re-projects before dispatching.
               if (freshness != null && localHlcText != null) {
                 if (isStale(
                   cloud: freshness,
                   localHlcText: localHlcText,
                 )) {
-                  traceBuilder.bumpStaleReadModel();
+                  traceBuilder.markStaleReadModel(freshness.readModel);
                 }
               }
             }
@@ -387,13 +391,16 @@ class ChatRepository {
       await _store.touchSession(sessionId, DateTime.now().toUtc());
       // Append the trace last so a failure here can never sneak past
       // and skip session.touch — chat history takes priority over
-      // transparency.
+      // transparency. The optional onTraceFinalized callback is the
+      // bridge that feeds stale-read-model names into the next chat
+      // request's FreshnessHint (lib/.../providers.dart).
       if (traceBuilder != null && _traceStore != null) {
         try {
           final trace = traceBuilder.finalize(
             finishedAt: DateTime.now().toUtc(),
           );
           await _traceStore.append(trace);
+          _onTraceFinalized?.call(trace);
         } catch (_) {
           // Tracing is best-effort.
         }

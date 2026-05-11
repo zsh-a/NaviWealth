@@ -19,7 +19,7 @@ class AiTraceBuilder {
   final AiTrace _seed;
   final List<TraceToolCall> _tools = <TraceToolCall>[];
   final List<DisclosureSummary> _disclosures = <DisclosureSummary>[];
-  int _staleReadModels = 0;
+  final Set<String> _staleReadModelNames = <String>{};
 
   void addToolCall({
     required String name,
@@ -35,11 +35,13 @@ class AiTraceBuilder {
     _disclosures.add(summary);
   }
 
-  /// Bump when a tool_result's [Freshness] watermark is behind the
-  /// device's local HLC. Phase 1 diagnostic — Phase 2 wires
-  /// `request_freshness_refresh` round-trips off this signal.
-  void bumpStaleReadModel() {
-    _staleReadModels += 1;
+  /// Record a read model whose `source_hlc_watermark` was behind the
+  /// device's local HLC at tool_result time. Phase 2's prep closure
+  /// pulls these names out of the finalised trace and injects them
+  /// into the *next* request's `FreshnessHint.forceRefreshReadModels`
+  /// so the cloud re-projects before dispatching.
+  void markStaleReadModel(String readModel) {
+    if (readModel.isNotEmpty) _staleReadModelNames.add(readModel);
   }
 
   /// Whether any disclosure has been recorded with a non-denied
@@ -63,7 +65,7 @@ class AiTraceBuilder {
       totalDurationMs: durationMs < 0 ? 0 : durationMs,
       disclosures: List<DisclosureSummary>.unmodifiable(_disclosures),
       toolCalls: List<TraceToolCall>.unmodifiable(_tools),
-      staleReadModels: _staleReadModels,
+      staleReadModelNames: Set<String>.unmodifiable(_staleReadModelNames),
     );
   }
 }

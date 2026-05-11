@@ -131,6 +131,29 @@ pub async fn load_freshness_meta(
     }))
 }
 
+/// 主动失效一个 read model 的 freshness_meta —— 下次 `ensure_fresh`
+/// 看到无 meta 行即强制走 `refresh()` 路径。
+///
+/// 由 freshness gate Phase 2 端→云协议触发：mobile 把上一轮 stale 的
+/// read_model 名通过 `ContextPack.task.freshness_hint.force_refresh_read_models`
+/// 传上来，`routes/ai.rs` 在 `dispatch` 之前调一次。
+pub async fn clear_freshness_meta(
+    db: &D1Database,
+    user_id: &str,
+    read_model: &str,
+) -> Result<(), AppError> {
+    db.prepare(
+        "DELETE FROM read_model_freshness_meta
+         WHERE user_id = ?1 AND read_model = ?2",
+    )
+    .bind_refs([&D1Type::Text(user_id), &D1Type::Text(read_model)])
+    .map_err(|e| AppError::Internal(format!("bind: {e}")))?
+    .run()
+    .await
+    .map_err(|e| AppError::Internal(format!("run: {e}")))?;
+    Ok(())
+}
+
 /// 写 freshness_meta（upsert）。Projection.refresh 实现完成后调用。
 pub async fn upsert_freshness_meta(
     db: &D1Database,

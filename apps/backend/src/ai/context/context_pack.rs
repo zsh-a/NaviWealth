@@ -204,6 +204,16 @@ pub struct ScopedAggregate {
     pub row_count: Option<u32>,
 }
 
+/// 端侧主动给云端的 freshness 失效提示。docs/ai-architecture.md §4.2
+/// Phase 2 闭环：mobile 检测 stale → 下一次 chat 的 ContextPack 携带
+/// 此 hint → routes/ai.rs 在 dispatch 前清掉 freshness_meta → 工具
+/// dispatch 调 ensure_fresh 时自然重算。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct FreshnessHint {
+    #[serde(default)]
+    pub force_refresh_read_models: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TaskContext {
     pub route: RouteContext,
@@ -214,6 +224,8 @@ pub struct TaskContext {
     pub retrieved: Vec<SemanticHit>,
     #[serde(default)]
     pub aggregates: Vec<ScopedAggregate>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub freshness_hint: Option<FreshnessHint>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
