@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
@@ -12,6 +13,7 @@ import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/domain/asset.dart';
+import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
@@ -146,11 +148,15 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     final localHlc = await ref.read(syncLocalHlcProvider.future);
     final localHlcText = localHlc?.toString();
 
-    // Wave 11 — derive AnalyticalUpload list from end-side detector
-    // outputs. Phase 1 source is the existing anomaly insight; future
-    // waves add recurring_pattern once a canonical TransactionInput
-    // stream is wired.
-    final analyticalUploads = _buildAnalyticalUploads(anomaly: anomaly);
+    // Wave 11/15 — derive AnalyticalUpload list from end-side detector
+    // outputs. anomaly_flag comes from expenseAnomalyInsightProvider
+    // (Wave 11); recurring_pattern comes from detectRecurring() on the
+    // expense stream (Wave 15).
+    final expenses = await _readExpensesForRecurring(ref);
+    final analyticalUploads = _buildAnalyticalUploads(
+      anomaly: anomaly,
+      expenses: expenses,
+    );
 
     final pack = compressor.compress(
       route: route,
@@ -178,13 +184,30 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
   }
 }
 
+/// One-shot read of the user's expenses for the recurring detector.
+/// `journalExpensesStreamProvider` is autoDispose; calling `.future`
+/// gets the first emission then unsubscribes. Returns `[]` on any
+/// failure so chat is never blocked by analytics infra.
+Future<List<Expense>> _readExpensesForRecurring(Ref ref) async {
+  try {
+    return await ref.read(journalExpensesStreamProvider.future);
+  } catch (_) {
+    return const <Expense>[];
+  }
+}
+
 /// Map end-side detector outputs into the wire-form
-/// `AnalyticalUpload` list (§4.3.3). Phase 1 only emits anomaly_flag
-/// derived from `expenseAnomalyInsightProvider`; future waves add
-/// recurring_pattern (once we have a TransactionInput stream
-/// adapter) and subscription_changes.
+/// `AnalyticalUpload` list (§4.3.3).
+///  - anomaly_flag: from `expenseAnomalyInsightProvider` (Wave 11)
+///  - recurring_pattern: from `detectRecurring()` over the expense
+///    stream (Wave 15) — converts Expense → TransactionInput then
+///    runs the rules detector
+///
+/// Future waves add subscription_changes / investment_performance over
+/// the same channel.
 List<AnalyticalUpload> _buildAnalyticalUploads({
   ExpenseAnomalySummary? anomaly,
+  List<Expense> expenses = const <Expense>[],
 }) {
   final out = <AnalyticalUpload>[];
   if (anomaly != null) {
@@ -210,7 +233,52 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
       ),
     );
   }
+
+  // Wave 15: run recurring_detector on expenses, convert each pattern.
+  // Empty list when there are no expenses / no detectable cadence.
+  if (expenses.isNotEmpty) {
+    final transactionInputs = expenses
+        .map(_expenseToTransactionInput)
+        .toList(growable: false);
+    final patterns = detectRecurring(transactionInputs);
+    for (final p in patterns) {
+      out.add(_recurringPatternToUpload(p));
+    }
+  }
+
   return out;
+}
+
+/// Map a domain Expense → a neutral TransactionInput the skill module
+/// consumes. Expense.amount is the positive magnitude (per its docstring);
+/// the detector wants signed minor units (negative = outflow), so we
+/// negate here.
+TransactionInput _expenseToTransactionInput(Expense e) {
+  final cents = (e.amount * Decimal.fromInt(100)).floor().toBigInt();
+  return TransactionInput(
+    id: e.id,
+    description: e.note ?? '',
+    amountMinor: '-$cents',
+    currency: e.currency,
+    occurredAt: e.tradeDate,
+    accountId: e.expenseAccountId,
+    categoryId: e.expenseAccountId,
+  );
+}
+
+AnalyticalUpload _recurringPatternToUpload(RecurringPattern p) {
+  return AnalyticalUpload(
+    kind: 'recurring_pattern',
+    id: '${p.merchantKey}|${p.currency}',
+    payload: <String, Object?>{
+      'merchant_key': p.merchantKey,
+      'cadence': p.cadence.name,
+      'median_amount_minor': p.medianAmountMinor.toString(),
+      'currency': p.currency,
+      'occurrences': p.occurrenceIds.length,
+      'last_seen_at': p.lastSeenAt.toIso8601String(),
+    },
+  );
 }
 
 String _routeAreaFromPath(String path) {
