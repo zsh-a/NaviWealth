@@ -21,4 +21,5 @@ pub mod holdings_snapshot;
 pub mod monthly_spend_by_category;
 pub mod net_worth_snapshot;
 pub mod projection;
+pub mod recurring_patterns;
 pub mod scoped_detail;

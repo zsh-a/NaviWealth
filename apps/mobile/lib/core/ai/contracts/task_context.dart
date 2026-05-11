@@ -258,6 +258,46 @@ class FreshnessHint {
   }
 }
 
+/// 端→云单条分析上报。docs/ai-architecture.md §4.3.3 Analytical 层
+/// 的端侧投影：端是唯一计算者，云端只镜像 device 产物，避免 Dart/Rust
+/// 启发式逻辑双份漂移。
+class AnalyticalUpload {
+  const AnalyticalUpload({
+    required this.kind,
+    required this.id,
+    required this.payload,
+  });
+
+  /// 'recurring_pattern' / 'anomaly_flag' / 'refund_link' /
+  /// 'subscription_change' 等。后端按 kind 路由到对应 read model 表。
+  final String kind;
+
+  /// 设备约定的稳定 id —— 同 (kind, id) 重复上报视为 upsert。
+  /// 例如 recurring_pattern 用 `'<merchant_key>|<currency>'`.
+  final String id;
+
+  final Map<String, Object?> payload;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': kind,
+    'id': id,
+    'payload': payload,
+  };
+
+  factory AnalyticalUpload.fromJson(Map<String, Object?> json) {
+    final k = json['kind'];
+    final i = json['id'];
+    final p = json['payload'];
+    return AnalyticalUpload(
+      kind: k is String ? k : '',
+      id: i is String ? i : '',
+      payload: p is Map
+          ? p.map((k, v) => MapEntry(k.toString(), v))
+          : const <String, Object?>{},
+    );
+  }
+}
+
 class TaskContext {
   const TaskContext({
     required this.route,
@@ -266,6 +306,8 @@ class TaskContext {
     this.retrieved = const <SemanticHit>[],
     this.aggregates = const <ScopedAggregate>[],
     this.freshnessHint,
+    this.analyticalUploads = const <AnalyticalUpload>[],
+    this.deviceHlc,
   });
 
   final RouteContext route;
@@ -275,6 +317,14 @@ class TaskContext {
   final List<ScopedAggregate> aggregates;
   final FreshnessHint? freshnessHint;
 
+  /// 端侧 detector 上报：每条 kind=recurring_pattern/anomaly_flag/...
+  /// 后端镜像入对应 device-sourced read model。
+  final List<AnalyticalUpload> analyticalUploads;
+
+  /// 端侧本地最新 HLC（同 syncLocalHlcProvider 的字符串形式），作为本
+  /// 批 analytical_uploads 的 source_hlc_watermark。Null = 没上报。
+  final String? deviceHlc;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'route': route.toJson(),
     'intent': intent.toJson(),
@@ -283,12 +333,17 @@ class TaskContext {
     'aggregates': aggregates.map((a) => a.toJson()).toList(growable: false),
     if (freshnessHint != null && !freshnessHint!.isEmpty)
       'freshness_hint': freshnessHint!.toJson(),
+    if (analyticalUploads.isNotEmpty)
+      'analytical_uploads':
+          analyticalUploads.map((u) => u.toJson()).toList(growable: false),
+    if (deviceHlc != null && deviceHlc!.isNotEmpty) 'device_hlc': deviceHlc,
   };
 
   factory TaskContext.fromJson(Map<String, Object?> json) {
     final route = json['route'];
     final intent = json['intent'];
     final hint = json['freshness_hint'];
+    final dh = json['device_hlc'];
     return TaskContext(
       route: route is Map
           ? RouteContext.fromJson(_strKeyed(route))
@@ -305,6 +360,11 @@ class TaskContext {
       freshnessHint: hint is Map
           ? FreshnessHint.fromJson(_strKeyed(hint))
           : null,
+      analyticalUploads: _list(
+        json['analytical_uploads'],
+        AnalyticalUpload.fromJson,
+      ),
+      deviceHlc: dh is String ? dh : null,
     );
   }
 }
