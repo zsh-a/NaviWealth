@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 19] = [
+const DESCRIPTORS: [ToolDescriptor; 21] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -132,11 +132,25 @@ const DESCRIPTORS: [ToolDescriptor; 19] = [
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Small,
     },
-    // Scoped Detail tool (docs/ai-architecture.md §4.3.4) — drill-down
+    // Scoped Detail tools (docs/ai-architecture.md §4.3.4) — drill-down
     // 仅在 LLM 真正需要明细时调用；要求更高的 ContextPack tier 让常规
     // 路由不轻易触发。
     ToolDescriptor {
         name: "read_category_window",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Standard,
+    },
+    ToolDescriptor {
+        name: "read_account_window",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Standard,
+    },
+    ToolDescriptor {
+        name: "read_asset_window",
         access: Access::Read,
         risk: RiskLevel::Info,
         requires_confirmation: Confirmation::None,

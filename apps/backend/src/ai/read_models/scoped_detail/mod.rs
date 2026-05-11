@@ -13,4 +13,7 @@
 //! 的「按类目过滤」用法。后续可加 `read_account_window` /
 //! `read_asset_window` 共用此模块的 sanitisation + freshness 公约。
 
+pub mod account_window;
+pub mod asset_window;
 pub mod category_window;
+pub mod common;

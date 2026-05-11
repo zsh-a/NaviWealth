@@ -262,6 +262,59 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "read_account_window".into(),
+            description: "Scoped Detail：返回某账户在指定窗口内的交易明细（drill-down）。\
+                          只在用户问「这张卡上花了哪些」需要例证时调用；首选 Snapshot 工具回答聚合性问题。\
+                          硬限额：窗口 ≤ 31 天，limit ≤ 50。明细字段已脱敏：merchant_hashed + category。\
+                          purpose 必填，用于 AiTrace 审计。可选 category / min_amount_minor / max_amount_minor。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["account_id", "from", "to", "purpose"],
+                "properties": {
+                    "account_id": { "type": "string" },
+                    "from":       { "type": "string", "description": "ISO 起点（包含）" },
+                    "to":         { "type": "string", "description": "ISO 终点（不包含），to - from ≤ 31 天" },
+                    "purpose": {
+                        "type": "string",
+                        "enum": [
+                            "drill_down_expense", "drill_down_investment",
+                            "refund_matching", "anomaly_explain",
+                            "recurring_detect", "other"
+                        ]
+                    },
+                    "limit":            { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
+                    "category":         { "type": "string", "description": "可选；按类目二次过滤" },
+                    "min_amount_minor": { "type": "integer", "description": "可选；最小 signed minor units" },
+                    "max_amount_minor": { "type": "integer", "description": "可选；最大 signed minor units" }
+                }
+            }),
+        },
+        ToolSchema {
+            name: "read_asset_window".into(),
+            description: "Scoped Detail：返回某资产在指定窗口内的交易腿（数量变动 + 单价）。\
+                          适合「AAPL 这个月有几次买卖」「这只 ETF 最近调仓」之类的 drill-down。\
+                          硬限额：窗口 ≤ 31 天，limit ≤ 50。返回 qty_delta（signed）+ side (buy/sell) + cost_per_unit + currency；\
+                          天然脱敏（不含 merchant 信息）。purpose 必填。".into(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["asset_id", "from", "to", "purpose"],
+                "properties": {
+                    "asset_id": { "type": "string" },
+                    "from":     { "type": "string" },
+                    "to":       { "type": "string" },
+                    "purpose": {
+                        "type": "string",
+                        "enum": [
+                            "drill_down_expense", "drill_down_investment",
+                            "refund_matching", "anomaly_explain",
+                            "recurring_detect", "other"
+                        ]
+                    },
+                    "limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+                }
+            }),
+        },
+        ToolSchema {
             name: "read_category_window".into(),
             description: "Scoped Detail 工具：返回某一类目在指定时间窗口内的交易明细（drill-down）。\
                           只在用户问「为什么 / 哪些」需要例证时调用 —— 默认应当先用 \
@@ -466,6 +519,8 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
             "get_recurring_patterns" => get_recurring_patterns(ctx, input).await,
             "get_anomaly_flags" => get_anomaly_flags(ctx, input).await,
+            "read_account_window" => read_account_window(ctx, input).await,
+            "read_asset_window" => read_asset_window(ctx, input).await,
             "read_category_window" => read_category_window(ctx, input).await,
             // FIR-66 write proposals — never persist; always return a plan.
             "propose_trade" => proposals::propose_trade(ctx, input).await,
@@ -1748,6 +1803,24 @@ async fn read_category_window(
     use super::read_models::scoped_detail::category_window;
     let parsed = category_window::parse_input(input)?;
     category_window::run(ctx.db, ctx.user_id, &parsed).await
+}
+
+async fn read_account_window(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::scoped_detail::account_window;
+    let parsed = account_window::parse_input(input)?;
+    account_window::run(ctx.db, ctx.user_id, &parsed).await
+}
+
+async fn read_asset_window(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::scoped_detail::asset_window;
+    let parsed = asset_window::parse_input(input)?;
+    asset_window::run(ctx.db, ctx.user_id, &parsed).await
 }
 
 fn summarize_buckets(
