@@ -159,6 +159,7 @@ mod tests {
             "get_cashflow_buckets",
             "get_recurring_patterns",
             "get_anomaly_flags",
+            "get_xirr_summary",
             "read_category_window",
             "read_account_window",
             "read_asset_window",

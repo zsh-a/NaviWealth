@@ -237,6 +237,19 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_xirr_summary".into(),
+            description: "返回当前 portfolio + 每个有现金流的 asset 的年化 XIRR (全时间窗口)。\
+                          数据来自 AI Read Model `xirr_snapshot`（Analytical P2，cloud-projected —— \
+                          与 device-sourced 不同，XIRR 是 Newton-Raphson 确定性算法，云端能直接 project）。\
+                          每行: scope (portfolio 或 asset_id) + xirr (可能 null：单边/不收敛/数据不足) + \
+                          flow_count + primary_currency + multi_currency。\
+                          需要自定义时间窗的 XIRR 仍走 compute_xirr (legacy inline path).".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {}
+            }),
+        },
+        ToolSchema {
             name: "get_cashflow_buckets".into(),
             description: "返回最近 N 个月的现金 inflow / outflow 分桶。\
                           数据来自 AI Read Model `cashflow_buckets`（Snapshot 层 P1）—— \
@@ -519,6 +532,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
             "get_recurring_patterns" => get_recurring_patterns(ctx, input).await,
             "get_anomaly_flags" => get_anomaly_flags(ctx, input).await,
+            "get_xirr_summary" => get_xirr_summary(ctx, input).await,
             "read_account_window" => read_account_window(ctx, input).await,
             "read_asset_window" => read_asset_window(ctx, input).await,
             "read_category_window" => read_category_window(ctx, input).await,
@@ -1628,6 +1642,41 @@ async fn get_net_worth_summary(
 }
 
 // ---------------------------------------------------------------------------
+// get_xirr_summary — Analytical P2 (§4.3.3, cloud-projected)
+// ---------------------------------------------------------------------------
+
+async fn get_xirr_summary(ctx: &ToolCtx<'_>, _input: &Value) -> Result<Value, AppError> {
+    use super::read_models::projection::ensure_fresh;
+    use super::read_models::xirr_snapshot::{query_all, XirrSnapshot};
+
+    let proj = XirrSnapshot;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+    let rows = query_all(ctx.db, ctx.user_id).await?;
+
+    let series: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "scope":            r.scope,
+                "xirr":             r.xirr,
+                "flow_count":       r.flow_count,
+                "primary_currency": r.primary_currency,
+                "multi_currency":   r.multi_currency,
+                "approximation":    r.approximation,
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "rows":      series,
+        "count":     series.len(),
+        "freshness": freshness,
+        "source":    "read_model",
+        "note":      "全时间窗口 XIRR；自定义 from/to 走 compute_xirr。multi_currency=true 时算法跨币种相加，结果仅作粗略参考。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_anomaly_flags — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
@@ -1941,6 +1990,9 @@ mod tests {
             "get_cashflow_buckets",
             "get_recurring_patterns",
             "get_anomaly_flags",
+            "get_xirr_summary",
+            "read_account_window",
+            "read_asset_window",
             "read_category_window",
             "propose_trade",
             "propose_expense",
