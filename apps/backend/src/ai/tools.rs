@@ -959,6 +959,18 @@ fn next_step(d: DateTime<Utc>, granularity: &str) -> DateTime<Utc> {
 }
 
 async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    let granularity = input
+        .get("granularity")
+        .and_then(|v| v.as_str())
+        .unwrap_or("month");
+
+    // Granularity=month 走 Read Model 主通道（docs/ai-architecture.md §4.3.2）。
+    // day/week 仍走 inline —— net_worth_snapshot 当前只存月粒度
+    // (Phase 1 简化，§4.3 表脚注)。
+    if granularity == "month" {
+        return compute_net_worth_monthly(ctx, input).await;
+    }
+
     let now = Utc::now();
     let from = input
         .get("from")
@@ -970,10 +982,6 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         .and_then(|v| v.as_str())
         .and_then(parse_iso)
         .unwrap_or(now);
-    let granularity = input
-        .get("granularity")
-        .and_then(|v| v.as_str())
-        .unwrap_or("month");
     let base_currency = requested_base_currency(input, ctx.portfolio_snapshot);
 
     let assets = load_payloads(ctx.db, ctx.user_id, "assets").await?;
@@ -1075,6 +1083,91 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
         "conversion_gaps": conversion_gaps,
         "approximation": true,
         "note":          "使用累计现金流 - 当前负债余额近似净资产；指定 base_currency 时只汇总同币种现金流，并附带客户端 snapshot 的当前持仓 base 市值。conversion_gaps 列出缺少 FX 的现金流。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
+// compute_net_worth — Read Model 主通道（granularity=month）
+// ---------------------------------------------------------------------------
+
+async fn compute_net_worth_monthly(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::net_worth_snapshot::{query_range, NetWorthSnapshot};
+    use super::read_models::projection::ensure_fresh;
+
+    let now = Utc::now();
+    let from = input
+        .get("from")
+        .and_then(|v| v.as_str())
+        .and_then(parse_iso)
+        .unwrap_or(now - Duration::days(365));
+    let to = input
+        .get("to")
+        .and_then(|v| v.as_str())
+        .and_then(parse_iso)
+        .unwrap_or(now);
+    let base_currency = requested_base_currency(input, ctx.portfolio_snapshot);
+
+    let proj = NetWorthSnapshot;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+
+    let from_ym = format!("{:04}-{:02}", from.year(), from.month());
+    let to_ym = format!("{:04}-{:02}", to.year(), to.month());
+
+    let rows = query_range(
+        ctx.db,
+        ctx.user_id,
+        &from_ym,
+        &to_ym,
+        base_currency.as_deref(),
+    )
+    .await?;
+
+    // 负债仍 inline 算（balance 模型不在 read_model 范围；§4.3.2 表脚注）
+    let liabilities = load_payloads(ctx.db, ctx.user_id, "liabilities").await?;
+    let total_liabilities: f64 = liabilities
+        .iter()
+        .map(|(_, p)| payload_num(p, "principal").unwrap_or(0.0))
+        .sum();
+
+    let current_holdings_base = base_currency
+        .as_deref()
+        .and_then(|base| snapshot_total_base(ctx.portfolio_snapshot, "market_value_base", base));
+
+    let series: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            let value = (r.cumulative_minor as f64) / 100.0 - total_liabilities;
+            // Read model 月粒度 —— 标记到月初 00:00 UTC，对应 ISO 字符串
+            // 与 inline 路径 next_step() 起点一致。
+            let date_str = format!("{}-01T00:00:00+00:00", r.year_month);
+            json!({
+                "date":          date_str,
+                "value":         value,
+                "currency":      r.currency,
+                "base_currency": base_currency.as_deref(),
+            })
+        })
+        .collect();
+
+    Ok(json!({
+        "from":          from.to_rfc3339(),
+        "to":            to.to_rfc3339(),
+        "granularity":   "month",
+        "series":        series,
+        "base_currency": base_currency.as_deref(),
+        "current_snapshot": current_holdings_base.map(|holdings| json!({
+            "as_of": ctx.portfolio_snapshot.and_then(|s| s.get("as_of")).and_then(|v| v.as_str()),
+            "holdings_market_value_base": holdings,
+            "base_currency": base_currency.as_deref(),
+            "source": "client_portfolio_snapshot",
+        })),
+        "conversion_source": "read_model",
+        "freshness":     freshness,
+        "approximation": true,
+        "note":          "数据源 net_worth_snapshot Read Model（月粒度，每币种累计现金流）— 当前负债余额仍是 inline 算；指定 base_currency 时只取同币种行（无 conversion_gaps，未匹配的币种被服务端过滤）。",
     }))
 }
 
