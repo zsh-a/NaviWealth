@@ -15,6 +15,7 @@
 //! 落后于 op_log 时同步重算。后续 hot read model 可改为 write-side 触发
 //! 同步刷新 (§4.3.6)。
 
+pub mod anomaly_flags;
 pub mod cashflow_buckets;
 pub mod freshness;
 pub mod holdings_snapshot;
