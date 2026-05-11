@@ -53,6 +53,7 @@ class ContextCompressor {
     double? expenseAnomalyDelta,
     int? depositMaturityCount,
     int? depositMaturityDays,
+    FreshnessHint? freshnessHint,
   }) {
     final signals = <RecentSignal>[];
     if (expenseAnomalyDelta != null) {
@@ -83,6 +84,7 @@ class ContextCompressor {
       route: route,
       intent: intent,
       signals: List<RecentSignal>.unmodifiable(signals),
+      freshnessHint: freshnessHint,
     );
   }
 
@@ -96,6 +98,7 @@ class ContextCompressor {
     double? expenseAnomalyDelta,
     int? depositMaturityCount,
     int? depositMaturityDays,
+    FreshnessHint? freshnessHint,
     PrivacyBudget budget = PrivacyBudget.standard,
   }) {
     final pack = ContextPack(
@@ -107,6 +110,7 @@ class ContextCompressor {
         expenseAnomalyDelta: expenseAnomalyDelta,
         depositMaturityCount: depositMaturityCount,
         depositMaturityDays: depositMaturityDays,
+        freshnessHint: freshnessHint,
       ),
       budget: budget,
     );
