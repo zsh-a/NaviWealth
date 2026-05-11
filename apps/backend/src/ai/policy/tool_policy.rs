@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 14] = [
+const DESCRIPTORS: [ToolDescriptor; 16] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -95,13 +95,30 @@ const DESCRIPTORS: [ToolDescriptor; 14] = [
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Standard,
     },
-    // Snapshot-layer read model (docs/ai-architecture.md §4.3.2)
+    // Snapshot-layer read models (docs/ai-architecture.md §4.3.2)
     ToolDescriptor {
         name: "get_monthly_spend_by_category",
         access: Access::Read,
         risk: RiskLevel::Info,
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Small,
+    },
+    ToolDescriptor {
+        name: "get_net_worth_summary",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
+    },
+    // Scoped Detail tool (docs/ai-architecture.md §4.3.4) — drill-down
+    // 仅在 LLM 真正需要明细时调用；要求更高的 ContextPack tier 让常规
+    // 路由不轻易触发。
+    ToolDescriptor {
+        name: "read_category_window",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Standard,
     },
     // ── Propose tools (FIR-66) ─────────────────────────────────
     ToolDescriptor {

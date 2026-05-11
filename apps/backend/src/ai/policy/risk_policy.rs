@@ -155,6 +155,8 @@ mod tests {
             "get_market_cap_breakdown",
             "get_risk_alerts",
             "get_monthly_spend_by_category",
+            "get_net_worth_summary",
+            "read_category_window",
             "propose_trade",
             "propose_expense",
             "propose_liability_payment",
