@@ -21,6 +21,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/providers.dart';
+import '../../../core/ai/visual/visual.dart';
 import 'ai_trace_timeline.dart';
 
 // ===========================================================================
@@ -78,16 +79,17 @@ class _TraceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final ts = Theme.of(context).textTheme;
     final title = _displayTitle(trace);
     final source = _displaySource(trace);
     final isError = trace.terminalReason != TerminalReason.done;
     return ListTile(
-      leading: _StatusDot(error: isError, color: isError ? cs.error : cs.primary),
+      leading: _StatusDot(
+        error: isError,
+        color: isError ? AiTone.error(context) : AiTone.active(context),
+      ),
       title: Text(
         title,
-        style: ts.bodyLarge,
+        style: AiType.body(context).copyWith(fontWeight: FontWeight.w500),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -97,27 +99,22 @@ class _TraceRow extends StatelessWidget {
           spacing: 6,
           runSpacing: 6,
           children: [
-            if (source != null) _Chip(label: source, tone: cs.primary),
-            _Chip(label: '${trace.totalDurationMs} ms'),
-            _Chip(label: trace.backend.wire),
+            if (source != null)
+              AiPill(label: source, state: AiPillState.selected),
+            AiPill(label: '${trace.totalDurationMs} ms'),
+            AiPill(label: trace.backend.wire),
             if (trace.toolCalls.isNotEmpty)
-              _Chip(
-                label: '🔧 ${trace.toolCalls.length}',
-                tone: cs.outline,
-              ),
+              AiPill(label: '🔧 ${trace.toolCalls.length}'),
             if (trace.staleReadModels > 0)
-              _Chip(
-                label: '过期 ×${trace.staleReadModels}',
-                tone: cs.tertiary,
-              ),
+              AiPill(label: '过期 ×${trace.staleReadModels}'),
             if (isError)
-              _Chip(label: trace.terminalReason.wire, tone: cs.error),
+              AiPill(label: trace.terminalReason.wire, state: AiPillState.error),
           ],
         ),
       ),
       trailing: Text(
         _shortTimestamp(trace.startedAtIso),
-        style: ts.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+        style: AiType.meta(context),
       ),
       onTap: () => context.goNamed(
         AppRouteNames.aiTransparencyDetail,
@@ -167,29 +164,6 @@ class _StatusDot extends StatelessWidget {
           color: color,
           shape: BoxShape.circle,
         ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, this.tone});
-  final String label;
-  final Color? tone;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final color = tone ?? cs.outline;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
       ),
     );
   }
@@ -249,29 +223,27 @@ class _HeaderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final ts = Theme.of(context).textTheme;
     final intent = trace.invocation?['intent']?.toString();
     final title = intent ?? trace.intent.label ?? '(unnamed turn)';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: ts.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        Row(
+          children: [
+            const AiSparkle(),
+            const SizedBox(width: 6),
+            Expanded(child: Text(title, style: AiType.title(context))),
+          ],
         ),
         const SizedBox(height: 4),
         Text(
           '$eventCount 个事件 · 始于 ${_longTimestamp(trace.startedAtIso)}',
-          style: ts.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+          style: AiType.meta(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         SelectableText(
           'request_id ${trace.requestId}',
-          style: ts.labelSmall?.copyWith(
-            color: cs.onSurfaceVariant,
-            fontFamily: 'monospace',
-          ),
+          style: AiType.meta(context).copyWith(fontFamily: 'monospace'),
         ),
       ],
     );
