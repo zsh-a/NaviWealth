@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/intent/intent.dart';
+import '../../../core/ai/write/write.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
@@ -287,20 +288,27 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
                     if (widget.isEdit && widget.expenseId != null) ...[
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: AiObjectCapsule(
-                          source: 'expense_detail',
-                          intent: 'explain_change',
-                          object: AiObjectRef(
-                            type: 'expense',
-                            id: widget.expenseId!,
+                      Row(
+                        children: [
+                          AiObjectCapsule(
+                            source: 'expense_detail',
+                            intent: 'explain_change',
+                            object: AiObjectRef(
+                              type: 'expense',
+                              id: widget.expenseId!,
+                            ),
+                            objectLabel: _objectLabelForCapsule(l10n),
+                            context: const <String, Object?>{
+                              'timeframe': '最近 90 天',
+                            },
                           ),
-                          objectLabel: _objectLabelForCapsule(l10n),
-                          context: const <String, Object?>{
-                            'timeframe': '最近 90 天',
-                          },
-                        ),
+                          const SizedBox(width: 8),
+                          // Wave 39 — AiSourceMark when this expense was
+                          // last touched by an AI proposal apply. The
+                          // mark is decorative; tooltip carries the
+                          // explainer.
+                          _AiTouchMark(entityId: widget.expenseId!),
+                        ],
                       ),
                       const SizedBox(height: 8),
                     ],
@@ -464,5 +472,35 @@ class _NoAccountsHint extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Wave 39 — small consumer that surfaces `AiSourceMark` only when the
+/// expense was AI-touched recently. Keeps the widget tree clean in
+/// non-AI cases (most expense rows have no touch record).
+///
+/// Threshold: 30 days. Older touches are filtered out — the mark
+/// should reflect "this might have been AI-created", not "this was
+/// AI-created two years ago".
+class _AiTouchMark extends ConsumerWidget {
+  const _AiTouchMark({required this.entityId});
+
+  final String entityId;
+
+  static const _staleAfter = Duration(days: 30);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final touchAsync = ref.watch(
+      aiTouchedAtProvider((entityType: 'journal_entries', entityId: entityId)),
+    );
+    final touch = touchAsync.value;
+    if (touch == null) return const SizedBox.shrink();
+    final age = DateTime.now().toUtc().difference(touch.touchedAt);
+    if (age > _staleAfter) return const SizedBox.shrink();
+    final tooltip = touch.kindLabel == null
+        ? '由 AI 提议修改'
+        : '由 AI 提议修改（${touch.kindLabel}）';
+    return AiSourceMark(tooltipZh: tooltip);
   }
 }
