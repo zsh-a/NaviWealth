@@ -28,9 +28,9 @@ use crate::ai::read_models::projection::{latest_op_log_hlc, now_iso};
 use crate::error::AppError;
 
 use super::common::{
-    excerpt, hash_merchant, load_payloads, parse_iso_required, parse_limit,
-    parse_purpose, payload_num, payload_str, validate_range,
-    CALCULATION_VERSION, NOTE_EXCERPT_CHARS, SCHEMA_VERSION,
+    excerpt, hash_merchant, load_payloads, parse_iso_required, parse_limit, parse_purpose,
+    payload_num, payload_str, validate_range, CALCULATION_VERSION, NOTE_EXCERPT_CHARS,
+    SCHEMA_VERSION,
 };
 
 const READ_MODEL_NAME: &str = "scoped_detail/account_window";
@@ -81,24 +81,14 @@ pub fn parse_input(raw: &Value) -> Result<Input, AppError> {
     })
 }
 
-pub async fn run(
-    db: &D1Database,
-    user_id: &str,
-    input: &Input,
-) -> Result<Value, AppError> {
+pub async fn run(db: &D1Database, user_id: &str, input: &Input) -> Result<Value, AppError> {
     let watermark = latest_op_log_hlc(db, user_id).await?.unwrap_or_default();
 
     let entries = load_payloads(db, user_id, "journal_entries").await?;
     let postings = load_payloads(db, user_id, "postings").await?;
     let accounts = load_payloads(db, user_id, "accounts").await?;
 
-    let result = filter_and_sanitise(
-        &entries,
-        &postings,
-        &accounts,
-        input,
-        user_id,
-    );
+    let result = filter_and_sanitise(&entries, &postings, &accounts, input, user_id);
 
     Ok(json!({
         "summary":      result.summary,
@@ -225,7 +215,10 @@ pub(crate) fn filter_and_sanitise(
             Some(c) if c != h.currency => mixed_currency = true,
             _ => {}
         }
-        let merchant_hashed = h.note.filter(|s| !s.is_empty()).map(|n| hash_merchant(n, user_id));
+        let merchant_hashed = h
+            .note
+            .filter(|s| !s.is_empty())
+            .map(|n| hash_merchant(n, user_id));
         transactions.push(json!({
             "id":              h.entry_id,
             "occurred_at":     h.date.to_rfc3339(),
@@ -365,13 +358,7 @@ mod tests {
         let accounts = vec![account("acc_visa", "credit")];
         let mut inp = input("acc_visa", "2026-04-01", "2026-05-01");
         inp.category = Some("food".into());
-        let out = filter_and_sanitise(
-            &entries,
-            &postings,
-            &accounts,
-            &inp,
-            "user_1",
-        );
+        let out = filter_and_sanitise(&entries, &postings, &accounts, &inp, "user_1");
         assert_eq!(out.transactions.len(), 1);
         assert_eq!(out.transactions[0]["category"], "food");
     }
@@ -379,7 +366,14 @@ mod tests {
     #[test]
     fn limit_truncates_but_count_reflects_total() {
         let entries: Vec<(String, Value)> = (0..15)
-            .map(|i| entry(&format!("e{i}"), &format!("2026-04-{:02}T10:00:00Z", (i % 28) + 1), "food", "x"))
+            .map(|i| {
+                entry(
+                    &format!("e{i}"),
+                    &format!("2026-04-{:02}T10:00:00Z", (i % 28) + 1),
+                    "food",
+                    "x",
+                )
+            })
             .collect();
         let postings: Vec<(String, Value)> = (0..15)
             .map(|i| posting(&format!("e{i}"), "acc_visa", "USD", -1.0))
@@ -387,13 +381,7 @@ mod tests {
         let accounts = vec![account("acc_visa", "credit")];
         let mut inp = input("acc_visa", "2026-04-01", "2026-05-01");
         inp.limit = 5;
-        let out = filter_and_sanitise(
-            &entries,
-            &postings,
-            &accounts,
-            &inp,
-            "user_1",
-        );
+        let out = filter_and_sanitise(&entries, &postings, &accounts, &inp, "user_1");
         assert_eq!(out.transactions.len(), 5);
         assert_eq!(out.summary["count"], 15);
         assert_eq!(out.summary["returned"], 5);

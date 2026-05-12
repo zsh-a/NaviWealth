@@ -13,8 +13,8 @@ pub(crate) const DESCRIPTION: &str =
     "提议创建一个新账户（券商 / 银行 / 现金 / 实物资产 / 负债）。返回 plan + 预分配 id。\
                           后续 propose_trade / propose_expense 可以引用这个 id。";
 
-pub fn schema() -> crate::ai::anthropic::ToolSchema {
-    crate::ai::anthropic::ToolSchema {
+pub fn schema() -> crate::ai::adapters::anthropic::wire::ToolSchema {
+    crate::ai::adapters::anthropic::wire::ToolSchema {
         name: "propose_account_create".into(),
         description: DESCRIPTION.into(),
         input_schema: input_schema(),

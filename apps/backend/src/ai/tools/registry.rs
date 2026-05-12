@@ -4,7 +4,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use serde_json::Value;
 
-use super::super::anthropic::ToolSchema;
+use super::super::adapters::anthropic::wire::ToolSchema;
 use super::super::policy::ToolDescriptor;
 use super::ToolCtx;
 use crate::error::AppError;

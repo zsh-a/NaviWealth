@@ -139,32 +139,137 @@ const fn proposal(name: &'static str, tier: BudgetTier) -> ToolDescriptor {
 
 const DESCRIPTORS: [ToolDescriptor; 27] = [
     // ── Read tools without a read_model layer (inline computers / legacy) ─
-    read_only("get_holdings", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Snapshot)),
-    read_only("get_journal_entries", RiskLevel::Info, BudgetTier::Small, None),
+    read_only(
+        "get_holdings",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_journal_entries",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        None,
+    ),
     read_only("compute_xirr", RiskLevel::Info, BudgetTier::Standard, None),
-    read_only("compute_net_worth", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Snapshot)),
-    read_only("get_industry_breakdown", RiskLevel::Info, BudgetTier::Standard, Some(ReadModelLayer::Snapshot)),
-    read_only("get_geo_breakdown", RiskLevel::Info, BudgetTier::Standard, Some(ReadModelLayer::Snapshot)),
-    read_only("get_market_cap_breakdown", RiskLevel::Info, BudgetTier::Standard, Some(ReadModelLayer::Snapshot)),
-    read_only("get_risk_alerts", RiskLevel::Suggest, BudgetTier::Standard, Some(ReadModelLayer::Snapshot)),
+    read_only(
+        "compute_net_worth",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_industry_breakdown",
+        RiskLevel::Info,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_geo_breakdown",
+        RiskLevel::Info,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_market_cap_breakdown",
+        RiskLevel::Info,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_risk_alerts",
+        RiskLevel::Suggest,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::Snapshot),
+    ),
     // ── Snapshot-layer read models (docs/ai-architecture.md §4.3.2) ──────
-    read_only("get_monthly_spend_by_category", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Snapshot)),
-    read_only("get_net_worth_summary", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Snapshot)),
-    read_only("get_cashflow_buckets", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Snapshot)),
-    read_only("get_asset_allocation", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Snapshot)),
+    read_only(
+        "get_monthly_spend_by_category",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_net_worth_summary",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_cashflow_buckets",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Snapshot),
+    ),
+    read_only(
+        "get_asset_allocation",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Snapshot),
+    ),
     // ── Analytical-layer (cloud-projected) ──────────────────────────────
-    read_only("get_xirr_summary", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
+    read_only(
+        "get_xirr_summary",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
     // ── Analytical-layer (device-sourced) ───────────────────────────────
-    read_only("get_recurring_patterns", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
-    read_only("get_anomaly_flags", RiskLevel::Suggest, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
-    read_only("get_refund_links", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
-    read_only("get_transfer_links", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
-    read_only("get_investment_performance", RiskLevel::Info, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
-    read_only("get_subscription_changes", RiskLevel::Suggest, BudgetTier::Small, Some(ReadModelLayer::Analytical)),
+    read_only(
+        "get_recurring_patterns",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
+    read_only(
+        "get_anomaly_flags",
+        RiskLevel::Suggest,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
+    read_only(
+        "get_refund_links",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
+    read_only(
+        "get_transfer_links",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
+    read_only(
+        "get_investment_performance",
+        RiskLevel::Info,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
+    read_only(
+        "get_subscription_changes",
+        RiskLevel::Suggest,
+        BudgetTier::Small,
+        Some(ReadModelLayer::Analytical),
+    ),
     // ── Scoped Detail (drill-down, higher tier) ─────────────────────────
-    read_only("read_category_window", RiskLevel::Info, BudgetTier::Standard, Some(ReadModelLayer::ScopedDetail)),
-    read_only("read_account_window", RiskLevel::Info, BudgetTier::Standard, Some(ReadModelLayer::ScopedDetail)),
-    read_only("read_asset_window", RiskLevel::Info, BudgetTier::Standard, Some(ReadModelLayer::ScopedDetail)),
+    read_only(
+        "read_category_window",
+        RiskLevel::Info,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::ScopedDetail),
+    ),
+    read_only(
+        "read_account_window",
+        RiskLevel::Info,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::ScopedDetail),
+    ),
+    read_only(
+        "read_asset_window",
+        RiskLevel::Info,
+        BudgetTier::Standard,
+        Some(ReadModelLayer::ScopedDetail),
+    ),
     // ── Propose tools (FIR-66) ──────────────────────────────────────────
     proposal("propose_trade", BudgetTier::Standard),
     proposal("propose_expense", BudgetTier::Small),
@@ -220,7 +325,10 @@ mod tests {
         for d in descriptors() {
             if matches!(d.read_model_layer, Some(ReadModelLayer::ScopedDetail)) {
                 assert!(
-                    matches!(d.allowed_context_tier, BudgetTier::Standard | BudgetTier::Large),
+                    matches!(
+                        d.allowed_context_tier,
+                        BudgetTier::Standard | BudgetTier::Large
+                    ),
                     "scoped detail tool {} must not be Small-tier (drill-down protection)",
                     d.name
                 );

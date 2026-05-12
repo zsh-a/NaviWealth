@@ -206,11 +206,7 @@ pub async fn query_all(
                  WHERE user_id = ?1 AND currency = ?2 AND cadence = ?3
                  ORDER BY occurrences DESC, last_seen_at DESC",
             )
-            .bind_refs([
-                &D1Type::Text(user_id),
-                &D1Type::Text(c),
-                &D1Type::Text(d),
-            ])
+            .bind_refs([&D1Type::Text(user_id), &D1Type::Text(c), &D1Type::Text(d)])
             .map_err(|e| AppError::Internal(format!("bind: {e}")))?,
     };
     let raw: Vec<RowSelect> = stmt

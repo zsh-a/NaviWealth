@@ -17,8 +17,8 @@ pub(crate) const DESCRIPTION: &str = "提议一笔证券 / 加密交易（买入
                           - 缺少字段时优先反问用户，不要硬编值。\
                           - 日期相对值（昨天 / 上周三）请你解析为 ISO-8601 后传入。";
 
-pub fn schema() -> crate::ai::anthropic::ToolSchema {
-    crate::ai::anthropic::ToolSchema {
+pub fn schema() -> crate::ai::adapters::anthropic::wire::ToolSchema {
+    crate::ai::adapters::anthropic::wire::ToolSchema {
         name: "propose_trade".into(),
         description: DESCRIPTION.into(),
         input_schema: input_schema(),
