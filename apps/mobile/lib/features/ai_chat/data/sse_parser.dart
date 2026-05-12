@@ -90,6 +90,28 @@ AiChatEvent? _decodeFrame(_RawSseFrame frame) {
   final m = json.map((k, v) => MapEntry(k.toString(), v));
 
   switch (frame.event) {
+    case 'text_delta':
+      final text = m['text'];
+      if (text is! String) return null;
+      return TextEvent(text);
+    case 'thinking_delta':
+      final text = m['text'];
+      if (text is! String) return null;
+      return ThinkingDeltaEvent(text);
+    case 'tool_call_start':
+      final id = m['id'];
+      final name = m['name'];
+      if (id is! String || name is! String) return null;
+      return ToolCallStartEvent(id: id, name: name);
+    case 'tool_call_delta':
+      final id = m['id'];
+      final partial = m['partial_input_json'];
+      if (id is! String || partial is! String) return null;
+      return ToolCallDeltaEvent(id: id, partialInputJson: partial);
+    case 'tool_call_end':
+      final id = m['id'];
+      if (id is! String) return null;
+      return ToolCallEvent(id: id, name: '', input: m['input']);
     case 'tool_call':
       final id = m['id'];
       final name = m['name'];
@@ -107,9 +129,22 @@ AiChatEvent? _decodeFrame(_RawSseFrame frame) {
       final text = m['text'];
       if (text is! String) return null;
       return TextEvent(text);
+    case 'usage':
+      return UsageEvent(TokenUsage.fromJson(m));
     case 'error':
       final msg = m['message'];
-      return ErrorEvent(msg is String ? msg : 'unknown error');
+      final code = m['code'];
+      return ErrorEvent(
+        msg is String ? msg : 'unknown error',
+        code: code is String ? code : null,
+      );
+    case 'stop':
+      final reason = m['reason'];
+      final rounds = m['rounds'];
+      return DoneEvent(
+        stopReason: reason is String ? reason : 'unknown',
+        rounds: rounds is int ? rounds : 0,
+      );
     case 'done':
       final stop = m['stop_reason'];
       final rounds = m['rounds'];

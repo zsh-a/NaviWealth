@@ -144,6 +144,7 @@ class ChatRepository {
     String? systemContext,
     String? model,
     CancelToken? cancelToken,
+
     /// Wave 33 — when this turn was triggered through an
     /// [AiIntentInvocation] (capsule / insight / command), pass the
     /// invocation's `toTraceJson()` here so the finalised trace
@@ -239,6 +240,7 @@ class ChatRepository {
     // fresh empty one. Invariant: `segments.length ==
     // invocationOrder.length + 1`.
     final segments = <String>[''];
+    final reasoning = StringBuffer();
     final invocations = <String, ToolInvocation>{};
     final invocationOrder = <String>[];
     final localCancel = cancelToken ?? CancelToken();
@@ -275,6 +277,46 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
+          case ThinkingDeltaEvent(:final text):
+            reasoning.write(text);
+            assistant = assistant.copyWith(reasoningText: reasoning.toString());
+            await _store.updateMessage(assistant);
+          case ToolCallStartEvent(:final id, :final name):
+            if (!invocationOrder.contains(id)) {
+              invocationOrder.add(id);
+              segments.add('');
+            }
+            invocations[id] = ToolInvocation(id: id, name: name, input: null);
+            toolStarts[id] = DateTime.now().toUtc();
+            assistant = assistant.copyWith(
+              toolCalls: [for (final k in invocationOrder) invocations[k]!],
+              textSegments: List<String>.unmodifiable(segments),
+            );
+            await _store.updateMessage(assistant);
+          case ToolCallDeltaEvent(:final id, :final partialInputJson):
+            final existing = invocations[id];
+            if (existing == null) {
+              if (!invocationOrder.contains(id)) {
+                invocationOrder.add(id);
+                segments.add('');
+              }
+              invocations[id] = ToolInvocation(
+                id: id,
+                name: '',
+                input: partialInputJson,
+                partialInputJson: partialInputJson,
+              );
+            } else {
+              invocations[id] = existing.copyWith(
+                input: partialInputJson,
+                partialInputJson: partialInputJson,
+              );
+            }
+            assistant = assistant.copyWith(
+              toolCalls: [for (final k in invocationOrder) invocations[k]!],
+              textSegments: List<String>.unmodifiable(segments),
+            );
+            await _store.updateMessage(assistant);
           case ToolCallEvent(:final id, :final name, :final input):
             // First sighting of this id → close the active text
             // segment and start a new trailing one.
@@ -282,8 +324,14 @@ class ChatRepository {
               invocationOrder.add(id);
               segments.add('');
             }
-            invocations[id] = ToolInvocation(id: id, name: name, input: input);
-            toolStarts[id] = DateTime.now().toUtc();
+            final existing = invocations[id];
+            invocations[id] = ToolInvocation(
+              id: id,
+              name: name.isEmpty ? (existing?.name ?? '') : name,
+              input: input,
+              output: existing?.output,
+            );
+            toolStarts[id] ??= DateTime.now().toUtc();
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
@@ -324,10 +372,7 @@ class ChatRepository {
               // `force_refresh_read_models` into the next ContextPack
               // so the cloud re-projects before dispatching.
               if (freshness != null && localHlcText != null) {
-                if (isStale(
-                  cloud: freshness,
-                  localHlcText: localHlcText,
-                )) {
+                if (isStale(cloud: freshness, localHlcText: localHlcText)) {
                   traceBuilder.markStaleReadModel(freshness.readModel);
                 }
               }
@@ -339,6 +384,9 @@ class ChatRepository {
               status: ChatMessageStatus.errored,
               errorMessage: message,
             );
+            await _store.updateMessage(assistant);
+          case UsageEvent(:final usage):
+            assistant = assistant.copyWith(usage: usage);
             await _store.updateMessage(assistant);
           case DoneEvent(:final stopReason):
             sawDone = true;

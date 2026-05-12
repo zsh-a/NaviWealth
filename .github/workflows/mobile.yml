@@ -5,13 +5,21 @@ on:
     branches: [main]
     paths:
       - 'apps/mobile/**'
+      - 'apps/backend/src/ai/**'
+      - 'apps/backend/src/bin/tool_descriptor_dump.rs'
       - '.github/workflows/mobile.yml'
       - 'codecov.yml'
+      - 'docs/ai-protocol.md'
+      - 'tool/check-tool-descriptors.sh'
   pull_request:
     paths:
       - 'apps/mobile/**'
+      - 'apps/backend/src/ai/**'
+      - 'apps/backend/src/bin/tool_descriptor_dump.rs'
       - '.github/workflows/mobile.yml'
       - 'codecov.yml'
+      - 'docs/ai-protocol.md'
+      - 'tool/check-tool-descriptors.sh'
 
 concurrency:
   group: mobile-${{ github.ref }}
@@ -33,6 +41,9 @@ jobs:
           cache: true
       - run: flutter --version
       - run: flutter pub get
+      - name: Check mobile tool descriptors match backend
+        working-directory: ${{ github.workspace }}
+        run: tool/check-tool-descriptors.sh
       - name: Stub web-only font assets so test asset bundle resolves
         # All five files are gitignored build artifacts (see
         # tool/build-{cn,latin}-fonts.sh). flutter analyze + flutter test
@@ -137,4 +148,3 @@ jobs:
           path: apps/mobile/build/web
           retention-days: 7
           if-no-files-found: error
-

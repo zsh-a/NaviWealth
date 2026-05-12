@@ -245,6 +245,18 @@ void main() {
       expect(decoded.requiresConfirmation, desc.requiresConfirmation);
       expect(decoded.allowedContextTier, desc.allowedContextTier);
     });
+
+    test('mobile descriptor mirror carries all backend tools', () {
+      expect(allToolDescriptors, hasLength(27));
+      expect(
+        lookupToolDescriptor('get_holdings')?.readModelLayer,
+        ReadModelLayer.snapshot,
+      );
+      expect(
+        lookupToolDescriptor('propose_expense')?.sideEffect,
+        SideEffect.deviceLocalWrite,
+      );
+    });
   });
 
   group('AiTrace roundtrip', () {

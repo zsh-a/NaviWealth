@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
+import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 
 import '../../data/db/test_database.dart';
@@ -87,6 +88,13 @@ void main() {
       await store.insertMessage(placeholder);
       final updated = placeholder.copyWith(
         content: '回答',
+        reasoningText: 'checked read models',
+        usage: const TokenUsage(
+          input: 10,
+          output: 5,
+          cacheRead: 2,
+          cacheWrite: 1,
+        ),
         status: ChatMessageStatus.complete,
         toolCalls: [
           const ToolInvocation(id: 't', name: 'compute_xirr', input: {}),
@@ -96,6 +104,8 @@ void main() {
 
       final rows = await store.listMessages('s');
       expect(rows.single.content, '回答');
+      expect(rows.single.reasoningText, 'checked read models');
+      expect(rows.single.usage?.total, 18);
       expect(rows.single.status, ChatMessageStatus.complete);
       expect(rows.single.toolCalls.single.name, 'compute_xirr');
     });

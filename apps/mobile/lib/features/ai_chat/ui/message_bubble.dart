@@ -158,6 +158,10 @@ class _AssistantBubble extends StatelessWidget {
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if ((message.reasoningText ?? '').isNotEmpty) ...[
+          _ReasoningPanel(text: message.reasoningText!),
+          const SizedBox(height: 8),
+        ],
         ..._buildInterleavedBlocks(
           context: context,
           textColor: textColor,
@@ -175,6 +179,13 @@ class _AssistantBubble extends StatelessWidget {
         ],
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
+        if (message.usage != null)
+          _UsageLine(
+            input: message.usage!.input,
+            output: message.usage!.output,
+            cacheRead: message.usage!.cacheRead,
+            cacheWrite: message.usage!.cacheWrite,
+          ),
         if (!isStreaming &&
             !_isError &&
             message.role == ChatRole.assistant &&
@@ -191,9 +202,7 @@ class _AssistantBubble extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: _ReplyChips(
-              toolNames: {
-                for (final t in message.toolCalls) t.name,
-              },
+              toolNames: {for (final t in message.toolCalls) t.name},
               invocationIntent: invocationIntent,
               onTap: onReplyChip!,
             ),
@@ -639,6 +648,73 @@ class _ContinueButton extends StatelessWidget {
             const SizedBox(width: 2),
             Icon(Icons.arrow_forward, size: 14, color: color),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReasoningPanel extends StatelessWidget {
+  const _ReasoningPanel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        title: Text(
+          AppLocalizations.of(context).aiChatThinking,
+          style: context.theme.typography.xs.copyWith(
+            color: colors.mutedForeground,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SelectableText(
+              text,
+              style: context.theme.typography.xs.copyWith(
+                height: 1.45,
+                color: colors.mutedForeground,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UsageLine extends StatelessWidget {
+  const _UsageLine({
+    required this.input,
+    required this.output,
+    required this.cacheRead,
+    required this.cacheWrite,
+  });
+
+  final int input;
+  final int output;
+  final int cacheRead;
+  final int cacheWrite;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Text(
+        'Tokens $input in / $output out / $cacheRead read / $cacheWrite write',
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
+          fontFamily: 'monospace',
         ),
       ),
     );

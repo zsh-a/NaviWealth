@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../../data/db/app_database.dart';
+import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
 
 /// Persistence layer for chat sessions and messages.
@@ -174,8 +175,9 @@ class ChatHistoryStore {
     await _db.customStatement(
       'INSERT INTO chat_messages '
       '(id, session_id, owner_user_id, role, content, tool_calls_json, '
-      ' text_segments_json, status, error_message, stop_reason, created_at) '
-      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)',
+      ' text_segments_json, reasoning_text, usage_json, status, '
+      ' error_message, stop_reason, created_at) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
       <Object?>[
         msg.id,
         msg.sessionId,
@@ -184,6 +186,8 @@ class ChatHistoryStore {
         msg.content,
         msg.toolCalls.isEmpty ? null : ToolInvocation.encodeList(msg.toolCalls),
         _encodeTextSegments(msg.textSegments),
+        msg.reasoningText,
+        _encodeUsage(msg.usage),
         msg.status.wire,
         msg.errorMessage,
         _encodeStopReason(msg.stopReason),
@@ -197,13 +201,16 @@ class ChatHistoryStore {
     await _db.customStatement(
       'UPDATE chat_messages SET '
       ' content = ?2, tool_calls_json = ?3, text_segments_json = ?4,'
-      ' status = ?5, error_message = ?6, stop_reason = ?7 '
+      ' reasoning_text = ?5, usage_json = ?6, status = ?7,'
+      ' error_message = ?8, stop_reason = ?9 '
       'WHERE id = ?1',
       <Object?>[
         msg.id,
         msg.content,
         msg.toolCalls.isEmpty ? null : ToolInvocation.encodeList(msg.toolCalls),
         _encodeTextSegments(msg.textSegments),
+        msg.reasoningText,
+        _encodeUsage(msg.usage),
         msg.status.wire,
         msg.errorMessage,
         _encodeStopReason(msg.stopReason),
@@ -233,6 +240,20 @@ class ChatHistoryStore {
       return parsed.map((e) => e is String ? e : '').toList(growable: false);
     } on FormatException {
       return const <String>[];
+    }
+  }
+
+  static String? _encodeUsage(TokenUsage? usage) =>
+      usage == null ? null : jsonEncode(usage.toJson());
+
+  static TokenUsage? _decodeUsage(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return TokenUsage.fromJson(decoded.map((k, v) => MapEntry('$k', v)));
+    } on FormatException {
+      return null;
     }
   }
 
@@ -276,6 +297,8 @@ class ChatHistoryStore {
       status: ChatMessageStatusX.parse(row.read<String>('status')),
       errorMessage: row.readNullable<String>('error_message'),
       stopReason: stopRaw == null ? null : ChatStopReasonX.parse(stopRaw),
+      reasoningText: row.readNullable<String>('reasoning_text'),
+      usage: _decodeUsage(row.readNullable<String>('usage_json')),
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         row.read<int>('created_at'),
         isUtc: true,
