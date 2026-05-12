@@ -48,6 +48,13 @@ use super::context::BudgetTier;
 use super::policy::{check_tool_call, lookup, PolicyDecision};
 use crate::error::AppError;
 
+pub mod propose_account_create;
+pub mod propose_asset_valuation;
+pub mod propose_expense;
+pub mod propose_liability_payment;
+pub mod propose_trade;
+pub mod registry;
+
 pub struct ToolCtx<'a> {
     pub user_id: &'a str,
     pub db: &'a D1Database,
@@ -57,10 +64,25 @@ pub struct ToolCtx<'a> {
     pub context_tier: Option<BudgetTier>,
 }
 
+pub fn registry() -> registry::ToolRegistry {
+    registry::ToolRegistry::new([
+        std::sync::Arc::new(propose_trade::ProposeTradeTool)
+            as std::sync::Arc<dyn registry::Tool>,
+        std::sync::Arc::new(propose_expense::ProposeExpenseTool)
+            as std::sync::Arc<dyn registry::Tool>,
+        std::sync::Arc::new(propose_liability_payment::ProposeLiabilityPaymentTool)
+            as std::sync::Arc<dyn registry::Tool>,
+        std::sync::Arc::new(propose_account_create::ProposeAccountCreateTool)
+            as std::sync::Arc<dyn registry::Tool>,
+        std::sync::Arc::new(propose_asset_valuation::ProposeAssetValuationTool)
+            as std::sync::Arc<dyn registry::Tool>,
+    ])
+}
+
 /// Static catalogue. Kept as a function (not a `static` constant) because
 /// `ToolSchema` carries `serde_json::Value` and isn't `const`-constructible.
 pub fn schemas() -> Vec<ToolSchema> {
-    vec![
+    let mut schemas = vec![
         ToolSchema {
             name: "get_holdings".into(),
             description: "返回当前持仓快照。优先使用客户端 portfolio_snapshot 中的持仓引擎结果；\
@@ -457,118 +479,9 @@ pub fn schemas() -> Vec<ToolSchema> {
                 }
             }),
         },
-        // -------------------------------------------------------------------
-        // Write-proposal tools (FIR-66). These never persist anything;
-        // they always return a plan the client confirms.
-        // -------------------------------------------------------------------
-        ToolSchema {
-            name: "propose_trade".into(),
-            description: "提议一笔证券 / 加密交易（买入 / 卖出 / 转入 / 转出 / 估值调整）。\
-                          ⚠ 这是只提议、不落库的工具：返回一个 plan，前端会让用户在确认 UI 上点确认后才走 \
-                          TradeEntryService.buildPlan + JournalEntryRepository。\
-                          - asset 通过 asset_id 或 asset_symbol / asset_name 任一指认；多个匹配会返回 candidates。\
-                          - account 同理。\
-                          - 缺少字段时优先反问用户，不要硬编值。\
-                          - 日期相对值（昨天 / 上周三）请你解析为 ISO-8601 后传入。".into(),
-            input_schema: json!({
-                "type": "object",
-                "required": ["type", "quantity"],
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "enum": ["buy", "sell", "transferIn", "transferOut", "valuationAdjust"]
-                    },
-                    "asset_id":     { "type": "string" },
-                    "asset_symbol": { "type": "string", "description": "如 AAPL / 600519 / BTC" },
-                    "asset_name":   { "type": "string", "description": "如 苹果 / 茅台" },
-                    "account_id":   { "type": "string" },
-                    "account_name": { "type": "string" },
-                    "quantity":     { "type": "number", "minimum": 0 },
-                    "price":        { "type": "number", "minimum": 0, "description": "成交价。留空时前端会从行情回填，并 warn 用户。" },
-                    "fee":          { "type": "number", "minimum": 0, "default": 0 },
-                    "tax":          { "type": "number", "minimum": 0, "default": 0 },
-                    "currency":     { "type": "string", "description": "ISO 4217；留空时取账户币种" },
-                    "trade_date":   { "type": "string", "description": "ISO-8601；相对日期请你先解析" },
-                    "note":         { "type": "string" }
-                }
-            }),
-        },
-        ToolSchema {
-            name: "propose_expense".into(),
-            description: "提议一笔日常消费 / 支出。返回 plan，前端确认后才写入 journal_entries / postings。\
-                          类目从内置 9 类里选：餐饮 / 交通 / 房租 / 娱乐 / 医疗 / 教育 / 购物 / 旅行 / 其它。\
-                          类目不在闭集时工具会返回 candidates，请你让用户选一个再重新调用。".into(),
-            input_schema: json!({
-                "type": "object",
-                "required": ["amount"],
-                "properties": {
-                    "amount":       { "type": "number", "minimum": 0 },
-                    "category":     { "type": "string", "description": "中文 label 或 slug，如 餐饮 / food" },
-                    "account_id":   { "type": "string" },
-                    "account_name": { "type": "string" },
-                    "currency":     { "type": "string" },
-                    "date":         { "type": "string", "description": "ISO-8601" },
-                    "note":         { "type": "string" }
-                }
-            }),
-        },
-        ToolSchema {
-            name: "propose_liability_payment".into(),
-            description: "提议一笔负债还款（房贷、信用卡、消费贷等）。返回 plan，前端确认后走还款流程。\
-                          liability 通过 liability_id 或 liability_name 指认；金额 > 0。".into(),
-            input_schema: json!({
-                "type": "object",
-                "required": ["amount"],
-                "properties": {
-                    "liability_id":      { "type": "string" },
-                    "liability_name":    { "type": "string" },
-                    "from_account_id":   { "type": "string", "description": "还款来源账户" },
-                    "from_account_name": { "type": "string" },
-                    "amount":            { "type": "number", "minimum": 0 },
-                    "currency":          { "type": "string" },
-                    "date":              { "type": "string", "description": "ISO-8601" },
-                    "note":              { "type": "string" }
-                }
-            }),
-        },
-        ToolSchema {
-            name: "propose_account_create".into(),
-            description: "提议创建一个新账户（券商 / 银行 / 现金 / 实物资产 / 负债）。返回 plan + 预分配 id。\
-                          后续 propose_trade / propose_expense 可以引用这个 id。".into(),
-            input_schema: json!({
-                "type": "object",
-                "required": ["name", "type"],
-                "properties": {
-                    "name":        { "type": "string" },
-                    "type":        {
-                        "type": "string",
-                        "enum": ["brokerage", "bank", "cryptoWallet", "realEstate", "vehicle", "liability", "cash", "other"]
-                    },
-                    "currency":    { "type": "string", "default": "CNY" },
-                    "institution": { "type": "string" },
-                    "note":        { "type": "string" }
-                }
-            }),
-        },
-        ToolSchema {
-            name: "propose_asset_valuation".into(),
-            description: "提议更新一个手工估值资产（房产 / 车 / 现金 / 银行存款 / 理财）的当前估值。\
-                          有市场行情的证券请改用 propose_trade 的 valuationAdjust 类型。".into(),
-            input_schema: json!({
-                "type": "object",
-                "required": ["new_value"],
-                "properties": {
-                    "asset_id":     { "type": "string" },
-                    "asset_symbol": { "type": "string" },
-                    "asset_name":   { "type": "string" },
-                    "new_value":    { "type": "number", "minimum": 0 },
-                    "currency":     { "type": "string" },
-                    "date":         { "type": "string", "description": "ISO-8601" },
-                    "note":         { "type": "string" }
-                }
-            }),
-        },
-    ]
+    ];
+    schemas.extend(registry().schemas());
+    schemas
 }
 
 /// Dispatch a tool call by name. Returns the JSON result the LLM will see in
@@ -582,7 +495,6 @@ pub fn schemas() -> Vec<ToolSchema> {
 /// the model sees a parseable failure and can retry / wrap up rather than
 /// the entire SSE stream stalling at the route layer.
 pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
-    use super::proposals;
     use futures_util::future::{select, Either};
     use gloo_timers::future::TimeoutFuture;
 
@@ -592,7 +504,11 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
     // silently running. The synthesized result matches the shape of
     // an ordinary tool error (`{error: {...}}`) so existing model-side
     // error handling kicks in unchanged.
-    let descriptor = lookup(name);
+    let registry_descriptor = {
+        let registry = registry();
+        registry.get(name).map(|tool| tool.descriptor())
+    };
+    let descriptor = registry_descriptor.as_ref().or_else(|| lookup(name));
     match check_tool_call(descriptor, ctx.context_tier) {
         PolicyDecision::Allowed => {}
         PolicyDecision::Denied(reason) => {
@@ -628,12 +544,15 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "read_account_window" => read_account_window(ctx, input).await,
             "read_asset_window" => read_asset_window(ctx, input).await,
             "read_category_window" => read_category_window(ctx, input).await,
-            // FIR-66 write proposals — never persist; always return a plan.
-            "propose_trade" => proposals::propose_trade(ctx, input).await,
-            "propose_expense" => proposals::propose_expense(ctx, input).await,
-            "propose_liability_payment" => proposals::propose_liability_payment(ctx, input).await,
-            "propose_account_create" => proposals::propose_account_create(ctx, input).await,
-            "propose_asset_valuation" => proposals::propose_asset_valuation(ctx, input).await,
+            // FIR-66 write proposals — routed through the trait registry.
+            name if name.starts_with("propose_") => {
+                let registry = registry();
+                registry
+                    .get(name)
+                    .ok_or_else(|| AppError::BadRequest(format!("unknown tool: {name}")))?
+                    .invoke(ctx, input.clone())
+                    .await
+            }
             _ => Err(AppError::BadRequest(format!("unknown tool: {name}"))),
         }
     };
