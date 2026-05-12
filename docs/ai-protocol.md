@@ -90,17 +90,22 @@ hidden from v1 clients.
 
 ## Mobile parser notes
 
-The current mobile `sse_parser.dart` should continue parsing v1 streams without
-changes because v1 is still selected by default.
+Mobile now opts in to v2 by default by sending
+`X-Naviwealth-AI-Protocol: 2`. Build with `--dart-define=AI_PROTOCOL=v1` to
+force the v1 compatibility stream for rollback. `AI_PROTOCOL=v2` is the default.
 
-The mobile v2 upgrade should:
+The mobile parser:
 
-- Send `X-Naviwealth-AI-Protocol: 2` on `/ai/chat` requests.
 - Dispatch on the nine v2 event names above.
 - Append `text_delta.text` into the visible assistant answer.
-- Append `thinking_delta.text` into a separate reasoning buffer if the UI shows
-  reasoning.
+- Append `thinking_delta.text` into a separate reasoning buffer rendered in the
+  assistant bubble's folded reasoning panel.
 - Treat `tool_call_delta.partial_input_json` as an optional preview only.
 - Use `tool_call_end.input` as the complete tool input.
-- Surface `usage` token counts when product decides to show them.
+- Persist and surface `usage` token counts on the assistant message debug line.
 - Treat `stop` as the terminal event for a completed stream.
+
+`apps/mobile/lib/core/ai/contracts/tool_descriptor.dart` mirrors the backend
+tool descriptor dump. Run `tool/check-tool-descriptors.sh` from the repository
+root to compare the Dart mirror against
+`cargo run --bin tool_descriptor_dump`.

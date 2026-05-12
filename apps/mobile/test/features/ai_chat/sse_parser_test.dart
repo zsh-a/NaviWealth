@@ -56,6 +56,44 @@ void main() {
       },
     );
 
+    test('decodes v2 token, thinking, tool, usage, and stop events', () async {
+      final source = _stream([
+        _frame('thinking_delta', {'text': 'Checking holdings.'}),
+        _frame('text_delta', {'text': 'I found '}),
+        _frame('tool_call_start', {'id': 'call_1', 'name': 'get_holdings'}),
+        _frame('tool_call_delta', {
+          'id': 'call_1',
+          'partial_input_json': '{"as_of"',
+        }),
+        _frame('tool_call_end', {
+          'id': 'call_1',
+          'input': {'as_of': '2026-04-30'},
+        }),
+        _frame('tool_result', <String, Object?>{
+          'id': 'call_1',
+          'name': 'get_holdings',
+          'output': <String, Object?>{'rows': <Object?>[]},
+        }),
+        _frame('usage', {
+          'input': 10,
+          'output': 5,
+          'cache_read': 2,
+          'cache_write': 1,
+        }),
+        _frame('stop', {'reason': 'end_turn', 'rounds': 1}),
+      ]);
+
+      final events = await decodeSseEvents(source).toList();
+      expect(events, hasLength(8));
+      expect((events[0] as ThinkingDeltaEvent).text, 'Checking holdings.');
+      expect((events[1] as TextEvent).text, 'I found ');
+      expect((events[2] as ToolCallStartEvent).name, 'get_holdings');
+      expect((events[3] as ToolCallDeltaEvent).partialInputJson, '{"as_of"');
+      expect((events[4] as ToolCallEvent).input, {'as_of': '2026-04-30'});
+      expect((events[6] as UsageEvent).usage.total, 18);
+      expect((events[7] as DoneEvent).stopReason, 'end_turn');
+    });
+
     test('handles frames split across chunk boundaries', () async {
       final whole =
           _frame('text', {'text': '中文测试'}) +
