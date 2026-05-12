@@ -94,7 +94,7 @@ fn rank(t: BudgetTier) -> u8 {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tool_policy::{lookup, Access, Confirmation, ToolDescriptor};
+    use super::super::tool_policy::{Access, Confirmation, ToolDescriptor};
     use super::*;
     use crate::ai::context::RiskLevel;
 
@@ -214,7 +214,10 @@ mod tests {
             "propose_account_create",
             "propose_asset_valuation",
         ] {
-            assert!(lookup(name).is_some(), "no descriptor for {name}");
+            assert!(
+                crate::ai::tools::registry().get(name).is_some(),
+                "no descriptor for {name}"
+            );
         }
     }
 }
