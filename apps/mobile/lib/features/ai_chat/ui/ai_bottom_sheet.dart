@@ -202,8 +202,12 @@ class _AiBottomSheetShellState extends ConsumerState<AiBottomSheetShell> {
           controller: widget.scrollController,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           itemCount: msgs.length,
-          itemBuilder: (context, i) =>
-              MessageBubble(sessionId: sessionId, message: msgs[i]),
+          itemBuilder: (context, i) => MessageBubble(
+            sessionId: sessionId,
+            message: msgs[i],
+            invocationIntent: widget.invocation.intent,
+            onReplyChip: (chip) => _sendChip(sessionId, chip),
+          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -212,6 +216,27 @@ class _AiBottomSheetShellState extends ConsumerState<AiBottomSheetShell> {
         child: Text('对话渲染失败: $e'),
       ),
     );
+  }
+
+  Future<void> _sendChip(String sessionId, String chip) async {
+    final auth = ref.read(authSessionProvider);
+    if (auth == null) return;
+    try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      unawaited(
+        repo.sendMessage(
+          sessionId: sessionId,
+          ownerUserId: auth.userId,
+          content: chip,
+          // Same invocation tag as the original turn — the trace
+          // attribution carries through follow-up chip taps so the
+          // transparency page can group them.
+          invocationTrace: widget.invocation.toTraceJson(),
+        ),
+      );
+    } catch (_) {
+      // Best-effort: chip taps are non-critical.
+    }
   }
 
   void _expandToChat(BuildContext context) {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
@@ -37,6 +39,11 @@ Widget? renderToolOutput(
       'get_geo_breakdown' ||
       'get_market_cap_breakdown' => _BreakdownView(output: output),
       'get_risk_alerts' => _RiskAlertList(output: output),
+      // Wave 34 — Analytical / Snapshot read-model renderers.
+      'get_asset_allocation' => AssetAllocationView(output: output),
+      'get_recurring_patterns' => RecurringPatternsView(output: output),
+      'get_subscription_changes' => SubscriptionChangesView(output: output),
+      'get_refund_links' => RefundLinksView(output: output),
       _ => null,
     };
   } catch (_) {
@@ -738,6 +745,609 @@ class _EmptyResult extends StatelessWidget {
 /// payload inline. Callers can use this to decide whether to keep raw JSON
 /// hidden behind a "查看 raw JSON" toggle even when the payload itself is
 /// huge.
+// ===========================================================================
+// Wave 34 — Domain renderers for Snapshot/Analytical read-model tools.
+// Calm Intelligence: surface tone, no glow, type-first layout. Each view
+// degrades gracefully (empty / off-shape payloads) and never throws.
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// get_asset_allocation → donut + weight list.
+// Payload shape: { buckets: [{bucket_dim, bucket_key, currency,
+//   total_cost_minor (string), position_count (int), weight (double)}],
+//   count, freshness, note }
+// Weights are normalised per-currency (sum=1 within a currency); when the
+// caller mixes multiple currencies we split into per-currency groups so
+// the donut stays interpretable.
+// ---------------------------------------------------------------------------
+
+class AssetAllocationView extends StatelessWidget {
+  const AssetAllocationView({super.key, required this.output});
+  final Object? output;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _asMap(output);
+    final raw = _asList(m?['buckets']) ?? const <Object?>[];
+    if (raw.isEmpty) {
+      return const _EmptyHint(text: '尚无持仓数据');
+    }
+    final scheme = Theme.of(context).colorScheme;
+    final palette = <Color>[
+      scheme.primary,
+      scheme.secondary,
+      scheme.tertiary,
+      scheme.primaryContainer,
+      scheme.secondaryContainer,
+      scheme.outline,
+    ];
+
+    // Group by currency so the donut totals are meaningful.
+    final byCurrency = <String, List<_AllocBucket>>{};
+    for (final b in raw) {
+      final mb = _asMap(b);
+      if (mb == null) continue;
+      final bucket = _AllocBucket.fromJson(mb);
+      if (bucket == null) continue;
+      byCurrency.putIfAbsent(bucket.currency, () => <_AllocBucket>[]).add(bucket);
+    }
+    if (byCurrency.isEmpty) {
+      return const _EmptyHint(text: '持仓数据格式异常');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in byCurrency.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _AllocBlock(
+              currency: entry.key,
+              buckets: entry.value,
+              palette: palette,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AllocBucket {
+  const _AllocBucket({
+    required this.key,
+    required this.currency,
+    required this.totalMinor,
+    required this.positions,
+    required this.weight,
+  });
+  final String key;
+  final String currency;
+  final int totalMinor;
+  final int positions;
+  final double weight;
+
+  static _AllocBucket? fromJson(Map<String, Object?> m) {
+    final key = _asString(m['bucket_key']);
+    final currency = _asString(m['currency']);
+    if (key == null || currency == null) return null;
+    return _AllocBucket(
+      key: key,
+      currency: currency,
+      totalMinor: int.tryParse(_asString(m['total_cost_minor']) ?? '0') ?? 0,
+      positions: (m['position_count'] is int)
+          ? m['position_count']! as int
+          : (int.tryParse(_asString(m['position_count']) ?? '0') ?? 0),
+      weight: _asDouble(m['weight']) ?? 0.0,
+    );
+  }
+}
+
+class _AllocBlock extends StatelessWidget {
+  const _AllocBlock({
+    required this.currency,
+    required this.buckets,
+    required this.palette,
+  });
+  final String currency;
+  final List<_AllocBucket> buckets;
+  final List<Color> palette;
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...buckets]..sort((a, b) => b.weight.compareTo(a.weight));
+    final fmt = NumberFormat.decimalPattern();
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            currency,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 88,
+                height: 88,
+                child: CustomPaint(
+                  painter: _DonutPainter(
+                    slices: sorted,
+                    palette: palette,
+                    background: Theme.of(context).colorScheme.surface,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < sorted.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: palette[i % palette.length],
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                sorted[i].key,
+                                style: Theme.of(context).textTheme.bodySmall,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              '${(sorted[i].weight * 100).toStringAsFixed(1)}%',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                fontFeatures: const [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '合计成本 ${fmt.format(sorted.fold<int>(0, (a, b) => a + b.totalMinor) / 100.0)} · ${sorted.length} 类持仓',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  _DonutPainter({
+    required this.slices,
+    required this.palette,
+    required this.background,
+  });
+  final List<_AllocBucket> slices;
+  final List<Color> palette;
+  final Color background;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final total = slices.fold<double>(0, (a, b) => a + b.weight);
+    if (total <= 0) return;
+    final rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: size.shortestSide / 2 - 1,
+    );
+    var start = -math.pi / 2;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 12
+      ..strokeCap = StrokeCap.butt;
+    for (var i = 0; i < slices.length; i++) {
+      final sweep = (slices[i].weight / total) * math.pi * 2;
+      stroke.color = palette[i % palette.length];
+      canvas.drawArc(rect.deflate(6), start, sweep, false, stroke);
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter old) =>
+      old.slices != slices || old.palette != palette;
+}
+
+// ---------------------------------------------------------------------------
+// get_recurring_patterns → subscription cards with cadence chips.
+// Payload shape: { patterns: [{id, merchant_key, cadence, currency,
+//   median_amount_minor (string), occurrences (int), last_seen_at}],
+//   count, freshness, source, note }
+// ---------------------------------------------------------------------------
+
+class RecurringPatternsView extends StatelessWidget {
+  const RecurringPatternsView({super.key, required this.output});
+  final Object? output;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _asMap(output);
+    final raw = _asList(m?['patterns']) ?? const <Object?>[];
+    if (raw.isEmpty) {
+      return const _EmptyHint(text: '尚未检测到稳定的周期性支出');
+    }
+    final visible = raw.take(_kMaxVisibleRows).toList();
+    final fmt = NumberFormat.decimalPattern();
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in visible)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _patternRow(context, entry, fmt, cs),
+          ),
+        if (raw.length > visible.length)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '+ 还有 ${raw.length - visible.length} 项',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _patternRow(
+    BuildContext context,
+    Object? entry,
+    NumberFormat fmt,
+    ColorScheme cs,
+  ) {
+    final mp = _asMap(entry);
+    if (mp == null) return const SizedBox.shrink();
+    final merchant = _asString(mp['merchant_key']) ?? '(unknown)';
+    final cadence = _asString(mp['cadence']) ?? '?';
+    final currency = _asString(mp['currency']) ?? '';
+    final medianMinor =
+        int.tryParse(_asString(mp['median_amount_minor']) ?? '0') ?? 0;
+    final occ = (mp['occurrences'] is int)
+        ? mp['occurrences']! as int
+        : int.tryParse(_asString(mp['occurrences']) ?? '0') ?? 0;
+    final lastSeen = _asDate(mp['last_seen_at']);
+    final cadenceLabel = switch (cadence) {
+      'monthly' => '每月',
+      'weekly' => '每周',
+      _ => cadence,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  merchant,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    _miniChip(context, cadenceLabel),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$occ 次${lastSeen != null ? ' · 最近 ${_displayDate(lastSeen)}' : ''}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '${fmt.format(medianMinor.abs() / 100.0)} $currency',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _miniChip(BuildContext context, String label) {
+  final cs = Theme.of(context).colorScheme;
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(
+      color: cs.outline.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      label,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: cs.onSurfaceVariant,
+      ),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// get_subscription_changes → price-diff bars (↑/↓).
+// Payload shape: { changes: [{id, merchant_key, cadence, currency,
+//   prev_amount_minor (string), new_amount_minor (string),
+//   delta_ratio (double), since (iso datetime)}], count, freshness }
+// ---------------------------------------------------------------------------
+
+class SubscriptionChangesView extends StatelessWidget {
+  const SubscriptionChangesView({super.key, required this.output});
+  final Object? output;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _asMap(output);
+    final raw = _asList(m?['changes']) ?? const <Object?>[];
+    if (raw.isEmpty) {
+      return const _EmptyHint(text: '本期未检测到订阅价格变化');
+    }
+    final visible = raw.take(_kMaxVisibleRows).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in visible)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _changeRow(context, entry),
+          ),
+        if (raw.length > visible.length)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '+ 还有 ${raw.length - visible.length} 项',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _changeRow(BuildContext context, Object? entry) {
+    final mp = _asMap(entry);
+    if (mp == null) return const SizedBox.shrink();
+    final merchant = _asString(mp['merchant_key']) ?? '(unknown)';
+    final currency = _asString(mp['currency']) ?? '';
+    final prev = int.tryParse(_asString(mp['prev_amount_minor']) ?? '') ?? 0;
+    final next = int.tryParse(_asString(mp['new_amount_minor']) ?? '') ?? 0;
+    final delta = _asDouble(mp['delta_ratio']) ?? 0.0;
+    final since = _asDate(mp['since']);
+    final cs = Theme.of(context).colorScheme;
+    final up = next.abs() > prev.abs();
+    final accent = up ? cs.error : cs.primary;
+    final fmt = NumberFormat.decimalPattern();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            up ? Icons.trending_up : Icons.trending_down,
+            size: 18,
+            color: accent,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  merchant,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'
+                  '${since != null ? ' · 自 ${_displayDate(since)}' : ''}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// get_refund_links → original ↔ refund pair cards.
+// Payload shape: { links: [{id, original_txn_id, refund_txn_id,
+//   amount_minor (string), currency, payload}], count, freshness }
+// ---------------------------------------------------------------------------
+
+class RefundLinksView extends StatelessWidget {
+  const RefundLinksView({super.key, required this.output});
+  final Object? output;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _asMap(output);
+    final raw = _asList(m?['links']) ?? const <Object?>[];
+    if (raw.isEmpty) {
+      return const _EmptyHint(text: '尚未检测到退款配对');
+    }
+    final visible = raw.take(_kMaxVisibleRows).toList();
+    final fmt = NumberFormat.decimalPattern();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in visible)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _pairRow(context, entry, fmt),
+          ),
+        if (raw.length > visible.length)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '+ 还有 ${raw.length - visible.length} 项',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _pairRow(BuildContext context, Object? entry, NumberFormat fmt) {
+    final mp = _asMap(entry);
+    if (mp == null) return const SizedBox.shrink();
+    final origin = _asString(mp['original_txn_id']) ?? '?';
+    final refund = _asString(mp['refund_txn_id']) ?? '?';
+    final amountMinor =
+        int.tryParse(_asString(mp['amount_minor']) ?? '') ?? 0;
+    final currency = _asString(mp['currency']) ?? '';
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.south_west,
+                      size: 14,
+                      color: cs.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        origin,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontFamily: 'monospace',
+                          color: cs.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.north_east,
+                      size: 14,
+                      color: cs.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        refund,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontFamily: 'monospace',
+                          color: cs.primary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '${fmt.format(amountMinor.abs() / 100.0)} $currency',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint({required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
 bool isOversizedToolPayload(String toolName, Object? output) {
   final m = _asMap(output);
   if (m == null) return false;
