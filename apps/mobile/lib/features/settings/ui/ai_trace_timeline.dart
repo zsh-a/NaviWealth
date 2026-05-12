@@ -22,6 +22,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/visual/visual.dart';
 
 // ===========================================================================
 // Event model (extensible).
@@ -102,8 +103,13 @@ class InvocationEvent extends TraceEvent {
   @override
   IconData get icon => Icons.flag_outlined;
 
+  // Wave 36: AI surfaces commit to a single accent — invocation rail
+  // uses `active`, every other "informational" event uses outline tone.
   @override
   Color tone(ColorScheme cs) => cs.primary;
+  // ↑ kept as cs.primary (== AiTone.active) so this contract stays in
+  // place across themes. Switching to AiTone-based API in the row
+  // widget below.
 
   @override
   Widget? expandedBody(BuildContext context) {
@@ -143,8 +149,10 @@ class RoutingEvent extends TraceEvent {
   @override
   IconData get icon => Icons.alt_route_outlined;
 
+  // Wave 36 — routing is informational, not "alive": muted tone keeps
+  // it out of visual competition with the active invocation marker.
   @override
-  Color tone(ColorScheme cs) => cs.secondary;
+  Color tone(ColorScheme cs) => cs.outlineVariant;
 
   @override
   Widget? expandedBody(BuildContext context) => _kvBlock(context, <(String, String)>[
@@ -211,9 +219,12 @@ class DisclosureEvent extends TraceEvent {
   @override
   IconData get icon => Icons.lock_outline;
 
+  // Wave 36 — color discipline: disclosures don't get their own hue.
+  // Denied → muted (this didn't actually happen), accepted → active
+  // (signal that real data was shared).
   @override
   Color tone(ColorScheme cs) =>
-      consent == 'denied' ? cs.outline : cs.tertiary;
+      consent == 'denied' ? cs.outlineVariant : cs.primary;
 }
 
 class FreshnessAlertEvent extends TraceEvent {
@@ -233,15 +244,17 @@ class FreshnessAlertEvent extends TraceEvent {
   @override
   IconData get icon => Icons.update_outlined;
 
+  // Wave 36 — staleness is encoded by the `update_outlined` icon, not
+  // by color. Tone is muted; the icon does the signaling.
   @override
-  Color tone(ColorScheme cs) => cs.tertiary;
+  Color tone(ColorScheme cs) => cs.outlineVariant;
 
   @override
   Widget? expandedBody(BuildContext context) => Wrap(
         spacing: 6,
         runSpacing: 6,
         children: [
-          for (final name in readModelNames) _MiniTag(label: name),
+          for (final name in readModelNames) AiPill(label: name),
         ],
       );
 }
@@ -454,7 +467,6 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -463,57 +475,15 @@ class _FilterRow extends StatelessWidget {
             if (available.contains(k))
               Padding(
                 padding: const EdgeInsets.only(right: 6),
-                child: _PillButton(
+                child: AiPill(
                   label: _labelFor(k),
-                  selected: active.contains(k),
-                  selectedTone: cs.primary,
+                  state: active.contains(k)
+                      ? AiPillState.selected
+                      : AiPillState.neutral,
                   onTap: () => onToggle(k),
                 ),
               ),
         ],
-      ),
-    );
-  }
-}
-
-class _PillButton extends StatelessWidget {
-  const _PillButton({
-    required this.label,
-    required this.selected,
-    required this.selectedTone,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final Color selectedTone;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final bg = selected ? selectedTone.withValues(alpha: 0.16) : Colors.transparent;
-    final fg = selected ? selectedTone : cs.onSurfaceVariant;
-    return Material(
-      color: bg,
-      shape: StadiumBorder(
-        side: BorderSide(
-          color: selected ? selectedTone : cs.outlineVariant,
-        ),
-      ),
-      child: InkWell(
-        customBorder: const StadiumBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -589,7 +559,7 @@ class _TimelineRow extends StatelessWidget {
             // ── Right: event card ─────────────────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 12, right: 4),
+                padding: const EdgeInsets.only(top: 6, bottom: 8, right: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -599,8 +569,7 @@ class _TimelineRow extends StatelessWidget {
                         Expanded(
                           child: Text(
                             event.title,
-                            style:
-                                Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: AiType.body(context).copyWith(
                               fontWeight: FontWeight.w500,
                             ),
                             maxLines: 2,
@@ -612,8 +581,8 @@ class _TimelineRow extends StatelessWidget {
                             expanded
                                 ? Icons.expand_less
                                 : Icons.expand_more,
-                            size: 18,
-                            color: cs.onSurfaceVariant,
+                            size: 16,
+                            color: AiTone.muted(context),
                           ),
                       ],
                     ),
@@ -621,19 +590,16 @@ class _TimelineRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         event.subtitle,
-                        style:
-                            Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
+                        style: AiType.meta(context),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                     if (expanded) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       AnimatedSize(
-                        duration: const Duration(milliseconds: 160),
-                        curve: Curves.easeOut,
+                        duration: AiMotion.short,
+                        curve: AiMotion.standard,
                         child: event.expandedBody(context) ??
                             const SizedBox.shrink(),
                       ),
@@ -649,36 +615,11 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
-class _MiniTag extends StatelessWidget {
-  const _MiniTag({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: cs.tertiary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: cs.tertiary,
-          fontFamily: 'monospace',
-        ),
-      ),
-    );
-  }
-}
-
 Widget _kvBlock(BuildContext context, List<(String, String)> rows) {
-  final cs = Theme.of(context).colorScheme;
   return Container(
     padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
-      color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+      color: AiTone.surfaceTint(context).withValues(alpha: 0.4),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Column(
@@ -690,19 +631,11 @@ Widget _kvBlock(BuildContext context, List<(String, String)> rows) {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 88,
-                  child: Text(
-                    r.$1,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ),
-                ),
+                SizedBox(width: 88, child: Text(r.$1, style: AiType.meta(context))),
                 Expanded(
                   child: Text(
                     r.$2,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    style: AiType.body(context).copyWith(
                       fontFamily: 'monospace',
                     ),
                   ),

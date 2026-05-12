@@ -1,18 +1,19 @@
-/// Wave 35 — `PersistentUndoBanner`: global "已修改 X · 撤销" surface.
+/// Wave 35 / 36 — `PersistentUndoBanner`: global "已修改 X · 撤销" surface.
 ///
 /// Sits above the bottom navigation bar in `AppShell`. Watches
 /// `undoEntriesStreamProvider`; shows the newest non-expired entry
 /// when present, hides otherwise. Tap "撤销" calls
 /// `DriftUndoStack.take(token)` and dismisses the banner.
 ///
-/// Calm Intelligence (§5.6): surface tone background, single
-/// `auto_awesome_outlined` 14px sparkle, no glow, no slide-in
-/// animation beyond a 200ms opacity fade.
+/// Wave 36 refactor — uses `AiSparkle` / `AiType` / `AiMotion` from
+/// `core/ai/visual/` so the banner shares the visual language of
+/// every other AI surface.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../visual/visual.dart';
 import 'drift_undo_stack.dart';
 import 'providers.dart';
 
@@ -34,9 +35,9 @@ class PersistentUndoBanner extends ConsumerWidget {
       }
     }
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      switchInCurve: Curves.easeOut,
-      switchOutCurve: Curves.easeIn,
+      duration: AiMotion.medium,
+      switchInCurve: AiMotion.standard,
+      switchOutCurve: AiMotion.standard,
       transitionBuilder: (child, anim) =>
           FadeTransition(opacity: anim, child: child),
       child: top == null
@@ -67,12 +68,11 @@ class _UndoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final summary = entry.payload['summary_zh'] as String? ??
         entry.payload['summaryZh'] as String? ??
         entry.kind;
     return Material(
-      color: scheme.surfaceContainerHighest,
+      color: AiTone.surfaceTint(context),
       elevation: 0,
       child: SafeArea(
         top: false,
@@ -81,34 +81,21 @@ class _UndoRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              Icon(
-                Icons.auto_awesome_outlined,
-                size: 14,
-                color: scheme.onSurfaceVariant,
-              ),
+              const AiSparkle(),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   summary,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurface,
-                  ),
+                  style: AiType.body(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              TextButton(
-                onPressed: onUndo,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 0,
-                  ),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                ),
-                child: const Text('撤销'),
+              const SizedBox(width: 8),
+              AiPill(
+                label: '撤销',
+                state: AiPillState.selected,
+                onTap: onUndo,
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/visual/visual.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
@@ -11,7 +12,7 @@ import '../state/chat_controller.dart';
 import 'ai_transparency_badge.dart';
 import 'propose_card.dart';
 import 'reply_chips.dart';
-import 'tool_invocation_card.dart';
+import 'tool_invocation_inline.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
 ///
@@ -299,11 +300,20 @@ class _AssistantBubble extends StatelessWidget {
       final shouldRenderText = seg.isNotEmpty || (isLastSeg && isStreaming);
       if (shouldRenderText) {
         addGapIfNeeded();
+        // Wave 37 — when the model is mid-flight and has called a tool
+        // whose result hasn't arrived yet, surface the tool name so the
+        // streaming indicator reads "正在 <tool>" instead of generic
+        // "思考中". The pending tool is the *last* invocation without
+        // output (per Anthropic's serial tool-use protocol).
+        final pendingTool = (isLastSeg && isStreaming)
+            ? _findPendingToolName(tools)
+            : null;
         blocks.add(
           _AssistantBody(
             text: seg,
             isStreaming: isLastSeg && isStreaming,
             textColor: textColor,
+            pendingToolName: pendingTool,
           ),
         );
         anythingEmittedYet = true;
@@ -330,8 +340,21 @@ class _AssistantBubble extends StatelessWidget {
         plan: plan,
       );
     }
-    return ToolInvocationCard(invocation: invocation);
+    // Wave 37 — inline rendering when a domain renderer is registered;
+    // the legacy card (chevron + raw JSON) remains the fallback for
+    // tools without one, and accessible via long-press on the inline.
+    return ToolInvocationInline(invocation: invocation);
   }
+}
+
+/// Wave 37 — last unresolved tool name. The model emits tool_use frames
+/// serially under the Anthropic protocol, so the most recent
+/// invocation without an output is the one currently being awaited.
+String? _findPendingToolName(List<ToolInvocation> tools) {
+  for (var i = tools.length - 1; i >= 0; i--) {
+    if (tools[i].output == null) return tools[i].name;
+  }
+  return null;
 }
 
 class _AssistantBody extends StatelessWidget {
@@ -339,15 +362,42 @@ class _AssistantBody extends StatelessWidget {
     required this.text,
     required this.isStreaming,
     required this.textColor,
+    this.pendingToolName,
   });
   final String text;
   final bool isStreaming;
   final Color textColor;
 
+  /// Wave 37 — when the model has dispatched a tool but is still
+  /// waiting for the result, surface the tool name. Beats a generic
+  /// "thinking" placeholder for agentic flows.
+  final String? pendingToolName;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (text.isEmpty && isStreaming) {
+      // Active-tool variant: replace dots + 思考中 with
+      // ✦ 正在 get_holdings ... so the user can see what the agent is
+      // doing right now.
+      if (pendingToolName != null) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AiSparkle(active: true),
+            const SizedBox(width: 6),
+            Text(
+              '正在 $pendingToolName',
+              style: AiType.meta(context).copyWith(
+                color: AiTone.active(context),
+                fontFamily: 'monospace',
+              ),
+            ),
+            const SizedBox(width: 2),
+            _TypingDots(color: AiTone.active(context).withValues(alpha: 0.7)),
+          ],
+        );
+      }
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -640,9 +690,9 @@ class _SystemNotice extends StatelessWidget {
   }
 }
 
-/// Wave 34 — reply chip row under completed assistant turns. Calm
-/// Intelligence: outline buttons, body-small text, no icons. Up to 3
-/// chips sourced from `suggestReplyChips` (`reply_chips.dart`).
+/// Wave 34 / 36 — reply chip row under completed assistant turns.
+/// Now backed by [AiPill] (Wave 36) so chips share the capsule's
+/// visual language. Up to 3 chips sourced from `suggestReplyChips`.
 class _ReplyChips extends StatelessWidget {
   const _ReplyChips({
     required this.toolNames,
@@ -662,27 +712,11 @@ class _ReplyChips extends StatelessWidget {
     );
     if (chips.isEmpty) return const SizedBox.shrink();
     return Wrap(
-      spacing: 8,
+      spacing: 6,
       runSpacing: 6,
       children: [
         for (final label in chips)
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: const Size(0, 32),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-              foregroundColor: Theme.of(context).colorScheme.onSurface,
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ),
-            onPressed: () => onTap(label),
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
+          AiPill(label: label, onTap: () => onTap(label)),
       ],
     );
   }
