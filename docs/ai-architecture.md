@@ -1,7 +1,7 @@
 # NaviWealth AI 架构
 
 > 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步），**P2 全部完成**（AI 透明度审计页 / ContextPack→system prompt / Drift QueryPlanExecutor + NetWorthTrendPlan / AiTrace terminal reason 细分 / ProposalEnvelope.source / ContextPack 收缩）。Phase 5（端侧 LLM）未实现。
-> **Wave 进度**: Wave 1–34 完成（Wave 33 = §5 AI Entry Framework；Wave 34 = §5 Contextual Output）— 详见 §8 实现状态表与 Wave 落地清单。剩余主线: §5 落地剩 Wave 35（Trust & Action / interaction_mode）；Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`、Analytical 层 P2 四模型。
+> **Wave 进度**: Wave 1–35 完成（Wave 33–35 = §5 AI Entry Framework / Contextual Output / Trust & Action 三个 §5 子项全部落地）— 详见 §8 实现状态表与 Wave 落地清单。剩余主线: 详情页 `AiSourceMark` 接入（widget 已就绪，等 caller 主动加）+ proposal_card 按 `interaction_mode` 分支（widget 派生函数已就绪）；Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`、Analytical 层 P2 四模型。
 > **§5 是 UI/UX 契约**: 任何新 AI 入口 / 渲染 / 确认面必须满足 §5.8 硬约束。
 > 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
 
@@ -573,7 +573,7 @@ const AiIntentInvocation(
 
 ### 5.5 风险分层 × 交互模式
 
-`ToolDescriptor` 已有 `risk` (Info/Suggest/Propose/Commit) + `requires_confirmation` (None/OneTap/Typed)，但 UI 没有从这两个轴直接派生交互。新增 `interaction_mode` 作为 UI 的强约束 (Wave 35 落地):
+`ToolDescriptor` 已有 `risk` (Info/Suggest/Propose/Commit) + `requires_confirmation` (None/OneTap/Typed)，但 UI 没有从这两个轴直接派生交互。新增 `interaction_mode` 作为 UI 的强约束 (✅ Wave 35 落地：`lib/core/ai/write/interaction_mode.dart`，按 envelope 子类 + kindLabel 派生表实现):
 
 | 场景 | proposal kind 举例 | risk | side_effect | `interaction_mode` |
 |------|--------------------|------|-------------|---------------------|
@@ -598,7 +598,7 @@ InteractionMode deriveMode(ProposalEnvelope p) {
 
 **禁止覆盖**: feature 代码不能"为了流畅"把 `confirmDiff` 降级为 `oneTap`。要降级先改 `risk`。
 
-**Undo 全局可见性** (Wave 35 落地):
+**Undo 全局可见性** (✅ Wave 35 落地，`PersistentUndoBanner` 挂在 `AppShell.footer`):
 - `oneTap` / `swipe` 应用后，全局顶部出现 persistent undo snackbar（不是 60s 后消失的传统 toast），停留直到用户主动 dismiss 或新 proposal 应用
 - snackbar 文案: "已修改 Netflix 分类为「订阅」· 撤销"
 - 数据来源: `DriftUndoStack` (Wave 24)
@@ -688,7 +688,7 @@ const intentDescriptors = <IntentDescriptor>[
 | Home insight 卡片不能深链 chat | Ambient → Contextual 缺桥梁 | insight tap 构造 `AiIntentInvocation(intent: 'explain_insight')` 打开 bottom sheet |
 | Feature 页无 AI 入口 | Contextual 缺失 | 详情页右上角 capsule（触发式优先：长按 / 选中文本菜单；少数高频对象常驻） |
 | Tool result 多为 raw JSON | Visualization capability 未实现 | Wave 34 domain renderer 4 个高价值优先 |
-| Proposal 单一确认流 | interaction_mode 未派生 | Wave 35 落地 `deriveMode` + UI 分支 |
+| ~~Proposal 单一确认流~~ | ✅ interaction_mode 已派生 (Wave 35) | proposal_card UI 分支（按派生 mode 选择确认形态）待 caller 接入 |
 | Undo 仅 chat 内 60s | global feedback 缺失 | persistent undo snackbar 接 `DriftUndoStack` |
 | 冷启动固定 prompt | onboarding 缺失 | sample intents 从 `intent_policy` 当前 active 集合派生 |
 
@@ -890,6 +890,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 32 | ContextPack 收缩 | `FreshnessHint` 新增 `last_local_hlc`（mobile + Rust 双侧 + serde default）；`BaseContext.accounts/cashflow` 标记 deprecated（保留 wire 兼容，未来 v2 移除）；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含 |
 | 33 | **§5 AI Entry Framework** | `lib/core/ai/intent/`（`AiIntentInvocation` + 5 intent 注册表 + `renderPromptFor`）；`AiBottomSheetShell` + `showAiBottomSheet`（viewport < 500px fallback Dialog）；`AiObjectCapsule` 可复用 capsule；2 个 proof point（expense detail + home insight）；`AiTrace.invocation` 字段贯穿 trace_builder / chat_repository / 透明度页 |
 | 34 | **§5 Contextual Output** | 4 个 domain renderer (`get_asset_allocation` 环形图 + 权重列表 / `get_recurring_patterns` 订阅卡 / `get_subscription_changes` 涨跌 diff bar / `get_refund_links` pair 卡) 接入 `renderToolOutput` dispatch；`reply_chips.dart` 规则化生成 v1（intent-specific 上限 2 + tool-driven + generic fallback），`MessageBubble.onReplyChip` 透传；bottom sheet 内 tap chip 同 invocation trace 续传 |
+| 35 | **§5 Trust & Action** | `InteractionMode` 枚举 (oneTap/swipe/confirmDiff/typed) + `deriveInteractionMode(ProposalEnvelope)` (kindLabel-table 派生，禁止 feature 硬编码)；`DriftUndoStack.watchAll()` + `undoEntriesStreamProvider` + `PersistentUndoBanner` 全局挂载在 AppShell footer（calm intelligence：surface tone + 14px sparkle + 撤销 button）；`AiSourceMark` 12px sparkle widget 作 AI 修改字段前缀 |
 
 ## 9. TODO
 
@@ -929,6 +930,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 
 按 §5 落地 AI native UI/UX。三个 wave，先建框架再补能力，最后调可信度。**proof point 数量遵从 §5.8 硬约束**——每个 wave 只接 2 个 feature page 验证架构，剩余在 33.x / 34.x / 35.x 渐进铺开。
 
+- [x] ~~**Wave 35 — Trust & Action**~~ — `InteractionMode` + `deriveInteractionMode`（`ExternalSideEffect`/`LocalProposal`/`LocalImmediateWrite` 走类型决定，`CloudProposal` 按 kindLabel 表派生，未知 kind → confirmDiff 安全默认）；`DriftUndoStack.watchAll()` 加 `StreamController<void>` 触发；`undoEntriesStreamProvider` + `PersistentUndoBanner` 全局挂载在 AppShell footer；`AiSourceMark` 12px sparkle widget 已就绪
 - [x] ~~**Wave 34 — Contextual Output**~~ — 4 个 domain renderer 接入 `tool_invocation_renderers.dart` dispatch；`reply_chips.dart` 规则生成（intent-specific 上限 2 + tool-driven + generic）；`MessageBubble.onReplyChip` 透传至 `AiBottomSheetShell._sendChip` 续发；chip 复用原 invocation trace 让透明度页 group 跟随对话深度
 - [x] ~~**Wave 33 — AI Entry Framework**~~ — 落地于 `lib/core/ai/intent/` + `lib/features/ai_chat/ui/ai_bottom_sheet.dart`
   - `AiIntentInvocation` / `AiObjectRef` / `AiCapability` 类型（`ai_intent_invocation.dart`）；`intent_policy.dart` 注册 5 个 intent (`explain_change` / `summarize_account` / `stress_test_plan` / `compare_period` / `explain_insight`) 含 prompt template + 占位符填充
@@ -938,10 +940,6 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
   - `AiTrace.invocation` 字段 (Map\<String,Object?\>)：附加 source/intent/object_type/object_id/context_keys；透明度详情页新增「触发来源」section；roundtrip + null-omitted 测试
   - `ChatRepository.sendMessage(invocationTrace:)` 透传给 `AiTraceBuilder.attachInvocation`
   - 测试：7 个 intent_policy 单测（lookup / render / trace shape）+ 2 个 AiTrace.invocation roundtrip
-- [ ] **Wave 35 — Trust & Action**
-  - `interaction_mode` 派生函数 + 四种 UI 分支（oneTap / swipe / confirmDiff / typed）
-  - Persistent undo snackbar 接 `DriftUndoStack`；全局可见，停留至 dismiss / 新 proposal
-  - "AI 来源" 标识在 expense / account 等详情页：被 AI 修改过的字段加微小 sparkle prefix（calm intelligence 风格）
 
 ### P3 — Phase 5 / 长期 / 未来 feature
 
