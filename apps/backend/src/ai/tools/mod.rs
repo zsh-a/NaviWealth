@@ -241,6 +241,22 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_subscription_changes".into(),
+            description: "返回端侧 detectSubscriptionChanges 检测到的订阅价格变动\
+                          （早窗口 median vs 晚窗口 median 差值超 10% 且 >=$1 等价）。\
+                          数据来自 AI Read Model `subscription_changes`（Analytical P1，device-sourced）。\
+                          payload 含 merchant_key / cadence / currency / prev_amount_minor / \
+                          new_amount_minor / delta_ratio / since。\
+                          典型问题：「哪些订阅最近涨价了」「Netflix 涨了多少」。\
+                          注意：检测窗口仅限于本次 chat 上报的 expenses，未持久化跨会话状态。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "currency": { "type": "string", "description": "可选；只看某一币种。" }
+                }
+            }),
+        },
+        ToolSchema {
             name: "get_investment_performance".into(),
             description: "返回 per-asset 当前持仓表现：market_value / cost_basis / unrealized_pnl / weight。\
                           数据来自 AI Read Model `investment_performance`（Analytical P1，device-sourced）—— \
@@ -294,6 +310,27 @@ pub fn schemas() -> Vec<ToolSchema> {
             input_schema: json!({
                 "type": "object",
                 "properties": {}
+            }),
+        },
+        ToolSchema {
+            name: "get_asset_allocation".into(),
+            description: "按 asset.type（stock / etf / crypto / cash / ...）+ currency 双键聚合\
+                          当前持仓的 cost_basis_minor。数据来自 AI Read Model \
+                          `asset_allocation_snapshot`（Snapshot 层 P1，cloud-projected）。\
+                          weight 在同 currency 内归一（sum==1 within currency），\
+                          跨币种不直接相加（云端没有 FX 源）。\
+                          典型问题：「我的股票/加密占比」「USD 仓位最大头是哪类」「股票总成本多少」。\
+                          单位是 **成本** 而非市值；市值需配合端侧价格数据计算。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "bucket_dim": {
+                        "type": "string",
+                        "enum": ["asset_type"],
+                        "default": "asset_type",
+                        "description": "桶维度。当前只有 asset_type。预留 industry / region。"
+                    }
+                }
             }),
         },
         ToolSchema {
@@ -549,18 +586,21 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
     use futures_util::future::{select, Either};
     use gloo_timers::future::TimeoutFuture;
 
-    // Phase 2-C: advisory policy check. Log violations to surface
-    // metadata bugs against real traffic; do NOT yet reject — that
-    // flips to enforcement in Phase 3 once the descriptor table is
-    // proven against production calls.
+    // Wave 21: policy is now ENFORCED (advisory → enforced). Denied
+    // calls synthesize a structured tool_result so the model sees a
+    // parseable failure and can pivot, rather than the dispatch
+    // silently running. The synthesized result matches the shape of
+    // an ordinary tool error (`{error: {...}}`) so existing model-side
+    // error handling kicks in unchanged.
     let descriptor = lookup(name);
     match check_tool_call(descriptor, ctx.context_tier) {
         PolicyDecision::Allowed => {}
         PolicyDecision::Denied(reason) => {
             worker::console_log!(
-                "tool_policy advisory deny: tool={name} reason={reason:?} client_tier={:?}",
+                "tool_policy denied: tool={name} reason={reason:?} client_tier={:?}",
                 ctx.context_tier
             );
+            return policy_denied_result(name, &reason);
         }
     }
 
@@ -577,11 +617,13 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_monthly_spend_by_category" => get_monthly_spend_by_category(ctx, input).await,
             "get_net_worth_summary" => get_net_worth_summary(ctx, input).await,
             "get_cashflow_buckets" => get_cashflow_buckets(ctx, input).await,
+            "get_asset_allocation" => get_asset_allocation(ctx, input).await,
             "get_recurring_patterns" => get_recurring_patterns(ctx, input).await,
             "get_anomaly_flags" => get_anomaly_flags(ctx, input).await,
             "get_refund_links" => get_refund_links(ctx, input).await,
             "get_transfer_links" => get_transfer_links(ctx, input).await,
             "get_investment_performance" => get_investment_performance(ctx, input).await,
+            "get_subscription_changes" => get_subscription_changes(ctx, input).await,
             "get_xirr_summary" => get_xirr_summary(ctx, input).await,
             "read_account_window" => read_account_window(ctx, input).await,
             "read_asset_window" => read_asset_window(ctx, input).await,
@@ -621,6 +663,24 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
 /// catching the pathological "D1 hang under spawn_local context" case
 /// before it stalls the whole conversation.
 const PER_TOOL_TIMEOUT_MS: u32 = 15_000;
+
+/// Wave 21 — synthesised `tool_result` body when policy denies dispatch.
+/// Shape mirrors a normal tool error (`{error: {code, message}}`) so the
+/// LLM's existing error handling kicks in without special-casing.
+fn policy_denied_result(
+    tool_name: &str,
+    reason: &super::policy::PolicyReason,
+) -> Value {
+    json!({
+        "error": {
+            "code":     "policy_denied",
+            "policy":   reason.code(),
+            "tool":     tool_name,
+            "message":  reason.message(),
+        },
+        "policy_denied": true,
+    })
+}
 
 // ---------------------------------------------------------------------------
 // D1 row helpers — we read the materialised tables directly. The protocol
@@ -903,66 +963,11 @@ async fn get_journal_entries(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, 
 }
 
 // ---------------------------------------------------------------------------
-// compute_xirr — Newton-Raphson on the cash-flow series.
+// compute_xirr — see `xirr` submodule for the Newton-Raphson core (Wave 25).
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Copy)]
-struct CashFlow {
-    when: DateTime<Utc>,
-    amount: f64,
-}
-
-fn xirr(flows: &[CashFlow]) -> Option<f64> {
-    if flows.len() < 2 {
-        return None;
-    }
-    // All same sign → XIRR is undefined (no break-even rate).
-    let any_pos = flows.iter().any(|f| f.amount > 0.0);
-    let any_neg = flows.iter().any(|f| f.amount < 0.0);
-    if !(any_pos && any_neg) {
-        return None;
-    }
-    let t0 = flows.iter().map(|f| f.when).min()?;
-    let years: Vec<f64> = flows
-        .iter()
-        .map(|f| (f.when - t0).num_seconds() as f64 / (365.25 * 86400.0))
-        .collect();
-
-    let f = |r: f64| -> f64 {
-        flows
-            .iter()
-            .zip(&years)
-            .map(|(cf, &t)| cf.amount / (1.0 + r).powf(t))
-            .sum()
-    };
-    let df = |r: f64| -> f64 {
-        flows
-            .iter()
-            .zip(&years)
-            .map(|(cf, &t)| -t * cf.amount / (1.0 + r).powf(t + 1.0))
-            .sum()
-    };
-    let mut r = 0.1_f64;
-    for _ in 0..64 {
-        let val = f(r);
-        if val.abs() < 1e-9 {
-            return Some(r);
-        }
-        let d = df(r);
-        if d.abs() < 1e-12 {
-            return None;
-        }
-        let next = r - val / d;
-        if !next.is_finite() || next <= -0.999_999 {
-            return None;
-        }
-        if (next - r).abs() < 1e-9 {
-            return Some(next);
-        }
-        r = next;
-    }
-    None
-}
+mod xirr;
+use self::xirr::{xirr, CashFlow};
 
 async fn compute_xirr(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     let scope = input
@@ -1681,6 +1686,42 @@ async fn get_risk_alerts(ctx: &ToolCtx<'_>) -> Result<Value, AppError> {
 }
 
 // ---------------------------------------------------------------------------
+// get_asset_allocation — Snapshot P1 (§4.3.2, cloud-projected)
+// ---------------------------------------------------------------------------
+
+async fn get_asset_allocation(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::asset_allocation_snapshot::{query_all, AssetAllocationSnapshot};
+    use super::read_models::projection::ensure_fresh;
+    let bucket_dim = input
+        .get("bucket_dim")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty());
+
+    let proj = AssetAllocationSnapshot;
+    let freshness = ensure_fresh(ctx.db, ctx.user_id, &proj).await?;
+    let buckets = query_all(ctx.db, ctx.user_id, bucket_dim).await?;
+    let rows: Vec<Value> = buckets
+        .iter()
+        .map(|b| {
+            json!({
+                "bucket_dim":       b.bucket_dim,
+                "bucket_key":       b.bucket_key,
+                "currency":         b.currency,
+                "total_cost_minor": b.total_cost_minor.to_string(),
+                "position_count":   b.position_count,
+                "weight":           b.weight,
+            })
+        })
+        .collect();
+    Ok(json!({
+        "buckets":   rows,
+        "count":     rows.len(),
+        "freshness": freshness,
+        "note":      "cost basis（非市值；云端无 FX 源）；weight 在同 currency 内归一。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_monthly_spend_by_category — Read Model 主通道入口（§4.3）
 // ---------------------------------------------------------------------------
 
@@ -1943,6 +1984,47 @@ async fn get_transfer_links(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, A
 }
 
 // ---------------------------------------------------------------------------
+// get_subscription_changes — Analytical P1 (§4.3.3, device-sourced)
+// ---------------------------------------------------------------------------
+
+async fn get_subscription_changes(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::subscription_changes::{current_freshness, query_all};
+    let currency = input
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+    let freshness = current_freshness(ctx.db, ctx.user_id).await?;
+    let rows = query_all(ctx.db, ctx.user_id, currency.as_deref()).await?;
+    let changes: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "id":                 r.id,
+                "merchant_key":       r.merchant_key,
+                "cadence":            r.cadence,
+                "currency":           r.currency,
+                "prev_amount_minor":  r.prev_amount_minor.map(|n| n.to_string()),
+                "new_amount_minor":   r.new_amount_minor.map(|n| n.to_string()),
+                "delta_ratio":        r.delta_ratio,
+                "since":              r.since,
+                "payload":            r.payload,
+            })
+        })
+        .collect();
+    Ok(json!({
+        "changes":   changes,
+        "count":     changes.len(),
+        "freshness": freshness,
+        "source":    "device_analytical_read_model",
+        "note":      "device-sourced：端侧 detectSubscriptionChanges 在本次 chat 上报的 expense 窗口内对比 earlier vs later median。跨会话历史需要 OpLog 持久化 recurring_patterns 后扩展。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_investment_performance — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
@@ -2174,43 +2256,41 @@ mod tests {
     use super::*;
 
     #[test]
-    fn xirr_matches_excel_simple_case() {
-        // -1000 today, +1100 in one year ≈ 10%.
-        let t0 = DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
-            .unwrap()
-            .with_timezone(&Utc);
-        let t1 = DateTime::parse_from_rfc3339("2026-01-01T00:00:00Z")
-            .unwrap()
-            .with_timezone(&Utc);
-        let rate = xirr(&[
-            CashFlow {
-                when: t0,
-                amount: -1000.0,
-            },
-            CashFlow {
-                when: t1,
-                amount: 1100.0,
-            },
-        ])
-        .unwrap();
-        assert!((rate - 0.10).abs() < 1e-3, "rate = {rate}");
+    fn policy_denied_result_has_stable_shape() {
+        // The model side branches on `error.code == "policy_denied"`,
+        // so this shape is a wire contract.
+        let v = policy_denied_result(
+            "get_journal_entries",
+            &super::super::policy::PolicyReason::UnknownTool,
+        );
+        assert_eq!(v["error"]["code"], "policy_denied");
+        assert_eq!(v["error"]["tool"], "get_journal_entries");
+        assert_eq!(v["error"]["policy"], "unknown_tool");
+        assert_eq!(v["policy_denied"], true);
+        // Message is human-readable, non-empty.
+        assert!(v["error"]["message"].as_str().unwrap().len() > 5);
     }
 
     #[test]
-    fn xirr_returns_none_for_single_sign() {
-        let t0 = Utc::now();
-        let rate = xirr(&[
-            CashFlow {
-                when: t0,
-                amount: -1.0,
+    fn policy_denied_result_distinguishes_reasons() {
+        let v1 = policy_denied_result(
+            "x",
+            &super::super::policy::PolicyReason::ExternalWriteRequiresConsent,
+        );
+        let v2 = policy_denied_result(
+            "x",
+            &super::super::policy::PolicyReason::ContextTierTooLow {
+                client: BudgetTier::Small,
+                required: BudgetTier::Standard,
             },
-            CashFlow {
-                when: t0 + Duration::days(30),
-                amount: -2.0,
-            },
-        ]);
-        assert!(rate.is_none());
+        );
+        assert_eq!(v1["error"]["policy"], "external_write_requires_consent");
+        assert_eq!(v2["error"]["policy"], "context_tier_too_low");
     }
+
+    // Wave 25: xirr core tests live with the implementation in
+    // `tools/xirr.rs`. Tests here exercise the dispatcher's surrounding
+    // behaviour, not the algorithm.
 
     #[test]
     fn snapshot_total_base_sums_string_base_values() {
@@ -2258,11 +2338,13 @@ mod tests {
             "get_monthly_spend_by_category",
             "get_net_worth_summary",
             "get_cashflow_buckets",
+            "get_asset_allocation",
             "get_recurring_patterns",
             "get_anomaly_flags",
             "get_refund_links",
             "get_transfer_links",
             "get_investment_performance",
+            "get_subscription_changes",
             "get_xirr_summary",
             "read_account_window",
             "read_asset_window",

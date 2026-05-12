@@ -3,15 +3,32 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/db/providers.dart';
 import '../contracts/contracts.dart';
 import 'ai_trace_store.dart';
+import 'drift_ai_trace_store.dart';
 
-/// Backend storage for [AiTrace] records. Default is the in-memory
-/// ring buffer — overridden in tests, and swapped for a Drift impl in
-/// Phase 2 via `ProviderContainer.overrides`.
-final aiTraceStoreProvider = Provider<AiTraceStore>(
-  (ref) => InMemoryAiTraceStore(),
-);
+/// Backend storage for [AiTrace] records.
+///
+/// Production wiring (Wave 23): falls back to in-memory until the
+/// Drift database is ready, then switches to the Drift-backed store.
+/// The async DB boot is one-shot — once available we keep the same
+/// store instance for the rest of the session.
+///
+/// Tests / dev: override this provider with a hand-rolled
+/// `InMemoryAiTraceStore` to keep tests fast and hermetic.
+final aiTraceStoreProvider = Provider<AiTraceStore>((ref) {
+  final dbAsync = ref.watch(appDatabaseProvider);
+  return dbAsync.when(
+    data: (db) => DriftAiTraceStore(db),
+    // Until the DB is open, traces buffer in memory; once the DB
+    // becomes available callers re-watch this provider and the in-memory
+    // buffer is dropped (it was only filled during boot — typically a
+    // sub-second window).
+    loading: () => InMemoryAiTraceStore(),
+    error: (_, _) => InMemoryAiTraceStore(),
+  );
+});
 
 /// Most-recent traces (newest first). UI surfaces should depend on
 /// this provider; refresh by invalidating it after a write.

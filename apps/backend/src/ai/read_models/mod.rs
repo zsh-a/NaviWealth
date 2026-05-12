@@ -16,6 +16,7 @@
 //! 同步刷新 (§4.3.6)。
 
 pub mod anomaly_flags;
+pub mod asset_allocation_snapshot;
 pub mod cashflow_buckets;
 pub mod freshness;
 pub mod holdings_snapshot;
@@ -27,5 +28,6 @@ pub mod projection;
 pub mod recurring_patterns;
 pub mod refund_links;
 pub mod scoped_detail;
+pub mod subscription_changes;
 pub mod transfer_links;
 pub mod xirr_snapshot;

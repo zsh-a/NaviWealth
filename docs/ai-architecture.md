@@ -1,7 +1,7 @@
 # NaviWealth AI 架构
 
-> 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层主通道已贯通**（Snapshot 全部 / Analytical 5/6 / Scoped Detail 三表），Phase 5（端侧 LLM）未实现。
-> **Wave 进度**: Wave 1–17 完成 — 详见 §7 实现状态表。剩余主线: `subscription_changes` (Analytical P1)、`asset_allocation_snapshot` (Snapshot P1)、Runtime 抽象、Phase 5。
+> 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步）。Phase 5（端侧 LLM）未实现。
+> **Wave 进度**: Wave 1–25 完成 — 详见 §7 实现状态表与 Wave 落地清单。剩余主线: Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`（需 OpLog 持久化 recurring_patterns）。
 > 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
 
 ---
@@ -579,17 +579,22 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | **Phase 2-C** | ToolDescriptor 元数据 + risk_policy（advisory） | ✅ |
 | **Phase 3** | NL→QueryPlan + 5 类 plan + InMemoryExecutor | ✅ |
 | **Phase 4** | Embedder 抽象 + InMemoryVectorStore + SemanticMemory（StubEmbedder） | ✅ |
-| **★ Read Models — Snapshot 层** | `holdings_snapshot` / `net_worth_snapshot` / `monthly_spend_by_category` / `cashflow_buckets` / `net_worth_daily` | ✅ 主通道全部贯通（cloud-projected via `Projection` trait + lazy refresh） |
-| **★ Read Models — Analytical 层 P1** | `recurring_patterns` / `anomaly_flags` / `refund_links` / `transfer_links` / `investment_performance` (5/6) | ✅ device-sourced — 端侧 detector → `ContextPack.analytical_uploads` → 后端镜像；剩 `subscription_changes` 待跨会话状态机 |
+| **★ Read Models — Snapshot 层** | `holdings_snapshot` / `net_worth_snapshot` / `monthly_spend_by_category` / `cashflow_buckets` / `net_worth_daily` / `asset_allocation_snapshot` | ✅ 全部贯通（cloud-projected via `Projection` trait + lazy refresh）|
+| **★ Read Models — Analytical 层 P1** | `recurring_patterns` / `anomaly_flags` / `refund_links` / `transfer_links` / `investment_performance` / `subscription_changes` | ✅ 六个 device-sourced 模型全部贯通；`subscription_changes` 当前仅检测**本次 chat 窗口内**的变化（长历史需 OpLog 持久化 `recurring_patterns`） |
 | **★ Read Models — Analytical 层 P2** | `xirr_snapshot` | ✅ cloud-projected (Newton-Raphson 确定性算法) |
 | **★ Read Models — Scoped Detail 层** | `read_account_window` / `read_asset_window` / `read_category_window` | ✅ 含 purpose 必填 + 硬限额 + sanitised 字段 + HMAC-SHA256(user_id, merchant) 哈希；`get_journal_entries` 仍在表中（schema 隐藏，dispatch 保留兼容），待去除 |
 | **★ Schema 公约 + Freshness gate** | `source_hlc_watermark` / `refreshed_at` / `schema_version` / `calculation_version`；SSE tool_result.freshness + 端侧比对 + Phase 2 `force_refresh_read_models` 提示 | ✅ Phase 1 (logging) + Phase 2 (hint) 落地，下一次 chat 自动带 `freshnessHint` |
-| **★ Runtime 抽象层** | `AiRuntime` interface + `RuntimeRegistry` | ❌ 当前 `Backend` 枚举写死 |
+| **★ ToolDescriptor 扩展** | `allowed_runtimes` (cloud/device bitset) + `side_effect` (None/DeviceLocalWrite/ExternalCall) + `read_model_layer` (Snapshot/Analytical/ScopedDetail) | ✅ 27 个描述符全部填充；mobile 镜像（`tool_descriptor.dart`）字段对齐 |
+| **★ risk_policy enforced** | dispatch denied 分支返回合成 `tool_result {error: "policy_denied", policy, tool, message}` | ✅ Wave 21 落地；LLM 看到标准 error 形态可继续工作 |
+| **★ AiRuntime + RuntimeRegistry** | `AiRuntime` trait / `RuntimeId` / `CloudAnthropicRuntime` (wraps existing `AiChatApiClient`) / `RulesDeviceRuntime` stub / registry provider | ✅ 抽象层就位；ChatRepository 暂未改走 registry（Phase 5 接入端侧 runtime 时再切） |
+| **★ AiTraceStore 持久化** | Drift 表 `ai_traces` (request_id PK + owner partition) + `DriftAiTraceStore`；provider 自动从 in-memory 切换到 Drift | ✅ Wave 23 落地；30 天清理由 caller 调度 |
+| **★ Undo stack 持久化** | Drift 表 `ai_undo_stack` (token PK + expires_at) + `DriftUndoStack` (put/take 原子 / pruneExpiredBefore) | ✅ Wave 24 落地；closure-based `LocalImmediateWriteExecutor` 保留作为内存路径，需持久化的 caller 直接用 `DriftUndoStack` |
+| **★ `tools.rs` 拆分** | `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法提到 `tools/xirr.rs` | ✅ Wave 25 起步；剩余 read/propose 二级拆分待后续增量 |
 | **Phase 5** | 端侧真实 LLM runtime + 模型下载/校验 | ❌ 未实现 |
 
-**ToolDescriptor 总数**: 25（Read 18 + Propose 5 + 兼容保留 2）— 见 `apps/backend/src/ai/policy/tool_policy.rs`。`risk_policy.rs::every_dispatch_target_has_a_descriptor` 与 `tools.rs::schemas_advertise_all_dispatch_targets` 双向同步。
+**ToolDescriptor 总数**: 27（Read 20 + Propose 5 + 兼容保留 2）— 见 `apps/backend/src/ai/policy/tool_policy.rs`。每条描述符含七个轴：`name` / `access` / `risk` / `requires_confirmation` / `allowed_context_tier` / `allowed_runtimes` / `side_effect` / `read_model_layer`。`risk_policy.rs::every_dispatch_target_has_a_descriptor` 与 `tools.rs::schemas_advertise_all_dispatch_targets` 双向同步。
 
-**测试覆盖**: backend 121 tests (`cargo test --lib`) + mobile（含 8 个 analytical_uploads 转换契约用例 + 23 个 chat_repository 用例 + freshness gate 覆盖）。`flutter analyze --fatal-infos` 与 `cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings` 均干净。Runtime 抽象、Phase 5 尚未触及。
+**测试覆盖**: backend **131 tests** (`cargo test --lib`，新增 4 个 asset_allocation aggregate + 4 个 tool_policy invariant + 2 个 policy_denied shape) + mobile 含 8 个 analytical_uploads 转换契约（Wave 16/17/19）+ 5 个 ai_runtime registry/picker + 5 个 drift_ai_trace_store + 6 个 drift_undo_stack + 23 个 chat_repository + freshness gate 覆盖。`flutter analyze --fatal-infos lib` 与 `cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings` 均干净。剩余 9 个 widget 渲染器失败为 Wave 18 之前的预存遗留（`tool_invocation_renderers_test.dart::_expandCard` 找不到目标 widget），与本次 P1 无关。
 
 ### Wave 落地清单（Read Models 主通道）
 
@@ -610,10 +615,18 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 15 | Mobile producer wire：`detectRecurring` 跑在 expense 流上 → `recurring_pattern` upload | `_buildAnalyticalUploads` 落地 |
 | 16 | `refund_links` + `transfer_links`（device-sourced） | migration 0014；端侧 `matchRefunds` / `matchTransfers` 接入 producer |
 | 17 | `investment_performance`（device-sourced，per-asset 持仓状态） | migration 0015；`holdingsSnapshotProvider` → `investment_performance` upload |
+| 18 | `asset_allocation_snapshot`（Snapshot P1）— per (asset_type, currency) cost basis 聚合 | migration 0016；`get_asset_allocation` 工具 |
+| 19 | `subscription_changes`（Analytical P1 完结）— 端侧 `detectSubscriptionChanges` 半窗对比 | migration 0017；`get_subscription_changes` 工具 + skill 模块 |
+| 20 | `ToolDescriptor` 扩展三维度 | `allowed_runtimes` / `side_effect` / `read_model_layer` 字段 + mobile 镜像 + invariant tests |
+| 21 | `risk_policy` advisory → enforced | `policy_denied_result(name, reason)` 合成 tool_result；`PolicyReason::code/message` 稳定形态 |
+| 22 | `AiRuntime` + `RuntimeRegistry` | `lib/core/ai/runtime/ai_runtime.dart`，`CloudAnthropicRuntime` + `RulesDeviceRuntime` + 5 个 registry 测试 |
+| 23 | `AiTraceStore` Drift 持久化 | Drift 表 `ai_traces` + `DriftAiTraceStore` + provider 自动切换 + 5 个 round-trip 测试 |
+| 24 | `LocalImmediateWriteExecutor` Drift 持久化 | Drift 表 `ai_undo_stack` + `DriftUndoStack` (原子 take) + 6 个测试 |
+| 25 | `tools.rs` 拆分起步 | `apps/backend/src/ai/tools/` 目录化；XIRR 核心抽离到 `tools/xirr.rs` |
 
 ## 8. TODO
 
-按优先级排列。**P0 主通道已贯通**；P1 剩 Analytical 1 个模型 + Runtime 抽象 + 运维持久化。
+按优先级排列。**P0 + P1 全部完成（Wave 1–25）**；P2 是体验增强，P3 进入 Phase 5。
 
 ### P0 — 主通道（✅ 全部完成 Wave 1–17）
 
@@ -623,19 +636,17 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [x] ~~**Freshness gate 协议**~~ — SSE `tool_result.freshness` (Phase 1 logging + Phase 2 `pendingFreshnessHintProvider` → 下次 chat 携带 `forceRefreshReadModels` 提示) — 见 `apps/mobile/lib/features/ai_chat/data/providers.dart`、`apps/mobile/lib/features/ai_chat/state/chat_sync_gate.dart`
 - [x] ~~**废弃 `get_journal_entries` → Scoped Detail 工具族**~~ — `read_account_window` / `read_asset_window` / `read_category_window` 落地：必填 `purpose` + 硬限额 ≤ 50 + HMAC-SHA256(user_id, merchant) 哈希 + sanitised 字段 + 共享 `scoped_detail/common.rs` 帮手；`get_journal_entries` schema 已从 LLM 视野隐藏（dispatch 保留以防回归）
 
-### P1 — 现有路径稳定 + 启用生产
+### P1 — 现有路径稳定 + 启用生产（✅ 全部完成 Wave 18–25）
 
-- [ ] **Read Models — Snapshot 层 P1**: 剩 `asset_allocation_snapshot`（`cashflow_buckets` 已落地 Wave 9，`net_worth_daily` 额外补充）
-- [ ] **Read Models — Analytical 层 P1**: 剩 `subscription_changes`
-  - 端侧需要跨会话状态（"上个月这条 recurring 比这个月便宜了 10%"）— 落地前需把 `recurring_patterns` detector 结果通过 OpLog 持久化到 Drift，方能跨 chat 比对
-  - 已落地（device-sourced）：`recurring_patterns` (Wave 10) / `anomaly_flags` (Wave 11) / `refund_links` (Wave 16) / `transfer_links` (Wave 16) / `investment_performance` (Wave 17)
-  - 已落地（cloud-projected）：`xirr_snapshot` (Wave 13)
-- [ ] **`AiRuntime` 抽象 + RuntimeRegistry** — 把现有路径包装为 `RulesDeviceRuntime` + `CloudAnthropicRuntime`，router 改成 registry 查询。`Backend` 枚举降级为 trace label。
-- [ ] **AiTraceStore 持久化** — Drift 表 + 30 天滚动清理。接口已稳定。  *入口*: `lib/core/ai/trace/ai_trace_store.dart`
-- [ ] **LocalImmediateWriteExecutor 持久化** — undo 栈 Drift 表按 token 索引。  *入口*: `lib/core/ai/write/local_immediate_executor.dart`
-- [ ] **risk_policy advisory → enforced** — 生产数据验证后，dispatcher 在 denied 分支返回合成的 `tool_result { error: "policy_denied" }`。  *入口*: `apps/backend/src/ai/tools.rs::dispatch`
-- [ ] **`tools.rs` 文件拆分** — `tools/{read,propose,external}/`，元数据已在 `policy/tool_policy.rs`，机械工作不影响行为。
-- [ ] **`ToolDescriptor` 加 `allowed_runtimes` + `side_effect` + `read_model_layer`** — 端云同构契约；`read_model_layer` 让 policy 强制 routine chat 不调 Layer 3。
+- [x] ~~**Read Models — Snapshot 层 P1**~~ — `asset_allocation_snapshot` 落地（Wave 18），`cashflow_buckets` / `net_worth_daily` 在 P0 完成
+- [x] ~~**Read Models — Analytical 层 P1**~~ — 六模型全部落地：`recurring_patterns` (W10) / `anomaly_flags` (W11) / `refund_links` + `transfer_links` (W16) / `investment_performance` (W17) / `subscription_changes` (W19)
+  - 注：`subscription_changes` 当前只检测**本次 chat 上报的 expense 窗口内**的变化（earlier-half vs later-half median diff）。跨会话长历史比对需把 `recurring_patterns` 通过 OpLog 持久化到 Drift —— P3 工程项
+- [x] ~~**`AiRuntime` 抽象 + RuntimeRegistry**~~ — `lib/core/ai/runtime/ai_runtime.dart`：`CloudAnthropicRuntime` 包装现有 `AiChatApiClient`，`RulesDeviceRuntime` 为 Phase 5 占位。`ChatRepository` 暂未改走 registry（Phase 5 接入端侧 runtime 时切换以避免现在 churn）
+- [x] ~~**AiTraceStore 持久化**~~ — `DriftAiTraceStore` + `ai_traces` 表 (request_id PK + owner partition + started_at index)。Provider 自动从 in-memory 切换到 Drift。30 天清理由 caller 触发 `pruneOlderThan(...)`
+- [x] ~~**LocalImmediateWriteExecutor 持久化**~~ — `DriftUndoStack` + `ai_undo_stack` 表 (token PK + expires_at)。原子 `take(token)` 通过事务保证两次 undo 不并发执行
+- [x] ~~**risk_policy advisory → enforced**~~ — `tools::dispatch` denied 分支直接 return `policy_denied_result(name, reason)` 合成 `{error: {code: "policy_denied", policy, tool, message}, policy_denied: true}`，LLM 看到的就是标准 tool error
+- [x] ~~**`tools.rs` 文件拆分**~~ — `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法迁到 `tools/xirr.rs`（Wave 25）。剩余 read/propose 二级拆分作为后续增量
+- [x] ~~**`ToolDescriptor` 加 `allowed_runtimes` + `side_effect` + `read_model_layer`**~~ — Wave 20：27 描述符全部填充，mobile `tool_descriptor.dart` 镜像对齐，含 invariant tests（proposals 必有 DeviceLocalWrite side effect / reads 必无 side effect / ScopedDetail 必至少 Standard tier / 每条都允许 cloud）
 
 ### P2 — 增强
 

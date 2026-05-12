@@ -7,6 +7,7 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/router/router.dart';
+import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
@@ -54,6 +55,18 @@ final aiChatDioProvider = Provider<Dio>((ref) {
 final aiChatApiClientProvider = Provider<AiChatApiClient>(
   (ref) => DioAiChatApiClient(dio: ref.watch(aiChatDioProvider)),
 );
+
+/// Wave 22 — AiRuntime registry. Today it wires `cloud_anthropic` over
+/// the existing dio client + a stub `rules_device`. ChatRepository does
+/// not yet consult the registry; the abstraction is in place so future
+/// waves can flip dispatch without touching call sites.
+final runtimeRegistryProvider = Provider<RuntimeRegistry>((ref) {
+  final api = ref.watch(aiChatApiClientProvider);
+  return RuntimeRegistry(<RuntimeId, AiRuntime>{
+    RuntimeId.cloudAnthropic: CloudAnthropicRuntime(apiClient: api),
+    RuntimeId.rulesDevice: const RulesDeviceRuntime(),
+  });
+});
 
 /// Chat persistence is awaited once via [appDatabaseProvider]. We expose
 /// the store as an `AsyncValue` so consumers can react to first-time DB
@@ -276,6 +289,12 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
     for (final t in transfers) {
       out.add(_transferMatchToUpload(t));
     }
+    // Wave 19: subscription price changes (stateless detection over the
+    // same input window).
+    final subChanges = detectSubscriptionChanges(transactionInputs);
+    for (final s in subChanges) {
+      out.add(_subscriptionChangeToUpload(s));
+    }
   }
 
   // Wave 17: per-asset holding snapshot → investment_performance upload.
@@ -340,6 +359,22 @@ AnalyticalUpload _transferMatchToUpload(TransferMatch m) {
       'to_txn_id': m.toTxnId,
       'amount_minor': m.amountMinor.toString(),
       'currency': m.currency,
+    },
+  );
+}
+
+AnalyticalUpload _subscriptionChangeToUpload(SubscriptionChange c) {
+  return AnalyticalUpload(
+    kind: 'subscription_change',
+    id: '${c.merchantKey}|${c.currency}',
+    payload: <String, Object?>{
+      'merchant_key': c.merchantKey,
+      'cadence': c.cadence.name,
+      'currency': c.currency,
+      'prev_amount_minor': c.prevMedianAmountMinor.toString(),
+      'new_amount_minor': c.newMedianAmountMinor.toString(),
+      'delta_ratio': c.deltaRatio,
+      'since': c.since.toUtc().toIso8601String(),
     },
   );
 }

@@ -28,6 +28,39 @@ pub enum PolicyReason {
     ExternalWriteRequiresConsent,
 }
 
+impl PolicyReason {
+    /// Short, stable identifier the model can branch on without parsing
+    /// the human-readable message.
+    pub fn code(&self) -> &'static str {
+        match self {
+            PolicyReason::UnknownTool => "unknown_tool",
+            PolicyReason::ContextTierTooLow { .. } => "context_tier_too_low",
+            PolicyReason::ExternalWriteRequiresConsent => "external_write_requires_consent",
+        }
+    }
+
+    /// Human-readable explanation. Goes in the synthesized tool_result
+    /// body so the LLM can read it (and so traces are debuggable).
+    pub fn message(&self) -> String {
+        match self {
+            PolicyReason::UnknownTool => {
+                "tool is not registered in the descriptor table".into()
+            }
+            PolicyReason::ContextTierTooLow { client, required } => {
+                format!(
+                    "context tier {client:?} below required {required:?} — caller must \
+                     escalate the ContextPack tier before invoking this tool"
+                )
+            }
+            PolicyReason::ExternalWriteRequiresConsent => {
+                "external-write tools require explicit user confirmation; planner cannot \
+                 auto-dispatch"
+                    .into()
+            }
+        }
+    }
+}
+
 pub fn check_tool_call(
     descriptor: Option<&ToolDescriptor>,
     client_tier: Option<BudgetTier>,
@@ -73,6 +106,9 @@ mod tests {
         risk: RiskLevel::Info,
         requires_confirmation: Confirmation::None,
         allowed_context_tier: BudgetTier::Standard,
+        allowed_runtimes: crate::ai::policy::tool_policy::AllowedRuntimes::CLOUD_ONLY,
+        side_effect: crate::ai::policy::tool_policy::SideEffect::None,
+        read_model_layer: None,
     };
 
     const PROPOSE_LARGE: ToolDescriptor = ToolDescriptor {
@@ -81,6 +117,9 @@ mod tests {
         risk: RiskLevel::Propose,
         requires_confirmation: Confirmation::OneTap,
         allowed_context_tier: BudgetTier::Large,
+        allowed_runtimes: crate::ai::policy::tool_policy::AllowedRuntimes::CLOUD_ONLY,
+        side_effect: crate::ai::policy::tool_policy::SideEffect::DeviceLocalWrite,
+        read_model_layer: None,
     };
 
     const EXTERNAL: ToolDescriptor = ToolDescriptor {
@@ -89,6 +128,9 @@ mod tests {
         risk: RiskLevel::Commit,
         requires_confirmation: Confirmation::Typed,
         allowed_context_tier: BudgetTier::Standard,
+        allowed_runtimes: crate::ai::policy::tool_policy::AllowedRuntimes::CLOUD_ONLY,
+        side_effect: crate::ai::policy::tool_policy::SideEffect::ExternalCall,
+        read_model_layer: None,
     };
 
     #[test]
@@ -157,11 +199,13 @@ mod tests {
             "get_monthly_spend_by_category",
             "get_net_worth_summary",
             "get_cashflow_buckets",
+            "get_asset_allocation",
             "get_recurring_patterns",
             "get_anomaly_flags",
             "get_refund_links",
             "get_transfer_links",
             "get_investment_performance",
+            "get_subscription_changes",
             "get_xirr_summary",
             "read_category_window",
             "read_account_window",
