@@ -39,5 +39,8 @@ pub mod policy;
 pub mod proposals;
 // AI Read Models — 主通道（docs/ai-architecture.md §4.3）
 pub mod read_models;
+// Phase A runtime protocol: defined ahead of adapters / agent loop / SSE v2.
+#[allow(dead_code, unused_imports)]
+pub mod runtime;
 pub mod sse;
 pub mod tools;
