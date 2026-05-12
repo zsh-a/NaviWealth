@@ -37,7 +37,7 @@ pub struct ToolDescriptor {
     pub allowed_context_tier: BudgetTier,
 }
 
-const DESCRIPTORS: [ToolDescriptor; 24] = [
+const DESCRIPTORS: [ToolDescriptor; 25] = [
     // ── Read-only tools ────────────────────────────────────────
     ToolDescriptor {
         name: "get_holdings",
@@ -149,6 +149,13 @@ const DESCRIPTORS: [ToolDescriptor; 24] = [
     },
     ToolDescriptor {
         name: "get_transfer_links",
+        access: Access::Read,
+        risk: RiskLevel::Info,
+        requires_confirmation: Confirmation::None,
+        allowed_context_tier: BudgetTier::Small,
+    },
+    ToolDescriptor {
+        name: "get_investment_performance",
         access: Access::Read,
         risk: RiskLevel::Info,
         requires_confirmation: Confirmation::None,

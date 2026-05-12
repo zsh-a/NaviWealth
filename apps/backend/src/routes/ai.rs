@@ -276,6 +276,36 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
                     auth.user_id
                 );
             }
+
+            // kind == 'investment_performance' (Wave 17)
+            let perfs: Vec<
+                crate::ai::read_models::investment_performance::InvestmentPerformanceUpload<'_>,
+            > = pack
+                .task
+                .analytical_uploads
+                .iter()
+                .filter(|u| u.kind == "investment_performance")
+                .map(|u| {
+                    crate::ai::read_models::investment_performance::InvestmentPerformanceUpload {
+                        id: &u.id,
+                        payload: &u.payload,
+                        source_device_id: None,
+                    }
+                })
+                .collect();
+            if !perfs.is_empty() {
+                let n = crate::ai::read_models::investment_performance::ingest(
+                    &db_for_ingest,
+                    &auth.user_id,
+                    device_hlc,
+                    &perfs,
+                )
+                .await?;
+                worker::console_log!(
+                    "analytical_uploads: ingested {n} investment_performance for user={}",
+                    auth.user_id
+                );
+            }
         }
     }
 

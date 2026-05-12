@@ -241,6 +241,26 @@ pub fn schemas() -> Vec<ToolSchema> {
             }),
         },
         ToolSchema {
+            name: "get_investment_performance".into(),
+            description: "返回 per-asset 当前持仓表现：market_value / cost_basis / unrealized_pnl / weight。\
+                          数据来自 AI Read Model `investment_performance`（Analytical P1，device-sourced）—— \
+                          端侧 holdingsSnapshotProvider 算出 per-asset 持仓后通过 \
+                          ContextPack.analytical_uploads 镜像到云端表，AI 不需要再做计算。\
+                          每行: asset_id / asset_currency / base_currency / market_value_base / \
+                          cost_basis_base / unrealized_pnl_base / weight / holding_days? / as_of。\
+                          典型问题：「我现在赚最多的是哪个标的」「AAPL 持仓现值」「未实现盈亏总计」。\
+                          需要全时间窗口 XIRR 走 get_xirr_summary；自定义时间窗 XIRR 走 compute_xirr。".into(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "base_currency": {
+                        "type": "string",
+                        "description": "可选；只看某一 base currency（一般用户的整个 portfolio 都是同一个）。"
+                    }
+                }
+            }),
+        },
+        ToolSchema {
             name: "get_recurring_patterns".into(),
             description: "返回端侧 detector 检测到的周期性支出（月度/周度订阅、定期账单等）。\
                           数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— \
@@ -561,6 +581,7 @@ pub async fn dispatch(ctx: &ToolCtx<'_>, name: &str, input: &Value) -> Value {
             "get_anomaly_flags" => get_anomaly_flags(ctx, input).await,
             "get_refund_links" => get_refund_links(ctx, input).await,
             "get_transfer_links" => get_transfer_links(ctx, input).await,
+            "get_investment_performance" => get_investment_performance(ctx, input).await,
             "get_xirr_summary" => get_xirr_summary(ctx, input).await,
             "read_account_window" => read_account_window(ctx, input).await,
             "read_asset_window" => read_asset_window(ctx, input).await,
@@ -1922,6 +1943,49 @@ async fn get_transfer_links(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, A
 }
 
 // ---------------------------------------------------------------------------
+// get_investment_performance — Analytical P1 (§4.3.3, device-sourced)
+// ---------------------------------------------------------------------------
+
+async fn get_investment_performance(
+    ctx: &ToolCtx<'_>,
+    input: &Value,
+) -> Result<Value, AppError> {
+    use super::read_models::investment_performance::{current_freshness, query_all};
+    let base_currency = input
+        .get("base_currency")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty());
+    let freshness = current_freshness(ctx.db, ctx.user_id).await?;
+    let rows = query_all(ctx.db, ctx.user_id, base_currency.as_deref()).await?;
+    let assets: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "id":                  r.id,
+                "asset_id":            r.asset_id,
+                "asset_currency":      r.asset_currency,
+                "base_currency":       r.base_currency,
+                "market_value_base":   r.market_value_base,
+                "cost_basis_base":     r.cost_basis_base,
+                "unrealized_pnl_base": r.unrealized_pnl_base,
+                "weight":              r.weight,
+                "holding_days":        r.holding_days,
+                "as_of":               r.as_of,
+                "payload":             r.payload,
+            })
+        })
+        .collect();
+    Ok(json!({
+        "assets":    assets,
+        "count":     assets.len(),
+        "freshness": freshness,
+        "source":    "device_analytical_read_model",
+        "note":      "device-sourced：端侧 holdingsSnapshotProvider 算出 per-asset 持仓快照后上报。decimal 字段为字符串避免精度丢失。XIRR 不在此 read model，走 get_xirr_summary。",
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // get_recurring_patterns — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
@@ -2198,6 +2262,7 @@ mod tests {
             "get_anomaly_flags",
             "get_refund_links",
             "get_transfer_links",
+            "get_investment_performance",
             "get_xirr_summary",
             "read_account_window",
             "read_asset_window",

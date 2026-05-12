@@ -11,6 +11,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 
 void main() {
   group('Expense → TransactionInput (mirrors providers.dart)', () {
@@ -174,6 +175,58 @@ void main() {
       expect(upload.id, 'purchase_1|refund_1');
       expect(upload.payload['amount_minor'], '5000');
       expect(upload.payload['currency'], 'USD');
+    });
+  });
+
+  group('Wave 17: HoldingSnapshot → AnalyticalUpload payload', () {
+    test('id is asset_id; payload mirrors the snapshot in decimal strings', () {
+      final snap = HoldingSnapshot(
+        assetId: 'aapl',
+        quantity: Decimal.parse('10'),
+        costBasisInAssetCurrency: Decimal.parse('1500.00'),
+        marketValueInAssetCurrency: Decimal.parse('1900.00'),
+        assetCurrency: 'USD',
+        costBasisInBase: Decimal.parse('1500.00'),
+        marketValueInBase: Decimal.parse('1900.00'),
+        unrealizedPnlInBase: Decimal.parse('400.00'),
+        weight: Decimal.parse('0.25'),
+        baseCurrency: 'USD',
+        asOf: DateTime.utc(2026, 5, 12, 9, 30),
+      );
+      // Mirror the providers.dart mapping inline:
+      final upload = AnalyticalUpload(
+        kind: 'investment_performance',
+        id: snap.assetId,
+        payload: <String, Object?>{
+          'asset_id': snap.assetId,
+          'asset_currency': snap.assetCurrency,
+          'base_currency': snap.baseCurrency,
+          'as_of': snap.asOf.toUtc().toIso8601String(),
+          'quantity': snap.quantity.toString(),
+          'cost_basis_in_asset_currency':
+              snap.costBasisInAssetCurrency.toString(),
+          'market_value_in_asset_currency':
+              snap.marketValueInAssetCurrency.toString(),
+          'cost_basis_in_base': snap.costBasisInBase.toString(),
+          'market_value_in_base': snap.marketValueInBase.toString(),
+          'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
+          'weight': snap.weight.toString(),
+        },
+      );
+      expect(upload.kind, 'investment_performance');
+      expect(upload.id, 'aapl');
+      // Decimal fields go over the wire as strings to preserve precision —
+      // the backend's `payload_decimal_str` accepts string OR number, but
+      // the device side always emits string. Note: Decimal.toString()
+      // normalizes trailing zeros (1900.00 → 1900) — this is fine because
+      // the value is preserved exactly; the backend re-parses as decimal.
+      expect(upload.payload['market_value_in_base'], '1900');
+      expect(upload.payload['cost_basis_in_base'], '1500');
+      expect(upload.payload['unrealized_pnl_in_base'], '400');
+      expect(upload.payload['weight'], '0.25');
+      expect(upload.payload['asset_currency'], 'USD');
+      expect(upload.payload['base_currency'], 'USD');
+      expect(upload.payload['as_of'], '2026-05-12T09:30:00.000Z');
     });
   });
 
