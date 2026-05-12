@@ -67,6 +67,15 @@ class SseIdleTimeout implements Exception {
 /// trip the alarm.
 const Duration kSseIdleTimeout = Duration(seconds: 30);
 
+/// Compile-time rollout switch for the AI SSE event shape.
+///
+/// Default is v2. Build with `--dart-define=AI_PROTOCOL=v1` to force
+/// the v1 compatibility stream during rollback.
+const String kAiSseProtocolVersion = String.fromEnvironment(
+  'AI_PROTOCOL',
+  defaultValue: 'v2',
+);
+
 /// Dio-backed implementation. Streams the SSE body via
 /// `ResponseType.stream` so the caller gets `text` / `tool_call` events
 /// as they arrive on native targets.
@@ -115,6 +124,9 @@ class DioAiChatApiClient implements AiChatApiClient {
               'Accept': 'text/event-stream',
               'Authorization': 'Bearer ${session.accessToken}',
               'Sync-Protocol-Version': protocolVersion,
+              'X-Naviwealth-AI-Protocol': kAiSseProtocolVersion == 'v1'
+                  ? '1'
+                  : '2',
             },
             responseType: ResponseType.stream,
             // Honour the worker's status codes manually so a 401/429 with a

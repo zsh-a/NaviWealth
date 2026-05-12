@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -132,6 +132,17 @@ class AppDatabase extends _$AppDatabase {
       if (from < 6) {
         await _createAiTouchedEntitiesTable(this);
       }
+      // v6 → v7: persist v2 AI SSE side channels. Reasoning text stays
+      // separate from assistant-visible content, and usage is stored as
+      // compact JSON for debug surfaces.
+      if (from < 7) {
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN reasoning_text TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN usage_json TEXT',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -161,6 +172,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   content             TEXT NOT NULL DEFAULT '',
   tool_calls_json     TEXT,
   text_segments_json  TEXT,
+  reasoning_text      TEXT,
+  usage_json          TEXT,
   status              TEXT NOT NULL,
   error_message       TEXT,
   stop_reason         TEXT,
