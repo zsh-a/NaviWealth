@@ -24,6 +24,9 @@
 //! `guardrails::SYSTEM_PROMPT`.
 
 pub mod anthropic;
+// Phase B adapter surface: defined ahead of route migration in Phase C.
+#[allow(dead_code, unused_imports)]
+pub mod adapters;
 // Phase 1 contracts: types are defined ahead of consumers. The
 // allow lifts when the routes/policy/tools modules start using them.
 #[allow(dead_code, unused_imports)]
