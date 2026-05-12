@@ -18,6 +18,7 @@
 /// API for callers that don't.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -57,6 +58,20 @@ class DriftUndoStack {
 
   String get _owner => ownerUserId ?? '';
 
+  /// Wave 35 — manual change-notify channel. The Drift `customSelect`
+  /// stream API can't auto-track tables created via `customStatement`
+  /// (no `TableInfo`), so each mutation calls [_notifyChange] and the
+  /// [watchAll] stream re-fetches.
+  final StreamController<void> _changes = StreamController<void>.broadcast();
+
+  void _notifyChange() {
+    if (!_changes.isClosed) _changes.add(null);
+  }
+
+  void dispose() {
+    _changes.close();
+  }
+
   /// Persist a new entry. Token uniqueness is the caller's
   /// responsibility — duplicate tokens cause an `INSERT OR REPLACE`
   /// (the new payload wins).
@@ -77,6 +92,7 @@ class DriftUndoStack {
         Variable.withString(jsonEncode(entry.payload)),
       ],
     );
+    _notifyChange();
   }
 
   /// Atomically read + remove the entry for [token]. Returns `null`
@@ -102,7 +118,9 @@ class DriftUndoStack {
         'DELETE FROM ai_undo_stack WHERE token = ?1 AND owner_user_id = ?2',
         [token, _owner],
       );
-      return _rowToEntry(row);
+      final entry = _rowToEntry(row);
+      _notifyChange();
+      return entry;
     });
   }
 
@@ -132,6 +150,17 @@ class DriftUndoStack {
       '  AND expires_at_iso < ?2',
       [_owner, cutoff.toUtc().toIso8601String()],
     );
+    _notifyChange();
+  }
+
+  /// Wave 35 — stream the current entry list (newest first). Emits an
+  /// initial snapshot and re-fetches after every mutation routed
+  /// through this stack instance.
+  Stream<List<PersistedUndoEntry>> watchAll({int limit = 100}) async* {
+    yield await all(limit: limit);
+    await for (final _ in _changes.stream) {
+      yield await all(limit: limit);
+    }
   }
 
   PersistedUndoEntry _rowToEntry(QueryRow row) {

@@ -90,6 +90,19 @@ void main() {
     await db.close();
   });
 
+  test('Wave 35: watchAll yields the initial snapshot', () async {
+    final db = makeTestDatabase();
+    final stack = DriftUndoStack(db);
+    await stack.put(entry(token: 'a', createdAt: DateTime.utc(2026, 5, 12)));
+    // First emission must reflect the row that's already there. We use
+    // .first to avoid the async* loop's broadcast-stream await-for
+    // hanging the test runner on cleanup.
+    final initial = await stack.watchAll().first;
+    expect(initial.map((e) => e.token), <String>['a']);
+    stack.dispose();
+    await db.close();
+  });
+
   test('payload round-trip preserves nested JSON', () async {
     final db = makeTestDatabase();
     final stack = DriftUndoStack(db);

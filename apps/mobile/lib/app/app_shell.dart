@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/ai/write/persistent_undo_banner.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -183,20 +184,28 @@ class _MobileShell extends StatelessWidget {
     final colors = context.theme.colors;
     return FScaffold(
       childPad: false,
-      footer: FBottomNavigationBar(
-        index: selectedIndex,
-        onChange: onDestinationSelected,
-        safeAreaBottom: true,
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 0; i < destinations.length; i++)
-            FBottomNavigationBarItem(
-              icon: _MobileNavIcon(
-                destination: destinations[i],
-                selected: i == selectedIndex,
-                accentColor: colors.primary,
-              ),
-              label: Text(destinations[i].label),
-            ),
+          // Wave 35 — persistent undo banner sits between content and
+          // the bottom nav. Hidden when the stack is empty.
+          const PersistentUndoBanner(),
+          FBottomNavigationBar(
+            index: selectedIndex,
+            onChange: onDestinationSelected,
+            safeAreaBottom: true,
+            children: [
+              for (var i = 0; i < destinations.length; i++)
+                FBottomNavigationBarItem(
+                  icon: _MobileNavIcon(
+                    destination: destinations[i],
+                    selected: i == selectedIndex,
+                    accentColor: colors.primary,
+                  ),
+                  label: Text(destinations[i].label),
+                ),
+            ],
+          ),
         ],
       ),
       child: child,
