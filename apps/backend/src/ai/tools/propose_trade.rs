@@ -3,8 +3,9 @@ use serde_json::{json, Value};
 
 use super::registry::Tool;
 use super::ToolCtx;
+use crate::ai::context::{BudgetTier, RiskLevel};
 use crate::ai::policy::{Access, AllowedRuntimes, Confirmation, SideEffect, ToolDescriptor};
-use crate::ai::{context::BudgetTier, context::RiskLevel, proposals};
+use crate::ai::proposals;
 use crate::error::AppError;
 
 pub struct ProposeTradeTool;
@@ -16,14 +17,6 @@ pub(crate) const DESCRIPTION: &str = "提议一笔证券 / 加密交易（买入
                           - account 同理。\
                           - 缺少字段时优先反问用户，不要硬编值。\
                           - 日期相对值（昨天 / 上周三）请你解析为 ISO-8601 后传入。";
-
-pub fn schema() -> crate::ai::adapters::anthropic::wire::ToolSchema {
-    crate::ai::adapters::anthropic::wire::ToolSchema {
-        name: "propose_trade".into(),
-        description: DESCRIPTION.into(),
-        input_schema: input_schema(),
-    }
-}
 
 fn input_schema() -> Value {
     json!({
