@@ -20,6 +20,14 @@ class AiTraceBuilder {
   final List<TraceToolCall> _tools = <TraceToolCall>[];
   final List<DisclosureSummary> _disclosures = <DisclosureSummary>[];
   final Set<String> _staleReadModelNames = <String>{};
+  Map<String, Object?>? _invocation;
+
+  /// Attach an `AiIntentInvocation.toTraceJson()` summary to this
+  /// turn (Wave 33). Called once at chat dispatch when the surface
+  /// originated from a registered invocation.
+  void attachInvocation(Map<String, Object?> invocation) {
+    _invocation = invocation;
+  }
 
   void addToolCall({
     required String name,
@@ -70,6 +78,7 @@ class AiTraceBuilder {
       toolCalls: List<TraceToolCall>.unmodifiable(_tools),
       staleReadModelNames: Set<String>.unmodifiable(_staleReadModelNames),
       terminalReason: terminalReason,
+      invocation: _invocation,
     );
   }
 }

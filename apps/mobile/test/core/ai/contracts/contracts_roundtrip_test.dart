@@ -319,6 +319,58 @@ void main() {
       }
     });
 
+    test('Wave 33: AiTrace.invocation round-trips with object + context keys', () {
+      const seed = AiTrace(
+        requestId: 'r',
+        startedAtIso: '2026-05-12T00:00:00Z',
+        intent: IntentHint(
+          capability: Capability.analyze,
+          risk: RiskLevel.suggest,
+        ),
+        backend: Backend.cloud,
+        budgetTier: BudgetTier.small,
+        routingReason: 'capsule_explain',
+        usedCloud: true,
+        usedRawLedger: false,
+        totalDurationMs: 200,
+        invocation: <String, Object?>{
+          'source': 'expense_detail',
+          'intent': 'explain_change',
+          'object_type': 'expense',
+          'object_id': 'exp_42',
+          'context_keys': <String>['timeframe'],
+        },
+      );
+      final decoded = AiTrace.fromJson(
+        jsonDecode(jsonEncode(seed.toJson())) as Map<String, Object?>,
+      );
+      expect(decoded.invocation, isNotNull);
+      expect(decoded.invocation!['source'], 'expense_detail');
+      expect(decoded.invocation!['intent'], 'explain_change');
+      expect(decoded.invocation!['object_type'], 'expense');
+      expect(decoded.invocation!['object_id'], 'exp_42');
+      expect(decoded.invocation!['context_keys'], <String>['timeframe']);
+    });
+
+    test('Wave 33: AiTrace.invocation omitted when null', () {
+      const seed = AiTrace(
+        requestId: 'r',
+        startedAtIso: '2026-05-12T00:00:00Z',
+        intent: IntentHint(
+          capability: Capability.analyze,
+          risk: RiskLevel.info,
+        ),
+        backend: Backend.cloud,
+        budgetTier: BudgetTier.small,
+        routingReason: 'chat_typed',
+        usedCloud: true,
+        usedRawLedger: false,
+        totalDurationMs: 50,
+      );
+      final json = seed.toJson();
+      expect(json.containsKey('invocation'), isFalse);
+    });
+
     test('legacy AiTrace JSON without terminal_reason defaults to done', () {
       // Simulates old persisted rows from before Wave 30. The decoder
       // must tolerate the missing field rather than crash.

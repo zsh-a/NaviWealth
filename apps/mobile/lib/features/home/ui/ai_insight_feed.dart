@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../domain/insight_models.dart';
 import 'insight_feed_strings.dart';
 
@@ -104,6 +106,21 @@ class _InsightCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 6),
+                    // Wave 33 proof point: explain_insight bottom sheet.
+                    // Sits below the detail row rather than next to the
+                    // chevron so the tap target is unambiguous (the row
+                    // still routes to insight.route).
+                    AiObjectCapsule(
+                      source: 'home_insight_card',
+                      intent: 'explain_insight',
+                      object: AiObjectRef(
+                        type: 'insight',
+                        id: _insightStableId(item),
+                      ),
+                      objectLabel: insightHeadline(l10n, item),
+                      fallbackLabel: '展开洞察',
+                    ),
                   ],
                 ),
               ),
@@ -119,6 +136,20 @@ class _InsightCard extends StatelessWidget {
           ),
     );
   }
+}
+
+/// Wave 33: synthesise a stable insight id from kind + key params so
+/// the AiTrace records `object_id` consistently across rebuilds. Not a
+/// persistent identifier — purely for attribution in this session.
+String _insightStableId(InsightItem item) {
+  return [
+    item.kind.name,
+    item.category?.name ?? '',
+    item.monthsToTarget?.toString() ?? '',
+    item.driftPct?.toStringAsFixed(2) ?? '',
+    item.maturityCount?.toString() ?? '',
+    item.anomalyPct?.toStringAsFixed(2) ?? '',
+  ].where((s) => s.isNotEmpty).join('|');
 }
 
 /// Tiny entrance animation: 6dp upward translate + opacity 0 → 1 over

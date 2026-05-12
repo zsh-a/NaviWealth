@@ -144,6 +144,12 @@ class ChatRepository {
     String? systemContext,
     String? model,
     CancelToken? cancelToken,
+    /// Wave 33 — when this turn was triggered through an
+    /// [AiIntentInvocation] (capsule / insight / command), pass the
+    /// invocation's `toTraceJson()` here so the finalised trace
+    /// records the entry point. Plain "user typed in chat tab" calls
+    /// leave this `null`.
+    Map<String, Object?>? invocationTrace,
   }) async {
     final session = _sessionReader();
     if (session == null) {
@@ -221,6 +227,9 @@ class ChatRepository {
     final traceBuilder = traceSeed == null
         ? null
         : AiTraceBuilder.fromSeed(traceSeed);
+    if (traceBuilder != null && invocationTrace != null) {
+      traceBuilder.attachInvocation(invocationTrace);
+    }
     final toolStarts = <String, DateTime>{};
 
     // Interleaved record of the assistant turn. `segments` and
