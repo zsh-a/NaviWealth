@@ -139,7 +139,15 @@ pub struct FireGoalSummary {
 pub struct BaseContext {
     pub preferred_currency: String,
     pub risk_preference: RiskPreference,
+    /// Wave 32 — deprecated. Account aggregates now live in
+    /// `holdings_snapshot` / `asset_allocation_snapshot` read models.
+    /// Kept on the wire for backward-compat; clients emit empty values.
+    /// Will be removed when ContextPack ticks to major v2.
     pub accounts: AccountSummary,
+    /// Wave 32 — deprecated. Cashflow aggregates now live in
+    /// `cashflow_buckets` / `monthly_spend_by_category` read models.
+    /// Kept on the wire for backward-compat; clients emit empty values.
+    /// Will be removed when ContextPack ticks to major v2.
     pub cashflow: CashflowSummary,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fire_goal: Option<FireGoalSummary>,
@@ -212,6 +220,10 @@ pub struct ScopedAggregate {
 pub struct FreshnessHint {
     #[serde(default)]
     pub force_refresh_read_models: Vec<String>,
+    /// Wave 32 — 端侧此次 chat 时的 localHlc。早期 client 不携带，
+    /// `None` 时回落到 `TaskContext::device_hlc` 兼容旧路径。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_local_hlc: Option<String>,
 }
 
 /// 端→云单条分析上报（docs/ai-architecture.md §4.3.3 Analytical 层）。

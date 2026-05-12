@@ -10,6 +10,8 @@
 
 pub mod context_pack;
 pub mod disclosure;
+pub mod system_prompt_extension;
 
 pub use context_pack::*;
 pub use disclosure::*;
+pub use system_prompt_extension::format_context_pack;

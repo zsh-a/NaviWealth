@@ -74,6 +74,13 @@ class SettingsOverview extends ConsumerWidget {
                 subtitle: l10n.settingsDataSubtitle,
                 onTap: () => context.goNamed(AppRouteNames.backup),
               ),
+              _SectionDivider(),
+              InlineLinkRow(
+                icon: Icons.visibility_outlined,
+                label: 'AI 透明度',
+                subtitle: '查看最近 AI 调用的详细轨迹',
+                onTap: () => context.goNamed(AppRouteNames.aiTransparency),
+              ),
             ],
           ),
         ),

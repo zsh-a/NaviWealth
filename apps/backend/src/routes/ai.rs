@@ -376,6 +376,15 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
     let initial_messages = body.messages;
     let portfolio_snapshot = body.portfolio_snapshot;
     let context_tier = body.context_pack.as_ref().map(|p| p.budget.tier);
+    // Wave 27 — derive prompt appendix from ContextPack (route /
+    // base / signals / freshness hint / device upload counts). The
+    // tool loop appends this to SYSTEM_PROMPT before each Anthropic
+    // call so the model sees the structured per-turn signal without
+    // us replacing the static guardrail prompt.
+    let context_prompt_appendix = body
+        .context_pack
+        .as_ref()
+        .map(crate::ai::context::format_context_pack);
 
     // Keepalive ticker — emits a `:` comment frame every SSE_KEEPALIVE_MS
     // so proxies / mobile radios don't drop the connection during slow
@@ -411,6 +420,7 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
             initial_messages,
             portfolio_snapshot,
             context_tier,
+            context_prompt_appendix,
         ));
         let budget = Box::pin(TimeoutFuture::new(CHAT_TURN_BUDGET_MS));
         match select(work, budget).await {
@@ -472,13 +482,20 @@ async fn run_tool_loop(
     initial_messages: Vec<ChatMessage>,
     portfolio_snapshot: Option<Value>,
     context_tier: Option<crate::ai::context::BudgetTier>,
+    context_prompt_appendix: Option<String>,
 ) {
     // Inject "current time" as a synthetic system suffix; the model is told
-    // to rely on this rather than guess.
-    let system_with_time = format!(
+    // to rely on this rather than guess. Wave 27 also appends a
+    // per-turn ContextPack summary (route / base / signals / freshness)
+    // after the time stamp so the model sees structured per-turn signal
+    // without us replacing the static guardrail prompt.
+    let mut system_with_time = format!(
         "{SYSTEM_PROMPT}\n\n当前服务器时间: {}",
         Utc::now().to_rfc3339()
     );
+    if let Some(appendix) = context_prompt_appendix {
+        system_with_time.push_str(&appendix);
+    }
     let tool_schemas = tools::schemas();
     let mut messages = initial_messages;
 

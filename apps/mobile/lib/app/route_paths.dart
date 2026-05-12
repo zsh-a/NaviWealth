@@ -48,6 +48,9 @@ abstract final class AppRoutes {
   static const settingsBackup = '/settings/backup';
   static const settingsLogs = '/settings/logs';
   static const settingsSync = '/settings/sync';
+  static const settingsAiTransparency = '/settings/ai-transparency';
+  static String settingsAiTransparencyDetail(String requestId) =>
+      '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
 
   // ── Detail-page builders ───────────────────────────────────────────────
   static String accountAsset(String id) =>
@@ -84,6 +87,8 @@ abstract final class AppRouteNames {
   static const backup = 'backup';
   static const logs = 'logs';
   static const sync = 'sync';
+  static const aiTransparency = 'ai-transparency';
+  static const aiTransparencyDetail = 'ai-transparency-detail';
 
   static const accounts = 'accounts';
   static const accountsList = 'accounts-list';

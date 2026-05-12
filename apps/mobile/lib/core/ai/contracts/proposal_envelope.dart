@@ -7,14 +7,51 @@
 /// (device) or proposal_applier (cloud-confirmed) code paths.
 library;
 
+/// Wave 31 — where the proposal originated. Lets the audit trail
+/// distinguish "device skill generated this" from "cloud planner
+/// generated this" without inspecting the runtime that produced it.
+/// Mirrors the upcoming Stage 3 split where device-side LLM proposals
+/// merge into the same UI path as cloud-generated ones.
+enum ProposalSource {
+  /// Created by an on-device rules skill or device-LLM runtime.
+  device,
+  /// Created by the cloud planner (Anthropic / future cloud runtime).
+  cloud,
+  /// Joint: device skill plus cloud verification (Phase 5 rebalance).
+  hybrid,
+}
+
+extension ProposalSourceWire on ProposalSource {
+  String get wire => switch (this) {
+    ProposalSource.device => 'device',
+    ProposalSource.cloud => 'cloud',
+    ProposalSource.hybrid => 'hybrid',
+  };
+
+  static ProposalSource parse(String s) => switch (s) {
+    'device' => ProposalSource.device,
+    'cloud' => ProposalSource.cloud,
+    'hybrid' => ProposalSource.hybrid,
+    _ => ProposalSource.cloud,
+  };
+}
+
 sealed class ProposalEnvelope {
-  const ProposalEnvelope({required this.proposalId, required this.kindLabel});
+  const ProposalEnvelope({
+    required this.proposalId,
+    required this.kindLabel,
+    this.source = ProposalSource.cloud,
+  });
 
   final String proposalId;
 
   /// Short label for telemetry / trace ('memo_edit', 'tag_apply',
   /// 'rebalance', 'broker_order'). Free-form, not policy-bearing.
   final String kindLabel;
+
+  /// Wave 31 — origin runtime. Defaults to [ProposalSource.cloud] for
+  /// pre-Stage-3 callers (today's proposals all originate cloud-side).
+  final ProposalSource source;
 
   /// Stable wire discriminator. Used by AiTrace and any future
   /// envelope serialization to round-trip the subtype.
@@ -28,6 +65,7 @@ final class LocalImmediateWrite extends ProposalEnvelope {
   const LocalImmediateWrite({
     required super.proposalId,
     required super.kindLabel,
+    super.source,
     required this.summaryZh,
     required this.undo,
   });
@@ -51,6 +89,7 @@ final class LocalProposal extends ProposalEnvelope {
   const LocalProposal({
     required super.proposalId,
     required super.kindLabel,
+    super.source,
     required this.summaryZh,
     required this.payload,
   });
@@ -69,6 +108,7 @@ final class CloudProposal extends ProposalEnvelope {
   const CloudProposal({
     required super.proposalId,
     required super.kindLabel,
+    super.source,
     required this.summaryZh,
     required this.toolName,
     required this.payload,
@@ -93,6 +133,7 @@ final class ExternalSideEffect extends ProposalEnvelope {
   const ExternalSideEffect({
     required super.proposalId,
     required super.kindLabel,
+    super.source,
     required this.summaryZh,
     required this.target,
     required this.payload,

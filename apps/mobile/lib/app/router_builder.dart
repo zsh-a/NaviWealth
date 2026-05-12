@@ -43,6 +43,7 @@ import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
+import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_shell.dart';
 import 'deferred_route.dart';
@@ -360,6 +361,22 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'sync',
                     name: AppRouteNames.sync,
                     builder: (context, state) => const SyncStatusPage(),
+                  ),
+                  GoRoute(
+                    path: 'ai-transparency',
+                    name: AppRouteNames.aiTransparency,
+                    builder: (context, state) => const AiTransparencyPage(),
+                    routes: [
+                      GoRoute(
+                        path: ':requestId',
+                        name: AppRouteNames.aiTransparencyDetail,
+                        builder: (context, state) =>
+                            AiTransparencyDetailPage(
+                              requestId:
+                                  state.pathParameters['requestId'] ?? '',
+                            ),
+                      ),
+                    ],
                   ),
                 ],
               ),
