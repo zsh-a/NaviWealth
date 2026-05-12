@@ -28,9 +28,8 @@ use crate::ai::read_models::projection::{latest_op_log_hlc, now_iso};
 use crate::error::AppError;
 
 use super::common::{
-    load_payloads, parse_iso_required, parse_limit, parse_purpose,
-    payload_num, payload_str, validate_range, CALCULATION_VERSION,
-    SCHEMA_VERSION,
+    load_payloads, parse_iso_required, parse_limit, parse_purpose, payload_num, payload_str,
+    validate_range, CALCULATION_VERSION, SCHEMA_VERSION,
 };
 
 const READ_MODEL_NAME: &str = "scoped_detail/asset_window";
@@ -68,11 +67,7 @@ pub fn parse_input(raw: &Value) -> Result<Input, AppError> {
     })
 }
 
-pub async fn run(
-    db: &D1Database,
-    user_id: &str,
-    input: &Input,
-) -> Result<Value, AppError> {
+pub async fn run(db: &D1Database, user_id: &str, input: &Input) -> Result<Value, AppError> {
     let watermark = latest_op_log_hlc(db, user_id).await?.unwrap_or_default();
 
     let entries = load_payloads(db, user_id, "journal_entries").await?;
@@ -141,10 +136,9 @@ pub(crate) fn filter_and_extract(
         if qty == 0.0 {
             continue;
         }
-        let cost_per_unit = payload_num(p, "cost_per_unit")
-            .or_else(|| payload_num(p, "price_per_unit"));
-        let currency = payload_str(p, "cost_currency")
-            .or_else(|| payload_str(p, "price_currency"));
+        let cost_per_unit =
+            payload_num(p, "cost_per_unit").or_else(|| payload_num(p, "price_per_unit"));
+        let currency = payload_str(p, "cost_currency").or_else(|| payload_str(p, "price_currency"));
         hits.push(Hit {
             entry_id,
             qty_delta: qty,
@@ -309,11 +303,7 @@ mod tests {
             }),
         );
         let entries = vec![entry("e1", "2026-04-15T10:00:00Z")];
-        let out = filter_and_extract(
-            &entries,
-            &[p],
-            &input("AAPL", "2026-04-01", "2026-05-01"),
-        );
+        let out = filter_and_extract(&entries, &[p], &input("AAPL", "2026-04-01", "2026-05-01"));
         assert_eq!(out.transactions[0]["cost_per_unit"], 125.0);
         assert_eq!(out.transactions[0]["currency"], "USD");
     }

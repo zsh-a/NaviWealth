@@ -189,7 +189,7 @@ fn map_message_delta(event: &Value) -> Vec<AgentEvent> {
         .and_then(Value::as_str)
         .and_then(stop_reason)
     {
-        events.push(AgentEvent::Stop { reason });
+        events.push(AgentEvent::Stop { reason, rounds: 0 });
     }
     events
 }
@@ -363,7 +363,8 @@ mod tests {
         assert_eq!(
             events,
             vec![AgentEvent::Stop {
-                reason: StopReason::ToolUse
+                reason: StopReason::ToolUse,
+                rounds: 0,
             }]
         );
     }

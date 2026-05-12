@@ -13,8 +13,8 @@ pub(crate) const DESCRIPTION: &str = "提议一笔日常消费 / 支出。返回
                           类目从内置 9 类里选：餐饮 / 交通 / 房租 / 娱乐 / 医疗 / 教育 / 购物 / 旅行 / 其它。\
                           类目不在闭集时工具会返回 candidates，请你让用户选一个再重新调用。";
 
-pub fn schema() -> crate::ai::anthropic::ToolSchema {
-    crate::ai::anthropic::ToolSchema {
+pub fn schema() -> crate::ai::adapters::anthropic::wire::ToolSchema {
+    crate::ai::adapters::anthropic::wire::ToolSchema {
         name: "propose_expense".into(),
         description: DESCRIPTION.into(),
         input_schema: input_schema(),

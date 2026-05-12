@@ -23,7 +23,6 @@
 //! `tool_result` block. The system prompt enforces that contract; see
 //! `guardrails::SYSTEM_PROMPT`.
 
-pub mod anthropic;
 // Phase B adapter surface: defined ahead of route migration in Phase C.
 #[allow(dead_code, unused_imports)]
 pub mod adapters;
