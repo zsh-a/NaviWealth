@@ -19,11 +19,19 @@ use crate::routes::common::check_protocol_version;
 
 mod ingest;
 mod sse_sink;
+mod sse_sink_v2;
 
 #[cfg(test)]
 mod tests;
 
 const SSE_KEEPALIVE_MS: u32 = 10_000;
+const AI_PROTOCOL_HEADER: &str = "X-Naviwealth-AI-Protocol";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum AiProtocolVersion {
+    V1,
+    V2,
+}
 
 #[derive(Deserialize)]
 struct ChatRequest {
@@ -48,6 +56,7 @@ pub async fn chat(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response>
 
 async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response, AppError> {
     check_protocol_version(req.headers())?;
+    let ai_protocol = ai_protocol_version(req.headers());
     let auth = require_auth(&req, &ctx).await?;
 
     let body = parse_body(&mut req).await?;
@@ -97,9 +106,19 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
         let adapter = AnthropicAdapter::new(LlmConfig::new(api_key, base_url));
         let dispatcher = Rc::new(CloudToolDispatcher::new(db, auth.user_id));
         let agent = AgentLoop::new(adapter, model, dispatcher, TurnBudget::default());
-        let mut sink = sse_sink::SseEventSink::new(tx);
-        if let Err(e) = agent.run(&mut session, &mut sink).await {
-            e.log();
+        match ai_protocol {
+            AiProtocolVersion::V1 => {
+                let mut sink = sse_sink::SseEventSink::new(tx);
+                if let Err(e) = agent.run(&mut session, &mut sink).await {
+                    e.log();
+                }
+            }
+            AiProtocolVersion::V2 => {
+                let mut sink = sse_sink_v2::SseEventSinkV2::new(tx);
+                if let Err(e) = agent.run(&mut session, &mut sink).await {
+                    e.log();
+                }
+            }
         }
     });
 
@@ -117,6 +136,20 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
     let resp =
         Response::from_stream(rx).map_err(|e| AppError::Internal(format!("from_stream: {e}")))?;
     Ok(resp.with_headers(headers))
+}
+
+fn ai_protocol_version(headers: &Headers) -> AiProtocolVersion {
+    match headers.get(AI_PROTOCOL_HEADER) {
+        Ok(Some(value)) => ai_protocol_version_from_header(Some(value.as_str())),
+        _ => AiProtocolVersion::V1,
+    }
+}
+
+fn ai_protocol_version_from_header(value: Option<&str>) -> AiProtocolVersion {
+    match value {
+        Some("2") => AiProtocolVersion::V2,
+        _ => AiProtocolVersion::V1,
+    }
 }
 
 async fn parse_body(req: &mut Request) -> Result<ChatRequest, AppError> {
