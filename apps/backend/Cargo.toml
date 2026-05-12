@@ -7,7 +7,7 @@ description = "NaviWealth backend on Cloudflare Workers (Rust)"
 publish = false
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 worker = { version = "0.8", features = ["http", "d1"] }
