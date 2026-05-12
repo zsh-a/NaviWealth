@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/write/write.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/account.dart';
@@ -44,6 +45,18 @@ class ActivityEntryDetailPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
+            // Wave 40 — surfaces when this journal entry was created
+            // by an accepted AI proposal (propose_trade /
+            // propose_expense / propose_liability_payment). Self-
+            // gating: hidden otherwise.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AiTouchMark(
+                entityType: 'journal_entries',
+                entityId: entry.entry.id,
+              ),
+            ),
+            const SizedBox(height: 8),
             _HeroAmountCard(
               entry: entry,
               accountsById: accountsById,
