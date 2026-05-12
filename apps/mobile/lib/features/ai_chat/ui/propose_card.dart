@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/visual/visual.dart';
+import '../../../core/ai/write/interaction_mode.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/proposal_applier.dart';
@@ -11,6 +13,18 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
+
+/// Wave 38 — bridge between mobile enum and the snake_case
+/// `kindLabel` strings used by `interactionModeForKindLabel`. Must
+/// stay in sync with `policy/tool_policy.rs` propose entries.
+String _kindLabel(ProposalKind kind) => switch (kind) {
+      ProposalKind.trade => 'trade',
+      ProposalKind.expense => 'expense',
+      ProposalKind.liabilityPayment => 'liability_payment',
+      ProposalKind.accountCreate => 'account_create',
+      ProposalKind.assetValuation => 'asset_valuation',
+      ProposalKind.unknown => '',
+    };
 
 String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
     switch (kind) {
@@ -116,14 +130,40 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       case ProposalApplyStatus.pending:
       case ProposalApplyStatus.errored:
       case ProposalApplyStatus.applying:
-        return _ExpandedView(
-          plan: plan,
-          applyState: state,
-          overrides: _overrides,
-          onConfirm: _onConfirm,
-          onCancel: _onCancel,
-          onEdit: () => _onEdit(plan),
-        );
+        // Wave 38 — pick the confirmation surface from §5.5
+        // `interactionModeForKindLabel`. oneTap (memo/category/tag/
+        // small-expense) gets a slim Apply row; typed (broker order,
+        // bulk delete — unused today) gates Confirm behind a token
+        // field; everything else keeps the full diff/Confirm card.
+        // `swipe` is treated as `confirmDiff` for now — a real
+        // swipe-to-apply gesture is its own future wave.
+        final mode = interactionModeForKindLabel(_kindLabel(plan.kind));
+        return switch (mode) {
+          InteractionMode.oneTap => _OneTapView(
+              plan: plan,
+              applyState: state,
+              onConfirm: _onConfirm,
+              onCancel: _onCancel,
+              onEdit: () => _onEdit(plan),
+            ),
+          InteractionMode.typed => _TypedConfirmView(
+              plan: plan,
+              applyState: state,
+              overrides: _overrides,
+              onConfirm: _onConfirm,
+              onCancel: _onCancel,
+              onEdit: () => _onEdit(plan),
+            ),
+          InteractionMode.confirmDiff || InteractionMode.swipe =>
+            _ExpandedView(
+              plan: plan,
+              applyState: state,
+              overrides: _overrides,
+              onConfirm: _onConfirm,
+              onCancel: _onCancel,
+              onEdit: () => _onEdit(plan),
+            ),
+        };
     }
   }
 
@@ -348,6 +388,256 @@ class _ExpandedView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Wave 38 — InteractionMode.oneTap surface.
+//
+// Reserved for low-risk, easily-undoable proposals (memo edits, tag
+// applies, category sets, small expense entries). The expanded diff
+// preview is overkill for these — one tap should be enough. Errors
+// still fall back to the full ExpandedView wording so users can read
+// what went wrong.
+// ───────────────────────────────────────────────────────────────────────────
+class _OneTapView extends StatelessWidget {
+  const _OneTapView({
+    required this.plan,
+    required this.applyState,
+    required this.onConfirm,
+    required this.onCancel,
+    required this.onEdit,
+  });
+
+  final ReadyProposalPlan plan;
+  final ProposalApplyState applyState;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+  final VoidCallback onEdit;
+
+  bool get _isApplying =>
+      applyState.status == ProposalApplyStatus.applying;
+  bool get _isErrored =>
+      applyState.status == ProposalApplyStatus.errored;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: AiTone.surfaceTint(context).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const AiSparkle(),
+              const SizedBox(width: 6),
+              Text(
+                proposalKindLabel(l10n, plan.kind),
+                style: AiType.meta(context),
+              ),
+              const Spacer(),
+              if (_isApplying)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.6),
+                )
+              else
+                AiPill(
+                  // Retry on errored state — reuse the Confirm label;
+                  // tapping again drives the same _onConfirm path
+                  // which the apply state machine treats as a retry.
+                  label: l10n.aiChatProposalConfirm,
+                  state: AiPillState.selected,
+                  onTap: _isApplying ? null : onConfirm,
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            plan.summaryZh,
+            style: AiType.body(context),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (_isErrored && applyState.errorMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              applyState.errorMessage!,
+              style: AiType.meta(context).copyWith(
+                color: AiTone.error(context),
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              TextButton(
+                onPressed: _isApplying ? null : onEdit,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 0,
+                  ),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  textStyle: AiType.label(context),
+                ),
+                child: Text(l10n.aiChatProposalEdit),
+              ),
+              TextButton(
+                onPressed: _isApplying ? null : onCancel,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 0,
+                  ),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  textStyle: AiType.label(context).copyWith(
+                    color: AiTone.muted(context),
+                  ),
+                ),
+                child: Text(l10n.commonCancel),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Wave 38 — InteractionMode.typed surface.
+//
+// User must type a literal "确认" (or the proposal amount in future
+// revisions) before Apply is enabled. Reserved for broker_order /
+// bulk_delete-class proposals that no current backend tool generates —
+// the view exists so the framework is ready when those tools ship.
+// ───────────────────────────────────────────────────────────────────────────
+class _TypedConfirmView extends StatefulWidget {
+  const _TypedConfirmView({
+    required this.plan,
+    required this.applyState,
+    required this.overrides,
+    required this.onConfirm,
+    required this.onCancel,
+    required this.onEdit,
+  });
+
+  final ReadyProposalPlan plan;
+  final ProposalApplyState applyState;
+  final Map<String, Object?>? overrides;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+  final VoidCallback onEdit;
+
+  @override
+  State<_TypedConfirmView> createState() => _TypedConfirmViewState();
+}
+
+class _TypedConfirmViewState extends State<_TypedConfirmView> {
+  final _controller = TextEditingController();
+  static const _confirmToken = '确认';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool get _matches => _controller.text.trim() == _confirmToken;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Reuse the expanded view's diff body, but disable its
+        // Confirm button by swapping in a typed-confirm callback that
+        // refuses unless the token matches.
+        _ExpandedView(
+          plan: widget.plan,
+          applyState: widget.applyState,
+          overrides: widget.overrides,
+          onConfirm: () {
+            if (_matches) widget.onConfirm();
+          },
+          onCancel: widget.onCancel,
+          onEdit: widget.onEdit,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '此操作高风险。请输入「$_confirmToken」启用 Confirm。',
+                style: AiType.meta(context).copyWith(
+                  color: AiTone.error(context),
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _controller,
+                onChanged: (_) => setState(() {}),
+                style: AiType.body(context),
+                decoration: InputDecoration(
+                  hintText: _confirmToken,
+                  hintStyle: AiType.body(context).copyWith(
+                    color: AiTone.muted(context),
+                  ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AiTone.outline(context)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: AiTone.error(context),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              if (!_matches)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Confirm 暂未启用',
+                    style: AiType.meta(context),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    l10n.aiChatProposalConfirm,
+                    style: AiType.meta(context).copyWith(
+                      color: AiTone.active(context),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

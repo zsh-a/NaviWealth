@@ -1,7 +1,7 @@
 # NaviWealth AI 架构
 
 > 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步），**P2 全部完成**（AI 透明度审计页 / ContextPack→system prompt / Drift QueryPlanExecutor + NetWorthTrendPlan / AiTrace terminal reason 细分 / ProposalEnvelope.source / ContextPack 收缩）。Phase 5（端侧 LLM）未实现。
-> **Wave 进度**: Wave 1–37 完成（Wave 36 = AI 视觉语言；Wave 37 = tool inline + 流式 UX）— 详见 §8 实现状态表与 Wave 落地清单。剩余主线: 详情页 `AiSourceMark` 接入（widget 已就绪，等 caller 主动加）+ proposal_card 按 `interaction_mode` 分支（widget 派生函数已就绪）；Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`、Analytical 层 P2 四模型。
+> **Wave 进度**: Wave 1–38 完成（Wave 36 = AI 视觉语言；Wave 37 = tool inline + 流式 UX；Wave 38 = propose_card interaction_mode 分支）— 详见 §8 实现状态表与 Wave 落地清单。剩余主线: 详情页 `AiSourceMark` 接入（widget 已就绪，等 caller 主动加，需 entity schema 加 `aiTouchedAt`）；Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`、Analytical 层 P2 四模型；可选 swipe-to-apply 真实手势 wave。
 > **§5 是 UI/UX 契约**: 任何新 AI 入口 / 渲染 / 确认面必须满足 §5.8 硬约束。
 > 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
 
@@ -688,7 +688,7 @@ const intentDescriptors = <IntentDescriptor>[
 | Home insight 卡片不能深链 chat | Ambient → Contextual 缺桥梁 | insight tap 构造 `AiIntentInvocation(intent: 'explain_insight')` 打开 bottom sheet |
 | Feature 页无 AI 入口 | Contextual 缺失 | 详情页右上角 capsule（触发式优先：长按 / 选中文本菜单；少数高频对象常驻） |
 | Tool result 多为 raw JSON | Visualization capability 未实现 | Wave 34 domain renderer 4 个高价值优先 |
-| ~~Proposal 单一确认流~~ | ✅ interaction_mode 已派生 (Wave 35) | proposal_card UI 分支（按派生 mode 选择确认形态）待 caller 接入 |
+| ~~Proposal 单一确认流~~ | ✅ Wave 38 — propose_card 已按 mode 三分支（oneTap / confirmDiff / typed），swipe 当前等价 confirmDiff（等真实手势 wave）| — |
 | Undo 仅 chat 内 60s | global feedback 缺失 | persistent undo snackbar 接 `DriftUndoStack` |
 | 冷启动固定 prompt | onboarding 缺失 | sample intents 从 `intent_policy` 当前 active 集合派生 |
 
@@ -893,6 +893,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 35 | **§5 Trust & Action** | `InteractionMode` 枚举 (oneTap/swipe/confirmDiff/typed) + `deriveInteractionMode(ProposalEnvelope)` (kindLabel-table 派生，禁止 feature 硬编码)；`DriftUndoStack.watchAll()` + `undoEntriesStreamProvider` + `PersistentUndoBanner` 全局挂载在 AppShell footer（calm intelligence：surface tone + 14px sparkle + 撤销 button）；`AiSourceMark` 12px sparkle widget 作 AI 修改字段前缀 |
 | 36 | **AI 视觉语言** | 新 `lib/core/ai/visual/` 5 个原语：`AiSparkle` / `AiPill` (neutral/selected/error) / `AiTone` (onSurface/muted/active/error/outline/surfaceTint — 禁止 tertiary/secondary) / `AiType` (body 13 / meta 11 / label 12 / title 16，比 Material 紧 1px) / `AiMotion` (short 120ms / medium 200ms / Linear-style cubic 0.32 0.72 0 1)；6 处 AI surface（capsule / source mark / undo banner / reply chips / timeline / transparency chips / sheet header）全部迁移到原语，无散落 `Icons.auto_awesome_outlined` 或 `colorScheme.tertiary` |
 | 37 | **Tool inline + 流式 UX** | 新 `ToolInvocationInline`：domain renderer 命中时直接 inline 渲染（`✦ tool_name` 单行 attribution + 渲染体，无 card 边框），long-press 弹 bottom sheet 显示原 debug 卡作 fallback；未命中域 renderer 继续走原卡（JSON viewer 是唯一有用的呈现）；`_AssistantBody` 接收 `pendingToolName`，流式无文本时显示 `✦ 正在 get_holdings ...` 替代 generic 「思考中」；`_BodySkeleton` 三条 muted bar 1100ms 呼吸代替 spinner 作 bottom sheet 初始态 |
+| 38 | **propose_card interaction_mode 分支** | `interactionModeForKindLabel(String)` 公共化（从 `_cloudModeForKind` 提升）；propose_card 按 `_kindLabel(plan.kind)` 派生 mode 三分支：`oneTap` → 新 `_OneTapView`（紧凑单行 `✦ kind` + summary + `Confirm` pill + `Edit/Cancel` 文字按钮，适用 expense 这类低风险）；`typed` → 新 `_TypedConfirmView`（复用 `_ExpandedView` body + 增加「输入「确认」」TextField，未匹配前 Confirm callback 拒绝），目前没有 kindLabel 命中但框架就位；`confirmDiff/swipe` → 维持 `_ExpandedView`（swipe 等真实手势 wave）；`unknown` 安全 fallback confirmDiff |
 
 ## 9. TODO
 
