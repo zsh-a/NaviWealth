@@ -1,7 +1,8 @@
 # NaviWealth AI 架构
 
 > 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步），**P2 全部完成**（AI 透明度审计页 / ContextPack→system prompt / Drift QueryPlanExecutor + NetWorthTrendPlan / AiTrace terminal reason 细分 / ProposalEnvelope.source / ContextPack 收缩）。Phase 5（端侧 LLM）未实现。
-> **Wave 进度**: Wave 1–32 完成 — 详见 §7 实现状态表与 Wave 落地清单。剩余主线: Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`（需 OpLog 持久化 recurring_patterns）、Analytical 层 P2 四模型。
+> **Wave 进度**: Wave 1–32 完成 — 详见 §8 实现状态表与 Wave 落地清单。剩余主线: Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`（需 OpLog 持久化 recurring_patterns）、Analytical 层 P2 四模型，以及 §5 Interaction Grammar 落地（Wave 33–35 草案）。
+> **§5 是 UI/UX 契约**: 任何新 AI 入口 / 渲染 / 确认面必须满足 §5.8 硬约束。
 > 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
 
 ---
@@ -434,9 +435,266 @@ sealed class ProposalEnvelope {
 
 Confirmation gate 对 source 不敏感 — 任何高风险 proposal 都走同一确认 UI。**Privacy Policy 永远优先于 source。**
 
-## 5. 模块映射
+## 5. Interaction Grammar — AI 进入页面，而非用户进入 AI
 
-### 5.1 Mobile (Flutter)
+> 这一章是 UI/UX 层的「契约」，与 §4 wire 契约平级。所有 AI 入口、Bottom Sheet、Capsule、Reply Chip、Proposal 确认面，**必须遵守本章规则**。功能 PR 在 review 时按 §5.8 硬约束逐条对照。
+
+### 5.1 设计哲学
+
+NaviWealth 的 AI 不是「财务 App 里的一个 chat tab」，而是**贯穿整个产品的系统层能力**。指导原则三句话:
+
+1. **Invisible but Omnipresent** — AI 像系统服务，不像功能模块。用户感知是「这个 App 懂我」，而非「这里有个 AI 按钮」。
+2. **AI 进入用户的页面，而非用户进入 AI** — Bottom sheet / capsule 在原位展开，禁止把用户从当前业务页面踢到 `/ai` tab。
+3. **Calm Intelligence** — 排版 + 克制动效 + 极少 sparkle；禁止 chatbot 气泡、glow、neon 渐变。参考: Apple Intelligence / Linear / Notion AI。**反例**: Glowing "Ask AI" big button、彩虹色 robot icon。
+
+| 反模式（禁止） | 替代（采纳） |
+|----------------|--------------|
+| 「Ask AI」按钮 | 对象语义动作（"为什么涨价" / "对比上月"） |
+| 跳 `/ai` tab | inline bottom sheet（同页展开） |
+| 全功能 chat 起步 | 单 intent 触发，需要时再 expand |
+| 散落的 `openAiChat(args)` 调用 | 统一 `AiIntentInvocation` 协议（§5.3） |
+| chatbot 气泡 + AI avatar | typography-first，无 avatar |
+| glowing / neon / 渐变 AI icon | 单色 sparkle、极小尺寸、按需出现 |
+
+### 5.2 三层入口模型
+
+AI 触达用户的三个层级**必须共存**（缺一会回到「插件感」）:
+
+| 层级 | 触发者 | 形态 | 场景 | 当前落地 |
+|------|--------|------|------|----------|
+| **Ambient AI** | 系统/端侧 detector 主动 | Insight 卡片 / banner / 通知 | anomaly / maturity / subscription_change | 🟢 home `ai_insight_feed.dart`（但无 chat 深链） |
+| **Contextual AI** | 用户在某个对象上 | Capsule / 选中菜单 → bottom sheet | 详情页解释、对比、建议 | ❌ 未建 |
+| **Global AI** | 用户跨领域复杂任务 | Command palette / chat tab | 多步骤分析、跨账户重平衡 | 🟢 `/ai` tab + command palette |
+
+三层缺一不可。Ambient 不深链 → AI 看似有提示但用户无法追问；Contextual 缺失 → 用户必须切到 chat tab，context break；Global 缺失 → 复杂任务无家可归。
+
+### 5.3 AiIntentInvocation — 唯一入口协议
+
+**所有调起 AI 的地方** (capsule / insight tap / command / voice / 未来 drag-to-AI) **必须经过这个类型**。禁止散落的 `openAiChat(routeContext, sessionId, prompt)` 风格 API。
+
+```dart
+class AiIntentInvocation {
+  const AiIntentInvocation({
+    required this.source,        // 触发位置标签（'expense_detail', 'home_insight_card', ...）
+    required this.intent,        // §5.7 注册过的 intent 字符串（'explain_change', ...）
+    this.object,                 // 业务对象引用（{type, id}）
+    this.context = const {},     // 额外 ContextPack 信号（timeframe / 关联 ID 等）
+    this.suggestedPrompt,        // 兜底 prompt 文案（intent 模板生成失败时用）
+    this.capabilities = const {  // 此次调用允许的能力，影响 sheet 渲染分支
+      AiCapability.chat,
+      AiCapability.proposal,
+      AiCapability.visualization,
+    },
+  });
+
+  final String source;
+  final String intent;
+  final AiObjectRef? object;
+  final Map<String, Object?> context;
+  final String? suggestedPrompt;
+  final Set<AiCapability> capabilities;
+}
+
+class AiObjectRef {
+  const AiObjectRef({required this.type, required this.id});
+  final String type;  // 'expense' | 'account' | 'asset' | 'liability' | 'fire_plan' | 'insight'
+  final String id;
+}
+
+enum AiCapability { chat, proposal, visualization, voiceFollowup }
+```
+
+**示例**:
+
+```dart
+// Expense detail 页面右上角的 "为什么涨价" capsule
+const AiIntentInvocation(
+  source: 'expense_detail',
+  intent: 'explain_change',
+  object: AiObjectRef(type: 'expense', id: 'exp_abc123'),
+  context: {'timeframe': '30d'},
+  suggestedPrompt: '为什么这笔支出比上月增加了 18%？',
+)
+
+// Home insight 卡片 tap
+const AiIntentInvocation(
+  source: 'home_insight_card',
+  intent: 'explain_insight',
+  object: AiObjectRef(type: 'insight', id: 'anom_2026_05_food_spike'),
+)
+
+// FIRE 页面 "如何提高" capsule
+const AiIntentInvocation(
+  source: 'fire_page',
+  intent: 'stress_test_plan',
+  object: AiObjectRef(type: 'fire_plan', id: 'plan_default'),
+  capabilities: {AiCapability.chat, AiCapability.proposal},  // 不需要可视化
+)
+```
+
+**协议承诺**:
+- **唯一性**: 入口收敛到 `AiIntentInvocation` 是硬性纪律。新 AI surface 不允许绕过本协议直接构造 chat / proposal。
+- **可扩展**: 未来 voice、drag-to-AI、slash command 都填同一结构。
+- **可追踪**: `AiTrace` 多一个 `invocation` 字段，把上面所有键存进 trace（透明度页就能看到「这次 AI 调用是从 expense_detail 触发的，intent=explain_change」）。
+
+### 5.4 默认 surface: Inline Bottom Sheet
+
+**强制规则**: `AiIntentInvocation` 默认渲染为 modal bottom sheet，覆盖在用户当前页面之上。**禁止**跳转到 `/ai` tab 作为响应。
+
+```text
+┌─ Current Page ─────────────────┐
+│                                │
+│  …business content…            │
+│                                │
+│ ┌─ AI Bottom Sheet ──────────┐ │
+│ │ Context Header              │ │ ← intent + object 一行 summary
+│ │ "Analyzing Netflix sub"     │ │
+│ │                             │ │
+│ │ Streaming answer            │ │ ← 复用现有 message_bubble streaming
+│ │                             │ │
+│ │ [Visualization, if any]     │ │ ← Wave 34 domain renderer
+│ │                             │ │
+│ │ Reply chips: [对比] [深入]   │ │
+│ │                             │ │
+│ │ [Proposal Card, if any]     │ │ ← propose_card 嵌入 sheet 里
+│ │                             │ │
+│ │ ─ expand to chat ─          │ │ ← 二级动作，升级为完整 session
+│ └─────────────────────────────┘ │
+└────────────────────────────────┘
+```
+
+**升级路径**: 用户点 "expand to chat" 才把当前 invocation **转**为 `/ai` tab 的一个新 session，原 sheet 关闭。**默认不切 tab**。
+
+**降级 fallback**:
+- 屏幕高度 < 500px (老 Android 横屏) → sheet 自动升级为全屏 modal route
+- 用户从 sheet 内点 "在新会话里继续" → push `/ai` 并 seed 一条新 session
+
+**Trace 关系**: bottom sheet 内的对话也是 AiTrace 记录的，与 chat tab 共享 store；用户在透明度页能看到来自所有 surface 的轨迹。
+
+### 5.5 风险分层 × 交互模式
+
+`ToolDescriptor` 已有 `risk` (Info/Suggest/Propose/Commit) + `requires_confirmation` (None/OneTap/Typed)，但 UI 没有从这两个轴直接派生交互。新增 `interaction_mode` 作为 UI 的强约束 (Wave 35 落地):
+
+| 场景 | proposal kind 举例 | risk | side_effect | `interaction_mode` |
+|------|--------------------|------|-------------|---------------------|
+| 解释 / 分类建议 / 标签建议 | 改 category、加 tag | Info | None | `oneTap`（capsule 内直接出按钮，无确认 sheet） |
+| 小额记账 / 修改 note / 添加分类 | `propose_expense`（< $100）/ memo edit | Suggest | DeviceLocalWrite | `swipe`（向右滑应用 + persistent undo） |
+| 中等金额 / 删除 / 转账 | `propose_trade` / `propose_liability_payment` | Propose | DeviceLocalWrite | `confirmDiff`（必须看到 diff preview 才能确认） |
+| 大额 / 不可逆 / 外部 | broker 下单、bulk delete | Commit | ExternalCall | `typed`（输入金额 / 确认词二次） |
+
+**派生规则** (代码层强制):
+```dart
+InteractionMode deriveMode(ProposalEnvelope p) {
+  if (p is ExternalSideEffect) return InteractionMode.typed;
+  return switch ((p.risk, p.sideEffect)) {
+    (RiskLevel.info, _)                          => InteractionMode.oneTap,
+    (RiskLevel.suggest, SideEffect.deviceLocalWrite) => InteractionMode.swipe,
+    (RiskLevel.propose, _)                       => InteractionMode.confirmDiff,
+    (RiskLevel.commit, _)                        => InteractionMode.typed,
+    _                                            => InteractionMode.confirmDiff,  // safe default
+  };
+}
+```
+
+**禁止覆盖**: feature 代码不能"为了流畅"把 `confirmDiff` 降级为 `oneTap`。要降级先改 `risk`。
+
+**Undo 全局可见性** (Wave 35 落地):
+- `oneTap` / `swipe` 应用后，全局顶部出现 persistent undo snackbar（不是 60s 后消失的传统 toast），停留直到用户主动 dismiss 或新 proposal 应用
+- snackbar 文案: "已修改 Netflix 分类为「订阅」· 撤销"
+- 数据来源: `DriftUndoStack` (Wave 24)
+
+### 5.6 Calm Intelligence 视觉规范
+
+| 元素 | Do | Don't |
+|------|-----|-------|
+| AI 标识 | 单色细线 sparkle (Material `Icons.auto_awesome_outlined`)、字号同正文 | 彩虹渐变 / glowing / 大 icon |
+| Capsule | 灰底 + 文字 + 极小 sparkle prefix；hover/long-press 才出现 | 常驻巨型按钮 |
+| Bottom sheet | 系统 BottomSheet shape，标题区无装饰 | sheet 顶部彩色 banner |
+| 流式光标 | 单 `█` 字符脉冲（已实现 _StreamingCaret） | 三个跳跃点 dot loader |
+| Reply chip | outline button、同字号、间距紧凑 | 大尺寸卡片 / 阴影 |
+| AI 来源 badge | typography 小字、灰色、单行 | tooltip 弹窗 / 大徽章 |
+
+**色彩**: AI 元素**默认使用 surface tone**（不是 accent），让"AI 触点"在视觉上沉入页面而不是跳出来。只有处于 active streaming 状态时短暂强调一次。
+
+### 5.7 Intent 治理 — `intent_policy.dart`
+
+Intent 字符串 (`'explain_change'`, `'summarize_account'`, ...) 必须有 owner，否则两年后会有 50 个意图、半数已死。仿照 `policy/tool_policy.rs` 模式:
+
+```dart
+// lib/core/ai/intent/intent_policy.dart
+class IntentDescriptor {
+  const IntentDescriptor({
+    required this.name,
+    required this.labelZh,
+    required this.allowedObjectTypes,
+    required this.preferredCapabilities,
+    required this.promptTemplate,
+    this.preferredReadModels = const <String>[],
+  });
+
+  final String name;                       // 'explain_change'
+  final String labelZh;                    // 'capsule 上显示的中文短语：「为什么涨价」'
+  final Set<String> allowedObjectTypes;    // {'expense', 'recurring_pattern'}
+  final Set<AiCapability> preferredCapabilities;
+  /// `{}.object_label` / `{}.timeframe` 占位符
+  final String promptTemplate;
+  /// 此 intent 通常调用的 read model 名（freshness gate 用）
+  final List<String> preferredReadModels;
+}
+
+const intentDescriptors = <IntentDescriptor>[
+  IntentDescriptor(
+    name: 'explain_change',
+    labelZh: '为什么',
+    allowedObjectTypes: {'expense', 'recurring_pattern', 'asset', 'liability'},
+    preferredCapabilities: {AiCapability.chat, AiCapability.visualization},
+    promptTemplate: '请解释 {{object_label}} 在最近 {{timeframe}} 的变化原因。',
+    preferredReadModels: ['monthly_spend_by_category', 'subscription_changes'],
+  ),
+  IntentDescriptor(
+    name: 'summarize_account',
+    labelZh: '账户概览',
+    allowedObjectTypes: {'account'},
+    preferredCapabilities: {AiCapability.chat, AiCapability.visualization},
+    promptTemplate: '请用要点总结账户 {{object_label}} 的近 30 天表现。',
+    preferredReadModels: ['holdings_snapshot', 'cashflow_buckets'],
+  ),
+  // ...
+];
+```
+
+**纪律**:
+- 新加 capsule 前必须先注册 intent，code review 强制检查
+- `intent ∉ registered` 在 dev 模式 `assert(false)`，prod 模式回落到 `suggestedPrompt`
+- `intent × object_type` 不匹配 → capsule 不渲染（不会出现「在 expense 上看到 stress_test_plan」）
+
+### 5.8 实施硬约束（PR review 检查项）
+
+新 AI 相关 PR review 时必须逐条勾选。漏一条不通过。
+
+- [ ] **唯一入口**: 没有新的 `openAiChat(...)` / `Navigator.push(ChatPage(...))` 风格 API；所有调起都经过 `AiIntentInvocation`
+- [ ] **默认 surface**: 入口默认渲染 bottom sheet；route push 仅作为 "expand to chat" 的二级动作或屏幕过窄的 fallback
+- [ ] **Object-semantic label**: capsule / 入口文案 不允许出现 "Ask AI" / "AI 分析"；必须是对象语义动作
+- [ ] **Intent 注册**: 新 intent 在 `intent_policy.dart` 注册，含 `labelZh` / `allowedObjectTypes` / `promptTemplate`
+- [ ] **风险分层**: proposal 的 `interaction_mode` 通过 `deriveMode(p)` 派生，不允许 feature 代码硬编码；不允许降级
+- [ ] **Calm 视觉**: 无渐变 / glow / 巨型 AI icon；sparkle 字号 ≤ 正文；色彩默认 surface tone
+- [ ] **Trace**: 新 surface 调用 AI 必填 `AiTrace.invocation` 字段（source / intent / object）
+- [ ] **Three-tier 平衡**: 单独加 ambient / contextual / global 任一层之前确认另两层是否对该数据有覆盖
+
+### 5.9 当前差距 → 三层入口 mapping
+
+| 当前问题（来自 UX 审计） | 归属层 | 修复方向 |
+|--------------------------|--------|----------|
+| Home insight 卡片不能深链 chat | Ambient → Contextual 缺桥梁 | insight tap 构造 `AiIntentInvocation(intent: 'explain_insight')` 打开 bottom sheet |
+| Feature 页无 AI 入口 | Contextual 缺失 | 详情页右上角 capsule（触发式优先：长按 / 选中文本菜单；少数高频对象常驻） |
+| Tool result 多为 raw JSON | Visualization capability 未实现 | Wave 34 domain renderer 4 个高价值优先 |
+| Proposal 单一确认流 | interaction_mode 未派生 | Wave 35 落地 `deriveMode` + UI 分支 |
+| Undo 仅 chat 内 60s | global feedback 缺失 | persistent undo snackbar 接 `DriftUndoStack` |
+| 冷启动固定 prompt | onboarding 缺失 | sample intents 从 `intent_policy` 当前 active 集合派生 |
+
+## 6. 模块映射
+
+### 6.1 Mobile (Flutter)
 
 ```
 lib/core/ai/
@@ -486,7 +744,7 @@ lib/core/ai/
         └── embedding.dart          barrel
 ```
 
-### 5.2 Backend (Rust on Cloudflare Workers)
+### 6.2 Backend (Rust on Cloudflare Workers)
 
 ```
 apps/backend/src/ai/
@@ -516,7 +774,7 @@ apps/backend/src/ai/
 
 `apps/backend/src/routes/ai.rs`: `ChatRequest` 已含 `context_pack` 字段；`run_tool_loop` 已透传 `context_tier` 到 `ToolCtx`。
 
-## 6. 数据流示例
+## 7. 数据流示例
 
 ### 场景 A — 用户输入新交易 "STARBUCKS 04291"
 
@@ -569,7 +827,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
      "本地数据 + 云端推理 · 未上传原始交易明细 · 2 个工具 · 1.4s"
 ```
 
-## 7. 实现状态
+## 8. 实现状态
 
 | Phase | 范围 | 状态 |
 |-------|------|------|
@@ -631,7 +889,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 31 | ProposalEnvelope.source | `ProposalSource` 枚举 (device/cloud/hybrid) 加到基类，子类透传；`LocalImmediateWriteExecutor.register` 默认 `device`；默认值 `cloud` 兼容旧 caller |
 | 32 | ContextPack 收缩 | `FreshnessHint` 新增 `last_local_hlc`（mobile + Rust 双侧 + serde default）；`BaseContext.accounts/cashflow` 标记 deprecated（保留 wire 兼容，未来 v2 移除）；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含 |
 
-## 8. TODO
+## 9. TODO
 
 按优先级排列。**P0 + P1 全部完成（Wave 1–25）**；P2 是体验增强，P3 进入 Phase 5。
 
@@ -665,6 +923,27 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [x] ~~**`ProposalEnvelope.source` 字段**~~ — Wave 31：`ProposalSource` 枚举（`device` / `cloud` / `hybrid`）+ `ProposalSourceWire`；基类构造透传；`LocalImmediateWriteExecutor.register` 默认 `device`；默认值 `cloud` 兼容旧 caller
 - [x] ~~**ContextPack 收缩**~~ — Wave 32：`FreshnessHint.lastLocalHlc` (mobile + Rust 双侧加 `#[serde(default)]`)；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含；`BaseContext.accounts/cashflow` 标记 deprecated（wire 兼容保留，等 ContextPack v2 移除）
 
+### P2.5 — Interaction Grammar（待实施，契约见 §5）
+
+按 §5 落地 AI native UI/UX。三个 wave，先建框架再补能力，最后调可信度。**proof point 数量遵从 §5.8 硬约束**——每个 wave 只接 2 个 feature page 验证架构，剩余在 33.x / 34.x / 35.x 渐进铺开。
+
+- [ ] **Wave 33 — AI Entry Framework**
+  - `AiIntentInvocation` 类型 + Riverpod provider；`intent_policy.dart` 注册表起步（5 个 intent: `explain_change` / `summarize_account` / `stress_test_plan` / `compare_period` / `explain_insight`）
+  - 统一 `AiBottomSheetShell`（streaming + reply chips + proposal slot + expand-to-chat 按钮）
+  - 2 个 proof point: expense detail capsule + home insight tap → bottom sheet
+  - `AiTrace.invocation` 字段 + 透明度页显示来源
+  - PR review checklist 加 §5.8 八条
+- [ ] **Wave 34 — Contextual Output** （4 个高价值 domain renderer + reply chips 初版）
+  - `asset_allocation` → 环形图 + 权重列表
+  - `recurring_patterns` → 订阅卡片列表（含 cadence 标签）
+  - `subscription_changes` → 涨价/取消/新增 diff bar
+  - `refund_links` → pair 卡片
+  - Reply chip 生成（端侧 classifier 简单版：基于上轮 intent + tool 结果出 3 个建议）
+- [ ] **Wave 35 — Trust & Action**
+  - `interaction_mode` 派生函数 + 四种 UI 分支（oneTap / swipe / confirmDiff / typed）
+  - Persistent undo snackbar 接 `DriftUndoStack`；全局可见，停留至 dismiss / 新 proposal
+  - "AI 来源" 标识在 expense / account 等详情页：被 AI 修改过的字段加微小 sparkle prefix（calm intelligence 风格）
+
 ### P3 — Phase 5 / 长期 / 未来 feature
 
 - [ ] **Read Models — Analytical 层 P2 四模型** — `spending_clusters` / `goal_progress_projection` / `tax_lot_analysis` / `financial_behavior_profile`，nightly cron
@@ -687,7 +966,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - 9 个 `test/features/ai_chat/tool_invocation_renderers_test.dart` 测试在 HEAD 即失败（与本架构无关，已在 stash 验证）。
 - `apps/backend/src/routes/ai.rs:178` 的 `cargo fmt` 差异同样在 HEAD 即存在。
 
-## 9. Contract Drift Prevention
+## 10. Contract Drift Prevention
 
 NaviWealth 当前的 wire 契约（`lib/core/ai/contracts/` 与 `apps/backend/src/ai/context/`）是**双侧手写 + roundtrip test 锁死**的，约 9 个 Dart 文件 + 3 个 Rust 文件、~1500 LOC，规模可控。
 
@@ -723,7 +1002,7 @@ packages/ai_contracts/
 
 **核心原则**: **不共享代码，共享协议** — Dart 类型和 Rust 类型由同一份 schema 生成，业务实现各写各的。
 
-## 10. 关键设计取舍（非显然的决定）
+## 11. 关键设计取舍（非显然的决定）
 
 - **为什么主通道是 Read Models 而不是 ContextPack** — 同步已经把数据搬到 D1，让 cloud 绕回端侧拿数据是绕远路。ContextPack 退到「端侧独有的派生信号 + 偏好 + 路由 + freshness hint」更合理。
 - **为什么 Read Models 分三层而不是 snapshot only / 也不是开放 raw ledger** — 只有 snapshot 时 AI 答不出「为什么」只能胡猜；开放 raw ledger 会触发 token 爆炸 / prompt injection（恶意 memo 改 LLM 行为）/ 隐私边界失控 / planner 自由 scan 成本失控。三层各取所长：Snapshot 答聚合事实，Analytical 提供可解释的中间结论，Scoped Detail 在 drill-down 时给受控明细。
@@ -742,7 +1021,7 @@ packages/ai_contracts/
 - **NL→QueryPlan 不直接写 SQL** — sealed plan + Drift query builder。新增意图必须改类型，不会「忘了」。
 - **Privacy Policy 永久优先于 Source** — 任何 high-risk proposal 不论端侧/云端生成都走同一确认 UI；隐私设置不论 runtime 都执行。
 
-## 11. 引用 / 入口表
+## 12. 引用 / 入口表
 
 | 想做什么 | 从这里看起 |
 |---------|----------|
