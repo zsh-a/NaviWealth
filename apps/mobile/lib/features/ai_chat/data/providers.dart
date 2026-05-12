@@ -148,14 +148,17 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     final localHlc = await ref.read(syncLocalHlcProvider.future);
     final localHlcText = localHlc?.toString();
 
-    // Wave 11/15 — derive AnalyticalUpload list from end-side detector
+    // Wave 11/15/16/17 — derive AnalyticalUpload list from end-side detector
     // outputs. anomaly_flag comes from expenseAnomalyInsightProvider
-    // (Wave 11); recurring_pattern comes from detectRecurring() on the
-    // expense stream (Wave 15).
+    // (Wave 11); recurring_pattern/refund_link/transfer_link from the
+    // skills detectors over the expense stream (Wave 15/16);
+    // investment_performance from holdingsSnapshotProvider (Wave 17).
     final expenses = await _readExpensesForRecurring(ref);
+    final holdings = await _readHoldingsForPerformance(ref);
     final analyticalUploads = _buildAnalyticalUploads(
       anomaly: anomaly,
       expenses: expenses,
+      holdings: holdings,
     );
 
     final pack = compressor.compress(
@@ -196,6 +199,20 @@ Future<List<Expense>> _readExpensesForRecurring(Ref ref) async {
   }
 }
 
+/// One-shot read of the per-asset HoldingSnapshot map for the Wave 17
+/// `investment_performance` Analytical upload. Returns `{}` on any
+/// failure — chat must not be blocked when the portfolio computer can't
+/// converge (missing prices / fx rates / etc.).
+Future<Map<String, HoldingSnapshot>> _readHoldingsForPerformance(
+  Ref ref,
+) async {
+  try {
+    return await ref.read(holdingsSnapshotProvider.future);
+  } catch (_) {
+    return const <String, HoldingSnapshot>{};
+  }
+}
+
 /// Map end-side detector outputs into the wire-form
 /// `AnalyticalUpload` list (§4.3.3).
 ///  - anomaly_flag: from `expenseAnomalyInsightProvider` (Wave 11)
@@ -208,6 +225,7 @@ Future<List<Expense>> _readExpensesForRecurring(Ref ref) async {
 List<AnalyticalUpload> _buildAnalyticalUploads({
   ExpenseAnomalySummary? anomaly,
   List<Expense> expenses = const <Expense>[],
+  Map<String, HoldingSnapshot> holdings = const <String, HoldingSnapshot>{},
 }) {
   final out = <AnalyticalUpload>[];
   if (anomaly != null) {
@@ -258,6 +276,11 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
     for (final t in transfers) {
       out.add(_transferMatchToUpload(t));
     }
+  }
+
+  // Wave 17: per-asset holding snapshot → investment_performance upload.
+  for (final snap in holdings.values) {
+    out.add(_holdingSnapshotToUpload(snap));
   }
 
   return out;
@@ -317,6 +340,27 @@ AnalyticalUpload _transferMatchToUpload(TransferMatch m) {
       'to_txn_id': m.toTxnId,
       'amount_minor': m.amountMinor.toString(),
       'currency': m.currency,
+    },
+  );
+}
+
+AnalyticalUpload _holdingSnapshotToUpload(HoldingSnapshot snap) {
+  return AnalyticalUpload(
+    kind: 'investment_performance',
+    id: snap.assetId,
+    payload: <String, Object?>{
+      'asset_id': snap.assetId,
+      'asset_currency': snap.assetCurrency,
+      'base_currency': snap.baseCurrency,
+      'as_of': snap.asOf.toUtc().toIso8601String(),
+      'quantity': snap.quantity.toString(),
+      'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency.toString(),
+      'market_value_in_asset_currency':
+          snap.marketValueInAssetCurrency.toString(),
+      'cost_basis_in_base': snap.costBasisInBase.toString(),
+      'market_value_in_base': snap.marketValueInBase.toString(),
+      'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
+      'weight': snap.weight.toString(),
     },
   );
 }

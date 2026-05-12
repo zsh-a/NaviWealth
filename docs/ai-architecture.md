@@ -263,7 +263,7 @@ NaviWealth 当前缺少这一层。现状：
 | `anomaly_flags` | `{ category, delta_pct, reason_hint }` | P1 |
 | `refund_links` | `{ original_txn_id, refund_txn_id, amount_minor, currency }` | P1 |
 | `transfer_links` | `{ from_txn_id, to_txn_id, amount_minor, currency }` | P1 |
-| `investment_performance` | `{ ticker, xirr, holding_days }` | P1 |
+| `investment_performance` | `{ asset_id, asset_currency, base_currency, as_of, quantity, cost_basis_in_base, market_value_in_base, unrealized_pnl_in_base, weight, holding_days? }` | P1 |
 | `subscription_changes` | `{ merchant, prev_amount, new_amount, since }` | P1 |
 | `spending_clusters` | `{ cluster, transactions, total }` (e.g. "Japan Trip") | P2 |
 | `goal_progress_projection` | FIRE 进度 + 残余年数预测 | P2 |

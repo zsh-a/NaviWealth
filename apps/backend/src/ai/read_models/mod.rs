@@ -19,6 +19,7 @@ pub mod anomaly_flags;
 pub mod cashflow_buckets;
 pub mod freshness;
 pub mod holdings_snapshot;
+pub mod investment_performance;
 pub mod monthly_spend_by_category;
 pub mod net_worth_daily;
 pub mod net_worth_snapshot;
