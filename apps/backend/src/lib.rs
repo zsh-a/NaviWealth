@@ -1,8 +1,8 @@
 use worker::*;
 
-mod ai;
+pub mod ai;
 mod auth;
-mod error;
+pub mod error;
 mod hlc;
 mod routes;
 mod sync;

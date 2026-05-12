@@ -5,9 +5,12 @@
 //! invoke a tool. The two sides are kept aligned by review (the
 //! descriptor types don't cross the wire).
 
+use serde::{Serialize, Serializer};
+
 use crate::ai::context::{BudgetTier, RiskLevel};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum Access {
     Read,
     Propose,
@@ -17,7 +20,8 @@ pub enum Access {
     ExternalWrite,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum Confirmation {
     None,
     OneTap,
@@ -43,10 +47,24 @@ impl AllowedRuntimes {
     }
 }
 
+impl Serialize for AllowedRuntimes {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut runtimes = Vec::new();
+        if self.allows_device() {
+            runtimes.push("device");
+        }
+        if self.allows_cloud() {
+            runtimes.push("cloud");
+        }
+        runtimes.serialize(serializer)
+    }
+}
+
 /// Wave 20 — side-effect classification (orthogonal to risk level).
 /// Lets the dispatcher reject `ExternalCall` in routine chat without
 /// a special grant.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum SideEffect {
     None,
     /// Creates a device-local write proposal (the user still must confirm).
@@ -57,14 +75,15 @@ pub enum SideEffect {
 
 /// Wave 20 — which Read Model layer this tool consumes (or `None` for
 /// inline computers / proposals).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum ReadModelLayer {
     Snapshot,
     Analytical,
     ScopedDetail,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct ToolDescriptor {
     pub name: &'static str,
     pub access: Access,
