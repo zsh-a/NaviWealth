@@ -83,3 +83,24 @@ fn chat_request_parses_freshness_hint_with_force_refresh() {
         ]
     );
 }
+
+#[test]
+fn ai_protocol_defaults_to_v1_for_legacy_clients() {
+    assert_eq!(ai_protocol_version_from_header(None), AiProtocolVersion::V1);
+}
+
+#[test]
+fn ai_protocol_uses_v1_for_explicit_legacy_header() {
+    assert_eq!(
+        ai_protocol_version_from_header(Some("1")),
+        AiProtocolVersion::V1
+    );
+}
+
+#[test]
+fn ai_protocol_uses_v2_for_protocol_header_2() {
+    assert_eq!(
+        ai_protocol_version_from_header(Some("2")),
+        AiProtocolVersion::V2
+    );
+}
