@@ -145,6 +145,7 @@ class AiTrace {
     this.toolCalls = const <TraceToolCall>[],
     this.staleReadModelNames = const <String>{},
     this.terminalReason = TerminalReason.done,
+    this.invocation,
   });
 
   final String requestId;
@@ -178,6 +179,14 @@ class AiTrace {
   /// callers that haven't been updated yet (Wave 30).
   final TerminalReason terminalReason;
 
+  /// Wave 33 — entry-point attribution. Captures the
+  /// `AiIntentInvocation` summary (source / intent / object_type /
+  /// object_id / context_keys) so the transparency page can answer
+  /// "which surface triggered this AI call?". Local-only — not on the
+  /// chat-request wire. `null` for turns invoked the old way (typing
+  /// in the chat tab directly).
+  final Map<String, Object?>? invocation;
+
   /// Count form for UI / older callers.
   int get staleReadModels => staleReadModelNames.length;
 
@@ -196,6 +205,8 @@ class AiTrace {
     if (staleReadModelNames.isNotEmpty)
       'stale_read_model_names': staleReadModelNames.toList(growable: false),
     'terminal_reason': terminalReason.wire,
+    if (invocation != null && invocation!.isNotEmpty)
+      'invocation': invocation,
   };
 
   factory AiTrace.fromJson(Map<String, Object?> json) {
@@ -238,6 +249,10 @@ class AiTrace {
       terminalReason: switch (json['terminal_reason']) {
         final String s => TerminalReasonWire.parse(s),
         _ => TerminalReason.done,
+      },
+      invocation: switch (json['invocation']) {
+        final Map<Object?, Object?> raw => _strKeyed(raw),
+        _ => null,
       },
     );
   }

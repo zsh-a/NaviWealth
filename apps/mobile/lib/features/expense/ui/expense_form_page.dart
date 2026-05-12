@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/ai/intent/intent.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/repositories/journal_entry_builders.dart';
@@ -15,6 +16,7 @@ import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../../shared/forms/forms.dart';
 import 'category_grid_picker.dart';
 
@@ -241,6 +243,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     super.dispose();
   }
 
+  /// Build the human label for the AI capsule (Wave 33 proof point).
+  /// Prefer the user's note → category name → generic fallback. The
+  /// label feeds both the prompt template and the sheet header so it
+  /// should read as a noun phrase.
+  String _objectLabelForCapsule(AppLocalizations l10n) {
+    final note = _noteController.text.trim();
+    if (note.isNotEmpty) return note;
+    return l10n.expenseFormEditTitle;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -274,6 +286,24 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
+                    if (widget.isEdit && widget.expenseId != null) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: AiObjectCapsule(
+                          source: 'expense_detail',
+                          intent: 'explain_change',
+                          object: AiObjectRef(
+                            type: 'expense',
+                            id: widget.expenseId!,
+                          ),
+                          objectLabel: _objectLabelForCapsule(l10n),
+                          context: const <String, Object?>{
+                            'timeframe': '最近 90 天',
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     AmountField(
                       label: l10n.expenseFormAmountLabel,
                       controller: _amountController,

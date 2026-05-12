@@ -1,7 +1,7 @@
 # NaviWealth AI 架构
 
 > 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步），**P2 全部完成**（AI 透明度审计页 / ContextPack→system prompt / Drift QueryPlanExecutor + NetWorthTrendPlan / AiTrace terminal reason 细分 / ProposalEnvelope.source / ContextPack 收缩）。Phase 5（端侧 LLM）未实现。
-> **Wave 进度**: Wave 1–32 完成 — 详见 §8 实现状态表与 Wave 落地清单。剩余主线: Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`（需 OpLog 持久化 recurring_patterns）、Analytical 层 P2 四模型，以及 §5 Interaction Grammar 落地（Wave 33–35 草案）。
+> **Wave 进度**: Wave 1–33 完成（Wave 33 = §5 AI Entry Framework 已落地）— 详见 §8 实现状态表与 Wave 落地清单。剩余主线: §5 落地剩 Wave 34（Contextual Output / domain renderers）+ Wave 35（Trust & Action / interaction_mode）；Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`、Analytical 层 P2 四模型。
 > **§5 是 UI/UX 契约**: 任何新 AI 入口 / 渲染 / 确认面必须满足 §5.8 硬约束。
 > 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
 
@@ -888,6 +888,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 30 | AiTraceBuilder terminal reason | `TerminalReason` 枚举（done/streamError/userCancel/policyDenied/closedEarly）+ chat_repository 各分支精细打标 + 透明度页 chip/详情显示 + 兼容旧 trace JSON |
 | 31 | ProposalEnvelope.source | `ProposalSource` 枚举 (device/cloud/hybrid) 加到基类，子类透传；`LocalImmediateWriteExecutor.register` 默认 `device`；默认值 `cloud` 兼容旧 caller |
 | 32 | ContextPack 收缩 | `FreshnessHint` 新增 `last_local_hlc`（mobile + Rust 双侧 + serde default）；`BaseContext.accounts/cashflow` 标记 deprecated（保留 wire 兼容，未来 v2 移除）；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含 |
+| 33 | **§5 AI Entry Framework** | `lib/core/ai/intent/`（`AiIntentInvocation` + 5 intent 注册表 + `renderPromptFor`）；`AiBottomSheetShell` + `showAiBottomSheet`（viewport < 500px fallback Dialog）；`AiObjectCapsule` 可复用 capsule；2 个 proof point（expense detail + home insight）；`AiTrace.invocation` 字段贯穿 trace_builder / chat_repository / 透明度页 |
 
 ## 9. TODO
 
@@ -923,16 +924,18 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [x] ~~**`ProposalEnvelope.source` 字段**~~ — Wave 31：`ProposalSource` 枚举（`device` / `cloud` / `hybrid`）+ `ProposalSourceWire`；基类构造透传；`LocalImmediateWriteExecutor.register` 默认 `device`；默认值 `cloud` 兼容旧 caller
 - [x] ~~**ContextPack 收缩**~~ — Wave 32：`FreshnessHint.lastLocalHlc` (mobile + Rust 双侧加 `#[serde(default)]`)；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含；`BaseContext.accounts/cashflow` 标记 deprecated（wire 兼容保留，等 ContextPack v2 移除）
 
-### P2.5 — Interaction Grammar（待实施，契约见 §5）
+### P2.5 — Interaction Grammar（契约见 §5）
 
 按 §5 落地 AI native UI/UX。三个 wave，先建框架再补能力，最后调可信度。**proof point 数量遵从 §5.8 硬约束**——每个 wave 只接 2 个 feature page 验证架构，剩余在 33.x / 34.x / 35.x 渐进铺开。
 
-- [ ] **Wave 33 — AI Entry Framework**
-  - `AiIntentInvocation` 类型 + Riverpod provider；`intent_policy.dart` 注册表起步（5 个 intent: `explain_change` / `summarize_account` / `stress_test_plan` / `compare_period` / `explain_insight`）
-  - 统一 `AiBottomSheetShell`（streaming + reply chips + proposal slot + expand-to-chat 按钮）
-  - 2 个 proof point: expense detail capsule + home insight tap → bottom sheet
-  - `AiTrace.invocation` 字段 + 透明度页显示来源
-  - PR review checklist 加 §5.8 八条
+- [x] ~~**Wave 33 — AI Entry Framework**~~ — 落地于 `lib/core/ai/intent/` + `lib/features/ai_chat/ui/ai_bottom_sheet.dart`
+  - `AiIntentInvocation` / `AiObjectRef` / `AiCapability` 类型（`ai_intent_invocation.dart`）；`intent_policy.dart` 注册 5 个 intent (`explain_change` / `summarize_account` / `stress_test_plan` / `compare_period` / `explain_insight`) 含 prompt template + 占位符填充
+  - `AiBottomSheetShell` + `showAiBottomSheet(context, invocation:, objectLabel:)`：modal sheet 覆盖当前页面；viewport < 500px 时自动升级为 fullscreen Dialog（§5.4 fallback）；session 落到 ChatHistoryStore；`展开对话` 按钮 `context.go('/ai?selected=<sid>')`
+  - `AiObjectCapsule`：可复用对象级 capsule（surface tone + Icons.auto_awesome_outlined 14px + bodySmall 标签）
+  - 2 个 proof point: expense detail capsule（`explain_change`，note 作 objectLabel）+ home insight 卡片 capsule（`explain_insight`，stable id 派生自 kind+key fields）
+  - `AiTrace.invocation` 字段 (Map\<String,Object?\>)：附加 source/intent/object_type/object_id/context_keys；透明度详情页新增「触发来源」section；roundtrip + null-omitted 测试
+  - `ChatRepository.sendMessage(invocationTrace:)` 透传给 `AiTraceBuilder.attachInvocation`
+  - 测试：7 个 intent_policy 单测（lookup / render / trace shape）+ 2 个 AiTrace.invocation roundtrip
 - [ ] **Wave 34 — Contextual Output** （4 个高价值 domain renderer + reply chips 初版）
   - `asset_allocation` → 环形图 + 权重列表
   - `recurring_patterns` → 订阅卡片列表（含 cadence 标签）

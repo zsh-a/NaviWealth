@@ -195,6 +195,33 @@ class _TraceDetail extends StatelessWidget {
             _KvRow('label', trace.intent.label ?? ''),
           ],
         ),
+        if (trace.invocation != null) ...[
+          const SizedBox(height: 16),
+          _Section(
+            title: '触发来源 (Wave 33)',
+            rows: <_KvRow>[
+              _KvRow(
+                'source',
+                trace.invocation!['source']?.toString() ?? '',
+              ),
+              _KvRow(
+                'intent',
+                trace.invocation!['intent']?.toString() ?? '',
+              ),
+              if (trace.invocation!['object_type'] != null)
+                _KvRow(
+                  'object',
+                  '${trace.invocation!['object_type']} · '
+                      '${trace.invocation!['object_id'] ?? ''}',
+                ),
+              if (trace.invocation!['context_keys'] is List)
+                _KvRow(
+                  'context',
+                  (trace.invocation!['context_keys'] as List).join(', '),
+                ),
+            ],
+          ),
+        ],
         if (trace.toolCalls.isNotEmpty) ...[
           const SizedBox(height: 16),
           _SectionHeader(title: '工具调用 (${trace.toolCalls.length})'),
