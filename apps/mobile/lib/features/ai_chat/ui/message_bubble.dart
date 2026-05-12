@@ -10,6 +10,7 @@ import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
 import 'ai_transparency_badge.dart';
 import 'propose_card.dart';
+import 'reply_chips.dart';
 import 'tool_invocation_card.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
@@ -27,10 +28,22 @@ class MessageBubble extends StatelessWidget {
     super.key,
     required this.sessionId,
     required this.message,
+    this.onReplyChip,
+    this.invocationIntent,
   });
 
   final String sessionId;
   final ChatMessage message;
+
+  /// Wave 34 — when non-null, completed assistant turns render reply
+  /// chips below the body and call this back with the tapped chip
+  /// text. Caller sends it as the next user turn. Streaming/error
+  /// messages render no chips regardless.
+  final void Function(String chip)? onReplyChip;
+
+  /// Wave 34 — invocation intent that triggered this turn (Wave 33
+  /// invocation). Drives the rules-based chip suggester.
+  final String? invocationIntent;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +53,8 @@ class MessageBubble extends StatelessWidget {
       ChatRole.assistant || ChatRole.error => _AssistantBubble(
         sessionId: sessionId,
         message: message,
+        onReplyChip: onReplyChip,
+        invocationIntent: invocationIntent,
       ),
     };
     return TweenAnimationBuilder<double>(
@@ -109,10 +124,17 @@ class _UserBubble extends StatelessWidget {
 }
 
 class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.sessionId, required this.message});
+  const _AssistantBubble({
+    required this.sessionId,
+    required this.message,
+    this.onReplyChip,
+    this.invocationIntent,
+  });
 
   final String sessionId;
   final ChatMessage message;
+  final void Function(String chip)? onReplyChip;
+  final String? invocationIntent;
 
   bool get _isError =>
       message.role == ChatRole.error ||
@@ -157,6 +179,24 @@ class _AssistantBubble extends StatelessWidget {
             message.role == ChatRole.assistant &&
             message.status == ChatMessageStatus.complete)
           AiTransparencyBadge(messageId: message.id),
+        // Wave 34 — reply chips under completed assistant turns. Skip
+        // when no onReplyChip handler is supplied (older surfaces) or
+        // when the turn errored / was cancelled.
+        if (onReplyChip != null &&
+            !isStreaming &&
+            !_isError &&
+            message.role == ChatRole.assistant &&
+            message.status == ChatMessageStatus.complete)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: _ReplyChips(
+              toolNames: {
+                for (final t in message.toolCalls) t.name,
+              },
+              invocationIntent: invocationIntent,
+              onTap: onReplyChip!,
+            ),
+          ),
       ],
     );
 
@@ -596,6 +636,54 @@ class _SystemNotice extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Wave 34 — reply chip row under completed assistant turns. Calm
+/// Intelligence: outline buttons, body-small text, no icons. Up to 3
+/// chips sourced from `suggestReplyChips` (`reply_chips.dart`).
+class _ReplyChips extends StatelessWidget {
+  const _ReplyChips({
+    required this.toolNames,
+    required this.invocationIntent,
+    required this.onTap,
+  });
+
+  final Set<String> toolNames;
+  final String? invocationIntent;
+  final void Function(String chip) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = suggestReplyChips(
+      invocationIntent: invocationIntent,
+      turnTools: toolNames,
+    );
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: [
+        for (final label in chips)
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              minimumSize: const Size(0, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            onPressed: () => onTap(label),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+      ],
     );
   }
 }
