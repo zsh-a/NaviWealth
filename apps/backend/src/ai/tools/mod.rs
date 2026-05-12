@@ -43,7 +43,7 @@ use serde::Deserialize;
 use serde_json::{json, Map, Value};
 use worker::{D1Database, D1Type};
 
-use super::anthropic::ToolSchema;
+use super::adapters::anthropic::wire::ToolSchema;
 use super::context::BudgetTier;
 use super::policy::{check_tool_call, lookup, PolicyDecision};
 use crate::error::AppError;
@@ -66,8 +66,7 @@ pub struct ToolCtx<'a> {
 
 pub fn registry() -> registry::ToolRegistry {
     registry::ToolRegistry::new([
-        std::sync::Arc::new(propose_trade::ProposeTradeTool)
-            as std::sync::Arc<dyn registry::Tool>,
+        std::sync::Arc::new(propose_trade::ProposeTradeTool) as std::sync::Arc<dyn registry::Tool>,
         std::sync::Arc::new(propose_expense::ProposeExpenseTool)
             as std::sync::Arc<dyn registry::Tool>,
         std::sync::Arc::new(propose_liability_payment::ProposeLiabilityPaymentTool)
@@ -586,10 +585,7 @@ const PER_TOOL_TIMEOUT_MS: u32 = 15_000;
 /// Wave 21 — synthesised `tool_result` body when policy denies dispatch.
 /// Shape mirrors a normal tool error (`{error: {code, message}}`) so the
 /// LLM's existing error handling kicks in without special-casing.
-fn policy_denied_result(
-    tool_name: &str,
-    reason: &super::policy::PolicyReason,
-) -> Value {
+fn policy_denied_result(tool_name: &str, reason: &super::policy::PolicyReason) -> Value {
     json!({
         "error": {
             "code":     "policy_denied",
@@ -1082,9 +1078,7 @@ async fn compute_net_worth(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, Ap
     // 任何其他 granularity 字符串 fall through 到 inline 兜底逻辑。
     match granularity {
         "month" => return compute_net_worth_monthly(ctx, input).await,
-        "day" | "week" => {
-            return compute_net_worth_from_daily(ctx, input, granularity).await
-        }
+        "day" | "week" => return compute_net_worth_from_daily(ctx, input, granularity).await,
         _ => {} // fall through to inline
     }
 
@@ -1314,10 +1308,7 @@ async fn compute_net_worth_from_daily(
 // compute_net_worth — Read Model 主通道（granularity=month）
 // ---------------------------------------------------------------------------
 
-async fn compute_net_worth_monthly(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn compute_net_worth_monthly(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::net_worth_snapshot::{query_range, NetWorthSnapshot};
     use super::read_models::projection::ensure_fresh;
 
@@ -1515,11 +1506,7 @@ async fn get_breakdown(ctx: &ToolCtx<'_>, dim: BreakdownDim) -> Result<Value, Ap
 /// 把 `get_holdings` 透出的 `freshness` + `source` 字段挂回派生工具
 /// 的输出，让 Wave 5/6 的 freshness gate 在 breakdown / risk_alerts
 /// 这类「holdings 投影」工具上同样工作。
-fn attach_inherited(
-    out: &mut Value,
-    freshness: Option<Value>,
-    source: Option<Value>,
-) {
+fn attach_inherited(out: &mut Value, freshness: Option<Value>, source: Option<Value>) {
     if let Value::Object(map) = out {
         if let Some(f) = freshness {
             map.insert("freshness".into(), f);
@@ -1655,17 +1642,19 @@ async fn get_monthly_spend_by_category(
         .get("year_month")
         .and_then(|v| v.as_str())
         .ok_or_else(|| AppError::BadRequest("year_month required (YYYY-MM)".into()))?;
-    if year_month.len() != 7 || !year_month.as_bytes().iter().enumerate().all(|(i, b)| {
-        match i {
-            0..=3 => b.is_ascii_digit(),
-            4 => *b == b'-',
-            5..=6 => b.is_ascii_digit(),
-            _ => false,
-        }
-    }) {
-        return Err(AppError::BadRequest(
-            "year_month must be YYYY-MM".into(),
-        ));
+    if year_month.len() != 7
+        || !year_month
+            .as_bytes()
+            .iter()
+            .enumerate()
+            .all(|(i, b)| match i {
+                0..=3 => b.is_ascii_digit(),
+                4 => *b == b'-',
+                5..=6 => b.is_ascii_digit(),
+                _ => false,
+            })
+    {
+        return Err(AppError::BadRequest("year_month must be YYYY-MM".into()));
     }
     let category = input.get("category").and_then(|v| v.as_str());
 
@@ -1699,10 +1688,7 @@ async fn get_monthly_spend_by_category(
 // get_net_worth_summary — Read Model 月度净现金流（§4.3.2）
 // ---------------------------------------------------------------------------
 
-async fn get_net_worth_summary(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn get_net_worth_summary(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::net_worth_snapshot::{query_range, NetWorthSnapshot};
     use super::read_models::projection::ensure_fresh;
 
@@ -1731,14 +1717,7 @@ async fn get_net_worth_summary(
     }
     let from_ym = format!("{:04}-{:02}", from_y, from_m);
 
-    let rows = query_range(
-        ctx.db,
-        ctx.user_id,
-        &from_ym,
-        &to_ym,
-        currency.as_deref(),
-    )
-    .await?;
+    let rows = query_range(ctx.db, ctx.user_id, &from_ym, &to_ym, currency.as_deref()).await?;
 
     let series: Vec<Value> = rows
         .iter()
@@ -1906,10 +1885,7 @@ async fn get_transfer_links(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, A
 // get_subscription_changes — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
-async fn get_subscription_changes(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn get_subscription_changes(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::subscription_changes::{current_freshness, query_all};
     let currency = input
         .get("currency")
@@ -1947,10 +1923,7 @@ async fn get_subscription_changes(
 // get_investment_performance — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
-async fn get_investment_performance(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn get_investment_performance(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::investment_performance::{current_freshness, query_all};
     let base_currency = input
         .get("base_currency")
@@ -1990,13 +1963,8 @@ async fn get_investment_performance(
 // get_recurring_patterns — Analytical P1 (§4.3.3, device-sourced)
 // ---------------------------------------------------------------------------
 
-async fn get_recurring_patterns(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
-    use super::read_models::recurring_patterns::{
-        current_freshness, query_all,
-    };
+async fn get_recurring_patterns(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
+    use super::read_models::recurring_patterns::{current_freshness, query_all};
 
     let currency = input
         .get("currency")
@@ -2011,13 +1979,7 @@ async fn get_recurring_patterns(
     // device-sourced：没有 ensure_fresh —— 端侧通过下一次 chat 的
     // analytical_uploads 上报新结果；本工具只读最新已知的快照。
     let freshness = current_freshness(ctx.db, ctx.user_id).await?;
-    let rows = query_all(
-        ctx.db,
-        ctx.user_id,
-        currency.as_deref(),
-        cadence,
-    )
-    .await?;
+    let rows = query_all(ctx.db, ctx.user_id, currency.as_deref(), cadence).await?;
 
     let patterns: Vec<Value> = rows
         .iter()
@@ -2076,14 +2038,7 @@ async fn get_cashflow_buckets(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value,
     }
     let from_ym = format!("{:04}-{:02}", from_y, from_m);
 
-    let rows = query_range(
-        ctx.db,
-        ctx.user_id,
-        &from_ym,
-        &to_ym,
-        currency.as_deref(),
-    )
-    .await?;
+    let rows = query_range(ctx.db, ctx.user_id, &from_ym, &to_ym, currency.as_deref()).await?;
 
     let series: Vec<Value> = rows
         .iter()
@@ -2116,36 +2071,25 @@ async fn get_cashflow_buckets(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value,
 // read_category_window — Scoped Detail (§4.3.4)
 // ---------------------------------------------------------------------------
 
-async fn read_category_window(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn read_category_window(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::scoped_detail::category_window;
     let parsed = category_window::parse_input(input)?;
     category_window::run(ctx.db, ctx.user_id, &parsed).await
 }
 
-async fn read_account_window(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn read_account_window(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::scoped_detail::account_window;
     let parsed = account_window::parse_input(input)?;
     account_window::run(ctx.db, ctx.user_id, &parsed).await
 }
 
-async fn read_asset_window(
-    ctx: &ToolCtx<'_>,
-    input: &Value,
-) -> Result<Value, AppError> {
+async fn read_asset_window(ctx: &ToolCtx<'_>, input: &Value) -> Result<Value, AppError> {
     use super::read_models::scoped_detail::asset_window;
     let parsed = asset_window::parse_input(input)?;
     asset_window::run(ctx.db, ctx.user_id, &parsed).await
 }
 
-fn summarize_buckets(
-    buckets: &[super::read_models::monthly_spend_by_category::Bucket],
-) -> Value {
+fn summarize_buckets(buckets: &[super::read_models::monthly_spend_by_category::Bucket]) -> Value {
     use std::collections::BTreeMap;
     // 按币种合计；不跨币种汇总（避免假装会 FX）。
     let mut by_currency: BTreeMap<&str, (i128, u32)> = BTreeMap::new();

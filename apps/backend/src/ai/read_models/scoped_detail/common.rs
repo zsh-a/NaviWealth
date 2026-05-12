@@ -83,8 +83,8 @@ pub fn is_known_purpose(s: &str) -> bool {
 /// 跨用户不可逆。前 12 hex char ≈ 48 bit，typical 量级零碰撞。
 pub fn hash_merchant(merchant: &str, user_id: &str) -> String {
     type HmacSha256 = Hmac<Sha256>;
-    let mut mac = HmacSha256::new_from_slice(user_id.as_bytes())
-        .expect("HMAC accepts any key length");
+    let mut mac =
+        HmacSha256::new_from_slice(user_id.as_bytes()).expect("HMAC accepts any key length");
     mac.update(merchant.trim().to_lowercase().as_bytes());
     let bytes = mac.finalize().into_bytes();
     bytes
@@ -153,10 +153,7 @@ pub async fn load_payloads(
 }
 
 /// 校验 from < to 且窗口 ≤ MAX_RANGE_DAYS。
-pub fn validate_range(
-    from: DateTime<Utc>,
-    to: DateTime<Utc>,
-) -> Result<(), AppError> {
+pub fn validate_range(from: DateTime<Utc>, to: DateTime<Utc>) -> Result<(), AppError> {
     if to <= from {
         return Err(AppError::BadRequest("to must be after from".into()));
     }

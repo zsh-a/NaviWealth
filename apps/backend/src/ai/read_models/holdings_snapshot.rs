@@ -24,9 +24,8 @@ use worker::{D1Database, D1Type};
 use crate::error::AppError;
 
 use super::freshness::Freshness;
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "holdings_snapshot";
 const SCHEMA_VERSION: u32 = 1;
@@ -46,9 +45,7 @@ impl Projection for HoldingsSnapshot {
     }
 
     async fn refresh(&self, db: &D1Database, user_id: &str) -> Result<Freshness, AppError> {
-        let watermark = latest_op_log_hlc(db, user_id)
-            .await?
-            .unwrap_or_default();
+        let watermark = latest_op_log_hlc(db, user_id).await?.unwrap_or_default();
         let assets = load_payloads(db, user_id, "assets").await?;
         let postings = load_payloads(db, user_id, "postings").await?;
 
@@ -60,10 +57,12 @@ impl Projection for HoldingsSnapshot {
             db,
             user_id,
             &holdings,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -117,10 +116,7 @@ pub async fn query_all(db: &D1Database, user_id: &str) -> Result<Vec<Holding>, A
 
 // ── pure aggregation logic ─────────────────────────────────────────────────
 
-pub(crate) fn aggregate(
-    postings: &[(String, Value)],
-    asset_ids: &HashSet<String>,
-) -> Vec<Holding> {
+pub(crate) fn aggregate(postings: &[(String, Value)], asset_ids: &HashSet<String>) -> Vec<Holding> {
     struct Acc {
         net_qty: f64,
         cost: f64,
@@ -222,15 +218,11 @@ async fn load_payloads(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_holdings(
     db: &D1Database,
     user_id: &str,
     holdings: &[Holding],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
     db.prepare("DELETE FROM read_model_holdings_snapshot WHERE user_id = ?1")
         .bind_refs([&D1Type::Text(user_id)])
@@ -259,10 +251,10 @@ async fn write_holdings(
                 &D1Type::Text(&qty_str),
                 &D1Type::Text(&cost_str),
                 &D1Type::Text(&h.cost_currency),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })

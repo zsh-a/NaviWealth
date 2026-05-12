@@ -31,3 +31,10 @@ pub mod scoped_detail;
 pub mod subscription_changes;
 pub mod transfer_links;
 pub mod xirr_snapshot;
+
+pub(super) struct WriteMeta<'a> {
+    pub watermark: &'a str,
+    pub refreshed_at: &'a str,
+    pub schema_version: u32,
+    pub calculation_version: u32,
+}

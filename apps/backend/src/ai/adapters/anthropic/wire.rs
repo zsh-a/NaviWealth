@@ -34,8 +34,8 @@ pub struct AnthropicRequest<'a> {
     pub stream: bool,
 }
 
-/// Legacy non-streaming response shape kept for compatibility while
-/// `routes::ai` still uses `ai::anthropic`.
+/// Legacy non-streaming response shape kept for compatibility with older
+/// adapter tests and callers.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AnthropicMessage {
     pub content: Vec<Value>,

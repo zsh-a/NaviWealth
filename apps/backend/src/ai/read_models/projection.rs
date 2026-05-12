@@ -187,14 +187,9 @@ pub async fn upsert_freshness_meta(
 }
 
 /// 取该用户 op_log 的最高 HLC。lazy 刷新的 staleness 判定依据。
-pub async fn latest_op_log_hlc(
-    db: &D1Database,
-    user_id: &str,
-) -> Result<Option<String>, AppError> {
+pub async fn latest_op_log_hlc(db: &D1Database, user_id: &str) -> Result<Option<String>, AppError> {
     let stmt = db
-        .prepare(
-            "SELECT MAX(hlc_text) AS h FROM op_log WHERE user_id = ?1",
-        )
+        .prepare("SELECT MAX(hlc_text) AS h FROM op_log WHERE user_id = ?1")
         .bind_refs([&D1Type::Text(user_id)])
         .map_err(|e| AppError::Internal(format!("bind: {e}")))?;
     let row: Option<HlcRow> = stmt

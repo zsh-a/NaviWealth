@@ -43,9 +43,7 @@ impl PolicyReason {
     /// body so the LLM can read it (and so traces are debuggable).
     pub fn message(&self) -> String {
         match self {
-            PolicyReason::UnknownTool => {
-                "tool is not registered in the descriptor table".into()
-            }
+            PolicyReason::UnknownTool => "tool is not registered in the descriptor table".into(),
             PolicyReason::ContextTierTooLow { client, required } => {
                 format!(
                     "context tier {client:?} below required {required:?} — caller must \

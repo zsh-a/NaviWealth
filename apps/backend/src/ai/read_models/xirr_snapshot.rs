@@ -27,9 +27,8 @@ use worker::{D1Database, D1Type};
 use crate::error::AppError;
 
 use super::freshness::Freshness;
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "xirr_snapshot";
 const SCHEMA_VERSION: u32 = 1;
@@ -62,10 +61,12 @@ impl Projection for XirrSnapshot {
             db,
             user_id,
             &rows,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -83,7 +84,7 @@ impl Projection for XirrSnapshot {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct XirrRow {
-    pub scope: String,           // 'portfolio' OR asset_id
+    pub scope: String, // 'portfolio' OR asset_id
     pub xirr: Option<f64>,
     pub flow_count: u32,
     pub primary_currency: Option<String>,
@@ -91,10 +92,7 @@ pub struct XirrRow {
     pub approximation: bool,
 }
 
-pub async fn query_all(
-    db: &D1Database,
-    user_id: &str,
-) -> Result<Vec<XirrRow>, AppError> {
+pub async fn query_all(db: &D1Database, user_id: &str) -> Result<Vec<XirrRow>, AppError> {
     let stmt = db
         .prepare(
             "SELECT scope, xirr, flow_count, primary_currency,
@@ -201,9 +199,7 @@ pub(crate) fn aggregate(
                 .entry((*asset_id).to_string())
                 .or_default()
                 .push(cf);
-            let c_map = asset_currency
-                .entry((*asset_id).to_string())
-                .or_default();
+            let c_map = asset_currency.entry((*asset_id).to_string()).or_default();
             if let Some(c) = entry_cash_currency {
                 *c_map.entry(c.to_string()).or_insert(0) += 1;
             }
@@ -211,29 +207,18 @@ pub(crate) fn aggregate(
     }
 
     let mut out: Vec<XirrRow> = Vec::new();
-    out.push(make_row(
-        "portfolio",
-        &portfolio_flows,
-        &portfolio_currency,
-    ));
+    out.push(make_row("portfolio", &portfolio_flows, &portfolio_currency));
     let mut asset_keys: Vec<String> = asset_flows.keys().cloned().collect();
     asset_keys.sort();
     for asset_id in asset_keys {
         let flows = &asset_flows[&asset_id];
-        let cur = asset_currency
-            .get(&asset_id)
-            .cloned()
-            .unwrap_or_default();
+        let cur = asset_currency.get(&asset_id).cloned().unwrap_or_default();
         out.push(make_row(&asset_id, flows, &cur));
     }
     out
 }
 
-fn make_row(
-    scope: &str,
-    flows: &[CashFlow],
-    currency_counts: &HashMap<String, u32>,
-) -> XirrRow {
+fn make_row(scope: &str, flows: &[CashFlow], currency_counts: &HashMap<String, u32>) -> XirrRow {
     let multi_currency = currency_counts.len() > 1;
     let primary_currency = currency_counts
         .iter()
@@ -324,10 +309,7 @@ async fn load_payloads(
     user_id: &str,
     table: &str,
 ) -> Result<Vec<(String, Value)>, AppError> {
-    debug_assert!(matches!(
-        table,
-        "assets" | "journal_entries" | "postings"
-    ));
+    debug_assert!(matches!(table, "assets" | "journal_entries" | "postings"));
     let sql = format!(
         "SELECT id, payload FROM {table}
          WHERE user_id = ?1 AND deleted_at IS NULL"
@@ -351,15 +333,11 @@ async fn load_payloads(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_rows(
     db: &D1Database,
     user_id: &str,
     rows: &[XirrRow],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
     db.prepare("DELETE FROM read_model_xirr_snapshot WHERE user_id = ?1")
         .bind_refs([&D1Type::Text(user_id)])
@@ -396,10 +374,10 @@ async fn write_rows(
                 &cur_param,
                 &D1Type::Integer(if r.multi_currency { 1 } else { 0 }),
                 &D1Type::Integer(if r.approximation { 1 } else { 0 }),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })
@@ -510,10 +488,7 @@ mod tests {
     #[test]
     fn single_sign_flows_yield_none_xirr() {
         let entries = vec![entry("buy", "2025-01-01T00:00:00Z")];
-        let postings = vec![
-            posting("buy", "AAPL", 10.0),
-            posting("buy", "USD", -1000.0),
-        ];
+        let postings = vec![posting("buy", "AAPL", 10.0), posting("buy", "USD", -1000.0)];
         let rows = aggregate(&entries, &postings, &assets(&["AAPL"]));
         let port = rows.iter().find(|r| r.scope == "portfolio").unwrap();
         assert!(port.xirr.is_none(), "no break-even rate possible");
