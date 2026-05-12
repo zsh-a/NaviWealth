@@ -9,6 +9,7 @@ import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/trace.dart';
+import '../../../core/ai/write/write.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
@@ -497,6 +498,10 @@ final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
   final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
   final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
   final currentUserId = ref.watch(currentUserIdProvider);
+  // Wave 39 — optional touch store. May be null when the DB is mid-
+  // boot or for unauthenticated sessions; the applier degrades to
+  // its pre-Wave-39 behaviour (no source mark recorded) in that case.
+  final touched = ref.watch(aiTouchedStoreProvider);
   return ProposalApplier(
     tradeEntryService: tradeService,
     journalEntryRepo: journalEntryRepo,
@@ -505,5 +510,6 @@ final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
     manualAssetRepo: manualAssetRepo,
     liabilityRepo: liabilityRepo,
     currentUserId: currentUserId,
+    aiTouchedStore: touched,
   );
 });

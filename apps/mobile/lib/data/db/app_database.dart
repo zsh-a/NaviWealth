@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,7 @@ class AppDatabase extends _$AppDatabase {
       await _createDomainEventLog(this);
       await _createAiTraceTable(this);
       await _createAiUndoStackTable(this);
+      await _createAiTouchedEntitiesTable(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -123,6 +124,13 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await _createAiTraceTable(this);
         await _createAiUndoStackTable(this);
+      }
+      // v5 → v6: side-table that records "this entity was touched by
+      // an AI proposal" so detail pages can surface a subtle sparkle
+      // prefix (Wave 39). Side table > new column on entity tables —
+      // domain models stay clean and the migration is additive only.
+      if (from < 6) {
+        await _createAiTouchedEntitiesTable(this);
       }
     },
     beforeOpen: (details) async {
@@ -329,5 +337,29 @@ Future<void> _createAiUndoStackTable(AppDatabase db) async {
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_ai_undo_owner '
     'ON ai_undo_stack(owner_user_id, created_at_iso DESC)',
+  );
+}
+
+Future<void> _createAiTouchedEntitiesTable(AppDatabase db) async {
+  // Wave 39 — records "this entity was last touched by an AI
+  // proposal apply at <touched_at>". Detail pages query this side
+  // table to render `AiSourceMark` next to recently AI-modified
+  // entities; storing the touch out-of-band keeps the underlying
+  // entity schemas (journal_entries / accounts / liabilities /
+  // assets) unaware of the AI write path.
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ai_touched_entities ('
+    '  owner_user_id TEXT NOT NULL,'
+    '  entity_type   TEXT NOT NULL,'
+    '  entity_id     TEXT NOT NULL,'
+    '  touched_at    TEXT NOT NULL,'
+    '  kind_label    TEXT,'           // 'expense' / 'trade' / 'memo_edit' / ...
+    '  trace_id      TEXT,'           // AiTrace.requestId for jump-to-trace
+    '  PRIMARY KEY (owner_user_id, entity_type, entity_id)'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_touched_owner '
+    'ON ai_touched_entities(owner_user_id, touched_at DESC)',
   );
 }
