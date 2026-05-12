@@ -146,11 +146,6 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     // stale-read-model detection (Phase 2 gate). Clear immediately so
     // a second concurrent send doesn't double-trigger.
     final pendingNames = ref.read(pendingFreshnessHintProvider);
-    final freshnessHint = pendingNames.isEmpty
-        ? null
-        : FreshnessHint(
-            forceRefreshReadModels: pendingNames.toList(growable: false),
-          );
     if (pendingNames.isNotEmpty) {
       ref.read(pendingFreshnessHintProvider.notifier).state = <String>{};
     }
@@ -160,6 +155,17 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     // device_hlc tag (§4.3.3).
     final localHlc = await ref.read(syncLocalHlcProvider.future);
     final localHlcText = localHlc?.toString();
+
+    // Wave 32: FreshnessHint now also carries lastLocalHlc so the
+    // freshness protocol is self-contained. Always emit when either
+    // the force-refresh list is non-empty OR we know the local HLC,
+    // so the cloud has a freshness watermark even on no-op turns.
+    final freshnessHint = (pendingNames.isEmpty && localHlcText == null)
+        ? null
+        : FreshnessHint(
+            forceRefreshReadModels: pendingNames.toList(growable: false),
+            lastLocalHlc: localHlcText,
+          );
 
     // Wave 11/15/16/17 — derive AnalyticalUpload list from end-side detector
     // outputs. anomaly_flag comes from expenseAnomalyInsightProvider

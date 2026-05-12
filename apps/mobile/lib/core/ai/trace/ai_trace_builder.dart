@@ -50,7 +50,10 @@ class AiTraceBuilder {
   bool get _anyConsentedDisclosure =>
       _disclosures.any((d) => d.consent != UserConsent.denied);
 
-  AiTrace finalize({required DateTime finishedAt}) {
+  AiTrace finalize({
+    required DateTime finishedAt,
+    TerminalReason terminalReason = TerminalReason.done,
+  }) {
     final start = DateTime.parse(_seed.startedAtIso);
     final durationMs = finishedAt.toUtc().difference(start).inMilliseconds;
     return AiTrace(
@@ -66,6 +69,7 @@ class AiTraceBuilder {
       disclosures: List<DisclosureSummary>.unmodifiable(_disclosures),
       toolCalls: List<TraceToolCall>.unmodifiable(_tools),
       staleReadModelNames: Set<String>.unmodifiable(_staleReadModelNames),
+      terminalReason: terminalReason,
     );
   }
 }

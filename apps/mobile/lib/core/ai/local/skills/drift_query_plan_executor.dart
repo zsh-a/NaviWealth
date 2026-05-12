@@ -1,0 +1,133 @@
+/// Wave 28 — Drift-backed [QueryPlanExecutor] adapter.
+///
+/// The pure logic in [InMemoryQueryPlanExecutor] already does the
+/// heavy lifting; we just need a way to source `TransactionInput`
+/// values from the live journal. This adapter:
+///
+///   1. Reads the user's expense rows via `journalExpensesStreamProvider`
+///      (one-shot via `.future`).
+///   2. Converts each [Expense] to a signed [TransactionInput] (outflow
+///      negative — see `_expenseToTransactionInput`).
+///   3. Delegates to [InMemoryQueryPlanExecutor].
+///
+/// `NetWorthTrendPlan` continues to return a note (handled by the
+/// dashboard adapter in Wave 29); we deliberately don't double-implement
+/// it here.
+///
+/// The adapter is Riverpod-aware so callers can hand in any `Ref` —
+/// chat repository, dev page, future natural-language CLI. Tests that
+/// want pure logic stay on [InMemoryQueryPlanExecutor] with hand-rolled
+/// fixtures.
+library;
+
+import 'package:decimal/decimal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../data/domain/expense.dart';
+import '../../../../data/repositories/journal_entry_providers.dart';
+import '../../../../features/home/data/dashboard_providers.dart';
+import '../../../../features/home/domain/dashboard_trend_builder.dart';
+import 'finance_query_plan.dart';
+import 'query_plan_executor.dart';
+import 'transaction_input.dart';
+
+class DriftQueryPlanExecutor implements QueryPlanExecutor {
+  DriftQueryPlanExecutor({required this.ref});
+
+  final Ref ref;
+
+  @override
+  Future<QueryResult> run(FinanceQueryPlan plan) async {
+    // Wave 29: NetWorthTrendPlan reads from the dashboard trend
+    // provider — no transaction list needed.
+    if (plan is NetWorthTrendPlan) {
+      return _netWorthTrend(plan);
+    }
+    final expenses = await _readExpensesSafely();
+    final txns = expenses
+        .map(_expenseToTransactionInput)
+        .toList(growable: false);
+    final inner = InMemoryQueryPlanExecutor(transactions: txns);
+    return inner.run(plan);
+  }
+
+  Future<QueryResult> _netWorthTrend(NetWorthTrendPlan plan) async {
+    final DashboardTrend trend;
+    try {
+      trend = await ref.read(dashboardTrendProvider.future);
+    } catch (e) {
+      return QueryResult(
+        plan: plan,
+        rows: const <QueryRow>[],
+        note: 'net-worth trend unavailable: $e',
+      );
+    }
+    final from = DateTime.tryParse(plan.range.fromInclusive);
+    final to = DateTime.tryParse(plan.range.toExclusive);
+    final points = trend.points.where((p) {
+      if (from != null && p.asOf.isBefore(from)) return false;
+      if (to != null && !p.asOf.isBefore(to)) return false;
+      return true;
+    }).toList(growable: false);
+    final rows = points
+        .map(
+          (p) => QueryRow(
+            label: p.asOf.toUtc().toIso8601String(),
+            values: <String, Object?>{
+              'as_of': p.asOf.toUtc().toIso8601String(),
+              'net_worth': p.netWorth.amount.toString(),
+              'assets': p.assets.amount.toString(),
+              'liabilities': p.liabilities.amount.toString(),
+              'currency': trend.baseCurrency,
+            },
+          ),
+        )
+        .toList(growable: false);
+    return QueryResult(
+      plan: plan,
+      rows: rows,
+      summary: rows.isEmpty
+          ? null
+          : QuerySummary(
+              totalAbsAmountMinor: 0,
+              currency: trend.baseCurrency,
+              rowCount: rows.length,
+            ),
+      note: rows.isEmpty
+          ? 'no net-worth samples in requested range'
+          : null,
+    );
+  }
+
+  Future<List<Expense>> _readExpensesSafely() async {
+    try {
+      return await ref.read(journalExpensesStreamProvider.future);
+    } catch (_) {
+      // Producer failure (DB not ready, sync mid-flight) — return
+      // empty so the executor produces an honest "no rows" result
+      // rather than throwing into the AI surface.
+      return const <Expense>[];
+    }
+  }
+}
+
+/// Same shape as the chat-side converter (`_expenseToTransactionInput`
+/// in `features/ai_chat/data/providers.dart`). Kept duplicated rather
+/// than shared to avoid a feature→core dependency; if a third caller
+/// shows up we promote it into `skills/`.
+TransactionInput _expenseToTransactionInput(Expense e) {
+  final cents = (e.amount * Decimal.fromInt(100)).floor().toBigInt();
+  return TransactionInput(
+    id: e.id,
+    description: e.note ?? '',
+    amountMinor: '-$cents',
+    currency: e.currency,
+    occurredAt: e.tradeDate,
+    accountId: e.expenseAccountId,
+    categoryId: e.expenseAccountId,
+  );
+}
+
+final driftQueryPlanExecutorProvider = Provider<QueryPlanExecutor>(
+  (ref) => DriftQueryPlanExecutor(ref: ref),
+);

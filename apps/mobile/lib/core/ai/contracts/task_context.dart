@@ -234,16 +234,28 @@ class ScopedAggregate {
 /// 云端 routes/ai.rs 在 dispatch 前 `clear_freshness_meta` 强制
 /// `ensure_fresh` 重算。Hint 单向、幂等、消费后清空。
 class FreshnessHint {
-  const FreshnessHint({this.forceRefreshReadModels = const <String>[]});
+  const FreshnessHint({
+    this.forceRefreshReadModels = const <String>[],
+    this.lastLocalHlc,
+  });
 
   /// Read model 名（如 `monthly_spend_by_category`）。云端逐一失效
   /// 对应 freshness_meta 行；不认识的名字直接忽略。
   final List<String> forceRefreshReadModels;
 
-  bool get isEmpty => forceRefreshReadModels.isEmpty;
+  /// Wave 32 — 端侧此次 chat 时的 localHlc 字符串。云端可用作 freshness
+  /// 比较的真值水位（之前依赖 TaskContext.deviceHlc，但语义上 HLC
+  /// 属于 freshness 协议，挪进来后 TaskContext.deviceHlc 仅作为
+  /// analytical_uploads 的批次戳）。
+  /// `null` = 端未提供（早期 client）。
+  final String? lastLocalHlc;
+
+  bool get isEmpty =>
+      forceRefreshReadModels.isEmpty && (lastLocalHlc == null);
 
   Map<String, Object?> toJson() => <String, Object?>{
     'force_refresh_read_models': forceRefreshReadModels,
+    if (lastLocalHlc != null) 'last_local_hlc': lastLocalHlc,
   };
 
   factory FreshnessHint.fromJson(Map<String, Object?> json) {
@@ -254,7 +266,11 @@ class FreshnessHint {
         if (e is String && e.isNotEmpty) names.add(e);
       }
     }
-    return FreshnessHint(forceRefreshReadModels: names);
+    final hlc = json['last_local_hlc'];
+    return FreshnessHint(
+      forceRefreshReadModels: names,
+      lastLocalHlc: hlc is String && hlc.isNotEmpty ? hlc : null,
+    );
   }
 }
 

@@ -5,6 +5,7 @@
 library;
 
 export 'context_compressor.dart';
+export 'drift_query_plan_executor.dart';
 export 'finance_query_plan.dart';
 export 'merchant_key.dart';
 export 'nl_to_query_plan.dart';

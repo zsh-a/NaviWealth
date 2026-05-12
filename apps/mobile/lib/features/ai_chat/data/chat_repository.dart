@@ -234,6 +234,11 @@ class ChatRepository {
     final invocationOrder = <String>[];
     final localCancel = cancelToken ?? CancelToken();
     SendOutcome outcome = SendOutcome.completed;
+    // Wave 30: granular terminal reason for the finalised trace.
+    // SendOutcome collapses error/cancel into the user-visible shape;
+    // the trace surface needs the finer split so the audit page can
+    // tell "user cancelled" from "stream errored" from "policy denied".
+    TerminalReason terminalReason = TerminalReason.done;
     var sawStreamEvent = false;
     var sawDone = false;
 
@@ -320,6 +325,7 @@ class ChatRepository {
             }
           case ErrorEvent(:final message):
             outcome = SendOutcome.errored;
+            terminalReason = TerminalReason.streamError;
             assistant = assistant.copyWith(
               status: ChatMessageStatus.errored,
               errorMessage: message,
@@ -346,6 +352,7 @@ class ChatRepository {
       }
       if (!sawStreamEvent) {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.closedEarly;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended without any events',
@@ -354,6 +361,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       } else if (!sawDone && assistant.status == ChatMessageStatus.streaming) {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.closedEarly;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended before done',
@@ -364,6 +372,7 @@ class ChatRepository {
     } catch (e) {
       if (e is SseIdleTimeout) {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.streamError;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: kIdleTimeoutError,
@@ -372,6 +381,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       } else if (_isUserCancelled(localCancel)) {
         outcome = SendOutcome.cancelled;
+        terminalReason = TerminalReason.userCancel;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: kCancelledError,
@@ -380,6 +390,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       } else {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.streamError;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: _describeError(e),
@@ -398,6 +409,7 @@ class ChatRepository {
         try {
           final trace = traceBuilder.finalize(
             finishedAt: DateTime.now().toUtc(),
+            terminalReason: terminalReason,
           );
           await _traceStore.append(trace);
           _onTraceFinalized?.call(trace);

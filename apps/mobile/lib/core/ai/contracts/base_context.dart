@@ -175,8 +175,20 @@ class BaseContext {
 
   final String preferredCurrency;
   final RiskPreference riskPreference;
+
+  /// **Wave 32 — DEPRECATED**. Account aggregates now live in the
+  /// cloud read models (`holdings_snapshot`, `asset_allocation_snapshot`).
+  /// The field is retained on the wire for wire-compat with backends
+  /// pinned to the v1 schema; clients should emit an empty
+  /// [AccountSummary]. Will be removed when ContextPack ticks to v2.
   final AccountSummary accounts;
+
+  /// **Wave 32 — DEPRECATED**. Cashflow aggregates now live in the
+  /// cloud read models (`cashflow_buckets`, `monthly_spend_by_category`).
+  /// Clients should emit an empty [CashflowSummary]. Will be removed
+  /// when ContextPack ticks to v2.
   final CashflowSummary cashflow;
+
   final FireGoalSummary? fireGoal;
 
   Map<String, Object?> toJson() => <String, Object?>{

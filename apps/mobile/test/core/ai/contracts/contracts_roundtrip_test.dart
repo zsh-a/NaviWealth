@@ -291,6 +291,52 @@ void main() {
       expect(decoded.disclosures.first.purpose, DisclosurePurpose.anomalyExplain);
       expect(decoded.toolCalls, hasLength(2));
       expect(decoded.toolCalls.last.name, 'request_disclosure');
+      // Wave 30: terminalReason defaults to done when not provided.
+      expect(decoded.terminalReason, TerminalReason.done);
+    });
+
+    test('trace with explicit terminalReason round-trips (Wave 30)', () {
+      for (final reason in TerminalReason.values) {
+        const seed = AiTrace(
+          requestId: 'r',
+          startedAtIso: '2026-05-12T00:00:00Z',
+          intent: IntentHint(
+            capability: Capability.analyze,
+            risk: RiskLevel.suggest,
+          ),
+          backend: Backend.cloud,
+          budgetTier: BudgetTier.small,
+          routingReason: 'test',
+          usedCloud: true,
+          usedRawLedger: false,
+          totalDurationMs: 100,
+        );
+        // Build with the desired reason via copy through json.
+        final json = seed.toJson();
+        json['terminal_reason'] = reason.wire;
+        final decoded = AiTrace.fromJson(json);
+        expect(decoded.terminalReason, reason, reason: 'reason=$reason');
+      }
+    });
+
+    test('legacy AiTrace JSON without terminal_reason defaults to done', () {
+      // Simulates old persisted rows from before Wave 30. The decoder
+      // must tolerate the missing field rather than crash.
+      final json = <String, Object?>{
+        'request_id': 'old',
+        'started_at': '2026-01-01T00:00:00Z',
+        'intent': {'capability': 'analyze', 'risk': 'info'},
+        'backend': 'cloud',
+        'budget_tier': 'small',
+        'routing_reason': 'legacy',
+        'used_cloud': true,
+        'used_raw_ledger': false,
+        'total_duration_ms': 10,
+        'disclosures': <Object?>[],
+        'tool_calls': <Object?>[],
+      };
+      final decoded = AiTrace.fromJson(json);
+      expect(decoded.terminalReason, TerminalReason.done);
     });
   });
 

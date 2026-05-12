@@ -1,7 +1,7 @@
 # NaviWealth AI 架构
 
-> 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步）。Phase 5（端侧 LLM）未实现。
-> **Wave 进度**: Wave 1–25 完成 — 详见 §7 实现状态表与 Wave 落地清单。剩余主线: Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`（需 OpLog 持久化 recurring_patterns）。
+> 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步），**P2 全部完成**（AI 透明度审计页 / ContextPack→system prompt / Drift QueryPlanExecutor + NetWorthTrendPlan / AiTrace terminal reason 细分 / ProposalEnvelope.source / ContextPack 收缩）。Phase 5（端侧 LLM）未实现。
+> **Wave 进度**: Wave 1–32 完成 — 详见 §7 实现状态表与 Wave 落地清单。剩余主线: Phase 5 端侧 LLM、`tools.rs` 进一步细分（Wave 25 仅完成 xirr 提取 + 目录化）、long-window `subscription_changes`（需 OpLog 持久化 recurring_patterns）、Analytical 层 P2 四模型。
 > 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
 
 ---
@@ -594,7 +594,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 
 **ToolDescriptor 总数**: 27（Read 20 + Propose 5 + 兼容保留 2）— 见 `apps/backend/src/ai/policy/tool_policy.rs`。每条描述符含七个轴：`name` / `access` / `risk` / `requires_confirmation` / `allowed_context_tier` / `allowed_runtimes` / `side_effect` / `read_model_layer`。`risk_policy.rs::every_dispatch_target_has_a_descriptor` 与 `tools.rs::schemas_advertise_all_dispatch_targets` 双向同步。
 
-**测试覆盖**: backend **131 tests** (`cargo test --lib`，新增 4 个 asset_allocation aggregate + 4 个 tool_policy invariant + 2 个 policy_denied shape) + mobile 含 8 个 analytical_uploads 转换契约（Wave 16/17/19）+ 5 个 ai_runtime registry/picker + 5 个 drift_ai_trace_store + 6 个 drift_undo_stack + 23 个 chat_repository + freshness gate 覆盖。`flutter analyze --fatal-infos lib` 与 `cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings` 均干净。剩余 9 个 widget 渲染器失败为 Wave 18 之前的预存遗留（`tool_invocation_renderers_test.dart::_expandCard` 找不到目标 widget），与本次 P1 无关。
+**测试覆盖**: backend **140 tests** (`cargo test --lib`，P1 增量 +10：asset_allocation aggregate × 4 / tool_policy invariant × 4 / policy_denied shape × 2；P2 增量 +9：system_prompt_extension formatter × 9) + mobile **158 core/ai tests**（含 P1 的 analytical_uploads × 8 / ai_runtime × 5 / drift_ai_trace_store × 5 / drift_undo_stack × 6 / chat_repository × 23 + freshness gate；P2 的 AiTrace terminal_reason round-trip × 2）。`flutter analyze --fatal-infos lib` 与 `cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings` 均干净。剩余 9 个 widget 渲染器失败为 Wave 18 之前的预存遗留（`tool_invocation_renderers_test.dart::_expandCard` 找不到目标 widget），与本次 P1/P2 无关。
 
 ### Wave 落地清单（Read Models 主通道）
 
@@ -623,6 +623,13 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 23 | `AiTraceStore` Drift 持久化 | Drift 表 `ai_traces` + `DriftAiTraceStore` + provider 自动切换 + 5 个 round-trip 测试 |
 | 24 | `LocalImmediateWriteExecutor` Drift 持久化 | Drift 表 `ai_undo_stack` + `DriftUndoStack` (原子 take) + 6 个测试 |
 | 25 | `tools.rs` 拆分起步 | `apps/backend/src/ai/tools/` 目录化；XIRR 核心抽离到 `tools/xirr.rs` |
+| 26 | AI 透明度审计页 | `settings/ui/ai_transparency_page.dart` 列表 + 详情；Settings 入口；`/settings/ai-transparency` + `/:requestId` 子路由 |
+| 27 | ContextPack → system prompt | `ai/context/system_prompt_extension.rs`：route/base/signals/freshness hint/uploads-by-kind 概要追加在 SYSTEM_PROMPT 之后（不替代）；9 个 formatter 测试 |
+| 28 | Drift-backed QueryPlanExecutor | `core/ai/local/skills/drift_query_plan_executor.dart` — `journalExpensesStreamProvider.future` → TransactionInput → 委托给 `InMemoryQueryPlanExecutor` |
+| 29 | NetWorthTrendPlan 适配器 | DriftQueryPlanExecutor 直接读 `dashboardTrendProvider` → TrendPoint → QueryRow；本范围内过滤 |
+| 30 | AiTraceBuilder terminal reason | `TerminalReason` 枚举（done/streamError/userCancel/policyDenied/closedEarly）+ chat_repository 各分支精细打标 + 透明度页 chip/详情显示 + 兼容旧 trace JSON |
+| 31 | ProposalEnvelope.source | `ProposalSource` 枚举 (device/cloud/hybrid) 加到基类，子类透传；`LocalImmediateWriteExecutor.register` 默认 `device`；默认值 `cloud` 兼容旧 caller |
+| 32 | ContextPack 收缩 | `FreshnessHint` 新增 `last_local_hlc`（mobile + Rust 双侧 + serde default）；`BaseContext.accounts/cashflow` 标记 deprecated（保留 wire 兼容，未来 v2 移除）；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含 |
 
 ## 8. TODO
 
@@ -648,15 +655,15 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [x] ~~**`tools.rs` 文件拆分**~~ — `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法迁到 `tools/xirr.rs`（Wave 25）。剩余 read/propose 二级拆分作为后续增量
 - [x] ~~**`ToolDescriptor` 加 `allowed_runtimes` + `side_effect` + `read_model_layer`**~~ — Wave 20：27 描述符全部填充，mobile `tool_descriptor.dart` 镜像对齐，含 invariant tests（proposals 必有 DeviceLocalWrite side effect / reads 必无 side effect / ScopedDetail 必至少 Standard tier / 每条都允许 cloud）
 
-### P2 — 增强
+### P2 — 增强（✅ 全部完成 Wave 26–32）
 
-- [ ] **AI 透明度审计页** — Settings → AI 透明度 → 翻历史。`recentAiTracesProvider` 已就绪。
-- [ ] **ContextPack 进 system prompt** — 后端把派生信号（signals / preferences / route）编进 Anthropic system prompt（不替代 SYSTEM_PROMPT，而是 append）
-- [ ] **Drift-backed QueryPlanExecutor** — 生产侧 features 适配器。  *入口*: `lib/core/ai/local/skills/query_plan_executor.dart`
-- [ ] **`NetWorthTrendPlan` 适配器** — 端侧桥接 read_models 或 dashboard providers
-- [ ] **AiTraceBuilder 错误/取消细分 reason** — finalize 区分 stream error vs user cancel vs done。
-- [ ] **`ProposalEnvelope.source` 字段** — device/cloud/hybrid，配合 Stage 3 准备
-- [ ] **ContextPack 收缩** — `BaseContext` 删除 `cashflow` / `accounts` 字段（数据来自 read models 而非 ContextPack），`TaskContext` 加 `freshnessHint { lastLocalHlc }`
+- [x] ~~**AI 透明度审计页**~~ — Wave 26：`features/settings/ui/ai_transparency_page.dart` 含列表 + 详情；Settings 入口；GoRouter 路由 `/settings/ai-transparency` 与 `:requestId` 子路由；显示路由原因 / 终止原因 / 工具调用 / disclosures / stale 列表
+- [x] ~~**ContextPack 进 system prompt**~~ — Wave 27：`ai/context/system_prompt_extension.rs` formatter 把 route / base / signals / freshness hint / device upload 概要 append 在 SYSTEM_PROMPT 之后；9 个 unit tests
+- [x] ~~**Drift-backed QueryPlanExecutor**~~ — Wave 28：`DriftQueryPlanExecutor` 读 `journalExpensesStreamProvider.future` → `TransactionInput[]` → 委托 `InMemoryQueryPlanExecutor`；Riverpod provider `driftQueryPlanExecutorProvider`
+- [x] ~~**`NetWorthTrendPlan` 适配器**~~ — Wave 29：`DriftQueryPlanExecutor.run` 对 `NetWorthTrendPlan` 改读 `dashboardTrendProvider`，过滤范围后映射 `TrendPoint → QueryRow`
+- [x] ~~**AiTraceBuilder 错误/取消细分 reason**~~ — Wave 30：`TerminalReason` 枚举（`done` / `streamError` / `userCancel` / `policyDenied` / `closedEarly`）；`finalize(terminalReason:)` 参数；chat_repository 各分支精细打标；wire 兼容老 trace（missing → done）
+- [x] ~~**`ProposalEnvelope.source` 字段**~~ — Wave 31：`ProposalSource` 枚举（`device` / `cloud` / `hybrid`）+ `ProposalSourceWire`；基类构造透传；`LocalImmediateWriteExecutor.register` 默认 `device`；默认值 `cloud` 兼容旧 caller
+- [x] ~~**ContextPack 收缩**~~ — Wave 32：`FreshnessHint.lastLocalHlc` (mobile + Rust 双侧加 `#[serde(default)]`)；mobile 始终携带 lastLocalHlc 让 freshness 协议自包含；`BaseContext.accounts/cashflow` 标记 deprecated（wire 兼容保留，等 ContextPack v2 移除）
 
 ### P3 — Phase 5 / 长期 / 未来 feature
 

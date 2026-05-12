@@ -93,6 +93,43 @@ class DisclosureSummary {
   }
 }
 
+/// How the turn ended (Wave 30). Distinguishes "normal completion" from
+/// "the user cancelled mid-stream" from "the stream raised an error" —
+/// today these all collapse into a single trace row, which loses
+/// signal for the transparency surface and for future SLO dashboards.
+enum TerminalReason {
+  /// Stream emitted the terminal `done` frame normally.
+  done,
+  /// Stream errored out mid-flight (network / upstream / parser).
+  streamError,
+  /// User explicitly cancelled (cancel button / navigated away).
+  userCancel,
+  /// Policy denied dispatch — synthesised `tool_result {error: policy_denied}`.
+  policyDenied,
+  /// Stream closed before the `done` frame and no error fired (peer
+  /// reset, timeout, etc.). Less informative than `streamError`.
+  closedEarly,
+}
+
+extension TerminalReasonWire on TerminalReason {
+  String get wire => switch (this) {
+    TerminalReason.done => 'done',
+    TerminalReason.streamError => 'stream_error',
+    TerminalReason.userCancel => 'user_cancel',
+    TerminalReason.policyDenied => 'policy_denied',
+    TerminalReason.closedEarly => 'closed_early',
+  };
+
+  static TerminalReason parse(String s) => switch (s) {
+    'done' => TerminalReason.done,
+    'stream_error' => TerminalReason.streamError,
+    'user_cancel' => TerminalReason.userCancel,
+    'policy_denied' => TerminalReason.policyDenied,
+    'closed_early' => TerminalReason.closedEarly,
+    _ => TerminalReason.done,
+  };
+}
+
 class AiTrace {
   const AiTrace({
     required this.requestId,
@@ -107,6 +144,7 @@ class AiTrace {
     this.disclosures = const <DisclosureSummary>[],
     this.toolCalls = const <TraceToolCall>[],
     this.staleReadModelNames = const <String>{},
+    this.terminalReason = TerminalReason.done,
   });
 
   final String requestId;
@@ -136,6 +174,10 @@ class AiTrace {
   /// chat request (lib/features/ai_chat/data/providers.dart).
   final Set<String> staleReadModelNames;
 
+  /// How the turn ended. Defaults to [TerminalReason.done] for
+  /// callers that haven't been updated yet (Wave 30).
+  final TerminalReason terminalReason;
+
   /// Count form for UI / older callers.
   int get staleReadModels => staleReadModelNames.length;
 
@@ -153,6 +195,7 @@ class AiTrace {
     'tool_calls': toolCalls.map((t) => t.toJson()).toList(growable: false),
     if (staleReadModelNames.isNotEmpty)
       'stale_read_model_names': staleReadModelNames.toList(growable: false),
+    'terminal_reason': terminalReason.wire,
   };
 
   factory AiTrace.fromJson(Map<String, Object?> json) {
@@ -192,6 +235,10 @@ class AiTrace {
       disclosures: _list(json['disclosures'], DisclosureSummary.fromJson),
       toolCalls: _list(json['tool_calls'], TraceToolCall.fromJson),
       staleReadModelNames: staleNames,
+      terminalReason: switch (json['terminal_reason']) {
+        final String s => TerminalReasonWire.parse(s),
+        _ => TerminalReason.done,
+      },
     );
   }
 }
