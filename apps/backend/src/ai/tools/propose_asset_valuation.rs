@@ -3,8 +3,9 @@ use serde_json::{json, Value};
 
 use super::registry::Tool;
 use super::ToolCtx;
+use crate::ai::context::{BudgetTier, RiskLevel};
 use crate::ai::policy::{Access, AllowedRuntimes, Confirmation, SideEffect, ToolDescriptor};
-use crate::ai::{context::BudgetTier, context::RiskLevel, proposals};
+use crate::ai::proposals;
 use crate::error::AppError;
 
 pub struct ProposeAssetValuationTool;
@@ -12,14 +13,6 @@ pub struct ProposeAssetValuationTool;
 pub(crate) const DESCRIPTION: &str =
     "提议更新一个手工估值资产（房产 / 车 / 现金 / 银行存款 / 理财）的当前估值。\
                           有市场行情的证券请改用 propose_trade 的 valuationAdjust 类型。";
-
-pub fn schema() -> crate::ai::adapters::anthropic::wire::ToolSchema {
-    crate::ai::adapters::anthropic::wire::ToolSchema {
-        name: "propose_asset_valuation".into(),
-        description: DESCRIPTION.into(),
-        input_schema: input_schema(),
-    }
-}
 
 fn input_schema() -> Value {
     json!({

@@ -59,7 +59,7 @@ impl ToolDispatcher for CloudToolDispatcher {
             portfolio_snapshot: session.portfolio_snapshot.as_ref(),
             context_tier: session.context_tier,
         };
-        tools::dispatch(&ctx, name, input).await
+        tools::registry().dispatch(&ctx, name, input).await
     }
 }
 
@@ -81,7 +81,7 @@ impl<A: LlmAdapter> AgentLoop<A> {
         Self {
             adapter,
             model,
-            tool_schemas: tools::schemas(),
+            tool_schemas: tools::registry().schemas(),
             dispatcher,
             budget,
         }
