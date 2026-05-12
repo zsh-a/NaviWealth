@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -279,6 +280,21 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   children: [
+                    // Wave 40 — surface AI provenance when this
+                    // account was last touched by an AI proposal
+                    // (`propose_account_create`). The widget is
+                    // self-gating: renders nothing when the entity
+                    // has no recent touch.
+                    if (widget.isEdit && widget.accountId != null) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: AiTouchMark(
+                          entityType: 'accounts',
+                          entityId: widget.accountId!,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     // Wealth-container category picker — semantic
                     // icon-grid, not a dropdown. The accounting side
                     // (`_category`) auto-derives via

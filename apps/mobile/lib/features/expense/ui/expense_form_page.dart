@@ -303,11 +303,14 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                             },
                           ),
                           const SizedBox(width: 8),
-                          // Wave 39 — AiSourceMark when this expense was
-                          // last touched by an AI proposal apply. The
-                          // mark is decorative; tooltip carries the
-                          // explainer.
-                          _AiTouchMark(entityId: widget.expenseId!),
+                          // Wave 39 / 40 — AiTouchMark when this
+                          // expense was last touched by an AI proposal
+                          // apply. The widget is self-gating: nothing
+                          // renders when there's no recent touch.
+                          AiTouchMark(
+                            entityType: 'journal_entries',
+                            entityId: widget.expenseId!,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -475,32 +478,3 @@ class _NoAccountsHint extends StatelessWidget {
   }
 }
 
-/// Wave 39 — small consumer that surfaces `AiSourceMark` only when the
-/// expense was AI-touched recently. Keeps the widget tree clean in
-/// non-AI cases (most expense rows have no touch record).
-///
-/// Threshold: 30 days. Older touches are filtered out — the mark
-/// should reflect "this might have been AI-created", not "this was
-/// AI-created two years ago".
-class _AiTouchMark extends ConsumerWidget {
-  const _AiTouchMark({required this.entityId});
-
-  final String entityId;
-
-  static const _staleAfter = Duration(days: 30);
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final touchAsync = ref.watch(
-      aiTouchedAtProvider((entityType: 'journal_entries', entityId: entityId)),
-    );
-    final touch = touchAsync.value;
-    if (touch == null) return const SizedBox.shrink();
-    final age = DateTime.now().toUtc().difference(touch.touchedAt);
-    if (age > _staleAfter) return const SizedBox.shrink();
-    final tooltip = touch.kindLabel == null
-        ? '由 AI 提议修改'
-        : '由 AI 提议修改（${touch.kindLabel}）';
-    return AiSourceMark(tooltipZh: tooltip);
-  }
-}
