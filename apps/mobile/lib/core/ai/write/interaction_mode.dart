@@ -57,11 +57,16 @@ InteractionMode deriveInteractionMode(ProposalEnvelope p) {
     case LocalProposal _:
       return InteractionMode.confirmDiff;
     case CloudProposal cp:
-      return _cloudModeForKind(cp.kindLabel);
+      return interactionModeForKindLabel(cp.kindLabel);
   }
 }
 
-InteractionMode _cloudModeForKind(String kindLabel) {
+/// Public counterpart to [deriveInteractionMode] for callers that
+/// already know the kind string but don't have a full envelope (e.g.
+/// `propose_card.dart` derives from `ProposalKind.name`). Keeps the
+/// mapping single-sourced — the docstring table in this file is
+/// authoritative.
+InteractionMode interactionModeForKindLabel(String kindLabel) {
   return switch (kindLabel) {
     'broker_order' || 'bulk_delete' => InteractionMode.typed,
     'rebalance' ||

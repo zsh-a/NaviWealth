@@ -71,6 +71,32 @@ void main() {
       }
     });
 
+    test('Wave 38 — interactionModeForKindLabel mirrors deriveInteractionMode for CloudProposal', () {
+      // The propose_card flow calls interactionModeForKindLabel(_kindLabel(plan.kind))
+      // instead of constructing a CloudProposal. Make sure the two paths agree.
+      const labels = <String, InteractionMode>{
+        'expense': InteractionMode.oneTap,
+        'memo_edit': InteractionMode.oneTap,
+        'category_set': InteractionMode.oneTap,
+        'tag_apply': InteractionMode.oneTap,
+        'trade': InteractionMode.confirmDiff,
+        'rebalance': InteractionMode.confirmDiff,
+        'liability_payment': InteractionMode.confirmDiff,
+        'account_create': InteractionMode.confirmDiff,
+        'asset_valuation': InteractionMode.confirmDiff,
+        'broker_order': InteractionMode.typed,
+        'bulk_delete': InteractionMode.typed,
+        'unknown_kind': InteractionMode.confirmDiff,
+      };
+      for (final entry in labels.entries) {
+        expect(
+          interactionModeForKindLabel(entry.key),
+          entry.value,
+          reason: 'kindLabel=${entry.key}',
+        );
+      }
+    });
+
     test('unknown CloudProposal kindLabel falls back to confirmDiff', () {
       const p = CloudProposal(
         proposalId: 'p1',
