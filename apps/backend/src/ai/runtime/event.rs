@@ -36,11 +36,17 @@ pub enum AgentEvent {
     },
     Stop {
         reason: StopReason,
+        #[serde(default, skip_serializing_if = "is_zero")]
+        rounds: u8,
     },
     Error {
         code: String,
         message: String,
     },
+}
+
+fn is_zero(value: &u8) -> bool {
+    *value == 0
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -92,6 +98,7 @@ mod tests {
             },
             AgentEvent::Stop {
                 reason: StopReason::EndTurn,
+                rounds: 2,
             },
             AgentEvent::Error {
                 code: "provider_error".into(),
@@ -111,6 +118,7 @@ mod tests {
     fn agent_event_uses_snake_case_type_tag() {
         let encoded = serde_json::to_value(AgentEvent::Stop {
             reason: StopReason::MaxTokens,
+            rounds: 0,
         })
         .expect("serialize stop event");
 

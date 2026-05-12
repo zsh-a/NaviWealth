@@ -105,28 +105,15 @@ pub fn parse_input(raw: &Value) -> Result<Input, AppError> {
 
 /// 工具入口。Worker 持有 D1 + user_id；返回的 Value 直接作为
 /// tool_result.output，含 freshness 字段。
-pub async fn run(
-    db: &D1Database,
-    user_id: &str,
-    input: &Input,
-) -> Result<Value, AppError> {
-    let watermark = latest_op_log_hlc(db, user_id)
-        .await?
-        .unwrap_or_default();
+pub async fn run(db: &D1Database, user_id: &str, input: &Input) -> Result<Value, AppError> {
+    let watermark = latest_op_log_hlc(db, user_id).await?.unwrap_or_default();
 
     let entries = load_payloads(db, user_id, "journal_entries").await?;
     let postings = load_payloads(db, user_id, "postings").await?;
     let accounts = load_payloads(db, user_id, "accounts").await?;
     let assets = load_payloads(db, user_id, "assets").await?;
 
-    let result = filter_and_sanitise(
-        &entries,
-        &postings,
-        &accounts,
-        &assets,
-        input,
-        user_id,
-    );
+    let result = filter_and_sanitise(&entries, &postings, &accounts, &assets, input, user_id);
 
     Ok(json!({
         "summary":      result.summary,
@@ -163,9 +150,7 @@ pub(crate) fn filter_and_sanitise(
     let account_kinds: HashMap<&str, String> = accounts
         .iter()
         .map(|(id, p)| {
-            let kind = payload_str(p, "type")
-                .unwrap_or("unknown")
-                .to_string();
+            let kind = payload_str(p, "type").unwrap_or("unknown").to_string();
             (id.as_str(), kind)
         })
         .collect();
@@ -382,8 +367,8 @@ fn is_known_purpose(s: &str) -> bool {
 /// HMAC-SHA256(user_id, merchant) 取前 12 hex char (~48 bit)。
 fn hash_merchant(merchant: &str, user_id: &str) -> String {
     type HmacSha256 = Hmac<Sha256>;
-    let mut mac = HmacSha256::new_from_slice(user_id.as_bytes())
-        .expect("HMAC accepts any key length");
+    let mut mac =
+        HmacSha256::new_from_slice(user_id.as_bytes()).expect("HMAC accepts any key length");
     mac.update(merchant.trim().to_lowercase().as_bytes());
     let bytes = mac.finalize().into_bytes();
     bytes
@@ -522,14 +507,7 @@ mod tests {
         let assets: Vec<(String, Value)> = vec![];
         let mut inp = input("food", "2026-04-01", "2026-05-01");
         inp.merchant_substring = Some("starbucks".into());
-        let out = filter_and_sanitise(
-            &entries,
-            &postings,
-            &accounts,
-            &assets,
-            &inp,
-            "user_1",
-        );
+        let out = filter_and_sanitise(&entries, &postings, &accounts, &assets, &inp, "user_1");
         assert_eq!(out.transactions.len(), 1);
         assert_eq!(out.transactions[0]["id"], "e1");
     }
@@ -553,14 +531,7 @@ mod tests {
         let assets: Vec<(String, Value)> = vec![];
         let mut inp = input("food", "2026-04-01", "2026-05-01");
         inp.limit = 10;
-        let out = filter_and_sanitise(
-            &entries,
-            &postings,
-            &accounts,
-            &assets,
-            &inp,
-            "user_1",
-        );
+        let out = filter_and_sanitise(&entries, &postings, &accounts, &assets, &inp, "user_1");
         assert_eq!(out.transactions.len(), 10);
         assert_eq!(out.summary["count"], 30);
         assert_eq!(out.summary["returned"], 10);

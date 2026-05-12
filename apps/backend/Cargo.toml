@@ -45,6 +45,9 @@ wasm-bindgen-futures = "0.4"
 # `TimeoutFuture` so we can `select` it against work futures.
 gloo-timers = { version = "0.3", features = ["futures"] }
 
+[dev-dependencies]
+futures-executor = "0.3"
+
 [profile.release]
 opt-level = "s"
 lto = true

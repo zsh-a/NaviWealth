@@ -26,9 +26,8 @@ use worker::{D1Database, D1Type};
 use crate::error::AppError;
 
 use super::freshness::Freshness;
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "monthly_spend_by_category";
 const SCHEMA_VERSION: u32 = 1;
@@ -50,9 +49,7 @@ impl Projection for MonthlySpendByCategory {
     async fn refresh(&self, db: &D1Database, user_id: &str) -> Result<Freshness, AppError> {
         // 1. 抓 watermark on entry — 并发的新 op 会让下次 ensure_fresh 触发
         //    再次刷新，正确性优先。
-        let watermark = latest_op_log_hlc(db, user_id)
-            .await?
-            .unwrap_or_default();
+        let watermark = latest_op_log_hlc(db, user_id).await?.unwrap_or_default();
 
         // 2. 读取依赖的 sync 表。
         let assets = load_payloads(db, user_id, "assets").await?;
@@ -69,10 +66,12 @@ impl Projection for MonthlySpendByCategory {
             db,
             user_id,
             &buckets,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -205,13 +204,15 @@ pub(crate) fn aggregate(
 
     let mut out: Vec<Bucket> = buckets
         .into_iter()
-        .map(|((year_month, category, currency), (total_minor, count))| Bucket {
-            year_month,
-            category,
-            currency,
-            total_minor: total_minor as i64,
-            txn_count: count,
-        })
+        .map(
+            |((year_month, category, currency), (total_minor, count))| Bucket {
+                year_month,
+                category,
+                currency,
+                total_minor: total_minor as i64,
+                txn_count: count,
+            },
+        )
         .collect();
     out.sort_by(|a, b| {
         a.year_month
@@ -251,10 +252,7 @@ async fn load_payloads(
 ) -> Result<Vec<(String, Value)>, AppError> {
     // SQL 注入防护: table 是常量字符串集合（'assets' / 'journal_entries' /
     // 'postings'），调用方负责。这里不接受任意输入。
-    debug_assert!(matches!(
-        table,
-        "assets" | "journal_entries" | "postings"
-    ));
+    debug_assert!(matches!(table, "assets" | "journal_entries" | "postings"));
     let sql = format!(
         "SELECT id, payload FROM {table}
          WHERE user_id = ?1 AND deleted_at IS NULL"
@@ -279,15 +277,11 @@ async fn load_payloads(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_buckets(
     db: &D1Database,
     user_id: &str,
     buckets: &[Bucket],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
     // 先 DELETE 用户所有行（保证淘汰已没的桶），再批量 INSERT。
     db.prepare("DELETE FROM read_model_monthly_spend_by_category WHERE user_id = ?1")
@@ -320,10 +314,10 @@ async fn write_buckets(
                 &D1Type::Text(&b.currency),
                 &D1Type::Text(&total_str),
                 &D1Type::Integer(b.txn_count as i32),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })
@@ -363,10 +357,7 @@ mod tests {
     use serde_json::json;
 
     fn entry(id: &str, date: &str, category: &str) -> (String, Value) {
-        (
-            id.into(),
-            json!({ "date": date, "category": category }),
-        )
+        (id.into(), json!({ "date": date, "category": category }))
     }
 
     fn posting(entry_id: &str, unit: &str, units: f64) -> (String, Value) {
@@ -438,10 +429,7 @@ mod tests {
             entry("e_us", "2026-04-15T10:00:00Z", "food"),
             entry("e_cn", "2026-04-16T10:00:00Z", "food"),
         ];
-        let postings = vec![
-            posting("e_us", "USD", 10.0),
-            posting("e_cn", "CNY", 70.0),
-        ];
+        let postings = vec![posting("e_us", "USD", 10.0), posting("e_cn", "CNY", 70.0)];
         let buckets = aggregate(&entries, &postings, &assets(&[]));
         assert_eq!(buckets.len(), 2);
         let by_curr: HashMap<&str, &Bucket> =
@@ -456,10 +444,7 @@ mod tests {
             entry("e_apr", "2026-04-15T10:00:00Z", "food"),
             entry("e_may", "2026-05-15T10:00:00Z", "food"),
         ];
-        let postings = vec![
-            posting("e_apr", "USD", 10.0),
-            posting("e_may", "USD", 20.0),
-        ];
+        let postings = vec![posting("e_apr", "USD", 10.0), posting("e_may", "USD", 20.0)];
         let buckets = aggregate(&entries, &postings, &assets(&[]));
         assert_eq!(buckets.len(), 2);
         // 排序: year_month 升序

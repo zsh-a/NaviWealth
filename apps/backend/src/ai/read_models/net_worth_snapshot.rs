@@ -26,9 +26,8 @@ use worker::{D1Database, D1Type};
 use crate::error::AppError;
 
 use super::freshness::Freshness;
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "net_worth_snapshot";
 const SCHEMA_VERSION: u32 = 1;
@@ -48,9 +47,7 @@ impl Projection for NetWorthSnapshot {
     }
 
     async fn refresh(&self, db: &D1Database, user_id: &str) -> Result<Freshness, AppError> {
-        let watermark = latest_op_log_hlc(db, user_id)
-            .await?
-            .unwrap_or_default();
+        let watermark = latest_op_log_hlc(db, user_id).await?.unwrap_or_default();
         let assets = load_payloads(db, user_id, "assets").await?;
         let asset_ids: HashSet<String> = assets.into_iter().map(|(id, _)| id).collect();
         let entries = load_payloads(db, user_id, "journal_entries").await?;
@@ -63,10 +60,12 @@ impl Projection for NetWorthSnapshot {
             db,
             user_id,
             &rows,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -163,10 +162,7 @@ pub(crate) fn aggregate(
         let Some(d) = payload_str(p, "date").and_then(parse_iso) else {
             continue;
         };
-        entry_ym.insert(
-            id.as_str(),
-            format!("{:04}-{:02}", d.year(), d.month()),
-        );
+        entry_ym.insert(id.as_str(), format!("{:04}-{:02}", d.year(), d.month()));
     }
 
     // 2. (year_month, currency) → net_flow_minor
@@ -213,7 +209,11 @@ pub(crate) fn aggregate(
             });
         }
     }
-    out.sort_by(|a, b| a.year_month.cmp(&b.year_month).then_with(|| a.currency.cmp(&b.currency)));
+    out.sort_by(|a, b| {
+        a.year_month
+            .cmp(&b.year_month)
+            .then_with(|| a.currency.cmp(&b.currency))
+    });
     out
 }
 
@@ -238,10 +238,7 @@ async fn load_payloads(
     user_id: &str,
     table: &str,
 ) -> Result<Vec<(String, Value)>, AppError> {
-    debug_assert!(matches!(
-        table,
-        "assets" | "journal_entries" | "postings"
-    ));
+    debug_assert!(matches!(table, "assets" | "journal_entries" | "postings"));
     let sql = format!(
         "SELECT id, payload FROM {table}
          WHERE user_id = ?1 AND deleted_at IS NULL"
@@ -265,15 +262,11 @@ async fn load_payloads(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_rows(
     db: &D1Database,
     user_id: &str,
     rows: &[NetWorthRow],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
     db.prepare("DELETE FROM read_model_net_worth_snapshot WHERE user_id = ?1")
         .bind_refs([&D1Type::Text(user_id)])
@@ -302,10 +295,10 @@ async fn write_rows(
                 &D1Type::Text(&r.currency),
                 &D1Type::Text(&cum_str),
                 &D1Type::Text(&flow_str),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })
@@ -334,7 +327,9 @@ fn parse_iso(s: &str) -> Option<chrono::DateTime<chrono::Utc>> {
             chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                 .ok()
                 .and_then(|d| d.and_hms_opt(0, 0, 0))
-                .map(|dt| chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(dt, chrono::Utc))
+                .map(|dt| {
+                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(dt, chrono::Utc)
+                })
         })
 }
 
@@ -407,17 +402,26 @@ mod tests {
             .iter()
             .map(|r| ((r.year_month.clone(), r.currency.clone()), r))
             .collect();
-        assert_eq!(by_key[&("2026-01".into(), "USD".into())].cumulative_minor, 10_000);
-        assert_eq!(by_key[&("2026-01".into(), "CNY".into())].cumulative_minor, 70_000);
-        assert_eq!(by_key[&("2026-02".into(), "CNY".into())].cumulative_minor, 50_000);
+        assert_eq!(
+            by_key[&("2026-01".into(), "USD".into())].cumulative_minor,
+            10_000
+        );
+        assert_eq!(
+            by_key[&("2026-01".into(), "CNY".into())].cumulative_minor,
+            70_000
+        );
+        assert_eq!(
+            by_key[&("2026-02".into(), "CNY".into())].cumulative_minor,
+            50_000
+        );
     }
 
     #[test]
     fn ignores_asset_legs() {
         let entries = vec![entry("buy", "2026-04-15T10:00:00Z")];
         let postings = vec![
-            posting("buy", "asset_aapl", 10.0),  // asset leg, ignored
-            posting("buy", "USD", -1500.0),       // cash debit
+            posting("buy", "asset_aapl", 10.0), // asset leg, ignored
+            posting("buy", "USD", -1500.0),     // cash debit
         ];
         let rows = aggregate(&entries, &postings, &assets(&["asset_aapl"]));
         assert_eq!(rows.len(), 1);

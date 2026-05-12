@@ -13,8 +13,8 @@ pub(crate) const DESCRIPTION: &str =
     "提议一笔负债还款（房贷、信用卡、消费贷等）。返回 plan，前端确认后走还款流程。\
                           liability 通过 liability_id 或 liability_name 指认；金额 > 0。";
 
-pub fn schema() -> crate::ai::anthropic::ToolSchema {
-    crate::ai::anthropic::ToolSchema {
+pub fn schema() -> crate::ai::adapters::anthropic::wire::ToolSchema {
+    crate::ai::adapters::anthropic::wire::ToolSchema {
         name: "propose_liability_payment".into(),
         description: DESCRIPTION.into(),
         input_schema: input_schema(),

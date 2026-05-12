@@ -23,9 +23,8 @@ use worker::{D1Database, D1Type};
 use crate::error::AppError;
 
 use super::freshness::Freshness;
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "net_worth_daily";
 const SCHEMA_VERSION: u32 = 1;
@@ -58,10 +57,12 @@ impl Projection for NetWorthDaily {
             db,
             user_id,
             &rows,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -235,10 +236,7 @@ async fn load_payloads(
     user_id: &str,
     table: &str,
 ) -> Result<Vec<(String, Value)>, AppError> {
-    debug_assert!(matches!(
-        table,
-        "assets" | "journal_entries" | "postings"
-    ));
+    debug_assert!(matches!(table, "assets" | "journal_entries" | "postings"));
     let sql = format!(
         "SELECT id, payload FROM {table}
          WHERE user_id = ?1 AND deleted_at IS NULL"
@@ -262,15 +260,11 @@ async fn load_payloads(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_rows(
     db: &D1Database,
     user_id: &str,
     rows: &[NetWorthDailyRow],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
     db.prepare("DELETE FROM read_model_net_worth_daily WHERE user_id = ?1")
         .bind_refs([&D1Type::Text(user_id)])
@@ -298,10 +292,10 @@ async fn write_rows(
                 &D1Type::Text(&r.currency),
                 &D1Type::Text(&cum_str),
                 &D1Type::Text(&flow_str),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })
@@ -331,10 +325,7 @@ fn parse_iso(s: &str) -> Option<chrono::DateTime<chrono::Utc>> {
                 .ok()
                 .and_then(|d| d.and_hms_opt(0, 0, 0))
                 .map(|dt| {
-                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
-                        dt,
-                        chrono::Utc,
-                    )
+                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(dt, chrono::Utc)
                 })
         })
 }
@@ -421,9 +412,18 @@ mod tests {
             .iter()
             .map(|r| ((r.yyyy_mm_dd.clone(), r.currency.clone()), r))
             .collect();
-        assert_eq!(by_key[&("2026-05-01".into(), "USD".into())].cumulative_minor, 10_000);
-        assert_eq!(by_key[&("2026-05-01".into(), "CNY".into())].cumulative_minor, 70_000);
-        assert_eq!(by_key[&("2026-05-03".into(), "CNY".into())].cumulative_minor, 50_000);
+        assert_eq!(
+            by_key[&("2026-05-01".into(), "USD".into())].cumulative_minor,
+            10_000
+        );
+        assert_eq!(
+            by_key[&("2026-05-01".into(), "CNY".into())].cumulative_minor,
+            70_000
+        );
+        assert_eq!(
+            by_key[&("2026-05-03".into(), "CNY".into())].cumulative_minor,
+            50_000
+        );
     }
 
     #[test]

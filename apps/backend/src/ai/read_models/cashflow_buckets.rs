@@ -22,9 +22,8 @@ use worker::{D1Database, D1Type};
 use crate::error::AppError;
 
 use super::freshness::Freshness;
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "cashflow_buckets";
 const SCHEMA_VERSION: u32 = 1;
@@ -57,10 +56,12 @@ impl Projection for CashflowBuckets {
             db,
             user_id,
             &rows,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -198,16 +199,16 @@ pub(crate) fn aggregate(
 
     let mut out: Vec<CashflowRow> = acc
         .into_iter()
-        .map(|((year_month, currency), [inflow, outflow, in_c, out_c])| {
-            CashflowRow {
+        .map(
+            |((year_month, currency), [inflow, outflow, in_c, out_c])| CashflowRow {
                 year_month,
                 currency,
                 inflow_minor: inflow as i64,
                 outflow_minor: outflow as i64,
                 inflow_count: in_c as u32,
                 outflow_count: out_c as u32,
-            }
-        })
+            },
+        )
         .collect();
     out.sort_by(|a, b| {
         a.year_month
@@ -240,10 +241,7 @@ async fn load_payloads(
     user_id: &str,
     table: &str,
 ) -> Result<Vec<(String, Value)>, AppError> {
-    debug_assert!(matches!(
-        table,
-        "assets" | "journal_entries" | "postings"
-    ));
+    debug_assert!(matches!(table, "assets" | "journal_entries" | "postings"));
     let sql = format!(
         "SELECT id, payload FROM {table}
          WHERE user_id = ?1 AND deleted_at IS NULL"
@@ -267,15 +265,11 @@ async fn load_payloads(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_rows(
     db: &D1Database,
     user_id: &str,
     rows: &[CashflowRow],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
     db.prepare("DELETE FROM read_model_cashflow_buckets WHERE user_id = ?1")
         .bind_refs([&D1Type::Text(user_id)])
@@ -307,10 +301,10 @@ async fn write_rows(
                 &D1Type::Text(&out_str),
                 &D1Type::Integer(r.inflow_count as i32),
                 &D1Type::Integer(r.outflow_count as i32),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })
@@ -340,10 +334,7 @@ fn parse_iso(s: &str) -> Option<chrono::DateTime<chrono::Utc>> {
                 .ok()
                 .and_then(|d| d.and_hms_opt(0, 0, 0))
                 .map(|dt| {
-                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
-                        dt,
-                        chrono::Utc,
-                    )
+                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(dt, chrono::Utc)
                 })
         })
 }

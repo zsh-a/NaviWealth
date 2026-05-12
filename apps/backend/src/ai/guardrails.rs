@@ -17,7 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use worker::{D1Database, D1Type};
 
-use crate::ai::anthropic::ChatMessage;
+use crate::ai::adapters::anthropic::wire::ChatMessage;
 use crate::error::AppError;
 
 /// System prompt prepended to every conversation. The model **must** be told,

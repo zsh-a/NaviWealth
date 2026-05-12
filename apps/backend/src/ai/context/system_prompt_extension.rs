@@ -10,8 +10,8 @@
 //! (newest first when the caller orders them that way).
 
 use super::context_pack::{
-    BaseContext, CashflowTrend, ContextPack, FireGoalSummary, RecentSignal,
-    RiskPreference, RouteContext, SignalSeverity, TaskContext,
+    BaseContext, CashflowTrend, ContextPack, FireGoalSummary, RecentSignal, RiskPreference,
+    RouteContext, SignalSeverity, TaskContext,
 };
 
 const MAX_SIGNALS: usize = 6;
@@ -29,10 +29,7 @@ pub fn format_context_pack(pack: &ContextPack) -> String {
 }
 
 fn write_route(out: &mut String, r: &RouteContext) {
-    out.push_str(&format!(
-        "- 当前路由: area={} path={}\n",
-        r.area, r.path
-    ));
+    out.push_str(&format!("- 当前路由: area={} path={}\n", r.area, r.path));
 }
 
 fn write_base(out: &mut String, b: &BaseContext) {
@@ -102,9 +99,7 @@ fn write_aggregates_summary(out: &mut String, t: &TaskContext) {
 fn write_freshness_hint(out: &mut String, t: &TaskContext) {
     if let Some(hint) = &t.freshness_hint {
         if !hint.force_refresh_read_models.is_empty() {
-            out.push_str(
-                "\n## 注意: 客户端检测到 read model 落后，已请求强制刷新:\n",
-            );
+            out.push_str("\n## 注意: 客户端检测到 read model 落后，已请求强制刷新:\n");
             for name in &hint.force_refresh_read_models {
                 out.push_str(&format!("- {name}\n"));
             }

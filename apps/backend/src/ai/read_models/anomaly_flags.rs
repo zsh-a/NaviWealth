@@ -147,9 +147,8 @@ pub async fn query_all(
                 _ => &[],
             };
             // SQLite IN with bind: build placeholders by length
-            let placeholders: Vec<String> = (2..2 + allowed.len())
-                .map(|i| format!("?{i}"))
-                .collect();
+            let placeholders: Vec<String> =
+                (2..2 + allowed.len()).map(|i| format!("?{i}")).collect();
             let sql = format!(
                 "SELECT id, payload, category, kind, delta_pct, severity, detected_at
                  FROM read_model_anomaly_flags
@@ -157,8 +156,7 @@ pub async fn query_all(
                  ORDER BY detected_at DESC",
                 placeholders.join(", ")
             );
-            let mut binds: Vec<D1Type> =
-                vec![D1Type::Text(user_id)];
+            let mut binds: Vec<D1Type> = vec![D1Type::Text(user_id)];
             for s in allowed {
                 binds.push(D1Type::Text(s));
             }

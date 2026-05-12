@@ -23,9 +23,8 @@ use crate::error::AppError;
 
 use super::freshness::Freshness;
 use super::holdings_snapshot::{query_all as query_holdings, Holding};
-use super::projection::{
-    latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection,
-};
+use super::projection::{latest_op_log_hlc, now_iso, upsert_freshness_meta, Projection};
+use super::WriteMeta;
 
 const NAME: &str = "asset_allocation_snapshot";
 const SCHEMA_VERSION: u32 = 1;
@@ -56,10 +55,12 @@ impl Projection for AssetAllocationSnapshot {
             db,
             user_id,
             &buckets,
-            &watermark,
-            &refreshed_at,
-            SCHEMA_VERSION,
-            CALCULATION_VERSION,
+            WriteMeta {
+                watermark: &watermark,
+                refreshed_at: &refreshed_at,
+                schema_version: SCHEMA_VERSION,
+                calculation_version: CALCULATION_VERSION,
+            },
         )
         .await?;
 
@@ -166,9 +167,11 @@ pub(crate) fn aggregate(
         })
         .collect();
     out.sort_by(|a, b| {
-        a.currency
-            .cmp(&b.currency)
-            .then_with(|| b.weight.partial_cmp(&a.weight).unwrap_or(std::cmp::Ordering::Equal))
+        a.currency.cmp(&b.currency).then_with(|| {
+            b.weight
+                .partial_cmp(&a.weight)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     });
     out
 }
@@ -196,9 +199,7 @@ async fn load_asset_types(
     user_id: &str,
 ) -> Result<HashMap<String, String>, AppError> {
     let stmt = db
-        .prepare(
-            "SELECT id, payload FROM assets WHERE user_id = ?1 AND deleted_at IS NULL",
-        )
+        .prepare("SELECT id, payload FROM assets WHERE user_id = ?1 AND deleted_at IS NULL")
         .bind_refs([&D1Type::Text(user_id)])
         .map_err(|e| AppError::Internal(format!("bind: {e}")))?;
     let rows: Vec<AssetPayloadRow> = stmt
@@ -218,24 +219,18 @@ async fn load_asset_types(
     Ok(out)
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn write_buckets(
     db: &D1Database,
     user_id: &str,
     buckets: &[AllocationBucket],
-    watermark: &str,
-    refreshed_at: &str,
-    schema_version: u32,
-    calculation_version: u32,
+    meta: WriteMeta<'_>,
 ) -> Result<(), AppError> {
-    db.prepare(
-        "DELETE FROM read_model_asset_allocation_snapshot WHERE user_id = ?1",
-    )
-    .bind_refs([&D1Type::Text(user_id)])
-    .map_err(|e| AppError::Internal(format!("bind del: {e}")))?
-    .run()
-    .await
-    .map_err(|e| AppError::Internal(format!("del: {e}")))?;
+    db.prepare("DELETE FROM read_model_asset_allocation_snapshot WHERE user_id = ?1")
+        .bind_refs([&D1Type::Text(user_id)])
+        .map_err(|e| AppError::Internal(format!("bind del: {e}")))?
+        .run()
+        .await
+        .map_err(|e| AppError::Internal(format!("del: {e}")))?;
 
     if buckets.is_empty() {
         return Ok(());
@@ -261,10 +256,10 @@ async fn write_buckets(
                 &D1Type::Text(&total_str),
                 &D1Type::Integer(b.position_count as i32),
                 &D1Type::Text(&weight_str),
-                &D1Type::Text(watermark),
-                &D1Type::Text(refreshed_at),
-                &D1Type::Integer(schema_version as i32),
-                &D1Type::Integer(calculation_version as i32),
+                &D1Type::Text(meta.watermark),
+                &D1Type::Text(meta.refreshed_at),
+                &D1Type::Integer(meta.schema_version as i32),
+                &D1Type::Integer(meta.calculation_version as i32),
             ])
             .map_err(|e| AppError::Internal(format!("bind ins: {e}")))
         })
