@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -285,6 +286,18 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
+          // Wave 40 — surface AI provenance for assets touched by
+          // `propose_asset_valuation`. Self-gating.
+          if (widget.isEdit && widget.assetId != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AiTouchMark(
+                entityType: 'assets',
+                entityId: widget.assetId!,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           FCard.raw(
             child: Padding(
               padding: const EdgeInsets.all(4),

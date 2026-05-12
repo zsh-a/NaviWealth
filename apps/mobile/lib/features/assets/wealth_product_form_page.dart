@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -311,6 +312,17 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
         padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
+          // Wave 40.1 — AI provenance for `propose_asset_valuation`.
+          if (widget.isEdit && widget.assetId != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AiTouchMark(
+                entityType: 'assets',
+                entityId: widget.assetId!,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           AccountPicker(
             accounts: eligible,
             value: _accountId,
