@@ -1,10 +1,17 @@
-/// Wave 26 — AI Transparency audit page.
+/// AI Transparency surface.
 ///
-/// Lists recent [AiTrace] records (newest first) from `recentAiTracesProvider`.
-/// Tap a row to inspect: intent, routing reason, runtime, budget tier,
-/// tool calls (with their freshness), disclosures, total duration, stale
-/// read models. Trace storage is local-only — nothing here leaves the
-/// device.
+/// Two pages:
+///   - [AiTransparencyPage] — newest-first list of recent traces, one
+///     compact row per turn. The row carries the chips that matter
+///     most for quick scanning (backend, duration, terminal reason,
+///     tool count, stale count).
+///   - [AiTransparencyDetailPage] — vertical **timeline** of the
+///     selected trace's call chain. Replaces the old flat-section
+///     layout: see `ai_trace_timeline.dart` for the event model.
+///
+/// The list page intentionally stays thin so the detail page does the
+/// heavy lifting. Adding a new event type to a turn requires zero
+/// changes here (timeline builder takes care of it).
 library;
 
 import 'package:flutter/material.dart';
@@ -14,7 +21,11 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/providers.dart';
-import '../../../design_system/design_system.dart';
+import 'ai_trace_timeline.dart';
+
+// ===========================================================================
+// List page.
+// ===========================================================================
 
 class AiTransparencyPage extends ConsumerWidget {
   const AiTransparencyPage({super.key});
@@ -69,11 +80,13 @@ class _TraceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final ts = Theme.of(context).textTheme;
+    final title = _displayTitle(trace);
+    final source = _displaySource(trace);
+    final isError = trace.terminalReason != TerminalReason.done;
     return ListTile(
+      leading: _StatusDot(error: isError, color: isError ? cs.error : cs.primary),
       title: Text(
-        (trace.intent.label?.isEmpty ?? true)
-            ? '(unnamed turn)'
-            : trace.intent.label!,
+        title,
         style: ts.bodyLarge,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -84,22 +97,21 @@ class _TraceRow extends StatelessWidget {
           spacing: 6,
           runSpacing: 6,
           children: [
-            _Chip(label: trace.backend.wire, tone: cs.primary),
+            if (source != null) _Chip(label: source, tone: cs.primary),
             _Chip(label: '${trace.totalDurationMs} ms'),
-            _Chip(label: trace.routingReason),
-            _Chip(
-              label: trace.terminalReason.wire,
-              tone: trace.terminalReason == TerminalReason.done
-                  ? cs.outline
-                  : cs.error,
-            ),
+            _Chip(label: trace.backend.wire),
             if (trace.toolCalls.isNotEmpty)
-              _Chip(label: '${trace.toolCalls.length} tools'),
+              _Chip(
+                label: '🔧 ${trace.toolCalls.length}',
+                tone: cs.outline,
+              ),
             if (trace.staleReadModels > 0)
               _Chip(
-                label: 'stale ×${trace.staleReadModels}',
+                label: '过期 ×${trace.staleReadModels}',
                 tone: cs.tertiary,
               ),
+            if (isError)
+              _Chip(label: trace.terminalReason.wire, tone: cs.error),
           ],
         ),
       ),
@@ -110,6 +122,51 @@ class _TraceRow extends StatelessWidget {
       onTap: () => context.goNamed(
         AppRouteNames.aiTransparencyDetail,
         pathParameters: <String, String>{'requestId': trace.requestId},
+      ),
+    );
+  }
+
+  /// Prefer the invocation intent (Wave 33) → falls back to the
+  /// intent label → finally a generic placeholder. The invocation
+  /// intent is more user-actionable ("explain_change" tells you *what*
+  /// the turn was for, while `label` is often the chat tab's
+  /// auto-generated title).
+  static String _displayTitle(AiTrace trace) {
+    final intent = trace.invocation?['intent']?.toString();
+    if (intent != null && intent.isNotEmpty) return intent;
+    final label = trace.intent.label;
+    if (label != null && label.isNotEmpty) return label;
+    return '(unnamed turn)';
+  }
+
+  /// "expense_detail · exp_123" — present only when the trace was
+  /// triggered via an `AiIntentInvocation`. Manual chat-tab turns omit
+  /// this chip entirely.
+  static String? _displaySource(AiTrace trace) {
+    final source = trace.invocation?['source']?.toString();
+    if (source == null || source.isEmpty) return null;
+    final objType = trace.invocation?['object_type']?.toString();
+    return objType != null && objType.isNotEmpty ? '$source · $objType' : source;
+  }
+}
+
+class _StatusDot extends StatelessWidget {
+  const _StatusDot({required this.error, required this.color});
+  final bool error;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 24,
+      child: Container(
+        width: 8,
+        height: 8,
+        margin: const EdgeInsets.only(top: 8),
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
@@ -138,6 +195,10 @@ class _Chip extends StatelessWidget {
   }
 }
 
+// ===========================================================================
+// Detail page (timeline).
+// ===========================================================================
+
 class AiTransparencyDetailPage extends ConsumerWidget {
   const AiTransparencyDetailPage({super.key, required this.requestId});
   final String requestId;
@@ -146,13 +207,13 @@ class AiTransparencyDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final traceAsync = ref.watch(aiTraceByIdProvider(requestId));
     return Scaffold(
-      appBar: AppBar(title: const Text('调用详情')),
+      appBar: AppBar(title: const Text('调用链路')),
       body: traceAsync.when(
         data: (trace) {
           if (trace == null) {
             return const Center(child: Text('未找到该次调用记录'));
           }
-          return _TraceDetail(trace: trace);
+          return _TraceTimelineBody(trace: trace);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
@@ -161,227 +222,68 @@ class AiTransparencyDetailPage extends ConsumerWidget {
   }
 }
 
-class _TraceDetail extends StatelessWidget {
-  const _TraceDetail({required this.trace});
+class _TraceTimelineBody extends StatelessWidget {
+  const _TraceTimelineBody({required this.trace});
   final AiTrace trace;
 
   @override
   Widget build(BuildContext context) {
+    final events = buildTimeline(trace);
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _Section(
-          title: '基本',
-          rows: <_KvRow>[
-            _KvRow('Request ID', trace.requestId),
-            _KvRow('开始时间', trace.startedAtIso),
-            _KvRow('总耗时', '${trace.totalDurationMs} ms'),
-            _KvRow('Backend', trace.backend.wire),
-            _KvRow('Budget tier', trace.budgetTier.wire),
-            _KvRow('路由原因', trace.routingReason),
-            _KvRow(
-              '原始 ledger',
-              trace.usedRawLedger ? '触达' : '未触达',
-            ),
-            _KvRow('结束原因', trace.terminalReason.wire),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _Section(
-          title: 'Intent',
-          rows: <_KvRow>[
-            _KvRow('capability', trace.intent.capability.wire),
-            _KvRow('risk', trace.intent.risk.wire),
-            _KvRow('label', trace.intent.label ?? ''),
-          ],
-        ),
-        if (trace.invocation != null) ...[
-          const SizedBox(height: 16),
-          _Section(
-            title: '触发来源 (Wave 33)',
-            rows: <_KvRow>[
-              _KvRow(
-                'source',
-                trace.invocation!['source']?.toString() ?? '',
-              ),
-              _KvRow(
-                'intent',
-                trace.invocation!['intent']?.toString() ?? '',
-              ),
-              if (trace.invocation!['object_type'] != null)
-                _KvRow(
-                  'object',
-                  '${trace.invocation!['object_type']} · '
-                      '${trace.invocation!['object_id'] ?? ''}',
-                ),
-              if (trace.invocation!['context_keys'] is List)
-                _KvRow(
-                  'context',
-                  (trace.invocation!['context_keys'] as List).join(', '),
-                ),
-            ],
-          ),
-        ],
-        if (trace.toolCalls.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _SectionHeader(title: '工具调用 (${trace.toolCalls.length})'),
-          for (final t in trace.toolCalls) _ToolCallTile(call: t),
-        ],
-        if (trace.staleReadModels > 0) ...[
-          const SizedBox(height: 16),
-          _SectionHeader(
-            title: 'Stale read models (${trace.staleReadModels})',
-          ),
-          SoftCard(
-            padding: const EdgeInsets.all(12),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final name in trace.staleReadModelNames)
-                  _Chip(label: name),
-              ],
-            ),
-          ),
-        ],
-        if (trace.disclosures.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _SectionHeader(
-            title: 'Disclosures (${trace.disclosures.length})',
-          ),
-          for (final d in trace.disclosures) _DisclosureTile(d: d),
-        ],
+        _HeaderSummary(trace: trace, eventCount: events.length),
+        const SizedBox(height: 20),
+        AiTraceTimeline(events: events),
       ],
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 4, bottom: 8),
-    child: Text(
-      title,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-    ),
-  );
-}
-
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.rows});
-  final String title;
-  final List<_KvRow> rows;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _SectionHeader(title: title),
-      SoftCard(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          children: [
-            for (final r in rows) _kvRow(context, r),
-          ],
-        ),
-      ),
-    ],
-  );
-
-  Widget _kvRow(BuildContext context, _KvRow r) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 100,
-          child: Text(
-            r.k,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            r.v.isEmpty ? '—' : r.v,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _KvRow {
-  const _KvRow(this.k, this.v);
-  final String k;
-  final String v;
-}
-
-class _ToolCallTile extends StatelessWidget {
-  const _ToolCallTile({required this.call});
-  final TraceToolCall call;
+/// Compact summary above the timeline. Mirrors the list-row chips
+/// plus the request id (so users reporting bugs can quote it).
+class _HeaderSummary extends StatelessWidget {
+  const _HeaderSummary({required this.trace, required this.eventCount});
+  final AiTrace trace;
+  final int eventCount;
 
   @override
   Widget build(BuildContext context) {
-    final ts = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
-    return SoftCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(call.name, style: ts.bodyLarge)),
-              _Chip(
-                label: call.ok ? 'ok' : 'error',
-                tone: call.ok ? cs.primary : cs.error,
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              '${call.durationMs} ms',
-              style: ts.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DisclosureTile extends StatelessWidget {
-  const _DisclosureTile({required this.d});
-  final DisclosureSummary d;
-
-  @override
-  Widget build(BuildContext context) => SoftCard(
-    padding: const EdgeInsets.all(12),
-    child: Column(
+    final ts = Theme.of(context).textTheme;
+    final intent = trace.invocation?['intent']?.toString();
+    final title = intent ?? trace.intent.label ?? '(unnamed turn)';
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(d.purpose.wire, style: Theme.of(context).textTheme.bodyLarge),
+        Text(
+          title,
+          style: ts.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 4),
         Text(
-          'consent: ${d.consent.wire} · rows: ${d.rowCount} · fields: ${d.fieldsCount}',
-          style: Theme.of(context).textTheme.labelSmall,
+          '$eventCount 个事件 · 始于 ${_longTimestamp(trace.startedAtIso)}',
+          style: ts.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+        ),
+        const SizedBox(height: 8),
+        SelectableText(
+          'request_id ${trace.requestId}',
+          style: ts.labelSmall?.copyWith(
+            color: cs.onSurfaceVariant,
+            fontFamily: 'monospace',
+          ),
         ),
       ],
-    ),
-  );
+    );
+  }
 }
 
 String _shortTimestamp(String iso) {
   if (iso.length < 16) return iso;
-  // YYYY-MM-DDTHH:MM
   return iso.substring(5, 16).replaceFirst('T', ' ');
+}
+
+String _longTimestamp(String iso) {
+  if (iso.length < 19) return iso;
+  return iso.substring(0, 19).replaceFirst('T', ' ');
 }
