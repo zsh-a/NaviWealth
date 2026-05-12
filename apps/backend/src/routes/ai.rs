@@ -306,6 +306,36 @@ async fn chat_inner(mut req: Request, ctx: RouteContext<()>) -> Result<Response,
                     auth.user_id
                 );
             }
+
+            // kind == 'subscription_change' (Wave 19)
+            let subs: Vec<
+                crate::ai::read_models::subscription_changes::SubscriptionChangeUpload<'_>,
+            > = pack
+                .task
+                .analytical_uploads
+                .iter()
+                .filter(|u| u.kind == "subscription_change")
+                .map(|u| {
+                    crate::ai::read_models::subscription_changes::SubscriptionChangeUpload {
+                        id: &u.id,
+                        payload: &u.payload,
+                        source_device_id: None,
+                    }
+                })
+                .collect();
+            if !subs.is_empty() {
+                let n = crate::ai::read_models::subscription_changes::ingest(
+                    &db_for_ingest,
+                    &auth.user_id,
+                    device_hlc,
+                    &subs,
+                )
+                .await?;
+                worker::console_log!(
+                    "analytical_uploads: ingested {n} subscription_changes for user={}",
+                    auth.user_id
+                );
+            }
         }
     }
 

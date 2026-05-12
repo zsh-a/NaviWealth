@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,8 @@ class AppDatabase extends _$AppDatabase {
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
       await _createDomainEventLog(this);
+      await _createAiTraceTable(this);
+      await _createAiUndoStackTable(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -112,6 +114,15 @@ class AppDatabase extends _$AppDatabase {
         // rewrite. The category column requires no rewrite for system
         // accounts (income/expense/equity) and for user accounts whose
         // legacy value (asset/liability) maps 1:1 to AccountSide.
+      }
+      // v4 → v5: persist AI transparency traces + ai_chat undo stack.
+      // Both surfaces previously lived only in process memory; survival
+      // across restarts is needed for: (a) the AI transparency audit
+      // page (recentAiTraces), (b) the undo stack so toolings the user
+      // confirmed minutes ago still rollback after a reload.
+      if (from < 5) {
+        await _createAiTraceTable(this);
+        await _createAiUndoStackTable(this);
       }
     },
     beforeOpen: (details) async {
@@ -276,4 +287,47 @@ Future<void> _createSecuritiesCatalogIndexes(AppDatabase db) async {
   for (final stmt in _securitiesCatalogIndexStmts) {
     await db.customStatement(stmt);
   }
+}
+
+// ---------------------------------------------------------------------------
+// AI surfaces (Waves 23 / 24) — local-only audit + undo stack.
+// Both tables stay device-local (never sync). Per-user partitioning is the
+// caller's responsibility; we store the owner alongside each row so a
+// multi-user install can scope queries.
+// ---------------------------------------------------------------------------
+
+Future<void> _createAiTraceTable(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ai_traces ('
+    '  request_id     TEXT PRIMARY KEY,'
+    '  owner_user_id  TEXT NOT NULL,'
+    '  started_at_iso TEXT NOT NULL,'
+    '  payload_json   TEXT NOT NULL'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_traces_started_at '
+    'ON ai_traces(started_at_iso DESC)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_traces_owner '
+    'ON ai_traces(owner_user_id, started_at_iso DESC)',
+  );
+}
+
+Future<void> _createAiUndoStackTable(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ai_undo_stack ('
+    '  token          TEXT PRIMARY KEY,'
+    '  owner_user_id  TEXT NOT NULL,'
+    '  created_at_iso TEXT NOT NULL,'
+    '  expires_at_iso TEXT,'
+    '  kind           TEXT NOT NULL,'
+    '  payload_json   TEXT NOT NULL'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_undo_owner '
+    'ON ai_undo_stack(owner_user_id, created_at_iso DESC)',
+  );
 }
