@@ -119,18 +119,22 @@ final _cashPostingHistoryProvider =
       // Collect account IDs from cash assets' metadata. The link between a
       // cash asset and its postings is through CashMetadata.accountId stored
       // in assets.metadata_json — not through assets.id.
-      final cashAccountIds = <String>{};
+      final cashAccountCurrencies = <String, String>{};
       final assets = await ref.watch(manualAssetsStreamProvider.future);
       for (final a in assets) {
         if (a.type == AssetType.cash) {
           final meta = ManualAssetMetadata.decode(a.metadataJson);
-          if (meta?.accountId case final id?) cashAccountIds.add(id);
+          if (meta?.accountId case final id?) {
+            cashAccountCurrencies[id] = a.currency;
+          }
         }
       }
+      final cashAccountIds = cashAccountCurrencies.keys.toSet();
       if (cashAccountIds.isEmpty) {
         yield const {};
         return;
       }
+      final cashCurrencies = cashAccountCurrencies.values.toSet();
 
       final db = await ref.watch(appDatabaseProvider.future);
       final je = db.journalEntries;
@@ -140,6 +144,7 @@ final _cashPostingHistoryProvider =
             ..where(p.deletedAt.isNull())
             ..where(je.deletedAt.isNull())
             ..where(p.accountId.isIn(cashAccountIds))
+            ..where(p.unit.isIn(cashCurrencies))
             ..addColumns([je.date])
             ..orderBy([
               OrderingTerm.asc(p.accountId),
@@ -149,6 +154,9 @@ final _cashPostingHistoryProvider =
         final raw = <String, List<(DateTime, Decimal)>>{};
         for (final row in rows) {
           final posting = row.readTable(p);
+          if (posting.unit != cashAccountCurrencies[posting.accountId]) {
+            continue;
+          }
           final date = row.read(je.date)!;
           raw.putIfAbsent(posting.accountId, () => []).add((
             date,

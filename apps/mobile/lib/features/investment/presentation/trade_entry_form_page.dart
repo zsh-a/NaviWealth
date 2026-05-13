@@ -180,7 +180,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       final cashOut =
           quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
       final cashAccountId = _cashAccountId ?? accountId;
-      final currentBalance = await jeRepo.balanceByAccount(cashAccountId);
+      final currentBalance = await jeRepo.balanceByAccountUnit(
+        cashAccountId,
+        currency,
+      );
       if (!mounted) return;
       final resulting = currentBalance - cashOut;
       if (resulting < Decimal.zero) {

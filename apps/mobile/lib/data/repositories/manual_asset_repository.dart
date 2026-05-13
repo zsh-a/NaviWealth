@@ -93,6 +93,10 @@ class ManualAssetRepository {
     if (assetRow == null) return null;
     final meta = ManualAssetMetadata.decode(assetRow.metadataJson);
     if (meta == null) return null;
+    final jeRepo = _journalEntryRepo;
+    if (jeRepo != null) {
+      return jeRepo.balanceByAccountUnit(meta.accountId, assetRow.currency);
+    }
     final rows =
         await (_db.select(_db.postings).join([
                 innerJoin(
@@ -101,6 +105,7 @@ class ManualAssetRepository {
                 ),
               ])
               ..where(_db.postings.accountId.equals(meta.accountId))
+              ..where(_db.postings.unit.equals(assetRow.currency))
               ..where(_db.postings.deletedAt.isNull())
               ..where(_db.journalEntries.deletedAt.isNull()))
             .get();
