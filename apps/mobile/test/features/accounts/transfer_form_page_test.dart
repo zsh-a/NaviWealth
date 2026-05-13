@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -16,6 +17,7 @@ import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/features/accounts/transfer_form_page.dart';
+import 'package:naviwealth/features/shared/account_tree_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -141,6 +143,17 @@ Future<void> _enlarge(WidgetTester tester) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
 }
 
+Future<void> _selectAccount(
+  WidgetTester tester, {
+  required int pickerIndex,
+  required String accountName,
+}) async {
+  await tester.tap(find.byType(AccountTreePicker).at(pickerIndex));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(accountName).last);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   late _Harness h;
 
@@ -160,16 +173,8 @@ void main() {
       _wrap(
         h,
         accounts: [
-          _account(
-            id: 'a-bank-a',
-            name: 'Bank A',
-            category: AccountSide.asset,
-          ),
-          _account(
-            id: 'a-bank-b',
-            name: 'Bank B',
-            category: AccountSide.asset,
-          ),
+          _account(id: 'a-bank-a', name: 'Bank A', category: AccountSide.asset),
+          _account(id: 'a-bank-b', name: 'Bank B', category: AccountSide.asset),
         ],
       ),
     );
@@ -193,35 +198,20 @@ void main() {
       _wrap(
         h,
         accounts: [
-          _account(
-            id: 'a-bank-a',
-            name: 'Bank A',
-            category: AccountSide.asset,
-          ),
-          _account(
-            id: 'a-bank-b',
-            name: 'Bank B',
-            category: AccountSide.asset,
-          ),
+          _account(id: 'a-bank-a', name: 'Bank A', category: AccountSide.asset),
+          _account(id: 'a-bank-b', name: 'Bank B', category: AccountSide.asset),
         ],
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('From account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('• Bank A').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('To account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('• Bank B').last);
-    await tester.pumpAndSettle();
+    await _selectAccount(tester, pickerIndex: 0, accountName: 'Bank A');
+    await _selectAccount(tester, pickerIndex: 1, accountName: 'Bank B');
 
     // The amount field labels include the from-account currency once
     // the from picker is filled.
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Amount (CNY)'),
+      find.widgetWithText(FTextFormField, 'Amount (CNY)'),
       '1000',
     );
     await tester.pumpAndSettle();
@@ -257,18 +247,11 @@ void main() {
     // Both pickers + amount filled, but with the same account on both
     // sides — preview should not appear and submit should stay
     // disabled (the form's `canSubmit` rule covers it).
-    await tester.tap(find.text('From account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('• Only Bank').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('To account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('• Only Bank').last);
-    await tester.pumpAndSettle();
+    await _selectAccount(tester, pickerIndex: 0, accountName: 'Only Bank');
+    await _selectAccount(tester, pickerIndex: 1, accountName: 'Only Bank');
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Amount (CNY)'),
+      find.widgetWithText(FTextFormField, 'Amount (CNY)'),
       '500',
     );
     await tester.pumpAndSettle();
@@ -308,20 +291,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('From account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('• USD Bank').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('To account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('• CNY Bank').last);
-    await tester.pumpAndSettle();
+    await _selectAccount(tester, pickerIndex: 0, accountName: 'USD Bank');
+    await _selectAccount(tester, pickerIndex: 1, accountName: 'CNY Bank');
 
     // The To-amount field appears once both accounts disagree on
     // currency. Its label includes the destination currency.
     expect(
-      find.widgetWithText(TextFormField, 'To amount (CNY)'),
+      find.widgetWithText(FTextFormField, 'To amount (CNY)'),
       findsOneWidget,
     );
 
@@ -331,11 +307,11 @@ void main() {
 
     // Enter both sides of the exchange.
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Amount (USD)'),
+      find.widgetWithText(FTextFormField, 'Amount (USD)'),
       '1000',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'To amount (CNY)'),
+      find.widgetWithText(FTextFormField, 'To amount (CNY)'),
       '7100',
     );
     await tester.pumpAndSettle();
@@ -384,21 +360,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('From account'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('• USD Bank').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('To account'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('• CNY Bank').last);
-      await tester.pumpAndSettle();
+      await _selectAccount(tester, pickerIndex: 0, accountName: 'USD Bank');
+      await _selectAccount(tester, pickerIndex: 1, accountName: 'CNY Bank');
 
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Amount (USD)'),
+        find.widgetWithText(FTextFormField, 'Amount (USD)'),
         '1000',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'To amount (CNY)'),
+        find.widgetWithText(FTextFormField, 'To amount (CNY)'),
         '7100',
       );
       await tester.pumpAndSettle();

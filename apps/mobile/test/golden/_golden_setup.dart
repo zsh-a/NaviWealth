@@ -21,10 +21,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 const Size kGoldenLogicalSize = Size(390, 844);
 const double kGoldenDpr = 2.0;
 
-enum GoldenTheme {
-  dark,
-  colorblind,
-}
+enum GoldenTheme { dark, colorblind }
 
 extension GoldenThemeData on GoldenTheme {
   String get filenameSuffix {
@@ -41,7 +38,22 @@ extension GoldenThemeData on GoldenTheme {
       case GoldenTheme.dark:
         return AppTheme.dark();
       case GoldenTheme.colorblind:
-        return AppTheme.dark(marketColorMode: MarketColorMode.colorblind);
+        return AppTheme.dark();
+    }
+  }
+
+  MarketColors get marketColors {
+    switch (this) {
+      case GoldenTheme.dark:
+        return MarketColors.fromMode(
+          MarketColorMode.redUpGreenDown,
+          brightness: Brightness.dark,
+        );
+      case GoldenTheme.colorblind:
+        return MarketColors.fromMode(
+          MarketColorMode.colorblind,
+          brightness: Brightness.dark,
+        );
     }
   }
 }
@@ -100,9 +112,7 @@ Future<void> pumpAndSnapshotMobile(
   // build time — pushes into nowhere are silently absorbed at the lookup,
   // since the test never actually triggers them.
   final router = GoRouter(
-    routes: [
-      GoRoute(path: '/', builder: (_, _) => child),
-    ],
+    routes: [GoRoute(path: '/', builder: (_, _) => child)],
     errorBuilder: (_, _) => const SizedBox.shrink(),
   );
   addTearDown(router.dispose);
@@ -119,13 +129,16 @@ Future<void> pumpAndSnapshotMobile(
       data: const MediaQueryData(disableAnimations: true),
       child: ProviderScope(
         overrides: overrides,
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          theme: variant.buildTheme(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: locale,
-          routerConfig: router,
+        child: MarketColorsScope(
+          colors: variant.marketColors,
+          child: MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            theme: variant.buildTheme(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: locale,
+            routerConfig: router,
+          ),
         ),
       ),
     ),

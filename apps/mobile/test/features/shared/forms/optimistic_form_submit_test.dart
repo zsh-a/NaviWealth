@@ -21,35 +21,36 @@ void main() {
       );
     });
 
-    testWidgets(
-      'runs the write and surfaces no toast on success',
-      (tester) async {
-        await tester.pumpWidget(
-          AppMessenger.init(
-            child: const MaterialApp(home: Scaffold(body: SizedBox())),
-          ),
-        );
-        final context = tester.element(find.byType(SizedBox));
-        var calls = 0;
-        await runOptimisticWrite(
-          write: () async {
-            calls += 1;
-          },
-          failureMessage: (_) => 'unused',
-          logger: logger,
-          context: context,
-          retryLabel: 'Retry',
-        );
-        expect(calls, 1);
-      },
-    );
+    testWidgets('runs the write and surfaces no toast on success', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => AppMessenger.init(child: child!),
+          home: const Scaffold(body: SizedBox()),
+        ),
+      );
+      final context = tester.element(find.byType(SizedBox));
+      var calls = 0;
+      await runOptimisticWrite(
+        write: () async {
+          calls += 1;
+        },
+        failureMessage: (_) => 'unused',
+        logger: logger,
+        context: context,
+        retryLabel: 'Retry',
+      );
+      expect(calls, 1);
+    });
 
     testWidgets('shows a toast with the failure message on error', (
       tester,
     ) async {
       await tester.pumpWidget(
-        AppMessenger.init(
-          child: const MaterialApp(home: Scaffold(body: SizedBox())),
+        MaterialApp(
+          builder: (context, child) => AppMessenger.init(child: child!),
+          home: const Scaffold(body: SizedBox()),
         ),
       );
       final context = tester.element(find.byType(SizedBox));
@@ -70,8 +71,9 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        AppMessenger.init(
-          child: const MaterialApp(home: Scaffold(body: SizedBox())),
+        MaterialApp(
+          builder: (context, child) => AppMessenger.init(child: child!),
+          home: const Scaffold(body: SizedBox()),
         ),
       );
       final context = tester.element(find.byType(SizedBox));
@@ -109,8 +111,9 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        AppMessenger.init(
-          child: const MaterialApp(home: Scaffold(body: SizedBox())),
+        MaterialApp(
+          builder: (context, child) => AppMessenger.init(child: child!),
+          home: const Scaffold(body: SizedBox()),
         ),
       );
       final context = tester.element(find.byType(SizedBox));
@@ -129,72 +132,66 @@ void main() {
   });
 
   group('OptimisticFormSubmit mixin', () {
-    testWidgets(
-      'pops the route synchronously and surfaces the write failure '
-      'on the global messenger',
-      (tester) async {
-        final logger = AppLogger(
-          environment: AppEnvironment.dev,
-          crashReporter: const NoopCrashReporter(),
-        );
-        final completer = Completer<void>();
-        var didPop = false;
+    testWidgets('pops the route synchronously and surfaces the write failure '
+        'on the global messenger', (tester) async {
+      final logger = AppLogger(
+        environment: AppEnvironment.dev,
+        crashReporter: const NoopCrashReporter(),
+      );
+      final completer = Completer<void>();
+      var didPop = false;
 
-        await tester.pumpWidget(
-          AppMessenger.init(
-            child: ProviderScope(
-              overrides: [
-                loggerProvider.overrideWithValue(logger),
-              ],
-              child: MaterialApp(
-                home: Scaffold(
-                  body: Builder(
-                    builder: (ctx) => Center(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(ctx).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => _ProbeForm(
-                                onPop: () {
-                                  didPop = true;
-                                  Navigator.of(ctx).pop();
-                                },
-                                write: () => completer.future,
-                              ),
-                            ),
-                          );
-                        },
-                        child: const Text('open'),
-                      ),
-                    ),
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [loggerProvider.overrideWithValue(logger)],
+          child: MaterialApp(
+            builder: (context, child) => AppMessenger.init(child: child!),
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => _ProbeForm(
+                            onPop: () {
+                              didPop = true;
+                              Navigator.of(ctx).pop();
+                            },
+                            write: () => completer.future,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('open'),
                   ),
                 ),
               ),
             ),
           ),
-        );
+        ),
+      );
 
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
-        expect(find.byType(_ProbeForm), findsOneWidget);
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byType(_ProbeForm), findsOneWidget);
 
-        await tester.tap(find.byKey(const Key('submit')));
-        // Pump frames so the Navigator processes the pop.
-        await tester.pumpAndSettle();
-        expect(didPop, isTrue);
-        // Form is gone, but the write is still in-flight — no toast yet.
-        expect(find.textContaining('probe failed'), findsNothing);
+      await tester.tap(find.byKey(const Key('submit')));
+      // Pump frames so the Navigator processes the pop.
+      await tester.pumpAndSettle();
+      expect(didPop, isTrue);
+      // Form is gone, but the write is still in-flight — no toast yet.
+      expect(find.textContaining('probe failed'), findsNothing);
 
-        // Resolve the write with an error; the global messenger surfaces it.
-        completer.completeError(StateError('write blew up'));
-        // Flush the microtask (error delivery) then render one frame.
-        await Future<void>.value();
-        await tester.pump();
-        expect(find.textContaining('write blew up'), findsOneWidget);
-        // Expire the dismiss timer to avoid pending-timer errors.
-        await tester.pump(const Duration(seconds: 7));
-      },
-    );
+      // Resolve the write with an error; the global messenger surfaces it.
+      completer.completeError(StateError('write blew up'));
+      // Flush the microtask (error delivery) then render one frame.
+      await Future<void>.value();
+      await tester.pump();
+      expect(find.textContaining('write blew up'), findsOneWidget);
+      // Expire the dismiss timer to avoid pending-timer errors.
+      await tester.pump(const Duration(seconds: 7));
+    });
   });
 }
 

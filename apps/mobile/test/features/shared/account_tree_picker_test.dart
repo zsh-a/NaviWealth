@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -27,25 +28,24 @@ Account _account({
   DateTime? deletedAt,
   String? icon,
   String? color,
-}) =>
-    Account(
-      id: id,
-      type: type,
-      name: name,
-      currency: currency,
-      category: category,
-      parentId: parentId,
-      icon: icon,
-      color: color,
-      archived: archived,
-      sync: SyncMeta(
-        ownerUserId: 'u',
-        updatedAt: _sync.updatedAt,
-        updatedByDevice: 'dev',
-        hlc: _hlc,
-        deletedAt: deletedAt,
-      ),
-    );
+}) => Account(
+  id: id,
+  type: type,
+  name: name,
+  currency: currency,
+  category: category,
+  parentId: parentId,
+  icon: icon,
+  color: color,
+  archived: archived,
+  sync: SyncMeta(
+    ownerUserId: 'u',
+    updatedAt: _sync.updatedAt,
+    updatedByDevice: 'dev',
+    hlc: _hlc,
+    deletedAt: deletedAt,
+  ),
+);
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.light(),
@@ -56,7 +56,12 @@ Widget _wrap(Widget child) => MaterialApp(
   ],
   supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
   locale: const Locale('en', 'US'),
-  home: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: child)),
+  home: FTheme(
+    data: FThemes.slate.light.desktop,
+    child: Scaffold(
+      body: Padding(padding: const EdgeInsets.all(16), child: child),
+    ),
+  ),
 );
 
 void main() {
@@ -86,11 +91,11 @@ void main() {
     // three rows appear with the expected breadcrumb path.
     await tester.tap(find.byType(AccountTreePicker));
     await tester.pumpAndSettle();
-    expect(find.text('• Expenses'), findsOneWidget);
-    expect(find.text('› Expenses › Trading'), findsOneWidget);
-    expect(find.text('› Expenses › Trading › Trading Fee'), findsOneWidget);
+    expect(find.text('Expenses'), findsOneWidget);
+    expect(find.text('Expenses › Trading'), findsOneWidget);
+    expect(find.text('Expenses › Trading › Trading Fee'), findsOneWidget);
 
-    await tester.tap(find.text('› Expenses › Trading › Trading Fee'));
+    await tester.tap(find.text('Expenses › Trading › Trading Fee'));
     await tester.pumpAndSettle();
     expect(selected, 'expense:trading:fee');
   });
@@ -98,11 +103,7 @@ void main() {
   testWidgets('category filter narrows the list', (tester) async {
     final accounts = <Account>[
       _account(id: 'expense', name: 'Expenses'),
-      _account(
-        id: 'income',
-        name: 'Income',
-        category: AccountSide.income,
-      ),
+      _account(id: 'income', name: 'Income', category: AccountSide.income),
     ];
 
     await tester.pumpWidget(
@@ -118,8 +119,8 @@ void main() {
 
     await tester.tap(find.byType(AccountTreePicker));
     await tester.pumpAndSettle();
-    expect(find.text('• Expenses'), findsOneWidget);
-    expect(find.text('• Income'), findsNothing);
+    expect(find.text('Expenses'), findsOneWidget);
+    expect(find.text('Income'), findsNothing);
   });
 
   testWidgets('archived and deleted rows are hidden by default', (
@@ -133,18 +134,14 @@ void main() {
 
     await tester.pumpWidget(
       _wrap(
-        AccountTreePicker(
-          accounts: accounts,
-          value: null,
-          onChanged: (_) {},
-        ),
+        AccountTreePicker(accounts: accounts, value: null, onChanged: (_) {}),
       ),
     );
     await tester.tap(find.byType(AccountTreePicker));
     await tester.pumpAndSettle();
-    expect(find.text('• Live'), findsOneWidget);
-    expect(find.text('• Archived'), findsNothing);
-    expect(find.text('• Gone'), findsNothing);
+    expect(find.text('Live'), findsOneWidget);
+    expect(find.text('Archived'), findsNothing);
+    expect(find.text('Gone'), findsNothing);
   });
 
   testWidgets('allowSystemAccounts=false hides system-account rows', (
@@ -167,8 +164,8 @@ void main() {
     );
     await tester.tap(find.byType(AccountTreePicker));
     await tester.pumpAndSettle();
-    expect(find.text('• My Bank'), findsOneWidget);
-    expect(find.text('• Expenses System'), findsNothing);
+    expect(find.text('My Bank'), findsOneWidget);
+    expect(find.text('Expenses System'), findsNothing);
   });
 
   testWidgets('value not in current list is reset to null', (tester) async {
@@ -225,8 +222,8 @@ void main() {
       await tester.tap(find.byType(AccountTreePicker));
       await tester.pumpAndSettle();
       // The catalogued icon shows up; the bullet-glyph fallback does
-      // *not* (otherwise the row reads as `• Bank` which would
-      // duplicate the leading affordance).
+      // *not* as part of the title (otherwise the row reads as `• Bank`
+      // which would duplicate the leading affordance).
       expect(find.byIcon(Icons.account_balance), findsAtLeastNWidgets(1));
       expect(find.text('• Bank'), findsNothing);
     },
@@ -246,6 +243,7 @@ void main() {
     );
     await tester.tap(find.byType(AccountTreePicker));
     await tester.pumpAndSettle();
-    expect(find.text('• Bank'), findsOneWidget);
+    expect(find.text('•'), findsAtLeastNWidgets(1));
+    expect(find.text('Bank'), findsOneWidget);
   });
 }

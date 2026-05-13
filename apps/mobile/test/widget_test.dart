@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -21,7 +22,7 @@ void main() {
   });
 
   testWidgets('NaviWealthApp boots into the home shell', (tester) async {
-    // The shell picks NavigationBar / Rail / Drawer by viewport width.
+    // The shell picks bottom nav / side rail / desktop sidebar by viewport width.
     // Pin a mobile-sized surface so this smoke test keeps asserting bottom-nav
     // behavior; the responsive switch is covered in router_test.
     tester.view.physicalSize = const Size(400, 800);
@@ -74,7 +75,7 @@ void main() {
     // Home page localized title — "Overview" in en-US, "总览" in zh-CN.
     // Test environment falls back to the first supported locale (en).
     expect(find.text('Overview'), findsWidgets);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FBottomNavigationBar), findsOneWidget);
   });
 }
 

@@ -351,9 +351,8 @@ void main() {
         ids,
         containsAll(<String>[
           'nav.home',
-          'nav.portfolio',
           'nav.activity',
-          'nav.plan',
+          'nav.ai',
           'nav.accounts',
           'nav.expenses',
           'nav.analytics',

@@ -5,9 +5,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 
 Widget _wrap(Widget child, {MarketColorMode? mode}) {
   return MaterialApp(
-    theme: AppTheme.light(
-      marketColorMode: mode ?? MarketColorMode.redUpGreenDown,
-    ),
+    theme: AppTheme.light(),
     localizationsDelegates: const [
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
@@ -15,7 +13,13 @@ Widget _wrap(Widget child, {MarketColorMode? mode}) {
     ],
     supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
     locale: const Locale('en', 'US'),
-    home: Scaffold(body: Center(child: child)),
+    home: MarketColorsScope(
+      colors: MarketColors.fromMode(
+        mode ?? MarketColorMode.redUpGreenDown,
+        brightness: Brightness.light,
+      ),
+      child: Scaffold(body: Center(child: child)),
+    ),
   );
 }
 
@@ -93,7 +97,10 @@ void main() {
       // The Semantics(excludeSemantics: true) wrapper means the inner
       // Icon + Text don't leak as separate nodes; only our spoken label
       // is exposed to assistive tech.
-      expect(find.bySemanticsLabel(RegExp(r'^-1,234\.56 USD$')), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(RegExp(r'^-1,234\.56 USD$')),
+        findsOneWidget,
+      );
       handle.dispose();
     },
   );

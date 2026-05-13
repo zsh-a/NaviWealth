@@ -209,7 +209,9 @@ void main() {
     await tester.pumpWidget(_wrap(entries: [entry], accounts: accounts));
     await tester.pumpAndSettle();
 
-    expect(find.text('Food'), findsNothing);
+    // The compact row already surfaces the entry's primary account, while
+    // the counterparty stays hidden until expansion.
+    expect(find.text('Food'), findsOneWidget);
     expect(find.text('Wallet'), findsNothing);
 
     await tester.tap(find.text('Coffee'));

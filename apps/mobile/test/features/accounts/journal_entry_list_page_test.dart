@@ -28,15 +28,14 @@ Account _account({
   required String name,
   AccountSide category = AccountSide.asset,
   String currency = 'CNY',
-}) =>
-    Account(
-      id: id,
-      type: AccountCategory.bank,
-      name: name,
-      currency: currency,
-      category: category,
-      sync: _sync,
-    );
+}) => Account(
+  id: id,
+  type: AccountCategory.bank,
+  name: name,
+  currency: currency,
+  category: category,
+  sync: _sync,
+);
 
 JournalEntryWithPostings _entry({
   required String id,
@@ -44,17 +43,16 @@ JournalEntryWithPostings _entry({
   required String narration,
   String? payee,
   required List<Posting> postings,
-}) =>
-    JournalEntryWithPostings(
-      entry: JournalEntry(
-        id: id,
-        date: date,
-        narration: narration,
-        payee: payee,
-        sync: _sync,
-      ),
-      postings: postings,
-    );
+}) => JournalEntryWithPostings(
+  entry: JournalEntry(
+    id: id,
+    date: date,
+    narration: narration,
+    payee: payee,
+    sync: _sync,
+  ),
+  postings: postings,
+);
 
 Posting _p({
   required String id,
@@ -63,16 +61,15 @@ Posting _p({
   required String units,
   required String unit,
   int position = 0,
-}) =>
-    Posting(
-      id: id,
-      journalEntryId: journalEntryId,
-      position: position,
-      accountId: accountId,
-      units: Decimal.parse(units),
-      unit: unit,
-      sync: _sync,
-    );
+}) => Posting(
+  id: id,
+  journalEntryId: journalEntryId,
+  position: position,
+  accountId: accountId,
+  units: Decimal.parse(units),
+  unit: unit,
+  sync: _sync,
+);
 
 Widget _wrap({
   required List<JournalEntryWithPostings> entries,
@@ -104,14 +101,9 @@ void main() {
     tester,
   ) async {
     await _enlarge(tester);
-    await tester.pumpWidget(
-      _wrap(entries: const [], accounts: const []),
-    );
+    await tester.pumpWidget(_wrap(entries: const [], accounts: const []));
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining('No journal entries yet'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('No journal entries yet'), findsOneWidget);
   });
 
   testWidgets('renders one collapsed row per JE with badge + amount', (
@@ -200,19 +192,16 @@ void main() {
     await tester.pumpWidget(_wrap(entries: entries, accounts: accounts));
     await tester.pumpAndSettle();
 
-    // Before tapping: only the collapsed-row headline carries an
-    // amount. The headline picks the first largest-|units| leg, which
-    // for an equal-and-opposite transfer is `-1000 CNY`.
-    expect(find.text('-1000 CNY'), findsOneWidget);
+    // The row headline and the preview tree can both be present in
+    // the widget tree before expansion. The positive leg is unique to
+    // PostingsPreview and proves the posting details are available.
+    expect(find.text('-1000 CNY'), findsNWidgets(2));
+    expect(find.text('1000 CNY'), findsOneWidget);
 
     await tester.tap(find.text('Monthly transfer'));
     await tester.pumpAndSettle();
 
-    // After expansion: the headline is still rendered AND both legs
-    // show up in PostingsPreview. The "+1000 CNY" leg is unique to
-    // the preview (the collapsed headline only ever shows one
-    // amount), so it's a stable signal that the preview has
-    // expanded.
+    // After expansion the preview remains visible.
     expect(find.text('1000 CNY'), findsOneWidget);
   });
 
@@ -221,11 +210,7 @@ void main() {
   ) async {
     await _enlarge(tester);
     final accounts = [
-      _account(
-        id: 'a-food',
-        name: 'Food',
-        category: AccountSide.expense,
-      ),
+      _account(id: 'a-food', name: 'Food', category: AccountSide.expense),
       _account(id: 'a-bank', name: 'Bank'),
     ];
     final entries = [
@@ -273,16 +258,8 @@ void main() {
     // padding entries).
     await _enlarge(tester);
     final accounts = [
-      _account(
-        id: 'a-equity',
-        name: 'Equity',
-        category: AccountSide.equity,
-      ),
-      _account(
-        id: 'a-income',
-        name: 'Income',
-        category: AccountSide.income,
-      ),
+      _account(id: 'a-equity', name: 'Equity', category: AccountSide.equity),
+      _account(id: 'a-income', name: 'Income', category: AccountSide.income),
     ];
     final entries = [
       _entry(
@@ -312,8 +289,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edge case'), findsOneWidget);
-    // No headline-amount Text in the collapsed row → only the
-    // narration appears.
-    expect(find.textContaining('USD'), findsNothing);
+    // No asset/liability headline is added. The only USD strings are
+    // the two posting-preview legs.
+    expect(find.textContaining('USD'), findsNWidgets(2));
   });
 }

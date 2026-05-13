@@ -90,7 +90,7 @@ void main() {
 
     final router = await _pump(tester, container, initial: AppRoutes.accounts);
 
-    expect(_path(router), '/login?next=%2Fportfolio');
+    expect(_path(router), '/login?next=%2Faccounts');
     expect(find.text('login'), findsOneWidget);
   });
 

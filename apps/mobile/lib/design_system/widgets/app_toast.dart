@@ -60,12 +60,16 @@ class AppMessenger {
     VoidCallback? onAction,
   ) {
     FToasterState? state;
+    var usingCachedState = false;
     try {
       state = context.findAncestorStateOfType<FToasterState>();
     } catch (_) {
       // Context may be unmounted after a Navigator.pop.
     }
-    state ??= _cachedToaster;
+    if (state == null) {
+      state = _cachedToaster;
+      usingCachedState = true;
+    }
     if (state == null) return;
     _cachedToaster = state;
 
@@ -83,7 +87,7 @@ class AppMessenger {
     });
 
     state.show(
-      context: context,
+      context: usingCachedState ? null : context,
       builder: (ctx, entry) => FToast(
         variant: variant,
         icon: icon,
