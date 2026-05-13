@@ -29,7 +29,9 @@ import pathlib
 import re
 import sys
 
-CJK_RE = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
+NON_ASCII_RE = re.compile(r"[^\x00-\x7F]")
+DART_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.S)
+DART_LINE_COMMENT_RE = re.compile(r"//.*")
 
 # Characters always shipped in the base subset, even if they don't appear
 # in the source tree. Keep this list short — it is the safety net for
@@ -37,18 +39,30 @@ CJK_RE = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
 _ALWAYS_INCLUDE: list[int] = (
     # ASCII printable
     list(range(0x20, 0x7F))
-    # Latin-1 chars we render (¢, £, ¥, ©, ®, °, ±, ·, ×, ÷, …)
-    + [0x00A0, 0x00A2, 0x00A3, 0x00A5, 0x00A9, 0x00AE, 0x00B0, 0x00B1, 0x00B7, 0x00D7, 0x00F7]
-    # General punctuation (— ‘ ’ “ ” ‧ … ‰ ′ ″)
-    + list(range(0x2010, 0x2030))
+    # Runtime punctuation / signs that may come from formatters, server
+    # messages, or platform widgets rather than literal app strings.
+    + [
+        0x00A0,  # non-breaking space
+        0x00A5,  # ¥
+        0x00B0,  # °
+        0x00B1,  # ±
+        0x00B7,  # ·
+        0x00D7,  # ×
+        0x2013,  # –
+        0x2014,  # —
+        0x2018,  # ‘
+        0x2019,  # ’
+        0x201C,  # “
+        0x201D,  # ”
+        0x2022,  # •
+        0x2026,  # …
+        0x2030,  # ‰
+        0x20AC,  # €
+      ]
     # Arrows + geometric shapes used by delta_text (↑ ↓ ▲ ▼ ● ○)
     + [0x2190, 0x2191, 0x2192, 0x2193, 0x25B2, 0x25BC, 0x25CF, 0x25CB]
-    # Currency symbols block (€, ₩, ₹, etc.)
-    + list(range(0x20A0, 0x20D0))
-    # CJK symbols and punctuation (。 ， 、 ； ：「」『』 etc.)
-    + list(range(0x3000, 0x3040))
-    # Halfwidth and fullwidth forms (full-width digits, brackets, ¥, etc.)
-    + list(range(0xFF00, 0xFFF0))
+    # Common CJK punctuation that can appear in backend / platform strings.
+    + [0x3001, 0x3002, 0x300A, 0x300B, 0xFF0C, 0xFF1A, 0xFF1B, 0xFF1F]
     # Material DatePicker / time-picker CJK chars not always in source scan:
     # weekday headers (二四五六), 星 (星期), 昨 (昨天)
     + [0x4E8C, 0x56DB, 0x4E94, 0x516D, 0x661F, 0x6628]
@@ -73,8 +87,20 @@ def _gb2312_codepoints() -> set[int]:
     return pts
 
 
+def _strip_dart_comments(text: str) -> str:
+    """Best-effort comment stripper for font scanning.
+
+    The font subset only needs characters the app can render. Chinese text in
+    Dart comments can be useful for maintainers, but shipping those glyphs in
+    the first-paint web font bloats the bundle. ARB / JSON / YAML / Markdown
+    are scanned as-is because they commonly contain user-facing copy.
+    """
+    text = DART_BLOCK_COMMENT_RE.sub("", text)
+    return "\n".join(DART_LINE_COMMENT_RE.sub("", line) for line in text.splitlines())
+
+
 def scan_codebase(root: pathlib.Path) -> set[int]:
-    """Return every CJK code point that appears literally in source files."""
+    """Return every renderable non-ASCII code point that appears in source."""
     found: set[int] = set()
     for path in root.rglob("*"):
         if not path.is_file():
@@ -89,7 +115,9 @@ def scan_codebase(root: pathlib.Path) -> set[int]:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        for ch in CJK_RE.findall(text):
+        if path.suffix == ".dart":
+            text = _strip_dart_comments(text)
+        for ch in NON_ASCII_RE.findall(text):
             found.add(ord(ch))
     return found
 
@@ -121,7 +149,7 @@ def main() -> int:
     write_unicodes(pathlib.Path(args.out_ext), ext)
 
     print(
-        f"scanned {len(scanned)} CJK chars from {lib_root}\n"
+        f"scanned {len(scanned)} non-ASCII chars from {lib_root}\n"
         f"base set: {len(base)} code points\n"
         f"ext  set: {len(ext)} code points",
         file=sys.stderr,
