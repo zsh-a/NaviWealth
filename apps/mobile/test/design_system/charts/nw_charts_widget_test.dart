@@ -183,6 +183,51 @@ void main() {
       expect(chart.data.lineBarsData.first.isCurved, isTrue);
     });
 
+    testWidgets('supports linear interpolation', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            interpolation: ChartInterpolation.linear,
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: List.generate(
+                  10,
+                  (i) => ChartPoint(x: i.toDouble(), y: i.toDouble()),
+                ),
+              ),
+            ],
+            xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+          ),
+        ),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.isCurved, isFalse);
+    });
+
+    testWidgets('curved shorthand overrides interpolation', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            interpolation: ChartInterpolation.curved,
+            curved: false,
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: List.generate(
+                  10,
+                  (i) => ChartPoint(x: i.toDouble(), y: i.toDouble()),
+                ),
+              ),
+            ],
+            xAxis: const TimeAxis(format: AxisDateFormat.yearOnly),
+          ),
+        ),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.first.isCurved, isFalse);
+    });
+
     testWidgets('filled: true uses gradient for area fill', (tester) async {
       await tester.pumpWidget(
         _wrap(
