@@ -38,6 +38,8 @@ class NwLineChart extends StatefulWidget {
     this.downsampleTarget = kDefaultDownsampleTarget,
     this.semanticLabel,
     this.filled = false,
+    this.interpolation = ChartInterpolation.curved,
+    this.curved,
     this.curveSmoothness = 0.28,
     this.heroDots = false,
     this.showXAxis = true,
@@ -63,6 +65,18 @@ class NwLineChart extends StatefulWidget {
   /// For multi-series stacked fills use [NwAreaChart] with `stacked: true`.
   final bool filled;
 
+  /// Line interpolation mode. Keep [ChartInterpolation.curved] for
+  /// decorative sparklines, projections, and smoothed indicators. Use
+  /// [ChartInterpolation.linear] for observed prices, balances, net worth,
+  /// and asset values where the line should not visually anticipate the next
+  /// sample. Step lines can be added as a future interpolation mode.
+  final ChartInterpolation interpolation;
+
+  /// Backward-compatible shorthand for [interpolation].
+  ///
+  /// When supplied, this overrides [interpolation].
+  final bool? curved;
+
   /// Bezier curve smoothness. 0 = straight segments, 1 = maximum smoothing.
   /// Default 0.28 prevents overshoot on volatile data.
   final double curveSmoothness;
@@ -87,6 +101,8 @@ class NwLineChart extends StatefulWidget {
   @override
   State<NwLineChart> createState() => _NwLineChartState();
 }
+
+enum ChartInterpolation { linear, curved }
 
 class _NwLineChartState extends State<NwLineChart> {
   ChartPoint? _touchStartPoint;
@@ -260,9 +276,11 @@ class _NwLineChartState extends State<NwLineChart> {
         ? (dashArray ?? const [6, 4])
         : (dashArray ?? (isProjection ? const [4, 4] : null));
 
+    final isCurved =
+        widget.curved ?? widget.interpolation == ChartInterpolation.curved;
     return LineChartBarData(
       spots: spots,
-      isCurved: true,
+      isCurved: isCurved,
       curveSmoothness: widget.curveSmoothness,
       color: effectiveColor,
       dashArray: effectiveDash,

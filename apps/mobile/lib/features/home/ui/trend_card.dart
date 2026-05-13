@@ -25,44 +25,44 @@ class TrendCard extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       borderRadius: 18,
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.dashboardTrendTitle,
-                    style: context.theme.typography.md,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.dashboardTrendTitle,
+                  style: context.theme.typography.md,
+                ),
+              ),
+              trendAsync.maybeWhen(
+                data: (trend) => FTooltip(
+                  tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: trend.isEmpty
+                        ? null
+                        : () => showDashboardChartFullscreen(
+                            context: context,
+                            title: l10n.dashboardTrendTitle,
+                            child: const _TrendFullscreenContent(),
+                          ),
+                    child: const Icon(Icons.fullscreen, size: 20),
                   ),
                 ),
-                trendAsync.maybeWhen(
-                  data: (trend) => FTooltip(
-                    tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
-                    child: FButton.icon(
-                      variant: FButtonVariant.ghost,
-                      onPress: trend.isEmpty
-                          ? null
-                          : () => showDashboardChartFullscreen(
-                              context: context,
-                              title: l10n.dashboardTrendTitle,
-                              child: const _TrendFullscreenContent(),
-                            ),
-                      child: const Icon(Icons.fullscreen, size: 20),
-                    ),
-                  ),
-                  orElse: () => const SizedBox(width: 48, height: 48),
-                ),
-              ],
-            ),
-            const _RangeChips(),
-            const SizedBox(height: 12),
-            trendAsync.when(
-              loading: () => const _TrendSkeleton(),
-              error: (e, st) => _TrendError(error: e),
-              data: (trend) => _TrendChart(trend: trend),
-            ),
-          ],
-        ),
+                orElse: () => const SizedBox(width: 48, height: 48),
+              ),
+            ],
+          ),
+          const _RangeChips(),
+          const SizedBox(height: 12),
+          trendAsync.when(
+            loading: () => const _TrendSkeleton(),
+            error: (e, st) => _TrendError(error: e),
+            data: (trend) => _TrendChart(trend: trend),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -299,11 +299,9 @@ class _LineChartBody extends StatelessWidget {
     return NwLineChart(
       series: [series],
       xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
-      yAxis: ValueAxis.currency(
-        currencyCode: trend.baseCurrency,
-        maxLabels: 3,
-      ),
+      yAxis: ValueAxis.currency(currencyCode: trend.baseCurrency, maxLabels: 3),
       filled: true,
+      interpolation: ChartInterpolation.linear,
       heroDots: true,
       showXAxis: false,
       showTouchXAxisLabel: true,

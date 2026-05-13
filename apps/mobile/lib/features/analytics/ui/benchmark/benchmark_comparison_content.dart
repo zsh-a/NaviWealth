@@ -96,6 +96,7 @@ class _ComparisonChart extends StatelessWidget {
             maxLabels: 4,
           ),
           aspectRatio: chartAspectFor(c.maxWidth),
+          interpolation: ChartInterpolation.linear,
           semanticLabel: l10n.benchmarkComparisonTitle,
         ),
       ),

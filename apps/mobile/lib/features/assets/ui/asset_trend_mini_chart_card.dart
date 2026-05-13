@@ -149,6 +149,7 @@ class _ChartBody extends StatelessWidget {
           xAxis: const TimeAxis(format: AxisDateFormat.dayMonth, maxLabels: 4),
           yAxis: ValueAxis.currency(currencyCode: currency, maxLabels: 4),
           aspectRatio: chartAspectFor(constraints.maxWidth),
+          interpolation: ChartInterpolation.linear,
           semanticLabel: l10n.assetDetailTrendSemanticLabel,
         ),
       ),
