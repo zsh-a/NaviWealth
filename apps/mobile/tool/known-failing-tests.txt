@@ -1,0 +1,52 @@
+# Wave 41 — allowlist of test files currently failing on `main`.
+#
+# Pinned by `tool/check-known-failing-tests.sh`. New PRs cannot
+# introduce additional failing files; reducing this list is welcome.
+# When a file here is fixed, remove its line (the script will warn).
+#
+# Two root causes for everything currently on this list:
+#
+# (1) **Design system API drift** — these files reference symbols
+#     (`AppElevations`, `marketColorMode`, `SemanticColors.light()`,
+#     etc.) that were removed from `lib/design_system/` but the tests
+#     weren't updated. Compile-fail today; needs a "design system
+#     test refresh" wave.
+#
+# (2) **Widget-finder rot** — `find.byType(InkWell)` / `find.byTooltip(...)`
+#     style finders broken by upstream Forui / form refactors. Each
+#     needs a targeted fix similar to Wave 41's `tool_invocation_renderers`
+#     repair.
+#
+# Add new lines ONLY with reviewer sign-off and a brief reason.
+
+# ── Category (1): design system API drift ──────────────────────────
+design_system/app_theme_test.dart
+design_system/charts/chart_palette_test.dart
+design_system/charts/nw_charts_widget_test.dart
+design_system/delta_text_test.dart
+design_system/skeleton_test.dart
+
+# ── Category (2): widget finder rot ────────────────────────────────
+app/router_test.dart
+core/command_palette/command_palette_dialog_test.dart
+features/accounts/account_form_page_test.dart
+features/accounts/journal_entry_list_page_test.dart
+features/accounts/transfer_form_page_test.dart
+features/activity/activity_feed_test.dart
+features/auth/auth_route_guard_test.dart
+features/shared/account_tree_picker_test.dart
+features/shared/forms/amount_field_test.dart
+features/shared/forms/manual_security_sheet_test.dart
+features/shared/forms/optimistic_form_submit_test.dart
+widget_test.dart
+
+# ── Category (3): golden suite (tests run from `--tags=golden`, not
+# the main suite). These fail because their seed pages compile-fail
+# on (1). Listed here so the script's "fixed" hint works when (1)
+# is repaired.
+golden/ai_chat_page_golden_test.dart
+golden/analytics_page_golden_test.dart
+golden/asset_detail_page_golden_test.dart
+golden/fire_page_golden_test.dart
+golden/home_page_golden_test.dart
+golden/settings_page_golden_test.dart

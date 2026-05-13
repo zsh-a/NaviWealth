@@ -73,6 +73,7 @@ const intentDescriptors = <IntentDescriptor>[
     preferredReadModels: <String>[
       'monthly_spend_by_category',
       'subscription_changes',
+      'recurring_patterns',
       'cashflow_buckets',
     ],
   ),
@@ -132,7 +133,11 @@ const intentDescriptors = <IntentDescriptor>[
     },
     promptTemplate:
         '请详细解释这条洞察 ({{object_label}})，说明触发原因、严重程度和可采取的行动。',
-    preferredReadModels: <String>['anomaly_flags', 'subscription_changes'],
+    preferredReadModels: <String>[
+      'anomaly_flags',
+      'subscription_changes',
+      'refund_links',
+    ],
   ),
 ];
 
