@@ -97,42 +97,12 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
         final existing = await repo.findCashByAccountId(_accountId!);
         if (existing != null && mounted) {
           final l10n = AppLocalizations.of(context);
-          final goEdit = await showFSheet<bool>(
-            side: FLayout.btt,
+          final goEdit = await showConfirmDialog(
             context: context,
-            builder: (ctx) => Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.cashFormDuplicateTitle,
-                    style: context.theme.typography.md,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(l10n.cashFormDuplicateMessage),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      FButton(
-                        variant: FButtonVariant.ghost,
-                        onPress: () => Navigator.of(ctx).pop(false),
-                        child: Text(l10n.cashFormDuplicateCancel),
-                      ),
-                      const SizedBox(width: 8),
-                      FButton(
-                        variant: FButtonVariant.outline,
-                        onPress: () => Navigator.of(ctx).pop(true),
-                        child: Text(l10n.cashFormDuplicateEdit),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-                ],
-              ),
-            ),
+            title: Text(l10n.cashFormDuplicateTitle),
+            body: Text(l10n.cashFormDuplicateMessage),
+            cancelLabel: l10n.cashFormDuplicateCancel,
+            confirmLabel: l10n.cashFormDuplicateEdit,
           );
           if (goEdit == true && mounted) {
             context.go(AppRoutes.accountAsset(existing.id));
@@ -334,38 +304,12 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
 /// The strings live in ARB so every "delete asset" surface stays in sync.
 Future<bool?> confirmManualAssetDelete(BuildContext context) {
   final l10n = AppLocalizations.of(context);
-  return showFSheet<bool>(
-    side: FLayout.btt,
+  return showConfirmDialog(
     context: context,
-    builder: (ctx) => Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.manualAssetDeleteTitle, style: context.theme.typography.md),
-          const SizedBox(height: 8),
-          Text(l10n.manualAssetDeleteContent),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => Navigator.of(ctx).pop(false),
-                child: Text(l10n.manualAssetDeleteCancel),
-              ),
-              const SizedBox(width: 8),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: () => Navigator.of(ctx).pop(true),
-                child: Text(l10n.manualAssetDeleteConfirm),
-              ),
-            ],
-          ),
-          SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-        ],
-      ),
-    ),
+    title: Text(l10n.manualAssetDeleteTitle),
+    body: Text(l10n.manualAssetDeleteContent),
+    cancelLabel: l10n.manualAssetDeleteCancel,
+    confirmLabel: l10n.manualAssetDeleteConfirm,
+    destructive: true,
   );
 }

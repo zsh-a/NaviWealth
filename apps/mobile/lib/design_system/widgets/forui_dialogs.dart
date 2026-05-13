@@ -5,8 +5,8 @@ import 'package:forui/forui.dart';
 ///
 /// Returns `true` when the user taps the confirm action, `false` for
 /// cancel, `null` if the barrier was dismissed.
-Future<bool?> showConfirmDialog(
-  BuildContext context, {
+Future<bool?> showConfirmDialog({
+  required BuildContext context,
   required Widget title,
   Widget? body,
   required String confirmLabel,

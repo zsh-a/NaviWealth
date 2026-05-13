@@ -24,7 +24,10 @@ class LiabilityDetailPage extends ConsumerWidget {
     final summaryAsync = ref.watch(liabilitySummaryProvider(id));
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.liabilitiesAppBarTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,
@@ -287,42 +290,12 @@ class _AmortizationTable extends ConsumerWidget {
       row.principalPayment + row.interestPayment,
       code: liability.currency,
     );
-    final confirmed = await showFSheet<bool>(
-      side: FLayout.btt,
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex),
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.liabilityScheduleMarkPaidConfirmBody(amount)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.commonConfirm),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.liabilityScheduleMarkPaidConfirmTitle(row.periodIndex)),
+      body: Text(l10n.liabilityScheduleMarkPaidConfirmBody(amount)),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonConfirm,
     );
     if (confirmed != true || !context.mounted) return;
     final repo = await ref.read(liabilityRepositoryProvider.future);

@@ -62,42 +62,13 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
     String assetId,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showFSheet<bool>(
-      side: FLayout.btt,
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.physicalAssetDeleteConfirmTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.physicalAssetDeleteConfirmBody),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.physicalAssetDeleteAction),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.physicalAssetDeleteConfirmTitle),
+      body: Text(l10n.physicalAssetDeleteConfirmBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.physicalAssetDeleteAction,
+      destructive: true,
     );
     if (confirmed != true) return;
     final repo = await ref.read(physicalAssetRepositoryProvider.future);
