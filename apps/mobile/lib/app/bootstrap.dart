@@ -86,6 +86,14 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   final logger = container.read(loggerProvider);
 
   FlutterError.onError = (details) {
+    if (isBenignDuplicateKeyDownAssertion(details)) {
+      logger.w(
+        'Ignored duplicate platform KeyDown assertion',
+        error: details.exception,
+        stackTrace: details.stack,
+      );
+      return;
+    }
     logger.e(
       'Uncaught Flutter framework error',
       error: details.exception,
@@ -137,6 +145,19 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   unawaited(_syncFxRates(container, logger));
 
   return container;
+}
+
+/// Flutter can occasionally receive a duplicate platform KeyDown without an
+/// intervening KeyUp, most often around OS/browser shortcuts or focus changes.
+/// The framework asserts before app-level Shortcuts/Focus handlers run, so the
+/// app cannot prevent the event. Treat that specific debug assertion as
+/// non-fatal while leaving all other framework errors on the normal crash path.
+@visibleForTesting
+bool isBenignDuplicateKeyDownAssertion(FlutterErrorDetails details) {
+  final text = details.exception.toString();
+  return text.contains('hardware_keyboard.dart') &&
+      text.contains('A KeyDownEvent is dispatched') &&
+      text.contains('physical key is already pressed');
 }
 
 /// Trigger FX rate sync in the background. Reads the user's base currency

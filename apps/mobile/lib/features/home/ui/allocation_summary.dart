@@ -1,12 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/dashboard_models.dart';
+import 'allocation_detail_panel.dart';
 import 'asset_category_visuals.dart';
 
 /// Compact allocation surface for the home cockpit.
@@ -26,12 +25,10 @@ class AllocationSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final assetAllocations = snapshot.allocations
-        .where((a) => !a.isLiability)
-        .toList()
-      ..sort(
-        (a, b) => b.totalInBase.amount.compareTo(a.totalInBase.amount),
-      );
+    final assetAllocations =
+        snapshot.allocations.where((a) => !a.isLiability).toList()..sort(
+          (a, b) => b.totalInBase.amount.compareTo(a.totalInBase.amount),
+        );
     if (assetAllocations.isEmpty) return const SizedBox.shrink();
 
     final total = assetAllocations.fold<Decimal>(
@@ -44,8 +41,7 @@ class AllocationSummary extends StatelessWidget {
     final segments = <_AllocationSegment>[];
     for (var i = 0; i < assetAllocations.length; i++) {
       final allocation = assetAllocations[i];
-      final ratio =
-          (allocation.totalInBase.amount / total).toDouble();
+      final ratio = (allocation.totalInBase.amount / total).toDouble();
       segments.add(
         _AllocationSegment(
           allocation: allocation,
@@ -71,42 +67,44 @@ class AllocationSummary extends StatelessWidget {
         SoftCard(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _StackedBar(segments: segments),
-                const SizedBox(height: 14),
-                for (final s in segments.take(3)) ...[
-                  _SegmentLegendRow(
-                    segment: s,
-                    baseCurrency: snapshot.baseCurrency,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _StackedBar(segments: segments),
+              const SizedBox(height: 14),
+              for (final s in segments.take(3)) ...[
+                _SegmentLegendRow(
+                  segment: s,
+                  baseCurrency: snapshot.baseCurrency,
+                ),
+                if (s != segments.take(3).last) const SizedBox(height: 8),
+              ],
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => showAllocationDetailPanel(
+                    context: context,
+                    snapshot: snapshot,
                   ),
-                  if (s != segments.take(3).last)
-                    const SizedBox(height: 8),
-                ],
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: () => context.go(AppRoutes.accounts),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 4,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
                     ),
-                    child: Text(
-                      l10n.dashboardAllocationViewBreakdown,
-                      style: context.theme.typography.xs.copyWith(
-                        color: context.theme.colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.dashboardAllocationViewBreakdown,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -151,10 +149,7 @@ class _StackedBar extends StatelessWidget {
 }
 
 class _SegmentLegendRow extends StatelessWidget {
-  const _SegmentLegendRow({
-    required this.segment,
-    required this.baseCurrency,
-  });
+  const _SegmentLegendRow({required this.segment, required this.baseCurrency});
 
   final _AllocationSegment segment;
   final String baseCurrency;
