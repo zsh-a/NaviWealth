@@ -4,6 +4,18 @@ import 'package:forui/forui.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 
+bool useCompactDensity(TargetPlatform platform, bool isWeb) {
+  if (isWeb) return true;
+  return switch (platform) {
+    TargetPlatform.macOS ||
+    TargetPlatform.windows ||
+    TargetPlatform.linux => true,
+    TargetPlatform.iOS ||
+    TargetPlatform.android ||
+    TargetPlatform.fuchsia => false,
+  };
+}
+
 /// Minimal Material [ThemeData] that mirrors the active forui slate palette
 /// so any residual Material widget in the tree (charts, etc.) renders in
 /// step with forui visuals.
@@ -32,8 +44,7 @@ class AppTheme {
     final onAccent = AccentColors.onPrimary(brightness);
     // Off-white page background — pure white reads as bare canvas and
     // washes out the SoftCard tint. Mirror app.dart's FColors override.
-    final pageBackground =
-        isDark ? f.background : const Color(0xFFF5F7F9);
+    final pageBackground = isDark ? f.background : const Color(0xFFF5F7F9);
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,

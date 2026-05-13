@@ -854,13 +854,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get langChinese => '中文';
 
   @override
-  String get settingsCompactDensityTitle => 'Compact density';
-
-  @override
-  String get settingsCompactDensitySubtitle =>
-      'Tighter list rows and controls. Recommended for mouse use.';
-
-  @override
   String get commonRetry => 'Retry';
 
   @override
@@ -3491,6 +3484,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioUnassignedAccount => 'Unassigned';
+
+  @override
+  String get activityAddAction => 'Add';
 
   @override
   String get activityFeedFilterTitle => 'Filter';

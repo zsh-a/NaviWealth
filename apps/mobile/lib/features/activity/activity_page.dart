@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/activity_feed_provider.dart';
 import 'data/activity_feed_query.dart';
@@ -48,28 +49,44 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       _replaceActivityUrl(query: next);
     });
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.navActivity),
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(Icons.filter_list_outlined),
-            onPress: () => ActivityFeedFilterSheet.show(context),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 1024;
+        return FScaffold(
+          header: FHeader.nested(
+            title: Text(l10n.navActivity),
+            suffixes: [
+              FHeaderAction(
+                icon: const Icon(Icons.filter_list_outlined),
+                onPress: () => ActivityFeedFilterSheet.show(context),
+              ),
+              FHeaderAction(
+                icon: const Icon(Icons.add_outlined),
+                onPress: () => showActivityActionPanel(context),
+              ),
+            ],
           ),
-          FHeaderAction(
-            icon: const Icon(Icons.add_outlined),
-            onPress: () => showActivityActionPanel(context),
-          ),
-        ],
-      ),
-      childPad: false,
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _ActivityKindFilterRow(),
-          Expanded(child: ActivityFeed()),
-        ],
-      ),
+          childPad: false,
+          child: isDesktop
+              ? AdaptiveContentFrame(
+                  maxWidth: AdaptiveMaxWidth.dashboard,
+                  layout: AdaptiveFrameLayout.cockpit,
+                  rightRailWidth: 340,
+                  primary: const ActivityFeed(),
+                  secondary: _ActivityRightRail(
+                    onFilter: () => ActivityFeedFilterSheet.show(context),
+                    onAdd: () => showActivityActionPanel(context),
+                  ),
+                )
+              : const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ActivityKindFilterRow(),
+                    Expanded(child: ActivityFeed()),
+                  ],
+                ),
+        );
+      },
     );
   }
 
@@ -93,6 +110,87 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   }
 }
 
+class _ActivityRightRail extends ConsumerWidget {
+  const _ActivityRightRail({required this.onFilter, required this.onAdd});
+
+  final VoidCallback onFilter;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final query = ref.watch(activityFeedQueryProvider);
+    final controller = ref.read(activityFeedQueryProvider.notifier);
+    final selected = query.kinds;
+    final allActive = selected.isEmpty;
+    final chips = <_KindChipSpec>[
+      _KindChipSpec(
+        label: l10n.activityFilterChipAll,
+        active: allActive,
+        onTap: () =>
+            controller.setQuery(query.copyWith(kinds: const <ActivityKind>{})),
+      ),
+      for (final kind in const [
+        ActivityKind.income,
+        ActivityKind.expense,
+        ActivityKind.transfer,
+        ActivityKind.trade,
+      ])
+        _KindChipSpec(
+          label: _labelForKind(l10n, kind),
+          active: selected.contains(kind),
+          onTap: () {
+            final next = {...selected};
+            if (next.contains(kind)) {
+              next.remove(kind);
+            } else {
+              next.add(kind);
+            }
+            controller.setQuery(query.copyWith(kinds: next));
+          },
+        ),
+    ];
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        SoftCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.navActivity,
+                style: context.theme.typography.md.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [for (final chip in chips) _FilterChip(spec: chip)],
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                icon: const Icon(Icons.add_outlined),
+                label: Text(l10n.activityAddAction),
+                onPressed: onAdd,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.filter_list_outlined),
+                label: Text(l10n.activityFeedFilterTitle),
+                onPressed: onFilter,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Quick filter chip row above the timeline. Tapping a chip toggles the
 /// corresponding [ActivityKind] in the active feed query — multiple
 /// chips can be active simultaneously. The "All" chip clears the kind
@@ -112,9 +210,8 @@ class _ActivityKindFilterRow extends ConsumerWidget {
       _KindChipSpec(
         label: l10n.activityFilterChipAll,
         active: allActive,
-        onTap: () => controller.setQuery(
-          query.copyWith(kinds: const <ActivityKind>{}),
-        ),
+        onTap: () =>
+            controller.setQuery(query.copyWith(kinds: const <ActivityKind>{})),
       ),
       for (final kind in const [
         ActivityKind.income,
