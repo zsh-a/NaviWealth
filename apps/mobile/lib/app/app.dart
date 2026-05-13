@@ -34,7 +34,7 @@ class NaviWealthApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
-    final compact = ref.watch(compactDensityProvider);
+    final compact = useCompactDensity(defaultTargetPlatform, kIsWeb);
     final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
 
     return MaterialApp.router(

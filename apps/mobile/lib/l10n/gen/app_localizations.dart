@@ -1598,18 +1598,6 @@ abstract class AppLocalizations {
   /// **'中文'**
   String get langChinese;
 
-  /// Settings: toggle for tighter UI density on desktop / web
-  ///
-  /// In en, this message translates to:
-  /// **'Compact density'**
-  String get settingsCompactDensityTitle;
-
-  /// Settings: helper text for compact density toggle
-  ///
-  /// In en, this message translates to:
-  /// **'Tighter list rows and controls. Recommended for mouse use.'**
-  String get settingsCompactDensitySubtitle;
-
   /// No description provided for @commonRetry.
   ///
   /// In en, this message translates to:
@@ -6195,6 +6183,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unassigned'**
   String get portfolioUnassignedAccount;
+
+  /// Activity feed add action label
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get activityAddAction;
 
   /// Activity feed filter action title
   ///

@@ -258,8 +258,6 @@
   "langSystem": "跟随系统",
   "langEnglish": "英文",
   "langChinese": "中文",
-  "settingsCompactDensityTitle": "紧凑布局",
-  "settingsCompactDensitySubtitle": "更紧凑的列表行与控件，适合鼠标操作的桌面 / Web。",
 
   "commonRetry": "重试",
   "commonCancel": "取消",
@@ -1107,6 +1105,7 @@
   "portfolioAggregateItems": "{count} 项",
   "portfolioCurrencyNative": "原币 {amount}",
   "portfolioUnassignedAccount": "未分配",
+  "activityAddAction": "添加",
   "activityFeedFilterTitle": "筛选",
   "activityFeedFilterClear": "清除",
   "activityFeedFilterKind": "类型",

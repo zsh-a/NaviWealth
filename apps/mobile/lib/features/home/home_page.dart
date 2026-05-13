@@ -69,43 +69,73 @@ class _DashboardBody extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isWide = !Breakpoints.isMobile(width);
-        final basePadding = isWide
-            ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
-            : const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
+        final useCockpit = width >= 1024;
+        final basePadding = Breakpoints.isMobile(width)
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
+            : const EdgeInsets.symmetric(horizontal: 24, vertical: 24);
         final padding = basePadding.copyWith(
-          bottom: basePadding.bottom + MediaQuery.paddingOf(context).bottom + 16,
+          bottom:
+              basePadding.bottom + MediaQuery.paddingOf(context).bottom + 16,
         );
 
-        // Tablet/desktop: cap content width to 720 so a wide window doesn't
-        // stretch lines into uncomfortable spans. The cockpit reads as a
-        // focused single column at any width.
-        final content = ListView(
-          padding: padding.copyWith(top: 0),
+        return ListView(
+          padding: EdgeInsets.zero,
           children: [
-            const HomeGreetingHeader(),
-            _NetWorthHeader(snapshot: snapshot),
-            if (insights.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              AiInsightFeed(insights: insights),
-            ],
-            const SizedBox(height: 20),
-            AllocationSummary(snapshot: snapshot),
-            const SizedBox(height: 20),
-            const ActivityTimelinePreview(),
-            const SizedBox(height: 20),
-            const TrendCard(),
+            if (useCockpit)
+              AdaptiveContentFrame(
+                maxWidth: AdaptiveMaxWidth.dashboard,
+                layout: AdaptiveFrameLayout.cockpit,
+                padding: padding.copyWith(top: 0),
+                header: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const HomeGreetingHeader(),
+                    _NetWorthHeader(snapshot: snapshot),
+                  ],
+                ),
+                primary: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AllocationSummary(snapshot: snapshot),
+                    const SizedBox(height: 20),
+                    const TrendCard(),
+                  ],
+                ),
+                secondary: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (insights.isNotEmpty) ...[
+                      AiInsightFeed(insights: insights),
+                      const SizedBox(height: 20),
+                    ],
+                    const ActivityTimelinePreview(),
+                  ],
+                ),
+              )
+            else
+              AdaptiveContentFrame(
+                maxWidth: AdaptiveMaxWidth.narrow,
+                padding: padding.copyWith(top: 0),
+                primary: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const HomeGreetingHeader(),
+                    _NetWorthHeader(snapshot: snapshot),
+                    if (insights.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      AiInsightFeed(insights: insights),
+                    ],
+                    const SizedBox(height: 20),
+                    AllocationSummary(snapshot: snapshot),
+                    const SizedBox(height: 20),
+                    const ActivityTimelinePreview(),
+                    const SizedBox(height: 20),
+                    const TrendCard(),
+                  ],
+                ),
+              ),
           ],
         );
-        if (isWide) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: content,
-            ),
-          );
-        }
-        return content;
       },
     );
   }
@@ -126,54 +156,54 @@ class _NetWorthHeader extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       borderRadius: 18,
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.homeNetWorthTitle,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-                fontWeight: FontWeight.w600,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.homeNetWorthTitle,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Cap dynamic-text scaling on the 32dp hero number so users on
+          // 200% system font size don't blow the card out of its row.
+          // FittedBox handles long currency strings (¥123,456,789.00)
+          // by scaling glyphs down to fit the card's content rect.
+          MediaQuery.withClampedTextScaling(
+            maxScaleFactor: 1.3,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: AnimatedMoneyText(
+                amount: value,
+                currencyCode: snapshot.baseCurrency,
+                style: TypographyTokens.numericDisplay,
+                showSign: value != null && value < 0,
               ),
             ),
+          ),
+          if (hasData) ...[
             const SizedBox(height: 8),
-            // Cap dynamic-text scaling on the 32dp hero number so users on
-            // 200% system font size don't blow the card out of its row.
-            // FittedBox handles long currency strings (¥123,456,789.00)
-            // by scaling glyphs down to fit the card's content rect.
-            MediaQuery.withClampedTextScaling(
-              maxScaleFactor: 1.3,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: AnimatedMoneyText(
-                  amount: value,
-                  currencyCode: snapshot.baseCurrency,
-                  style: TypographyTokens.numericDisplay,
-                  showSign: value != null && value < 0,
-                ),
-              ),
-            ),
-            if (hasData) ...[
-              const SizedBox(height: 8),
-              _DeltaMetricsRow(metrics: metricsAsync),
-            ],
-            const SizedBox(height: 4),
-            Text(
-              hasData
-                  ? l10n.dashboardNetWorthBreakdown(
-                      _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
-                      _formatBaseAmount(
-                        snapshot.totalLiabilities.amount.toDouble(),
-                      ),
-                      snapshot.baseCurrency,
-                    )
-                  : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            _DeltaMetricsRow(metrics: metricsAsync),
           ],
-        ),
+          const SizedBox(height: 4),
+          Text(
+            hasData
+                ? l10n.dashboardNetWorthBreakdown(
+                    _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
+                    _formatBaseAmount(
+                      snapshot.totalLiabilities.amount.toDouble(),
+                    ),
+                    snapshot.baseCurrency,
+                  )
+                : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

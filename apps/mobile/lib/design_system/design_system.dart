@@ -5,7 +5,6 @@
 library;
 
 export 'charts/charts.dart';
-export 'preferences/density_preferences.dart';
 export 'preferences/theme_preferences.dart';
 export 'theme/accent_colors.dart';
 export 'theme/app_theme.dart';
@@ -17,6 +16,7 @@ export 'tokens/breakpoints.dart';
 export 'tokens/color_palette.dart';
 export 'tokens/motion_tokens.dart';
 export 'tokens/typography_tokens.dart';
+export 'widgets/adaptive_content_frame.dart';
 export 'widgets/animated_money_text.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_toast.dart';
@@ -31,4 +31,3 @@ export 'widgets/section_header.dart';
 export 'widgets/skeleton.dart';
 export 'widgets/skeletons/page_skeletons.dart';
 export 'widgets/soft_card.dart';
-
