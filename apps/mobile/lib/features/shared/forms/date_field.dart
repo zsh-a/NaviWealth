@@ -33,6 +33,8 @@ class DateField extends StatefulWidget {
 class _DateFieldState extends State<DateField> {
   late DateTime? _value;
   final _controller = TextEditingController();
+  Locale? _locale;
+  bool _syncQueued = false;
 
   @override
   void initState() {
@@ -42,20 +44,62 @@ class _DateFieldState extends State<DateField> {
   }
 
   @override
-  void didUpdateWidget(DateField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialValue != widget.initialValue) {
-      _value = widget.initialValue;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context);
+    if (_locale != locale) {
+      _locale = locale;
       _syncController();
     }
   }
 
-  void _syncController() {
-    if (_value == null) {
-      _controller.text = '';
-      return;
+  @override
+  void didUpdateWidget(DateField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      _value = widget.initialValue;
+      _queueControllerSync();
     }
-    _controller.text = _value!.toIso8601String().split('T').first;
+  }
+
+  String _format(DateTime? value) {
+    if (value == null) return '';
+    final locale = _locale;
+    if (locale == null) {
+      return value.toIso8601String().split('T').first;
+    }
+    return AppFormatters(locale: locale).date(value);
+  }
+
+  void _syncController() {
+    final text = _format(_value);
+    if (_controller.text != text) {
+      _controller.text = text;
+    }
+  }
+
+  void _queueControllerSync() {
+    if (_syncQueued) return;
+    _syncQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncQueued = false;
+      if (!mounted) return;
+      _syncController();
+    });
+  }
+
+  void _setValue(DateTime? value) {
+    setState(() {
+      _value = value;
+      _syncController();
+    });
+    widget.onChanged?.call(value);
+  }
+
+  DateTime _clampInitialDate(DateTime date, DateTime first, DateTime last) {
+    if (date.isBefore(first)) return first;
+    if (date.isAfter(last)) return last;
+    return date;
   }
 
   Future<void> _pick(BuildContext context) async {
@@ -66,22 +110,22 @@ class _DateFieldState extends State<DateField> {
         widget.lastDate ?? DateTime(today.year + 30, today.month, today.day);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _value ?? today,
+      initialDate: _clampInitialDate(_value ?? today, firstDate, lastDate),
       firstDate: firstDate,
       lastDate: lastDate,
     );
     if (picked == null) return;
-    setState(() => _value = picked);
-    widget.onChanged?.call(picked);
+    _setValue(picked);
+  }
+
+  void _clear() {
+    if (widget.required) return;
+    _setValue(null);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final formatter = AppFormatters(locale: Localizations.localeOf(context));
-    if (_value != null) {
-      _controller.text = formatter.date(_value!);
-    }
     return FTextFormField(
       control: FTextFieldControl.managed(controller: _controller),
       readOnly: true,
@@ -101,13 +145,7 @@ class _DateFieldState extends State<DateField> {
               padding: const EdgeInsetsDirectional.only(end: 4),
               child: FButton.icon(
                 variant: FButtonVariant.ghost,
-                onPress: widget.required
-                    ? null
-                    : () {
-                        setState(() => _value = null);
-                        _controller.clear();
-                        widget.onChanged?.call(null);
-                      },
+                onPress: widget.required ? null : _clear,
                 child: Icon(
                   Icons.clear,
                   size: 18,
