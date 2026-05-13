@@ -140,6 +140,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               tag: 'asset-${asset.id}-name',
               child: Text(asset.name ?? asset.symbol),
             ),
+            prefixes: [backHeaderAction(context)],
             suffixes: [
               FHeaderAction(
                 icon: _syncing
@@ -164,10 +165,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
                 // gating; absent when no recent touch on this id.
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: AiTouchMark(
-                    entityType: 'assets',
-                    entityId: asset.id,
-                  ),
+                  child: AiTouchMark(entityType: 'assets', entityId: asset.id),
                 ),
                 const SizedBox(height: 8),
                 AssetSummaryCard(asset: asset),
