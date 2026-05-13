@@ -175,42 +175,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.accountFormDeleteTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.accountFormDeleteContent(_initial!.name)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.accountFormCancelAction),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.accountFormDeleteAction),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.accountFormDeleteTitle),
+      body: Text(l10n.accountFormDeleteContent(_initial!.name)),
+      cancelLabel: l10n.accountFormCancelAction,
+      confirmLabel: l10n.accountFormDeleteAction,
+      destructive: true,
     );
     if (ok != true) return;
     setState(() => _busy = true);

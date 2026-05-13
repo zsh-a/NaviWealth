@@ -93,42 +93,12 @@ class DevicesPage extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.authLogoutDialogTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.authLogoutDialogBody),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.authLogoutDialogConfirm),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.authLogoutDialogTitle),
+      body: Text(l10n.authLogoutDialogBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.authLogoutDialogConfirm,
     );
     if (ok != true) return;
     await ref.read(authControllerProvider.notifier).logoutCurrent();
@@ -193,48 +163,18 @@ class _DevicesList extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final fallback = l10n.authDeviceRevokeError;
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.authDeviceRevokeDialogTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.authDeviceRevokeDialogBody(
-                device.name?.isNotEmpty == true
-                    ? device.name!
-                    : l10n.authDeviceUnnamed,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.authDeviceRevokeConfirm),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
+      title: Text(l10n.authDeviceRevokeDialogTitle),
+      body: Text(
+        l10n.authDeviceRevokeDialogBody(
+          device.name?.isNotEmpty == true
+              ? device.name!
+              : l10n.authDeviceUnnamed,
         ),
       ),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.authDeviceRevokeConfirm,
     );
     if (ok != true) return;
     try {
