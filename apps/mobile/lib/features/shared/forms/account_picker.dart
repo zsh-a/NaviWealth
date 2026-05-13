@@ -29,11 +29,11 @@ class AccountPicker extends StatelessWidget {
         ? accounts
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
     final effectiveValue = filtered.any((a) => a.id == value) ? value : null;
-    final items = <String, String>{
-      for (final a in filtered) '${a.name} · ${a.currency}': a.id,
+    final labelById = <String, String>{
+      for (final a in filtered) a.id: '${a.name} · ${a.currency}',
     };
-    return FSelect<String>(
-      items: items,
+    return FSelect<String>.rich(
+      format: (id) => labelById[id] ?? '',
       control: FSelectControl<String>.managed(
         initial: effectiveValue,
         onChange: onChanged,
@@ -42,6 +42,16 @@ class AccountPicker extends StatelessWidget {
       enabled: filtered.isNotEmpty,
       validator: (v) =>
           (v == null || v.isEmpty) ? l10n.formAccountPickerRequired : null,
+      children: [
+        for (final account in filtered)
+          FSelectItem<String>(
+            value: account.id,
+            title: Text(
+              labelById[account.id]!,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
     );
   }
 }

@@ -70,13 +70,20 @@ class CurrencyPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final effectiveValue = value == null || value!.isEmpty ? null : value;
+    final effectiveOptions = [
+      ...options,
+      if (effectiveValue != null && !options.contains(effectiveValue))
+        effectiveValue,
+    ];
     final items = <String, String>{
-      for (final code in options) currencyDisplayLabel(l10n, code): code,
+      for (final code in effectiveOptions)
+        currencyDisplayLabel(l10n, code): code,
     };
     return FSelect<String>(
       items: items,
       control: FSelectControl<String>.managed(
-        initial: value,
+        initial: effectiveValue,
         onChange: enabled ? onChanged : (_) {},
       ),
       label: Text(label ?? l10n.formCurrencyPickerLabelDefault),
