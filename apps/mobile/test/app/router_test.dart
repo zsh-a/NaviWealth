@@ -16,6 +16,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/desktop_sidebar.dart';
 import 'package:naviwealth/app/route_error_page.dart';
@@ -196,12 +197,11 @@ void main() {
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(FBottomNavigationBar), findsOneWidget);
     });
 
     for (final legacy in <String>[
       '/assets',
-      '/accounts',
       '/expenses',
       '/analytics',
       '/fire',
@@ -286,20 +286,20 @@ void main() {
       final container = await _pumpAt(tester);
       expect(_currentPath(container), AppRoutes.home);
 
-      // Find the GlassBottomBar and calculate nav item positions.
-      // Layout: [tab0] [tab1] [tab2] [tab3] — 4 equally-spaced tabs, no extra button.
-      final barFinder = find.byType(NavigationBar);
+      // Find the bottom bar and calculate nav item positions.
+      // Layout: Home / Activity / AI / Accounts / Settings.
+      final barFinder = find.byType(FBottomNavigationBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
       final barOrigin = barBox.localToGlobal(Offset.zero);
 
       final barCenterY = barOrigin.dy + barSize.height / 2;
       final barWidth = barSize.width;
-      final tabW = barWidth / 4;
+      final tabW = barWidth / 5;
 
-      // Item 1 = Portfolio (second from left).
-      final portfolioX = barOrigin.dx + tabW * 1.5;
-      await tester.tapAt(Offset(portfolioX, barCenterY));
+      // Item 3 = Accounts.
+      final accountsX = barOrigin.dx + tabW * 3.5;
+      await tester.tapAt(Offset(accountsX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.accounts);
@@ -307,20 +307,20 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 4-tab layout: Overview(0) | Portfolio(1) | Activity(2) | Plan(3)
+      // 5-tab layout: Home(0) | Activity(1) | AI(2) | Accounts(3) | Settings(4)
       final container = await _pumpAt(tester, initialLocation: AppRoutes.ai);
-      final bar = tester.widget<NavigationBar>(
-        find.byType(NavigationBar),
+      final bar = tester.widget<FBottomNavigationBar>(
+        find.byType(FBottomNavigationBar),
       );
-      expect(bar.selectedIndex, 3);
+      expect(bar.index, 2);
 
       container.read(appRouterProvider).go(AppRoutes.activity);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      final updated = tester.widget<NavigationBar>(
-        find.byType(NavigationBar),
+      final updated = tester.widget<FBottomNavigationBar>(
+        find.byType(FBottomNavigationBar),
       );
-      expect(updated.selectedIndex, 2);
+      expect(updated.index, 1);
       await _drainTimers(tester);
     });
   });
@@ -334,21 +334,21 @@ void main() {
       tester,
     ) async {
       await _pumpAt(tester, viewportSize: _mobileSize);
-      expect(find.byType(NavigationBar), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(FBottomNavigationBar), findsOneWidget);
+      expect(find.byType(FSidebar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
     testWidgets('tablet width uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: _tabletSize);
-      expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(FSidebar), findsOneWidget);
+      expect(find.byType(FBottomNavigationBar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
     testWidgets('tablet width ≥ 900 still uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: const Size(1100, 1000));
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(FSidebar), findsOneWidget);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
@@ -357,8 +357,7 @@ void main() {
     ) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
       expect(find.byType(DesktopSidebar), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(FBottomNavigationBar), findsNothing);
     });
 
     testWidgets('GlassSideBar selectedIndex follows the current URL', (
@@ -369,15 +368,13 @@ void main() {
         initialLocation: AppRoutes.ai,
         viewportSize: _tabletSize,
       );
-      // Verify the rail is rendered with the correct selected index.
-      var rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(rail.selectedIndex, 3);
+      expect(find.byType(FSidebar), findsOneWidget);
+      expect(find.byType(AccountsHubPage), findsNothing);
 
       container.read(appRouterProvider).go(AppRoutes.accounts);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(rail.selectedIndex, 1);
+      expect(find.byType(AccountsHubPage), findsOneWidget);
       await _drainTimers(tester);
     });
 
@@ -392,7 +389,7 @@ void main() {
       final sidebar = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      expect(sidebar.selectedIndex, 3);
+      expect(sidebar.selectedIndex, 2);
 
       container.read(appRouterProvider).go(AppRoutes.accounts);
       await tester.pump();
@@ -400,7 +397,7 @@ void main() {
       final updated = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      expect(updated.selectedIndex, 1);
+      expect(updated.selectedIndex, 3);
       await _drainTimers(tester);
     });
 

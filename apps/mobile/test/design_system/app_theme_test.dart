@@ -4,31 +4,30 @@ import 'package:naviwealth/design_system/design_system.dart';
 
 void main() {
   group('AppTheme', () {
-    test('light theme exposes all design ThemeExtensions', () {
+    test('light theme exposes Material theme tokens', () {
       final theme = AppTheme.light();
       expect(theme.brightness, Brightness.light);
-      expect(theme.extension<SemanticColors>(), isNotNull);
-      expect(theme.extension<MarketColors>(), isNotNull);
-      expect(theme.extension<AppElevations>(), isNotNull);
+      expect(theme.colorScheme.brightness, Brightness.light);
+      expect(theme.colorScheme.primary, AccentColors.primary(Brightness.light));
+      expect(theme.textTheme.bodyMedium, isNotNull);
     });
 
     test('dark theme uses dark variants', () {
       final theme = AppTheme.dark();
       expect(theme.brightness, Brightness.dark);
       // Dark divider != light divider.
-      expect(
-        theme.extension<SemanticColors>()!.divider,
-        isNot(SemanticColors.light().divider),
-      );
+      expect(SemanticColors.dark.divider, isNot(SemanticColors.light.divider));
     });
 
-    test('market mode propagates to MarketColors extension', () {
-      final cn = AppTheme.light(
-        marketColorMode: MarketColorMode.redUpGreenDown,
-      ).extension<MarketColors>()!;
-      final intl = AppTheme.light(
-        marketColorMode: MarketColorMode.greenUpRedDown,
-      ).extension<MarketColors>()!;
+    test('market mode resolves MarketColors token set', () {
+      final cn = MarketColors.fromMode(
+        MarketColorMode.redUpGreenDown,
+        brightness: Brightness.light,
+      );
+      final intl = MarketColors.fromMode(
+        MarketColorMode.greenUpRedDown,
+        brightness: Brightness.light,
+      );
       expect(cn.mode, MarketColorMode.redUpGreenDown);
       expect(intl.mode, MarketColorMode.greenUpRedDown);
       expect(cn.up, intl.down);
@@ -40,18 +39,22 @@ void main() {
   ) async {
     SemanticColors? semantic;
     MarketColors? market;
-    AppElevations? elevations;
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Builder(
-          builder: (context) {
-            semantic = SemanticColors.of(context);
-            market = MarketColors.of(context);
-            elevations = AppElevations.of(context);
-            return const SizedBox.shrink();
-          },
+      MarketColorsScope(
+        colors: MarketColors.fromMode(
+          MarketColorMode.redUpGreenDown,
+          brightness: Brightness.light,
+        ),
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) {
+              semantic = SemanticColors.of(context);
+              market = MarketColors.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
@@ -59,6 +62,5 @@ void main() {
     expect(semantic, isNotNull);
     expect(market, isNotNull);
     expect(market!.mode, MarketColorMode.redUpGreenDown);
-    expect(elevations!.level2, isNotEmpty);
   });
 }

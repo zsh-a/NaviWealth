@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 Widget _wrap(
@@ -7,11 +8,17 @@ Widget _wrap(
   bool disableAnimations = false,
   Brightness brightness = Brightness.light,
 }) {
+  final fTheme = brightness == Brightness.dark
+      ? FThemes.slate.dark.desktop
+      : FThemes.slate.light.desktop;
   return MaterialApp(
     theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
     home: MediaQuery(
       data: MediaQueryData(disableAnimations: disableAnimations),
-      child: Scaffold(body: Center(child: child)),
+      child: FTheme(
+        data: fTheme,
+        child: Scaffold(body: Center(child: child)),
+      ),
     ),
   );
 }
@@ -26,27 +33,23 @@ void main() {
     expect(size.height, 24);
   });
 
-  testWidgets(
-    'SkeletonBox runs the shimmer animation when motion is enabled',
-    (tester) async {
-      const key = ValueKey('shimmer');
-      await tester.pumpWidget(
-        _wrap(const SkeletonBox(key: key, width: 100, height: 16)),
-      );
-      // The animation drives a CustomPaint inside an AnimatedBuilder
-      // descendant of our SkeletonBox.
-      expect(
-        find.descendant(
-          of: find.byKey(key),
-          matching: find.byType(CustomPaint),
-        ),
-        findsWidgets,
-      );
-      // Tear the widget down so the running ticker doesn't leak past
-      // the test boundary.
-      await tester.pumpWidget(const SizedBox.shrink());
-    },
-  );
+  testWidgets('SkeletonBox runs the shimmer animation when motion is enabled', (
+    tester,
+  ) async {
+    const key = ValueKey('shimmer');
+    await tester.pumpWidget(
+      _wrap(const SkeletonBox(key: key, width: 100, height: 16)),
+    );
+    // The animation drives a CustomPaint inside an AnimatedBuilder
+    // descendant of our SkeletonBox.
+    expect(
+      find.descendant(of: find.byKey(key), matching: find.byType(CustomPaint)),
+      findsWidgets,
+    );
+    // Tear the widget down so the running ticker doesn't leak past
+    // the test boundary.
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets(
     'SkeletonBox renders static block when MediaQuery disables animations',
@@ -68,45 +71,30 @@ void main() {
         findsNothing,
       );
       expect(
-        find.descendant(
-          of: find.byKey(key),
-          matching: find.byType(ColoredBox),
-        ),
+        find.descendant(of: find.byKey(key), matching: find.byType(ColoredBox)),
         findsOneWidget,
       );
     },
   );
 
-  testWidgets(
-    'SkeletonBox renders static block when shimmer flag is false',
-    (tester) async {
-      const key = ValueKey('shimmer-off');
-      await tester.pumpWidget(
-        _wrap(
-          const SkeletonBox(
-            key: key,
-            width: 100,
-            height: 16,
-            shimmer: false,
-          ),
-        ),
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(key),
-          matching: find.byType(CustomPaint),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(key),
-          matching: find.byType(ColoredBox),
-        ),
-        findsOneWidget,
-      );
-    },
-  );
+  testWidgets('SkeletonBox renders static block when shimmer flag is false', (
+    tester,
+  ) async {
+    const key = ValueKey('shimmer-off');
+    await tester.pumpWidget(
+      _wrap(
+        const SkeletonBox(key: key, width: 100, height: 16, shimmer: false),
+      ),
+    );
+    expect(
+      find.descendant(of: find.byKey(key), matching: find.byType(CustomPaint)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byKey(key), matching: find.byType(ColoredBox)),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('SkeletonBox is excluded from semantics', (tester) async {
     final handle = tester.ensureSemantics();
@@ -117,7 +105,7 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('SkeletonCard wraps child in a Card with padding', (
+  testWidgets('SkeletonCard wraps child in an FCard with padding', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -130,7 +118,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(SkeletonCard),
-        matching: find.byType(Card),
+        matching: find.byType(FCard),
       ),
       findsOneWidget,
     );
@@ -143,34 +131,22 @@ void main() {
     );
   });
 
-  testWidgets(
-    'SkeletonBox dark-mode tones come from the active ColorScheme',
-    (tester) async {
-      const key = ValueKey('dark');
-      await tester.pumpWidget(
-        _wrap(
-          const SkeletonBox(
-            key: key,
-            width: 50,
-            height: 16,
-            shimmer: false,
-          ),
-          brightness: Brightness.dark,
-        ),
-      );
-      final colored = tester.widget<ColoredBox>(
-        find
-            .descendant(
-              of: find.byKey(key),
-              matching: find.byType(ColoredBox),
-            )
-            .first,
-      );
-      final ctx = tester.element(find.byKey(key));
-      expect(
-        colored.color,
-        Theme.of(ctx).colorScheme.surfaceContainerHighest,
-      );
-    },
-  );
+  testWidgets('SkeletonBox dark-mode tones come from the active ColorScheme', (
+    tester,
+  ) async {
+    const key = ValueKey('dark');
+    await tester.pumpWidget(
+      _wrap(
+        const SkeletonBox(key: key, width: 50, height: 16, shimmer: false),
+        brightness: Brightness.dark,
+      ),
+    );
+    final colored = tester.widget<ColoredBox>(
+      find
+          .descendant(of: find.byKey(key), matching: find.byType(ColoredBox))
+          .first,
+    );
+    final ctx = tester.element(find.byKey(key));
+    expect(colored.color, ctx.theme.colors.muted);
+  });
 }

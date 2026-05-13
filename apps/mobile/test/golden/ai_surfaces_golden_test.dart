@@ -1,11 +1,8 @@
 // Wave 43 — golden coverage for the AI visual language (Wave 36 tokens
 // + Wave 37/38/39/40 surfaces).
 //
-// We don't reuse `_golden_setup.dart` here because that harness pulls
-// in the page-level theme path which currently fails to compile
-// (`AppTheme.dark(marketColorMode: …)` references a removed parameter —
-// see `tool/known-failing-tests.txt`). These goldens are intentionally
-// component-scoped: one widget, deterministic inputs, minimal chrome.
+// These goldens are intentionally component-scoped: one widget,
+// deterministic inputs, minimal chrome.
 //
 // Coverage: 7 goldens / 1 file
 //   - ai_pill_neutral / ai_pill_selected / ai_pill_error
@@ -46,10 +43,7 @@ Future<void> _pumpComponent(
           backgroundColor: Colors.white,
           body: Padding(
             padding: const EdgeInsets.all(16),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: child,
-            ),
+            child: Align(alignment: Alignment.topLeft, child: child),
           ),
         ),
       ),
@@ -60,49 +54,40 @@ Future<void> _pumpComponent(
 }
 
 void main() {
-  testGoldens(
-    'AiPill — neutral / selected / error',
-    (tester) async {
-      await _pumpComponent(
-        tester,
-        name: 'ai_pill_variants',
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            AiPill(label: 'neutral', leading: const AiSparkle()),
-            AiPill(label: 'selected', state: AiPillState.selected),
-            AiPill(label: 'error', state: AiPillState.error),
-          ],
-        ),
-      );
-    },
-    tags: 'golden',
-  );
+  testGoldens('AiPill — neutral / selected / error', (tester) async {
+    await _pumpComponent(
+      tester,
+      name: 'ai_pill_variants',
+      child: const Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          AiPill(label: 'neutral', leading: AiSparkle()),
+          AiPill(label: 'selected', state: AiPillState.selected),
+          AiPill(label: 'error', state: AiPillState.error),
+        ],
+      ),
+    );
+  }, tags: 'golden');
 
-  testGoldens(
-    'AiObjectCapsule (Wave 33)',
-    (tester) async {
-      await _pumpComponent(
-        tester,
-        name: 'ai_object_capsule',
-        // We use the underlying AiPill here directly to avoid
-        // pulling in showAiBottomSheet's transitive providers — the
-        // capsule's visual identity is `AiPill + AiSparkle + intent
-        // label`, exactly what we render below.
-        child: AiPill(label: '为什么变化', leading: const AiSparkle()),
-      );
-    },
-    tags: 'golden',
-  );
+  testGoldens('AiObjectCapsule (Wave 33)', (tester) async {
+    await _pumpComponent(
+      tester,
+      name: 'ai_object_capsule',
+      // We use the underlying AiPill here directly to avoid
+      // pulling in showAiBottomSheet's transitive providers — the
+      // capsule's visual identity is `AiPill + AiSparkle + intent
+      // label`, exactly what we render below.
+      child: const AiPill(label: '为什么变化', leading: AiSparkle()),
+    );
+  }, tags: 'golden');
 
-  testGoldens(
-    'asset_allocation domain renderer (Wave 34)',
-    (tester) async {
-      await _pumpComponent(
-        tester,
-        name: 'asset_allocation_view',
-        child: const AssetAllocationView(output: <String, Object?>{
+  testGoldens('asset_allocation domain renderer (Wave 34)', (tester) async {
+    await _pumpComponent(
+      tester,
+      name: 'asset_allocation_view',
+      child: const AssetAllocationView(
+        output: <String, Object?>{
           'buckets': [
             {
               'bucket_dim': 'asset_type',
@@ -121,19 +106,17 @@ void main() {
               'weight': 0.4,
             },
           ],
-        }),
-      );
-    },
-    tags: 'golden',
-  );
+        },
+      ),
+    );
+  }, tags: 'golden');
 
-  testGoldens(
-    'subscription_changes domain renderer (Wave 34)',
-    (tester) async {
-      await _pumpComponent(
-        tester,
-        name: 'subscription_changes_view',
-        child: const SubscriptionChangesView(output: <String, Object?>{
+  testGoldens('subscription_changes domain renderer (Wave 34)', (tester) async {
+    await _pumpComponent(
+      tester,
+      name: 'subscription_changes_view',
+      child: const SubscriptionChangesView(
+        output: <String, Object?>{
           'changes': [
             {
               'id': 'netflix|USD',
@@ -156,48 +139,48 @@ void main() {
               'since': '2026-03-01T00:00:00Z',
             },
           ],
-        }),
-      );
-    },
-    tags: 'golden',
-  );
-
-  testGoldens(
-    'AiTraceTimeline — invocation → routing → tools → terminal',
-    (tester) async {
-      const trace = AiTrace(
-        requestId: 'r_golden',
-        startedAtIso: '2026-05-12T09:00:00Z',
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.suggest,
-          label: 'turn',
-        ),
-        backend: Backend.cloud,
-        budgetTier: BudgetTier.small,
-        routingReason: 'capsule_explain',
-        usedCloud: true,
-        usedRawLedger: false,
-        totalDurationMs: 850,
-        toolCalls: [
-          TraceToolCall(name: 'get_holdings', durationMs: 30, ok: true),
-          TraceToolCall(name: 'compute_xirr', durationMs: 80, ok: true),
-          TraceToolCall(
-              name: 'get_subscription_changes', durationMs: 12, ok: false),
-        ],
-        invocation: <String, Object?>{
-          'source': 'expense_detail',
-          'intent': 'explain_change',
-          'object_type': 'expense',
-          'object_id': 'exp_42',
         },
-      );
-      await _pumpComponent(
-        tester,
-        name: 'ai_trace_timeline',
-        child: AiTraceTimeline(events: buildTimeline(trace)),
-      );
-    },
-    tags: 'golden',
-  );
+      ),
+    );
+  }, tags: 'golden');
+
+  testGoldens('AiTraceTimeline — invocation → routing → tools → terminal', (
+    tester,
+  ) async {
+    const trace = AiTrace(
+      requestId: 'r_golden',
+      startedAtIso: '2026-05-12T09:00:00Z',
+      intent: IntentHint(
+        capability: Capability.analyze,
+        risk: RiskLevel.suggest,
+        label: 'turn',
+      ),
+      backend: Backend.cloud,
+      budgetTier: BudgetTier.small,
+      routingReason: 'capsule_explain',
+      usedCloud: true,
+      usedRawLedger: false,
+      totalDurationMs: 850,
+      toolCalls: [
+        TraceToolCall(name: 'get_holdings', durationMs: 30, ok: true),
+        TraceToolCall(name: 'compute_xirr', durationMs: 80, ok: true),
+        TraceToolCall(
+          name: 'get_subscription_changes',
+          durationMs: 12,
+          ok: false,
+        ),
+      ],
+      invocation: <String, Object?>{
+        'source': 'expense_detail',
+        'intent': 'explain_change',
+        'object_type': 'expense',
+        'object_id': 'exp_42',
+      },
+    );
+    await _pumpComponent(
+      tester,
+      name: 'ai_trace_timeline',
+      child: AiTraceTimeline(events: buildTimeline(trace)),
+    );
+  }, tags: 'golden');
 }

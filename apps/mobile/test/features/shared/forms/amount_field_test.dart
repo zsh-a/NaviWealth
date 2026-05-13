@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/features/shared/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -15,7 +16,10 @@ Widget _wrap(Widget child) {
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('zh'),
-    home: Scaffold(body: child),
+    home: FTheme(
+      data: FThemes.slate.light.desktop,
+      child: Scaffold(body: child),
+    ),
   );
 }
 
@@ -23,10 +27,15 @@ void main() {
   testWidgets('rejects empty input when required', (tester) async {
     final formKey = GlobalKey<FormState>();
     await tester.pumpWidget(
-      _wrap(Form(key: formKey, child: const AmountField(label: '金额'))),
+      _wrap(
+        Form(
+          key: formKey,
+          child: const AmountField(label: '金额'),
+        ),
+      ),
     );
     expect(formKey.currentState!.validate(), isFalse);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('请输入金额'), findsOneWidget);
   });
 
@@ -41,7 +50,7 @@ void main() {
         ),
       ),
     );
-    await tester.enterText(find.byType(TextFormField), '12345.6789');
+    await tester.enterText(find.byType(EditableText), '12345.6789');
     expect(formKey.currentState!.validate(), isTrue);
     expect(readAmount(controller), Decimal.parse('12345.6789'));
   });
@@ -53,7 +62,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(AmountField(label: '金额', controller: controller)),
     );
-    await tester.enterText(find.byType(TextFormField), '-5');
+    await tester.enterText(find.byType(EditableText), '-5');
     // FilteringTextInputFormatter.allow rejects any value whose final form
     // doesn't match the pattern, so a typed `-5` reverts to the previous
     // (empty) string — which is the right user-facing outcome regardless.
@@ -80,38 +89,37 @@ void main() {
 
       // Type something then clear it to trigger the validator without
       // submitting the form.
-      await tester.enterText(find.byType(TextFormField), '12.34');
+      await tester.enterText(find.byType(EditableText), '12.34');
       await tester.pump();
       expect(find.text('请输入金额'), findsNothing);
 
-      await tester.enterText(find.byType(TextFormField), '');
-      await tester.pump();
+      await tester.enterText(find.byType(EditableText), '');
+      await tester.pumpAndSettle();
       expect(find.text('请输入金额'), findsOneWidget);
     },
   );
 
-  testWidgets(
-    'forwards the keyboard action to onFieldSubmitted',
-    (tester) async {
-      var submitted = false;
-      final focus = FocusNode();
-      addTearDown(focus.dispose);
-      await tester.pumpWidget(
-        _wrap(
-          AmountField(
-            label: '金额',
-            focusNode: focus,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => submitted = true,
-          ),
+  testWidgets('forwards the keyboard action to onFieldSubmitted', (
+    tester,
+  ) async {
+    var submitted = false;
+    final focus = FocusNode();
+    addTearDown(focus.dispose);
+    await tester.pumpWidget(
+      _wrap(
+        AmountField(
+          label: '金额',
+          focusNode: focus,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => submitted = true,
         ),
-      );
-      await tester.enterText(find.byType(TextFormField), '99');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pump();
-      expect(submitted, isTrue);
-    },
-  );
+      ),
+    );
+    await tester.enterText(find.byType(EditableText), '99');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(submitted, isTrue);
+  });
 
   testWidgets(
     'preserves text and cursor across rebuilds when no controller is supplied',
@@ -138,10 +146,12 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField), '1234.5');
+      await tester.enterText(find.byType(EditableText), '1234.5');
       // Place the cursor in the middle of the entered text.
-      final beforeRebuild = tester.widget<TextField>(find.byType(TextField));
-      beforeRebuild.controller!.selection = const TextSelection.collapsed(
+      final beforeRebuild = tester.widget<EditableText>(
+        find.byType(EditableText),
+      );
+      beforeRebuild.controller.selection = const TextSelection.collapsed(
         offset: 3,
       );
       await tester.pump();
