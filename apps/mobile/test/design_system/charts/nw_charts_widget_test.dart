@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -263,6 +264,55 @@ void main() {
         ),
       );
       expect(captured.showGrid, isFalse);
+    });
+
+    testWidgets('touch X label aligns to the selected plot point', (
+      tester,
+    ) async {
+      final days = [
+        DateTime(2026, 1),
+        DateTime(2026, 1, 2),
+        DateTime(2026, 1, 3),
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'main',
+                points: [
+                  for (var i = 0; i < days.length; i++)
+                    ChartPoint(
+                      x: days[i].millisecondsSinceEpoch.toDouble(),
+                      y: i.toDouble(),
+                    ),
+                ],
+              ),
+            ],
+            xAxis: const TimeAxis(format: AxisDateFormat.dayMonth),
+            showXAxis: false,
+            showTouchXAxisLabel: true,
+          ),
+        ),
+      );
+
+      final chartRect = tester.getRect(find.byType(LineChart));
+      const leftAxisWidth = 44.0;
+      final expectedCenterX =
+          chartRect.left +
+          leftAxisWidth +
+          (chartRect.width - leftAxisWidth) / 2;
+      final gesture = await tester.startGesture(
+        Offset(expectedCenterX, chartRect.center.dy),
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+      await tester.pump();
+
+      final label = find.text('Jan 2');
+      expect(label, findsNWidgets(2));
+      expect(tester.getCenter(label.last).dx, closeTo(expectedCenterX, 8));
+
+      await gesture.up();
     });
   });
 
