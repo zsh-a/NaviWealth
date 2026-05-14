@@ -5,6 +5,7 @@ import '../../../data/domain/liability.dart';
 import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
+import '../../../domain/values/price_confidence.dart';
 import '../../assets/physical/data/physical_asset.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/domain/liability_summary.dart';
@@ -79,6 +80,8 @@ class DashboardAggregator {
   }) {
     final byCategory = <AssetCategory, List<CategoryItem>>{};
     _mismatches.clear();
+    var staleHoldings = 0;
+    PriceConfidence? confidenceFloor;
 
     for (final asset in manualAssets) {
       final item = _itemForManualAsset(asset);
@@ -99,6 +102,13 @@ class DashboardAggregator {
       if (item == null) continue;
       final cat = categoryForAssetType(holding.asset.type);
       byCategory.putIfAbsent(cat, () => []).add(item);
+      final c = holding.snapshot.priceConfidence;
+      if (c != null) {
+        if (c == PriceConfidence.stale) staleHoldings++;
+        if (confidenceFloor == null || c.index > confidenceFloor.index) {
+          confidenceFloor = c;
+        }
+      }
     }
 
     final summaryById = {for (final s in liabilitySummaries) s.liability.id: s};
@@ -167,6 +177,8 @@ class DashboardAggregator {
       totalLiabilities: totalLiabilities,
       netWorth: totalAssets - totalLiabilities,
       currencyMismatches: List.unmodifiable(_mismatches),
+      staleHoldingCount: staleHoldings,
+      confidenceFloor: confidenceFloor,
     );
   }
 

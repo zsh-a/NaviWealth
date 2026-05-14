@@ -274,6 +274,9 @@ class _LedgerHoldingService implements HoldingService {
         weight: Decimal.zero,
         baseCurrency: baseCurrency,
         asOf: asOf,
+        priceConfidence: price.confidence,
+        priceSource: price.source,
+        priceAsOf: price.asOf,
       );
     }
 

@@ -9,7 +9,7 @@
 /// not free-form. No "Ask AI" / glow / generic chat icon.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';

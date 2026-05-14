@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -73,58 +73,58 @@ class _ActionCard extends StatelessWidget {
         onPress: route == null ? null : () => context.push(route),
         padding: const EdgeInsets.all(14),
         child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: tint.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(item.icon, size: 14, color: tint),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        insightHeadline(l10n, item),
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(item.icon, size: 14, color: tint),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    insightDetail(l10n, item),
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                      height: 1.4,
+                    insightHeadline(l10n, item),
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 4,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (route != null)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      l10n.aiActionCardsOpen,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
               ],
             ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: Text(
+                insightDetail(l10n, item),
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                  height: 1.4,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (route != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.aiActionCardsOpen,
+                  style: context.theme.typography.xs.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

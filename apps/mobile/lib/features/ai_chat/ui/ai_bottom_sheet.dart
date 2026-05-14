@@ -15,8 +15,9 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -35,35 +36,18 @@ Future<void> showAiBottomSheet(
   String? objectLabel,
 }) {
   final viewportHeight = MediaQuery.of(context).size.height;
-  // §5.4 fallback rule: short viewport → full-screen modal route
-  // rather than a cramped sheet (old Android landscape, etc.).
-  if (viewportHeight < 500) {
-    return Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (_) => Dialog.fullscreen(
-          child: AiBottomSheetShell(
-            invocation: invocation,
-            objectLabel: objectLabel,
-          ),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<void>(
+  final sheetHeight = viewportHeight < 500
+      ? viewportHeight
+      : viewportHeight * 0.7;
+  return showFSheet<void>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    builder: (_) => DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (_, controller) => AiBottomSheetShell(
+    side: FLayout.btt,
+    mainAxisMaxRatio: null,
+    builder: (_) => SizedBox(
+      height: sheetHeight,
+      child: AiBottomSheetShell(
         invocation: invocation,
         objectLabel: objectLabel,
-        scrollController: controller,
       ),
     ),
   );
@@ -148,17 +132,19 @@ class _AiBottomSheetShellState extends ConsumerState<AiBottomSheetShell> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return SafeArea(
       top: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Header(invocation: widget.invocation, objectLabel: widget.objectLabel),
-          const Divider(height: 1),
+          _Header(
+            invocation: widget.invocation,
+            objectLabel: widget.objectLabel,
+          ),
+          const FDivider(),
           Expanded(child: _body(context)),
           if (_sessionId != null) ...[
-            const Divider(height: 1),
+            const FDivider(),
             _Footer(
               onExpand: () => _expandToChat(context),
               onDismiss: () => Navigator.of(context).maybePop(),
@@ -169,8 +155,8 @@ class _AiBottomSheetShellState extends ConsumerState<AiBottomSheetShell> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Text(
                 _error!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.error,
+                style: context.theme.typography.sm.copyWith(
+                  color: context.theme.colors.destructive,
                 ),
               ),
             ),
@@ -207,11 +193,9 @@ class _AiBottomSheetShellState extends ConsumerState<AiBottomSheetShell> {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('对话渲染失败: $e'),
-      ),
+      loading: () => const Center(child: FCircularProgress()),
+      error: (e, _) =>
+          Padding(padding: const EdgeInsets.all(16), child: Text('对话渲染失败: $e')),
     );
   }
 
@@ -275,14 +259,8 @@ class _Header extends StatelessWidget {
                     style: AiType.label(context),
                   ),
                   if (objectLabel != null) ...[
-                    TextSpan(
-                      text: '  ·  ',
-                      style: AiType.meta(context),
-                    ),
-                    TextSpan(
-                      text: objectLabel!,
-                      style: AiType.meta(context),
-                    ),
+                    TextSpan(text: '  ·  ', style: AiType.meta(context)),
+                    TextSpan(text: objectLabel!, style: AiType.meta(context)),
                   ],
                 ],
               ),
@@ -370,20 +348,21 @@ class _Footer extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: Row(
         children: [
-          TextButton.icon(
-            onPressed: onDismiss,
-            icon: const Icon(Icons.close, size: 16),
-            label: const Text('关闭'),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onDismiss,
+            prefix: const Text('x'),
+            child: const Text('关闭'),
           ),
           const Spacer(),
-          TextButton.icon(
-            onPressed: onExpand,
-            icon: const Icon(Icons.open_in_full, size: 16),
-            label: const Text('展开对话'),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: onExpand,
+            prefix: const Text('↗'),
+            child: const Text('展开对话'),
           ),
         ],
       ),
     );
   }
 }
-

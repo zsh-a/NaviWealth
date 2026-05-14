@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../domain/values/money.dart';
+import '../../../domain/values/price_confidence.dart';
 
 /// The seven top-level "big bucket" categories surfaced by the dashboard pie
 /// chart. The set is derived from FIR-52's scope: 股票 / ETF / 现金 / 加密 /
@@ -207,6 +208,8 @@ class DashboardSnapshot {
     required this.totalLiabilities,
     required this.netWorth,
     this.currencyMismatches = const [],
+    this.staleHoldingCount = 0,
+    this.confidenceFloor,
   });
 
   /// Empty snapshot — used as the initial state while async data is still
@@ -236,6 +239,17 @@ class DashboardSnapshot {
   /// them to [baseCurrency]. Empty when every asset / liability could be
   /// folded into the snapshot. Caller surfaces these in a warning banner.
   final List<CurrencyMismatch> currencyMismatches;
+
+  /// Number of securities holdings whose resolved price came back with
+  /// [PriceConfidence.stale]. Drives the "N holdings have stale prices"
+  /// banner. Zero when every contributing holding had a fresh price or
+  /// when the dashboard has no securities holdings.
+  final int staleHoldingCount;
+
+  /// Worst (lowest-trust) [PriceConfidence] across every contributing
+  /// holding. `null` when no security holding contributed a confidence
+  /// (e.g. pure manual-asset portfolio, or empty snapshot).
+  final PriceConfidence? confidenceFloor;
 
   bool get isEmpty => allocations.isEmpty;
 }

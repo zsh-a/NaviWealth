@@ -654,41 +654,63 @@ class _ContinueButton extends StatelessWidget {
   }
 }
 
-class _ReasoningPanel extends StatelessWidget {
+class _ReasoningPanel extends StatefulWidget {
   const _ReasoningPanel({required this.text});
 
   final String text;
 
   @override
+  State<_ReasoningPanel> createState() => _ReasoningPanelState();
+}
+
+class _ReasoningPanelState extends State<_ReasoningPanel> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: EdgeInsets.zero,
-        dense: true,
-        visualDensity: VisualDensity.compact,
-        title: Text(
-          AppLocalizations.of(context).aiChatThinking,
-          style: context.theme.typography.xs.copyWith(
-            color: colors.mutedForeground,
-            fontWeight: FontWeight.w600,
+    final labelStyle = context.theme.typography.xs.copyWith(
+      color: colors.mutedForeground,
+      fontWeight: FontWeight.w600,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FTappable(
+          onPress: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  AppLocalizations.of(context).aiChatThinking,
+                  style: labelStyle,
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 16,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
           ),
         ),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
             child: SelectableText(
-              text,
+              widget.text,
               style: context.theme.typography.xs.copyWith(
                 height: 1.45,
                 color: colors.mutedForeground,
               ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
