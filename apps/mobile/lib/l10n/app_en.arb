@@ -11,8 +11,6 @@
   "@navExpenses": { "description": "Expense list label" },
   "navSettings": "Settings",
   "@navSettings": { "description": "Bottom nav: settings tab" },
-  "navAI": "AI",
-  "@navAI": { "description": "Bottom nav: AI assistant tab (centered accent)" },
   "navActivity": "Activity",
   "@navActivity": { "description": "Bottom nav: activity tab (single timeline)" },
   "navAccounts": "Accounts",

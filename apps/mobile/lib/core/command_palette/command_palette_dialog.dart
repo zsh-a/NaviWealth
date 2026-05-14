@@ -87,7 +87,7 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
       final aiEntry = CommandPaletteEntry(
         id: 'action.askAi',
         label: l10n.commandPaletteAskAi(raw),
-        icon: Icons.auto_awesome,
+        icon: Icons.auto_awesome_outlined,
         keywords: <String>[raw, 'ai', 'ask'],
         run: (_) => widget.onAskAi!(raw),
       );

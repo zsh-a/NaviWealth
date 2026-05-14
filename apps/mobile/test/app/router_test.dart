@@ -225,8 +225,8 @@ void main() {
       expect(_currentPath(container), AppRoutes.accounts);
     });
 
-    testWidgets('/plan/analytics renders Analytics', (tester) async {
-      await _pumpAt(tester, initialLocation: AppRoutes.aiInsightsAnalytics);
+    testWidgets('/accounts/analytics renders Analytics', (tester) async {
+      await _pumpAt(tester, initialLocation: AppRoutes.accountsAnalytics);
       expect(find.byType(AnalyticsPage), findsOneWidget);
     });
 
@@ -241,7 +241,7 @@ void main() {
       // Query params on a redirect path should survive the redirect.
       await _pumpAt(
         tester,
-        initialLocation: '${AppRoutes.aiInsightsAnalytics}?range=1y',
+        initialLocation: '${AppRoutes.accountsAnalytics}?range=1y',
       );
       expect(find.byType(AnalyticsPage), findsOneWidget);
     });
@@ -267,10 +267,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.activity);
 
-      container.read(appRouterProvider).go(AppRoutes.ai);
+      container.read(appRouterProvider).go(AppRoutes.settings);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(_currentPath(container), AppRoutes.ai);
+      expect(_currentPath(container), AppRoutes.settings);
 
       container.read(appRouterProvider).go(AppRoutes.home);
       await tester.pump();
@@ -287,7 +287,7 @@ void main() {
       expect(_currentPath(container), AppRoutes.home);
 
       // Find the bottom bar and calculate nav item positions.
-      // Layout: Home / Activity / AI / Accounts / Settings.
+      // Layout: Home / Activity / Accounts / Settings.
       final barFinder = find.byType(FBottomNavigationBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
@@ -295,10 +295,10 @@ void main() {
 
       final barCenterY = barOrigin.dy + barSize.height / 2;
       final barWidth = barSize.width;
-      final tabW = barWidth / 5;
+      final tabW = barWidth / 4;
 
-      // Item 3 = Accounts.
-      final accountsX = barOrigin.dx + tabW * 3.5;
+      // Item 2 = Accounts (was index 3 in the 5-tab layout).
+      final accountsX = barOrigin.dx + tabW * 2.5;
       await tester.tapAt(Offset(accountsX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -307,8 +307,11 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 5-tab layout: Home(0) | Activity(1) | AI(2) | Accounts(3) | Settings(4)
-      final container = await _pumpAt(tester, initialLocation: AppRoutes.ai);
+      // 4-tab layout: Home(0) | Activity(1) | Accounts(2) | Settings(3)
+      final container = await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.accounts,
+      );
       final bar = tester.widget<FBottomNavigationBar>(
         find.byType(FBottomNavigationBar),
       );
@@ -365,7 +368,7 @@ void main() {
     ) async {
       final container = await _pumpAt(
         tester,
-        initialLocation: AppRoutes.ai,
+        initialLocation: AppRoutes.activity,
         viewportSize: _tabletSize,
       );
       expect(find.byType(FSidebar), findsOneWidget);
@@ -381,9 +384,12 @@ void main() {
     testWidgets('DesktopSidebar selectedIndex follows the current URL', (
       tester,
     ) async {
+      // FIRE now lives under Accounts (/accounts/fire), so the Accounts
+      // tab (index 2) is what stays selected when the user is on a plan
+      // dashboard.
       final container = await _pumpAt(
         tester,
-        initialLocation: AppRoutes.aiInsightsFire,
+        initialLocation: AppRoutes.accountsFire,
         viewportSize: _desktopSize,
       );
       final sidebar = tester.widget<DesktopSidebar>(
@@ -391,7 +397,7 @@ void main() {
       );
       expect(sidebar.selectedIndex, 2);
 
-      container.read(appRouterProvider).go(AppRoutes.accounts);
+      container.read(appRouterProvider).go(AppRoutes.settings);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       final updated = tester.widget<DesktopSidebar>(
@@ -432,7 +438,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AccountsHubPage), findsOneWidget);
 
-      router.go(AppRoutes.aiInsightsAnalytics);
+      router.go(AppRoutes.accountsAnalytics);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnalyticsPage), findsOneWidget);
@@ -445,11 +451,11 @@ void main() {
       expect(_currentPath(container), AppRoutes.accounts);
 
       // Simulate browser "forward".
-      router.go(AppRoutes.aiInsightsAnalytics);
+      router.go(AppRoutes.accountsAnalytics);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnalyticsPage), findsOneWidget);
-      expect(_currentPath(container), AppRoutes.aiInsightsAnalytics);
+      expect(_currentPath(container), AppRoutes.accountsAnalytics);
       await _drainTimers(tester);
     });
   });

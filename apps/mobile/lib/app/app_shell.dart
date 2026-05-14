@@ -9,19 +9,18 @@ import '../features/ai_chat/state/route_context_provider.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
 
-/// Root shell that hosts the 5-tab IndexedStack:
-///   Home / Activity / AI (centered accent) / Accounts / Settings.
+/// Root shell that hosts the 4-tab IndexedStack:
+///   Home / Activity / Accounts / Settings.
 ///
 /// Layout adapts at the breakpoints documented in
 /// `docs/design/01-responsive-layout.md`:
-///  - mobile (<600dp): bottom navigation bar with the AI tab visually
-///    elevated as a teal accent disc.
+///  - mobile (<600dp): bottom navigation bar.
 ///  - tablet (600-1240dp): slim icon rail on the left.
 ///  - desktop (>=1240dp): full sidebar via [DesktopSidebar].
 ///
-/// The legacy "+ FAB" surface is gone — quick-add flows now live behind the
-/// AI tab and the per-page header actions, keeping the calm finance
-/// aesthetic uncluttered.
+/// AI is no longer a destination tab (§5.10): the command palette overlay
+/// (Layer 1) and inline capsules (Layer 2) carry the explicit surfaces;
+/// chat session history lives under `/settings/ai-history`.
 class AppRootShell extends ConsumerStatefulWidget {
   const AppRootShell({super.key, required this.shell});
 
@@ -124,15 +123,11 @@ class _NavDestination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
-    this.isAccent = false,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
-
-  /// Center "AI" tab — rendered with the teal accent disc on mobile.
-  final bool isAccent;
 }
 
 List<_NavDestination> _navDestinations(AppLocalizations l10n) {
@@ -146,12 +141,6 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long,
       label: l10n.navActivity,
-    ),
-    _NavDestination(
-      icon: Icons.auto_awesome_outlined,
-      selectedIcon: Icons.auto_awesome,
-      label: l10n.navAI,
-      isAccent: true,
     ),
     _NavDestination(
       icon: Icons.account_balance_wallet_outlined,
@@ -181,7 +170,6 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return FScaffold(
       childPad: false,
       footer: Column(
@@ -197,10 +185,10 @@ class _MobileShell extends StatelessWidget {
             children: [
               for (var i = 0; i < destinations.length; i++)
                 FBottomNavigationBarItem(
-                  icon: _MobileNavIcon(
-                    destination: destinations[i],
-                    selected: i == selectedIndex,
-                    accentColor: colors.primary,
+                  icon: Icon(
+                    i == selectedIndex
+                        ? destinations[i].selectedIcon
+                        : destinations[i].icon,
                   ),
                   label: Text(destinations[i].label),
                 ),
@@ -210,58 +198,6 @@ class _MobileShell extends StatelessWidget {
       ),
       child: child,
     );
-  }
-}
-
-/// Mobile bottom-nav icon. Renders the AI center tab as an accent-tinted
-/// disc so it pops above the surrounding gray-scale glyphs without
-/// resorting to a separate floating FAB (which would clutter the calm
-/// surface). Inactive non-accent tabs use the muted foreground; the
-/// active non-accent tab uses the standard accent foreground.
-class _MobileNavIcon extends StatelessWidget {
-  const _MobileNavIcon({
-    required this.destination,
-    required this.selected,
-    required this.accentColor,
-  });
-
-  final _NavDestination destination;
-  final bool selected;
-  final Color accentColor;
-
-  @override
-  Widget build(BuildContext context) {
-    if (destination.isAccent) {
-      // Calm-finance AI tab: subtle teal halo + tinted glyph rather
-      // than a 100%-filled accent disc. The previous fill made AI read
-      // as a floating CTA / FAB and pulled attention away from
-      // whatever page the user was actually on. The new treatment
-      // still distinguishes AI as the centered accent tab — selected
-      // state deepens the halo and adds a hairline ring — but it
-      // sits flush with its peer tabs.
-      final haloAlpha = selected ? 0.22 : 0.10;
-      return Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: accentColor.withValues(alpha: haloAlpha),
-          borderRadius: BorderRadius.circular(8),
-          border: selected
-              ? Border.all(
-                  color: accentColor.withValues(alpha: 0.45),
-                  width: 1,
-                )
-              : null,
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          selected ? destination.selectedIcon : destination.icon,
-          size: 16,
-          color: accentColor,
-        ),
-      );
-    }
-    return Icon(selected ? destination.selectedIcon : destination.icon);
   }
 }
 
@@ -314,19 +250,8 @@ class _TabletRailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isAiTab = destination.isAccent;
-    // AI tab no longer fills with solid accent — it gets a tinted halo
-    // matching the mobile bottom nav so it reads as "noteworthy" but
-    // not "primary CTA".
-    final iconColor = isAiTab
-        ? colors.primary
-        : (selected ? colors.primary : colors.mutedForeground);
-    final fillAlpha = isAiTab
-        ? (selected ? 0.20 : 0.10)
-        : (selected ? 1.0 : 0.0);
-    final fill = isAiTab
-        ? colors.primary.withValues(alpha: fillAlpha)
-        : (selected ? colors.muted : Colors.transparent);
+    final iconColor = selected ? colors.primary : colors.mutedForeground;
+    final fill = selected ? colors.muted : Colors.transparent;
     return FTappable(
       onPress: onTap,
       child: Container(
@@ -335,12 +260,6 @@ class _TabletRailItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: fill,
           borderRadius: BorderRadius.circular(10),
-          border: isAiTab && selected
-              ? Border.all(
-                  color: colors.primary.withValues(alpha: 0.40),
-                  width: 1,
-                )
-              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -355,9 +274,7 @@ class _TabletRailItem extends StatelessWidget {
               destination.label,
               style: context.theme.typography.xs.copyWith(
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: isAiTab
-                    ? colors.primary
-                    : (selected ? colors.primary : colors.foreground),
+                color: selected ? colors.primary : colors.foreground,
               ),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
@@ -393,7 +310,6 @@ class _DesktopShell extends StatelessWidget {
               icon: d.icon,
               selectedIcon: d.selectedIcon,
               label: d.label,
-              isAccent: d.isAccent,
             ),
         ],
         selectedIndex: selectedIndex,

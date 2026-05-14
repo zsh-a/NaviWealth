@@ -21,9 +21,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get navAI => 'AI';
-
-  @override
   String get navActivity => 'Activity';
 
   @override

@@ -27,7 +27,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.flag_outlined,
           kind: InsightKind.fireProgress,
           monthsToTarget: months,
-          route: AppRoutes.aiInsightsFire,
+          route: AppRoutes.accountsFire,
         ),
       );
     } else if (months == 0) {
@@ -36,7 +36,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.celebration_outlined,
           kind: InsightKind.fireReached,
           iconColor: Colors.green,
-          route: AppRoutes.aiInsightsFire,
+          route: AppRoutes.accountsFire,
         ),
       );
     }
@@ -51,7 +51,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         category: drift.category,
         driftPct: drift.deviation,
         iconColor: Colors.amber,
-        route: AppRoutes.aiInsightsRebalance,
+        route: AppRoutes.accountsRebalance,
       ),
     );
   }
