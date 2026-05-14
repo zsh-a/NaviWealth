@@ -95,9 +95,21 @@ DateTime _floorToDay(DateTime d) {
   return DateTime.utc(u.year, u.month, u.day);
 }
 
-final holdingPriceSourceProvider = Provider<HoldingPriceSource>((ref) {
+/// Composed price source for the holdings pipeline:
+///   1. Pre-resolved live prices from [priceResolverProvider] for "now-ish"
+///      asOf lookups (drives the live dashboard / FIRE / AI snapshot).
+///   2. Synced `prices` ledger observations for historical asOf (drives
+///      portfolio-return curves, time-machine views, anything pre-today).
+///
+/// Switching from the prior ledger-only `Provider<HoldingPriceSource>` to
+/// this `FutureProvider` means consumers (`holdingServiceProvider`,
+/// `portfolioReturnServiceProvider`) need to await it — they already lived
+/// in `FutureProvider` scopes, so the change is local.
+final holdingPriceSourceProvider = FutureProvider<HoldingPriceSource>((
+  ref,
+) async {
   final rows = ref.watch(_priceRowsStreamProvider).value ?? const <PriceRow>[];
-  return InMemoryHoldingPriceSource([
+  final ledgerSource = InMemoryHoldingPriceSource([
     for (final row in rows)
       HoldingPriceObservation(
         assetId: row.unit,
@@ -106,6 +118,16 @@ final holdingPriceSourceProvider = Provider<HoldingPriceSource>((ref) {
         currency: row.quoteCurrency,
       ),
   ]);
+  final assets = ref.watch(allAssetsStreamProvider).value ?? const <Asset>[];
+  final resolver = await ref.watch(priceResolverProvider.future);
+  final clock = ref.watch(clockProvider);
+  final resolvedAt = clock.now();
+  final resolved = await resolver.resolveMany(assets, asOf: resolvedAt);
+  return ResolvedPriceHoldingSource(
+    resolved: resolved,
+    resolvedAt: resolvedAt,
+    fallback: ledgerSource,
+  );
 });
 
 final returnsCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
@@ -125,7 +147,7 @@ final holdingBaseCurrencyProvider = Provider<String>((ref) {
 final holdingServiceProvider = FutureProvider<HoldingService>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
-  final prices = ref.watch(holdingPriceSourceProvider);
+  final prices = await ref.watch(holdingPriceSourceProvider.future);
   final converter = ref.watch(returnsCurrencyConverterProvider);
   final base = ref.watch(holdingBaseCurrencyProvider);
   return _LedgerHoldingService(
