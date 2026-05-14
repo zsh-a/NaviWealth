@@ -352,7 +352,6 @@ void main() {
         containsAll(<String>[
           'nav.home',
           'nav.activity',
-          'nav.ai',
           'nav.accounts',
           'nav.expenses',
           'nav.analytics',

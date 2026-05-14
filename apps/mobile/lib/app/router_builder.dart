@@ -93,9 +93,10 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
         name: AppRouteNames.login,
         builder: (context, state) => const LoginPage(),
       ),
-      // Main shell: 5-branch IndexedStack preserves tab state across switches.
-      // Order matches kPrimaryTabPaths: Home / Activity / AI / Accounts /
-      // Settings — AI is the centered accent tab in the bottom nav.
+      // Main shell: 4-branch IndexedStack preserves tab state across switches.
+      // Order matches kPrimaryTabPaths: Home / Activity / Accounts / Settings.
+      // The former `/ai` tab is gone (§5.10) — AI is now an overlay (command
+      // palette) + inline capsules, not a destination.
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppRootShell(shell: shell),
         branches: [
@@ -171,46 +172,8 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Branch 2: AI Assistant + Insights (FIRE/Rebalance/Analytics) ─
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.ai,
-                name: AppRouteNames.aiChat,
-                builder: (context, state) => DeferredRoute(
-                  load: ai_chat_lib.loadLibrary,
-                  builder: (_) => ai_chat_lib.AiChatPage(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'insights/fire',
-                    name: AppRouteNames.aiInsightsFire,
-                    builder: (context, state) => DeferredRoute(
-                      load: fire_lib.loadLibrary,
-                      builder: (_) => fire_lib.FirePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'insights/rebalance',
-                    name: AppRouteNames.aiInsightsRebalance,
-                    builder: (context, state) => DeferredRoute(
-                      load: rebalance_lib.loadLibrary,
-                      builder: (_) => rebalance_lib.RebalancePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'insights/analytics',
-                    name: AppRouteNames.aiInsightsAnalytics,
-                    builder: (context, state) => DeferredRoute(
-                      load: analytics_lib.loadLibrary,
-                      builder: (_) => analytics_lib.AnalyticsPage(),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // ── Branch 3: Accounts hub (assets + liabilities + bank list) ───
+          // ── Branch 2: Accounts hub (assets + liabilities + bank list +
+          //              plan dashboards: FIRE / Rebalance / Analytics) ─────
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -264,6 +227,30 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                       load: corp_action_lib.loadLibrary,
                       builder: (_) =>
                           corp_action_lib.CorporateActionEntryRoute(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'fire',
+                    name: AppRouteNames.accountsFire,
+                    builder: (context, state) => DeferredRoute(
+                      load: fire_lib.loadLibrary,
+                      builder: (_) => fire_lib.FirePage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'rebalance',
+                    name: AppRouteNames.accountsRebalance,
+                    builder: (context, state) => DeferredRoute(
+                      load: rebalance_lib.loadLibrary,
+                      builder: (_) => rebalance_lib.RebalancePage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'analytics',
+                    name: AppRouteNames.accountsAnalytics,
+                    builder: (context, state) => DeferredRoute(
+                      load: analytics_lib.loadLibrary,
+                      builder: (_) => analytics_lib.AnalyticsPage(),
                     ),
                   ),
                   GoRoute(
@@ -323,7 +310,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Branch 4: Settings ───────────────────────────────────────────
+          // ── Branch 3: Settings ───────────────────────────────────────────
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -361,6 +348,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'sync',
                     name: AppRouteNames.sync,
                     builder: (context, state) => const SyncStatusPage(),
+                  ),
+                  GoRoute(
+                    path: 'ai-history',
+                    name: AppRouteNames.aiHistory,
+                    builder: (context, state) => DeferredRoute(
+                      load: ai_chat_lib.loadLibrary,
+                      builder: (_) => ai_chat_lib.AiChatPage(),
+                    ),
                   ),
                   GoRoute(
                     path: 'ai-transparency',

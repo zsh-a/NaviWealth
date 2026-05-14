@@ -265,7 +265,7 @@ class _AiChatSheetBodyState extends ConsumerState<AiChatSheetBody> {
               ? null
               : () {
                   Navigator.of(context).pop();
-                  context.go(AppRoutes.ai);
+                  context.go(AppRoutes.settingsAiHistory);
                 },
         ),
         const FDivider(),
@@ -295,7 +295,7 @@ class _SheetHeader extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.auto_awesome,
+            Icons.auto_awesome_outlined,
             size: 20,
             color: context.theme.colors.primary,
           ),

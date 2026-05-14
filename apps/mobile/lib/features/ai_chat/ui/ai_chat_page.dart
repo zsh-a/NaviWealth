@@ -195,7 +195,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   setState(() => _activeSessionId = id);
                   replaceSelectedQuery(
                     context,
-                    path: AppRoutes.ai,
+                    path: AppRoutes.settingsAiHistory,
                     selected: id,
                   );
                 },
@@ -407,20 +407,14 @@ class _EmptyConversation extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colors.primary.withValues(alpha: 0.85),
-                            colors.mutedForeground.withValues(alpha: 0.85),
-                          ],
-                        ),
+                        color: colors.secondary,
                         shape: BoxShape.circle,
+                        border: Border.all(color: colors.border, width: 1),
                       ),
                       child: Icon(
-                        Icons.auto_awesome,
+                        Icons.auto_awesome_outlined,
                         size: 28,
-                        color: colors.primaryForeground,
+                        color: colors.foreground,
                       ),
                     ),
                   ),

@@ -122,12 +122,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// Bottom nav: AI assistant tab (centered accent)
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get navAI;
-
   /// Bottom nav: activity tab (single timeline)
   ///
   /// In en, this message translates to:

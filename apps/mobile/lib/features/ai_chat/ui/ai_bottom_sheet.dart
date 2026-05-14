@@ -224,10 +224,11 @@ class _AiBottomSheetShellState extends ConsumerState<AiBottomSheetShell> {
     final sid = _sessionId;
     if (sid == null) return;
     Navigator.of(context).pop();
-    // §5.4 expand path: navigate to /ai with the existing session id.
-    // The query parameter is what the chat page reads when picking the
-    // selected session on master-detail layouts.
-    context.go('${AppRoutes.ai}?selected=$sid');
+    // §5.4 expand path: navigate to the chat history page (now under
+    // Settings — §5.10.2) with the existing session id. The query
+    // parameter is what the chat page reads when picking the selected
+    // session on master-detail layouts.
+    context.go('${AppRoutes.settingsAiHistory}?selected=$sid');
   }
 }
 

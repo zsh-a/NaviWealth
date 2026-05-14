@@ -6,15 +6,11 @@ import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-/// "Insights" section block — entry points into the deep-dive surfaces
-/// that used to live under the now-removed `/plan` tab. Renders four
-/// rows: FIRE Progress · Rebalance Suggestions · Concentration Risk ·
-/// Benchmark Comparison. Each opens its dedicated detail page under
-/// `/ai/insights/...`.
-///
-/// Designed to slot under the AI chat conversation as a collapsible
-/// section so the chat stays the primary surface; the user expands the
-/// panel to see structured insights without leaving the AI tab.
+/// "Insights" section block — entry points into the deterministic
+/// plan dashboards (FIRE / Rebalance / Analytics) that live under
+/// `/accounts/...`. Designed to slot under the AI chat conversation
+/// (now mounted at `/settings/ai-history`) as a collapsible section so
+/// the user can jump to a dashboard without losing chat context.
 class AiInsightsPanel extends StatefulWidget {
   const AiInsightsPanel({super.key});
 
@@ -71,19 +67,19 @@ class _AiInsightsPanelState extends State<AiInsightsPanel> {
               _InsightLink(
                 icon: Icons.flag_outlined,
                 label: l10n.planFireTitle,
-                route: AppRoutes.aiInsightsFire,
+                route: AppRoutes.accountsFire,
               ),
               const FDivider(),
               _InsightLink(
                 icon: Icons.tune_outlined,
                 label: l10n.aiInsightsRebalanceTitle,
-                route: AppRoutes.aiInsightsRebalance,
+                route: AppRoutes.accountsRebalance,
               ),
               const FDivider(),
               _InsightLink(
                 icon: Icons.pie_chart_outline,
                 label: l10n.planAnalyticsTitle,
-                route: AppRoutes.aiInsightsAnalytics,
+                route: AppRoutes.accountsAnalytics,
               ),
             ],
           ],

@@ -21,9 +21,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettings => '设置';
 
   @override
-  String get navAI => 'AI';
-
-  @override
   String get navActivity => '流水';
 
   @override

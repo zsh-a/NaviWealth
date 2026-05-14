@@ -76,16 +76,11 @@ class DesktopSidebarDestination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
-    this.isAccent = false,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
-
-  /// True for the AI tab; rendered with a teal accent disc so the assistant
-  /// stands out as the primary action layer in the sidebar too.
-  final bool isAccent;
 }
 
 class _SidebarItem extends StatelessWidget {
@@ -104,18 +99,9 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isAccent = destination.isAccent;
-    // Accent (AI) tab uses a teal-tinted halo + teal-tinted glyph
-    // (matching the mobile bottom-nav treatment) instead of a solid
-    // accent fill — keeps the sidebar reading as one consistent
-    // navigation surface rather than a primary CTA in disguise.
-    final iconColor = isAccent
-        ? colors.primary
-        : (selected ? colors.primary : colors.mutedForeground);
+    final iconColor = selected ? colors.primary : colors.mutedForeground;
     final labelStyle = context.theme.typography.sm.copyWith(
-      color: isAccent
-          ? colors.primary
-          : (selected ? colors.primary : colors.foreground),
+      color: selected ? colors.primary : colors.foreground,
       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
     );
     final row = Row(
@@ -139,18 +125,13 @@ class _SidebarItem extends StatelessWidget {
       ],
     );
 
-    final Color background;
-    if (isAccent) {
-      background = colors.primary.withValues(alpha: selected ? 0.18 : 0.08);
-    } else if (selected) {
-      background = colors.primary.withValues(alpha: 0.10);
-    } else {
-      background = const Color(0x00000000);
-    }
+    final Color background = selected
+        ? colors.primary.withValues(alpha: 0.10)
+        : const Color(0x00000000);
 
     final content = Stack(
       children: [
-        if (selected && !isAccent)
+        if (selected)
           Positioned(
             left: 0,
             top: 4,
@@ -172,12 +153,6 @@ class _SidebarItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: background,
             borderRadius: BorderRadius.circular(12),
-            border: isAccent && selected
-                ? Border.all(
-                    color: colors.primary.withValues(alpha: 0.35),
-                    width: 1,
-                  )
-                : null,
           ),
           alignment: Alignment.centerLeft,
           child: row,

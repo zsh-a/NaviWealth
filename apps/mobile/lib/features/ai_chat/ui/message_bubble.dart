@@ -756,7 +756,11 @@ class _AssistantAvatar extends StatelessWidget {
         border: Border.all(color: colors.border, width: 1),
       ),
       alignment: Alignment.center,
-      child: Icon(Icons.auto_awesome, size: 16, color: colors.foreground),
+      child: Icon(
+        Icons.auto_awesome_outlined,
+        size: 16,
+        color: colors.foreground,
+      ),
     );
   }
 }
