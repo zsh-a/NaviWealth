@@ -4,7 +4,9 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../core/logging/providers.dart';
 import '../../domain/services/market_data_service.dart';
+import '../../domain/services/price_resolver.dart';
 import '../db/providers.dart';
+import '../repositories/providers.dart';
 import 'cache/cache_policy.dart';
 import 'cache/quote_cache.dart';
 import 'composite_market_data_service.dart';
@@ -17,6 +19,7 @@ import 'providers/coingecko_provider.dart';
 import 'providers/market_provider.dart';
 import 'providers/sina_provider.dart';
 import 'providers/yfinance_provider.dart';
+import 'resolver/layered_price_resolver.dart';
 
 /// Per-app singleton clock — overrideable in tests.
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
@@ -117,5 +120,26 @@ final marketDataServiceProvider = FutureProvider<MarketDataService>((
     cache: cache,
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
+  );
+});
+
+/// Default tier-window policy for [LayeredPriceResolver]. Overrideable by
+/// tests (shrink windows to seconds) or settings (future Phase E toggle).
+final priceResolverPolicyProvider = Provider<PriceResolverPolicy>(
+  (ref) => const PriceResolverPolicy(),
+);
+
+/// The unified valuation entry point. Composes the live market service +
+/// synced `prices` ledger + the layered tier policy. Features that need
+/// "price for asset" must consume this, not [marketDataServiceProvider]
+/// directly.
+final priceResolverProvider = FutureProvider<PriceResolver>((ref) async {
+  final market = await ref.watch(marketDataServiceProvider.future);
+  final prices = await ref.watch(priceRepositoryProvider.future);
+  return LayeredPriceResolver(
+    market: market,
+    prices: prices,
+    clock: ref.watch(clockProvider),
+    policy: ref.watch(priceResolverPolicyProvider),
   );
 });
