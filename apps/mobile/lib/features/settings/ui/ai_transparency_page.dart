@@ -14,8 +14,9 @@
 /// changes here (timeline builder takes care of it).
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -34,9 +35,10 @@ class AiTransparencyPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tracesAsync = ref.watch(recentAiTracesProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('AI 透明度')),
-      body: tracesAsync.when(
+    return FScaffold(
+      header: const FHeader.nested(title: Text('AI 透明度')),
+      childPad: false,
+      child: tracesAsync.when(
         data: (traces) {
           if (traces.isEmpty) {
             return const _EmptyState();
@@ -44,12 +46,14 @@ class AiTransparencyPage extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: traces.length,
-            separatorBuilder: (_, _) =>
-                const Divider(height: 1, indent: 16, endIndent: 16),
+            separatorBuilder: (_, _) => const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: FDivider(),
+            ),
             itemBuilder: (context, i) => _TraceRow(trace: traces[i]),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
       ),
     );
@@ -65,8 +69,8 @@ class _EmptyState extends StatelessWidget {
       child: Text(
         '暂无 AI 调用记录。\n下次发起对话后，会在此处看到完整轨迹。',
         textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        style: context.theme.typography.sm.copyWith(
+          color: context.theme.colors.mutedForeground,
         ),
       ),
     ),
@@ -82,43 +86,66 @@ class _TraceRow extends StatelessWidget {
     final title = _displayTitle(trace);
     final source = _displaySource(trace);
     final isError = trace.terminalReason != TerminalReason.done;
-    return ListTile(
-      leading: _StatusDot(
-        error: isError,
-        color: isError ? AiTone.error(context) : AiTone.active(context),
-      ),
-      title: Text(
-        title,
-        style: AiType.body(context).copyWith(fontWeight: FontWeight.w500),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            if (source != null)
-              AiPill(label: source, state: AiPillState.selected),
-            AiPill(label: '${trace.totalDurationMs} ms'),
-            AiPill(label: trace.backend.wire),
-            if (trace.toolCalls.isNotEmpty)
-              AiPill(label: '🔧 ${trace.toolCalls.length}'),
-            if (trace.staleReadModels > 0)
-              AiPill(label: '过期 ×${trace.staleReadModels}'),
-            if (isError)
-              AiPill(label: trace.terminalReason.wire, state: AiPillState.error),
-          ],
-        ),
-      ),
-      trailing: Text(
-        _shortTimestamp(trace.startedAtIso),
-        style: AiType.meta(context),
-      ),
-      onTap: () => context.goNamed(
+    return FTappable(
+      onPress: () => context.goNamed(
         AppRouteNames.aiTransparencyDetail,
         pathParameters: <String, String>{'requestId': trace.requestId},
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: _StatusDot(
+                error: isError,
+                color: isError ? AiTone.error(context) : AiTone.active(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AiType.body(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      if (source != null)
+                        AiPill(label: source, state: AiPillState.selected),
+                      AiPill(label: '${trace.totalDurationMs} ms'),
+                      AiPill(label: trace.backend.wire),
+                      if (trace.toolCalls.isNotEmpty)
+                        AiPill(label: '工具 ${trace.toolCalls.length}'),
+                      if (trace.staleReadModels > 0)
+                        AiPill(label: '过期 x${trace.staleReadModels}'),
+                      if (isError)
+                        AiPill(
+                          label: trace.terminalReason.wire,
+                          state: AiPillState.error,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              _shortTimestamp(trace.startedAtIso),
+              style: AiType.meta(context),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,7 +170,9 @@ class _TraceRow extends StatelessWidget {
     final source = trace.invocation?['source']?.toString();
     if (source == null || source.isEmpty) return null;
     final objType = trace.invocation?['object_type']?.toString();
-    return objType != null && objType.isNotEmpty ? '$source · $objType' : source;
+    return objType != null && objType.isNotEmpty
+        ? '$source · $objType'
+        : source;
   }
 }
 
@@ -160,10 +189,7 @@ class _StatusDot extends StatelessWidget {
         width: 8,
         height: 8,
         margin: const EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
@@ -180,16 +206,17 @@ class AiTransparencyDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final traceAsync = ref.watch(aiTraceByIdProvider(requestId));
-    return Scaffold(
-      appBar: AppBar(title: const Text('调用链路')),
-      body: traceAsync.when(
+    return FScaffold(
+      header: const FHeader.nested(title: Text('调用链路')),
+      childPad: false,
+      child: traceAsync.when(
         data: (trace) {
           if (trace == null) {
             return const Center(child: Text('未找到该次调用记录'));
           }
           return _TraceTimelineBody(trace: trace);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
       ),
     );
@@ -241,7 +268,7 @@ class _HeaderSummary extends StatelessWidget {
           style: AiType.meta(context),
         ),
         const SizedBox(height: 6),
-        SelectableText(
+        Text(
           'request_id ${trace.requestId}',
           style: AiType.meta(context).copyWith(fontFamily: 'monospace'),
         ),

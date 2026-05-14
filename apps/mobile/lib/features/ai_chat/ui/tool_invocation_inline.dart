@@ -15,7 +15,8 @@
 /// text segments.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/visual.dart';
 import '../domain/chat_models.dart';
@@ -102,9 +103,7 @@ class _AttributionRow extends StatelessWidget {
           Flexible(
             child: Text(
               _friendly(invocation.name),
-              style: AiType.meta(context).copyWith(
-                fontFamily: 'monospace',
-              ),
+              style: AiType.meta(context).copyWith(fontFamily: 'monospace'),
             ),
           ),
         ],
@@ -113,18 +112,13 @@ class _AttributionRow extends StatelessWidget {
   }
 
   void _openDebugSheet(BuildContext context) {
-    showModalBottomSheet<void>(
+    showFSheet<void>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (_, controller) => ListView(
-          controller: controller,
+      side: FLayout.btt,
+      mainAxisMaxRatio: null,
+      builder: (_) => SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.7,
+        child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
             // Reuse the existing card — it ships its own chevron / JSON

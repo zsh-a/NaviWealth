@@ -5,7 +5,7 @@
 /// (legacy messages, in-flight messages, or failed prep).
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -48,11 +48,7 @@ String formatAiTraceBadge(AiTrace trace) {
     case Backend.hybrid:
       parts.add('本地数据 + 云端推理');
   }
-  parts.add(
-    trace.usedRawLedger
-        ? '已授权使用明细数据'
-        : '未上传原始交易明细',
-  );
+  parts.add(trace.usedRawLedger ? '已授权使用明细数据' : '未上传原始交易明细');
   if (trace.toolCalls.isNotEmpty) {
     parts.add('${trace.toolCalls.length} 个工具');
   }

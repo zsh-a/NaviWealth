@@ -15,6 +15,7 @@ import '../core/logging/crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/sync/providers.dart';
 import '../data/db/providers.dart';
+import '../data/market/sync/price_sync_providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
@@ -142,6 +143,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // don't block startup — the dashboard degrades gracefully with a
   // "currency mismatch" banner when rates are missing.
   container.read(syncSchedulerBootstrapProvider);
+  container.read(priceSyncCoordinatorBootstrapProvider);
   unawaited(_syncFxRates(container, logger));
 
   return container;

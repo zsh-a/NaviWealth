@@ -454,6 +454,9 @@ Map<String, Object?> _holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
     'unrealized_pnl_base': snap.unrealizedPnlInBase.toString(),
     'weight': snap.weight.toString(),
     'as_of': snap.asOf.toUtc().toIso8601String(),
+    'price_confidence': snap.priceConfidence?.name,
+    'price_source': snap.priceSource,
+    'price_as_of': snap.priceAsOf?.toUtc().toIso8601String(),
   };
 }
 
