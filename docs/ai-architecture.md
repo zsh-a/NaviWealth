@@ -692,6 +692,92 @@ const intentDescriptors = <IntentDescriptor>[
 | Undo 仅 chat 内 60s | global feedback 缺失 | persistent undo snackbar 接 `DriftUndoStack` |
 | 冷启动固定 prompt | onboarding 缺失 | sample intents 从 `intent_policy` 当前 active 集合派生 |
 
+### 5.10 四层入口重构（S0–S6 蓝图）
+
+> 状态: 蓝图阶段；本节本身 = **S0**，是后续 S1–S6 所有 AI 入口 PR 的纲领。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。
+
+#### 5.10.1 四层模型
+
+四个表面互不抢戏，按用户主动度从高到低、作用范围从全局到上下文排列。**没有 `/ai` tab，没有右下角悬浮气泡，没有 ✨ 按钮散在每个面板旁。**
+
+| Layer | 名称 | 触发者 | 形态 | §5.2 三层模型对应 |
+|-------|------|--------|------|----------------------|
+| 1 | 统一命令栏 | 用户主动 / 全局 | Cmd-K overlay / 顶栏 search / 主屏下拉 spotlight | Global AI（重塑：不再是 `/ai` tab，而是 overlay） |
+| 2 | 内联上下文 Capsule | 用户主动 / 局部 | 图表 ⋯ 菜单 / 表格选区工具条 / 卡片长按 sheet | Contextual AI |
+| 3 | 环境式洞察 | 系统主动 | 主屏卡片，三动作（展开 / 问一下 / 忽略） | Ambient AI（增强） |
+| 4 | 录入链路隐形 AI | 系统主动 / 无入口 | 截图 / 邮件 / 文件粘贴自动解析 + 去重对账 | **新增**（§5.2 未覆盖） |
+
+**保留不变**: §5.4 inline bottom sheet 仍是 Layer 2 的默认渲染形态；§5.5 `interaction_mode` 派生表与 PersistentUndoBanner 仍生效；§5.7 `intent_policy` 治理仍生效；§5.8 PR 硬约束在本节 §5.10.7 之上累加，不替换。
+
+#### 5.10.2 主要拓扑变更
+
+1. **`/ai` tab 下线**: 5-tab → 4-tab（Home / Activity / Accounts / Settings）。`features/ai_chat/ui/ai_chat_page.dart` 不再是 tab 着陆页，迁至 `/settings/ai-history`（沿用 `AiTransparencyPage` 位置语义），仅作只读历史回放；新会话默认走命令栏的结构化结果区。
+2. **命令栏升级为唯一显式 AI 入口**: `core/command_palette/` 现行 "Ask AI" 是 prefill 后跳 `AiChatSheet`；新行为是**就地出结构化答案**（表格 / 数字 / 小图 + 一段简短解释），overlay 不留对话历史。回放进 `/settings/ai-history`。
+3. **Ambient 卡片改造**: `features/home/ui/ai_insight_feed.dart` 卡片由"点开跳转"单一 affordance → 三动作（展开 / 问一下 / 忽略）+ 偏好学习（新 Drift 表 `dismissed_insight_keys`）。
+4. **新增 `features/ingest/` 模块**: Layer 4 此前完全空白；新增统一解析管道 + 去重对账层 + 待确认队列。
+
+#### 5.10.3 §5.2 三层模型 → §5.10 四层模型归并
+
+| §5.2 旧条目 | §5.10 新归类 | 备注 |
+|-------------|---------------|------|
+| Ambient AI (insight feed) | Layer 3 | 卡片三动作 + 偏好学习；规则引擎独立化 |
+| Contextual AI (capsule) | Layer 2 | 默认 surface 仍是 inline bottom sheet（§5.4 不变） |
+| Global AI (chat tab + command palette) | Layer 1（命令栏） + `/settings/ai-history`（聊天回放） | 拆分：探索性入口收敛到命令栏 overlay；session 历史降级为审计页 |
+| — | Layer 4（录入隐形 AI） | 新增；不是 surface，而是「无入口」——任何粘贴/拖拽/转发都被理解 |
+
+#### 5.10.4 视觉契约（在 §5.6 上加严）
+
+§5.6 已禁止 chatbot 气泡 / 渐变 / glow。在本节再加严:
+
+- **`Icons.auto_awesome`（实心 ✨）全量替换**为 `Icons.auto_awesome_outlined` 或 `core/ai/visual/ai_pill.dart` 现有的 `Generated` 角标。盘点替换点: `app/app_shell.dart`、`core/command_palette/default_commands.dart` + `command_palette_dialog.dart`、`features/ai_chat/ui/{message_bubble, tool_invocation_inline, ai_chat_page, ai_bottom_sheet, ai_chat_sheet}.dart`、`features/activity/ui/activity_entry_detail_page.dart`。
+- **等宽数字**: `design_system/tokens/` 新增 monospace numeral token，应用到 `features/home/ui/{trend_card, allocation_card}.dart`；金额一律右对齐、千分位、固定小数位。
+- **AI 状态指示文字**: 命令栏右下角一行小字，三态 `本地处理` / `云端处理（已脱敏）` / `云端处理`，从 `privacyModeProvider`（§5.10.5 新增）实时取。
+- **暗色模式默认**: 财务用户夜间查账多，深色背景让数字更醒目。
+
+#### 5.10.5 隐私 UI（落实 §4 的 PrivacyBudget / ScopedDisclosure / AiTrace 用户感知）
+
+`PrivacyBudget` / `ScopedDisclosure` / `AiTrace` 契约已实现但用户感知不到。新增:
+
+- 新 `features/settings/ui/ai_privacy_page.dart`: 三选一 radio（金额可上行 / 金额掩码量级 / 金额完全本地）+ 账户名/机构名脱敏开关；状态写入新 `privacyModeProvider`，下沉到 `core/ai/contracts/privacy_budget.dart` 的运行时入口（运行时根据该 provider 选择 PrivacyBudget tier）。
+- 审计页强化: `features/settings/ui/ai_transparency_page.dart` 每行写入操作加 "撤销" 按钮，直连 `core/ai/write/drift_undo_stack.dart`。
+- 首次 onboarding: `app/bootstrap.dart` 加一次性 sheet 引导隐私模式选择，写 `shared_preferences` 标记。
+
+#### 5.10.6 不可逆操作护栏（在 §5.5 风险表上加一条）
+
+命令栏接到不可逆意图（转账、下单、删除账户）→ **拒绝执行**，只回操作指引。实施:
+
+- `core/ai/intent/intent_policy.dart` 新增 `requiresExplicitConfirmation` 字段（IntentDescriptor 元数据）。
+- 命令栏检测到 `requiresExplicitConfirmation == true` 的意图 → 强制弹二次确认 sheet，复用 `core/ai/write/local_immediate_executor.dart` + `drift_undo_stack.dart` 撤销链。
+- AI 在任何 surface（Layer 1–4）都**不可作为不可逆操作的最终执行者**——只能产出 `ProposalEnvelope`，由用户确认面完成提交。
+
+#### 5.10.7 反模式清单（PR review 一票否决，与 §5.8 并列累加）
+
+- 右下角悬浮聊天气泡
+- 底部多一个 "AI" tab（包括 5-tab 复活）
+- ✨ / 魔法棒 / glow 撒在每个面板旁
+- 一打开 app 先看到 chat 界面而不是数据
+- AI 直接给出「该买/该卖 XX」的投资建议
+- LLM 直接计算金额并显示（必须经 §4 ToolDescriptor 工具路径，落到 read model）
+- 把转账/下单做成 AI 一句话就能触发的命令
+- 紫色渐变 / 彩虹色 / 机器人头像
+
+#### 5.10.8 执行序列（S0–S6）
+
+后续 PR 纲领。**S0 = 本节**；S1–S6 各自一条 issue。依赖链: S1 阻塞所有 UI 工作；S5 与 S2–S4 可并行；S6 在 S2 之后任意插入。
+
+| 序号 | 名称 | 关键文件 / 路径 | 依赖 | 备注 |
+|------|------|------------------|------|------|
+| S0 | 本节文档（蓝图对齐） | `docs/ai-architecture.md §5.10` | — | 后续 PR review 依据 |
+| S1a | 拓扑重构（去 tab + 路由迁移 + ARB） | `app/route_paths.dart`、`app/router_builder.dart`、`app/app_shell.dart`、`l10n/app_*.arb` | S0 | 纯拓扑；一次性 ARB key 删除 |
+| S1b | 视觉去 sparkle + golden 重拍 | `core/command_palette/`、`features/ai_chat/ui/`、`features/activity/ui/activity_entry_detail_page.dart`、`design_system/tokens/`、`test/golden/`、`docs/visual-baseline/` | S1a | 与 S1a 拆开，避免审查混淆 |
+| S2 | 命令栏成为 AI 主入口 | `core/command_palette/command_palette_dialog.dart`、新 `core/command_palette/ask_ai_result_pane.dart`、`core/ai/intent/intent_policy.dart`（加 `requiresExplicitConfirmation`）、复用 `core/ai/intent/nl_to_query_plan.dart` + `core/ai/local/skills/query_plan_executor.dart` + `core/ai/runtime/ai_runtime.dart` | S1 | 结构化答案模板；不可逆护栏；二次确认 sheet |
+| S3 | Layer 3 卡片三动作 + 两类新洞察 | `features/home/ui/ai_insight_feed.dart`、新 `features/home/data/duplicate_charge_insight_provider.dart`（复用 `core/ai/local/skills/recurring_detector.dart` + `refund_matcher.dart`）、新 `monthly_summary_insight_provider.dart`、新 `dismissed_insights_store` (Drift 表 `dismissed_insight_keys`) | S2（"问一下"目的地） | 与 S2 可并行起步 |
+| S4 | Layer 2 Capsule 铺开 | `design_system/charts/ChartCard` trailing slot、新 `core/ai/intent/ai_context_chip_scope.dart`、`features/activity/` + `features/expense/ui/expense_list_*.dart` 选区工具条 + 新意图 `transactions.explainSelection` 注册 | S2 | 沿用 §5.3 AiIntentInvocation 协议；沿用 §5.4 inline bottom sheet |
+| S5 | Layer 4 录入解析管道 | 新 `features/ingest/`（data/domain/ui，含 `ingest_pipeline.dart` / `dedup_engine.dart` / `draft_queue_page.dart`）、新 `apps/backend/src/routes/ingest.rs`、新 `apps/backend/src/ai/tools/{parse_receipt_image, parse_statement_pdf}.rs`（受 `guardrails.rs` + PrivacyBudget 约束）、`apps/mobile/pubspec.yaml`（`image_picker`、`desktop_drop`）、iOS/Android plist/manifest 媒体权限 | OpLog 表迁移（独立线） | 与 S2–S4 可并行；新表走现有 sync 通道保证 HLC 与撤销一致 |
+| S6 | 隐私 UI + Onboarding | 新 `features/settings/ui/ai_privacy_page.dart`、新 `core/ai/contracts/privacy_mode_provider.dart`、`app/bootstrap.dart` 一次性 sheet、`features/settings/ui/ai_transparency_page.dart` 加 undo 按钮 | S2 之后任意插入 | 落实 §4 既有契约的用户感知 |
+
+每条 issue 在 review 时必须勾选: **§5.8 既有硬约束** + **§5.10.7 反模式清单**。S1a 合并即触发一次 golden 全量重拍（baseline 跟 `docs/visual-baseline/` 同步更新）。
+
 ## 6. 模块映射
 
 ### 6.1 Mobile (Flutter)
