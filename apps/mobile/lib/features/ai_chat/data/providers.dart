@@ -13,7 +13,9 @@ import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
+import '../../../data/domain/account.dart';
 import '../../../data/domain/asset.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
@@ -174,6 +176,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     // investment_performance from holdingsSnapshotProvider (Wave 17).
     final expenses = await _readExpensesForRecurring(ref);
     final holdings = await _readHoldingsForPerformance(ref);
+    final accountSummary = await _readAccountSummary(ref);
     final analyticalUploads = _buildAnalyticalUploads(
       anomaly: anomaly,
       expenses: expenses,
@@ -184,6 +187,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       route: route,
       intent: intent,
       baseCurrency: metrics?.baseCurrency,
+      accountSummary: accountSummary,
       expenseAnomalyDelta: anomaly?.deltaRatio,
       depositMaturityCount: maturity?.count,
       depositMaturityDays: maturity?.days,
@@ -205,6 +209,35 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     return (pack: null, traceSeed: null, localHlcText: null);
   }
 }
+
+Future<AccountSummary> _readAccountSummary(Ref ref) async {
+  try {
+    final repo = await ref.read(accountRepositoryProvider.future);
+    final accounts = await repo.listActive();
+    final byKind = <String, int>{};
+    for (final account in accounts) {
+      final kind = _accountSummaryKind(account);
+      byKind[kind] = (byKind[kind] ?? 0) + 1;
+    }
+    return AccountSummary(
+      totalCount: accounts.length,
+      byKind: Map<String, int>.unmodifiable(byKind),
+    );
+  } catch (_) {
+    return const AccountSummary(totalCount: 0, byKind: <String, int>{});
+  }
+}
+
+String _accountSummaryKind(Account account) => switch (account.type) {
+  AccountCategory.cash => 'cash',
+  AccountCategory.bank => 'bank',
+  AccountCategory.broker => 'broker',
+  AccountCategory.crypto => 'crypto',
+  AccountCategory.credit => 'credit',
+  AccountCategory.loan => 'loan',
+  AccountCategory.asset => 'asset',
+  AccountCategory.liability => 'liability',
+};
 
 /// One-shot read of the user's expenses for the recurring detector.
 /// `journalExpensesStreamProvider` is autoDispose; calling `.future`
@@ -249,7 +282,8 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   final out = <AnalyticalUpload>[];
   if (anomaly != null) {
     final now = DateTime.now().toUtc();
-    final yearMonth = '${now.year.toString().padLeft(4, '0')}-'
+    final yearMonth =
+        '${now.year.toString().padLeft(4, '0')}-'
         '${now.month.toString().padLeft(2, '0')}';
     final deltaPct = (anomaly.deltaRatio * 100).round();
     final severity = anomaly.deltaRatio.abs() > 0.5
@@ -379,8 +413,8 @@ AnalyticalUpload _holdingSnapshotToUpload(HoldingSnapshot snap) {
       'as_of': snap.asOf.toUtc().toIso8601String(),
       'quantity': snap.quantity.toString(),
       'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency.toString(),
-      'market_value_in_asset_currency':
-          snap.marketValueInAssetCurrency.toString(),
+      'market_value_in_asset_currency': snap.marketValueInAssetCurrency
+          .toString(),
       'cost_basis_in_base': snap.costBasisInBase.toString(),
       'market_value_in_base': snap.marketValueInBase.toString(),
       'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),

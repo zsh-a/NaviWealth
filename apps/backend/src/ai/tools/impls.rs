@@ -1657,6 +1657,7 @@ mod tests {
             "read_account_window",
             "read_asset_window",
             "read_category_window",
+            "list_payment_accounts",
             "propose_trade",
             "propose_expense",
             "propose_liability_payment",

@@ -20,17 +20,19 @@ import '../../contracts/contracts.dart';
 class ContextCompressor {
   const ContextCompressor();
 
-  BaseContext compressBase({String? baseCurrency}) {
+  BaseContext compressBase({
+    String? baseCurrency,
+    AccountSummary accountSummary = const AccountSummary(
+      totalCount: 0,
+      byKind: <String, int>{},
+    ),
+  }) {
     final currency = baseCurrency ?? 'USD';
     return BaseContext(
       preferredCurrency: currency,
       // TODO(phase2): wire to settings.riskPreference.
       riskPreference: RiskPreference.moderate,
-      // TODO(phase2): aggregate from accounts repository.
-      accounts: const AccountSummary(
-        totalCount: 0,
-        byKind: <String, int>{},
-      ),
+      accounts: accountSummary,
       // TODO(phase2): replace with real cashflow aggregation —
       // monthlyChangePct on the dashboard is net-worth delta, not
       // cashflow direction. Keeping `unknown` here is more honest
@@ -77,8 +79,7 @@ class ContextCompressor {
         RecentSignal(
           kind: SignalKind.depositMaturing,
           severity: SignalSeverity.info,
-          summaryZh:
-              '$depositMaturityCount 笔存款将在 $depositMaturityDays 天内到期',
+          summaryZh: '$depositMaturityCount 笔存款将在 $depositMaturityDays 天内到期',
         ),
       );
     }
@@ -99,6 +100,10 @@ class ContextCompressor {
     required RouteContext route,
     required IntentHint intent,
     String? baseCurrency,
+    AccountSummary accountSummary = const AccountSummary(
+      totalCount: 0,
+      byKind: <String, int>{},
+    ),
     double? expenseAnomalyDelta,
     int? depositMaturityCount,
     int? depositMaturityDays,
@@ -109,7 +114,10 @@ class ContextCompressor {
   }) {
     final pack = ContextPack(
       version: kCurrentContextPackVersion,
-      base: compressBase(baseCurrency: baseCurrency),
+      base: compressBase(
+        baseCurrency: baseCurrency,
+        accountSummary: accountSummary,
+      ),
       task: compressTask(
         route: route,
         intent: intent,

@@ -138,6 +138,7 @@ fn description_for(name: &str) -> &'static str {
         "read_category_window" => super::read_category_window::DESCRIPTION,
         "read_account_window" => super::read_account_window::DESCRIPTION,
         "read_asset_window" => super::read_asset_window::DESCRIPTION,
+        "list_payment_accounts" => super::list_payment_accounts::DESCRIPTION,
         "propose_trade" => super::propose_trade::DESCRIPTION,
         "propose_expense" => super::propose_expense::DESCRIPTION,
         "propose_liability_payment" => super::propose_liability_payment::DESCRIPTION,
@@ -196,8 +197,8 @@ mod tests {
     #[test]
     fn registry_lists_all_descriptors_but_hides_deprecated_schema() {
         let registry = crate::ai::tools::registry();
-        assert_eq!(registry.descriptors().len(), 27);
-        assert_eq!(registry.schemas().len(), 26);
+        assert_eq!(registry.descriptors().len(), 28);
+        assert_eq!(registry.schemas().len(), 27);
         assert!(registry.get("get_journal_entries").is_some());
         assert!(!registry
             .schemas()
