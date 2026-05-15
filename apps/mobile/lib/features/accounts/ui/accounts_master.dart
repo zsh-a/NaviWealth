@@ -181,9 +181,20 @@ class _AccountsByType extends StatelessWidget {
     for (final a in accounts) {
       grouped.putIfAbsent(a.type, () => []).add(a);
     }
-    final order = AccountCategory.values
+    const renderOrder = [
+      AccountCategory.cash,
+      AccountCategory.bank,
+      AccountCategory.broker,
+      AccountCategory.crypto,
+      AccountCategory.credit,
+      AccountCategory.loan,
+      AccountCategory.asset,
+      AccountCategory.liability,
+    ];
+    final order = renderOrder
         .where((t) => grouped.containsKey(t))
         .toList(growable: false);
+    final colors = context.theme.colors;
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -195,21 +206,27 @@ class _AccountsByType extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: Text(
-                accountCategoryLabel(l10n, type),
-                style: context.theme.typography.md,
+                accountCategoryLabel(l10n, type).toUpperCase(),
+                style: context.theme.typography.xs2.copyWith(
+                  color: colors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
               ),
             ),
             FCard.raw(
               child: Column(
                 children: [
-                  for (final a in group)
+                  for (var j = 0; j < group.length; j++) ...[
                     _AccountTile(
-                      account: a,
-                      selected: a.id == selectedId,
+                      account: group[j],
+                      selected: group[j].id == selectedId,
                       heroEnabled: !inMasterDetail,
                     ),
+                    if (j < group.length - 1) const FDivider(),
+                  ],
                 ],
               ),
             ),

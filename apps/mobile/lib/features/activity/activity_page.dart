@@ -154,36 +154,47 @@ class _ActivityRightRail extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        SoftCard(
-          padding: const EdgeInsets.all(16),
+        FCard.raw(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                l10n.navActivity,
-                style: context.theme.typography.md.copyWith(
-                  fontWeight: FontWeight.w600,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: Text(
+                  l10n.navActivity,
+                  style: context.theme.typography.md.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [for (final chip in chips) _FilterChip(spec: chip)],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [for (final chip in chips) _FilterChip(spec: chip)],
+                ),
               ),
               const SizedBox(height: 16),
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: onAdd,
-                prefix: const Icon(Icons.add_outlined),
-                child: Text(l10n.activityAddAction),
+              const FDivider(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: onAdd,
+                  prefix: const Icon(Icons.add_outlined),
+                  child: Text(l10n.activityAddAction),
+                ),
               ),
               const SizedBox(height: 8),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: onFilter,
-                prefix: const Icon(Icons.filter_list_outlined),
-                child: Text(l10n.activityFeedFilterTitle),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: onFilter,
+                  prefix: const Icon(Icons.filter_list_outlined),
+                  child: Text(l10n.activityFeedFilterTitle),
+                ),
               ),
             ],
           ),

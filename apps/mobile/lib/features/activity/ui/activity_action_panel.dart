@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -24,32 +23,32 @@ Future<void> showActivityActionPanel(BuildContext context) {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.add_card_outlined,
           title: l10n.superFabExpense,
           subtitle: l10n.activityActionExpenseHint,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.expenseNew),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.add_chart_outlined,
           title: l10n.superFabTrade,
           subtitle: l10n.activityActionTradeHint,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.tradeEntry),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.swap_horiz,
           title: l10n.superFabTransfer,
           subtitle: l10n.activityActionTransferHint,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.transfer),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.currency_exchange,
           title: l10n.superFabConvert,
           subtitle: l10n.activityActionConvertHint,
-          onTap: () => _closeAndPush(
+          onPress: () => _closeAndPush(
             sheetContext,
             context,
             '${AppRoutes.transfer}?convert=1',
@@ -58,69 +57,6 @@ Future<void> showActivityActionPanel(BuildContext context) {
       ],
     ),
   );
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
-      onPress: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: colors.foreground.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 18, color: colors.mutedForeground),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Text(
-                      subtitle,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 void _closeAndPush(

@@ -67,8 +67,7 @@ class AccountsHubPage extends ConsumerWidget {
               balances: balances,
               baseCurrency: snapshot?.baseCurrency ?? 'USD',
               netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
-              totalAssets:
-                  snapshot?.totalAssets.amount ?? Decimal.zero,
+              totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
               totalLiabilities:
                   snapshot?.totalLiabilities.amount ?? Decimal.zero,
             );
@@ -82,8 +81,7 @@ class AccountsHubPage extends ConsumerWidget {
 bool _isUserContainer(Account a) {
   // System accounts persist with side = income / expense / equity. The
   // user hub renders only asset / liability sides.
-  return a.category == AccountSide.asset ||
-      a.category == AccountSide.liability;
+  return a.category == AccountSide.asset || a.category == AccountSide.liability;
 }
 
 class _AccountsHubBody extends StatelessWidget {
@@ -140,9 +138,7 @@ class _AccountsHubBody extends StatelessWidget {
   }
 }
 
-Map<AccountCategory, List<Account>> _groupByCategory(
-  List<Account> accounts,
-) {
+Map<AccountCategory, List<Account>> _groupByCategory(List<Account> accounts) {
   // Render order — Cash first, then Bank, Broker, Crypto, Credit, Loan,
   // Asset (other), Liability (other). Empty groups are dropped.
   const order = [
@@ -261,24 +257,18 @@ class _AccountsSection extends StatelessWidget {
               ),
             ),
           ),
-          SoftCard(
+          FCard.raw(
             child: Column(
               children: [
                 for (var i = 0; i < accounts.length; i++) ...[
                   _AccountRow(
                     account: accounts[i],
-                    balances: balances[accounts[i].id] ??
+                    balances:
+                        balances[accounts[i].id] ??
                         AccountBalances.empty(accounts[i].id),
                     baseCurrency: baseCurrency,
                   ),
-                  if (i < accounts.length - 1)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Container(
-                        height: 1,
-                        color: colors.foreground.withValues(alpha: 0.05),
-                      ),
-                    ),
+                  if (i < accounts.length - 1) const FDivider(),
                 ],
               ],
             ),
@@ -315,12 +305,13 @@ class _AccountRowState extends State<_AccountRow> {
     final account = widget.account;
     final balances = widget.balances;
     final isMulti = balances.isMultiUnit;
-    final primaryLeg = balances.legFor(account.currency) ??
+    final primaryLeg =
+        balances.legFor(account.currency) ??
         (balances.legs.isNotEmpty ? balances.legs.first : null);
 
     return Column(
       children: [
-        FTappable(
+        FTile(
           onPress: () {
             if (isMulti) {
               setState(() => _expanded = !_expanded);
@@ -328,93 +319,79 @@ class _AccountRowState extends State<_AccountRow> {
               context.push(AppRoutes.accountListItem(account.id));
             }
           },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: colors.foreground.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    _iconFor(account.type),
-                    size: 18,
+          prefix: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: colors.foreground.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              _iconFor(account.type),
+              size: 18,
+              color: colors.mutedForeground,
+            ),
+          ),
+          title: Text(
+            account.name,
+            style: context.theme.typography.sm.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle:
+              account.institution != null && account.institution!.isNotEmpty
+              ? Text(
+                  account.institution!,
+                  style: context.theme.typography.xs.copyWith(
                     color: colors.mutedForeground,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        account.name,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : null,
+          suffix: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (primaryLeg != null)
+                    _PrimaryAmount(leg: primaryLeg)
+                  else
+                    Text(
+                      '—',
+                      style: context.theme.typography.sm.copyWith(
+                        color: colors.mutedForeground,
                       ),
-                      if (account.institution != null &&
-                          account.institution!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            account.institution!,
-                            style: context.theme.typography.xs.copyWith(
-                              color: colors.mutedForeground,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (primaryLeg != null)
-                      _PrimaryAmount(leg: primaryLeg)
-                    else
-                      Text(
-                        '—',
-                        style: context.theme.typography.sm.copyWith(
+                    ),
+                  if (isMulti)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        _multiHint(balances),
+                        style: context.theme.typography.xs2.copyWith(
                           color: colors.mutedForeground,
                         ),
                       ),
-                    if (isMulti)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          _multiHint(balances),
-                          style: context.theme.typography.xs2.copyWith(
-                            color: colors.mutedForeground,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                if (isMulti)
-                  Padding(
-                    padding: const EdgeInsetsDirectional.only(start: 4),
-                    child: Icon(
-                      _expanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: colors.mutedForeground.withValues(alpha: 0.6),
                     ),
+                ],
+              ),
+              if (isMulti)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 4),
+                  child: Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    size: 18,
+                    color: colors.mutedForeground.withValues(alpha: 0.6),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
         if (isMulti && _expanded)
@@ -535,39 +512,30 @@ class _BankAccountsLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return SoftCard(
-      onPress: () => context.push(AppRoutes.accountsList),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: colors.foreground.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.tune_outlined,
-              size: 18,
-              color: colors.mutedForeground,
-            ),
+    return FCard.raw(
+      child: FTile(
+        onPress: () => context.push(AppRoutes.accountsList),
+        prefix: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: colors.foreground.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              l10n.accountsHubManageBankAccounts,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.tune_outlined,
+            size: 18,
             color: colors.mutedForeground,
           ),
-        ],
+        ),
+        title: Text(
+          l10n.accountsHubManageBankAccounts,
+          style: context.theme.typography.sm.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        suffix: Icon(Icons.chevron_right, color: colors.mutedForeground),
       ),
     );
   }
