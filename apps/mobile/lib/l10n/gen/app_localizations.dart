@@ -134,6 +134,12 @@ abstract class AppLocalizations {
   /// **'Accounts'**
   String get navAccounts;
 
+  /// Bottom nav action that opens the command palette on touch shells
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get navSearch;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:
