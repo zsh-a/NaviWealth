@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/interaction_mode.dart';
 import '../../../core/haptics/haptics.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/proposal_applier.dart';
 import '../data/providers.dart';
@@ -18,13 +19,13 @@ import '../domain/proposal_plan.dart';
 /// `kindLabel` strings used by `interactionModeForKindLabel`. Must
 /// stay in sync with `policy/tool_policy.rs` propose entries.
 String _kindLabel(ProposalKind kind) => switch (kind) {
-      ProposalKind.trade => 'trade',
-      ProposalKind.expense => 'expense',
-      ProposalKind.liabilityPayment => 'liability_payment',
-      ProposalKind.accountCreate => 'account_create',
-      ProposalKind.assetValuation => 'asset_valuation',
-      ProposalKind.unknown => '',
-    };
+  ProposalKind.trade => 'trade',
+  ProposalKind.expense => 'expense',
+  ProposalKind.liabilityPayment => 'liability_payment',
+  ProposalKind.accountCreate => 'account_create',
+  ProposalKind.assetValuation => 'asset_valuation',
+  ProposalKind.unknown => '',
+};
 
 String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
     switch (kind) {
@@ -140,29 +141,28 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         final mode = interactionModeForKindLabel(_kindLabel(plan.kind));
         return switch (mode) {
           InteractionMode.oneTap => _OneTapView(
-              plan: plan,
-              applyState: state,
-              onConfirm: _onConfirm,
-              onCancel: _onCancel,
-              onEdit: () => _onEdit(plan),
-            ),
+            plan: plan,
+            applyState: state,
+            onConfirm: _onConfirm,
+            onCancel: _onCancel,
+            onEdit: () => _onEdit(plan),
+          ),
           InteractionMode.typed => _TypedConfirmView(
-              plan: plan,
-              applyState: state,
-              overrides: _overrides,
-              onConfirm: _onConfirm,
-              onCancel: _onCancel,
-              onEdit: () => _onEdit(plan),
-            ),
-          InteractionMode.confirmDiff || InteractionMode.swipe =>
-            _ExpandedView(
-              plan: plan,
-              applyState: state,
-              overrides: _overrides,
-              onConfirm: _onConfirm,
-              onCancel: _onCancel,
-              onEdit: () => _onEdit(plan),
-            ),
+            plan: plan,
+            applyState: state,
+            overrides: _overrides,
+            onConfirm: _onConfirm,
+            onCancel: _onCancel,
+            onEdit: () => _onEdit(plan),
+          ),
+          InteractionMode.confirmDiff || InteractionMode.swipe => _ExpandedView(
+            plan: plan,
+            applyState: state,
+            overrides: _overrides,
+            onConfirm: _onConfirm,
+            onCancel: _onCancel,
+            onEdit: () => _onEdit(plan),
+          ),
         };
     }
   }
@@ -253,7 +253,9 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       context: context,
       side: FLayout.btt,
       mainAxisMaxRatio: null,
-      builder: (ctx) => ProposalEditSheet(plan: plan, initial: _overrides),
+      builder: (ctx) => AppSheetSurface(
+        child: ProposalEditSheet(plan: plan, initial: _overrides),
+      ),
     );
     if (result == null || !mounted) return;
     setState(() => _overrides = result);
@@ -416,10 +418,8 @@ class _OneTapView extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onEdit;
 
-  bool get _isApplying =>
-      applyState.status == ProposalApplyStatus.applying;
-  bool get _isErrored =>
-      applyState.status == ProposalApplyStatus.errored;
+  bool get _isApplying => applyState.status == ProposalApplyStatus.applying;
+  bool get _isErrored => applyState.status == ProposalApplyStatus.errored;
 
   @override
   Widget build(BuildContext context) {
@@ -471,42 +471,26 @@ class _OneTapView extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               applyState.errorMessage!,
-              style: AiType.meta(context).copyWith(
-                color: AiTone.error(context),
-              ),
+              style: AiType.meta(
+                context,
+              ).copyWith(color: AiTone.error(context)),
             ),
           ],
           const SizedBox(height: 4),
           Row(
             children: [
-              TextButton(
-                onPressed: _isApplying ? null : onEdit,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 0,
-                  ),
-                  minimumSize: const Size(0, 28),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                  textStyle: AiType.label(context),
-                ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.sm,
+                mainAxisSize: MainAxisSize.min,
+                onPress: _isApplying ? null : onEdit,
                 child: Text(l10n.aiChatProposalEdit),
               ),
-              TextButton(
-                onPressed: _isApplying ? null : onCancel,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 0,
-                  ),
-                  minimumSize: const Size(0, 28),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                  textStyle: AiType.label(context).copyWith(
-                    color: AiTone.muted(context),
-                  ),
-                ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.sm,
+                mainAxisSize: MainAxisSize.min,
+                onPress: _isApplying ? null : onCancel,
                 child: Text(l10n.commonCancel),
               ),
             ],
@@ -584,9 +568,9 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
             children: [
               Text(
                 '此操作高风险。请输入「$_confirmToken」启用 Confirm。',
-                style: AiType.meta(context).copyWith(
-                  color: AiTone.error(context),
-                ),
+                style: AiType.meta(
+                  context,
+                ).copyWith(color: AiTone.error(context)),
               ),
               const SizedBox(height: 6),
               TextField(
@@ -595,9 +579,9 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
                 style: AiType.body(context),
                 decoration: InputDecoration(
                   hintText: _confirmToken,
-                  hintStyle: AiType.body(context).copyWith(
-                    color: AiTone.muted(context),
-                  ),
+                  hintStyle: AiType.body(
+                    context,
+                  ).copyWith(color: AiTone.muted(context)),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -619,19 +603,16 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
               if (!_matches)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Confirm 暂未启用',
-                    style: AiType.meta(context),
-                  ),
+                  child: Text('Confirm 暂未启用', style: AiType.meta(context)),
                 )
               else
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     l10n.aiChatProposalConfirm,
-                    style: AiType.meta(context).copyWith(
-                      color: AiTone.active(context),
-                    ),
+                    style: AiType.meta(
+                      context,
+                    ).copyWith(color: AiTone.active(context)),
                   ),
                 ),
             ],
@@ -847,7 +828,7 @@ class ProposalPayloadDetails extends StatelessWidget {
 /// Inline edit sheet: lets the user override the high-frequency fields
 /// (amount / price / note / date) before they confirm. Anything beyond
 /// these flows back to the full FIR-44 / FIR-63 / FIR-64 entry pages —
-/// surfaced as a TextButton at the bottom of the sheet.
+/// surfaced as a compact Forui action at the bottom of the sheet.
 class ProposalEditSheet extends StatefulWidget {
   const ProposalEditSheet({super.key, required this.plan, this.initial});
 

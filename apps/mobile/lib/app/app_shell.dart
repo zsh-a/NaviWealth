@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/ai/write/persistent_undo_banner.dart';
+import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -196,7 +197,64 @@ class _MobileShell extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      // §5.10.2 / S2.5 — touch platforms have no `Cmd-K`, and the
+      // `/ai` tab is gone (S1a). Without this pill the command palette
+      // (Layer 1, the sole explicit AI entry) would be unreachable on
+      // a phone. Slim, surface-tone, top-anchored — not a FAB / bubble
+      // (§5.10.7 anti-pattern).
+      child: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: _CommandBarPill(),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+/// Spotlight-style entry to the command palette on touch shells.
+/// Tapping dispatches [OpenCommandPaletteIntent] through the always-
+/// mounted `Actions` layer (see `global_shortcuts_scope.dart`), so it
+/// reuses the exact same opener the desktop `Cmd-K` binding uses.
+class _CommandBarPill extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: FTappable(
+        onPress: () =>
+            Actions.maybeInvoke(context, const OpenCommandPaletteIntent()),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: colors.secondary,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: colors.border, width: 1),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search, size: 18, color: colors.mutedForeground),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.commandPaletteMobileEntryHint,
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

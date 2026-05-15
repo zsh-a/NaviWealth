@@ -69,7 +69,7 @@ Future<void> showAiPrivacyOnboardingSheet(BuildContext context) {
     side: FLayout.btt,
     mainAxisMaxRatio: null,
     builder: (BuildContext sheetContext) =>
-        const _AiPrivacyOnboardingSheet(),
+        const AppSheetSurface(child: _AiPrivacyOnboardingSheet()),
   );
 }
 
@@ -199,12 +199,10 @@ class _OnboardingChoiceTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            isSelected
-                ? Icons.radio_button_checked
-                : Icons.radio_button_unchecked,
-            size: 18,
-            color: isSelected ? colors.primary : colors.mutedForeground,
+          FRadio(
+            value: isSelected,
+            onChange: (_) => onSelect(mode),
+            semanticsLabel: label,
           ),
           const SizedBox(width: 10),
           Expanded(

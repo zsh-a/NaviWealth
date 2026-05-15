@@ -40,7 +40,10 @@ class AiTransparencyPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tracesAsync = ref.watch(recentAiTracesProvider);
     return FScaffold(
-      header: const FHeader.nested(title: Text('AI 透明度')),
+      header: FHeader.nested(
+        title: const Text('AI 透明度'),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: CustomScrollView(
         slivers: <Widget>[
@@ -62,9 +65,8 @@ class AiTransparencyPage extends ConsumerWidget {
             loading: () => const SliverToBoxAdapter(
               child: Center(child: FCircularProgress()),
             ),
-            error: (e, _) => SliverToBoxAdapter(
-              child: Center(child: Text('加载失败: $e')),
-            ),
+            error: (e, _) =>
+                SliverToBoxAdapter(child: Center(child: Text('加载失败: $e'))),
           ),
         ],
       ),
@@ -141,7 +143,8 @@ class _UndoRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final summary = entry.payload['summary_zh'] as String? ??
+    final summary =
+        entry.payload['summary_zh'] as String? ??
         entry.payload['summaryZh'] as String? ??
         entry.kind;
     return Padding(
@@ -336,7 +339,10 @@ class AiTransparencyDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final traceAsync = ref.watch(aiTraceByIdProvider(requestId));
     return FScaffold(
-      header: const FHeader.nested(title: Text('调用链路')),
+      header: FHeader.nested(
+        title: const Text('调用链路'),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: traceAsync.when(
         data: (trace) {

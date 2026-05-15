@@ -12,7 +12,7 @@ import '../tokens/motion_tokens.dart';
 ///
 /// Background is rendered as iOS-style frosted glass:
 ///   - `BackdropFilter(blur 18)` over whatever's underneath
-///   - 88% opaque base surface so the page below tints through
+///   - near-opaque base surface so the page below does not compete
 ///   - rounded top corners (20dp) so the sheet reads as a card edge
 ///     against the page below
 ///
@@ -61,14 +61,6 @@ class AppSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    // Slight translucency lets the page below tint through, the way
-    // iOS sheets read against their host. Dark mode is a touch more
-    // opaque than light mode because the underlying surface has less
-    // contrast to cut through.
-    final surface = colors.background.withValues(alpha: isDark ? 0.92 : 0.86);
-    final hairline = colors.foreground.withValues(alpha: isDark ? 0.10 : 0.08);
-
     final body = scrollable
         ? SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -125,16 +117,45 @@ class AppSheet extends StatelessWidget {
       ],
     );
 
+    return AppSheetSurface(child: content);
+  }
+}
+
+/// Shared sheet surface for custom sheet bodies that cannot use [AppSheet].
+class AppSheetSurface extends StatelessWidget {
+  const AppSheetSurface({
+    super.key,
+    required this.child,
+    this.borderRadius = const BorderRadius.vertical(top: Radius.circular(20)),
+    this.border,
+    this.safeTop = false,
+    this.safeBottom = true,
+  });
+
+  final Widget child;
+  final BorderRadius borderRadius;
+  final Border? border;
+  final bool safeTop;
+  final bool safeBottom;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final isDark = colors.brightness == Brightness.dark;
+    final surface = colors.background.withValues(alpha: isDark ? 0.98 : 0.97);
+    final hairline = colors.foreground.withValues(alpha: isDark ? 0.12 : 0.10);
+
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: borderRadius,
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: surface,
-            border: Border(top: BorderSide(color: hairline, width: 1)),
+            border:
+                border ?? Border(top: BorderSide(color: hairline, width: 1)),
           ),
-          child: SafeArea(top: false, child: content),
+          child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
         ),
       ),
     );

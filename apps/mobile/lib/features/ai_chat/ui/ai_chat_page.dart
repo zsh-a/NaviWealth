@@ -117,7 +117,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     await showFSheet<void>(
       context: context,
       side: FLayout.rtl,
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => AppSheetSurface(
+        borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+        safeTop: true,
         child: SizedBox(
           width: 320,
           child: SessionsPanel(
@@ -142,7 +144,10 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final session = ref.watch(authSessionProvider);
     if (session == null) {
       return FScaffold(
-        header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
+        header: FHeader.nested(
+          title: Text(l10n.aiChatAppBarTitle),
+          prefixes: [backHeaderAction(context)],
+        ),
         childPad: false,
         child: const _LoginRequired(),
       );
@@ -186,7 +191,10 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
         if (isDesktop) {
           return FScaffold(
-            header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
+            header: FHeader.nested(
+              title: Text(l10n.aiChatAppBarTitle),
+              prefixes: [backHeaderAction(context)],
+            ),
             childPad: false,
             child: MasterDetailLayout(
               master: SessionsPanel(
@@ -212,6 +220,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         return FScaffold(
           header: FHeader.nested(
             title: Text(_titleForActive(session.userId, activeId, l10n)),
+            prefixes: [backHeaderAction(context)],
             suffixes: [
               FHeaderAction(
                 icon: const Icon(Icons.history),

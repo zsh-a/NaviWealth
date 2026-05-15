@@ -7,7 +7,6 @@
 /// current mode label.
 library;
 
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -139,12 +138,10 @@ class _ModeRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              size: 20,
-              color: isSelected ? colors.primary : colors.mutedForeground,
+            FRadio(
+              value: isSelected,
+              onChange: (_) => onSelect(mode),
+              semanticsLabel: label,
             ),
             const SizedBox(width: 12),
             Expanded(

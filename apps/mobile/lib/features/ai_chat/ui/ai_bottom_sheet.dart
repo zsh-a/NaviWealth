@@ -24,6 +24,7 @@ import '../../../app/route_paths.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
 import 'message_bubble.dart';
 
@@ -45,9 +46,11 @@ Future<void> showAiBottomSheet(
     mainAxisMaxRatio: null,
     builder: (_) => SizedBox(
       height: sheetHeight,
-      child: AiBottomSheetShell(
-        invocation: invocation,
-        objectLabel: objectLabel,
+      child: AppSheetSurface(
+        child: AiBottomSheetShell(
+          invocation: invocation,
+          objectLabel: objectLabel,
+        ),
       ),
     ),
   );

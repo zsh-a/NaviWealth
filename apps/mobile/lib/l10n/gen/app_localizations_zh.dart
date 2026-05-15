@@ -914,6 +914,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteSearchHint => '搜索命令…';
 
   @override
+  String get commandPaletteMobileEntryHint => '搜索、跳转、提问…';
+
+  @override
   String get commandPaletteEmpty => '没有匹配的命令';
 
   @override

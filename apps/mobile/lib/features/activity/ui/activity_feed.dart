@@ -141,10 +141,11 @@ class _FeedFooter extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
         child: canLoadMore
-            ? TextButton(
-                onPressed: ref
-                    .read(activityFeedQueryProvider.notifier)
-                    .loadMore,
+            ? FButton(
+                variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.sm,
+                mainAxisSize: MainAxisSize.min,
+                onPress: ref.read(activityFeedQueryProvider.notifier).loadMore,
                 child: Text(l10n.activityFeedLoadMore),
               )
             : Text(
