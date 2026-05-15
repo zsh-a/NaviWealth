@@ -161,6 +161,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardNetWorthLiabilitiesLabel => 'Liabilities';
 
   @override
+  String get dashboardValuationUpdating => 'Updating valuations…';
+
+  @override
+  String get dashboardLedgerSyncing => 'Syncing latest records…';
+
+  @override
+  String get dashboardValuationUpdated => 'Valuations updated just now';
+
+  @override
   String get portfolioAssetsTab => 'Assets';
 
   @override

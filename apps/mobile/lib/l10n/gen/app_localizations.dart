@@ -344,6 +344,24 @@ abstract class AppLocalizations {
   /// **'Liabilities'**
   String get dashboardNetWorthLiabilitiesLabel;
 
+  /// Home net-worth card status while market prices or FX rates are refreshing
+  ///
+  /// In en, this message translates to:
+  /// **'Updating valuations…'**
+  String get dashboardValuationUpdating;
+
+  /// Home net-worth card status while cloud ledger sync is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing latest records…'**
+  String get dashboardLedgerSyncing;
+
+  /// Home net-worth card status shortly after valuation refresh finishes
+  ///
+  /// In en, this message translates to:
+  /// **'Valuations updated just now'**
+  String get dashboardValuationUpdated;
+
   /// Portfolio segmented control: assets sub-tab
   ///
   /// In en, this message translates to:
