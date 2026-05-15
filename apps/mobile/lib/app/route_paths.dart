@@ -54,6 +54,8 @@ abstract final class AppRoutes {
   // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
   // under Settings as part of the AI audit surface.
   static const settingsAiHistory = '/settings/ai-history';
+  // §5.10.5 — user-facing privacy posture for cloud-bound AI requests.
+  static const settingsAiPrivacy = '/settings/ai-privacy';
   static String settingsAiTransparencyDetail(String requestId) =>
       '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
 
@@ -91,6 +93,7 @@ abstract final class AppRouteNames {
   static const aiTransparency = 'ai-transparency';
   static const aiTransparencyDetail = 'ai-transparency-detail';
   static const aiHistory = 'ai-history';
+  static const aiPrivacy = 'ai-privacy';
 
   static const accounts = 'accounts';
   static const accountsList = 'accounts-list';

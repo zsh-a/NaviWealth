@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../settings/ui/ai_privacy_onboarding.dart';
 import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';
 import 'domain/dashboard_models.dart';
@@ -46,6 +47,9 @@ class HomePage extends ConsumerWidget {
               data: (snapshot) => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // §5.10.5 — first-launch privacy onboarding sheet.
+                  // Renders nothing once the user has confirmed.
+                  const AiPrivacyOnboardingMount(),
                   const CurrencyMismatchBanner(),
                   Expanded(child: _DashboardBody(snapshot: snapshot)),
                 ],

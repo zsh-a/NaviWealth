@@ -2753,6 +2753,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSubtitle => 'Export or import encrypted data backups';
 
   @override
+  String get settingsAiPrivacyTitle => 'AI privacy';
+
+  @override
+  String get settingsAiPrivacySubtitle =>
+      'Pick what the AI can send to the cloud';
+
+  @override
+  String get aiPrivacyTitle => 'AI privacy';
+
+  @override
+  String get aiPrivacyIntro =>
+      'Choose how much detail the AI can see when it leaves the device. You can change this at any time.';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedLabel => 'Amounts allowed';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedDescription =>
+      'Send exact amounts and account context. Best answer quality.';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedLabel => 'Amounts bucketed';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedDescription =>
+      'Round amounts to the nearest order of magnitude before sending. Cloud sees patterns but not exact numbers.';
+
+  @override
+  String get aiPrivacyModeAmountsLocalLabel => 'Amounts stay local';
+
+  @override
+  String get aiPrivacyModeAmountsLocalDescription =>
+      'Only intent and category names leave the device. Cloud answers narrow to qualitative tips.';
+
+  @override
+  String get aiPrivacyMaskAccountsLabel => 'Mask account / institution names';
+
+  @override
+  String get aiPrivacyMaskAccountsDescription =>
+      'Replace bank and broker names with anonymous IDs before they\'re sent.';
+
+  @override
+  String get aiPrivacyOnboardingTitle => 'Pick your AI privacy posture';
+
+  @override
+  String get aiPrivacyOnboardingBody =>
+      'NaviWealth\'s AI is local-first. When it needs to use the cloud, this setting decides what it can send. You can change it later in Settings.';
+
+  @override
+  String get aiPrivacyOnboardingConfirm => 'Got it';
+
+  @override
+  String get aiTransparencyUndoSectionTitle => 'Pending AI changes';
+
+  @override
+  String get aiTransparencyUndoEmpty => 'No pending AI changes.';
+
+  @override
+  String get aiTransparencyUndoAction => 'Undo';
+
+  @override
   String get settingsDeveloperSection => 'Developer';
 
   @override

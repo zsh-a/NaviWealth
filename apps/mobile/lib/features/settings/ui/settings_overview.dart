@@ -79,6 +79,13 @@ class SettingsOverview extends ConsumerWidget {
               ),
               _SectionDivider(),
               InlineLinkRow(
+                icon: Icons.lock_outline,
+                label: l10n.settingsAiPrivacyTitle,
+                subtitle: l10n.settingsAiPrivacySubtitle,
+                onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
+              ),
+              _SectionDivider(),
+              InlineLinkRow(
                 icon: Icons.visibility_outlined,
                 label: 'AI 透明度',
                 subtitle: '查看最近 AI 调用的详细轨迹',
