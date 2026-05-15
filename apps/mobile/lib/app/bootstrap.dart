@@ -14,13 +14,10 @@ import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/sync/providers.dart';
-import '../data/db/providers.dart';
 import '../data/market/sync/price_sync_providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
-import '../features/settings/data/base_currency_preference.dart';
-import '../features/settings/fx_rates/providers.dart';
 import 'route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
@@ -139,12 +136,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     await container.read(authControllerProvider.future);
   }
 
-  // Fire-and-forget FX rate sync on app launch. Errors are logged but
-  // don't block startup — the dashboard degrades gracefully with a
-  // "currency mismatch" banner when rates are missing.
+  // Start foreground data sync. PriceSyncCoordinator owns both quote
+  // warming and FX refresh so dashboard valuations have one startup path.
   container.read(syncSchedulerBootstrapProvider);
   container.read(priceSyncCoordinatorBootstrapProvider);
-  unawaited(_syncFxRates(container, logger));
 
   return container;
 }
@@ -160,42 +155,6 @@ bool isBenignDuplicateKeyDownAssertion(FlutterErrorDetails details) {
   return text.contains('hardware_keyboard.dart') &&
       text.contains('A KeyDownEvent is dispatched') &&
       text.contains('physical key is already pressed');
-}
-
-/// Trigger FX rate sync in the background. Reads the user's base currency
-/// and account currencies, then fetches today's rates from Yahoo Finance.
-///
-/// Uses the repository directly instead of [accountsStreamProvider] because
-/// the stream is `autoDispose` and has no listeners during bootstrap.
-Future<void> _syncFxRates(ProviderContainer container, AppLogger logger) async {
-  try {
-    logger.i('FX rate sync: starting...');
-    final service = await container.read(fxRateSyncServiceProvider.future);
-    final base = container.read(baseCurrencyProvider);
-    final db = await container.read(appDatabaseProvider.future);
-    final rows = await db
-        .customSelect(
-          'SELECT DISTINCT currency FROM accounts '
-          'WHERE deleted_at IS NULL '
-          'AND archived = 0 '
-          "AND id NOT LIKE 'system-account:%'",
-        )
-        .get();
-    final currencies = rows.map((r) => r.read<String>('currency')).toSet();
-    logger.i('FX rate sync: base=$base, currencies=$currencies');
-    if (currencies.isEmpty ||
-        (currencies.length == 1 && currencies.contains(base))) {
-      logger.i('FX rate sync: no foreign currencies, skipping');
-      return;
-    }
-    final synced = await service.syncRates(
-      baseCurrency: base,
-      accountCurrencies: currencies,
-    );
-    logger.i('FX rate sync complete: $synced pairs updated');
-  } catch (e, st) {
-    logger.w('FX rate sync failed (non-fatal)', error: e, stackTrace: st);
-  }
 }
 
 /// Runs [body] inside a guarded zone so async errors bubble to [AppLogger].

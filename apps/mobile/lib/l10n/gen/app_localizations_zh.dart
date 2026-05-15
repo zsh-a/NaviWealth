@@ -157,6 +157,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardNetWorthLiabilitiesLabel => '负债';
 
   @override
+  String get dashboardValuationUpdating => '正在更新估值…';
+
+  @override
+  String get dashboardLedgerSyncing => '正在同步最新账本…';
+
+  @override
+  String get dashboardValuationUpdated => '估值刚刚更新';
+
+  @override
   String get portfolioAssetsTab => '资产';
 
   @override

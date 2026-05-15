@@ -33,6 +33,47 @@ enum PriceSyncReason {
   mutation,
 }
 
+enum PriceSyncStatus { idle, syncing, fresh, failed }
+
+class PriceSyncStatusEvent {
+  const PriceSyncStatusEvent({
+    required this.status,
+    required this.at,
+    this.lastSuccessAt,
+    this.lastError,
+  });
+
+  final PriceSyncStatus status;
+  final DateTime at;
+  final DateTime? lastSuccessAt;
+  final String? lastError;
+}
+
+class PriceSyncStatusBus {
+  PriceSyncStatusBus({PriceSyncStatusEvent? initial})
+    : _current =
+          initial ??
+          PriceSyncStatusEvent(
+            status: PriceSyncStatus.idle,
+            at: DateTime.now(),
+          );
+
+  final StreamController<PriceSyncStatusEvent> _ctrl =
+      StreamController<PriceSyncStatusEvent>.broadcast();
+  PriceSyncStatusEvent _current;
+
+  Stream<PriceSyncStatusEvent> get stream => _ctrl.stream;
+
+  PriceSyncStatusEvent get current => _current;
+
+  void emit(PriceSyncStatusEvent event) {
+    _current = event;
+    if (!_ctrl.isClosed) _ctrl.add(event);
+  }
+
+  Future<void> close() => _ctrl.close();
+}
+
 /// Reads the current set of "warmable" assets — securities + crypto + bonds
 /// whose symbols can be quoted by the live provider chain. Manual-valuation
 /// types (cash, deposits, wealth products, real estate) are excluded; the
@@ -69,6 +110,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
     Duration interval = const Duration(minutes: 30),
     Clock clock = const SystemClock(),
     AppLogger? logger,
+    PriceSyncStatusBus? statusBus,
   }) : _market = market,
        _fxSync = fxSync,
        _heldAssets = heldAssets,
@@ -77,7 +119,8 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
        _writeDailySnapshots = writeDailySnapshots ?? (() => false),
        _interval = interval,
        _clock = clock,
-       _logger = logger ?? AppLogger.instance;
+       _logger = logger ?? AppLogger.instance,
+       _statusBus = statusBus;
 
   final MarketDataService _market;
   final FxRateSyncService _fxSync;
@@ -88,6 +131,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
   final Duration _interval;
   final Clock _clock;
   final AppLogger _logger;
+  final PriceSyncStatusBus? _statusBus;
 
   Timer? _timer;
   Timer? _mutationDebounce;
@@ -191,18 +235,36 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
   Future<void> _runCycle(PriceSyncReason reason) async {
     cycleCount++;
     _logger.d('price_sync_coordinator: cycle reason=${reason.name}');
+    _emitStatus(PriceSyncStatus.syncing);
     try {
       await _warmQuotes();
       await _syncFx();
       lastSuccessAt = _clock.now();
+      _emitStatus(PriceSyncStatus.fresh, lastSuccessAt: lastSuccessAt);
       _logger.d('price_sync_coordinator: cycle ok');
     } catch (e, st) {
+      _emitStatus(PriceSyncStatus.failed, lastError: e.toString());
       _logger.w(
         'price_sync_coordinator: cycle error (non-fatal)',
         error: e,
         stackTrace: st,
       );
     }
+  }
+
+  void _emitStatus(
+    PriceSyncStatus status, {
+    DateTime? lastSuccessAt,
+    String? lastError,
+  }) {
+    _statusBus?.emit(
+      PriceSyncStatusEvent(
+        status: status,
+        at: _clock.now(),
+        lastSuccessAt: lastSuccessAt ?? this.lastSuccessAt,
+        lastError: lastError,
+      ),
+    );
   }
 
   Future<void> _warmQuotes() async {

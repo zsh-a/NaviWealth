@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../core/sync/providers.dart';
+import '../../core/sync/sync_status.dart';
+import '../../data/market/sync/price_sync_coordinator.dart';
+import '../../data/market/sync/price_sync_providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../settings/ui/ai_privacy_onboarding.dart';
@@ -14,6 +18,16 @@ import 'ui/allocation_summary.dart';
 import 'ui/currency_mismatch_banner.dart';
 import 'ui/home_greeting_header.dart';
 import 'ui/trend_card.dart';
+
+final _valuationStatusTickerProvider = StreamProvider.autoDispose<DateTime>((
+  ref,
+) async* {
+  yield DateTime.now();
+  yield* Stream<DateTime>.periodic(
+    const Duration(seconds: 15),
+    (_) => DateTime.now(),
+  );
+});
 
 /// Home cockpit (FIR-52, redesigned).
 ///
@@ -206,12 +220,78 @@ class _NetWorthHeader extends ConsumerWidget {
               color: context.theme.colors.mutedForeground,
             ),
           ),
+          const _ValuationStatusLine(),
         ],
       ),
     );
   }
 
   String _formatBaseAmount(double v) => v.toStringAsFixed(0);
+}
+
+class _ValuationStatusLine extends ConsumerWidget {
+  const _ValuationStatusLine();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final now =
+        ref.watch(_valuationStatusTickerProvider).value ?? DateTime.now();
+    final priceEvent = ref.watch(priceSyncStatusEventStreamProvider).value;
+    final syncEvent = ref.watch(syncStatusEventStreamProvider).value;
+
+    final String? label;
+    final bool active;
+    if (priceEvent?.status == PriceSyncStatus.syncing) {
+      label = l10n.dashboardValuationUpdating;
+      active = true;
+    } else if (syncEvent?.status == SyncStatus.syncing) {
+      label = l10n.dashboardLedgerSyncing;
+      active = true;
+    } else if (_isRecent(now, priceEvent?.lastSuccessAt)) {
+      label = l10n.dashboardValuationUpdated;
+      active = false;
+    } else {
+      return const SizedBox.shrink();
+    }
+
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (active)
+            const SizedBox(width: 12, height: 12, child: FCircularProgress())
+          else
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: colors.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isRecent(DateTime now, DateTime? timestamp) {
+    if (timestamp == null) return false;
+    final age = now.difference(timestamp);
+    return !age.isNegative && age < const Duration(minutes: 2);
+  }
 }
 
 /// Today / MTD / YTD strip rendered under the hero net-worth number.
