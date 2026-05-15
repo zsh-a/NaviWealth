@@ -14,6 +14,7 @@ import '../features/accounts/accounts_page.dart';
 import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
 import '../features/activity/activity_page.dart';
+import '../features/activity/ui/activity_entry_detail_page.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
@@ -163,6 +164,20 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'transfer',
                     name: AppRouteNames.transfer,
                     builder: (context, state) => const TransferFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'entry/:entryId',
+                    name: AppRouteNames.activityEntryDetail,
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      if (extra is ActivityEntryDetailArgs) {
+                        return ActivityEntryDetailPage(
+                          entry: extra.entry,
+                          accountsById: extra.accountsById,
+                        );
+                      }
+                      return RouteErrorPage(state: state);
+                    },
                   ),
                   GoRoute(
                     path: 'journal',
@@ -371,11 +386,9 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                       GoRoute(
                         path: ':requestId',
                         name: AppRouteNames.aiTransparencyDetail,
-                        builder: (context, state) =>
-                            AiTransparencyDetailPage(
-                              requestId:
-                                  state.pathParameters['requestId'] ?? '',
-                            ),
+                        builder: (context, state) => AiTransparencyDetailPage(
+                          requestId: state.pathParameters['requestId'] ?? '',
+                        ),
                       ),
                     ],
                   ),

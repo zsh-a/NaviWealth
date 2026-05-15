@@ -91,12 +91,9 @@ class AccountsDetailEmpty extends StatelessWidget {
     return FScaffold(
       header: FHeader.nested(title: Text(l10n.accountsAppBarTitle)),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: MasterDetailEmpty(
-          icon: Icons.account_balance_outlined,
-          message: l10n.accountsDetailEmpty,
-        ),
+      child: MasterDetailEmpty(
+        icon: Icons.account_balance_outlined,
+        message: l10n.accountsDetailEmpty,
       ),
     );
   }
@@ -129,7 +126,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
         ],
       ),
       childPad: false,
-      child: Material(color: Colors.transparent, child: child),
+      child: child,
     );
   }
 }

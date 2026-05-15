@@ -75,6 +75,9 @@ abstract final class AppRoutes {
   static String expense(String id) =>
       '/activity/expenses/${Uri.encodeComponent(id)}';
 
+  static String activityEntry(String id) =>
+      '/activity/entry/${Uri.encodeComponent(id)}';
+
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
 }
@@ -113,6 +116,7 @@ abstract final class AppRouteNames {
   static const accountsAnalytics = 'accounts-analytics';
 
   static const activity = 'activity';
+  static const activityEntryDetail = 'activity-entry-detail';
   static const expenses = 'expenses';
   static const expenseNew = 'expense-new';
   static const expenseReport = 'expense-report';

@@ -36,17 +36,14 @@ class AccountsPage extends ConsumerWidget {
         if (masterDetail) {
           return FScaffold(
             childPad: false,
-            child: Material(
-              color: Colors.transparent,
-              child: MasterDetailLayout(
-                master: AccountsMaster(
-                  selectedId: selected,
-                  inMasterDetail: true,
-                ),
-                detail: selected == null
-                    ? const AccountsDetailEmpty()
-                    : AccountFormPage(accountId: selected),
+            child: MasterDetailLayout(
+              master: AccountsMaster(
+                selectedId: selected,
+                inMasterDetail: true,
               ),
+              detail: selected == null
+                  ? const AccountsDetailEmpty()
+                  : AccountFormPage(accountId: selected),
             ),
           );
         }
