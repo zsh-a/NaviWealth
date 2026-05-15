@@ -266,7 +266,12 @@ class _DeltaMetricsRow extends StatelessWidget {
             ),
             _MetricCell(
               label: l10n.dashboardHeaderDeltaYtdLabel,
-              child: m.ytdChangePct != null
+              // Sanity guard: even after the XIRR runaway fix, treat any
+              // ratio outside ±100 (i.e. ±10000%) as numerically
+              // meaningless and fall through to the bounded currency
+              // delta. Stops a single bad upstream value from blowing
+              // the hero past the screen.
+              child: _isSaneRatio(m.ytdChangePct)
                   ? DeltaText.percentFromRatio(
                       ratio: m.ytdChangePct,
                       fractionDigits: 2,
@@ -284,6 +289,16 @@ class _DeltaMetricsRow extends StatelessWidget {
       },
     );
   }
+}
+
+/// `true` when [ratio] is non-null, finite, and within ±100 (±10000%).
+/// Anything outside that band is almost certainly a numerical artifact
+/// upstream — the dashboard hero falls through to the bounded
+/// currency-delta representation instead.
+bool _isSaneRatio(double? ratio) {
+  if (ratio == null) return false;
+  if (!ratio.isFinite) return false;
+  return ratio.abs() < 100;
 }
 
 class _MetricCell extends StatelessWidget {
