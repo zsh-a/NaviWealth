@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -26,121 +25,61 @@ Future<void> showAccountsActionPanel(BuildContext context) {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.account_balance_outlined,
           title: l10n.accountFormCreateTitle,
           subtitle: l10n.accountsActionAccountHint,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountListNew),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.account_balance_wallet_outlined,
           title: l10n.assetsAddCashTitle,
           subtitle: l10n.assetsAddCashSubtitle,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountNewCash),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.savings_outlined,
           title: l10n.assetsAddDepositTitle,
           subtitle: l10n.assetsAddDepositSubtitle,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountNewDeposit),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.auto_graph_outlined,
           title: l10n.assetsAddWealthTitle,
           subtitle: l10n.assetsAddWealthSubtitle,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.accountNewWealth),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.home_outlined,
           title: l10n.physicalAssetAddRealEstate,
           subtitle: l10n.assetsAddRealEstateSubtitle,
-          onTap: () =>
-              _closeAndOpenPhysical(sheetContext, context, AssetType.realEstate),
+          onPress: () => _closeAndOpenPhysical(
+            sheetContext,
+            context,
+            AssetType.realEstate,
+          ),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.directions_car_outlined,
           title: l10n.physicalAssetAddVehicle,
           subtitle: l10n.assetsAddVehicleSubtitle,
-          onTap: () =>
+          onPress: () =>
               _closeAndOpenPhysical(sheetContext, context, AssetType.vehicle),
         ),
-        _ActionTile(
+        AppActionSheetTile(
           icon: Icons.payments_outlined,
           title: l10n.superFabLiability,
           subtitle: l10n.accountsActionLiabilityHint,
-          onTap: () =>
+          onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.liabilityNew),
         ),
       ],
     ),
   );
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
-      onPress: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: colors.foreground.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, size: 18, color: colors.mutedForeground),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Text(
-                      subtitle,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 void _closeAndPush(
