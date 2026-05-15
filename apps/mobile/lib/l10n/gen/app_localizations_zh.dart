@@ -922,6 +922,54 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get askAiResultLocalBadge => '本地处理';
+
+  @override
+  String get askAiResultNoLocalMatch => '命令栏暂无法本地解析这个问题。可去 AI 历史里继续追问。';
+
+  @override
+  String get askAiResultContinueInChat => '去 AI 历史继续追问 →';
+
+  @override
+  String get askAiResultIrreversibleBlocked => '命令栏不执行转账 / 下单 / 删除账户。请到对应页面操作。';
+
+  @override
+  String askAiResultError(String error) {
+    return '查询执行失败：$error';
+  }
+
+  @override
+  String get askAiResultEmpty => '没有匹配的记录。';
+
+  @override
+  String askAiResultMoreRows(int count) {
+    return '还有 $count 条';
+  }
+
+  @override
+  String askAiResultRowCount(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String get askAiResultTitleSpending => '支出分类';
+
+  @override
+  String get askAiResultTitleTransactions => '交易明细';
+
+  @override
+  String get askAiResultTitleNetWorth => '净资产趋势';
+
+  @override
+  String get askAiResultTitleSubscriptions => '订阅';
+
+  @override
+  String get askAiResultTitleRefunds => '退款匹配';
+
+  @override
+  String get askAiResultTitleGeneric => '查询结果';
+
+  @override
   String get commandPaletteGoOverview => '前往 总览';
 
   @override

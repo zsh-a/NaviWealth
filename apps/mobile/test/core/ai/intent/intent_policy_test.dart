@@ -28,6 +28,31 @@ void main() {
     expect(lookupIntent('does_not_exist'), isNull);
   });
 
+  test('requiresExplicitConfirmation defaults to false', () {
+    // §5.10.6 — registered read-only intents must never trip the guard.
+    for (final d in intentDescriptors) {
+      expect(
+        d.requiresExplicitConfirmation,
+        isFalse,
+        reason:
+            'Intent "${d.name}" must not silently require confirmation — '
+            'flip the flag explicitly when registering a write-shaped intent.',
+      );
+    }
+  });
+
+  test('requiresExplicitConfirmation can be set on a descriptor', () {
+    const d = IntentDescriptor(
+      name: 'place_order',
+      labelZh: '下单',
+      allowedObjectTypes: <String>{'asset'},
+      preferredCapabilities: <AiCapability>{AiCapability.proposal},
+      promptTemplate: '请确认是否对 {{object_label}} 下单。',
+      requiresExplicitConfirmation: true,
+    );
+    expect(d.requiresExplicitConfirmation, isTrue);
+  });
+
   test('renderPromptFor fills object_label / timeframe / currency', () {
     const inv = AiIntentInvocation(
       source: 'expense_detail',

@@ -954,6 +954,56 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get askAiResultLocalBadge => 'Local';
+
+  @override
+  String get askAiResultNoLocalMatch =>
+      'Can\'t answer this here. Continue in AI history for a full chat.';
+
+  @override
+  String get askAiResultContinueInChat => 'Continue in AI history →';
+
+  @override
+  String get askAiResultIrreversibleBlocked =>
+      'The command palette doesn\'t execute transfers, orders, or account deletion. Use the corresponding page.';
+
+  @override
+  String askAiResultError(String error) {
+    return 'Could not run this query: $error';
+  }
+
+  @override
+  String get askAiResultEmpty => 'No matching records.';
+
+  @override
+  String askAiResultMoreRows(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String askAiResultRowCount(int count) {
+    return '$count rows';
+  }
+
+  @override
+  String get askAiResultTitleSpending => 'Spending by category';
+
+  @override
+  String get askAiResultTitleTransactions => 'Transactions';
+
+  @override
+  String get askAiResultTitleNetWorth => 'Net worth trend';
+
+  @override
+  String get askAiResultTitleSubscriptions => 'Subscriptions';
+
+  @override
+  String get askAiResultTitleRefunds => 'Refund matches';
+
+  @override
+  String get askAiResultTitleGeneric => 'Result';
+
+  @override
   String get commandPaletteGoOverview => 'Go to Overview';
 
   @override

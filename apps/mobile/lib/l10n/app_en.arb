@@ -481,6 +481,43 @@
     "description": "Dynamic command palette entry that opens AI chat with the user's query prefilled",
     "placeholders": { "query": { "type": "String", "example": "portfolio summary" } }
   },
+  "askAiResultLocalBadge": "Local",
+  "@askAiResultLocalBadge": { "description": "Tiny badge on the command palette result pane showing the answer was computed on-device" },
+  "askAiResultNoLocalMatch": "Can't answer this here. Continue in AI history for a full chat.",
+  "@askAiResultNoLocalMatch": { "description": "Shown when the natural-language parser can't resolve a query locally" },
+  "askAiResultContinueInChat": "Continue in AI history →",
+  "@askAiResultContinueInChat": { "description": "Link below the no-local-match notice that opens /settings/ai-history with the query prefilled" },
+  "askAiResultIrreversibleBlocked": "The command palette doesn't execute transfers, orders, or account deletion. Use the corresponding page.",
+  "@askAiResultIrreversibleBlocked": { "description": "§5.10.6 guardrail copy shown when the user types a write-shaped natural language query" },
+  "askAiResultError": "Could not run this query: {error}",
+  "@askAiResultError": {
+    "description": "Shown when the local executor throws while running a parsed query plan",
+    "placeholders": { "error": { "type": "String", "example": "no database" } }
+  },
+  "askAiResultEmpty": "No matching records.",
+  "@askAiResultEmpty": { "description": "Shown when a parsed query returns zero rows" },
+  "askAiResultMoreRows": "+{count} more",
+  "@askAiResultMoreRows": {
+    "description": "Footer hint when only the first N rows are previewed",
+    "placeholders": { "count": { "type": "int", "example": "12" } }
+  },
+  "askAiResultRowCount": "{count} rows",
+  "@askAiResultRowCount": {
+    "description": "Summary line: number of rows in the result",
+    "placeholders": { "count": { "type": "int", "example": "7" } }
+  },
+  "askAiResultTitleSpending": "Spending by category",
+  "@askAiResultTitleSpending": { "description": "Title for the spending-by-category result card" },
+  "askAiResultTitleTransactions": "Transactions",
+  "@askAiResultTitleTransactions": { "description": "Title for the transactions-filter result card" },
+  "askAiResultTitleNetWorth": "Net worth trend",
+  "@askAiResultTitleNetWorth": { "description": "Title for the net-worth-trend result card" },
+  "askAiResultTitleSubscriptions": "Subscriptions",
+  "@askAiResultTitleSubscriptions": { "description": "Title for the subscription-list result card" },
+  "askAiResultTitleRefunds": "Refund matches",
+  "@askAiResultTitleRefunds": { "description": "Title for the refund-matching result card" },
+  "askAiResultTitleGeneric": "Result",
+  "@askAiResultTitleGeneric": { "description": "Generic title for query result cards we haven't specialized" },
   "commandPaletteGoOverview": "Go to Overview",
   "@commandPaletteGoOverview": { "description": "Command palette: navigate to the home/overview tab" },
   "commandPaletteGoSettings": "Go to Settings",
