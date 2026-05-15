@@ -1778,6 +1778,90 @@ abstract class AppLocalizations {
   /// **'Ask AI: {query}'**
   String commandPaletteAskAi(String query);
 
+  /// Tiny badge on the command palette result pane showing the answer was computed on-device
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get askAiResultLocalBadge;
+
+  /// Shown when the natural-language parser can't resolve a query locally
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t answer this here. Continue in AI history for a full chat.'**
+  String get askAiResultNoLocalMatch;
+
+  /// Link below the no-local-match notice that opens /settings/ai-history with the query prefilled
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in AI history →'**
+  String get askAiResultContinueInChat;
+
+  /// §5.10.6 guardrail copy shown when the user types a write-shaped natural language query
+  ///
+  /// In en, this message translates to:
+  /// **'The command palette doesn\'t execute transfers, orders, or account deletion. Use the corresponding page.'**
+  String get askAiResultIrreversibleBlocked;
+
+  /// Shown when the local executor throws while running a parsed query plan
+  ///
+  /// In en, this message translates to:
+  /// **'Could not run this query: {error}'**
+  String askAiResultError(String error);
+
+  /// Shown when a parsed query returns zero rows
+  ///
+  /// In en, this message translates to:
+  /// **'No matching records.'**
+  String get askAiResultEmpty;
+
+  /// Footer hint when only the first N rows are previewed
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String askAiResultMoreRows(int count);
+
+  /// Summary line: number of rows in the result
+  ///
+  /// In en, this message translates to:
+  /// **'{count} rows'**
+  String askAiResultRowCount(int count);
+
+  /// Title for the spending-by-category result card
+  ///
+  /// In en, this message translates to:
+  /// **'Spending by category'**
+  String get askAiResultTitleSpending;
+
+  /// Title for the transactions-filter result card
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get askAiResultTitleTransactions;
+
+  /// Title for the net-worth-trend result card
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth trend'**
+  String get askAiResultTitleNetWorth;
+
+  /// Title for the subscription-list result card
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions'**
+  String get askAiResultTitleSubscriptions;
+
+  /// Title for the refund-matching result card
+  ///
+  /// In en, this message translates to:
+  /// **'Refund matches'**
+  String get askAiResultTitleRefunds;
+
+  /// Generic title for query result cards we haven't specialized
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get askAiResultTitleGeneric;
+
   /// Command palette: navigate to the home/overview tab
   ///
   /// In en, this message translates to:

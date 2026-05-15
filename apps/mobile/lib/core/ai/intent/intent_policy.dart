@@ -22,6 +22,7 @@ class IntentDescriptor {
     required this.preferredCapabilities,
     required this.promptTemplate,
     this.preferredReadModels = const <String>[],
+    this.requiresExplicitConfirmation = false,
   });
 
   /// Stable identifier — `'explain_change'`, never renamed.
@@ -51,6 +52,18 @@ class IntentDescriptor {
   /// freshness gate (force-refresh before the cloud answers) — falls
   /// back to no-hint when empty.
   final List<String> preferredReadModels;
+
+  /// §5.10.6 — irreversible-operation guard. When `true`, surfaces that
+  /// could trigger this intent (command palette overlay, inline capsule
+  /// auto-actions) **must not** execute it without an explicit
+  /// confirmation sheet. The rule is enforced at the call site (command
+  /// palette / capsule dispatcher); AI surfaces never short-circuit a
+  /// transfer / order / delete via natural language.
+  ///
+  /// Reach for this on any intent whose side effect is not safely
+  /// undoable through [DriftUndoStack]: external API calls, cross-account
+  /// transfers, account deletion, broker order placement.
+  final bool requiresExplicitConfirmation;
 }
 
 const intentDescriptors = <IntentDescriptor>[
