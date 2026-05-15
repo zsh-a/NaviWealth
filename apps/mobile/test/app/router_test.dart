@@ -288,7 +288,7 @@ void main() {
       expect(_currentPath(container), AppRoutes.home);
 
       // Find the bottom bar and calculate nav item positions.
-      // Layout: Home / Activity / Accounts / Settings.
+      // Layout: Home / Activity / Search / Accounts / Settings.
       final barFinder = find.byType(FBottomNavigationBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
@@ -296,10 +296,10 @@ void main() {
 
       final barCenterY = barOrigin.dy + barSize.height / 2;
       final barWidth = barSize.width;
-      final tabW = barWidth / 4;
+      final tabW = barWidth / 5;
 
-      // Item 2 = Accounts (was index 3 in the 5-tab layout).
-      final accountsX = barOrigin.dx + tabW * 2.5;
+      // Item 3 = Accounts. Item 2 is the Search action and does not navigate.
+      final accountsX = barOrigin.dx + tabW * 3.5;
       await tester.tapAt(Offset(accountsX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -308,7 +308,8 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 4-tab layout: Home(0) | Activity(1) | Accounts(2) | Settings(3)
+      // 5-item nav layout:
+      // Home(0) | Activity(1) | Search action(2) | Accounts(3) | Settings(4)
       final container = await _pumpAt(
         tester,
         initialLocation: AppRoutes.accounts,
@@ -316,7 +317,7 @@ void main() {
       final bar = tester.widget<FBottomNavigationBar>(
         find.byType(FBottomNavigationBar),
       );
-      expect(bar.index, 2);
+      expect(bar.index, 3);
 
       container.read(appRouterProvider).go(AppRoutes.activity);
       await tester.pump();
@@ -344,38 +345,39 @@ void main() {
     });
 
     testWidgets(
-      'S2.5 — mobile shell exposes the command-bar pill (only Layer-1 '
+      'S2.5 — mobile shell exposes a command-bar nav action (only Layer-1 '
       'AI entry on touch; opens the palette on tap)',
       (tester) async {
         final container = await _pumpAt(tester, viewportSize: _mobileSize);
-        // Resolve the localized hint so the assertion survives a copy
+        // Resolve the localized label so the assertion survives a copy
         // change.
-        final l10n = await AppLocalizations.delegate.load(
-          const Locale('en'),
-        );
-        final pill = find.text(l10n.commandPaletteMobileEntryHint);
-        expect(pill, findsOneWidget);
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+        final searchAction = find.text(l10n.navSearch);
+        expect(searchAction, findsOneWidget);
 
-        await tester.tap(pill);
+        await tester.tap(searchAction);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         // The palette opens as a dialog with its own search field.
         expect(find.text(l10n.commandPaletteSearchHint), findsOneWidget);
-        expect(_currentPath(container), AppRoutes.home,
-            reason: 'opening the palette must not navigate away');
+        expect(
+          _currentPath(container),
+          AppRoutes.home,
+          reason: 'opening the palette must not navigate away',
+        );
         await _drainTimers(tester);
       },
     );
 
-    testWidgets('S2.5 — desktop shell does not show the mobile pill', (
+    testWidgets('S2.5 — desktop shell does not show the mobile search action', (
       tester,
     ) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       expect(
-        find.text(l10n.commandPaletteMobileEntryHint),
+        find.text(l10n.navSearch),
         findsNothing,
-        reason: 'desktop uses Cmd-K; the pill is touch-only',
+        reason: 'desktop uses Cmd-K; the nav action is touch-only',
       );
     });
 

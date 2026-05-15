@@ -27,6 +27,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navAccounts => '账户';
 
   @override
+  String get navSearch => '搜索';
+
+  @override
   String get accountsHubSectionCashDeposits => '现金与存款';
 
   @override

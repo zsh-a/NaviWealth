@@ -171,6 +171,32 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const commandIndex = 2;
+    final navIndex = selectedIndex < commandIndex
+        ? selectedIndex
+        : selectedIndex + 1;
+
+    void onNavChange(int i) {
+      if (i == commandIndex) {
+        Actions.maybeInvoke(context, const OpenCommandPaletteIntent());
+        return;
+      }
+      onDestinationSelected(i < commandIndex ? i : i - 1);
+    }
+
+    FBottomNavigationBarItem itemFor(int i) {
+      return FBottomNavigationBarItem(
+        icon: Icon(
+          i == selectedIndex
+              ? destinations[i].selectedIcon
+              : destinations[i].icon,
+        ),
+        label: Text(destinations[i].label),
+      );
+    }
+
+    final l10n = AppLocalizations.of(context);
+
     return FScaffold(
       childPad: false,
       footer: Column(
@@ -180,81 +206,23 @@ class _MobileShell extends StatelessWidget {
           // the bottom nav. Hidden when the stack is empty.
           const PersistentUndoBanner(),
           FBottomNavigationBar(
-            index: selectedIndex,
-            onChange: onDestinationSelected,
+            index: navIndex,
+            onChange: onNavChange,
             safeAreaBottom: true,
             children: [
-              for (var i = 0; i < destinations.length; i++)
-                FBottomNavigationBarItem(
-                  icon: Icon(
-                    i == selectedIndex
-                        ? destinations[i].selectedIcon
-                        : destinations[i].icon,
-                  ),
-                  label: Text(destinations[i].label),
-                ),
-            ],
-          ),
-        ],
-      ),
-      // §5.10.2 / S2.5 — touch platforms have no `Cmd-K`, and the
-      // `/ai` tab is gone (S1a). Without this pill the command palette
-      // (Layer 1, the sole explicit AI entry) would be unreachable on
-      // a phone. Slim, surface-tone, top-anchored — not a FAB / bubble
-      // (§5.10.7 anti-pattern).
-      child: Column(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: _CommandBarPill(),
-          ),
-          Expanded(child: child),
-        ],
-      ),
-    );
-  }
-}
-
-/// Spotlight-style entry to the command palette on touch shells.
-/// Tapping dispatches [OpenCommandPaletteIntent] through the always-
-/// mounted `Actions` layer (see `global_shortcuts_scope.dart`), so it
-/// reuses the exact same opener the desktop `Cmd-K` binding uses.
-class _CommandBarPill extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: FTappable(
-        onPress: () =>
-            Actions.maybeInvoke(context, const OpenCommandPaletteIntent()),
-        child: Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: colors.secondary,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: colors.border, width: 1),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.search, size: 18, color: colors.mutedForeground),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.commandPaletteMobileEntryHint,
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              itemFor(0),
+              itemFor(1),
+              FBottomNavigationBarItem(
+                icon: const Icon(Icons.search),
+                label: Text(l10n.navSearch),
               ),
+              itemFor(2),
+              itemFor(3),
             ],
           ),
-        ),
+        ],
       ),
+      child: child,
     );
   }
 }
