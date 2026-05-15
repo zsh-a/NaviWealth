@@ -1,0 +1,686 @@
+/// The single entry point for AI as an overlay sheet.
+///
+/// Replaces the two historically separate surfaces — `showAiChatSheet`
+/// (FAB / command palette) and `showAiBottomSheet` (object capsule) —
+/// whose only real differences are *mode*, not architecture. One API,
+/// one [AiSheetShell], two modes:
+///
+///  - **conversation** (`invocation == null`): resumes the user's
+///    default thread via [defaultChatSessionProvider] and shows the
+///    composer, optionally [prefill]ed. Mobile → 70 vh bottom sheet;
+///    tablet / desktop → a 480×600 draggable floating card whose
+///    position persists across opens.
+///  - **invocation** (`invocation != null`): the object-semantic
+///    surface (§5.4 "AI 进入用户当前页面"). Spins up a fresh thread
+///    titled from the intent, fires the rendered prompt immediately,
+///    offers reply chips + an "expand to chat" footer, and has no
+///    composer. Bottom sheet at every width — it carries its own
+///    context header, so it never free-floats.
+///
+/// Hard constraints (§5.8) carried over from the invocation surface:
+///   - The only entry point for AI from outside the chat tab
+///   - Reuses `ChatRepository.sendMessage` — no separate runtime path
+///   - Attaches `AiIntentInvocation.toTraceJson()` to AiTrace
+library;
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/route_paths.dart';
+import '../../../core/ai/intent/intent.dart';
+import '../../../core/ai/visual/visual.dart';
+import '../../../core/auth/providers.dart';
+import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../data/providers.dart';
+import '../state/chat_controller.dart';
+import '../state/chat_session_scope.dart';
+import '../state/route_context_provider.dart';
+import 'chat_composer.dart';
+import 'chat_conversation_view.dart';
+
+/// Open the AI sheet. Pass [invocation] for the object-semantic mode;
+/// otherwise it opens (or resumes) the user's conversation. Never
+/// construct [AiSheetShell] directly and never push `/ai` for a
+/// non-conversation entry point — call this.
+Future<void> showAiSheet(
+  BuildContext context, {
+  AiIntentInvocation? invocation,
+  String? objectLabel,
+  String? prefill,
+}) {
+  if (invocation != null) {
+    final viewportHeight = MediaQuery.of(context).size.height;
+    final sheetHeight = viewportHeight < 500
+        ? viewportHeight
+        : viewportHeight * 0.7;
+    return showFSheet<void>(
+      context: context,
+      side: FLayout.btt,
+      mainAxisMaxRatio: null,
+      builder: (_) => SizedBox(
+        height: sheetHeight,
+        child: AppSheetSurface(
+          child: AiSheetShell.invocation(
+            invocation: invocation,
+            objectLabel: objectLabel,
+          ),
+        ),
+      ),
+    );
+  }
+
+  final width = MediaQuery.sizeOf(context).width;
+  if (Breakpoints.isMobile(width)) {
+    return showFSheet<void>(
+      side: FLayout.btt,
+      context: context,
+      mainAxisMaxRatio: null,
+      builder: (_) => _SheetSized(
+        child: AppSheetSurface(
+          child: AiSheetShell.conversation(prefill: prefill),
+        ),
+      ),
+    );
+  }
+  return showGeneralDialog<void>(
+    context: context,
+    barrierLabel: 'ai-chat-sheet',
+    barrierDismissible: true,
+    barrierColor: Colors.black.withValues(alpha: 0.18),
+    transitionDuration: Motion.medium,
+    pageBuilder: (ctx, animation, secondaryAnimation) =>
+        _DesktopSheetOverlay(prefill: prefill),
+  );
+}
+
+/// Wraps the conversation body to 70 vh on mobile.
+class _SheetSized extends StatelessWidget {
+  const _SheetSized({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height * 0.7;
+    return SizedBox(height: height, child: child);
+  }
+}
+
+/// Desktop conversation overlay: a 480 × 600 draggable floating card.
+/// Position defaults to bottom-right and persists to SharedPreferences.
+class _DesktopSheetOverlay extends ConsumerStatefulWidget {
+  const _DesktopSheetOverlay({this.prefill});
+
+  final String? prefill;
+
+  @override
+  ConsumerState<_DesktopSheetOverlay> createState() =>
+      _DesktopSheetOverlayState();
+}
+
+class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
+  static const _prefKey = 'naviwealth.ai_chat.sheet_offset';
+  static const _sheetW = 480.0;
+  static const _sheetH = 600.0;
+
+  Offset? _offset;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPosition();
+  }
+
+  Future<void> _loadPosition() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final dx = prefs.getDouble('$_prefKey.dx');
+    final dy = prefs.getDouble('$_prefKey.dy');
+    if (dx != null && dy != null && mounted) {
+      setState(() => _offset = Offset(dx, dy));
+    }
+  }
+
+  Future<void> _persistPosition(Offset o) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await Future.wait([
+      prefs.setDouble('$_prefKey.dx', o.dx),
+      prefs.setDouble('$_prefKey.dy', o.dy),
+    ]);
+  }
+
+  Offset _defaultPosition(Size screenSize) {
+    return Offset(
+      screenSize.width - _sheetW - 24,
+      screenSize.height - _sheetH - 24,
+    );
+  }
+
+  Offset _clampToScreen(Offset o, Size screenSize) {
+    final maxDx = screenSize.width - _sheetW;
+    final maxDy = screenSize.height - _sheetH;
+    return Offset(o.dx.clamp(0.0, maxDx), o.dy.clamp(0.0, maxDy));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final pos = _clampToScreen(
+      _offset ?? _defaultPosition(screenSize),
+      screenSize,
+    );
+
+    final colors = context.theme.colors;
+    return Stack(
+      children: [
+        Positioned(
+          left: pos.dx,
+          top: pos.dy,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: _sheetW,
+              height: _sheetH,
+              decoration: BoxDecoration(
+                color: colors.background,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.border, width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Drag handle — only this area initiates drag.
+                  GestureDetector(
+                    onPanUpdate: (details) {
+                      setState(() {
+                        _offset = Offset(
+                          pos.dx + details.delta.dx,
+                          pos.dy + details.delta.dy,
+                        );
+                      });
+                    },
+                    onPanEnd: (_) {
+                      if (_offset != null) _persistPosition(_offset!);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colors.mutedForeground.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: AiSheetShell.conversation(prefill: widget.prefill),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The unified sheet content. `invocation == null` ⇒ conversation mode
+/// (default thread + composer); otherwise invocation mode (fresh thread
+/// + fired prompt + reply chips + footer). One widget so a new chat
+/// affordance is added in exactly one place.
+class AiSheetShell extends ConsumerStatefulWidget {
+  const AiSheetShell.conversation({super.key, this.prefill})
+    : invocation = null,
+      objectLabel = null;
+
+  const AiSheetShell.invocation({
+    super.key,
+    required AiIntentInvocation this.invocation,
+    this.objectLabel,
+  }) : prefill = null;
+
+  /// Non-null ⇒ invocation mode.
+  final AiIntentInvocation? invocation;
+
+  /// Human label for the object ("Netflix 订阅", "投资账户") — fills
+  /// `{{object_label}}` in the prompt template and the context header.
+  final String? objectLabel;
+
+  /// Conversation-mode composer pre-fill (command palette "Ask AI").
+  final String? prefill;
+
+  bool get isInvocation => invocation != null;
+
+  @override
+  ConsumerState<AiSheetShell> createState() => _AiSheetShellState();
+}
+
+class _AiSheetShellState extends ConsumerState<AiSheetShell> {
+  // Invocation-mode state only.
+  String? _sessionId;
+  bool _kicked = false;
+  bool _loginRequired = false;
+  String? _errorDetail;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isInvocation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _kick());
+    }
+  }
+
+  // ── Invocation mode ──────────────────────────────────────────────
+
+  Future<void> _kick() async {
+    if (_kicked) return;
+    _kicked = true;
+    final invocation = widget.invocation!;
+    final auth = ref.read(authSessionProvider);
+    if (auth == null) {
+      setState(() => _loginRequired = true);
+      return;
+    }
+    try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      // Real session backed by ChatHistoryStore so "expand to chat" can
+      // take over without rebuilding state. Title encodes the intent
+      // for sidebar legibility.
+      final desc = lookupIntent(invocation.intent);
+      final title = desc != null
+          ? '${desc.labelZh} · ${widget.objectLabel ?? invocation.object?.type ?? "AI"}'
+          : (widget.objectLabel ?? 'AI');
+      final session = await repo.createSession(
+        ownerUserId: auth.userId,
+        title: title,
+      );
+      if (!mounted) return;
+      setState(() => _sessionId = session.id);
+      final prompt = renderPromptFor(
+        invocation,
+        objectLabel: widget.objectLabel,
+      );
+      unawaited(
+        repo.sendMessage(
+          sessionId: session.id,
+          ownerUserId: auth.userId,
+          content: prompt,
+          invocationTrace: invocation.toTraceJson(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorDetail = '$e');
+    }
+  }
+
+  Future<void> _sendChip(String sessionId, String chip) async {
+    final auth = ref.read(authSessionProvider);
+    if (auth == null) return;
+    try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      unawaited(
+        repo.sendMessage(
+          sessionId: sessionId,
+          ownerUserId: auth.userId,
+          content: chip,
+          // Same invocation tag — trace attribution carries through
+          // follow-up chip taps so the transparency page can group them.
+          invocationTrace: widget.invocation!.toTraceJson(),
+        ),
+      );
+    } catch (_) {
+      // Best-effort: chip taps are non-critical.
+    }
+  }
+
+  void _expandToChat() {
+    final sid = _sessionId;
+    if (sid == null) return;
+    Navigator.of(context).pop();
+    context.go('${AppRoutes.settingsAiHistory}?selected=$sid');
+  }
+
+  Widget _buildInvocation(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SafeArea(
+      top: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _InvocationHeader(
+            invocation: widget.invocation!,
+            objectLabel: widget.objectLabel,
+          ),
+          const FDivider(),
+          Expanded(child: _invocationBody()),
+          if (_sessionId != null) ...[
+            const FDivider(),
+            _Footer(
+              onExpand: _expandToChat,
+              onDismiss: () => Navigator.of(context).maybePop(),
+            ),
+          ],
+          if (_loginRequired || _errorDetail != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Text(
+                _loginRequired
+                    ? l10n.aiChatLoginRequired
+                    : l10n.commonLoadError(_errorDetail!),
+                style: context.theme.typography.sm.copyWith(
+                  color: context.theme.colors.destructive,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _invocationBody() {
+    final sessionId = _sessionId;
+    if (sessionId == null) {
+      // The header already shows the invocation context, so the body
+      // should feel "AI is about to talk", not "loading…".
+      return const _BodySkeleton();
+    }
+    return ChatConversationView(
+      sessionId: sessionId,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      invocationIntent: widget.invocation!.intent,
+      onReplyChip: (chip) => _sendChip(sessionId, chip),
+      loadingBuilder: (_) => const _BodySkeleton(),
+      emptyBuilder: (_) => const _BodySkeleton(),
+    );
+  }
+
+  // ── Conversation mode ────────────────────────────────────────────
+
+  Widget _buildConversation(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final session = ref.watch(authSessionProvider);
+
+    if (session == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 32,
+                color: context.theme.colors.mutedForeground,
+              ),
+              const SizedBox(height: 12),
+              Text(l10n.aiChatLoginRequired),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final activeId = ref
+        .watch(defaultChatSessionProvider(session.userId))
+        .asData
+        ?.value;
+
+    return Column(
+      children: [
+        _ConversationHeader(
+          title: l10n.aiChatSheetTitle,
+          onExpand: activeId == null
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                  context.go(AppRoutes.settingsAiHistory);
+                },
+        ),
+        const FDivider(),
+        Expanded(
+          child: activeId == null
+              ? const Center(child: FCircularProgress())
+              : ChatConversationView(
+                  sessionId: activeId,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  emptyBuilder: (context) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        AppLocalizations.of(context).aiChatSheetEmpty,
+                        style: context.theme.typography.sm.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        if (activeId != null)
+          _ConversationComposer(sessionId: activeId, prefill: widget.prefill),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.isInvocation
+        ? _buildInvocation(context)
+        : _buildConversation(context);
+  }
+}
+
+class _ConversationHeader extends StatelessWidget {
+  const _ConversationHeader({required this.title, this.onExpand});
+  final String title;
+  final VoidCallback? onExpand;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          const AiSparkle(size: 16),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, style: AiType.title(context))),
+          FTooltip(
+            tipBuilder: (_, _) =>
+                Text(AppLocalizations.of(context).aiChatSheetExpandTooltip),
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: onExpand,
+              child: const Icon(Icons.open_in_full, size: 20),
+            ),
+          ),
+          FButton.icon(
+            variant: FButtonVariant.ghost,
+            onPress: () => Navigator.of(context).pop(),
+            child: const Icon(Icons.close, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConversationComposer extends ConsumerWidget {
+  const _ConversationComposer({required this.sessionId, this.prefill});
+  final String sessionId;
+  final String? prefill;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final turn = ref.watch(chatControllerProvider(sessionId));
+    final routeCtx = ref.watch(aiRouteContextProvider);
+    return ChatComposer(
+      isStreaming: turn.isStreaming,
+      isFlushing: turn.isFlushing,
+      initialText: prefill,
+      onSend: (text) {
+        ref
+            .read(chatControllerProvider(sessionId).notifier)
+            .send(
+              text,
+              staleSyncNotice: l10n.aiChatStaleSyncNotice,
+              systemContext: routeCtx.toSystemContext(),
+            );
+      },
+      onCancel: () {
+        ref.read(chatControllerProvider(sessionId).notifier).cancel();
+      },
+    );
+  }
+}
+
+class _InvocationHeader extends StatelessWidget {
+  const _InvocationHeader({required this.invocation, this.objectLabel});
+  final AiIntentInvocation invocation;
+  final String? objectLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final desc = lookupIntent(invocation.intent);
+    // Single inline header row: sparkle + intent label + middot +
+    // object label, so context stays visible while the body scrolls.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      child: Row(
+        children: [
+          const AiSparkle(),
+          const SizedBox(width: 8),
+          Flexible(
+            child: RichText(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: desc?.labelZh ?? 'AI',
+                    style: AiType.label(context),
+                  ),
+                  if (objectLabel != null) ...[
+                    TextSpan(text: '  ·  ', style: AiType.meta(context)),
+                    TextSpan(text: objectLabel!, style: AiType.meta(context)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder shape that materialises into the first assistant turn —
+/// three muted bars sized like a chat bubble, pulsing subtly.
+class _BodySkeleton extends StatefulWidget {
+  const _BodySkeleton();
+
+  @override
+  State<_BodySkeleton> createState() => _BodySkeletonState();
+}
+
+class _BodySkeletonState extends State<_BodySkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, _) {
+          final t = _ctrl.value;
+          // Lerp between 0.35 and 0.65 alpha — barely perceptible.
+          final alpha = 0.35 + 0.30 * t;
+          final color = AiTone.surfaceTint(context).withValues(alpha: alpha);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _bar(color, widthFactor: 0.85),
+              const SizedBox(height: 8),
+              _bar(color, widthFactor: 0.65),
+              const SizedBox(height: 8),
+              _bar(color, widthFactor: 0.45),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _bar(Color color, {required double widthFactor}) {
+    return FractionallySizedBox(
+      alignment: Alignment.centerLeft,
+      widthFactor: widthFactor,
+      child: Container(
+        height: 12,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
+    );
+  }
+}
+
+class _Footer extends StatelessWidget {
+  const _Footer({required this.onExpand, required this.onDismiss});
+  final VoidCallback onExpand;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: Row(
+        children: [
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onDismiss,
+            prefix: const Icon(Icons.close, size: 16),
+            child: Text(l10n.commonClose),
+          ),
+          const Spacer(),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: onExpand,
+            prefix: const Icon(Icons.open_in_full, size: 16),
+            child: Text(l10n.aiChatSheetExpandTooltip),
+          ),
+        ],
+      ),
+    );
+  }
+}

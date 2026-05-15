@@ -3724,4 +3724,79 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStatusStatJustNow => '刚刚';
+
+  @override
+  String get aiReplyChipCompareLastPeriod => '对比上一周期';
+
+  @override
+  String get aiReplyChipFindKeyDrivers => '找出主要驱动';
+
+  @override
+  String get aiReplyChipHowControlSpending => '如何控制支出';
+
+  @override
+  String get aiReplyChipViewHoldings => '看持仓明细';
+
+  @override
+  String get aiReplyChipComputeXirr => '计算 XIRR';
+
+  @override
+  String get aiReplyChipCompareLastMonth => '对比上月';
+
+  @override
+  String get aiReplyChipMarketDrop20 => '如果市场下跌 20%?';
+
+  @override
+  String get aiReplyChipMonthlySaveDelta => '需要每月多存多少?';
+
+  @override
+  String get aiReplyChipRebalanceAdvice => '调整资产配置建议';
+
+  @override
+  String get aiReplyChipCompareAnotherPeriod => '再对比一个时段';
+
+  @override
+  String get aiReplyChipBiggestCategoryChange => '哪些类目变化最大';
+
+  @override
+  String get aiReplyChipTrendSummary => '给出趋势小结';
+
+  @override
+  String get aiReplyChipHandleInsight => '如何处理这条洞察?';
+
+  @override
+  String get aiReplyChipSimilarHistory => '看历史相似情况';
+
+  @override
+  String get aiReplyChipActionPlan => '给我具体行动方案';
+
+  @override
+  String get aiReplyChipRiskConcentration => '风险集中度评估';
+
+  @override
+  String get aiReplyChipUnusedSubscriptions => '哪些订阅没在用';
+
+  @override
+  String get aiReplyChipCancelPriciestSub => '取消最贵的订阅?';
+
+  @override
+  String get aiReplyChipUnmatchedRefunds => '未匹配的退款';
+
+  @override
+  String get aiReplyChipCompareBenchmark => '与基准对比';
+
+  @override
+  String get aiReplyChipForecast12mo => '未来 12 月预测';
+
+  @override
+  String get aiReplyChipExpandDetails => '展开细节';
+
+  @override
+  String get aiReplyChipActionPlanGeneric => '给出行动方案';
+
+  @override
+  String get aiReplyChipVsLastMonth => '与上月对比';
+
+  @override
+  String get aiCapsuleExpandFallback => '展开';
 }

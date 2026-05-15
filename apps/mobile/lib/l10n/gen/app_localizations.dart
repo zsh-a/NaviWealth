@@ -6843,6 +6843,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'now'**
   String get syncStatusStatJustNow;
+
+  /// No description provided for @aiReplyChipCompareLastPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to previous period'**
+  String get aiReplyChipCompareLastPeriod;
+
+  /// No description provided for @aiReplyChipFindKeyDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find the key drivers'**
+  String get aiReplyChipFindKeyDrivers;
+
+  /// No description provided for @aiReplyChipHowControlSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I rein in spending?'**
+  String get aiReplyChipHowControlSpending;
+
+  /// No description provided for @aiReplyChipViewHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'View holdings detail'**
+  String get aiReplyChipViewHoldings;
+
+  /// No description provided for @aiReplyChipComputeXirr.
+  ///
+  /// In en, this message translates to:
+  /// **'Compute XIRR'**
+  String get aiReplyChipComputeXirr;
+
+  /// No description provided for @aiReplyChipCompareLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to last month'**
+  String get aiReplyChipCompareLastMonth;
+
+  /// No description provided for @aiReplyChipMarketDrop20.
+  ///
+  /// In en, this message translates to:
+  /// **'What if the market drops 20%?'**
+  String get aiReplyChipMarketDrop20;
+
+  /// No description provided for @aiReplyChipMonthlySaveDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'How much more to save each month?'**
+  String get aiReplyChipMonthlySaveDelta;
+
+  /// No description provided for @aiReplyChipRebalanceAdvice.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalancing advice'**
+  String get aiReplyChipRebalanceAdvice;
+
+  /// No description provided for @aiReplyChipCompareAnotherPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare another period'**
+  String get aiReplyChipCompareAnotherPeriod;
+
+  /// No description provided for @aiReplyChipBiggestCategoryChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Which categories changed most?'**
+  String get aiReplyChipBiggestCategoryChange;
+
+  /// No description provided for @aiReplyChipTrendSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Give a trend summary'**
+  String get aiReplyChipTrendSummary;
+
+  /// No description provided for @aiReplyChipHandleInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'How should I handle this?'**
+  String get aiReplyChipHandleInsight;
+
+  /// No description provided for @aiReplyChipSimilarHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show similar past cases'**
+  String get aiReplyChipSimilarHistory;
+
+  /// No description provided for @aiReplyChipActionPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Give me a concrete action plan'**
+  String get aiReplyChipActionPlan;
+
+  /// No description provided for @aiReplyChipRiskConcentration.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk concentration check'**
+  String get aiReplyChipRiskConcentration;
+
+  /// No description provided for @aiReplyChipUnusedSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Which subscriptions go unused?'**
+  String get aiReplyChipUnusedSubscriptions;
+
+  /// No description provided for @aiReplyChipCancelPriciestSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel the priciest subscription?'**
+  String get aiReplyChipCancelPriciestSub;
+
+  /// No description provided for @aiReplyChipUnmatchedRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmatched refunds'**
+  String get aiReplyChipUnmatchedRefunds;
+
+  /// No description provided for @aiReplyChipCompareBenchmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with benchmark'**
+  String get aiReplyChipCompareBenchmark;
+
+  /// No description provided for @aiReplyChipForecast12mo.
+  ///
+  /// In en, this message translates to:
+  /// **'12-month forecast'**
+  String get aiReplyChipForecast12mo;
+
+  /// No description provided for @aiReplyChipExpandDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand details'**
+  String get aiReplyChipExpandDetails;
+
+  /// No description provided for @aiReplyChipActionPlanGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Give an action plan'**
+  String get aiReplyChipActionPlanGeneric;
+
+  /// No description provided for @aiReplyChipVsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with last month'**
+  String get aiReplyChipVsLastMonth;
+
+  /// No description provided for @aiCapsuleExpandFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get aiCapsuleExpandFallback;
 }
 
 class _AppLocalizationsDelegate

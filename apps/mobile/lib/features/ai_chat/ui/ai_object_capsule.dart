@@ -13,7 +13,8 @@ import 'package:flutter/widgets.dart';
 
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';
-import 'ai_bottom_sheet.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import 'ai_sheet.dart';
 
 class AiObjectCapsule extends StatelessWidget {
   const AiObjectCapsule({
@@ -36,7 +37,10 @@ class AiObjectCapsule extends StatelessWidget {
   @override
   Widget build(BuildContext buildContext) {
     final descriptor = lookupIntent(intent);
-    final label = fallbackLabel ?? descriptor?.labelZh ?? '展开';
+    final label =
+        fallbackLabel ??
+        descriptor?.labelZh ??
+        AppLocalizations.of(buildContext).aiCapsuleExpandFallback;
     return AiPill(
       leading: const AiSparkle(),
       label: label,
@@ -53,7 +57,7 @@ class AiObjectCapsule extends StatelessWidget {
       ...scopeContext,
       ...context,
     };
-    showAiBottomSheet(
+    showAiSheet(
       buildContext,
       invocation: AiIntentInvocation(
         source: source,

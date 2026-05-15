@@ -3,7 +3,7 @@
 ///
 /// Every site that triggers AI — capsule, command palette, home insight
 /// tap, future voice / drag-to-AI — **must** construct an
-/// [AiIntentInvocation] and route through [showAiBottomSheet]. Direct
+/// [AiIntentInvocation] and route through `showAiSheet`. Direct
 /// `Navigator.push(ChatPage(...))` style is forbidden by the §5.8
 /// hard-constraint checklist.
 ///

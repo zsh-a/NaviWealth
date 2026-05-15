@@ -75,7 +75,7 @@ void main() {
       tester,
       name: 'ai_object_capsule',
       // We use the underlying AiPill here directly to avoid
-      // pulling in showAiBottomSheet's transitive providers — the
+      // pulling in showAiSheet's transitive providers — the
       // capsule's visual identity is `AiPill + AiSparkle + intent
       // label`, exactly what we render below.
       child: const AiPill(label: '为什么变化', leading: AiSparkle()),
