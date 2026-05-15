@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/insight_models.dart';
 import 'asset_category_visuals.dart';
@@ -12,6 +14,9 @@ String insightHeadline(AppLocalizations l10n, InsightItem item) {
     InsightKind.portfolioDrift => l10n.dashboardInsightDriftLabel,
     InsightKind.maturity => l10n.dashboardInsightMaturityLabel,
     InsightKind.anomaly => l10n.dashboardInsightAnomalyLabel,
+    InsightKind.duplicateCharge =>
+      l10n.dashboardInsightDuplicateChargeLabel,
+    InsightKind.monthlySummary => l10n.dashboardInsightMonthlySummaryLabel,
   };
 }
 
@@ -27,7 +32,60 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
     InsightKind.anomaly => l10n.dashboardInsightAnomalyValue(
       _signedPercent(item.anomalyPct ?? 0),
     ),
+    InsightKind.duplicateCharge => _duplicateCharge(l10n, item),
+    InsightKind.monthlySummary => _monthlySummary(l10n, item),
   };
+}
+
+String _duplicateCharge(AppLocalizations l10n, InsightItem item) {
+  final count = item.duplicateChargeCount ?? 0;
+  final amountMinor = item.duplicateChargeAmountMinor ?? 0;
+  final currency = item.duplicateChargeCurrency ?? 'USD';
+  return l10n.dashboardInsightDuplicateChargeValue(
+    count,
+    _formatMoney(amountMinor, currency),
+  );
+}
+
+String _monthlySummary(AppLocalizations l10n, InsightItem item) {
+  final delta = item.summaryDeltaMinor ?? 0;
+  final currency = item.summaryCurrency ?? 'USD';
+  if (delta == 0) return l10n.dashboardInsightMonthlySummaryFlat;
+  final amount = _formatMoney(delta.abs(), currency);
+  return delta > 0
+      ? l10n.dashboardInsightMonthlySummaryUp(amount)
+      : l10n.dashboardInsightMonthlySummaryDown(amount);
+}
+
+/// Format a minor-unit amount as a thin "currency + grouped digits"
+/// string. Distinct from [MoneyText] because this string is consumed
+/// by the ARB-templated detail line, not a widget.
+String _formatMoney(int amountMinor, String currency) {
+  final value = amountMinor.abs() / 100.0;
+  final formatted = NumberFormat.currency(
+    name: currency,
+    symbol: _glyphFor(currency),
+    decimalDigits: 2,
+  ).format(value);
+  return formatted;
+}
+
+String _glyphFor(String code) {
+  switch (code.toUpperCase()) {
+    case 'CNY':
+    case 'JPY':
+      return '¥';
+    case 'USD':
+      return r'$';
+    case 'EUR':
+      return '€';
+    case 'GBP':
+      return '£';
+    case 'HKD':
+      return r'HK$';
+    default:
+      return '$code ';
+  }
 }
 
 String _fireProgress(AppLocalizations l10n, InsightItem item) {

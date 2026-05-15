@@ -6220,6 +6220,60 @@ abstract class AppLocalizations {
   /// **'Projected {percent}'**
   String dashboardInsightAnomalyValue(String percent);
 
+  /// Dashboard insight label: same merchant + amount within ±2 days
+  ///
+  /// In en, this message translates to:
+  /// **'Possible duplicate charge'**
+  String get dashboardInsightDuplicateChargeLabel;
+
+  /// Dashboard duplicate-charge insight value
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pair} other{{count} pairs}} totaling {amount}'**
+  String dashboardInsightDuplicateChargeValue(int count, String amount);
+
+  /// Dashboard insight label: prior-month net-worth summary, fired in the first week of a new month
+  ///
+  /// In en, this message translates to:
+  /// **'Last month recap'**
+  String get dashboardInsightMonthlySummaryLabel;
+
+  /// Monthly summary insight value when net worth grew
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth grew {amount}'**
+  String dashboardInsightMonthlySummaryUp(String amount);
+
+  /// Monthly summary insight value when net worth declined
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth shrank {amount}'**
+  String dashboardInsightMonthlySummaryDown(String amount);
+
+  /// Monthly summary insight value when net worth was unchanged
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth was flat'**
+  String get dashboardInsightMonthlySummaryFlat;
+
+  /// Insight card action: expand inline detail
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get dashboardInsightActionExpand;
+
+  /// Insight card action: open the command palette with the insight as context
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get dashboardInsightActionAsk;
+
+  /// Insight card action: hide this insight kind on the dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dashboardInsightActionDismiss;
+
   /// Portfolio view switcher: assets list
   ///
   /// In en, this message translates to:
