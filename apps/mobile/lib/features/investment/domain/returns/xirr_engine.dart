@@ -118,7 +118,14 @@ class XirrEngine {
   /// Returns:
   /// - [XirrConverged] on success.
   /// - [XirrFallbackAbsolute] when the input has fewer than two flows, all
-  ///   flows share a sign, or both Newton and bisection fail to find a root.
+  ///   flows share a sign, both Newton and bisection fail to find a root,
+  ///   **or** the solver "converged" to a rate so far outside
+  ///   [bisectionHigh] that NPV terms collapsed to floating-point zero
+  ///   (a numerical no-man's land — see `reason='runaway'`). Without that
+  ///   guard, a small mid-year outflow with a much larger terminal
+  ///   bookend used to spiral Newton into a finite-but-meaningless 1e12+
+  ///   rate, which the dashboard then `* 100`'d into a 100+ digit string
+  ///   that blew the home page hero past the screen.
   ///
   /// Input order does not matter — the engine sorts internally.
   XirrSolution compute(List<XirrCashFlow> flows) {
@@ -160,7 +167,7 @@ class XirrEngine {
       final f = _npv(sorted, years, rate);
       if (f.isNaN || f.isInfinite) break;
       if (f.abs() < tolerance) {
-        return XirrConverged(rate: rate, iterations: iterations);
+        return _convergedOrFallback(rate, iterations, sorted);
       }
       final fp = _dnpv(sorted, years, rate);
       if (fp == 0 || fp.isNaN || fp.isInfinite) break;
@@ -168,8 +175,14 @@ class XirrEngine {
       // Pin to (-1, ∞); rates ≤ -1 send (1+r)^t to a singular / complex
       // result and the iteration explodes.
       if (next <= -1) next = -0.999999;
+      // Pin the upper end to bisectionHigh × 10 so a bad iteration can't
+      // launch `rate` into 1e150-land where every NPV term floors to
+      // zero and the loop spuriously declares "converged" (the dashboard
+      // YTD overflow regression).
+      final upperGuard = bisectionHigh * 10;
+      if (next > upperGuard) next = upperGuard;
       if ((next - rate).abs() < tolerance) {
-        return XirrConverged(rate: next, iterations: iterations);
+        return _convergedOrFallback(next, iterations, sorted);
       }
       rate = next;
     }
@@ -192,7 +205,7 @@ class XirrEngine {
       final npvMid = _npv(sorted, years, mid);
       if (npvMid.isNaN) break;
       if (npvMid.abs() < tolerance || (hi - lo).abs() < tolerance) {
-        return XirrConverged(rate: mid, iterations: iterations);
+        return _convergedOrFallback(mid, iterations, sorted);
       }
       if (npvLo.sign != npvMid.sign) {
         hi = mid;
@@ -207,6 +220,26 @@ class XirrEngine {
       absoluteReturn: _absoluteReturn(sorted),
       reason: 'failed-to-converge',
     );
+  }
+
+  /// Wraps the rate in a sanity check before declaring convergence.
+  /// A finite-but-absurd rate (|r| > [bisectionHigh]) means Newton
+  /// settled in a region where every NPV term has rounded to zero —
+  /// the value is mathematically meaningless. Down-grade to the
+  /// bounded absolute-return fallback so consumers (the dashboard
+  /// YTD percent cell, in particular) never receive `9.22e18`.
+  XirrSolution _convergedOrFallback(
+    double rate,
+    int iterations,
+    List<XirrCashFlow> sorted,
+  ) {
+    if (rate.isNaN || rate.isInfinite || rate.abs() > bisectionHigh) {
+      return XirrFallbackAbsolute(
+        absoluteReturn: _absoluteReturn(sorted),
+        reason: 'runaway',
+      );
+    }
+    return XirrConverged(rate: rate, iterations: iterations);
   }
 
   static double _npv(
