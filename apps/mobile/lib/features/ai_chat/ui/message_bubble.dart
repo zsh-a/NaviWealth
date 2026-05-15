@@ -179,13 +179,6 @@ class _AssistantBubble extends StatelessWidget {
         ],
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
-        if (message.usage != null)
-          _UsageLine(
-            input: message.usage!.input,
-            output: message.usage!.output,
-            cacheRead: message.usage!.cacheRead,
-            cacheWrite: message.usage!.cacheWrite,
-          ),
         if (!isStreaming &&
             !_isError &&
             message.role == ChatRole.assistant &&
@@ -715,52 +708,22 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
   }
 }
 
-class _UsageLine extends StatelessWidget {
-  const _UsageLine({
-    required this.input,
-    required this.output,
-    required this.cacheRead,
-    required this.cacheWrite,
-  });
-
-  final int input;
-  final int output;
-  final int cacheRead;
-  final int cacheWrite;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Text(
-        'Tokens $input in / $output out / $cacheRead read / $cacheWrite write',
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-          fontFamily: 'monospace',
-        ),
-      ),
-    );
-  }
-}
-
 class _AssistantAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
+    // Wave 36 visual language: the assistant identity glyph is a framed
+    // [AiSparkle]. No ad-hoc `secondary` hue — surface tint + hairline
+    // only (AiTone), per core/ai/visual §5.8.
     return Container(
       width: 28,
       height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: colors.secondary,
-        border: Border.all(color: colors.border, width: 1),
+        color: AiTone.surfaceTint(context),
+        border: Border.all(color: AiTone.outline(context), width: 1),
       ),
       alignment: Alignment.center,
-      child: Icon(
-        Icons.auto_awesome_outlined,
-        size: 16,
-        color: colors.foreground,
-      ),
+      child: const AiSparkle(size: 16),
     );
   }
 }
@@ -808,16 +771,20 @@ class _ReplyChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chips = suggestReplyChips(
+    final ids = suggestReplyChips(
       invocationIntent: invocationIntent,
       turnTools: toolNames,
     );
-    if (chips.isEmpty) return const SizedBox.shrink();
+    if (ids.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    // The localized phrase is both the chip label and the user turn
+    // sent on tap — the model sees natural language, never the id.
+    final labels = [for (final id in ids) localizedReplyChip(l10n, id)];
     return Wrap(
       spacing: 6,
       runSpacing: 6,
       children: [
-        for (final label in chips)
+        for (final label in labels)
           AiPill(label: label, onTap: () => onTap(label)),
       ],
     );

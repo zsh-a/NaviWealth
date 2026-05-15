@@ -3882,4 +3882,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncStatusStatJustNow => 'now';
+
+  @override
+  String get aiReplyChipCompareLastPeriod => 'Compare to previous period';
+
+  @override
+  String get aiReplyChipFindKeyDrivers => 'Find the key drivers';
+
+  @override
+  String get aiReplyChipHowControlSpending => 'How do I rein in spending?';
+
+  @override
+  String get aiReplyChipViewHoldings => 'View holdings detail';
+
+  @override
+  String get aiReplyChipComputeXirr => 'Compute XIRR';
+
+  @override
+  String get aiReplyChipCompareLastMonth => 'Compare to last month';
+
+  @override
+  String get aiReplyChipMarketDrop20 => 'What if the market drops 20%?';
+
+  @override
+  String get aiReplyChipMonthlySaveDelta => 'How much more to save each month?';
+
+  @override
+  String get aiReplyChipRebalanceAdvice => 'Rebalancing advice';
+
+  @override
+  String get aiReplyChipCompareAnotherPeriod => 'Compare another period';
+
+  @override
+  String get aiReplyChipBiggestCategoryChange =>
+      'Which categories changed most?';
+
+  @override
+  String get aiReplyChipTrendSummary => 'Give a trend summary';
+
+  @override
+  String get aiReplyChipHandleInsight => 'How should I handle this?';
+
+  @override
+  String get aiReplyChipSimilarHistory => 'Show similar past cases';
+
+  @override
+  String get aiReplyChipActionPlan => 'Give me a concrete action plan';
+
+  @override
+  String get aiReplyChipRiskConcentration => 'Risk concentration check';
+
+  @override
+  String get aiReplyChipUnusedSubscriptions => 'Which subscriptions go unused?';
+
+  @override
+  String get aiReplyChipCancelPriciestSub =>
+      'Cancel the priciest subscription?';
+
+  @override
+  String get aiReplyChipUnmatchedRefunds => 'Unmatched refunds';
+
+  @override
+  String get aiReplyChipCompareBenchmark => 'Compare with benchmark';
+
+  @override
+  String get aiReplyChipForecast12mo => '12-month forecast';
+
+  @override
+  String get aiReplyChipExpandDetails => 'Expand details';
+
+  @override
+  String get aiReplyChipActionPlanGeneric => 'Give an action plan';
+
+  @override
+  String get aiReplyChipVsLastMonth => 'Compare with last month';
+
+  @override
+  String get aiCapsuleExpandFallback => 'Expand';
 }
