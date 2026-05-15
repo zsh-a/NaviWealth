@@ -150,10 +150,11 @@ class _EmptyAccounts extends StatelessWidget {
             const SizedBox(height: 12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton.icon(
-              icon: const Icon(Icons.add_card_outlined),
-              label: Text(l10n.accountFormCreateTitle),
-              onPressed: () => context.go(AppRoutes.accountListNew),
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: () => context.go(AppRoutes.accountListNew),
+              prefix: const Icon(Icons.add_card_outlined),
+              child: Text(l10n.accountFormCreateTitle),
             ),
           ],
         ),

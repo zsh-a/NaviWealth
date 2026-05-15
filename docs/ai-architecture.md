@@ -694,7 +694,7 @@ const intentDescriptors = <IntentDescriptor>[
 
 ### 5.10 四层入口重构（S0–S6 蓝图）
 
-> 状态: 蓝图阶段；本节本身 = **S0**，是后续 S1–S6 所有 AI 入口 PR 的纲领。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。
+> 状态: **S0–S4 + S6 已落地**（命令栏成为 AI 主入口 / Layer 3 三动作 + 两类新洞察 / Layer 2 capsule 铺开 / 隐私 UI），**S5（Layer 4 录入管道）未开始**。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。详见 §5.10.8 状态表与 §5.10.9 偏离记录。
 
 #### 5.10.1 四层模型
 
@@ -765,18 +765,34 @@ const intentDescriptors = <IntentDescriptor>[
 
 后续 PR 纲领。**S0 = 本节**；S1–S6 各自一条 issue。依赖链: S1 阻塞所有 UI 工作；S5 与 S2–S4 可并行；S6 在 S2 之后任意插入。
 
-| 序号 | 名称 | 关键文件 / 路径 | 依赖 | 备注 |
-|------|------|------------------|------|------|
-| S0 | 本节文档（蓝图对齐） | `docs/ai-architecture.md §5.10` | — | 后续 PR review 依据 |
-| S1a | 拓扑重构（去 tab + 路由迁移 + ARB） | `app/route_paths.dart`、`app/router_builder.dart`、`app/app_shell.dart`、`l10n/app_*.arb` | S0 | 纯拓扑；一次性 ARB key 删除 |
-| S1b | 视觉去 sparkle + golden 重拍 | `core/command_palette/`、`features/ai_chat/ui/`、`features/activity/ui/activity_entry_detail_page.dart`、`design_system/tokens/`、`test/golden/`、`docs/visual-baseline/` | S1a | 与 S1a 拆开，避免审查混淆 |
-| S2 | 命令栏成为 AI 主入口 | `core/command_palette/command_palette_dialog.dart`、新 `core/command_palette/ask_ai_result_pane.dart`、`core/ai/intent/intent_policy.dart`（加 `requiresExplicitConfirmation`）、复用 `core/ai/intent/nl_to_query_plan.dart` + `core/ai/local/skills/query_plan_executor.dart` + `core/ai/runtime/ai_runtime.dart` | S1 | 结构化答案模板；不可逆护栏；二次确认 sheet |
-| S3 | Layer 3 卡片三动作 + 两类新洞察 | `features/home/ui/ai_insight_feed.dart`、新 `features/home/data/duplicate_charge_insight_provider.dart`（复用 `core/ai/local/skills/recurring_detector.dart` + `refund_matcher.dart`）、新 `monthly_summary_insight_provider.dart`、新 `dismissed_insights_store` (Drift 表 `dismissed_insight_keys`) | S2（"问一下"目的地） | 与 S2 可并行起步 |
-| S4 | Layer 2 Capsule 铺开 | `design_system/charts/ChartCard` trailing slot、新 `core/ai/intent/ai_context_chip_scope.dart`、`features/activity/` + `features/expense/ui/expense_list_*.dart` 选区工具条 + 新意图 `transactions.explainSelection` 注册 | S2 | 沿用 §5.3 AiIntentInvocation 协议；沿用 §5.4 inline bottom sheet |
-| S5 | Layer 4 录入解析管道 | 新 `features/ingest/`（data/domain/ui，含 `ingest_pipeline.dart` / `dedup_engine.dart` / `draft_queue_page.dart`）、新 `apps/backend/src/routes/ingest.rs`、新 `apps/backend/src/ai/tools/{parse_receipt_image, parse_statement_pdf}.rs`（受 `guardrails.rs` + PrivacyBudget 约束）、`apps/mobile/pubspec.yaml`（`image_picker`、`desktop_drop`）、iOS/Android plist/manifest 媒体权限 | OpLog 表迁移（独立线） | 与 S2–S4 可并行；新表走现有 sync 通道保证 HLC 与撤销一致 |
-| S6 | 隐私 UI + Onboarding | 新 `features/settings/ui/ai_privacy_page.dart`、新 `core/ai/contracts/privacy_mode_provider.dart`、`app/bootstrap.dart` 一次性 sheet、`features/settings/ui/ai_transparency_page.dart` 加 undo 按钮 | S2 之后任意插入 | 落实 §4 既有契约的用户感知 |
+| 序号 | 状态 | 名称 | 关键文件 / 路径 | 依赖 | 备注 |
+|------|------|------|------------------|------|------|
+| S0 | ✅ | 本节文档（蓝图对齐） | `docs/ai-architecture.md §5.10` | — | 后续 PR review 依据 |
+| S1a | ✅ | 拓扑重构（去 tab + 路由迁移 + ARB） | `app/route_paths.dart`、`app/router_builder.dart`、`app/app_shell.dart`、`l10n/app_*.arb` | S0 | 5-tab→4-tab；FIRE/Rebalance/Analytics 迁到 `/accounts/{fire,rebalance,analytics}`；chat 迁 `/settings/ai-history`；`isAccent`/accent-disc 全删；`kPrimaryTabCount` 5→4；vim `g i` 删除 |
+| S1b | ✅* | 视觉去 sparkle + monospace token | `core/command_palette/`、`features/ai_chat/ui/`、`design_system/tokens/typography_tokens.dart`（新 `numericMono`）、`test/golden/`、`docs/visual-baseline/` | S1a | 4 处实心 ✨→outlined；空状态紫渐变圆→中性圆。*Golden 重拍待 Linux CI（macOS 本地按 `flutter_test_config.dart` skip 像素 diff，非阻塞） |
+| S2 | ✅ | 命令栏成为 AI 主入口 | `core/command_palette/command_palette_dialog.dart`、新 `core/command_palette/ask_ai_result_pane.dart`、`core/ai/intent/intent_policy.dart`（加 `requiresExplicitConfirmation`）、复用 `nl_to_query_plan.dart` + `query_plan_executor.dart` + `drift_query_plan_executor.dart` | S1 | 结构化答案就地渲染；不可逆 NL 关键词护栏；"去 AI 历史继续"回退；旧 in-list "Ask AI" 行删除 |
+| S2.5 | ✅⚠ | 移动端命令栏入口（回归修补） | `core/shortcuts/global_shortcuts_scope.dart`（Actions 层在触屏平台也挂载）、`app/app_shell.dart`（`_CommandBarPill`）、`l10n`（`commandPaletteMobileEntryHint`） | S2 | S1a 删了 `/ai` tab 但没补移动端入口 → 触屏一度无任何方式打开命令栏。补：`_MobileShell` 顶部 spotlight 式 pill → `Actions.maybeInvoke(OpenCommandPaletteIntent)`。⚠ 主屏下拉手势仍 deferred——见 §5.10.9 |
+| S3 | ✅⚠ | Layer 3 卡片三动作 + 两类新洞察 | `features/home/ui/ai_insight_feed.dart`、新 `features/home/data/duplicate_charge_insight_provider.dart`、新 `monthly_summary_insight_provider.dart`、新 `dismissed_insights_store`、新 `core/ai/local/skills/duplicate_charge_detector.dart` + `expense_to_transaction_input.dart` | S2 | 三动作（展开/问一下/忽略）；新 `InsightKind.duplicateCharge`/`monthlySummary`。⚠ dismissed store 用 `shared_preferences` 而非 Drift 表——见 §5.10.9 |
+| S4 | ✅⚠ | Layer 2 Capsule 铺开 | 新 `core/ai/intent/ai_context_chip_scope.dart`、`intent_policy` 注册 `explain_chart`+`transactions.explainSelection`、`features/home/ui/{trend_card,allocation_card}.dart` capsule、`regression_corpus.dart` | S2 | `AiObjectCapsule` 自动 merge scope chips。⚠ expense_list 选区工具条 deferred 到 S4.5——见 §5.10.9 |
+| S5 | ⬜ | Layer 4 录入解析管道 | 新 `features/ingest/`（pipeline/dedup/draft queue）、新 `apps/backend/src/routes/ingest.rs`、新 `apps/backend/src/ai/tools/{parse_receipt_image,parse_statement_pdf}.rs`、`pubspec.yaml`（`image_picker`、`desktop_drop`）、iOS/Android 媒体权限 | OpLog 表迁移（独立线） | **未开始**；体量为独立大 PR（Drift schema bump + 后端 Vision + 邮件 webhook + 新 Flutter 模块 + 平台权限） |
+| S6 | ✅ | 隐私 UI + Onboarding | 新 `features/settings/ui/ai_privacy_page.dart`、新 `core/ai/contracts/privacy_mode_provider.dart`、新 `features/settings/ui/ai_privacy_onboarding.dart`、`features/settings/ui/ai_transparency_page.dart` 加 undo section | S2 之后任意插入 | 三选一 mode→`maxBudgetTier`/`AnonymizationLevel` 映射；首启 onboarding sheet 挂 HomePage；审计页列待撤销项 |
 
-每条 issue 在 review 时必须勾选: **§5.8 既有硬约束** + **§5.10.7 反模式清单**。S1a 合并即触发一次 golden 全量重拍（baseline 跟 `docs/visual-baseline/` 同步更新）。
+状态图例: ✅ 已落地 · ✅* 已落地但有外部待办 · ✅⚠ 已落地但偏离 spec（见 §5.10.9）· ⬜ 未开始
+
+每条 issue 在 review 时必须勾选: **§5.8 既有硬约束** + **§5.10.7 反模式清单**。S1a/S1b 合并后需在 Linux（CI / Docker）跑一次 `flutter test test/golden --update-goldens` 重拍基线并与 `docs/visual-baseline/` 同步。
+
+测试现状（截至 S6 + S2.5 + YTD bugfix）: `flutter analyze --fatal-infos` clean；`flutter test` 1235 passing / 17 skipped（golden，按平台 skip）/ 0 failing。
+
+#### 5.10.9 偏离记录（spec ↔ 实现）
+
+落地过程中相对 §5.10.8 关键文件清单的有意偏离，后续 PR 需知晓:
+
+- **S3 — dismissed store 用 `shared_preferences` 而非 Drift 表 `dismissed_insight_keys`**。理由: Drift schema bump 牵涉 `app_database.dart` 升版 + `build_runner` 重生 `.g.dart` + onUpgrade 迁移，对 S3 体量过重。`DismissedInsightsStore` 的公共 API 完全隐藏存储后端（`watch()` / `dismiss()` / `currentSnapshot()`），未来 Drift 化是单点替换、不动调用方。代价: dismissal 状态目前不跨设备同步（视为本地偏好，可接受）。
+- **S4 — expense_list 选区工具条 deferred 到 S4.5**。`transactions.explainSelection` 意图与 regression corpus 已注册，`AiContextChipScope` 基础设施已就绪；缺的是 `ExpenseGroupedList` 的多选状态 + 浮起工具条 + tap 切换 vs navigate 的歧义处理——这是独立的一条 UX 工作线，单独 PR review 更稳。
+- **S1b — golden 基线未在本机重拍**。`flutter_test_config.dart` 把 byte-compare 限定在 Linux；macOS 本地 skip 像素 diff（页面仍 pump，render 异常仍会 fail）。S1a/S1b 的视觉改动需 Linux CI 跑 `--update-goldens` 后基线才真正更新。
+- **S2.5 — 移动端命令栏入口（S1a 回归修补）**。S1a 删 `/ai` tab 时漏补移动端入口，触屏平台一度完全无法打开命令栏（`Cmd-K` 在 iOS/Android 原生不可用，`GlobalShortcutsScope` 整体透传）。修补: `Actions` 层改为全平台挂载（只把键盘 `Shortcuts` map + vim 处理 gate 在 `areKeyboardShortcutsAvailable`），`_MobileShell` 顶部加 spotlight 式 pill 调 `Actions.maybeInvoke(OpenCommandPaletteIntent())`。**仍 deferred**: §5.10.2 mock 里的「主屏下拉唤出」手势——下拉手势需 overscroll 检测且与各页 ScrollView 协调，单独一条 UX 工作线；持久 pill 已满足"有入口"且更可发现、风险更低。
+
+> 计划外 bugfix（非 §5.10 范畴，记此备查）: home hero「年初至今」整数溢出（XIRR Newton 无 rate 上界，对「年初 0 + 年中小买入 + 大 bookend」shape 收敛到 1e12+ 无意义 rate，`*100` 后撑屏 1448px）。已在 `xirr_engine.dart` 加 `_convergedOrFallback` sanity gate（`|rate| > bisectionHigh` → `XirrFallbackAbsolute(reason:'runaway')`）+ Newton 步进 clamp，并在 `home_page.dart` 加 `_isSaneRatio`（`|ratio|≥100` 退回 currency delta）双层防御。回归用例见 `test/features/investment/domain/returns/xirr_engine_test.dart`。
 
 ## 6. 模块映射
 

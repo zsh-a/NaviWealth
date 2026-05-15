@@ -43,6 +43,7 @@ import 'package:naviwealth/features/investment/domain/models/holding_snapshot.da
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
@@ -340,6 +341,42 @@ void main() {
       expect(find.byType(FBottomNavigationBar), findsOneWidget);
       expect(find.byType(FSidebar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
+    });
+
+    testWidgets(
+      'S2.5 — mobile shell exposes the command-bar pill (only Layer-1 '
+      'AI entry on touch; opens the palette on tap)',
+      (tester) async {
+        final container = await _pumpAt(tester, viewportSize: _mobileSize);
+        // Resolve the localized hint so the assertion survives a copy
+        // change.
+        final l10n = await AppLocalizations.delegate.load(
+          const Locale('en'),
+        );
+        final pill = find.text(l10n.commandPaletteMobileEntryHint);
+        expect(pill, findsOneWidget);
+
+        await tester.tap(pill);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        // The palette opens as a dialog with its own search field.
+        expect(find.text(l10n.commandPaletteSearchHint), findsOneWidget);
+        expect(_currentPath(container), AppRoutes.home,
+            reason: 'opening the palette must not navigate away');
+        await _drainTimers(tester);
+      },
+    );
+
+    testWidgets('S2.5 — desktop shell does not show the mobile pill', (
+      tester,
+    ) async {
+      await _pumpAt(tester, viewportSize: _desktopSize);
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      expect(
+        find.text(l10n.commandPaletteMobileEntryHint),
+        findsNothing,
+        reason: 'desktop uses Cmd-K; the pill is touch-only',
+      );
     });
 
     testWidgets('tablet width uses GlassSideBar', (tester) async {

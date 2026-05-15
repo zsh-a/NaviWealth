@@ -946,6 +946,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteSearchHint => 'Search commands…';
 
   @override
+  String get commandPaletteMobileEntryHint => 'Search, jump, ask…';
+
+  @override
   String get commandPaletteEmpty => 'No commands match your search';
 
   @override

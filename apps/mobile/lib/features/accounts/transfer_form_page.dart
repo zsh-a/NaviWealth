@@ -100,8 +100,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     // account. We surface a banner above the form and pre-select the
     // same account on both sides so they only need to pick currencies.
     final convertMode =
-        GoRouter.of(context).routeInformationProvider.value.uri.queryParameters['convert'] ==
-            '1';
+        GoRouter.of(
+          context,
+        ).routeInformationProvider.value.uri.queryParameters['convert'] ==
+        '1';
     return FScaffold(
       header: FHeader.nested(
         title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
@@ -179,11 +181,13 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     // container). Same-account same-currency is still meaningless and
     // blocked. Cross-account same- or cross-currency is the classic
     // transfer.
-    final isSameAccountConvert = _fromAccountId != null &&
+    final isSameAccountConvert =
+        _fromAccountId != null &&
         _toAccountId != null &&
         _fromAccountId == _toAccountId &&
         isCrossCurrency;
-    final isCrossAccount = _fromAccountId != null &&
+    final isCrossAccount =
+        _fromAccountId != null &&
         _toAccountId != null &&
         _fromAccountId != _toAccountId;
     final canSubmit =
@@ -345,8 +349,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                     : _noteController.text,
               ),
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: canSubmit ? _save : null,
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: canSubmit ? _save : null,
               child: Text(l10n.transferSubmitAction),
             ),
           ],

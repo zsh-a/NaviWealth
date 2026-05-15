@@ -81,24 +81,22 @@ class AllocationSummary extends StatelessWidget {
               const SizedBox(height: 4),
               Align(
                 alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => showAllocationDetailPanel(
+                child: FTappable(
+                  onPress: () => showAllocationDetailPanel(
                     context: context,
                     snapshot: snapshot,
                   ),
-                  style: TextButton.styleFrom(
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 4,
                       vertical: 4,
                     ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    l10n.dashboardAllocationViewBreakdown,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.primary,
-                      fontWeight: FontWeight.w600,
+                    child: Text(
+                      l10n.dashboardAllocationViewBreakdown,
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

@@ -147,11 +147,14 @@ class _ChatComposerState extends State<ChatComposer> {
     AppLocalizations l10n,
   ) {
     if (widget.isStreaming) {
-      return IconButton.filledTonal(
+      return FTooltip(
         key: const ValueKey('stop'),
-        onPressed: widget.onCancel,
-        tooltip: l10n.aiChatComposerStopTooltip,
-        icon: const Icon(Icons.stop),
+        tipBuilder: (_, _) => Text(l10n.aiChatComposerStopTooltip),
+        child: FButton.icon(
+          variant: FButtonVariant.secondary,
+          onPress: widget.onCancel,
+          child: const Icon(Icons.stop),
+        ),
       );
     }
     if (widget.isFlushing) {
@@ -161,19 +164,14 @@ class _ChatComposerState extends State<ChatComposer> {
         child: SizedBox(width: 20, height: 20, child: FCircularProgress()),
       );
     }
-    return IconButton.filled(
+    return FTooltip(
       key: const ValueKey('send'),
-      onPressed: canSend ? _send : null,
-      tooltip: l10n.aiChatComposerSendTooltip,
-      style: IconButton.styleFrom(
-        backgroundColor: context.theme.colors.primary,
-        foregroundColor: context.theme.colors.primaryForeground,
-        disabledBackgroundColor: context.theme.colors.secondary,
-        disabledForegroundColor: context.theme.colors.mutedForeground
-            .withValues(alpha: 0.5),
-        shape: const StadiumBorder(),
+      tipBuilder: (_, _) => Text(l10n.aiChatComposerSendTooltip),
+      child: FButton.icon(
+        variant: FButtonVariant.primary,
+        onPress: canSend ? _send : null,
+        child: const Icon(Icons.arrow_upward),
       ),
-      icon: const Icon(Icons.arrow_upward),
     );
   }
 }

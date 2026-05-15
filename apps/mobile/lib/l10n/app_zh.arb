@@ -291,6 +291,7 @@
   "shortcutListPrevious": "选择上一项",
 
   "commandPaletteSearchHint": "搜索命令…",
+  "commandPaletteMobileEntryHint": "搜索、跳转、提问…",
   "commandPaletteEmpty": "没有匹配的命令",
   "commandPaletteAskAi": "问 AI：{query}",
   "askAiResultLocalBadge": "本地处理",

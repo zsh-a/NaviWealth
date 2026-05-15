@@ -33,7 +33,9 @@ Future<void> _showMobileSheet(BuildContext context, {String? prefill}) {
     side: FLayout.btt,
     context: context,
     mainAxisMaxRatio: null,
-    builder: (_) => _SheetSized(child: AiChatSheetBody(prefill: prefill)),
+    builder: (_) => _SheetSized(
+      child: AppSheetSurface(child: AiChatSheetBody(prefill: prefill)),
+    ),
   );
 }
 
@@ -42,7 +44,7 @@ Future<void> _showDesktopSheet(BuildContext context, {String? prefill}) {
     context: context,
     barrierLabel: 'ai-chat-sheet',
     barrierDismissible: true,
-    barrierColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.18),
     transitionDuration: Motion.medium,
     pageBuilder: (ctx, animation, secondaryAnimation) =>
         _DesktopSheetOverlay(prefill: prefill),

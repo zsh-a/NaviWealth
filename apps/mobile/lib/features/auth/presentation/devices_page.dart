@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -67,22 +68,23 @@ class DevicesPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
+            icon: const Icon(Icons.refresh),
+            onPress: () => ref.invalidate(devicesProvider),
+          ),
+          FHeaderAction(
             icon: const Icon(Icons.logout),
             onPress: () => _confirmLogoutCurrent(context, ref),
           ),
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: state.when(
-          data: (data) => _DevicesList(response: data),
-          loading: () => const Center(child: FCircularProgress()),
-          error: (error, _) => _ErrorView(
-            message: l10n.authDevicesLoadError,
-            details: error is AuthException ? error.message : '$error',
-            onRetry: () => ref.invalidate(devicesProvider),
-          ),
+      child: state.when(
+        data: (data) => _DevicesList(response: data),
+        loading: () => const Center(child: FCircularProgress()),
+        error: (error, _) => _ErrorView(
+          message: l10n.authDevicesLoadError,
+          details: error is AuthException ? error.message : '$error',
+          onRetry: () => ref.invalidate(devicesProvider),
         ),
       ),
     );
@@ -118,41 +120,38 @@ class _DevicesList extends ConsumerWidget {
     );
     final devices = [...response.devices]
       ..sort((a, b) => b.lastSeenAt.compareTo(a.lastSeenAt));
-    return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(devicesProvider),
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: devices.length,
-        separatorBuilder: (_, _) => const FDivider(),
-        itemBuilder: (context, i) {
-          final device = devices[i];
-          final isCurrent = device.id == response.currentDeviceId;
-          return FTile(
-            title: Text(
-              device.name?.isNotEmpty == true
-                  ? device.name!
-                  : l10n.authDeviceUnnamed,
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: devices.length,
+      separatorBuilder: (_, _) => const FDivider(),
+      itemBuilder: (context, i) {
+        final device = devices[i];
+        final isCurrent = device.id == response.currentDeviceId;
+        return FTile(
+          title: Text(
+            device.name?.isNotEmpty == true
+                ? device.name!
+                : l10n.authDeviceUnnamed,
+          ),
+          prefix: Icon(isCurrent ? Icons.verified_user : Icons.devices_other),
+          subtitle: Text(
+            l10n.authDeviceLastSeen(
+              formatters.dateTime(device.lastSeenAt.toLocal()),
             ),
-            prefix: Icon(isCurrent ? Icons.verified_user : Icons.devices_other),
-            subtitle: Text(
-              l10n.authDeviceLastSeen(
-                formatters.dateTime(device.lastSeenAt.toLocal()),
-              ),
-            ),
-            suffix: isCurrent
-                ? FBadge(child: Text(l10n.authDeviceCurrent))
-                : FTooltip(
-                    tipBuilder: (_, _) => Text(l10n.authDeviceRevokeTooltip),
-                    child: FButton.icon(
-                      variant: FButtonVariant.ghost,
-                      onPress: () => _confirmRevoke(context, ref, device),
-                      child: const Icon(Icons.logout, size: 18),
-                    ),
+          ),
+          suffix: isCurrent
+              ? FBadge(child: Text(l10n.authDeviceCurrent))
+              : FTooltip(
+                  tipBuilder: (_, _) => Text(l10n.authDeviceRevokeTooltip),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => _confirmRevoke(context, ref, device),
+                    child: const Icon(Icons.logout, size: 18),
                   ),
-          );
-        },
-      ),
+                ),
+        );
+      },
     );
   }
 

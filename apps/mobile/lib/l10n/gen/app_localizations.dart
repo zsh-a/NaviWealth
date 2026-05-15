@@ -1766,6 +1766,12 @@ abstract class AppLocalizations {
   /// **'Search commands…'**
   String get commandPaletteSearchHint;
 
+  /// Placeholder text on the mobile shell's command-bar pill (§5.10.2 / S2.5)
+  ///
+  /// In en, this message translates to:
+  /// **'Search, jump, ask…'**
+  String get commandPaletteMobileEntryHint;
+
   /// Shown in the command palette when the query matches no commands
   ///
   /// In en, this message translates to:

@@ -19,6 +19,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/visual.dart';
+import '../../../design_system/design_system.dart';
 import '../domain/chat_models.dart';
 import 'tool_invocation_card.dart';
 import 'tool_invocation_renderers.dart';
@@ -116,17 +117,19 @@ class _AttributionRow extends StatelessWidget {
       context: context,
       side: FLayout.btt,
       mainAxisMaxRatio: null,
-      builder: (_) => SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.7,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          children: [
-            // Reuse the existing card — it ships its own chevron / JSON
-            // viewer. From inside the bottom sheet the chrome reads as
-            // "developer detail", which is exactly what long-press
-            // promised.
-            ToolInvocationCard(invocation: invocation),
-          ],
+      builder: (_) => AppSheetSurface(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.7,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            children: [
+              // Reuse the existing card — it ships its own chevron / JSON
+              // viewer. From inside the bottom sheet the chrome reads as
+              // "developer detail", which is exactly what long-press
+              // promised.
+              ToolInvocationCard(invocation: invocation),
+            ],
+          ),
         ),
       ),
     );

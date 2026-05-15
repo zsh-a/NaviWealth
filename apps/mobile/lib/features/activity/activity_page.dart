@@ -172,16 +172,18 @@ class _ActivityRightRail extends ConsumerWidget {
                 children: [for (final chip in chips) _FilterChip(spec: chip)],
               ),
               const SizedBox(height: 16),
-              FilledButton.icon(
-                icon: const Icon(Icons.add_outlined),
-                label: Text(l10n.activityAddAction),
-                onPressed: onAdd,
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: onAdd,
+                prefix: const Icon(Icons.add_outlined),
+                child: Text(l10n.activityAddAction),
               ),
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.filter_list_outlined),
-                label: Text(l10n.activityFeedFilterTitle),
-                onPressed: onFilter,
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: onFilter,
+                prefix: const Icon(Icons.filter_list_outlined),
+                child: Text(l10n.activityFeedFilterTitle),
               ),
             ],
           ),
