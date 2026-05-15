@@ -2653,6 +2653,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSubtitle => '导出或导入加密数据备份';
 
   @override
+  String get settingsAiPrivacyTitle => 'AI 隐私';
+
+  @override
+  String get settingsAiPrivacySubtitle => '选择 AI 可以上传到云端的数据范围';
+
+  @override
+  String get aiPrivacyTitle => 'AI 隐私';
+
+  @override
+  String get aiPrivacyIntro => '选择 AI 离开本机时可以看到多少细节。可以随时更改。';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedLabel => '金额可上行';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedDescription => '上传精确金额和账户上下文，回答质量最佳。';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedLabel => '金额做掩码';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedDescription =>
+      '金额按数量级取整后再上传。云端能看到模式但看不到具体数字。';
+
+  @override
+  String get aiPrivacyModeAmountsLocalLabel => '金额完全本地';
+
+  @override
+  String get aiPrivacyModeAmountsLocalDescription => '只把意图和分类名上传，云端只能给定性建议。';
+
+  @override
+  String get aiPrivacyMaskAccountsLabel => '脱敏账户 / 机构名';
+
+  @override
+  String get aiPrivacyMaskAccountsDescription => '把银行 / 券商等名字替换成匿名 ID 后再上传。';
+
+  @override
+  String get aiPrivacyOnboardingTitle => '选择你的 AI 隐私偏好';
+
+  @override
+  String get aiPrivacyOnboardingBody =>
+      'NaviWealth 的 AI 默认本地优先。当需要走云端时，这个设置决定能上传什么。后续可在设置里改。';
+
+  @override
+  String get aiPrivacyOnboardingConfirm => '好的';
+
+  @override
+  String get aiTransparencyUndoSectionTitle => '待撤销的 AI 改动';
+
+  @override
+  String get aiTransparencyUndoEmpty => '暂无待撤销的 AI 改动。';
+
+  @override
+  String get aiTransparencyUndoAction => '撤销';
+
+  @override
   String get settingsDeveloperSection => '开发者';
 
   @override

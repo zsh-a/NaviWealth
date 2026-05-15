@@ -23,6 +23,10 @@ import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/ai/visual/visual.dart';
+import '../../../core/ai/write/drift_undo_stack.dart';
+import '../../../core/ai/write/providers.dart';
+import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'ai_trace_timeline.dart';
 
 // ===========================================================================
@@ -38,23 +42,148 @@ class AiTransparencyPage extends ConsumerWidget {
     return FScaffold(
       header: const FHeader.nested(title: Text('AI 透明度')),
       childPad: false,
-      child: tracesAsync.when(
-        data: (traces) {
-          if (traces.isEmpty) {
-            return const _EmptyState();
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: traces.length,
-            separatorBuilder: (_, _) => const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: FDivider(),
+      child: CustomScrollView(
+        slivers: <Widget>[
+          const SliverToBoxAdapter(child: _UndoSection()),
+          tracesAsync.when(
+            data: (traces) {
+              if (traces.isEmpty) {
+                return const SliverToBoxAdapter(child: _EmptyState());
+              }
+              return SliverList.separated(
+                itemCount: traces.length,
+                separatorBuilder: (_, _) => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: FDivider(),
+                ),
+                itemBuilder: (context, i) => _TraceRow(trace: traces[i]),
+              );
+            },
+            loading: () => const SliverToBoxAdapter(
+              child: Center(child: FCircularProgress()),
             ),
-            itemBuilder: (context, i) => _TraceRow(trace: traces[i]),
-          );
-        },
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('加载失败: $e')),
+            error: (e, _) => SliverToBoxAdapter(
+              child: Center(child: Text('加载失败: $e')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// §5.10.5 — pending-undo section. Lists every persisted entry in
+/// [DriftUndoStack] and exposes per-row "撤销" buttons. Tapping
+/// [DriftUndoStack.take] removes the entry from the stack (the
+/// reverter dispatch that actually rolls the data back is intentional
+/// future work — see [PersistentUndoBanner._handleUndo]).
+class _UndoSection extends ConsumerWidget {
+  const _UndoSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final entriesAsync = ref.watch(undoEntriesStreamProvider);
+    final colors = context.theme.colors;
+    final entries = entriesAsync.value ?? const <PersistedUndoEntry>[];
+    final now = DateTime.now().toUtc();
+    final live = entries
+        .where((e) => e.expiresAt == null || e.expiresAt!.isAfter(now))
+        .toList(growable: false);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              l10n.aiTransparencyUndoSectionTitle,
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colors.mutedForeground,
+              ),
+            ),
+          ),
+          if (live.isEmpty)
+            SoftCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Text(
+                l10n.aiTransparencyUndoEmpty,
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            )
+          else
+            SoftCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: <Widget>[
+                  for (var i = 0; i < live.length; i++) ...<Widget>[
+                    if (i > 0) const FDivider(),
+                    _UndoRow(entry: live[i]),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UndoRow extends ConsumerWidget {
+  const _UndoRow({required this.entry});
+  final PersistedUndoEntry entry;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final summary = entry.payload['summary_zh'] as String? ??
+        entry.payload['summaryZh'] as String? ??
+        entry.kind;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: <Widget>[
+          const AiSparkle(),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  summary,
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.foreground,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (entry.expiresAt != null)
+                  Text(
+                    entry.kind,
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          AiPill(
+            label: l10n.aiTransparencyUndoAction,
+            state: AiPillState.selected,
+            onTap: () async {
+              final stack = ref.read(undoStackProvider);
+              if (stack == null) return;
+              await stack.take(entry.token);
+            },
+          ),
+        ],
       ),
     );
   }

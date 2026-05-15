@@ -43,6 +43,7 @@ import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
+import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_shell.dart';
@@ -356,6 +357,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                       load: ai_chat_lib.loadLibrary,
                       builder: (_) => ai_chat_lib.AiChatPage(),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'ai-privacy',
+                    name: AppRouteNames.aiPrivacy,
+                    builder: (context, state) => const AiPrivacyPage(),
                   ),
                   GoRoute(
                     path: 'ai-transparency',

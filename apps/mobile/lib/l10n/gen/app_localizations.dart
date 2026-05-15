@@ -4884,6 +4884,114 @@ abstract class AppLocalizations {
   /// **'Export or import encrypted data backups'**
   String get settingsDataSubtitle;
 
+  /// Settings tile that opens the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'AI privacy'**
+  String get settingsAiPrivacyTitle;
+
+  /// Settings tile subtitle for the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'Pick what the AI can send to the cloud'**
+  String get settingsAiPrivacySubtitle;
+
+  /// Title of the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'AI privacy'**
+  String get aiPrivacyTitle;
+
+  /// Intro copy on the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how much detail the AI can see when it leaves the device. You can change this at any time.'**
+  String get aiPrivacyIntro;
+
+  /// Radio label: amounts can go to the cloud
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts allowed'**
+  String get aiPrivacyModeAmountsAllowedLabel;
+
+  /// Radio description: amounts can go to the cloud
+  ///
+  /// In en, this message translates to:
+  /// **'Send exact amounts and account context. Best answer quality.'**
+  String get aiPrivacyModeAmountsAllowedDescription;
+
+  /// Radio label: amounts go up as ballpark buckets
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts bucketed'**
+  String get aiPrivacyModeAmountsBucketedLabel;
+
+  /// Radio description for bucketed amounts
+  ///
+  /// In en, this message translates to:
+  /// **'Round amounts to the nearest order of magnitude before sending. Cloud sees patterns but not exact numbers.'**
+  String get aiPrivacyModeAmountsBucketedDescription;
+
+  /// Radio label: amounts never leave the device
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts stay local'**
+  String get aiPrivacyModeAmountsLocalLabel;
+
+  /// Radio description for local-only amounts
+  ///
+  /// In en, this message translates to:
+  /// **'Only intent and category names leave the device. Cloud answers narrow to qualitative tips.'**
+  String get aiPrivacyModeAmountsLocalDescription;
+
+  /// Toggle label for masking account names
+  ///
+  /// In en, this message translates to:
+  /// **'Mask account / institution names'**
+  String get aiPrivacyMaskAccountsLabel;
+
+  /// Toggle description for masking account names
+  ///
+  /// In en, this message translates to:
+  /// **'Replace bank and broker names with anonymous IDs before they\'re sent.'**
+  String get aiPrivacyMaskAccountsDescription;
+
+  /// Title of the first-launch privacy onboarding sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Pick your AI privacy posture'**
+  String get aiPrivacyOnboardingTitle;
+
+  /// Body copy of the first-launch privacy onboarding sheet
+  ///
+  /// In en, this message translates to:
+  /// **'NaviWealth\'s AI is local-first. When it needs to use the cloud, this setting decides what it can send. You can change it later in Settings.'**
+  String get aiPrivacyOnboardingBody;
+
+  /// Confirm button on the privacy onboarding sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get aiPrivacyOnboardingConfirm;
+
+  /// Section header above the list of undo-able AI changes on the transparency page
+  ///
+  /// In en, this message translates to:
+  /// **'Pending AI changes'**
+  String get aiTransparencyUndoSectionTitle;
+
+  /// Empty state for the pending-undo section
+  ///
+  /// In en, this message translates to:
+  /// **'No pending AI changes.'**
+  String get aiTransparencyUndoEmpty;
+
+  /// Per-row undo button on the transparency page
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get aiTransparencyUndoAction;
+
   /// Settings section header for developer tools
   ///
   /// In en, this message translates to:

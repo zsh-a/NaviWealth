@@ -9,6 +9,7 @@ export 'context_pack.dart';
 export 'freshness.dart';
 export 'intent.dart';
 export 'privacy_budget.dart';
+export 'privacy_mode_provider.dart';
 export 'proposal_envelope.dart';
 export 'scoped_disclosure.dart';
 export 'task_context.dart';
