@@ -3389,6 +3389,39 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightDuplicateChargeLabel => '疑似重复扣款';
+
+  @override
+  String dashboardInsightDuplicateChargeValue(int count, String amount) {
+    return '$count 组，共 $amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryLabel => '上月回顾';
+
+  @override
+  String dashboardInsightMonthlySummaryUp(String amount) {
+    return '净资产 +$amount';
+  }
+
+  @override
+  String dashboardInsightMonthlySummaryDown(String amount) {
+    return '净资产 -$amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryFlat => '净资产基本持平';
+
+  @override
+  String get dashboardInsightActionExpand => '展开';
+
+  @override
+  String get dashboardInsightActionAsk => '问一下';
+
+  @override
+  String get dashboardInsightActionDismiss => '忽略';
+
+  @override
   String get portfolioViewAssets => '资产';
 
   @override

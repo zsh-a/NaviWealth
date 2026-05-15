@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,6 +7,8 @@ import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
+import '../data/dashboard_insights_provider.dart';
+import '../data/dismissed_insights_store.dart';
 import '../domain/insight_models.dart';
 import 'insight_feed_strings.dart';
 
@@ -54,15 +57,34 @@ class AiInsightFeed extends StatelessWidget {
   }
 }
 
-class _InsightCard extends StatelessWidget {
+/// §5.10.1 Layer 3 — three-action insight card.
+///
+/// Each card now exposes:
+///   * 展开 — toggles an inline detail block (kept tiny; the deep-link
+///     route is still on the row tap as the "primary" affordance).
+///   * 问一下 — fires the existing explain_insight capsule, which
+///     opens the inline AI bottom sheet pre-loaded with insight
+///     context.
+///   * 忽略 — records a dismissal in [DismissedInsightsStore]; the
+///     card disappears immediately (the provider re-emits without
+///     it on the next tick).
+class _InsightCard extends ConsumerStatefulWidget {
   const _InsightCard({required this.item});
 
   final InsightItem item;
 
   @override
+  ConsumerState<_InsightCard> createState() => _InsightCardState();
+}
+
+class _InsightCardState extends ConsumerState<_InsightCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final item = widget.item;
     final route = item.route;
     final tappable = item.onTap != null || route != null;
     final iconTint = item.iconColor ?? colors.primary;
@@ -71,7 +93,11 @@ class _InsightCard extends StatelessWidget {
           ? null
           : (item.onTap ?? () => context.push(route!)),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
               Container(
                 width: 36,
@@ -106,21 +132,6 @@ class _InsightCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
-                    // Wave 33 proof point: explain_insight bottom sheet.
-                    // Sits below the detail row rather than next to the
-                    // chevron so the tap target is unambiguous (the row
-                    // still routes to insight.route).
-                    AiObjectCapsule(
-                      source: 'home_insight_card',
-                      intent: 'explain_insight',
-                      object: AiObjectRef(
-                        type: 'insight',
-                        id: _insightStableId(item),
-                      ),
-                      objectLabel: insightHeadline(l10n, item),
-                      fallbackLabel: '展开洞察',
-                    ),
                   ],
                 ),
               ),
@@ -134,6 +145,140 @@ class _InsightCard extends StatelessWidget {
               ],
             ],
           ),
+          const SizedBox(height: 8),
+          if (_expanded) ...[
+            _ExpandedDetail(item: item),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            children: [
+              _ActionPill(
+                icon: _expanded
+                    ? Icons.unfold_less_outlined
+                    : Icons.unfold_more_outlined,
+                label: l10n.dashboardInsightActionExpand,
+                onTap: () => setState(() => _expanded = !_expanded),
+              ),
+              const SizedBox(width: 8),
+              // 问一下 — pipes the insight into the existing
+              // explain_insight intent capsule (§5.3 AiIntentInvocation
+              // contract; surfaces in the inline bottom sheet).
+              AiObjectCapsule(
+                source: 'home_insight_card',
+                intent: 'explain_insight',
+                object: AiObjectRef(
+                  type: 'insight',
+                  id: _insightStableId(item),
+                ),
+                objectLabel: insightHeadline(l10n, item),
+                fallbackLabel: l10n.dashboardInsightActionAsk,
+              ),
+              const Spacer(),
+              _ActionPill(
+                icon: Icons.close_outlined,
+                label: l10n.dashboardInsightActionDismiss,
+                onTap: () => _dismiss(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _dismiss() async {
+    final store = ref.read(dismissedInsightsStoreProvider);
+    await store.dismiss(
+      DismissedInsightKey(
+        kind: widget.item.kind,
+        scopeHash: insightScopeHash(widget.item),
+      ),
+    );
+  }
+}
+
+class _ExpandedDetail extends StatelessWidget {
+  const _ExpandedDetail({required this.item});
+  final InsightItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        _expandedDetailFor(item),
+        style: context.theme.typography.xs.copyWith(
+          color: colors.foreground,
+        ),
+      ),
+    );
+  }
+
+  static String _expandedDetailFor(InsightItem item) {
+    // Kind-specific extra context. Kept ASCII-light and English to
+    // avoid an ARB explosion for what is effectively a debug-style
+    // breadcrumb; the user-facing summary is on the headline + detail
+    // rows above.
+    switch (item.kind) {
+      case InsightKind.duplicateCharge:
+        return 'Pairs detected within ±2 days, after refund + recurring '
+            'exclusion. Tap the row to open the matching transactions.';
+      case InsightKind.monthlySummary:
+        return 'Computed from the dashboard trend: difference between '
+            'the latest reading inside the prior month and the latest '
+            'reading before it.';
+      case InsightKind.fireProgress:
+      case InsightKind.fireReached:
+        return 'From the FIRE planner baseline scenario.';
+      case InsightKind.portfolioDrift:
+        return 'Allocation drift exceeds the configured threshold.';
+      case InsightKind.maturity:
+        return 'Deposit matures within the alert window.';
+      case InsightKind.anomaly:
+        return 'Projected month-end spend vs. the last 3 months.';
+    }
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: colors.mutedForeground),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

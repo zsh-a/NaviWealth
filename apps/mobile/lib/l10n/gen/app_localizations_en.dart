@@ -3508,6 +3508,46 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightDuplicateChargeLabel =>
+      'Possible duplicate charge';
+
+  @override
+  String dashboardInsightDuplicateChargeValue(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pairs',
+      one: '1 pair',
+    );
+    return '$_temp0 totaling $amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryLabel => 'Last month recap';
+
+  @override
+  String dashboardInsightMonthlySummaryUp(String amount) {
+    return 'Net worth grew $amount';
+  }
+
+  @override
+  String dashboardInsightMonthlySummaryDown(String amount) {
+    return 'Net worth shrank $amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryFlat => 'Net worth was flat';
+
+  @override
+  String get dashboardInsightActionExpand => 'Expand';
+
+  @override
+  String get dashboardInsightActionAsk => 'Ask';
+
+  @override
+  String get dashboardInsightActionDismiss => 'Dismiss';
+
+  @override
   String get portfolioViewAssets => 'Assets';
 
   @override

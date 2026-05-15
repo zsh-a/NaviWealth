@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
@@ -282,7 +281,7 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   // Empty list when there are no expenses / no detectable cadence.
   if (expenses.isNotEmpty) {
     final transactionInputs = expenses
-        .map(_expenseToTransactionInput)
+        .map(expenseToTransactionInput)
         .toList(growable: false);
     final patterns = detectRecurring(transactionInputs);
     for (final p in patterns) {
@@ -310,23 +309,6 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   }
 
   return out;
-}
-
-/// Map a domain Expense → a neutral TransactionInput the skill module
-/// consumes. Expense.amount is the positive magnitude (per its docstring);
-/// the detector wants signed minor units (negative = outflow), so we
-/// negate here.
-TransactionInput _expenseToTransactionInput(Expense e) {
-  final cents = (e.amount * Decimal.fromInt(100)).floor().toBigInt();
-  return TransactionInput(
-    id: e.id,
-    description: e.note ?? '',
-    amountMinor: '-$cents',
-    currency: e.currency,
-    occurredAt: e.tradeDate,
-    accountId: e.expenseAccountId,
-    categoryId: e.expenseAccountId,
-  );
 }
 
 AnalyticalUpload _recurringPatternToUpload(RecurringPattern p) {

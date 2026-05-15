@@ -7,7 +7,7 @@
 ///   1. Reads the user's expense rows via `journalExpensesStreamProvider`
 ///      (one-shot via `.future`).
 ///   2. Converts each [Expense] to a signed [TransactionInput] (outflow
-///      negative — see `_expenseToTransactionInput`).
+///      negative — see [expenseToTransactionInput]).
 ///   3. Delegates to [InMemoryQueryPlanExecutor].
 ///
 /// `NetWorthTrendPlan` continues to return a note (handled by the
@@ -20,16 +20,15 @@
 /// fixtures.
 library;
 
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/domain/expense.dart';
 import '../../../../data/repositories/journal_entry_providers.dart';
 import '../../../../features/home/data/dashboard_providers.dart';
 import '../../../../features/home/domain/dashboard_trend_builder.dart';
+import 'expense_to_transaction_input.dart';
 import 'finance_query_plan.dart';
 import 'query_plan_executor.dart';
-import 'transaction_input.dart';
 
 class DriftQueryPlanExecutor implements QueryPlanExecutor {
   DriftQueryPlanExecutor({required this.ref});
@@ -45,7 +44,7 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
     }
     final expenses = await _readExpensesSafely();
     final txns = expenses
-        .map(_expenseToTransactionInput)
+        .map(expenseToTransactionInput)
         .toList(growable: false);
     final inner = InMemoryQueryPlanExecutor(transactions: txns);
     return inner.run(plan);
@@ -109,23 +108,6 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
       return const <Expense>[];
     }
   }
-}
-
-/// Same shape as the chat-side converter (`_expenseToTransactionInput`
-/// in `features/ai_chat/data/providers.dart`). Kept duplicated rather
-/// than shared to avoid a feature→core dependency; if a third caller
-/// shows up we promote it into `skills/`.
-TransactionInput _expenseToTransactionInput(Expense e) {
-  final cents = (e.amount * Decimal.fromInt(100)).floor().toBigInt();
-  return TransactionInput(
-    id: e.id,
-    description: e.note ?? '',
-    amountMinor: '-$cents',
-    currency: e.currency,
-    occurredAt: e.tradeDate,
-    accountId: e.expenseAccountId,
-    categoryId: e.expenseAccountId,
-  );
 }
 
 final driftQueryPlanExecutorProvider = Provider<QueryPlanExecutor>(

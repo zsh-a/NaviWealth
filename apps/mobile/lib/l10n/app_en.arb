@@ -2000,6 +2000,36 @@
     "description": "Dashboard expense anomaly insight value",
     "placeholders": { "percent": { "type": "String" } }
   },
+  "dashboardInsightDuplicateChargeLabel": "Possible duplicate charge",
+  "@dashboardInsightDuplicateChargeLabel": { "description": "Dashboard insight label: same merchant + amount within ±2 days" },
+  "dashboardInsightDuplicateChargeValue": "{count, plural, one{1 pair} other{{count} pairs}} totaling {amount}",
+  "@dashboardInsightDuplicateChargeValue": {
+    "description": "Dashboard duplicate-charge insight value",
+    "placeholders": {
+      "count": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "dashboardInsightMonthlySummaryLabel": "Last month recap",
+  "@dashboardInsightMonthlySummaryLabel": { "description": "Dashboard insight label: prior-month net-worth summary, fired in the first week of a new month" },
+  "dashboardInsightMonthlySummaryUp": "Net worth grew {amount}",
+  "@dashboardInsightMonthlySummaryUp": {
+    "description": "Monthly summary insight value when net worth grew",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "dashboardInsightMonthlySummaryDown": "Net worth shrank {amount}",
+  "@dashboardInsightMonthlySummaryDown": {
+    "description": "Monthly summary insight value when net worth declined",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "dashboardInsightMonthlySummaryFlat": "Net worth was flat",
+  "@dashboardInsightMonthlySummaryFlat": { "description": "Monthly summary insight value when net worth was unchanged" },
+  "dashboardInsightActionExpand": "Expand",
+  "@dashboardInsightActionExpand": { "description": "Insight card action: expand inline detail" },
+  "dashboardInsightActionAsk": "Ask",
+  "@dashboardInsightActionAsk": { "description": "Insight card action: open the command palette with the insight as context" },
+  "dashboardInsightActionDismiss": "Dismiss",
+  "@dashboardInsightActionDismiss": { "description": "Insight card action: hide this insight kind on the dashboard" },
   "portfolioViewAssets": "Assets",
   "@portfolioViewAssets": { "description": "Portfolio view switcher: assets list" },
   "portfolioViewAccount": "Account",
