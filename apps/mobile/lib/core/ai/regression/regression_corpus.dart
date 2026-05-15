@@ -144,4 +144,32 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     objectType: 'insight',
     objectId: 'pending_refunds',
   ),
+
+  // ── explain_chart (§5.10 Layer 2 — chart-card capsule) ─────────
+  RegressionPrompt(
+    id: 'explain_chart.net_worth_trend',
+    intent: 'explain_chart',
+    userPrompt: '请解释这张净资产趋势图最近 12 个月的变化。',
+    expectedTools: <String>{'compute_net_worth'},
+    objectType: 'chart',
+    objectId: 'net_worth_trend',
+  ),
+  RegressionPrompt(
+    id: 'explain_chart.allocation_pie',
+    intent: 'explain_chart',
+    userPrompt: '请解释这张资产配置图的关键变化。',
+    expectedTools: <String>{'get_holdings'},
+    objectType: 'chart',
+    objectId: 'asset_allocation',
+  ),
+
+  // ── transactions.explainSelection (Layer 2 — selection toolbar) ─
+  RegressionPrompt(
+    id: 'transactions.explainSelection.three_coffee_charges',
+    intent: 'transactions.explainSelection',
+    userPrompt: '解读这 3 笔咖啡支出的共同点和异常。',
+    expectedTools: <String>{'get_monthly_spend_by_category'},
+    objectType: 'transactions',
+    objectId: 'sel_coffee_3',
+  ),
 ];

@@ -45,13 +45,21 @@ class AiObjectCapsule extends StatelessWidget {
   }
 
   void _open(BuildContext buildContext) {
+    // §5.10 Layer 2 — merge surrounding scope chips into the
+    // invocation context. Explicit per-capsule context wins on key
+    // collision so call sites can override what the scope advertises.
+    final scopeContext = AiContextChipScope.contextMapOf(buildContext);
+    final mergedContext = <String, Object?>{
+      ...scopeContext,
+      ...context,
+    };
     showAiBottomSheet(
       buildContext,
       invocation: AiIntentInvocation(
         source: source,
         intent: intent,
         object: object,
-        context: context,
+        context: mergedContext,
       ),
       objectLabel: objectLabel,
     );

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
@@ -21,7 +23,23 @@ class TrendCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final trendAsync = ref.watch(dashboardTrendProvider);
 
-    return SoftCard(
+    // §5.10 Layer 2 — advertise this card's identity/timeframe so any
+    // AI surface fired from inside the card gets the right context.
+    final selectedRange = ref.watch(dashboardTimeRangeProvider);
+    return AiContextChipScope(
+      chips: <AiContextChip>[
+        AiContextChip(
+          key: 'chart',
+          label: l10n.dashboardTrendTitle,
+          value: 'net_worth_trend',
+        ),
+        AiContextChip(
+          key: 'timeframe',
+          label: selectedRange.preset.name,
+          value: selectedRange.preset.name,
+        ),
+      ],
+      child: SoftCard(
       padding: const EdgeInsets.all(20),
       borderRadius: 18,
       child: Column(
@@ -34,6 +52,26 @@ class TrendCard extends ConsumerWidget {
                   l10n.dashboardTrendTitle,
                   style: context.theme.typography.md,
                 ),
+              ),
+              // Layer 2 trailing capsule — opens the AI bottom sheet
+              // pre-loaded with chart context (read from the
+              // surrounding AiContextChipScope).
+              trendAsync.maybeWhen(
+                data: (trend) => trend.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: AiObjectCapsule(
+                          source: 'home_trend_card',
+                          intent: 'explain_chart',
+                          object: const AiObjectRef(
+                            type: 'chart',
+                            id: 'net_worth_trend',
+                          ),
+                          objectLabel: l10n.dashboardTrendTitle,
+                        ),
+                      ),
+                orElse: () => const SizedBox.shrink(),
               ),
               trendAsync.maybeWhen(
                 data: (trend) => FTooltip(
@@ -62,6 +100,7 @@ class TrendCard extends ConsumerWidget {
             data: (trend) => _TrendChart(trend: trend),
           ),
         ],
+      ),
       ),
     );
   }
