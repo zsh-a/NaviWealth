@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../../liabilities/ui/liability_l10n.dart';
 import '../domain/dashboard_models.dart';
 import 'asset_category_visuals.dart';
@@ -37,7 +39,20 @@ class AllocationCard extends StatelessWidget {
         .cast<CategoryAllocation?>()
         .firstWhere((a) => true, orElse: () => null);
 
-    return FCard.raw(
+    return AiContextChipScope(
+      chips: <AiContextChip>[
+        AiContextChip(
+          key: 'chart',
+          label: l10n.dashboardAllocationTitle,
+          value: 'asset_allocation',
+        ),
+        AiContextChip(
+          key: 'currency',
+          label: snapshot.netWorth.currency,
+          value: snapshot.netWorth.currency,
+        ),
+      ],
+      child: FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: LayoutBuilder(
@@ -65,6 +80,18 @@ class AllocationCard extends StatelessWidget {
                       child: Text(
                         l10n.dashboardAllocationTitle,
                         style: context.theme.typography.md,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: AiObjectCapsule(
+                        source: 'home_allocation_card',
+                        intent: 'explain_chart',
+                        object: const AiObjectRef(
+                          type: 'chart',
+                          id: 'asset_allocation',
+                        ),
+                        objectLabel: l10n.dashboardAllocationTitle,
                       ),
                     ),
                     FTooltip(
@@ -96,6 +123,7 @@ class AllocationCard extends StatelessWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

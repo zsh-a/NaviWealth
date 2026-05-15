@@ -152,6 +152,43 @@ const intentDescriptors = <IntentDescriptor>[
       'refund_links',
     ],
   ),
+  IntentDescriptor(
+    name: 'explain_chart',
+    labelZh: '问这张图',
+    // Charts are abstract — they don't carry a stable AiObjectRef of
+    // their own. Allowed types stays empty so any chart-bearing
+    // surface can pass an `AiObjectRef(type: 'chart', id: '<chart>')`
+    // without tripping the registry's type-mismatch assertion.
+    allowedObjectTypes: <String>{'chart'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.visualization,
+    },
+    promptTemplate:
+        '请解释这张图 ({{object_label}}) 在 {{timeframe}} 内的关键变化，以及背后的驱动因素。',
+    preferredReadModels: <String>[
+      'net_worth_snapshot',
+      'cashflow_buckets',
+      'monthly_spend_by_category',
+      'holdings_snapshot',
+    ],
+  ),
+  IntentDescriptor(
+    name: 'transactions.explainSelection',
+    labelZh: '解读',
+    allowedObjectTypes: <String>{'transactions'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.visualization,
+    },
+    promptTemplate:
+        '请解读用户选中的这些交易 ({{object_label}})，给出共同点 / 异常 / 可能归类。',
+    preferredReadModels: <String>[
+      'monthly_spend_by_category',
+      'subscription_changes',
+      'refund_links',
+    ],
+  ),
 ];
 
 /// Lookup by intent name. Returns `null` for off-registry strings —
