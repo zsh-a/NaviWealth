@@ -110,13 +110,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: accountsAsync.when(
-          data: (accounts) => _buildForm(context, accounts, convertMode),
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
-        ),
+      child: accountsAsync.when(
+        data: (accounts) => _buildForm(context, accounts, convertMode),
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(child: Text(l10n.transferLoadError('$e'))),
       ),
     );
   }

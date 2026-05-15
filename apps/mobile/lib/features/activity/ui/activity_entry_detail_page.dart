@@ -38,47 +38,57 @@ class ActivityEntryDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.activityEntryDetailTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.activityEntryDetailTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            // Wave 40 — surfaces when this journal entry was created
-            // by an accepted AI proposal (propose_trade /
-            // propose_expense / propose_liability_payment). Self-
-            // gating: hidden otherwise.
-            Align(
-              alignment: Alignment.centerLeft,
-              child: AiTouchMark(
-                entityType: 'journal_entries',
-                entityId: entry.entry.id,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          // Wave 40 — surfaces when this journal entry was created
+          // by an accepted AI proposal (propose_trade /
+          // propose_expense / propose_liability_payment). Self-
+          // gating: hidden otherwise.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: AiTouchMark(
+              entityType: 'journal_entries',
+              entityId: entry.entry.id,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _HeroAmountCard(
+            entry: entry,
+            accountsById: accountsById,
+            formatters: formatters,
+          ),
+          const SizedBox(height: 16),
+          _AiInsightCard(entry: entry),
+          const SizedBox(height: 16),
+          FCard.raw(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: PostingsPreview(
+                postings: entry.postings,
+                accounts: accountsById,
               ),
             ),
-            const SizedBox(height: 8),
-            _HeroAmountCard(
-              entry: entry,
-              accountsById: accountsById,
-              formatters: formatters,
-            ),
-            const SizedBox(height: 16),
-            _AiInsightCard(entry: entry),
-            const SizedBox(height: 16),
-            FCard.raw(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: PostingsPreview(
-                  postings: entry.postings,
-                  accounts: accountsById,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class ActivityEntryDetailArgs {
+  const ActivityEntryDetailArgs({
+    required this.entry,
+    required this.accountsById,
+  });
+
+  final JournalEntryWithPostings entry;
+  final Map<String, Account> accountsById;
 }
 
 class _HeroAmountCard extends StatelessWidget {
@@ -234,7 +244,10 @@ String? _heuristicInsight(
   return null;
 }
 
-Posting? _headlinePosting(List<Posting> postings, Map<String, Account> accounts) {
+Posting? _headlinePosting(
+  List<Posting> postings,
+  Map<String, Account> accounts,
+) {
   Posting? headline;
   Decimal? best;
   for (final p in postings) {

@@ -47,32 +47,28 @@ class AccountsHubPage extends ConsumerWidget {
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text('$e')),
-          data: (accounts) {
-            // Filter: user-created wealth containers only. System
-            // accounts (income / expense / equity sub-trees) are
-            // ledger plumbing and don't belong on the hub surface.
-            final containers = accounts
-                .where((a) => !a.archived)
-                .where(_isUserContainer)
-                .toList();
-            final balances = balancesAsync.value ?? const {};
-            final snapshot = snapshotAsync.value;
-            return _AccountsHubBody(
-              accounts: containers,
-              balances: balances,
-              baseCurrency: snapshot?.baseCurrency ?? 'USD',
-              netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
-              totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
-              totalLiabilities:
-                  snapshot?.totalLiabilities.amount ?? Decimal.zero,
-            );
-          },
-        ),
+      child: accountsAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (accounts) {
+          // Filter: user-created wealth containers only. System
+          // accounts (income / expense / equity sub-trees) are
+          // ledger plumbing and don't belong on the hub surface.
+          final containers = accounts
+              .where((a) => !a.archived)
+              .where(_isUserContainer)
+              .toList();
+          final balances = balancesAsync.value ?? const {};
+          final snapshot = snapshotAsync.value;
+          return _AccountsHubBody(
+            accounts: containers,
+            balances: balances,
+            baseCurrency: snapshot?.baseCurrency ?? 'USD',
+            netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
+            totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
+            totalLiabilities: snapshot?.totalLiabilities.amount ?? Decimal.zero,
+          );
+        },
       ),
     );
   }

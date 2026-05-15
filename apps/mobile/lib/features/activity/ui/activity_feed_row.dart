@@ -1,7 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/entry_kind.dart';
@@ -46,14 +48,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
 
     return FCard.raw(
       child: FTile(
-        onPress: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ActivityEntryDetailPage(
-              entry: entry,
-              accountsById: accountsById,
-            ),
-          ),
-        ),
+        onPress: () => _openDetail(context),
         prefix: Container(
           width: 36,
           height: 36,
@@ -102,6 +97,31 @@ class ActivityFeedEntryRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    final args = ActivityEntryDetailArgs(
+      entry: entry,
+      accountsById: accountsById,
+    );
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      context.pushNamed(
+        AppRouteNames.activityEntryDetail,
+        pathParameters: {'entryId': entry.entry.id},
+        extra: args,
+      );
+      return;
+    }
+
+    Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, _, _) => ActivityEntryDetailPage(
+          entry: args.entry,
+          accountsById: args.accountsById,
         ),
       ),
     );

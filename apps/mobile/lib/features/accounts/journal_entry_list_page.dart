@@ -29,21 +29,21 @@ class JournalEntryListPage extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.journalTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.journalTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: journalAsync.when(
-          data: (entries) {
-            if (entries.isEmpty) return const _EmptyJournal();
-            final accountsById = <String, Account>{
-              for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
-            };
-            return _JournalList(entries: entries, accountsById: accountsById);
-          },
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text(l10n.journalLoadError('$e'))),
-        ),
+      child: journalAsync.when(
+        data: (entries) {
+          if (entries.isEmpty) return const _EmptyJournal();
+          final accountsById = <String, Account>{
+            for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
+          };
+          return _JournalList(entries: entries, accountsById: accountsById);
+        },
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(child: Text(l10n.journalLoadError('$e'))),
       ),
     );
   }
