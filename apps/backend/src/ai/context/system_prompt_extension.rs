@@ -34,11 +34,27 @@ fn write_route(out: &mut String, r: &RouteContext) {
 
 fn write_base(out: &mut String, b: &BaseContext) {
     out.push_str(&format!(
-        "- 偏好币种: {} · 风险偏好: {} · 账户数: {}\n",
+        "- 偏好币种: {} · 风险偏好: {}\n",
         b.preferred_currency,
         risk_label(b.risk_preference),
-        b.accounts.total_count,
     ));
+    if b.accounts.total_count > 0 || !b.accounts.by_kind.is_empty() {
+        let by_kind = b
+            .accounts
+            .by_kind
+            .iter()
+            .map(|(kind, n)| format!("{kind}={n}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        if by_kind.is_empty() {
+            out.push_str(&format!("- 账户摘要: 总数 {}\n", b.accounts.total_count));
+        } else {
+            out.push_str(&format!(
+                "- 账户摘要: 总数 {} · {}\n",
+                b.accounts.total_count, by_kind
+            ));
+        }
+    }
     out.push_str(&format!(
         "- 现金流: 月均流入≈{} 流出≈{} {} (趋势: {})\n",
         b.cashflow.average_inflow_minor,

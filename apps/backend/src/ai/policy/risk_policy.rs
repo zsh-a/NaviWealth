@@ -208,6 +208,7 @@ mod tests {
             "read_category_window",
             "read_account_window",
             "read_asset_window",
+            "list_payment_accounts",
             "propose_trade",
             "propose_expense",
             "propose_liability_payment",

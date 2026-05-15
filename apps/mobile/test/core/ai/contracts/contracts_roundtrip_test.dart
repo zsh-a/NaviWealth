@@ -247,10 +247,14 @@ void main() {
     });
 
     test('mobile descriptor mirror carries all backend tools', () {
-      expect(allToolDescriptors, hasLength(27));
+      expect(allToolDescriptors, hasLength(28));
       expect(
         lookupToolDescriptor('get_holdings')?.readModelLayer,
         ReadModelLayer.snapshot,
+      );
+      expect(
+        lookupToolDescriptor('list_payment_accounts')?.allowedContextTier,
+        BudgetTier.standard,
       );
       expect(
         lookupToolDescriptor('propose_expense')?.sideEffect,

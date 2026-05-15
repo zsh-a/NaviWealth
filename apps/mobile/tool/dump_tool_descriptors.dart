@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:naviwealth/core/ai/contracts/contracts.dart';
+import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 
 void main() {
   final descriptors = allToolDescriptors.map((d) => d.toJson()).toList()

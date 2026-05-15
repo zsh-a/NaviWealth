@@ -324,6 +324,13 @@ const allToolDescriptors = <ToolDescriptor>[
     readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
+    name: 'list_payment_accounts',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+  ),
+  ToolDescriptor(
     name: 'propose_account_create',
     access: Access.propose,
     risk: RiskLevel.propose,

@@ -23,6 +23,7 @@ pub mod get_subscription_changes;
 pub mod get_transfer_links;
 pub mod get_xirr_summary;
 pub(crate) mod impls;
+pub mod list_payment_accounts;
 pub mod propose_account_create;
 pub mod propose_asset_valuation;
 pub mod propose_expense;
@@ -84,6 +85,8 @@ pub fn registry() -> registry::ToolRegistry {
         std::sync::Arc::new(read_account_window::ReadAccountWindowTool)
             as std::sync::Arc<dyn registry::Tool>,
         std::sync::Arc::new(read_asset_window::ReadAssetWindowTool)
+            as std::sync::Arc<dyn registry::Tool>,
+        std::sync::Arc::new(list_payment_accounts::ListPaymentAccountsTool)
             as std::sync::Arc<dyn registry::Tool>,
         std::sync::Arc::new(propose_trade::ProposeTradeTool) as std::sync::Arc<dyn registry::Tool>,
         std::sync::Arc::new(propose_expense::ProposeExpenseTool)
