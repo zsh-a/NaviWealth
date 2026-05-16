@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'data/activity_feed_provider.dart';
@@ -56,6 +57,13 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           header: FHeader.nested(
             title: Text(l10n.navActivity),
             suffixes: [
+              // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
+              // by design: a plain outlined inbox, no badge/glow; the
+              // pending count lives inside the review page.
+              FHeaderAction(
+                icon: const Icon(Icons.move_to_inbox_outlined),
+                onPress: () => context.push(AppRoutes.activityIngest),
+              ),
               FHeaderAction(
                 icon: const Icon(Icons.filter_list_outlined),
                 onPress: () => ActivityFeedFilterSheet.show(context),

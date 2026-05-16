@@ -31,6 +31,7 @@ import '../features/expense/ui/expense_list_page.dart';
 import '../features/expense/ui/expense_report_page.dart';
 import '../features/fire/presentation/fire_page.dart' deferred as fire_lib;
 import '../features/home/home_page.dart';
+import '../features/ingest/ui/ingest_review_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
 import '../features/investment/presentation/trade_entry_form_page.dart';
@@ -183,6 +184,12 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'journal',
                     name: AppRouteNames.journalEntries,
                     builder: (context, state) => const JournalEntryListPage(),
+                  ),
+                  // §5.10.10 / S5a — Layer 4 ingest review queue.
+                  GoRoute(
+                    path: 'ingest',
+                    name: AppRouteNames.activityIngest,
+                    builder: (context, state) => const IngestReviewPage(),
                   ),
                 ],
               ),

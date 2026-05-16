@@ -27,6 +27,8 @@ abstract final class AppRoutes {
   static const tradeEntry = '/activity/trade';
   static const transfer = '/activity/transfer';
   static const journalEntries = '/activity/journal';
+  // §5.10.10 / S5a — Layer 4 ingest review queue.
+  static const activityIngest = '/activity/ingest';
 
   // ── Accounts hub sub-flows (things you own / owe + plan dashboards) ────
   static const accountsList = '/accounts/list';
@@ -124,6 +126,7 @@ abstract final class AppRouteNames {
   static const tradeEntry = 'trade-entry';
   static const transfer = 'transfer';
   static const journalEntries = 'journal-entries';
+  static const activityIngest = 'activity-ingest';
 }
 
 /// Primary shell tab paths in display order. See `app_shell.dart` for the

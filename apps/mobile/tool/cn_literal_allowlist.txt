@@ -79,3 +79,21 @@ lib/core/command_palette/default_commands.dart
 # ─── Remaining feature UI — l10n follow-up ───────────────────────────
 lib/features/expense/ui/expense_form_page.dart
 lib/features/home/ui/ai_insight_feed.dart
+
+# ─── Layer 4 ingest pipeline (S5a — §5.10.10) ───────────────────────
+# First device-only slice of the record-entry pipeline. Two distinct
+# reasons these carry CN literals:
+#   1. csv_ingest_parser.dart — `_headerAliases` matches Chinese bank
+#      statement column headers ("日期"/"金额"/"摘要"…). These are
+#      *parser data matched against external files*, not UI copy, so
+#      they cannot be localised by nature (same rationale as the
+#      command-palette search-keyword exemption above).
+#   2. ingest_review_page.dart + the data-layer error/summary strings
+#      are user-facing copy not yet migrated. Owned by the deferred
+#      S5a.1 line (which also lands the Layer-3 ambient card + the
+#      bilingual ARB pass) — see docs/ai-architecture.md §5.10.9.
+lib/features/ingest/data/csv_ingest_parser.dart
+lib/features/ingest/data/ingest_confirm_service.dart
+lib/features/ingest/data/ingest_pipeline.dart
+lib/features/ingest/data/providers.dart
+lib/features/ingest/ui/ingest_review_page.dart
