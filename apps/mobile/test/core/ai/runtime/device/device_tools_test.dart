@@ -15,6 +15,7 @@ import 'package:naviwealth/core/ai/local/skills/skills.dart'
         subscriptionChangeToUpload,
         transferMatchToUpload;
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/breakdown_tools.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart';
@@ -97,11 +98,19 @@ Posting _post(String accountId, String unit, String units) => Posting(
   sync: _stamp(),
 );
 
-Asset _asset(String id) => Asset(
+Asset _asset(
+  String id, {
+  String? industry,
+  String? region,
+  String? metadataJson,
+}) => Asset(
   id: id,
   type: AssetType.stock,
   symbol: id,
   currency: 'USD',
+  industry: industry,
+  region: region,
+  metadataJson: metadataJson,
   sync: _stamp(),
 );
 
@@ -167,14 +176,20 @@ void main() {
         ReadAccountWindowTool(),
         ReadAssetWindowTool(),
         ReadCategoryWindowTool(),
+        GetIndustryBreakdownTool(),
+        GetGeoBreakdownTool(),
+        GetMarketCapBreakdownTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_cashflow_buckets',
+        'get_geo_breakdown',
         'get_holdings',
+        'get_industry_breakdown',
         'get_investment_performance',
+        'get_market_cap_breakdown',
         'get_net_worth_summary',
         'get_recurring_patterns',
         'get_refund_links',
@@ -1663,6 +1678,115 @@ void main() {
       );
       expect(usd['currency'], 'USD');
       expect(series(usd).map((r) => r['currency']).toSet(), {'USD'});
+    });
+  });
+
+  group('W-D4.2c — breakdown trio (get_breakdown parity)', () {
+    Map<String, Object?> snap(Map<String, Map<String, Object?>> holdings) =>
+        <String, Object?>{'base_currency': 'USD', 'holdings': holdings};
+
+    Map<String, Object?> h(String costBase) => <String, Object?>{
+      'base_currency': 'USD',
+      'cost_basis_base': costBase,
+      'asset_currency': 'USD',
+    };
+
+    final assets = [
+      _asset(
+        'a1',
+        industry: 'Tech',
+        region: 'US',
+        metadataJson: '{"market_cap":"large"}',
+      ),
+      _asset(
+        'a2',
+        industry: 'Tech',
+        region: 'CN',
+        metadataJson: '{"market_cap":"large"}',
+      ),
+      _asset('a3', industry: 'Finance', region: 'US'), // metadataJson null
+    ];
+    final snapshot = snap({
+      'a1': h('1000'),
+      'a2': h('3000'),
+      'a3': h('500'),
+      'ghost': h('999'), // no matching Asset → skipped (backend parity)
+    });
+
+    List<Map<String, Object?>> buckets(Map<String, Object?> m) =>
+        (m['buckets'] as List).cast<Map<String, Object?>>();
+
+    test('industry: aggregates cost, share, sorted desc; §4.6.1 envelope', () {
+      final m = breakdownShape(
+        snapshot,
+        assets: assets,
+        dim: BreakdownDim.industry,
+      );
+      expect(m['total'], 4500.0); // ghost skipped
+      expect(m['base_currency'], 'USD');
+      expect(m['approximation'], true);
+      expect(m['source'], 'client_portfolio_snapshot'); // inherited
+      expect(m.containsKey('freshness'), isFalse); // device, §4.6.1
+      expect(m['note'], contains('记账成本'));
+      final b = buckets(m);
+      expect(b.map((x) => x['label']), ['Tech', 'Finance']); // cost desc
+      expect(b[0]['cost_basis'], 4000.0);
+      expect(b[0]['currency'], 'USD');
+      expect((b[0]['share'] as double), closeTo(4000 / 4500, 1e-9));
+      expect(b[1]['cost_basis'], 500.0);
+    });
+
+    test('geo: groups by asset.region', () {
+      final b = buckets(
+        breakdownShape(snapshot, assets: assets, dim: BreakdownDim.region),
+      );
+      final byLabel = {for (final x in b) x['label']: x['cost_basis']};
+      expect(byLabel['CN'], 3000.0);
+      expect(byLabel['US'], 1500.0); // a1 1000 + a3 500
+      expect(b.first['label'], 'CN'); // sorted by cost desc
+    });
+
+    test('market_cap: parsed from metadataJson, null → unknown', () {
+      final b = buckets(
+        breakdownShape(snapshot, assets: assets, dim: BreakdownDim.marketCap),
+      );
+      final byLabel = {for (final x in b) x['label']: x['cost_basis']};
+      expect(byLabel['large'], 4000.0); // a1 + a2
+      expect(byLabel['unknown'], 500.0); // a3 metadataJson null
+    });
+
+    test('marketCap dim_label: bad / missing JSON → unknown', () {
+      expect(
+        breakdownDimLabel(
+          _asset('x', metadataJson: 'not json'),
+          BreakdownDim.marketCap,
+        ),
+        'unknown',
+      );
+      expect(
+        breakdownDimLabel(
+          _asset('x', metadataJson: '{"market_cap":42}'), // non-string
+          BreakdownDim.marketCap,
+        ),
+        'unknown',
+      );
+      expect(
+        breakdownDimLabel(_asset('x'), BreakdownDim.industry),
+        'unknown', // industry null
+      );
+    });
+
+    test('empty portfolio → normal path: total 0, no buckets', () {
+      final m = breakdownShape(
+        null,
+        assets: assets,
+        dim: BreakdownDim.industry,
+      );
+      expect(m['total'], 0.0);
+      expect(buckets(m), isEmpty);
+      expect(m['base_currency'], isNull);
+      expect(m['source'], 'client_portfolio_snapshot');
+      expect(m.containsKey('freshness'), isFalse);
     });
   });
 }

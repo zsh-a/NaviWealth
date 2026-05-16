@@ -23,6 +23,7 @@ import '../../../contracts/tool_descriptor.dart';
 import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
+import 'breakdown_tools.dart';
 import 'device_tool.dart';
 import 'get_anomaly_flags_tool.dart';
 import 'get_asset_allocation_tool.dart';
@@ -72,6 +73,9 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   ReadAccountWindowTool(),
   ReadAssetWindowTool(),
   ReadCategoryWindowTool(),
+  GetIndustryBreakdownTool(),
+  GetGeoBreakdownTool(),
+  GetMarketCapBreakdownTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>
