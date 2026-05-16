@@ -111,6 +111,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDetailNoExplanation => '暂无该笔记录的 AI 洞察。';
 
   @override
+  String get activityEntryDetailInsightSubscription =>
+      '识别为周期订阅。下次续费前可复核是否仍符合当前计划。';
+
+  @override
+  String get activityEntryDetailInsightHousing => '识别为周期居住支出。可纳入必要支出基线持续跟踪。';
+
+  @override
+  String get activityEntryDetailInsightIncome => '识别为主要收入流入。可作为现金流预测的稳定基线。';
+
+  @override
   String get aiContextSummaryThisMonth => '本月概览';
 
   @override

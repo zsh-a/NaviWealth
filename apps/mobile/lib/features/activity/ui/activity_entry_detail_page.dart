@@ -38,6 +38,7 @@ class ActivityEntryDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
+    final aiInsight = _heuristicInsight(entry, l10n);
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.activityEntryDetailTitle),
@@ -64,8 +65,10 @@ class ActivityEntryDetailPage extends ConsumerWidget {
             accountsById: accountsById,
             formatters: formatters,
           ),
-          const SizedBox(height: 16),
-          _AiInsightCard(entry: entry),
+          if (aiInsight != null) ...[
+            const SizedBox(height: 16),
+            _AiInsightCard(insight: aiInsight),
+          ],
           const SizedBox(height: 16),
           FCard.raw(
             child: Padding(
@@ -168,15 +171,14 @@ class _HeroAmountCard extends StatelessWidget {
 }
 
 class _AiInsightCard extends StatelessWidget {
-  const _AiInsightCard({required this.entry});
+  const _AiInsightCard({required this.insight});
 
-  final JournalEntryWithPostings entry;
+  final String insight;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final hint = _heuristicInsight(entry, l10n);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -211,7 +213,7 @@ class _AiInsightCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    hint ?? l10n.activityEntryDetailNoExplanation,
+                    insight,
                     style: context.theme.typography.sm.copyWith(
                       color: colors.mutedForeground,
                       height: 1.4,
@@ -231,20 +233,52 @@ String? _heuristicInsight(
   JournalEntryWithPostings entry,
   AppLocalizations l10n,
 ) {
-  final narration = entry.entry.narration.toLowerCase();
-  if (narration.contains('netflix') ||
-      narration.contains('spotify') ||
-      narration.contains('prime') ||
-      narration.contains('subscription')) {
-    return 'Recurring subscription detected. Cancel anytime via the merchant\'s portal.';
+  final text = [
+    entry.entry.narration,
+    if (entry.entry.payee != null) entry.entry.payee!,
+  ].join(' ').toLowerCase();
+  if (_containsAny(text, const [
+    'netflix',
+    'spotify',
+    'prime',
+    'subscription',
+    '订阅',
+    '会员',
+    '自动续费',
+    '续费',
+    '月费',
+  ])) {
+    return l10n.activityEntryDetailInsightSubscription;
   }
-  if (narration.contains('rent') || narration.contains('mortgage')) {
-    return 'Recurring monthly housing expense. Tagged for FIRE essentials baseline.';
+  if (_containsAny(text, const [
+    'rent',
+    'mortgage',
+    'housing',
+    '房租',
+    '租金',
+    '房贷',
+    '按揭',
+    '物业',
+  ])) {
+    return l10n.activityEntryDetailInsightHousing;
   }
-  if (narration.contains('salary') || narration.contains('payroll')) {
-    return 'Primary income stream. Used to back-fill cash-flow projections.';
+  if (_containsAny(text, const [
+    'salary',
+    'payroll',
+    'wage',
+    '工资',
+    '薪资',
+    '薪水',
+    '发薪',
+    '奖金',
+  ])) {
+    return l10n.activityEntryDetailInsightIncome;
   }
   return null;
+}
+
+bool _containsAny(String text, List<String> keywords) {
+  return keywords.any(text.contains);
 }
 
 Posting? _headlinePosting(

@@ -113,6 +113,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'No insight available for this entry.';
 
   @override
+  String get activityEntryDetailInsightSubscription =>
+      'Recurring subscription. Review whether it still fits your plan before the next renewal.';
+
+  @override
+  String get activityEntryDetailInsightHousing =>
+      'Recurring housing payment. Keep it in the essential-spending baseline.';
+
+  @override
+  String get activityEntryDetailInsightIncome =>
+      'Primary income inflow. Keep it stable in cash-flow projections.';
+
+  @override
   String get aiContextSummaryThisMonth => 'Monthly summary';
 
   @override

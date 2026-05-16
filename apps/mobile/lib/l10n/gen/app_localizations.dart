@@ -284,6 +284,24 @@ abstract class AppLocalizations {
   /// **'No insight available for this entry.'**
   String get activityEntryDetailNoExplanation;
 
+  /// Heuristic AI insight shown for subscription-like transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring subscription. Review whether it still fits your plan before the next renewal.'**
+  String get activityEntryDetailInsightSubscription;
+
+  /// Heuristic AI insight shown for rent or mortgage-like transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring housing payment. Keep it in the essential-spending baseline.'**
+  String get activityEntryDetailInsightHousing;
+
+  /// Heuristic AI insight shown for salary or payroll-like transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Primary income inflow. Keep it stable in cash-flow projections.'**
+  String get activityEntryDetailInsightIncome;
+
   /// AI context summary section eyebrow
   ///
   /// In en, this message translates to:
