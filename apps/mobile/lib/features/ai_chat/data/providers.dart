@@ -9,6 +9,8 @@ import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
+import '../../../core/ai/runtime/device/tools/device_tool_registry.dart';
+import '../../../core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/auth/providers.dart';
@@ -75,11 +77,18 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   if (creds == null || !creds.isUsable) return null;
   final dio = Dio()
     ..interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  // §4.6.3 — registry membership is the device allow-list. W-D4 ships
+  // `list_payment_accounts` (the expense flow's dependency) as the
+  // proof tool; remaining families land in W-D4.x. Tools not yet
+  // ported simply aren't advertised, so the model never calls them.
+  final registry = DeviceToolRegistry(const [ListPaymentAccountsTool()]);
   return DeviceLlmRuntime(
     client: AnthropicClient(
       dio: dio,
       config: LlmConfig.fromCredentials(creds),
     ),
+    dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),
+    toolSchemas: registry.schemas(),
   );
 });
 
