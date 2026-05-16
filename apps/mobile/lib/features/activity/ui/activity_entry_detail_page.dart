@@ -8,6 +8,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/entry_kind.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../design_system/design_system.dart';
@@ -38,6 +39,7 @@ class ActivityEntryDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
+    final aiInsight = _heuristicInsight(entry, l10n);
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.activityEntryDetailTitle),
@@ -64,9 +66,11 @@ class ActivityEntryDetailPage extends ConsumerWidget {
             accountsById: accountsById,
             formatters: formatters,
           ),
-          const SizedBox(height: 16),
-          _AiInsightCard(entry: entry),
-          const SizedBox(height: 16),
+          if (aiInsight != null) ...[
+            const SizedBox(height: 12),
+            _AiInsightCard(insight: aiInsight),
+          ],
+          const SizedBox(height: 12),
           FCard.raw(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -110,7 +114,7 @@ class _HeroAmountCard extends StatelessWidget {
       resolveCategory: (id) => accountsById[id]?.category,
     );
     final headline = _headlinePosting(entry.postings, accountsById);
-    final dateLine = _formatDate(entry.entry.date);
+    final dateLine = formatters.dateTime(entry.entry.date);
     final title = entry.entry.narration.isEmpty ? '—' : entry.entry.narration;
     final payee = entry.entry.payee;
     final colors = context.theme.colors;
@@ -168,15 +172,14 @@ class _HeroAmountCard extends StatelessWidget {
 }
 
 class _AiInsightCard extends StatelessWidget {
-  const _AiInsightCard({required this.entry});
+  const _AiInsightCard({required this.insight});
 
-  final JournalEntryWithPostings entry;
+  final String insight;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final hint = _heuristicInsight(entry, l10n);
     return FCard.raw(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -211,7 +214,7 @@ class _AiInsightCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    hint ?? l10n.activityEntryDetailNoExplanation,
+                    insight,
                     style: context.theme.typography.sm.copyWith(
                       color: colors.mutedForeground,
                       height: 1.4,
@@ -231,20 +234,52 @@ String? _heuristicInsight(
   JournalEntryWithPostings entry,
   AppLocalizations l10n,
 ) {
-  final narration = entry.entry.narration.toLowerCase();
-  if (narration.contains('netflix') ||
-      narration.contains('spotify') ||
-      narration.contains('prime') ||
-      narration.contains('subscription')) {
-    return 'Recurring subscription detected. Cancel anytime via the merchant\'s portal.';
+  final text = [
+    entry.entry.narration,
+    if (entry.entry.payee != null) entry.entry.payee!,
+  ].join(' ').toLowerCase();
+  if (_containsAny(text, const [
+    'netflix',
+    'spotify',
+    'prime',
+    'subscription',
+    '订阅',
+    '会员',
+    '自动续费',
+    '续费',
+    '月费',
+  ])) {
+    return l10n.activityEntryDetailInsightSubscription;
   }
-  if (narration.contains('rent') || narration.contains('mortgage')) {
-    return 'Recurring monthly housing expense. Tagged for FIRE essentials baseline.';
+  if (_containsAny(text, const [
+    'rent',
+    'mortgage',
+    'housing',
+    '房租',
+    '租金',
+    '房贷',
+    '按揭',
+    '物业',
+  ])) {
+    return l10n.activityEntryDetailInsightHousing;
   }
-  if (narration.contains('salary') || narration.contains('payroll')) {
-    return 'Primary income stream. Used to back-fill cash-flow projections.';
+  if (_containsAny(text, const [
+    'salary',
+    'payroll',
+    'wage',
+    '工资',
+    '薪资',
+    '薪水',
+    '发薪',
+    '奖金',
+  ])) {
+    return l10n.activityEntryDetailInsightIncome;
   }
   return null;
+}
+
+bool _containsAny(String text, List<String> keywords) {
+  return keywords.any(text.contains);
 }
 
 Posting? _headlinePosting(
@@ -253,18 +288,25 @@ Posting? _headlinePosting(
 ) {
   Posting? headline;
   Decimal? best;
+  Posting? fallback;
+  Decimal? fallbackBest;
   for (final p in postings) {
     final magnitude = p.units.abs();
+    if (fallbackBest == null || magnitude > fallbackBest) {
+      fallbackBest = magnitude;
+      fallback = p;
+    }
+
+    final account = accounts[p.accountId];
+    if (account == null) continue;
+    if (account.category != AccountSide.asset &&
+        account.category != AccountSide.liability) {
+      continue;
+    }
     if (best == null || magnitude > best) {
       best = magnitude;
       headline = p;
     }
   }
-  return headline;
-}
-
-String _formatDate(DateTime date) {
-  final h = date.hour.toString().padLeft(2, '0');
-  final m = date.minute.toString().padLeft(2, '0');
-  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} $h:$m';
+  return headline ?? fallback;
 }

@@ -23,16 +23,15 @@ Account _account({
   required String name,
   AccountSide category = AccountSide.asset,
   String? parentId,
-}) =>
-    Account(
-      id: id,
-      type: AccountCategory.asset,
-      name: name,
-      currency: 'USD',
-      category: category,
-      parentId: parentId,
-      sync: _sync,
-    );
+}) => Account(
+  id: id,
+  type: AccountCategory.asset,
+  name: name,
+  currency: 'USD',
+  category: category,
+  parentId: parentId,
+  sync: _sync,
+);
 
 Posting _p({
   required String accountId,
@@ -41,18 +40,17 @@ Posting _p({
   Cost? cost,
   Price? price,
   int position = 0,
-}) =>
-    Posting(
-      id: 'p-$position',
-      journalEntryId: 'je-test',
-      position: position,
-      accountId: accountId,
-      units: units,
-      unit: unit,
-      cost: cost,
-      price: price,
-      sync: _sync,
-    );
+}) => Posting(
+  id: 'p-$position',
+  journalEntryId: 'je-test',
+  position: position,
+  accountId: accountId,
+  units: units,
+  unit: unit,
+  cost: cost,
+  price: price,
+  sync: _sync,
+);
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.light(),
@@ -66,10 +64,7 @@ Widget _wrap(Widget child) => MaterialApp(
   home: Scaffold(
     body: SizedBox(
       width: 400,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: child,
-      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
     ),
   ),
 );
@@ -132,62 +127,59 @@ void main() {
     expect(find.text('Buy 100 AAPL'), findsOneWidget);
     // Brokerage row present + cost annotation (lotId omitted).
     expect(find.text('Brokerage'), findsAtLeastNWidgets(1));
-    expect(find.text('100 NASDAQ:AAPL'), findsOneWidget);
+    expect(find.text('+100 AAPL'), findsAtLeastNWidgets(1));
     expect(find.text('{150 USD}'), findsOneWidget);
     // Nested fee account shows the full breadcrumb path.
     expect(find.text('Expenses › Trading › Trading Fee'), findsOneWidget);
-    expect(find.text('5 USD'), findsOneWidget);
-    expect(find.text('-15005 USD'), findsOneWidget);
+    expect(find.text('+\$5'), findsOneWidget);
+    expect(find.text('-\$15,005'), findsOneWidget);
   });
 
-  testWidgets(
-    'unit-balance footer renders a Σ row only for unbalanced units',
-    (tester) async {
-      final accounts = <String, Account>{
-        'a-cash': _account(id: 'a-cash', name: 'Cash'),
-        'a-bro': _account(id: 'a-bro', name: 'Brokerage'),
-      };
-      // Two cash legs sum to -1; the AAPL legs cancel out at zero.
-      final postings = [
-        _p(
-          accountId: 'a-bro',
-          units: Decimal.parse('100'),
-          unit: 'NASDAQ:AAPL',
-          cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
-        ),
-        _p(
-          accountId: 'a-bro',
-          units: Decimal.parse('-100'),
-          unit: 'NASDAQ:AAPL',
-          cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
-          position: 1,
-        ),
-        _p(
-          accountId: 'a-cash',
-          units: Decimal.parse('100'),
-          unit: 'USD',
-          position: 2,
-        ),
-        _p(
-          accountId: 'a-cash',
-          units: Decimal.parse('-101'),
-          unit: 'USD',
-          position: 3,
-        ),
-      ];
-      await tester.pumpWidget(
-        _wrap(
-          PostingsPreview(postings: postings, accounts: accounts),
-        ),
-      );
-      // AAPL is balanced (sum = 0) → no Σ row.
-      expect(find.text('Σ NASDAQ:AAPL'), findsNothing);
-      // USD is off by 1 → Σ row visible with the residual.
-      expect(find.text('Σ USD'), findsOneWidget);
-      expect(find.text('-1'), findsOneWidget);
-      expect(find.byIcon(Icons.error_outline), findsOneWidget);
-    },
-  );
+  testWidgets('unit-balance footer renders a Σ row only for unbalanced units', (
+    tester,
+  ) async {
+    final accounts = <String, Account>{
+      'a-cash': _account(id: 'a-cash', name: 'Cash'),
+      'a-bro': _account(id: 'a-bro', name: 'Brokerage'),
+    };
+    // Two cash legs sum to -1; the AAPL legs cancel out at zero.
+    final postings = [
+      _p(
+        accountId: 'a-bro',
+        units: Decimal.parse('100'),
+        unit: 'NASDAQ:AAPL',
+        cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
+      ),
+      _p(
+        accountId: 'a-bro',
+        units: Decimal.parse('-100'),
+        unit: 'NASDAQ:AAPL',
+        cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
+        position: 1,
+      ),
+      _p(
+        accountId: 'a-cash',
+        units: Decimal.parse('100'),
+        unit: 'USD',
+        position: 2,
+      ),
+      _p(
+        accountId: 'a-cash',
+        units: Decimal.parse('-101'),
+        unit: 'USD',
+        position: 3,
+      ),
+    ];
+    await tester.pumpWidget(
+      _wrap(PostingsPreview(postings: postings, accounts: accounts)),
+    );
+    // AAPL is balanced (sum = 0) → no Σ row.
+    expect(find.text('Σ NASDAQ:AAPL'), findsNothing);
+    // USD is off by 1 → Σ row visible with the residual.
+    expect(find.text('Σ USD'), findsOneWidget);
+    expect(find.text('-\$1'), findsOneWidget);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+  });
 
   testWidgets('balanced posting set renders without a Σ footer', (
     tester,
@@ -197,11 +189,7 @@ void main() {
       'a-to': _account(id: 'a-to', name: 'B'),
     };
     final postings = [
-      _p(
-        accountId: 'a-from',
-        units: Decimal.parse('-1000'),
-        unit: 'CNY',
-      ),
+      _p(accountId: 'a-from', units: Decimal.parse('-1000'), unit: 'CNY'),
       _p(
         accountId: 'a-to',
         units: Decimal.parse('1000'),
@@ -210,9 +198,7 @@ void main() {
       ),
     ];
     await tester.pumpWidget(
-      _wrap(
-        PostingsPreview(postings: postings, accounts: accounts),
-      ),
+      _wrap(PostingsPreview(postings: postings, accounts: accounts)),
     );
     expect(find.byIcon(Icons.check_circle_outline), findsNothing);
     expect(find.byIcon(Icons.error_outline), findsNothing);
@@ -221,11 +207,7 @@ void main() {
 
   testWidgets('unknown account id falls back to the bare id', (tester) async {
     final postings = [
-      _p(
-        accountId: 'mystery',
-        units: Decimal.parse('5'),
-        unit: 'USD',
-      ),
+      _p(accountId: 'mystery', units: Decimal.parse('5'), unit: 'USD'),
       _p(
         accountId: 'mystery',
         units: Decimal.parse('-5'),

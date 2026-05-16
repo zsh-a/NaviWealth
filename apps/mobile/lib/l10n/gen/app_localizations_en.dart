@@ -113,6 +113,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'No insight available for this entry.';
 
   @override
+  String get activityEntryDetailInsightSubscription =>
+      'Recurring subscription. Review whether it still fits your plan before the next renewal.';
+
+  @override
+  String get activityEntryDetailInsightHousing =>
+      'Recurring housing payment. Keep it in the essential-spending baseline.';
+
+  @override
+  String get activityEntryDetailInsightIncome =>
+      'Primary income inflow. Keep it stable in cash-flow projections.';
+
+  @override
   String get aiContextSummaryThisMonth => 'Monthly summary';
 
   @override
@@ -893,6 +905,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String commonLoadError(String error) {
     return 'Failed to load: $error';
   }
+
+  @override
+  String get commonLoadFailed => 'Couldn\'t load this view. Please try again.';
 
   @override
   String get commonSaveFailed => 'Couldn\'t save your changes. Tap retry.';
@@ -2427,9 +2442,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get physicalAssetValuationTrendSemanticLabel => 'Valuation trend';
-
-  @override
-  String get accountsAppBarTitle => 'Accounts';
 
   @override
   String get accountsDetailEmpty =>

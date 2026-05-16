@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
-import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -15,7 +14,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../home/data/dashboard_providers.dart';
 import 'data/account_balances_provider.dart';
 import 'domain/account_balances.dart';
-import 'ui/account_labels.dart';
+import 'ui/account_grouped_sections.dart';
 import 'ui/accounts_action_panel.dart';
 
 /// Accounts Hub — account-centric view of every wealth container.
@@ -43,6 +42,7 @@ class AccountsHubPage extends ConsumerWidget {
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.add_outlined),
+            semanticsLabel: l10n.accountsActionsTitle,
             onPress: () => showAccountsActionPanel(context),
           ),
         ],
@@ -50,7 +50,7 @@ class AccountsHubPage extends ConsumerWidget {
       childPad: false,
       child: accountsAsync.when(
         loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
         data: (accounts) {
           // Filter: user-created wealth containers only. System
           // accounts (income / expense / equity sub-trees) are
@@ -102,9 +102,6 @@ class _AccountsHubBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
-    final l10n = AppLocalizations.of(context);
-
-    final groups = _groupByCategory(accounts);
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
@@ -121,40 +118,18 @@ class _AccountsHubBody extends StatelessWidget {
           totalLiabilities: totalLiabilities,
         ),
         const SizedBox(height: 18),
-        for (final entry in groups.entries)
-          _AccountsSection(
-            title: accountCategoryLabel(l10n, entry.key),
-            accounts: entry.value,
-            balances: balances,
-            baseCurrency: baseCurrency,
-          ),
+        AccountsGroupedSections(
+          accounts: accounts,
+          balances: balances,
+          allowExpansion: true,
+          onAccountPressed: (context, account) =>
+              context.push(AppRoutes.accountListItem(account.id)),
+        ),
         const SizedBox(height: 8),
         _BankAccountsLink(),
       ],
     );
   }
-}
-
-Map<AccountCategory, List<Account>> _groupByCategory(List<Account> accounts) {
-  // Render order — Cash first, then Bank, Broker, Crypto, Credit, Loan,
-  // Asset (other), Liability (other). Empty groups are dropped.
-  const order = [
-    AccountCategory.cash,
-    AccountCategory.bank,
-    AccountCategory.broker,
-    AccountCategory.crypto,
-    AccountCategory.credit,
-    AccountCategory.loan,
-    AccountCategory.asset,
-    AccountCategory.liability,
-  ];
-  final out = <AccountCategory, List<Account>>{};
-  for (final cat in order) {
-    final group = accounts.where((a) => a.type == cat).toList();
-    if (group.isEmpty) continue;
-    out[cat] = group;
-  }
-  return out;
 }
 
 class _NetPulseStrip extends ConsumerWidget {
@@ -185,7 +160,6 @@ class _NetPulseStrip extends ConsumerWidget {
             style: context.theme.typography.xs2.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
             ),
           ),
           const SizedBox(height: 4),
@@ -214,278 +188,6 @@ class _NetPulseStrip extends ConsumerWidget {
                   '${formatters.currency(totalLiabilities, code: baseCurrency)}',
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountsSection extends StatelessWidget {
-  const _AccountsSection({
-    required this.title,
-    required this.accounts,
-    required this.balances,
-    required this.baseCurrency,
-  });
-
-  final String title;
-  final List<Account> accounts;
-  final Map<String, AccountBalances> balances;
-  final String baseCurrency;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: Text(
-              title.toUpperCase(),
-              style: context.theme.typography.xs2.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.6,
-              ),
-            ),
-          ),
-          FCard.raw(
-            child: Column(
-              children: [
-                for (var i = 0; i < accounts.length; i++) ...[
-                  _AccountRow(
-                    account: accounts[i],
-                    balances:
-                        balances[accounts[i].id] ??
-                        AccountBalances.empty(accounts[i].id),
-                    baseCurrency: baseCurrency,
-                  ),
-                  if (i < accounts.length - 1) const FDivider(),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Account row — collapsed by default, tap to expand into per-unit
-/// child rows when the container holds more than one unit.
-class _AccountRow extends StatefulWidget {
-  const _AccountRow({
-    required this.account,
-    required this.balances,
-    required this.baseCurrency,
-  });
-
-  final Account account;
-  final AccountBalances balances;
-  final String baseCurrency;
-
-  @override
-  State<_AccountRow> createState() => _AccountRowState();
-}
-
-class _AccountRowState extends State<_AccountRow> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final account = widget.account;
-    final balances = widget.balances;
-    final isMulti = balances.isMultiUnit;
-    final primaryLeg =
-        balances.legFor(account.currency) ??
-        (balances.legs.isNotEmpty ? balances.legs.first : null);
-
-    return Column(
-      children: [
-        FTile(
-          onPress: () {
-            if (isMulti) {
-              setState(() => _expanded = !_expanded);
-            } else {
-              context.push(AppRoutes.accountListItem(account.id));
-            }
-          },
-          prefix: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: colors.foreground.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              _iconFor(account.type),
-              size: 18,
-              color: colors.mutedForeground,
-            ),
-          ),
-          title: Text(
-            account.name,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle:
-              account.institution != null && account.institution!.isNotEmpty
-              ? Text(
-                  account.institution!,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-          suffix: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (primaryLeg != null)
-                    _PrimaryAmount(leg: primaryLeg)
-                  else
-                    Text(
-                      '—',
-                      style: context.theme.typography.sm.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  if (isMulti)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        _multiHint(balances),
-                        style: context.theme.typography.xs2.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              if (isMulti)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(start: 4),
-                  child: Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    size: 18,
-                    color: colors.mutedForeground.withValues(alpha: 0.6),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        if (isMulti && _expanded)
-          Padding(
-            padding: const EdgeInsetsDirectional.only(
-              start: 64,
-              end: 14,
-              bottom: 10,
-            ),
-            child: Column(
-              children: [
-                for (final leg in balances.legs)
-                  if (leg.unit != account.currency || balances.legs.length > 1)
-                    _SubLegRow(leg: leg),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  String _multiHint(AccountBalances balances) {
-    final units = balances.legs.map((l) => l.unit).toList();
-    if (units.length <= 3) return units.join(' · ');
-    return '${units.take(2).join(' · ')} · +${units.length - 2}';
-  }
-
-  IconData _iconFor(AccountCategory cat) {
-    return switch (cat) {
-      AccountCategory.cash => Icons.payments_outlined,
-      AccountCategory.bank => Icons.account_balance_outlined,
-      AccountCategory.broker => Icons.show_chart_outlined,
-      AccountCategory.crypto => Icons.currency_bitcoin,
-      AccountCategory.credit => Icons.credit_card_outlined,
-      AccountCategory.loan => Icons.request_quote_outlined,
-      AccountCategory.asset => Icons.inventory_2_outlined,
-      AccountCategory.liability => Icons.south_east_outlined,
-    };
-  }
-}
-
-class _PrimaryAmount extends ConsumerWidget {
-  const _PrimaryAmount({required this.leg});
-
-  final AccountBalanceLeg leg;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formatters = context.formatters(ref);
-    final amount = leg.units;
-    final text = formatters.signedMoney(
-      amount,
-      unit: leg.unit,
-      showPositiveSign: false,
-    );
-    return Text(
-      text,
-      style: context.theme.typography.sm.copyWith(
-        fontWeight: FontWeight.w600,
-        fontFeatures: const [FontFeature.tabularFigures()],
-      ),
-    );
-  }
-}
-
-class _SubLegRow extends ConsumerWidget {
-  const _SubLegRow({required this.leg});
-
-  final AccountBalanceLeg leg;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    final formatters = context.formatters(ref);
-    final amount = leg.units;
-    final text = formatters.signedMoney(
-      amount,
-      unit: leg.unit,
-      showPositiveSign: false,
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              AppFormatters.assetCode(leg.unit),
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Text(
-            text,
-            style: context.theme.typography.sm.copyWith(
-              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

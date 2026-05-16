@@ -32,6 +32,9 @@
   "activityEntryDetailTitle": "交易明细",
   "activityEntryDetailAiExplanation": "AI 洞察",
   "activityEntryDetailNoExplanation": "暂无该笔记录的 AI 洞察。",
+  "activityEntryDetailInsightSubscription": "识别为周期订阅。下次续费前可复核是否仍符合当前计划。",
+  "activityEntryDetailInsightHousing": "识别为周期居住支出。可纳入必要支出基线持续跟踪。",
+  "activityEntryDetailInsightIncome": "识别为主要收入流入。可作为现金流预测的稳定基线。",
   "aiContextSummaryThisMonth": "本月概览",
   "aiContextSummaryNetWorthLine": "本月净值 {pct}",
   "aiContextSummaryUnusualLine": "{count, plural, other{发现 {count} 笔异常支出}}",
@@ -272,6 +275,7 @@
   "commonLoading": "加载中…",
   "commonError": "出错了",
   "commonLoadError": "加载失败：{error}",
+  "commonLoadFailed": "加载失败，请稍后重试。",
   "commonSaveFailed": "保存失败，点击重试",
 
   "deferredLoadFailedTitle": "该页面加载失败",
@@ -772,7 +776,6 @@
   "physicalAssetValuationHistorical": "历史估值",
   "physicalAssetValuationTrendSemanticLabel": "估值走势",
 
-  "accountsAppBarTitle": "账户",
   "accountsDetailEmpty": "请在左侧选择账户以编辑详情。",
   "accountsCreateAction": "新建账户",
   "accountsLoadError": "加载失败：{error}",

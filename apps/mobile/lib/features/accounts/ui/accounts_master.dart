@@ -8,11 +8,12 @@ import '../../../app/route_paths.dart';
 import '../../../app/selection_query.dart';
 import '../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../data/domain/account.dart';
-import '../../../data/domain/enums.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'account_labels.dart';
+import '../data/account_balances_provider.dart';
+import '../domain/account_balances.dart';
+import 'account_grouped_sections.dart';
 
 class AccountsMaster extends ConsumerWidget {
   const AccountsMaster({
@@ -30,18 +31,26 @@ class AccountsMaster extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    final allIds = accountsAsync.value?.map((a) => a.id).toList();
+    final balancesAsync = ref.watch(accountBalancesByIdProvider);
+    final allIds = accountsAsync.value
+        ?.where((a) => !a.archived)
+        .map((a) => a.id)
+        .toList();
 
     final body = accountsAsync.when(
-      data: (accounts) => accounts.isEmpty
-          ? const _EmptyAccounts()
-          : _AccountsByType(
-              accounts: accounts,
-              selectedId: selectedId,
-              inMasterDetail: inMasterDetail,
-            ),
+      data: (accounts) {
+        final visibleAccounts = accounts.where((a) => !a.archived).toList();
+        return visibleAccounts.isEmpty
+            ? const _EmptyAccounts()
+            : _AccountsByType(
+                accounts: visibleAccounts,
+                balances: balancesAsync.value ?? const {},
+                selectedId: selectedId,
+                inMasterDetail: inMasterDetail,
+              );
+      },
       loading: () => const Center(child: FCircularProgress()),
-      error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
+      error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
     );
 
     return MasterDetailShortcuts(
@@ -89,7 +98,7 @@ class AccountsDetailEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.accountsAppBarTitle)),
+      header: FHeader.nested(title: Text(l10n.navAccounts)),
       childPad: false,
       child: MasterDetailEmpty(
         icon: Icons.account_balance_outlined,
@@ -109,18 +118,30 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
       header: FHeader.nested(
-        title: Text(l10n.accountsAppBarTitle),
+        title: Text(l10n.navAccounts),
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.add_card_outlined),
+            icon: Tooltip(
+              message: l10n.accountsCreateAction,
+              child: const Icon(Icons.add_card_outlined),
+            ),
+            semanticsLabel: l10n.accountsCreateAction,
             onPress: () => context.go(AppRoutes.accountListNew),
           ),
           FHeaderAction(
-            icon: const Icon(Icons.history),
+            icon: Tooltip(
+              message: l10n.accountsJournalAction,
+              child: const Icon(Icons.history),
+            ),
+            semanticsLabel: l10n.accountsJournalAction,
             onPress: () => context.go(AppRoutes.journalEntries),
           ),
           FHeaderAction(
-            icon: const Icon(Icons.swap_horiz),
+            icon: Tooltip(
+              message: l10n.accountsTransferAction,
+              child: const Icon(Icons.swap_horiz),
+            ),
+            semanticsLabel: l10n.accountsTransferAction,
             onPress: () => context.go(AppRoutes.transfer),
           ),
         ],
@@ -163,109 +184,40 @@ class _EmptyAccounts extends StatelessWidget {
 class _AccountsByType extends StatelessWidget {
   const _AccountsByType({
     required this.accounts,
+    required this.balances,
     required this.selectedId,
     required this.inMasterDetail,
   });
 
   final List<Account> accounts;
+  final Map<String, AccountBalances> balances;
   final String? selectedId;
   final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final grouped = <AccountCategory, List<Account>>{};
-    for (final a in accounts) {
-      grouped.putIfAbsent(a.type, () => []).add(a);
-    }
-    const renderOrder = [
-      AccountCategory.cash,
-      AccountCategory.bank,
-      AccountCategory.broker,
-      AccountCategory.crypto,
-      AccountCategory.credit,
-      AccountCategory.loan,
-      AccountCategory.asset,
-      AccountCategory.liability,
-    ];
-    final order = renderOrder
-        .where((t) => grouped.containsKey(t))
-        .toList(growable: false);
-    final colors = context.theme.colors;
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: order.length,
-      itemBuilder: (context, i) {
-        final type = order[i];
-        final group = grouped[type]!;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              child: Text(
-                accountCategoryLabel(l10n, type).toUpperCase(),
-                style: context.theme.typography.xs2.copyWith(
-                  color: colors.mutedForeground,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ),
-            FCard.raw(
-              child: Column(
-                children: [
-                  for (var j = 0; j < group.length; j++) ...[
-                    _AccountTile(
-                      account: group[j],
-                      selected: group[j].id == selectedId,
-                      heroEnabled: !inMasterDetail,
-                    ),
-                    if (j < group.length - 1) const FDivider(),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _AccountTile extends StatelessWidget {
-  const _AccountTile({
-    required this.account,
-    required this.selected,
-    required this.heroEnabled,
-  });
-
-  final Account account;
-  final bool selected;
-  final bool heroEnabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: selected
-          ? context.theme.colors.primary.withValues(alpha: 0.10)
-          : null,
-      child: FTile(
-        title: OptionalHero(
-          tag: 'account-${account.id}-name',
-          enabled: heroEnabled,
-          child: Text(account.name),
-        ),
-        subtitle: Text(_subtitleFor(account)),
-        suffix: const Icon(Icons.chevron_right),
-        onPress: () => _onTap(context),
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        hPad,
+        4,
+        hPad,
+        80 + MediaQuery.paddingOf(context).bottom,
       ),
+      children: [
+        AccountsGroupedSections(
+          accounts: accounts,
+          balances: balances,
+          selectedId: selectedId,
+          heroEnabled: !inMasterDetail,
+          onAccountPressed: _openAccount,
+        ),
+      ],
     );
   }
 
-  void _onTap(BuildContext context) {
+  void _openAccount(BuildContext context, Account account) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
       replaceSelectedQuery(
@@ -276,13 +228,5 @@ class _AccountTile extends StatelessWidget {
     } else {
       context.go(AppRoutes.accountListItem(account.id));
     }
-  }
-
-  String _subtitleFor(Account a) {
-    final parts = <String>[a.currency];
-    if (a.institution != null && a.institution!.isNotEmpty) {
-      parts.add(a.institution!);
-    }
-    return parts.join(' · ');
   }
 }
