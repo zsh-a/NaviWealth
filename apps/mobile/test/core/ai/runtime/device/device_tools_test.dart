@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -81,13 +82,20 @@ Future<T> _withRef<T>(
 void main() {
   group('DeviceToolRegistry', () {
     test('schemas() are sorted and expose the ported tool surface', () {
-      final reg = DeviceToolRegistry(const [ListPaymentAccountsTool()]);
+      final reg = DeviceToolRegistry(const [
+        ListPaymentAccountsTool(),
+        GetHoldingsTool(),
+      ]);
       final schemas = reg.schemas();
-      expect(schemas.map((s) => s.name), ['list_payment_accounts']);
-      final s = schemas.single;
-      expect(s.description, contains('支付账户候选'));
-      expect(s.inputSchema['required'], ['purpose']);
-      expect(reg.lookup('list_payment_accounts'), isNotNull);
+      expect(
+        schemas.map((s) => s.name),
+        ['get_holdings', 'list_payment_accounts'], // sorted
+      );
+      expect(
+        schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
+        contains('支付账户候选'),
+      );
+      expect(reg.lookup('get_holdings'), isNotNull);
       expect(reg.lookup('nope'), isNull);
     });
   });
@@ -209,6 +217,48 @@ void main() {
         ),
       );
       expect((out! as Map)['code'], 'bad_request');
+    });
+  });
+
+  group('GetHoldingsTool.shape — mirrors client_portfolio_snapshot', () {
+    final snapshot = <String, Object?>{
+      'as_of': '2026-05-01T00:00:00.000Z',
+      'base_currency': 'CNY',
+      'holdings': {
+        'a1': {'asset_id': 'a1', 'net_quantity': '10'},
+      },
+    };
+
+    test('passes the device snapshot through verbatim', () {
+      final m = GetHoldingsTool.shape(snapshot);
+      expect(m['source'], 'client_portfolio_snapshot');
+      expect(m['conversion_source'], 'client_portfolio_snapshot');
+      expect(m['approximation'], false);
+      expect(m['as_of'], '2026-05-01T00:00:00.000Z');
+      expect(m['base_currency'], 'CNY');
+      expect(m['snapshot_base_currency'], 'CNY');
+      expect((m['holdings'] as Map)['a1'], isNotNull);
+    });
+
+    test('input base_currency overrides and is trimmed + uppercased', () {
+      final m = GetHoldingsTool.shape(snapshot, inputBaseCurrency: ' usd ');
+      expect(m['base_currency'], 'USD');
+      expect(m['snapshot_base_currency'], 'CNY'); // raw snapshot value
+    });
+
+    test('input as_of overrides the snapshot timestamp', () {
+      final m = GetHoldingsTool.shape(snapshot, inputAsOf: '2026-06-09T00:00:00Z');
+      expect(m['as_of'], '2026-06-09T00:00:00Z');
+    });
+
+    test('no holdings → empty map, still a device-sourced answer', () {
+      final m = GetHoldingsTool.shape(null);
+      expect(m['holdings'], isEmpty);
+      expect(m['source'], 'client_portfolio_snapshot');
+      expect(m['base_currency'], isNull);
+      expect(m['snapshot_base_currency'], isNull);
+      expect(m['as_of'], isA<String>());
+      expect((m['as_of'] as String).isNotEmpty, isTrue);
     });
   });
 }
