@@ -1,14 +1,17 @@
 /// TTL knobs for the market-data cache layer.
 ///
-/// FIR-26 calls for "行情 60s / 历史 1d TTL". `quoteFresh` matches that.
+/// Default quote freshness is one day. NaviWealth uses market data for
+/// portfolio valuation and FX conversion rather than intraday trading, so the
+/// automatic refresh path should not burn free-tier provider quota every few
+/// minutes.
 /// `quoteStaleWindow` is the additional grace window during which we still
 /// serve a cached quote — labelled `stale` for the UI badge — when every
 /// provider in the chain is unreachable. Beyond that window we throw rather
 /// than mislead the user with a price that may be days old.
 class MarketCachePolicy {
   const MarketCachePolicy({
-    this.quoteFresh = const Duration(seconds: 60),
-    this.quoteStaleWindow = const Duration(hours: 24),
+    this.quoteFresh = const Duration(days: 1),
+    this.quoteStaleWindow = const Duration(days: 7),
     this.historyFresh = const Duration(days: 1),
     this.historyStaleWindow = const Duration(days: 30),
     this.searchFresh = const Duration(days: 7),

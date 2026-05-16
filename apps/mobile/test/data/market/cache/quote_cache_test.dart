@@ -37,6 +37,28 @@ void main() {
       expect(hit.source, 'yfinance');
     });
 
+    test('default quote TTL keeps same-day quotes fresh', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final clock = FakeClock();
+      final cache = MarketCache(db: db, clock: clock);
+
+      await cache.writeQuote(
+        Quote(
+          symbol: 'AAPL',
+          currency: 'USD',
+          price: Decimal.parse('100'),
+          asOf: clock.now(),
+        ),
+        source: 'yfinance',
+      );
+      clock.advance(const Duration(hours: 23));
+
+      final hit = await cache.readQuote('AAPL');
+      expect(hit, isNotNull);
+      expect(hit!.freshness, DataFreshness.cachedFresh);
+    });
+
     test('reports stale beyond fresh TTL but inside stale window', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
