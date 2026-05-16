@@ -54,15 +54,15 @@ class ProposeExpenseTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final amount = _requireNum(input, 'amount');
+    final amount = proposalRequireNum(input, 'amount');
     if (amount == null) {
       return proposalBadRequest("missing or non-numeric field 'amount'");
     }
     if (amount <= 0) {
       return proposalBadRequest('propose_expense: amount must be > 0');
     }
-    final rawCategory = _optionalStr(input, 'category');
-    final note = _optionalStr(input, 'note');
+    final rawCategory = proposalOptionalStr(input, 'category');
+    final note = proposalOptionalStr(input, 'note');
     final warnings = <String>[];
 
     final String category;
@@ -93,8 +93,8 @@ class ProposeExpenseTool implements DeviceTool {
     Account? account;
     final resolved = resolveAccount(
       accounts,
-      byId: _optionalStr(input, 'account_id'),
-      byName: _optionalStr(input, 'account_name'),
+      byId: proposalOptionalStr(input, 'account_id'),
+      byName: proposalOptionalStr(input, 'account_name'),
     );
     switch (resolved) {
       case ResolvedOne(:final row):
@@ -111,14 +111,14 @@ class ProposeExpenseTool implements DeviceTool {
     }
 
     final currency =
-        _optionalStr(input, 'currency') ??
+        proposalOptionalStr(input, 'currency') ??
         account?.currency ??
         (() {
           warnings.add('currency 未指定，已默认 CNY');
           return 'CNY';
         })();
 
-    final date = _optionalStr(input, 'date');
+    final date = proposalOptionalStr(input, 'date');
     if (date != null) {
       if (!isRfc3339(date)) {
         return proposalBadRequest(
@@ -145,7 +145,7 @@ class ProposeExpenseTool implements DeviceTool {
         .$2;
     final accountPhrase = account != null ? '（${account.name}）' : '';
     final summary =
-        '记一笔$label支出 ${_fmtAmount(amount)} $currency$accountPhrase';
+        '记一笔$label支出 ${formatProposalAmount(amount)} $currency$accountPhrase';
 
     return readyPlan(
       kind: 'expense',
@@ -155,22 +155,3 @@ class ProposeExpenseTool implements DeviceTool {
     );
   }
 }
-
-/// `optional_str` — non-empty string field or null.
-String? _optionalStr(Map<String, Object?> v, String key) {
-  final x = v[key];
-  return (x is String && x.isNotEmpty) ? x : null;
-}
-
-/// `require_num` — number or numeric string; null when missing/invalid.
-double? _requireNum(Map<String, Object?> v, String key) {
-  final x = v[key];
-  if (x is num) return x.toDouble();
-  if (x is String) return double.tryParse(x);
-  return null;
-}
-
-/// Match Rust `format!("{}", f64)` for the summary: `12.0` → "12",
-/// `12.5` → "12.5" (the payload keeps the raw double).
-String _fmtAmount(double a) =>
-    a == a.roundToDouble() ? a.toInt().toString() : a.toString();

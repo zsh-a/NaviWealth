@@ -14,6 +14,7 @@ library;
 import 'package:uuid/uuid.dart';
 
 import '../../../../../../data/domain/account.dart';
+import '../../../../../../data/domain/asset.dart';
 
 const _kUuid = Uuid();
 
@@ -44,7 +45,14 @@ const List<String> kProposalAccountTypes = [
   'cash',
   'other',
 ];
-const List<String> kManualValuationAssetTypes = [
+/// **Deliberately distinct** from the feature-side
+/// `kManualValuationAssetTypes` (`data/domain/enums.dart`), which is a
+/// stricter set excluding realEstate/vehicle. The device
+/// `propose_asset_valuation` must gate exactly like the **backend**
+/// `MANUAL_VALUATION_ASSET_TYPES` (which *does* allow realEstate /
+/// vehicle) so the device plan and the cloud plan are identical (§10);
+/// renamed to avoid the collision and the wrong-set trap.
+const List<String> kProposalManualValuationTypes = [
   'cash',
   'realEstate',
   'vehicle',
@@ -52,6 +60,11 @@ const List<String> kManualValuationAssetTypes = [
   'bankDepositDemand',
   'wealthProduct',
 ];
+
+/// Pre-allocated entity id (mirrors `Uuid::new_v4()` in
+/// `propose_account_create`, so follow-up proposals can reference the
+/// not-yet-created account).
+String proposalNewId() => _kUuid.v4();
 
 /// Port of `proposals::ready_plan`.
 Map<String, Object?> readyPlan({
@@ -150,6 +163,47 @@ ResolvedRef<Account> resolveAccount(
   };
 }
 
+/// Port of `resolve_asset`: `by_id` short-circuits; else
+/// `by_symbol ?? by_name` fuzzy-matches symbol|name. Candidate shape
+/// `{id,symbol,name,type}` (≤8), verbatim.
+ResolvedRef<Asset> resolveAsset(
+  List<Asset> assets, {
+  String? byId,
+  String? bySymbol,
+  String? byName,
+}) {
+  if (byId != null && byId.isNotEmpty) {
+    for (final a in assets) {
+      if (a.id == byId) return ResolvedOne<Asset>(a);
+    }
+    return const ResolvedNone();
+  }
+  final needle = (bySymbol != null && bySymbol.isNotEmpty)
+      ? bySymbol
+      : (byName != null && byName.isNotEmpty ? byName : null);
+  if (needle == null) return const ResolvedNone();
+  final matches = assets
+      .where(
+        (a) =>
+            nameMatches(a.symbol, needle) ||
+            (a.name != null && nameMatches(a.name!, needle)),
+      )
+      .toList();
+  return switch (matches.length) {
+    0 => const ResolvedNone(),
+    1 => ResolvedOne<Asset>(matches.first),
+    _ => ResolvedMany<Asset>([
+      for (final a in matches.take(8))
+        <String, Object?>{
+          'id': a.id,
+          'symbol': a.symbol,
+          'name': a.name,
+          'type': a.type.name,
+        },
+    ]),
+  };
+}
+
 /// Category match outcome (port of `enum CategoryMatch`).
 sealed class CategoryMatch {
   const CategoryMatch();
@@ -204,3 +258,30 @@ bool isRfc3339(String s) {
   if (!s.contains('T')) return false;
   return DateTime.tryParse(s) != null;
 }
+
+// ── shared input plumbing (ports proposals.rs) ──────────────────────────
+
+/// `optional_str` — non-empty string field or null.
+String? proposalOptionalStr(Map<String, Object?> v, String key) {
+  final x = v[key];
+  return (x is String && x.isNotEmpty) ? x : null;
+}
+
+/// `require_num` — number or numeric string; null when missing/invalid.
+double? proposalRequireNum(Map<String, Object?> v, String key) {
+  final x = v[key];
+  if (x is num) return x.toDouble();
+  if (x is String) return double.tryParse(x);
+  return null;
+}
+
+/// `require_str` — non-empty string field; null when missing/non-string.
+String? proposalRequireStr(Map<String, Object?> v, String key) {
+  final x = v[key];
+  return x is String ? x : null;
+}
+
+/// Match Rust `format!("{}", f64)` for summaries: `12.0` → "12",
+/// `12.5` → "12.5" (the payload keeps the raw double).
+String formatProposalAmount(double a) =>
+    a == a.roundToDouble() ? a.toInt().toString() : a.toString();

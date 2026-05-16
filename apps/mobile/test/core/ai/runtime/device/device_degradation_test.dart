@@ -232,6 +232,8 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'list_payment_accounts',
+        'propose_account_create',
+        'propose_asset_valuation',
         'propose_expense',
       ]);
     });
