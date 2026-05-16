@@ -36,6 +36,7 @@ import 'list_payment_accounts_tool.dart';
 import 'propose_account_create_tool.dart';
 import 'propose_asset_valuation_tool.dart';
 import 'propose_expense_tool.dart';
+import 'propose_liability_payment_tool.dart';
 
 /// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
 const Duration kPerToolTimeout = Duration(seconds: 15);
@@ -58,6 +59,7 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   ProposeExpenseTool(),
   ProposeAccountCreateTool(),
   ProposeAssetValuationTool(),
+  ProposeLiabilityPaymentTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

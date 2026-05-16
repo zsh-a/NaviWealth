@@ -235,6 +235,7 @@ void main() {
         'propose_account_create',
         'propose_asset_valuation',
         'propose_expense',
+        'propose_liability_payment',
       ]);
     });
   });

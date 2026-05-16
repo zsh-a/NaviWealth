@@ -15,6 +15,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../../../data/domain/account.dart';
 import '../../../../../../data/domain/asset.dart';
+import '../../../../../../data/domain/liability.dart';
 
 const _kUuid = Uuid();
 
@@ -159,6 +160,34 @@ ResolvedRef<Account> resolveAccount(
     _ => ResolvedMany<Account>([
       for (final a in matches.take(8))
         <String, Object?>{'id': a.id, 'name': a.name, 'type': a.type.name},
+    ]),
+  };
+}
+
+/// Port of `resolve_liability` (same `narrow_rows` semantics as
+/// `resolve_account`): `by_id` short-circuits, else `by_name`
+/// fuzzy-matches. Candidate shape `{id,name,type}` (≤8), verbatim.
+ResolvedRef<Liability> resolveLiability(
+  List<Liability> liabilities, {
+  String? byId,
+  String? byName,
+}) {
+  if (byId != null && byId.isNotEmpty) {
+    for (final l in liabilities) {
+      if (l.id == byId) return ResolvedOne<Liability>(l);
+    }
+    return const ResolvedNone();
+  }
+  if (byName == null || byName.isEmpty) return const ResolvedNone();
+  final matches = liabilities
+      .where((l) => nameMatches(l.name, byName))
+      .toList();
+  return switch (matches.length) {
+    0 => const ResolvedNone(),
+    1 => ResolvedOne<Liability>(matches.first),
+    _ => ResolvedMany<Liability>([
+      for (final l in matches.take(8))
+        <String, Object?>{'id': l.id, 'name': l.name, 'type': l.type.name},
     ]),
   };
 }
