@@ -8,6 +8,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/entry_kind.dart';
+import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../design_system/design_system.dart';
@@ -66,10 +67,10 @@ class ActivityEntryDetailPage extends ConsumerWidget {
             formatters: formatters,
           ),
           if (aiInsight != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _AiInsightCard(insight: aiInsight),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           FCard.raw(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -113,7 +114,7 @@ class _HeroAmountCard extends StatelessWidget {
       resolveCategory: (id) => accountsById[id]?.category,
     );
     final headline = _headlinePosting(entry.postings, accountsById);
-    final dateLine = _formatDate(entry.entry.date);
+    final dateLine = formatters.dateTime(entry.entry.date);
     final title = entry.entry.narration.isEmpty ? '—' : entry.entry.narration;
     final payee = entry.entry.payee;
     final colors = context.theme.colors;
@@ -287,18 +288,25 @@ Posting? _headlinePosting(
 ) {
   Posting? headline;
   Decimal? best;
+  Posting? fallback;
+  Decimal? fallbackBest;
   for (final p in postings) {
     final magnitude = p.units.abs();
+    if (fallbackBest == null || magnitude > fallbackBest) {
+      fallbackBest = magnitude;
+      fallback = p;
+    }
+
+    final account = accounts[p.accountId];
+    if (account == null) continue;
+    if (account.category != AccountSide.asset &&
+        account.category != AccountSide.liability) {
+      continue;
+    }
     if (best == null || magnitude > best) {
       best = magnitude;
       headline = p;
     }
   }
-  return headline;
-}
-
-String _formatDate(DateTime date) {
-  final h = date.hour.toString().padLeft(2, '0');
-  final m = date.minute.toString().padLeft(2, '0');
-  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} $h:$m';
+  return headline ?? fallback;
 }

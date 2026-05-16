@@ -2,6 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/write/providers.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -69,13 +71,13 @@ JournalEntryWithPostings _entry({required String narration, String? payee}) {
         id: 'p-expense',
         journalEntryId: 'je-1',
         accountId: 'expenses:living',
-        units: '88',
+        units: '1234.50',
       ),
       _posting(
         id: 'p-cash',
         journalEntryId: 'je-1',
         accountId: 'assets:cash',
-        units: '-88',
+        units: '-1234.50',
         position: 1,
       ),
     ],
@@ -99,6 +101,9 @@ Widget _wrap({
     ),
   };
   return ProviderScope(
+    overrides: [
+      aiTouchedAtProvider.overrideWith((ref, key) => Stream.value(null)),
+    ],
     child: MaterialApp(
       theme: AppTheme.light(),
       locale: locale,
@@ -110,6 +115,32 @@ Widget _wrap({
 }
 
 void main() {
+  setUpAll(AppFormatters.ensureInitialized);
+
+  testWidgets('renders compact localized hero details', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        entry: _entry(narration: 'Coffee', payee: 'Blue Bottle'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Expense'), findsOneWidget);
+    expect(find.text('Coffee'), findsOneWidget);
+    expect(find.text('Blue Bottle'), findsOneWidget);
+    expect(find.textContaining('5/1/2026'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.data != null &&
+            widget.data!.startsWith('-') &&
+            widget.data!.contains('1,234.5'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('renders localized subscription insight for English keywords', (
     tester,
   ) async {
