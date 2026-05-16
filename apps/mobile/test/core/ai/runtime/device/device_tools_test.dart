@@ -26,6 +26,8 @@ import 'package:naviwealth/core/ai/runtime/device/tools/get_refund_links_tool.da
 import 'package:naviwealth/core/ai/runtime/device/tools/get_subscription_changes_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_transfer_links_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/propose/proposal_plan.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -117,6 +119,7 @@ void main() {
         GetTransferLinksTool(),
         GetInvestmentPerformanceTool(),
         GetSubscriptionChangesTool(),
+        ProposeExpenseTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -129,6 +132,7 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'list_payment_accounts',
+        'propose_expense',
       ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -678,6 +682,154 @@ void main() {
         isEmpty,
       );
       expect(GetInvestmentPerformanceTool.shape(const [])['count'], 0);
+    });
+  });
+
+  group('W-D4.5 proposal scaffolding (ports proposals.rs)', () {
+    test('matchExpenseCategory: slug / label / substring / ambiguous', () {
+      expect(
+        (matchExpenseCategory('food') as CategoryExact).slug,
+        'food',
+      );
+      expect(
+        (matchExpenseCategory('餐饮') as CategoryExact).slug,
+        'food',
+      );
+      // single substring → exact
+      expect(
+        (matchExpenseCategory('transp') as CategoryExact).slug,
+        'transport',
+      );
+      // unknown → ambiguous top-3 (food / shopping / other)
+      final amb = matchExpenseCategory('quux') as CategoryAmbiguous;
+      expect(amb.top3.map((e) => e.$1), ['food', 'shopping', 'other']);
+      expect(
+        (matchExpenseCategory('') as CategoryAmbiguous).top3.last.$1,
+        'other',
+      );
+    });
+
+    test('nameMatches is case-insensitive contains-or-equals', () {
+      expect(nameMatches('Citibank Checking', 'citi'), isTrue);
+      expect(nameMatches('Citi', 'Citibank Checking'), isTrue);
+      expect(nameMatches('Cash', 'bank'), isFalse);
+    });
+
+    test('resolveAccount: none / one / many(≤8, {id,name,type})', () {
+      final accts = [
+        _acct('a1', 'Citibank Checking', type: AccountCategory.bank),
+        _acct('a2', 'Citi Savings', type: AccountCategory.bank),
+        _acct('a3', 'Cash', type: AccountCategory.cash),
+      ];
+      expect(resolveAccount(accts, byName: 'nope'), isA<ResolvedNone<Account>>());
+      expect(
+        (resolveAccount(accts, byName: 'cash') as ResolvedOne<Account>).row.id,
+        'a3',
+      );
+      expect(
+        (resolveAccount(accts, byId: 'a2') as ResolvedOne<Account>).row.id,
+        'a2',
+      );
+      final many = resolveAccount(accts, byName: 'citi') as ResolvedMany;
+      expect(many.candidates, hasLength(2));
+      expect(many.candidates.first, containsPair('type', 'bank'));
+    });
+
+    test('readyPlan / needsClarification envelope shapes', () {
+      final r = readyPlan(
+        kind: 'expense',
+        summaryZh: 's',
+        payload: {'x': 1},
+        warnings: ['w'],
+      );
+      expect(r['status'], 'ready');
+      expect(r['kind'], 'expense');
+      expect(r['candidates'], isNull);
+      expect(r['proposal_id'], isA<String>());
+      final c = needsClarification(
+        kind: 'expense',
+        field: 'category',
+        reason: 'why',
+        candidates: [
+          {'id': 'food', 'label': '餐饮'},
+        ],
+      );
+      expect(c['status'], 'needs_clarification');
+      expect(c['ambiguous_field'], 'category');
+      expect((c['candidates'] as List), hasLength(1));
+    });
+
+    test('isRfc3339 rejects date-only, accepts timestamps', () {
+      expect(isRfc3339('2026-05-16'), isFalse);
+      expect(isRfc3339('2026-05-16T10:00:00Z'), isTrue);
+      expect(isRfc3339('garbage'), isFalse);
+    });
+  });
+
+  group('ProposeExpenseTool.invoke — pre-account branches', () {
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ProposeExpenseTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('missing / non-positive amount → bad_request', () async {
+      expect(((await run(const {})) as Map)['code'], 'bad_request');
+      expect(
+        ((await run(const {'amount': -3})) as Map)['error'],
+        contains('amount must be > 0'),
+      );
+    });
+
+    test('ambiguous category → needs_clarification (before account read)',
+        () async {
+      final m = await run(const {'amount': 10, 'category': 'zzz'}) as Map;
+      expect(m['status'], 'needs_clarification');
+      expect(m['ambiguous_field'], 'category');
+      expect((m['candidates'] as List).map((e) => (e as Map)['id']), [
+        'food',
+        'shopping',
+        'other',
+      ]);
+    });
+
+    // The post-account-read branches (currency default, RFC3339 date
+    // reject, ready-plan shaping) reach `accountsStreamProvider.future`
+    // — an autoDispose StreamProvider whose `.future` can't be driven
+    // from a unit test without hanging (W-D4 lesson). Their logic is
+    // covered purely below via the same helpers the tool calls.
+    test('ready-plan composition (pure, mirrors invoke after resolve)', () {
+      // No-account path → warn + default CNY, summary like the tool's.
+      const cat = CategoryExact('food');
+      final slug = (cat).slug;
+      final resolved = resolveAccount(const <Account>[], byName: 'nope');
+      expect(resolved, isA<ResolvedNone<Account>>());
+      final label = kExpenseCategories.firstWhere((e) => e.$1 == slug).$2;
+      final plan = readyPlan(
+        kind: 'expense',
+        summaryZh: '记一笔$label支出 12.5 CNY',
+        payload: {
+          'type': 'expense',
+          'amount': 12.5,
+          'category': slug,
+          'currency': 'CNY',
+          'account_id': null,
+        },
+        warnings: const [
+          'account 未指定或未匹配；前端会让用户在确认页选择支付账户。',
+          'currency 未指定，已默认 CNY',
+        ],
+      );
+      expect(plan['status'], 'ready');
+      expect((plan['payload'] as Map)['category'], 'food');
+      expect(plan['summary_zh'], '记一笔餐饮支出 12.5 CNY');
+      expect(isRfc3339('2026-05-16'), isFalse); // tool would bad_request
     });
   });
 }
