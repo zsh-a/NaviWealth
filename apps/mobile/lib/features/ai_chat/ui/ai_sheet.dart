@@ -24,6 +24,7 @@
 library;
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,21 +55,14 @@ Future<void> showAiSheet(
   String? prefill,
 }) {
   if (invocation != null) {
-    final viewportHeight = MediaQuery.of(context).size.height;
-    final sheetHeight = viewportHeight < 500
-        ? viewportHeight
-        : viewportHeight * 0.7;
     return showFSheet<void>(
       context: context,
       side: FLayout.btt,
       mainAxisMaxRatio: null,
-      builder: (_) => SizedBox(
-        height: sheetHeight,
-        child: AppSheetSurface(
-          child: AiSheetShell.invocation(
-            invocation: invocation,
-            objectLabel: objectLabel,
-          ),
+      builder: (_) => _SheetFrame(
+        child: AiSheetShell.invocation(
+          invocation: invocation,
+          objectLabel: objectLabel,
         ),
       ),
     );
@@ -80,11 +74,8 @@ Future<void> showAiSheet(
       side: FLayout.btt,
       context: context,
       mainAxisMaxRatio: null,
-      builder: (_) => _SheetSized(
-        child: AppSheetSurface(
-          child: AiSheetShell.conversation(prefill: prefill),
-        ),
-      ),
+      builder: (_) =>
+          _SheetFrame(child: AiSheetShell.conversation(prefill: prefill)),
     );
   }
   return showGeneralDialog<void>(
@@ -98,15 +89,47 @@ Future<void> showAiSheet(
   );
 }
 
-/// Wraps the conversation body to 70 vh on mobile.
-class _SheetSized extends StatelessWidget {
-  const _SheetSized({required this.child});
+/// Bottom-sheet frame that stays usable while the soft keyboard is up.
+///
+/// `showFSheet` slides a fixed-height box up from the bottom and does
+/// **not** resize for `MediaQuery.viewInsets` (unlike `FScaffold`, which
+/// the full chat page uses). Without compensation the composer / footer
+/// buttons sit behind the keyboard and can't be tapped. This frame:
+///
+///  - reads `viewInsets` *inside* the subtree so it rebuilds when the
+///    keyboard toggles,
+///  - grows the sheet toward full height while the keyboard is open so
+///    the conversation keeps usable room, and
+///  - pads the body up by the keyboard height so the composer/footer
+///    rest just above it.
+class _SheetFrame extends StatelessWidget {
+  const _SheetFrame({required this.child});
+
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.sizeOf(context).height * 0.7;
-    return SizedBox(height: height, child: child);
+    final mq = MediaQuery.of(context);
+    final keyboard = mq.viewInsets.bottom;
+    final screenH = mq.size.height;
+    // Short viewports open full-height (matches the old invocation
+    // rule); otherwise 70 vh, expanding by the keyboard height (capped
+    // near full screen) so the visible area doesn't collapse.
+    final base = screenH < 500 ? screenH : screenH * 0.7;
+    final height = keyboard > 0
+        ? math.min(screenH * 0.95, base + keyboard)
+        : base;
+    return SizedBox(
+      height: height,
+      child: AppSheetSurface(
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: keyboard),
+          child: child,
+        ),
+      ),
+    );
   }
 }
 
