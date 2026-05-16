@@ -16,6 +16,12 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>naviwealth</string>
+	<!-- §5.10.10 / S5c-native — image_picker camera/library usage
+	     strings. iOS terminates the app on first access without these. -->
+	<key>NSCameraUsageDescription</key>
+	<string>用于拍摄收据/账单照片，自动解析为待确认的交易草稿。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>用于选择收据/账单图片，自动解析为待确认的交易草稿。</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

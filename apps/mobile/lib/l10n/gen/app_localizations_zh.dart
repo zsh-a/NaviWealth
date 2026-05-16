@@ -3902,4 +3902,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestImportFileAction => '导入文件';
+
+  @override
+  String get ingestCameraAction => '拍照';
 }

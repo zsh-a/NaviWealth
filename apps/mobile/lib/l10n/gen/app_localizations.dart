@@ -7173,6 +7173,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import file'**
   String get ingestImportFileAction;
+
+  /// Ingest review: snap a receipt with the camera
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get ingestCameraAction;
 }
 
 class _AppLocalizationsDelegate

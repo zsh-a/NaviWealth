@@ -2354,5 +2354,7 @@
   "ingestPasteAction": "Paste text",
   "@ingestPasteAction": { "description": "Ingest review: open paste dialog" },
   "ingestImportFileAction": "Import file",
-  "@ingestImportFileAction": { "description": "Ingest review: pick a receipt / statement / CSV file" }
+  "@ingestImportFileAction": { "description": "Ingest review: pick a receipt / statement / CSV file" },
+  "ingestCameraAction": "Take photo",
+  "@ingestCameraAction": { "description": "Ingest review: snap a receipt with the camera" }
 }

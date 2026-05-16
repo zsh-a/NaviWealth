@@ -4066,4 +4066,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestImportFileAction => 'Import file';
+
+  @override
+  String get ingestCameraAction => 'Take photo';
 }
