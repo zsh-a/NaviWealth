@@ -25,11 +25,15 @@ class BackupPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.settingsDataTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.settingsDataTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: ListView(
         padding: const EdgeInsets.all(16).copyWith(
-          bottom: const EdgeInsets.all(16).bottom +
+          bottom:
+              const EdgeInsets.all(16).bottom +
               64 +
               MediaQuery.paddingOf(context).bottom,
         ),
@@ -135,7 +139,7 @@ class BackupPage extends ConsumerWidget {
     logger.d('backup_ui: import flow started, opening file picker');
     FilePickerResult? result;
     try {
-      result = await FilePicker.platform.pickFiles(
+      result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['bak'],
         withData: true,
@@ -260,10 +264,7 @@ class BackupPage extends ConsumerWidget {
     return showAppSheet<String>(
       context: context,
       title: title,
-      builder: (_) => _PassphraseSheet(
-        hint: hint,
-        confirmLabel: confirmLabel,
-      ),
+      builder: (_) => _PassphraseSheet(hint: hint, confirmLabel: confirmLabel),
     );
   }
 
@@ -363,9 +364,7 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -441,9 +440,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

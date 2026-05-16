@@ -20,7 +20,7 @@ Future<bool> saveBackupFileImpl(Uint8List bytes, String fileName) async {
 
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
     logger.d('file_saver: desktop platform, opening save dialog');
-    final path = await FilePicker.platform.saveFile(
+    final path = await FilePicker.saveFile(
       dialogTitle: 'Save backup',
       fileName: fileName,
       type: FileType.custom,
@@ -45,6 +45,6 @@ Future<bool> saveBackupFileImpl(Uint8List bytes, String fileName) async {
   final file = File('${shareDir.path}/$fileName');
   await file.writeAsBytes(bytes);
   logger.d('file_saver: wrote temp file ${file.path}');
-  await Share.shareXFiles([XFile(file.path)]);
+  await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   return true;
 }
