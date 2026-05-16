@@ -2,12 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
+import 'package:naviwealth/core/ai/local/skills/skills.dart'
+    show RecurringCadence, RecurringPattern, recurringPatternToUpload;
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -92,12 +95,14 @@ void main() {
         GetHoldingsTool(),
         GetAssetAllocationTool(),
         GetAnomalyFlagsTool(),
+        GetRecurringPatternsTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_holdings',
+        'get_recurring_patterns',
         'list_payment_accounts',
       ]);
       expect(
@@ -420,6 +425,82 @@ void main() {
             .length,
         1,
       );
+    });
+  });
+
+  group('recurringPatternToUpload — shared cloud/device converter', () {
+    RecurringPattern pat({
+      String merchant = 'netflix',
+      RecurringCadence cadence = RecurringCadence.monthly,
+      int median = 1299,
+      String currency = 'USD',
+    }) => RecurringPattern(
+      merchantKey: merchant,
+      cadence: cadence,
+      medianAmountMinor: median,
+      currency: currency,
+      occurrenceIds: const ['a', 'b', 'c'],
+      lastSeenAt: DateTime.utc(2026, 5, 1),
+    );
+
+    test('stable id + payload shape (mirrors backend read model)', () {
+      final u = recurringPatternToUpload(pat());
+      expect(u.kind, 'recurring_pattern');
+      expect(u.id, 'netflix|USD');
+      expect(u.payload['merchant_key'], 'netflix');
+      expect(u.payload['cadence'], 'monthly');
+      expect(u.payload['median_amount_minor'], '1299');
+      expect(u.payload['currency'], 'USD');
+      expect(u.payload['occurrences'], 3);
+      expect(u.payload['last_seen_at'], '2026-05-01T00:00:00.000Z');
+    });
+
+    test('GetRecurringPatternsTool.shape projects + filters', () {
+      final uploads = [
+        recurringPatternToUpload(pat()), // netflix monthly USD
+        recurringPatternToUpload(
+          pat(
+            merchant: 'gym',
+            cadence: RecurringCadence.weekly,
+            currency: 'CNY',
+          ),
+        ),
+      ];
+
+      final all = GetRecurringPatternsTool.shape(uploads);
+      expect(all['count'], 2);
+      expect(all['source'], 'device_analytical_read_model');
+      final first = (all['patterns'] as List).first as Map;
+      expect(first['id'], 'netflix|USD');
+      expect(first['merchant_key'], 'netflix');
+      expect(first['cadence'], 'monthly');
+      expect(first['median_amount_minor'], '1299');
+      expect(first['occurrences'], 3);
+      expect(first['payload'], isA<Map<String, Object?>>());
+
+      // currency filter (case-insensitive)
+      final usd = GetRecurringPatternsTool.shape(uploads, currency: 'usd');
+      expect((usd['patterns'] as List).single, containsPair('id', 'netflix|USD'));
+
+      // cadence filter
+      final weekly = GetRecurringPatternsTool.shape(
+        uploads,
+        cadence: 'weekly',
+      );
+      expect((weekly['patterns'] as List).single, containsPair('cadence', 'weekly'));
+
+      // invalid cadence ignored (no filter)
+      expect(
+        GetRecurringPatternsTool.shape(uploads, cadence: 'daily')['count'],
+        2,
+      );
+    });
+
+    test('empty uploads → empty patterns, device-sourced envelope', () {
+      final m = GetRecurringPatternsTool.shape(const []);
+      expect(m['patterns'], isEmpty);
+      expect(m['count'], 0);
+      expect(m['note'], contains('device-sourced'));
     });
   });
 }

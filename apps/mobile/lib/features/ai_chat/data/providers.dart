@@ -360,7 +360,7 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
         .toList(growable: false);
     final patterns = detectRecurring(transactionInputs);
     for (final p in patterns) {
-      out.add(_recurringPatternToUpload(p));
+      out.add(recurringPatternToUpload(p));
     }
     final refunds = matchRefunds(transactionInputs);
     for (final r in refunds) {
@@ -384,21 +384,6 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   }
 
   return out;
-}
-
-AnalyticalUpload _recurringPatternToUpload(RecurringPattern p) {
-  return AnalyticalUpload(
-    kind: 'recurring_pattern',
-    id: '${p.merchantKey}|${p.currency}',
-    payload: <String, Object?>{
-      'merchant_key': p.merchantKey,
-      'cadence': p.cadence.name,
-      'median_amount_minor': p.medianAmountMinor.toString(),
-      'currency': p.currency,
-      'occurrences': p.occurrenceIds.length,
-      'last_seen_at': p.lastSeenAt.toIso8601String(),
-    },
-  );
 }
 
 AnalyticalUpload _refundMatchToUpload(RefundMatch m) {
