@@ -209,8 +209,14 @@ void main() {
               '${tool.name} is dispatchable on device but missing from '
               'tool_descriptor.dart — wire/descriptor drift (§10)',
         );
-        // device tools are read-only in this wave (no propose_* yet)
-        expect(d!.sideEffect, SideEffect.none, reason: tool.name);
+        // §4.5 invariant: a device tool may be a deviceLocalWrite
+        // proposal (propose_*, gated by the confirm flow) but must
+        // NEVER be an externalCall — those are never LLM-triggered.
+        expect(
+          d!.sideEffect,
+          isNot(SideEffect.externalCall),
+          reason: tool.name,
+        );
       }
     });
 
@@ -226,6 +232,7 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'list_payment_accounts',
+        'propose_expense',
       ]);
     });
   });
