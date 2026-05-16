@@ -106,7 +106,12 @@ class ToolDescriptor {
     required this.risk,
     required this.requiresConfirmation,
     required this.allowedContextTier,
-    this.allowedRuntimes = const <AllowedRuntime>{AllowedRuntime.cloud},
+    // §4.6 W-D7 — the cloud AI backend was deleted; every tool now runs
+    // device-only. No descriptor overrides this, so the default *is*
+    // the reconciliation (line 1254: "allowed_runtimes … 删 cloud 时一
+    // 并 flip"). Registry membership (`kDeviceTools`) remains the real
+    // dispatch gate; this field is now consistent metadata, not cloud.
+    this.allowedRuntimes = const <AllowedRuntime>{AllowedRuntime.device},
     this.sideEffect = SideEffect.none,
     this.readModelLayer,
   });
@@ -165,7 +170,7 @@ class ToolDescriptor {
               for (final s in ar.whereType<String>())
                 AllowedRuntimeWire.parse(s),
             }
-          : const <AllowedRuntime>{AllowedRuntime.cloud},
+          : const <AllowedRuntime>{AllowedRuntime.device},
       sideEffect: se is String ? SideEffectWire.parse(se) : SideEffect.none,
       readModelLayer: rml is String ? ReadModelLayerWire.parse(rml) : null,
     );

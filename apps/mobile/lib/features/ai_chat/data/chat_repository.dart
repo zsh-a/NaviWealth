@@ -254,10 +254,9 @@ class ChatRepository {
     var sawDone = false;
 
     try {
-      // The byte-level idle watchdog now lives inside the API client
-      // (see [DioAiChatApiClient.chat]) so it counts the backend's
-      // SSE keepalive comments as activity, not just real events. We
-      // only need to surface its sentinel error here.
+      // The idle watchdog lives in the runtime layer; [SseIdleTimeout]
+      // is its sentinel (the cloud SSE transport that originally owned
+      // it was removed in W-D7). We only surface that sentinel here.
       final stream = _api.chat(
         session: session,
         messages: wireMessages,

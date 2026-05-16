@@ -133,11 +133,10 @@ src/
   lib.rs          Worker Router (entry point)
   error.rs        AppError enum with coded JSON responses
   hlc.rs          Hybrid Logical Clock
-  ai/             Anthropic Claude proxy: anthropic, sse, tools, proposals, guardrails
   auth/           JWT (HS256), Argon2 password hashing, middleware
-  routes/         HTTP handlers: health, auth, me, sync, ai
+  routes/         HTTP handlers: health, auth, me, sync
   sync/           OpLog (op), materialise, state
-migrations/       D1 SQL migrations
+migrations/       D1 SQL migrations (AI read-model tables kept as history; W-D7)
 ```
 
 ### Key Architectural Decisions
@@ -148,7 +147,7 @@ migrations/       D1 SQL migrations
 - **Database**: Drift ORM; SQLCipher (native), sqlite3 WASM (web).
 - **Auth**: single-user JWT (HS256), no registration endpoint; `BYPASS_AUTH` for dev.
 - **Routing**: go_router with Path URL strategy; deferred imports for web code-splitting.
-- **AI**: Anthropic Claude API via backend proxy with SSE streaming.
+- **AI**: device-only — on-device agent runtime calls the Anthropic API directly with the user's own key (W-D7 deleted the cloud AI backend; no `/ai/chat` relay, no cloud fallback; web has no AI). See `docs/ai-architecture.md` §4.6.
 
 ---
 
@@ -208,7 +207,7 @@ test/
 - **No `.env` files committed.** Compile-time config via `--dart-define` (see `apps/mobile/lib/core/config/app_config.dart`):
   - `API_BASE_URL` (default `http://127.0.0.1:8787`)
   - `BYPASS_AUTH` (default `true` in dev)
-- **Wrangler secrets**: `JWT_SECRET`, `ANTHROPIC_API_KEY` (`wrangler secret put`).
+- **Wrangler secrets**: `JWT_SECRET` (`wrangler secret put`). `ANTHROPIC_API_KEY` is no longer a backend secret — W-D7 removed the cloud AI proxy; the model key is the user's, held on-device.
 - **GitHub secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CODECOV_TOKEN`, `KEYSTORE_BASE64` + signing keys.
 
 ---

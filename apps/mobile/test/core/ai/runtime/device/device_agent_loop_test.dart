@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_agent_loop.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
@@ -54,10 +53,7 @@ void main() {
   group('DeviceAgentLoop — ported from agent_loop.rs', () {
     test('text-only turn streams text then a single DoneEvent', () async {
       final adapter = _ScriptedAdapter([
-        [
-          const LlmTextDelta('你好'),
-          const LlmMessageStop(LlmStopReason.endTurn),
-        ],
+        [const LlmTextDelta('你好'), const LlmMessageStop(LlmStopReason.endTurn)],
       ]);
       final dispatcher = _RecordingDispatcher();
       final loop = DeviceAgentLoop(
@@ -65,8 +61,7 @@ void main() {
         model: 'm',
         dispatcher: dispatcher,
       );
-      final events =
-          await loop.run(_session([_user('hi')])).toList();
+      final events = await loop.run(_session([_user('hi')])).toList();
 
       expect(events.whereType<TextEvent>().single.text, '你好');
       final done = events.last as DoneEvent;
@@ -101,8 +96,10 @@ void main() {
       expect(session.roundsUsed, 2);
       expect(adapter.calls, 2);
       expect(events.whereType<ToolCallEvent>().single.name, 'get_risk_alerts');
-      expect(events.whereType<ToolResultEvent>().single.name,
-          'get_risk_alerts');
+      expect(
+        events.whereType<ToolResultEvent>().single.name,
+        'get_risk_alerts',
+      );
       final done = events.last as DoneEvent;
       expect(done.stopReason, 'end_turn');
       expect(done.rounds, 2);
@@ -113,14 +110,19 @@ void main() {
     test('propose_* cap skips dispatch and returns the cap error', () async {
       final seeded = <AnthropicChatMessage>[];
       for (var i = 0; i < kMaxProposalsPerConversation; i++) {
-        seeded.add(AnthropicChatMessage(role: 'assistant', content: [
-          {
-            'type': 'tool_use',
-            'id': 'old_$i',
-            'name': 'propose_expense',
-            'input': <String, Object?>{},
-          },
-        ]));
+        seeded.add(
+          AnthropicChatMessage(
+            role: 'assistant',
+            content: [
+              {
+                'type': 'tool_use',
+                'id': 'old_$i',
+                'name': 'propose_expense',
+                'input': <String, Object?>{},
+              },
+            ],
+          ),
+        );
       }
       seeded.add(_user('add another'));
       final adapter = _ScriptedAdapter([
@@ -145,42 +147,43 @@ void main() {
       expect((events.last as DoneEvent).stopReason, 'end_turn');
     });
 
-    test('provider stream error emits ErrorEvent then DoneEvent(error)',
-        () async {
-      final adapter = _ScriptedAdapter([
-        [
-          const LlmStreamErrorEvent(code: 'overloaded', message: 'busy'),
-        ],
-      ]);
-      final loop = DeviceAgentLoop(
-        streamFn: adapter.stream,
-        model: 'm',
-        dispatcher: _RecordingDispatcher(),
-      );
-      final events = await loop.run(_session([_user('hi')])).toList();
+    test(
+      'provider stream error emits ErrorEvent then DoneEvent(error)',
+      () async {
+        final adapter = _ScriptedAdapter([
+          [const LlmStreamErrorEvent(code: 'overloaded', message: 'busy')],
+        ]);
+        final loop = DeviceAgentLoop(
+          streamFn: adapter.stream,
+          model: 'm',
+          dispatcher: _RecordingDispatcher(),
+        );
+        final events = await loop.run(_session([_user('hi')])).toList();
 
-      final err = events.whereType<ErrorEvent>().single;
-      expect(err.code, 'overloaded');
-      expect(err.message, 'busy');
-      expect((events.last as DoneEvent).stopReason, 'error');
-    });
+        final err = events.whereType<ErrorEvent>().single;
+        expect(err.code, 'overloaded');
+        expect(err.message, 'busy');
+        expect((events.last as DoneEvent).stopReason, 'error');
+      },
+    );
 
-    test('thrown adapter error degrades to provider_error + DoneEvent',
-        () async {
-      Stream<LlmStreamEvent> boom(
-        AnthropicRequest r, {
-        CancelToken? cancelToken,
-      }) =>
-          Stream.error(StateError('socket closed'));
-      final loop = DeviceAgentLoop(
-        streamFn: boom,
-        model: 'm',
-        dispatcher: _RecordingDispatcher(),
-      );
-      final events = await loop.run(_session([_user('hi')])).toList();
-      expect(events.whereType<ErrorEvent>().single.code, 'provider_error');
-      expect((events.last as DoneEvent).stopReason, 'error');
-    });
+    test(
+      'thrown adapter error degrades to provider_error + DoneEvent',
+      () async {
+        Stream<LlmStreamEvent> boom(
+          AnthropicRequest r, {
+          CancelToken? cancelToken,
+        }) => Stream.error(StateError('socket closed'));
+        final loop = DeviceAgentLoop(
+          streamFn: boom,
+          model: 'm',
+          dispatcher: _RecordingDispatcher(),
+        );
+        final events = await loop.run(_session([_user('hi')])).toList();
+        expect(events.whereType<ErrorEvent>().single.code, 'provider_error');
+        expect((events.last as DoneEvent).stopReason, 'error');
+      },
+    );
 
     test('zero turn budget short-circuits to chat_timeout', () async {
       final adapter = _ScriptedAdapter([
@@ -206,8 +209,7 @@ void main() {
         CancelToken? cancelToken,
       }) async* {
         yield const LlmToolCallStart(id: 't', name: 'get_risk_alerts');
-        yield const LlmToolCallEnd(
-            id: 't', name: 'get_risk_alerts', input: {});
+        yield const LlmToolCallEnd(id: 't', name: 'get_risk_alerts', input: {});
         yield const LlmMessageStop(LlmStopReason.toolUse);
       }
 
@@ -230,8 +232,7 @@ void main() {
   });
 
   group('DeviceSession.systemPrompt', () {
-    test('starts with the ported SYSTEM_PROMPT and carries an appendix',
-        () {
+    test('starts with the ported SYSTEM_PROMPT and carries an appendix', () {
       final s = DeviceSession(messages: [], systemAppendix: '\n[ctx]');
       final p = s.systemPrompt();
       expect(p.startsWith(kDeviceSystemPrompt), isTrue);
@@ -240,42 +241,27 @@ void main() {
     });
   });
 
-  group('RuntimeRoutingAiChatApiClient', () {
-    test('no device runtime → delegates to the cloud client unchanged',
-        () async {
-      final cloud = _SpyCloud();
-      final routed = RuntimeRoutingAiChatApiClient(cloud: cloud);
+  group('RuntimeRoutingAiChatApiClient (W-D7 device-only)', () {
+    test('no device runtime → unavailable error, no cloud relay', () async {
+      const routed = RuntimeRoutingAiChatApiClient();
       expect(routed.usesDevice, isFalse);
 
-      final out = await routed.chat(
-        session: AuthSession(
-          accessToken: 't',
-          expiresAt: DateTime.utc(2030),
-          userId: 'u',
-          deviceId: 'd',
-        ),
-        messages: const [WireMessage(role: 'user', content: 'hi')],
-      ).toList();
+      final out = await routed
+          .chat(
+            session: AuthSession(
+              accessToken: 't',
+              expiresAt: DateTime.utc(2030),
+              userId: 'u',
+              deviceId: 'd',
+            ),
+            messages: const [WireMessage(role: 'user', content: 'hi')],
+          )
+          .toList();
 
-      expect(cloud.called, isTrue);
-      expect((out.single as TextEvent).text, 'cloud-reply');
+      expect(out, hasLength(2));
+      expect((out.first as ErrorEvent).code, 'device_unavailable');
+      expect(out.last, isA<DoneEvent>());
+      expect((out.last as DoneEvent).stopReason, 'error');
     });
   });
-}
-
-class _SpyCloud implements AiChatApiClient {
-  bool called = false;
-
-  @override
-  Stream<AiChatEvent> chat({
-    required AuthSession session,
-    required List<WireMessage> messages,
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
-    String? model,
-    CancelToken? cancelToken,
-  }) async* {
-    called = true;
-    yield const TextEvent('cloud-reply');
-  }
 }

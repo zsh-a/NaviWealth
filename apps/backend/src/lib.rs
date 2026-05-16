@@ -1,6 +1,5 @@
 use worker::*;
 
-pub mod ai;
 mod auth;
 pub mod error;
 mod hlc;
@@ -53,8 +52,6 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/me", routes::me::get)
         .post_async("/sync/push", routes::sync::push)
         .get_async("/sync/pull", routes::sync::pull)
-        .post_async("/ai/chat", routes::ai::chat)
-        .post_async("/ingest/parse", routes::ingest::parse)
         .run(req, env)
         .await?;
 

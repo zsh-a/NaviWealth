@@ -59,19 +59,18 @@ final ingestPipelineProvider = Provider<IngestPipeline>(
   (ref) => IngestPipeline(),
 );
 
-/// §5.10.10 / S5b-vision — backend Vision client. Reuses the
-/// base-URL-configured AI Dio; auth rides per-request like the chat
-/// client.
-/// §4.6 W-D5 — routes Vision parse device-direct when the on-device
+/// §4.6 W-D7 — Vision parse runs device-direct when the on-device
 /// runtime is available (native incl. desktop × user key × opt-in),
-/// reusing the *same* [AnthropicClient] the chat path built (one
-/// credential/Dio source). Otherwise the Worker relay, so behaviour
-/// with no key is identical to before. No device→cloud failover by
-/// design — see [DeviceVisionIngestClient].
+/// reusing the *same* [AnthropicClient] the chat path built. The cloud
+/// Vision relay (`/ingest/parse`) was deleted with the rest of the
+/// cloud AI backend, so the non-device slot is the
+/// [UnavailableCloudIngestClient] stub: it fails with actionable
+/// guidance (configure a key / use CSV) which the controller surfaces
+/// as the rejected reason — no dead endpoint, no device→cloud failover.
 final cloudIngestClientProvider = Provider<CloudIngestClient>((ref) {
   final DeviceLlmRuntime? runtime = ref.watch(deviceLlmRuntimeProvider);
   return RoutingCloudIngestClient(
-    cloud: DioCloudIngestClient(dio: ref.watch(aiChatDioProvider)),
+    cloud: const UnavailableCloudIngestClient(),
     device: runtime == null
         ? null
         : DeviceVisionIngestClient(client: runtime.client),
@@ -86,13 +85,14 @@ final _ledgerSnapshotProvider =
       return expenses.map(expenseToTransactionInput).toList(growable: false);
     });
 
-final ingestConfirmServiceProvider =
-    FutureProvider<IngestConfirmService?>((ref) async {
-      final store = ref.watch(ingestDraftStoreProvider);
-      if (store == null) return null;
-      final applier = await ref.watch(proposalApplierProvider.future);
-      return IngestConfirmService(applier: applier, store: store);
-    });
+final ingestConfirmServiceProvider = FutureProvider<IngestConfirmService?>((
+  ref,
+) async {
+  final store = ref.watch(ingestDraftStoreProvider);
+  if (store == null) return null;
+  final applier = await ref.watch(proposalApplierProvider.future);
+  return IngestConfirmService(applier: applier, store: store);
+});
 
 /// Orchestrates ②–⑥: snapshot the ledger, run the pipeline, persist the
 /// pending drafts. Pure planning stays in [IngestPipeline]; this is the
@@ -114,7 +114,8 @@ class IngestController {
       case IngestGateVerdict.blockedByPrivacy:
         return const IngestResult(
           drafts: <IngestDraft>[],
-          rejectedReason: '隐私模式「金额完全本地」已禁用云端解析；'
+          rejectedReason:
+              '隐私模式「金额完全本地」已禁用云端解析；'
               '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
         );
       case IngestGateVerdict.cloudAllowed:
@@ -134,11 +135,13 @@ class IngestController {
     }
     final auth = _ref.read(authSessionProvider);
     final ledger = await _ref.read(_ledgerSnapshotProvider.future);
-    final result = _ref.read(ingestPipelineProvider).plan(
-      source: source,
-      existingLedger: ledger,
-      ownerUserId: auth?.userId ?? '',
-    );
+    final result = _ref
+        .read(ingestPipelineProvider)
+        .plan(
+          source: source,
+          existingLedger: ledger,
+          ownerUserId: auth?.userId ?? '',
+        );
     if (!result.isRejected && result.drafts.isNotEmpty) {
       await store.putAll(result.drafts);
     }
@@ -185,13 +188,15 @@ class IngestController {
     }
 
     final ledger = await _ref.read(_ledgerSnapshotProvider.future);
-    final result = _ref.read(ingestPipelineProvider).planFromParsed(
-      parsed: parsed,
-      source: source,
-      existingLedger: ledger,
-      ownerUserId: session.userId,
-      traceId: requestId,
-    );
+    final result = _ref
+        .read(ingestPipelineProvider)
+        .planFromParsed(
+          parsed: parsed,
+          source: source,
+          existingLedger: ledger,
+          ownerUserId: session.userId,
+          traceId: requestId,
+        );
     if (result.drafts.isNotEmpty) {
       await store.putAll(result.drafts);
     }
@@ -230,13 +235,13 @@ class IngestController {
         usedRawLedger: false,
         totalDurationMs: 0,
       );
-      final trace = (AiTraceBuilder.fromSeed(seed)
-            ..addToolCall(
-              name: 'parse_${cloudIngestKindWire(kind)}',
-              duration: DateTime.now().toUtc().difference(startedAt),
-              ok: true,
-            ))
-          .finalize(finishedAt: DateTime.now().toUtc());
+      final trace =
+          (AiTraceBuilder.fromSeed(seed)..addToolCall(
+                name: 'parse_${cloudIngestKindWire(kind)}',
+                duration: DateTime.now().toUtc().difference(startedAt),
+                ok: true,
+              ))
+              .finalize(finishedAt: DateTime.now().toUtc());
       await _ref.read(aiTraceStoreProvider).append(trace);
     } catch (_) {
       // Transparency is decorative relative to the parse itself.

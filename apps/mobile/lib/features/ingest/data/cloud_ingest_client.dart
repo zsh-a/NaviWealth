@@ -1,13 +1,13 @@
-/// §5.10.10 / S5b-vision — mobile → backend cloud Vision client.
+/// §5.10.10 / S5b-vision — Vision ingest client surface.
 ///
-/// Posts a base64 receipt image / statement PDF to `POST /ingest/parse`
-/// and maps the structured reply to [ParsedTransaction]s. The backend
-/// is stateless (image discarded in-request); dedup + the draft queue
-/// + confirmation all stay on-device. The privacy gate (S5b-gate) has
-/// already decided this call is permitted before we get here.
+/// W-D7 deleted the cloud Vision relay (`POST /ingest/parse`) together
+/// with the rest of the cloud AI backend. Vision parsing now runs
+/// device-direct ([DeviceVisionIngestClient]); when no on-device
+/// runtime exists the [CloudIngestClient] slot is the
+/// [UnavailableCloudIngestClient] stub, which fails with a clear
+/// "configure a key" message instead of hitting a dead endpoint. The
+/// pure wire mappers below are retained — the device path reuses them.
 library;
-
-import 'package:dio/dio.dart';
 
 import '../../../core/auth/auth_session.dart';
 import '../domain/ingest_models.dart';
@@ -90,12 +90,13 @@ List<ParsedTransaction> parseCloudIngestResponse(Map<String, Object?> body) {
   return out;
 }
 
-class DioCloudIngestClient implements CloudIngestClient {
-  DioCloudIngestClient({required Dio dio, this.protocolVersion = '1'})
-    : _dio = dio;
-
-  final Dio _dio;
-  final String protocolVersion;
+/// W-D7 replacement for the deleted `DioCloudIngestClient`. The cloud
+/// Vision relay is gone; with no on-device runtime, Vision ingest is
+/// simply unavailable. `IngestController._ingestCloud` catches
+/// [CloudIngestException] and surfaces `message` as the rejected
+/// reason — so the user gets actionable guidance, not a dead request.
+class UnavailableCloudIngestClient implements CloudIngestClient {
+  const UnavailableCloudIngestClient();
 
   @override
   Future<List<ParsedTransaction>> parse({
@@ -105,43 +106,9 @@ class DioCloudIngestClient implements CloudIngestClient {
     required String contentBase64,
     String? currencyHint,
   }) async {
-    final Response<Object?> res;
-    try {
-      res = await _dio.post<Object?>(
-        '/ingest/parse',
-        data: <String, Object?>{
-          'kind': cloudIngestKindWire(kind),
-          'mime': mime,
-          'content_base64': contentBase64,
-          if (currencyHint != null && currencyHint.isNotEmpty)
-            'currency_hint': currencyHint,
-        },
-        options: Options(
-          headers: <String, Object>{
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': 'Bearer ${session.accessToken}',
-            'Sync-Protocol-Version': protocolVersion,
-          },
-          validateStatus: (_) => true,
-        ),
-      );
-    } on DioException catch (e) {
-      throw CloudIngestException('网络错误：${e.message ?? e.type.name}');
-    }
-
-    final status = res.statusCode ?? 0;
-    final data = res.data;
-    if (status < 200 || status >= 300) {
-      final msg = data is Map && data['message'] is String
-          ? data['message'] as String
-          : 'HTTP $status';
-      throw CloudIngestException(msg);
-    }
-    if (data is! Map) {
-      throw CloudIngestException('响应格式异常');
-    }
-    return parseCloudIngestResponse(
-      data.map((k, v) => MapEntry(k.toString(), v)),
+    throw CloudIngestException(
+      '图像/PDF 解析需要在设置中配置自带 API Key 后启用（本机直连模型）；'
+      'Web 端暂不支持。也可改用 CSV / 文本粘贴导入。',
     );
   }
 }

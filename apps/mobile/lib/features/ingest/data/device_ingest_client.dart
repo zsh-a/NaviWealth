@@ -1,8 +1,8 @@
 /// §4.6 W-D5 — on-device Vision ingest (user's own key, direct to the
 /// provider; the original image never reaches our servers).
 ///
-/// Implements the same [CloudIngestClient] surface as the Worker-relay
-/// [DioCloudIngestClient], so the ingest pipeline is unchanged. It runs
+/// Implements the [CloudIngestClient] surface (the cloud Worker relay
+/// was removed in W-D7), so the ingest pipeline is unchanged. It runs
 /// the one-shot forced-tool parse locally via [AnthropicClient.complete]
 /// using the verbatim-ported schema/prompt/extraction
 /// (`device_vision_parse.dart`), then maps rows through the *shared*
