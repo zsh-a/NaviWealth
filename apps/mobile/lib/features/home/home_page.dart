@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../core/format/providers.dart';
 import '../../core/sync/providers.dart';
 import '../../core/sync/sync_status.dart';
 import '../../data/market/sync/price_sync_coordinator.dart';
@@ -167,6 +168,7 @@ class _NetWorthHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
@@ -206,27 +208,36 @@ class _NetWorthHeader extends ConsumerWidget {
             _DeltaMetricsRow(metrics: metricsAsync),
           ],
           const SizedBox(height: 4),
-          Text(
-            hasData
-                ? l10n.dashboardNetWorthBreakdown(
-                    _formatBaseAmount(snapshot.totalAssets.amount.toDouble()),
-                    _formatBaseAmount(
-                      snapshot.totalLiabilities.amount.toDouble(),
-                    ),
-                    snapshot.baseCurrency,
-                  )
-                : l10n.homeNetWorthSubtitle(snapshot.baseCurrency),
+          // Assets / liabilities breakdown. Uses the same currency
+          // formatting (symbol + grouping) as the hero number and
+          // mirrors the Accounts-hub net-worth card, so money reads the
+          // same everywhere instead of a raw "123456 (CNY)" string.
+          DefaultTextStyle.merge(
             style: context.theme.typography.xs.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
+            child: hasData
+                ? Wrap(
+                    spacing: 6,
+                    children: [
+                      Text(
+                        '${l10n.dashboardNetWorthAssetsLabel} '
+                        '${formatters.currency(snapshot.totalAssets.amount, code: snapshot.baseCurrency)}',
+                      ),
+                      const Text('·'),
+                      Text(
+                        '${l10n.dashboardNetWorthLiabilitiesLabel} '
+                        '${formatters.currency(snapshot.totalLiabilities.amount, code: snapshot.baseCurrency)}',
+                      ),
+                    ],
+                  )
+                : Text(l10n.homeNetWorthSubtitle(snapshot.baseCurrency)),
           ),
           const _ValuationStatusLine(),
         ],
       ),
     );
   }
-
-  String _formatBaseAmount(double v) => v.toStringAsFixed(0);
 }
 
 class _ValuationStatusLine extends ConsumerWidget {
