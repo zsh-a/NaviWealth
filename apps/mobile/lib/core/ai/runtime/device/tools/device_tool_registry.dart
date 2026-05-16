@@ -26,6 +26,7 @@ import '../device_tool_dispatcher.dart';
 import 'device_tool.dart';
 import 'get_anomaly_flags_tool.dart';
 import 'get_asset_allocation_tool.dart';
+import 'get_cashflow_buckets_tool.dart';
 import 'get_holdings_tool.dart';
 import 'get_investment_performance_tool.dart';
 import 'get_net_worth_summary_tool.dart';
@@ -55,6 +56,7 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   ListPaymentAccountsTool(),
   GetHoldingsTool(),
   GetAssetAllocationTool(),
+  GetCashflowBucketsTool(),
   GetAnomalyFlagsTool(),
   GetRecurringPatternsTool(),
   GetRefundLinksTool(),
