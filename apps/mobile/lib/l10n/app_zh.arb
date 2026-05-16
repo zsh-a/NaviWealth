@@ -967,6 +967,7 @@
   "entryKindPayment": "还款",
   "entryKindAdjustment": "调整",
   "entryKindOpening": "期初",
+  "entryKindOther": "其他",
   "entryKindEntry": "记录",
   "entryKindSemanticLabel": "日记账 · {kind}",
 

@@ -1,6 +1,10 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/format/formatters.dart';
+import '../theme/semantic_colors.dart';
 import '../tokens/typography_tokens.dart';
 
 /// How much horizontal space the symbol should take.
@@ -182,5 +186,69 @@ class MoneyText extends StatelessWidget {
       default:
         return code;
     }
+  }
+}
+
+/// Signed ledger amount text with shared unit formatting and semantic
+/// income/expense colors.
+class SignedMoneyText extends StatelessWidget {
+  const SignedMoneyText({
+    super.key,
+    required this.amount,
+    required this.unit,
+    required this.formatters,
+    this.showPositiveSign = true,
+    this.colorBySign = true,
+    this.style,
+    this.color,
+    this.textAlign,
+    this.maxLines = 1,
+    this.overflow = TextOverflow.ellipsis,
+    this.semanticsLabel,
+  });
+
+  final Decimal? amount;
+  final String unit;
+  final AppFormatters formatters;
+  final bool showPositiveSign;
+  final bool colorBySign;
+  final TextStyle? style;
+  final Color? color;
+  final TextAlign? textAlign;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final String? semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final formatted = amount == null
+        ? '—'
+        : formatters.signedMoney(
+            amount!,
+            unit: unit,
+            showPositiveSign: showPositiveSign,
+          );
+    final effectiveColor = color ?? (colorBySign ? _signColor(context) : null);
+    final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
+      color: effectiveColor,
+      fontFeatures: TypographyTokens.tabularFigures,
+    );
+    return Text(
+      formatted,
+      style: effectiveStyle,
+      textAlign: textAlign,
+      maxLines: maxLines,
+      overflow: overflow,
+      semanticsLabel: semanticsLabel ?? '$formatted $unit',
+    );
+  }
+
+  Color _signColor(BuildContext context) {
+    final value = amount;
+    if (value == null || value == Decimal.zero) {
+      return context.theme.colors.foreground;
+    }
+    final semantic = SemanticColors.of(context);
+    return value > Decimal.zero ? semantic.success : semantic.danger;
   }
 }

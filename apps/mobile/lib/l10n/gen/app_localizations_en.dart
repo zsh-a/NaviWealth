@@ -3047,6 +3047,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryKindOpening => 'Opening';
 
   @override
+  String get entryKindOther => 'Other';
+
+  @override
   String get entryKindEntry => 'Entry';
 
   @override

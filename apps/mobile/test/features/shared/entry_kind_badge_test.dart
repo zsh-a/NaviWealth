@@ -3,7 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/entry_kind.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/shared/entry_kind_badge.dart';
+import 'package:naviwealth/features/shared/entry_kind_labels.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
+import 'package:naviwealth/l10n/gen/app_localizations_zh.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.light(),
@@ -14,6 +17,32 @@ Widget _wrap(Widget child) => MaterialApp(
 );
 
 void main() {
+  test('entryKindLabel covers every EntryKind in English and Chinese', () {
+    final en = AppLocalizationsEn();
+    final zh = AppLocalizationsZh();
+
+    expect(EntryKind.values.map((kind) => entryKindLabel(en, kind)).toList(), [
+      'Trade',
+      'Transfer',
+      'Income',
+      'Expense',
+      'Payment',
+      'Adjustment',
+      'Opening',
+      'Other',
+    ]);
+    expect(EntryKind.values.map((kind) => entryKindLabel(zh, kind)).toList(), [
+      '交易',
+      '转账',
+      '收入',
+      '支出',
+      '还款',
+      '调整',
+      '期初',
+      '其他',
+    ]);
+  });
+
   testWidgets('renders directional icon + label for a buy trade', (
     tester,
   ) async {
@@ -51,9 +80,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         const EntryKindBadge(
-          classification: EntryKindClassification(
-            kind: EntryKind.expense,
-          ),
+          classification: EntryKindClassification(kind: EntryKind.expense),
           compact: true,
         ),
       ),
@@ -95,15 +122,24 @@ void main() {
     ];
     for (final k in kinds) {
       await tester.pumpWidget(
-        _wrap(
-          EntryKindBadge(
-            classification: EntryKindClassification(kind: k),
-          ),
-        ),
+        _wrap(EntryKindBadge(classification: EntryKindClassification(kind: k))),
       );
       // At least one icon is rendered (anything beyond zero would
       // have failed the build_runner type check).
       expect(find.byType(Icon), findsOneWidget, reason: 'kind=$k');
     }
+  });
+
+  testWidgets('other kind uses the explicit localized label', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const EntryKindBadge(
+          classification: EntryKindClassification(kind: EntryKind.other),
+        ),
+      ),
+    );
+    expect(find.text('Other'), findsOneWidget);
+    expect(find.text('Entry'), findsNothing);
+    expect(find.text('other'), findsNothing);
   });
 }

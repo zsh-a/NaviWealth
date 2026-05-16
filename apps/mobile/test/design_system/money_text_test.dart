@@ -1,6 +1,8 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -16,6 +18,8 @@ Widget _wrap(Widget child) => MaterialApp(
 );
 
 void main() {
+  setUpAll(AppFormatters.ensureInitialized);
+
   testWidgets('MoneyText renders symbol + grouped value', (tester) async {
     await tester.pumpWidget(
       _wrap(
@@ -73,4 +77,37 @@ void main() {
       expect(text.semanticsLabel, contains('12,345.60'));
     },
   );
+
+  testWidgets('SignedMoneyText uses shared signed formatter', (tester) async {
+    final formatters = AppFormatters(locale: const Locale('en', 'US'));
+    await tester.pumpWidget(
+      _wrap(
+        SignedMoneyText(
+          amount: Decimal.parse('1234.5000'),
+          unit: 'USD',
+          formatters: formatters,
+        ),
+      ),
+    );
+
+    expect(find.text(r'+$1,234.5'), findsOneWidget);
+  });
+
+  testWidgets('SignedMoneyText formats securities and can hide plus', (
+    tester,
+  ) async {
+    final formatters = AppFormatters(locale: const Locale('en', 'US'));
+    await tester.pumpWidget(
+      _wrap(
+        SignedMoneyText(
+          amount: Decimal.parse('10.0000'),
+          unit: 'us_stock:AAPL',
+          formatters: formatters,
+          showPositiveSign: false,
+        ),
+      ),
+    );
+
+    expect(find.text('10 AAPL'), findsOneWidget);
+  });
 }
