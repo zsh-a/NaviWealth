@@ -11,6 +11,12 @@ import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 import 'scoped_disclosure.dart'
     show DisclosurePurpose, DisclosurePurposeWire, UserConsent, UserConsentWire;
 
+/// §4.6 W-D6 — [AiTrace.routingReason] value set when the on-device
+/// LLM runtime (user's own key, direct to provider) handled the turn.
+/// Distinguishes device-LLM-direct from the zero-model rules-device
+/// path so the transparency badge can say "未经我方服务器".
+const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
+
 enum Backend { device, cloud, hybrid }
 
 extension BackendWire on Backend {
@@ -256,6 +262,32 @@ class AiTrace {
       },
     );
   }
+
+  /// §4.6 W-D6 — needed so the trace can be made truthful about which
+  /// runtime actually ran (the router seeds `cloud`, but the device LLM
+  /// runtime may have handled the turn). Only overrides the few axes
+  /// that differ; all fields are already in [toJson] so this is no
+  /// wire-contract change.
+  AiTrace copyWith({
+    Backend? backend,
+    String? routingReason,
+    bool? usedCloud,
+  }) => AiTrace(
+    requestId: requestId,
+    startedAtIso: startedAtIso,
+    intent: intent,
+    backend: backend ?? this.backend,
+    budgetTier: budgetTier,
+    routingReason: routingReason ?? this.routingReason,
+    usedCloud: usedCloud ?? this.usedCloud,
+    usedRawLedger: usedRawLedger,
+    totalDurationMs: totalDurationMs,
+    disclosures: disclosures,
+    toolCalls: toolCalls,
+    staleReadModelNames: staleReadModelNames,
+    terminalReason: terminalReason,
+    invocation: invocation,
+  );
 }
 
 Map<String, Object?> _strKeyed(Map<Object?, Object?> raw) =>

@@ -24,9 +24,26 @@ import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
 import 'device_tool.dart';
+import 'get_asset_allocation_tool.dart';
+import 'get_holdings_tool.dart';
+import 'list_payment_accounts_tool.dart';
 
 /// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
 const Duration kPerToolTimeout = Duration(seconds: 15);
+
+/// Canonical device-dispatchable tool set. Registry membership *is* the
+/// device allow-list (§11): a tool runs on device iff a Drift-backed
+/// port is registered here. Single source for the provider and the
+/// W-D6 static-contract test (every name must resolve in the shared
+/// `tool_descriptor.dart` mirror).
+const List<DeviceTool> kDeviceTools = <DeviceTool>[
+  ListPaymentAccountsTool(),
+  GetHoldingsTool(),
+  GetAssetAllocationTool(),
+];
+
+DeviceToolRegistry defaultDeviceToolRegistry() =>
+    DeviceToolRegistry(kDeviceTools);
 
 class DeviceToolRegistry {
   DeviceToolRegistry(Iterable<DeviceTool> tools)

@@ -10,9 +10,6 @@ import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/tools/device_tool_registry.dart';
-import '../../../core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
-import '../../../core/ai/runtime/device/tools/get_holdings_tool.dart';
-import '../../../core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/auth/providers.dart';
@@ -78,15 +75,11 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   if (creds == null || !creds.isUsable) return null;
   final dio = Dio()
     ..interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
-  // §4.6.3 — registry membership is the device allow-list. W-D4 ships
-  // `list_payment_accounts` (the expense flow's dependency) as the
-  // proof tool; remaining families land in W-D4.x. Tools not yet
+  // §4.6.3 — registry membership is the device allow-list. The
+  // canonical set lives in `device_tool_registry.dart` (kDeviceTools)
+  // so the W-D6 static-contract test shares one source. Tools not yet
   // ported simply aren't advertised, so the model never calls them.
-  final registry = DeviceToolRegistry(const [
-    ListPaymentAccountsTool(),
-    GetHoldingsTool(),
-    GetAssetAllocationTool(),
-  ]);
+  final registry = defaultDeviceToolRegistry();
   return DeviceLlmRuntime(
     client: AnthropicClient(
       dio: dio,
@@ -257,7 +250,20 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     );
     final seed = router.seedTrace(requestId: requestId, decision: decision);
 
-    return (pack: pack, traceSeed: seed, localHlcText: localHlcText);
+    // §4.6 W-D6 — keep the transparency record truthful: the router
+    // always decides cloud for an online chat, but if the on-device
+    // runtime will actually handle this turn (native × key × opt-in),
+    // the trace must say so. `device_llm_direct` also drives the
+    // distinct "未经我方服务器" badge text.
+    final effectiveSeed = ref.read(deviceLlmAvailableProvider)
+        ? seed.copyWith(
+            backend: Backend.device,
+            routingReason: kDeviceLlmDirectRoutingReason,
+            usedCloud: false,
+          )
+        : seed;
+
+    return (pack: pack, traceSeed: effectiveSeed, localHlcText: localHlcText);
   } catch (_) {
     return (pack: null, traceSeed: null, localHlcText: null);
   }

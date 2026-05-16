@@ -42,7 +42,14 @@ String formatAiTraceBadge(AiTrace trace) {
   final parts = <String>[];
   switch (trace.backend) {
     case Backend.device:
-      parts.add('全部本地处理');
+      // §4.6 W-D6 — device-LLM-direct (user's own key, straight to the
+      // provider) is materially more private than the zero-model
+      // rules-device path; surface the distinction.
+      parts.add(
+        trace.routingReason == kDeviceLlmDirectRoutingReason
+            ? '端侧直连模型 · 请求与数据未经我方服务器'
+            : '全部本地处理',
+      );
     case Backend.cloud:
       parts.add('仅云端推理');
     case Backend.hybrid:
