@@ -2934,6 +2934,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get entryKindOpening => '期初';
 
   @override
+  String get entryKindOther => '其他';
+
+  @override
   String get entryKindEntry => '记录';
 
   @override

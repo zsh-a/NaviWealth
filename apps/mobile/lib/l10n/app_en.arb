@@ -1639,6 +1639,8 @@
   "@entryKindAdjustment": { "description": "Entry kind badge: adjustment label" },
   "entryKindOpening": "Opening",
   "@entryKindOpening": { "description": "Entry kind badge: opening label" },
+  "entryKindOther": "Other",
+  "@entryKindOther": { "description": "Entry kind badge: other label" },
   "entryKindEntry": "Entry",
   "@entryKindEntry": { "description": "Entry kind badge: generic entry label" },
   "entryKindSemanticLabel": "Journal entry · {kind}",
