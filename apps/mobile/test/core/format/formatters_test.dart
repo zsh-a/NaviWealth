@@ -71,4 +71,35 @@ void main() {
     expect(result.contains(r'$'), isFalse);
     expect(result, contains('1,234.50'));
   });
+
+  group('signedMoney', () {
+    final f = AppFormatters(locale: const Locale('en', 'US'));
+
+    test('formats fiat with sign, symbol and grouped value', () {
+      expect(f.signedMoney(_d('1234.5000'), unit: 'USD'), r'+$1,234.5');
+    });
+
+    test('formats negative fiat without trailing zeros', () {
+      expect(f.signedMoney(_d('-1000.00'), unit: 'CNY'), '-¥1,000');
+    });
+
+    test('formats zero without a sign', () {
+      expect(f.signedMoney(_d('0.0000'), unit: 'USD'), r'$0');
+    });
+
+    test('formats crypto as an asset code', () {
+      expect(f.signedMoney(_d('0.1234567800'), unit: 'BTC'), '+0.12345678 BTC');
+    });
+
+    test('formats security units with display symbol', () {
+      expect(f.signedMoney(_d('10.0000'), unit: 'us_stock:AAPL'), '+10 AAPL');
+    });
+
+    test('can suppress positive sign for balances', () {
+      expect(
+        f.signedMoney(_d('2500.00'), unit: 'USD', showPositiveSign: false),
+        r'$2,500',
+      );
+    });
+  });
 }

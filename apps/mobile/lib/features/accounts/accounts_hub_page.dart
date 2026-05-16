@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/format/formatters.dart';
 import '../../core/format/providers.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -438,9 +439,11 @@ class _PrimaryAmount extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formatters = context.formatters(ref);
     final amount = leg.units;
-    final text = leg.isFiatLike
-        ? formatters.currency(amount, code: leg.unit)
-        : '${_trimDecimal(amount)} ${_assetSymbol(leg.unit)}';
+    final text = formatters.signedMoney(
+      amount,
+      unit: leg.unit,
+      showPositiveSign: false,
+    );
     return Text(
       text,
       style: context.theme.typography.sm.copyWith(
@@ -461,16 +464,18 @@ class _SubLegRow extends ConsumerWidget {
     final colors = context.theme.colors;
     final formatters = context.formatters(ref);
     final amount = leg.units;
-    final text = leg.isFiatLike
-        ? formatters.currency(amount, code: leg.unit)
-        : '${_trimDecimal(amount)} ${_assetSymbol(leg.unit)}';
+    final text = formatters.signedMoney(
+      amount,
+      unit: leg.unit,
+      showPositiveSign: false,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              leg.isFiatLike ? leg.unit : _assetSymbol(leg.unit),
+              AppFormatters.assetCode(leg.unit),
               style: context.theme.typography.xs.copyWith(
                 color: colors.mutedForeground,
                 fontWeight: FontWeight.w500,
@@ -487,20 +492,6 @@ class _SubLegRow extends ConsumerWidget {
       ),
     );
   }
-}
-
-String _assetSymbol(String unit) {
-  // unit format is `<market>:<symbol>` for asset legs; show just the
-  // symbol when present so the row reads "AAPL", not "us_stock:AAPL".
-  final colon = unit.indexOf(':');
-  return colon < 0 ? unit : unit.substring(colon + 1);
-}
-
-String _trimDecimal(Decimal d) {
-  if (d == Decimal.zero) return '0';
-  final s = d.toString();
-  if (!s.contains('.')) return s;
-  return s.replaceFirst(RegExp(r'\.?0+$'), '');
 }
 
 class _BankAccountsLink extends StatelessWidget {

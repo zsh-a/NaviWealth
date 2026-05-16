@@ -146,8 +146,10 @@ class _HeroAmountCard extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             if (headline != null)
-              Text(
-                _signedAmount(headline),
+              SignedMoneyText(
+                amount: headline.units,
+                unit: headline.unit,
+                formatters: formatters,
                 style: TypographyTokens.numericTitle,
               ),
             const SizedBox(height: 4),
@@ -258,11 +260,6 @@ Posting? _headlinePosting(
     }
   }
   return headline;
-}
-
-String _signedAmount(Posting p) {
-  final v = p.units;
-  return '${v > Decimal.zero ? '+' : ''}${v.toString()} ${p.unit}';
 }
 
 String _formatDate(DateTime date) {

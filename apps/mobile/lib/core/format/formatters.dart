@@ -4,6 +4,28 @@ import 'package:decimal/decimal.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
+const Set<String> _knownFiatCodes = {
+  'AED',
+  'AUD',
+  'BRL',
+  'CAD',
+  'CHF',
+  'CNY',
+  'EUR',
+  'GBP',
+  'HKD',
+  'INR',
+  'JPY',
+  'KRW',
+  'MXN',
+  'NZD',
+  'RUB',
+  'SGD',
+  'TWD',
+  'USD',
+  'ZAR',
+};
+
 /// Locale- and currency-aware formatting helpers.
 ///
 /// Decimal-precision values (money, FX rates) are passed as [Decimal] to avoid
@@ -66,6 +88,24 @@ class AppFormatters {
     return formatter.format(amount.toDouble());
   }
 
+  /// Formats a ledger amount with a stable sign, grouping, unit display and
+  /// trimmed trailing zeros.
+  ///
+  /// Fiat units render with the locale currency symbol (`+$1,234.5`), while
+  /// commodities and securities render the grouped quantity plus an asset code
+  /// (`-0.25 BTC`, `+10 AAPL`). Security ids of the form `market:symbol`
+  /// display only the symbol.
+  String signedMoney(
+    Decimal amount, {
+    required String unit,
+    bool showPositiveSign = true,
+  }) {
+    final formatted = _formatUnitAmount(amount.abs(), unit: unit);
+    if (amount < Decimal.zero) return '-$formatted';
+    if (showPositiveSign && amount > Decimal.zero) return '+$formatted';
+    return formatted;
+  }
+
   // ---------- Numbers ----------
 
   String number(num value, {int? decimalDigits}) {
@@ -97,6 +137,43 @@ class AppFormatters {
   String compact(num value) {
     return NumberFormat.compact(locale: _localeName).format(value);
   }
+
+  String _formatUnitAmount(Decimal amount, {required String unit}) {
+    final scale = _trimmedFractionDigits(amount);
+    if (_isKnownFiatCode(unit)) {
+      final formatter =
+          NumberFormat.simpleCurrency(
+              locale: _localeName,
+              name: unit.toUpperCase(),
+            )
+            ..minimumFractionDigits = 0
+            ..maximumFractionDigits = scale;
+      return formatter.format(amount.toDouble());
+    }
+
+    final formatter = NumberFormat.decimalPattern(_localeName)
+      ..minimumFractionDigits = 0
+      ..maximumFractionDigits = scale;
+    return '${formatter.format(amount.toDouble())} ${assetCode(unit)}';
+  }
+
+  /// Display code for commodity/security units. `us_stock:AAPL` becomes
+  /// `AAPL`; plain units such as `BTC` pass through unchanged.
+  static String assetCode(String unit) {
+    final colon = unit.indexOf(':');
+    return colon < 0 ? unit : unit.substring(colon + 1);
+  }
+
+  int _trimmedFractionDigits(Decimal amount) {
+    final text = amount.toString();
+    final dot = text.indexOf('.');
+    if (dot < 0) return 0;
+    final fraction = text.substring(dot + 1).replaceFirst(RegExp(r'0+$'), '');
+    return fraction.length.clamp(0, 12).toInt();
+  }
+
+  bool _isKnownFiatCode(String unit) =>
+      _knownFiatCodes.contains(unit.toUpperCase());
 
   // ---------- Dates ----------
 

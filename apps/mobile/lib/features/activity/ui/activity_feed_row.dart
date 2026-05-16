@@ -10,6 +10,7 @@ import '../../../data/domain/entry_kind.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
+import '../../../design_system/design_system.dart';
 import 'activity_entry_detail_page.dart';
 
 /// One row in the unified Activity timeline (iOS Wallet style).
@@ -37,7 +38,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
-    final summary = _summariseAmount(entry.postings, accountsById);
+    final headline = _headlinePosting(entry.postings, accountsById);
     final timeStr = _formatTime(entry.entry.date);
     final iconData = _iconForKind(classification.kind);
     final iconTint = _tintForKind(classification.kind, colors);
@@ -81,11 +82,12 @@ class ActivityFeedEntryRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (summary != null)
-              Text(
-                summary,
+            if (headline != null)
+              SignedMoneyText(
+                amount: headline.units,
+                unit: headline.unit,
+                formatters: formatter,
                 style: context.theme.typography.sm.copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -178,7 +180,7 @@ String? _accountSummary(List<Posting> postings, Map<String, Account> accounts) {
   return null;
 }
 
-String? _summariseAmount(
+Posting? _headlinePosting(
   List<Posting> postings,
   Map<String, Account> accounts,
 ) {
@@ -197,15 +199,5 @@ String? _summariseAmount(
       headline = p;
     }
   }
-  if (headline == null) return null;
-  final value = headline.units;
-  return '${value > Decimal.zero ? '+' : ''}${_formatDecimal(value)} ${headline.unit}';
-}
-
-String _formatDecimal(Decimal d) {
-  if (d == Decimal.zero) return '0';
-  final s = d.toString();
-  if (!s.contains('.')) return s;
-  final trimmed = s.replaceFirst(RegExp(r'\.?0+$'), '');
-  return trimmed.isEmpty ? '0' : trimmed;
+  return headline;
 }

@@ -5,6 +5,8 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/format/formatters.dart';
+import '../../../core/format/providers.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/entry_kind.dart';
 import '../../../data/domain/enums.dart';
@@ -28,6 +30,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final formatter = context.formatters(ref);
     final feedAsync = ref.watch(activityFeedProvider);
     return feedAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -77,6 +80,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
                     _PreviewRow(
                       entry: entries[i],
                       accountsById: page.accountsById,
+                      formatter: formatter,
                     ),
                     if (i < entries.length - 1)
                       Padding(
@@ -100,10 +104,15 @@ class ActivityTimelinePreview extends ConsumerWidget {
 }
 
 class _PreviewRow extends StatelessWidget {
-  const _PreviewRow({required this.entry, required this.accountsById});
+  const _PreviewRow({
+    required this.entry,
+    required this.accountsById,
+    required this.formatter,
+  });
 
   final JournalEntryWithPostings entry;
   final Map<String, Account> accountsById;
+  final AppFormatters formatter;
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +121,7 @@ class _PreviewRow extends StatelessWidget {
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
-    final summary = _summariseAmount(entry.postings, accountsById);
+    final headline = _headlinePosting(entry.postings, accountsById);
     final timeStr = _formatTime(entry.entry.date);
     final iconData = _iconForKind(classification.kind);
     final iconColor = _colorForKind(classification.kind, colors);
@@ -168,11 +177,12 @@ class _PreviewRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (summary != null)
-                  Text(
-                    summary,
+                if (headline != null)
+                  SignedMoneyText(
+                    amount: headline.units,
+                    unit: headline.unit,
+                    formatters: formatter,
                     style: context.theme.typography.sm.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures()],
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -234,7 +244,7 @@ String _formatTime(DateTime date) {
   return '$h:$m';
 }
 
-String? _summariseAmount(
+Posting? _headlinePosting(
   List<Posting> postings,
   Map<String, Account> accounts,
 ) {
@@ -253,15 +263,5 @@ String? _summariseAmount(
       headline = p;
     }
   }
-  if (headline == null) return null;
-  final value = headline.units;
-  return '${value > Decimal.zero ? '+' : ''}${_formatDecimal(value)} ${headline.unit}';
-}
-
-String _formatDecimal(Decimal d) {
-  if (d == Decimal.zero) return '0';
-  final s = d.toString();
-  if (!s.contains('.')) return s;
-  final trimmed = s.replaceFirst(RegExp(r'\.?0+$'), '');
-  return trimmed.isEmpty ? '0' : trimmed;
+  return headline;
 }
