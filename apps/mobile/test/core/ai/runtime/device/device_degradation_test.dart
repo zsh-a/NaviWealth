@@ -238,6 +238,7 @@ void main() {
         'propose_liability_payment',
         'propose_trade',
         'read_account_window',
+        'read_asset_window',
       ]);
     });
   });

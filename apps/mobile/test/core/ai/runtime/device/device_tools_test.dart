@@ -33,6 +33,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dar
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_liability_payment_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_trade_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/read_account_window_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/read_asset_window_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/scoped/scoped_window.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -133,6 +134,7 @@ void main() {
         ProposeLiabilityPaymentTool(),
         ProposeTradeTool(),
         ReadAccountWindowTool(),
+        ReadAssetWindowTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -151,6 +153,7 @@ void main() {
         'propose_liability_payment',
         'propose_trade',
         'read_account_window',
+        'read_asset_window',
       ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -1187,6 +1190,44 @@ void main() {
           'to': '2026-01-10',
           'purpose': 'exfiltrate',
         }),
+        contains('DisclosurePurpose'),
+      );
+    });
+  });
+
+  group('W-D4.4b — read_asset_window validation (pre-read)', () {
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ReadAssetWindowTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('asset_id / range / purpose mandatory', () async {
+      expect(((await run(const {})) as Map)['error'], 'asset_id required');
+      expect(
+        ((await run(const {
+              'asset_id': 'AAPL',
+              'from': '2026-01-01',
+              'to': '2026-03-01',
+              'purpose': 'other',
+            }))
+            as Map)['error'],
+        contains('range exceeds'),
+      );
+      expect(
+        ((await run(const {
+              'asset_id': 'AAPL',
+              'from': '2026-01-01',
+              'to': '2026-01-10',
+              'purpose': 'nope',
+            }))
+            as Map)['error'],
         contains('DisclosurePurpose'),
       );
     });
