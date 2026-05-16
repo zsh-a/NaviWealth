@@ -435,6 +435,51 @@ sealed class ProposalEnvelope {
 
 Confirmation gate 对 source 不敏感 — 任何高风险 proposal 都走同一确认 UI。**Privacy Policy 永远优先于 source。**
 
+### 4.6 Phase 5 — 端侧 LLM Runtime（用户自带 key · 最小后端 · 原生 only）
+
+> 状态: ❌ 未实现 → 本节为已锁定的落地决策（取代 §9 P3 「Phase 5 — 端侧 LLM runtime」的占位描述）。
+> 取舍详见 §11；逐 Wave 清单见 §8 / §9。
+
+**目标**: agent 大脑下沉到端侧，**最小化对后端的依赖**。后端在 device runtime 路径上完全不参与 AI（不走 `/ai/chat`、guardrails、read model projection、ContextPack ingest）；后端 AI 代码先**冻结并存**，端侧验证稳定后单独 Wave 删除。后端继续保留 sync / auth / D1（与 AI 无关，不动）。
+
+#### 4.6.1 五条决策
+
+1. **用户自带 key**: 用户在设置里手动填 LLM API key。复用 `core/security/SecureKeyStore`（`flutter_secure_key_store.dart` 已有，Keychain/Keystore 后端）。key **绝不**进 OpLog / 云同步 / 明文备份；与 SQLCipher key 同等对待。
+2. **`DeviceLlmRuntime` 直连 provider**: 端侧 Dart Anthropic adapter（port 自 `apps/backend/src/ai/adapters/anthropic/`，Messages API + SSE streaming + `tool_use`）。agent loop / tool dispatch / prompt 组装 / proposal 全在端侧。
+3. **工具读 Drift 本地真源**: 不再读 D1 read models。**§4.2 freshness gate 与 ScopedDisclosure 兜底通道在 device runtime 路径上整体消失** —— 端侧本就是 local-first 真值源，不存在 read model stale，也不存在「原始 ledger 出设备」需要脱敏的问题。
+4. **Vision 端侧直发**: 图像 base64 → content block，用用户 key 直发 provider。比 §5.10.10 的 Worker 中转**更私密**（原图根本不出设备到我方服务器）。AiTrace 文案改为「端侧直连 provider · 原图未经我方服务器」。
+5. **平台边界 = 仅 iOS/Android 原生**: 原生有 Keychain/Keystore 安全存储 + 无浏览器 CORS。**Web 继续走 `CloudAnthropicRuntime`**（cloud relay 仍在时），由 registry 按 `platform × keyPresent × optIn` 选择。
+
+#### 4.6.2 Runtime 选择（`RuntimeRegistry` 改造）
+
+新增 `RuntimeId.deviceLlm`。`pickFor` 不再单纯按 `Backend` 枚举一一映射，改为能力 + 环境联合判定：
+
+```text
+if  platform == native(iOS/Android)
+ && userLlmKeyPresent
+ && userOptedInDeviceAi          → RuntimeId.deviceLlm
+else if cloud relay 仍存在        → RuntimeId.cloudAnthropic   (web / 无 key / 未 opt-in / 降级)
+else                              → AI 禁用，提示「设置中填入 API key」
+```
+
+`RulesDeviceRuntime` stub 由 `DeviceLlmRuntime` 取代（rules-only 快答仍作为 device runtime 内部的零模型短路，不再是独立 RuntimeId）。`ChatRepository` 这次真正改走 registry（§8 标注的「Phase 5 接入端侧 runtime 时切换」即此刻）。
+
+#### 4.6.3 工具端侧化清单（D1 read model → Drift）
+
+device runtime 路径上 27 个工具的数据源迁移，**复用既有端侧资产，不重造**：
+
+| 层 | 端侧来源 | 备注 |
+|----|---------|------|
+| Snapshot（net worth / holdings / monthly spend / cashflow / allocation / net_worth_daily） | `domain/services/` 既有 net worth/currency service + `holdingsSnapshotProvider` + `DriftQueryPlanExecutor` | XIRR 复用现有确定性算法（端侧已有 plan executor 雏形） |
+| Analytical（recurring / anomaly / refund / transfer / investment_perf / subscription_changes） | **本来就在端侧**（detector 是 Dart 唯一计算者，§4.3.3 铁律） | 直接调本地 detector，省掉 ContextPack 上报→D1 投影→工具读回的往返 |
+| Scoped Detail（account/asset/category window） | 直接查 Drift | 端侧不出设备 → **不再 HMAC 脱敏**；仍保留 `purpose` 必填 + 写 AiTrace 维持透明度 |
+
+`ToolDescriptor.allowed_runtimes` 据此校验：device runtime 只 dispatch 标 `device`/`both` 的工具；`ExternalSideEffect`（broker 下单）仍 `cloud_only + typed confirmation`，端侧产 proposal 但不自动执行（§4.5 不变）。
+
+#### 4.6.4 降级路径
+
+`DeviceLlmRuntime` 在以下情况回落 `CloudAnthropicRuntime`（cloud relay 删除前）：web 平台 / 无 key / 未 opt-in / provider 报错（鉴权失败、网络）。cloud relay 删除后，无 key 即禁用 AI 并引导填 key。降级必须写 AiTrace（`terminalReason` 体现）。
+
 ## 5. Interaction Grammar — AI 进入页面，而非用户进入 AI
 
 > 这一章是 UI/UX 层的「契约」，与 §4 wire 契约平级。所有 AI 入口、Bottom Sheet、Capsule、Reply Chip、Proposal 确认面，**必须遵守本章规则**。功能 PR 在 review 时按 §5.8 硬约束逐条对照。
@@ -1011,7 +1056,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | **★ AiTraceStore 持久化** | Drift 表 `ai_traces` (request_id PK + owner partition) + `DriftAiTraceStore`；provider 自动从 in-memory 切换到 Drift | ✅ Wave 23 落地；30 天清理由 caller 调度 |
 | **★ Undo stack 持久化** | Drift 表 `ai_undo_stack` (token PK + expires_at) + `DriftUndoStack` (put/take 原子 / pruneExpiredBefore) | ✅ Wave 24 落地；closure-based `LocalImmediateWriteExecutor` 保留作为内存路径，需持久化的 caller 直接用 `DriftUndoStack` |
 | **★ `tools.rs` 拆分** | `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法提到 `tools/xirr.rs` | ✅ Wave 25 起步；剩余 read/propose 二级拆分待后续增量 |
-| **Phase 5** | 端侧真实 LLM runtime + 模型下载/校验 | ❌ 未实现 |
+| **Phase 5** | 端侧 LLM runtime（§4.6：用户自带 key · 直连 provider · 工具读 Drift · 原生 only · cloud 先并存后删） | ❌ 未实现（W-D1–W-D7 见 §9） |
 
 **ToolDescriptor 总数**: 27（Read 20 + Propose 5 + 兼容保留 2）— 见 `apps/backend/src/ai/policy/tool_policy.rs`。每条描述符含七个轴：`name` / `access` / `risk` / `requires_confirmation` / `allowed_context_tier` / `allowed_runtimes` / `side_effect` / `read_model_layer`。`risk_policy.rs::every_dispatch_target_has_a_descriptor` 与 `tools.rs::schemas_advertise_all_dispatch_targets` 双向同步。
 
@@ -1119,13 +1164,14 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 
 - [ ] **Read Models — Analytical 层 P2 四模型** — `spending_clusters` / `goal_progress_projection` / `tax_lot_analysis` / `financial_behavior_profile`，nightly cron
 - [ ] **Read Models — Scoped Detail 层完善** — purpose-bound 工具族补齐（`read_trip_cluster` / `read_subscription_history` 等），与 Analytical 层 drill-down 链路打通
-- [ ] **Phase 5 — 端侧 LLM runtime**:
-  - [ ] 平台通道 / `onnxruntime` 包装
-  - [ ] 模型下载 + 校验和 + opt-in 设置
-  - [ ] tokeniser + decode loop
-  - [ ] 接管 `txn_classifier` 兜底分支（rules 未命中时）
-  - [ ] 月报摘要 device LLM 路径
-  - [ ] Stage 2 `LocalAnalystRuntime` 注册
+- [ ] **Phase 5 — 端侧 LLM runtime（决策见 §4.6：用户自带 key · 最小后端 · 原生 only · cloud 先并存后删）**:
+  - [ ] **W-D1** SecureKeyStore for LLM key + 设置页输入/校验/清除 UI（原生 only gate）
+  - [ ] **W-D2** Dart Anthropic adapter（Messages + SSE streaming + `tool_use`），port 自 `apps/backend/src/ai/adapters/anthropic/`
+  - [ ] **W-D3** 端侧 `AgentLoop`（port `agent_loop.rs`：tool round budget + propose 拦截）+ `DeviceLlmRuntime` 注册 + `RuntimeRegistry.pickFor` 改造 + `ChatRepository` 改走 registry
+  - [ ] **W-D4** 端侧 tool registry：Snapshot/XIRR 复用 `domain/services/` + Analytical 直连 detector + Scoped Detail 查 Drift（去 HMAC，保 purpose+AiTrace）；`allowed_runtimes` 校验
+  - [ ] **W-D5** 端侧 Vision 摄取（image → content block，用户 key 直发）+ AiTrace 文案「原图未经我方服务器」
+  - [ ] **W-D6** AiTrace / 透明度页适配「端侧直连 provider」+ 降级路径测试 + 回归 corpus
+  - [ ] **W-D7（后续）** 删除 `apps/backend/src/ai/` + `/ai/chat` + guardrails；read model 表/migration 保留为历史；文档收尾
 - [ ] **Phase 5 — 真实 Embedder** — 替换 `StubEmbedder` 为 MiniLM (~30MB ONNX)。`Embedder` 接口已稳定，仅换实现类。
 - [ ] **VectorStore: sqlite-vec 后端** — `InMemoryVectorStore` 在 ≥5k 文档时变慢。
 - [ ] **「不上云账户」feature + PrivacyGate UI** — 配合此 feature 上线时再做 disclosure consent UI；否则 ScopedDisclosure 仅做 freshness gate 即可。
@@ -1188,7 +1234,14 @@ packages/ai_contracts/
 - **`SideEffectScope` 默认 `crossCutting`** — 当 feature 没显式声明 sideEffect 时，路由器假设最坏情况而不是放行。
 - **`risk_policy` 为何先 advisory** — ToolDescriptor 表是手写元数据，需要生产流量验证。advisory 提供观察期，无回归风险。
 - **AiTrace 不进 OpLog** — trace 包含路由决策、tool latency、用户 consent 选择，不应该被同步到云端。
-- **端侧 LLM 必须 opt-in** — 200MB 级别下载不应阻塞首屏。
+- **端侧 LLM 必须 opt-in** — 200MB 级别下载不应阻塞首屏；用户自带 key 路径同样 opt-in（未填 key 不改变现状）。
+- **为什么用户自带 key 解除了「端侧直连」的一票否决项**（§4.6）— 原阻碍是「把我方 key 打进二进制 = 盗用 + 计费无上限 + 无法限流」。key 改为用户自己的 provider 账户后，计费与限流由用户账户承担，我方不再是被滥用对象，guardrails 也无需在不可信客户端强制。
+- **为什么 device runtime 路径上 freshness gate / ScopedDisclosure 整体消失**（§4.6）— 这两条通道存在的前提是「云端推理需要绕回端侧拿最新真值 / 原始 ledger 不能出设备」。当推理本身就在端侧、直接读 Drift 真源时，既无 stale 也无「出设备」边界，兜底通道在该路径上无意义（cloud relay 路径仍保留它们直到删除）。
+- **为什么 Scoped Detail 端侧不再 HMAC 脱敏**（§4.6）— `merchant_hashed` 的唯一目的是「原始字段不出设备到云」。端侧推理明细本就不出设备，脱敏只剩 token/可读性负担；保留 `purpose` 必填 + 写 AiTrace 即可维持同等透明度。
+- **为什么 Vision 端侧直发比 Worker 中转更私密**（对比 §11 末条「云端 Vision 无状态零留存」）— 那条的边界是「Worker in-request 处理后即弃」，仍有原图短暂经我方服务器。用户自带 key 直发 provider 后原图根本不到我方服务器，是更强而非更弱的隐私边界。
+- **为什么 web 仍走 cloud relay**（§4.6.1）— 浏览器无系统级安全存储（key 只能落 IndexedDB/localStorage），且 Anthropic 浏览器直连需 dangerous header 并把 key 暴露在 JS 内存；原生有 Keychain/Keystore，边界本质不同，不强行统一。
+- **为什么先并存再删 cloud AI**（§4.6 / §8 / §9 W-D7）— 140 backend tests + 已验证的 read model 主通道是资产；`AiRuntime` registry 让端云并存零成本，端侧路径生产验证稳定后再单独 Wave 做不可逆删除，降低回归风险。
+- **为什么端侧 agent 全 Dart 而非复用 Rust（FFI）**（§4.6）— 复用 Rust 的标准理由是「两份实现永久同步」，但 W-D7 删 cloud 后只剩端侧一份，dual-impl 只是 W-D1~W-D6 共存窗口的临时成本，会自然蒸发。换 FFI 的代价（backend crate 拆 runtime-无关 core / 从零搭 cargo-ndk + iOS xcframework + FRB / Drift 数据只能回调进 Dart 故 tool 取数仍是 Dart）是永久负债。唯一永久漂移风险是数值算法（XIRR Newton-Raphson 等），用 `test/core/ai/.../*_parity_test.dart` roundtrip 对齐 backend 直到 W-D7 删除即可，不值得为此引入 FFI 工具链。
 - **NL→QueryPlan 不直接写 SQL** — sealed plan + Drift query builder。新增意图必须改类型，不会「忘了」。
 - **Privacy Policy 永久优先于 Source** — 任何 high-risk proposal 不论端侧/云端生成都走同一确认 UI；隐私设置不论 runtime 都执行。
 - **为什么摄取草稿用独立本地表而非「待审 OpLog 行」**（§5.10.10）— OpLog 是同步真值，塞入未确认草稿会污染所有设备并绕过确认门；独立本地表让 §4.2 draft gate 自然成立，确认后才经 `proposal_applier` 进 OpLog。

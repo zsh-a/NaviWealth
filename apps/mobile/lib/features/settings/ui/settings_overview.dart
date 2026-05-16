@@ -91,6 +91,13 @@ class SettingsOverview extends ConsumerWidget {
                 subtitle: '查看最近 AI 调用的详细轨迹',
                 onTap: () => context.goNamed(AppRouteNames.aiTransparency),
               ),
+              _SectionDivider(),
+              InlineLinkRow(
+                icon: Icons.key_outlined,
+                label: '端侧 AI · 自带 Key',
+                subtitle: '用自己的 API Key 让 AI 在本机直连运行',
+                onTap: () => context.goNamed(AppRouteNames.aiLlm),
+              ),
             ],
           ),
         ),
