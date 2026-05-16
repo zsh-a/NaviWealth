@@ -1694,6 +1694,12 @@ abstract class AppLocalizations {
   /// **'Failed to load: {error}'**
   String commonLoadError(String error);
 
+  /// Generic load failure message that hides raw exception details from the UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this view. Please try again.'**
+  String get commonLoadFailed;
+
   /// Generic failure snackbar shown when an optimistic form submit fails after the form has already popped.
   ///
   /// In en, this message translates to:

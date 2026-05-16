@@ -50,7 +50,7 @@ class AccountsMaster extends ConsumerWidget {
               );
       },
       loading: () => const Center(child: FCircularProgress()),
-      error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
+      error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
     );
 
     return MasterDetailShortcuts(

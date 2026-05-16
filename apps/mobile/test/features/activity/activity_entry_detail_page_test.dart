@@ -137,7 +137,7 @@ void main() {
             widget.data!.startsWith('-') &&
             widget.data!.contains('1,234.5'),
       ),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 

@@ -433,6 +433,10 @@
   "@commonLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "commonLoadFailed": "Couldn't load this view. Please try again.",
+  "@commonLoadFailed": {
+    "description": "Generic load failure message that hides raw exception details from the UI."
+  },
   "commonSaveFailed": "Couldn't save your changes. Tap retry.",
   "@commonSaveFailed": {
     "description": "Generic failure snackbar shown when an optimistic form submit fails after the form has already popped."

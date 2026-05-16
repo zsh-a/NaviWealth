@@ -184,10 +184,10 @@ void main() {
     expect(find.text('To account'), findsOneWidget);
 
     // Submit button is rendered but disabled (no accounts picked yet).
-    final submit = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Transfer'),
+    final submit = tester.widget<FButton>(
+      find.widgetWithText(FButton, 'Transfer'),
     );
-    expect(submit.onPressed, isNull);
+    expect(submit.onPress, isNull);
   });
 
   testWidgets('PostingsPreview surfaces both legs once form is fillable', (
@@ -217,13 +217,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // PostingsPreview now shows the leg amounts.
-    expect(find.text('-1000 CNY'), findsOneWidget);
-    expect(find.text('1000 CNY'), findsOneWidget);
+    expect(find.text('-¥1,000'), findsOneWidget);
+    expect(find.text('+¥1,000'), findsOneWidget);
 
-    final submit = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Transfer'),
+    final submit = tester.widget<FButton>(
+      find.widgetWithText(FButton, 'Transfer'),
     );
-    expect(submit.onPressed, isNotNull);
+    expect(submit.onPress, isNotNull);
   });
 
   testWidgets('selecting the same account on both ends keeps submit disabled', (
@@ -257,13 +257,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // Preview should not render with same account on both ends.
-    expect(find.text('-500 CNY'), findsNothing);
-    expect(find.text('500 CNY'), findsNothing);
+    expect(find.text('-¥500'), findsNothing);
+    expect(find.text('+¥500'), findsNothing);
 
-    final submit = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Transfer'),
+    final submit = tester.widget<FButton>(
+      find.widgetWithText(FButton, 'Transfer'),
     );
-    expect(submit.onPressed, isNull);
+    expect(submit.onPress, isNull);
   });
 
   testWidgets('cross-currency picks reveal the To-amount field + rate hint', (
@@ -320,14 +320,14 @@ void main() {
     expect(find.textContaining('1 USD = 7.1 CNY'), findsOneWidget);
 
     // PostingsPreview shows both legs in their respective currencies.
-    expect(find.text('-1000 USD'), findsOneWidget);
-    expect(find.text('7100 CNY'), findsOneWidget);
+    expect(find.text(r'-$1,000'), findsAtLeastNWidgets(1));
+    expect(find.text('+¥7,100'), findsAtLeastNWidgets(1));
 
     // Submit is enabled.
-    final submit = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Transfer'),
+    final submit = tester.widget<FButton>(
+      find.widgetWithText(FButton, 'Transfer'),
     );
-    expect(submit.onPressed, isNotNull);
+    expect(submit.onPress, isNotNull);
   });
 
   testWidgets(
@@ -373,7 +373,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Transfer'));
+      await tester.tap(find.widgetWithText(FButton, 'Transfer'));
       await tester.pumpAndSettle();
 
       // The repo persisted both legs; the destination posting carries

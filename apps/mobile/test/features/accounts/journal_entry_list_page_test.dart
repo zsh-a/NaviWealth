@@ -145,7 +145,7 @@ void main() {
 
     // Title + headline amount visible while collapsed.
     expect(find.text('Monthly transfer'), findsOneWidget);
-    expect(find.textContaining('1000 CNY'), findsAtLeastNWidgets(1));
+    expect(find.textContaining('¥1,000'), findsAtLeastNWidgets(1));
 
     // Transfer-classified badge surfaces.
     expect(find.byIcon(Icons.swap_horiz), findsOneWidget);
@@ -195,14 +195,14 @@ void main() {
     // The row headline and the preview tree can both be present in
     // the widget tree before expansion. The positive leg is unique to
     // PostingsPreview and proves the posting details are available.
-    expect(find.text('-1000 CNY'), findsNWidgets(2));
-    expect(find.text('1000 CNY'), findsOneWidget);
+    expect(find.text('-¥1,000'), findsNWidgets(2));
+    expect(find.text('+¥1,000'), findsOneWidget);
 
     await tester.tap(find.text('Monthly transfer'));
     await tester.pumpAndSettle();
 
     // After expansion the preview remains visible.
-    expect(find.text('1000 CNY'), findsOneWidget);
+    expect(find.text('+¥1,000'), findsOneWidget);
   });
 
   testWidgets('payee renders inline next to the date when present', (
@@ -289,8 +289,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Edge case'), findsOneWidget);
-    // No asset/liability headline is added. The only USD strings are
+    // No asset/liability headline is added. The only rendered amounts are
     // the two posting-preview legs.
-    expect(find.textContaining('USD'), findsNWidgets(2));
+    expect(find.text(r'-$10'), findsOneWidget);
+    expect(find.text(r'+$10'), findsOneWidget);
   });
 }

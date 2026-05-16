@@ -165,7 +165,7 @@ void main() {
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Coffee'), findsOneWidget);
     expect(find.text('Blue Bottle'), findsOneWidget);
-    expect(find.text('-32 CNY'), findsOneWidget);
+    expect(find.text('-¥32'), findsOneWidget);
   });
 
   testWidgets('expands a journal row to reveal posting details', (
@@ -219,6 +219,6 @@ void main() {
 
     expect(find.text('Food'), findsOneWidget);
     expect(find.text('Wallet'), findsOneWidget);
-    expect(find.text('32 CNY'), findsOneWidget);
+    expect(find.text('+¥32'), findsOneWidget);
   });
 }

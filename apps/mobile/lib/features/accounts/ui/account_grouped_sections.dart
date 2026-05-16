@@ -109,7 +109,6 @@ class _AccountsSection extends StatelessWidget {
               style: context.theme.typography.xs2.copyWith(
                 color: colors.mutedForeground,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.6,
               ),
             ),
           ),

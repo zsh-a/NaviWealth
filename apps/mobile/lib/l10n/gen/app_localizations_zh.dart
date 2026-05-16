@@ -873,6 +873,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get commonLoadFailed => '加载失败，请稍后重试。';
+
+  @override
   String get commonSaveFailed => '保存失败，点击重试';
 
   @override

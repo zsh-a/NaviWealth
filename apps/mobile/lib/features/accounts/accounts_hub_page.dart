@@ -50,7 +50,7 @@ class AccountsHubPage extends ConsumerWidget {
       childPad: false,
       child: accountsAsync.when(
         loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text(l10n.accountsLoadError('$e'))),
+        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
         data: (accounts) {
           // Filter: user-created wealth containers only. System
           // accounts (income / expense / equity sub-trees) are
@@ -160,7 +160,6 @@ class _NetPulseStrip extends ConsumerWidget {
             style: context.theme.typography.xs2.copyWith(
               color: colors.mutedForeground,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
             ),
           ),
           const SizedBox(height: 4),
