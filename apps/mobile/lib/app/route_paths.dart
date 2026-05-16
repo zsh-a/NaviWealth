@@ -58,6 +58,8 @@ abstract final class AppRoutes {
   static const settingsAiHistory = '/settings/ai-history';
   // §5.10.5 — user-facing privacy posture for cloud-bound AI requests.
   static const settingsAiPrivacy = '/settings/ai-privacy';
+  // §4.6 W-D1 — bring-your-own LLM key for the on-device AI runtime.
+  static const settingsAiLlm = '/settings/ai-llm';
   static String settingsAiTransparencyDetail(String requestId) =>
       '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
 
@@ -99,6 +101,7 @@ abstract final class AppRouteNames {
   static const aiTransparencyDetail = 'ai-transparency-detail';
   static const aiHistory = 'ai-history';
   static const aiPrivacy = 'ai-privacy';
+  static const aiLlm = 'ai-llm';
 
   static const accounts = 'accounts';
   static const accountsList = 'accounts-list';
