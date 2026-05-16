@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../../data/domain/entry_kind.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'entry_kind_labels.dart';
 
 /// FIR-128 §1.1 — pill-shaped badge that surfaces the derived
 /// [EntryKind] of a journal entry (icon + short label, colour-toned by
@@ -38,14 +39,13 @@ class EntryKindBadge extends StatelessWidget {
     final visuals = _entryKindVisuals(classification, scheme);
     final l10n = AppLocalizations.of(context);
 
-    final label = labelOverride ?? _localizeKind(classification.kind, l10n);
+    final semanticLabel = entryKindLabel(l10n, classification.kind);
+    final label = labelOverride ?? semanticLabel;
     final showLabel = !compact && label.isNotEmpty;
 
     return Semantics(
       container: true,
-      label: l10n.entryKindSemanticLabel(
-        _localizeKind(classification.kind, l10n),
-      ),
+      label: l10n.entryKindSemanticLabel(semanticLabel),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: visuals.background,
@@ -90,27 +90,6 @@ class _BadgeVisuals {
   final Color background;
   final Color foreground;
   final String defaultLabel;
-}
-
-String _localizeKind(EntryKind kind, AppLocalizations l10n) {
-  switch (kind) {
-    case EntryKind.trade:
-      return l10n.entryKindTrade;
-    case EntryKind.transfer:
-      return l10n.entryKindTransfer;
-    case EntryKind.income:
-      return l10n.entryKindIncome;
-    case EntryKind.expense:
-      return l10n.entryKindExpense;
-    case EntryKind.payment:
-      return l10n.entryKindPayment;
-    case EntryKind.adjustment:
-      return l10n.entryKindAdjustment;
-    case EntryKind.opening:
-      return l10n.entryKindOpening;
-    case EntryKind.other:
-      return l10n.entryKindEntry;
-  }
 }
 
 _BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {

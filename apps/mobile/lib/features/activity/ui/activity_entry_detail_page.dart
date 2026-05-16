@@ -12,6 +12,7 @@ import '../../../data/domain/posting.dart';
 import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/entry_kind_labels.dart';
 import '../../shared/postings_preview.dart';
 
 /// Full-page detail surface for one journal entry. Pushed when the user
@@ -120,7 +121,7 @@ class _HeroAmountCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _kindLabel(classification.kind, AppLocalizations.of(context)),
+              entryKindLabel(AppLocalizations.of(context), classification.kind),
               style: context.theme.typography.xs.copyWith(
                 color: colors.mutedForeground,
                 fontWeight: FontWeight.w600,
@@ -266,22 +267,4 @@ String _formatDate(DateTime date) {
   final h = date.hour.toString().padLeft(2, '0');
   final m = date.minute.toString().padLeft(2, '0');
   return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} $h:$m';
-}
-
-String _kindLabel(EntryKind kind, AppLocalizations l10n) {
-  switch (kind) {
-    case EntryKind.income:
-      return l10n.activityFilterChipIncome;
-    case EntryKind.expense:
-      return l10n.activityFilterChipExpense;
-    case EntryKind.transfer:
-      return l10n.activityFilterChipTransfer;
-    case EntryKind.trade:
-      return l10n.activityFilterChipTrade;
-    case EntryKind.payment:
-    case EntryKind.adjustment:
-    case EntryKind.opening:
-    case EntryKind.other:
-      return kind.name;
-  }
 }

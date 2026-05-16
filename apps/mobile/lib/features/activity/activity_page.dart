@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../shared/entry_kind_labels.dart';
 import 'data/activity_feed_provider.dart';
 import 'data/activity_feed_query.dart';
 import 'ui/activity_action_panel.dart';
@@ -312,14 +313,5 @@ class _FilterChip extends StatelessWidget {
 }
 
 String _labelForKind(AppLocalizations l10n, ActivityKind kind) {
-  return switch (kind) {
-    ActivityKind.income => l10n.activityFilterChipIncome,
-    ActivityKind.expense => l10n.activityFilterChipExpense,
-    ActivityKind.transfer => l10n.activityFilterChipTransfer,
-    ActivityKind.trade => l10n.activityFilterChipTrade,
-    ActivityKind.payment ||
-    ActivityKind.adjustment ||
-    ActivityKind.opening ||
-    ActivityKind.other => kind.name,
-  };
+  return entryKindLabel(l10n, entryKindFromActivityKind(kind));
 }

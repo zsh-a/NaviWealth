@@ -5406,6 +5406,12 @@ abstract class AppLocalizations {
   /// **'Opening'**
   String get entryKindOpening;
 
+  /// Entry kind badge: other label
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get entryKindOther;
+
   /// Entry kind badge: generic entry label
   ///
   /// In en, this message translates to:
