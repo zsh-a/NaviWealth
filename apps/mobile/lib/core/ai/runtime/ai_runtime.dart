@@ -17,11 +17,18 @@
 /// in by registering a third implementor.
 library;
 
+import 'package:dio/dio.dart';
+
 import '../../../features/ai_chat/data/ai_chat_api_client.dart';
 import '../../../features/ai_chat/domain/chat_events.dart';
 import '../../auth/auth_session.dart';
 import '../contracts/contracts.dart';
 import '../router/routing_decision.dart';
+import 'device/anthropic/anthropic_client.dart';
+import 'device/anthropic/anthropic_wire.dart';
+import 'device/device_agent_loop.dart';
+import 'device/device_session.dart';
+import 'device/device_tool_dispatcher.dart';
 
 /// Identifier for a runtime. String-keyed so trace records and metrics
 /// stay stable across renames; the registry resolves it to an
@@ -34,6 +41,12 @@ enum RuntimeId {
   /// execution. Today returns "unsupported" for anything beyond
   /// pre-registered query plans; Phase 5 may extend it.
   rulesDevice,
+
+  /// §4.6 Phase 5 — on-device LLM calling the user's own provider key
+  /// directly (no Worker in the path). Selected by *availability*
+  /// (native × key × opt-in) at the provider layer, not by the
+  /// `Backend` trace label — see [RuntimeRegistry.pickFor].
+  deviceLlm,
 }
 
 /// Inputs to one chat turn. Shaped so callers can build it once and
@@ -144,5 +157,67 @@ class RulesDeviceRuntime implements AiRuntime {
       'rules_device runtime cannot answer this turn; route via cloud '
       'or extend the runtime',
     );
+  }
+}
+
+/// §4.6 Phase 5 — on-device LLM runtime.
+///
+/// Owns the full agent loop client-side: builds a [DeviceSession] from
+/// the inbound turn, runs [DeviceAgentLoop] over an [AnthropicClient]
+/// that talks straight to the user's provider with their key (W-D1/2),
+/// and emits the same [AiChatEvent] stream as [CloudAnthropicRuntime].
+/// Tools are stubbed via [UnavailableToolDispatcher] until W-D4 wires
+/// the Drift-backed registry, so text-only turns work end to end now.
+class DeviceLlmRuntime implements AiRuntime {
+  DeviceLlmRuntime({
+    required this.client,
+    this.dispatcher = const UnavailableToolDispatcher(),
+    this.toolSchemas = const [],
+    this.budget = const TurnBudget(),
+  });
+
+  final AnthropicClient client;
+  final DeviceToolDispatcher dispatcher;
+  final List<AnthropicToolSchema> toolSchemas;
+  final TurnBudget budget;
+
+  @override
+  RuntimeId get id => RuntimeId.deviceLlm;
+
+  @override
+  bool get supportsStreaming => true;
+
+  @override
+  Stream<AiChatEvent> chat(AiRuntimeRequest request) => run(
+    messages: request.messages,
+    portfolioSnapshot: request.portfolioSnapshot,
+    model: request.model,
+  );
+
+  /// [AiChatApiClient.chat]-shaped entry point so the routing client
+  /// can forward without synthesising a [RoutingDecision] (the device
+  /// loop ignores routing — selection already happened upstream).
+  Stream<AiChatEvent> run({
+    required List<WireMessage> messages,
+    Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
+    String? model,
+    CancelToken? cancelToken,
+  }) {
+    final session = DeviceSession(
+      messages: [
+        for (final m in messages)
+          AnthropicChatMessage(role: m.role, content: m.content),
+      ],
+      portfolioSnapshot: portfolioSnapshot,
+    );
+    final loop = DeviceAgentLoop(
+      streamFn: client.streamMessages,
+      model: (model == null || model.isEmpty) ? client.config.model : model,
+      dispatcher: dispatcher,
+      toolSchemas: toolSchemas,
+      budget: budget,
+    );
+    return loop.run(session, cancelToken: cancelToken);
   }
 }
