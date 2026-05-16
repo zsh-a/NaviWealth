@@ -31,6 +31,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/propose_account_create_t
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_asset_valuation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_liability_payment_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/propose_trade_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -128,6 +129,7 @@ void main() {
         ProposeAccountCreateTool(),
         ProposeAssetValuationTool(),
         ProposeLiabilityPaymentTool(),
+        ProposeTradeTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -144,6 +146,7 @@ void main() {
         'propose_asset_valuation',
         'propose_expense',
         'propose_liability_payment',
+        'propose_trade',
       ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -1054,6 +1057,52 @@ void main() {
       );
       expect(plan['status'], 'needs_clarification');
       expect(plan['ambiguous_field'], 'liability');
+    });
+  });
+
+  group('W-D4.5c — propose_trade (pre-resolve branches)', () {
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ProposeTradeTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('type / quantity validation bad_requests (before resolve)',
+        () async {
+      expect(
+        ((await run(const {})) as Map)['error'],
+        contains("field 'type'"),
+      );
+      expect(
+        ((await run(const {'type': 'gift', 'quantity': 1})) as Map)['error'],
+        contains("unsupported transaction type 'gift'"),
+      );
+      expect(
+        ((await run(const {'type': 'buy'})) as Map)['error'],
+        contains("field 'quantity'"),
+      );
+      expect(
+        ((await run(const {'type': 'buy', 'quantity': 0})) as Map)['error'],
+        contains('quantity must be > 0'),
+      );
+    });
+
+    test('_qty / summary composition (pure, mirrors invoke tail)', () {
+      // integer qty → " {n} 股"; fractional → " {value}"
+      final intPlan = readyPlan(
+        kind: 'trade',
+        summaryZh: '买入 AAPL 10 股 @ 190（券商）',
+        payload: const {'type': 'buy'},
+      );
+      expect(intPlan['summary_zh'], '买入 AAPL 10 股 @ 190（券商）');
+      expect(formatProposalAmount(190.0), '190');
+      expect(formatProposalAmount(1.5), '1.5');
     });
   });
 }

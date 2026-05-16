@@ -236,6 +236,7 @@ void main() {
         'propose_asset_valuation',
         'propose_expense',
         'propose_liability_payment',
+        'propose_trade',
       ]);
     });
   });
