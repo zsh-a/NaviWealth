@@ -1,11 +1,11 @@
-/// §5.10.10 / S5a step ⑥–⑦ surface — the待确认 queue.
+/// §5.10.10 / S5a step ⑥–⑦ surface — the review queue.
 ///
 /// Calm Intelligence (§5.6): no chatbot, no glow; a single outline
 /// sparkle in the header, surface-tone pills, typography-first rows.
 /// The page never auto-applies anything — every write is the user's
-/// explicit tap (§5.10.6). Strings are zh literals (S5a deviation,
-/// see §5.10.9): a full ARB pass for one new page would trip the
-/// Wave 42 parity gate for little user benefit on a zh-primary app.
+/// explicit tap (§5.10.6). All copy is localized via AppLocalizations
+/// (S5a.1 — full ARB pass; the data-layer parser tokens stay on the
+/// FIR-99 allowlist by nature, see §5.10.9).
 library;
 
 import 'package:flutter/material.dart';
@@ -17,6 +17,7 @@ import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
@@ -34,17 +35,18 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final draftsAsync = ref.watch(pendingIngestDraftsProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return FScaffold(
       header: FHeader.nested(
-        title: const Row(
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AiSparkle(size: 16),
-            SizedBox(width: 6),
-            Text('录入待确认'),
+            const AiSparkle(size: 16),
+            const SizedBox(width: 6),
+            Text(l10n.ingestReviewTitle),
           ],
         ),
         prefixes: [backHeaderAction(context)],
@@ -60,18 +62,24 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         color: Colors.transparent,
         child: accountsAsync.when(
           loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text('账户加载失败：$e')),
+          error: (e, _) =>
+              Center(child: Text(l10n.ingestAccountsLoadError('$e'))),
           data: (accounts) => draftsAsync.when(
             loading: () => const Center(child: FCircularProgress()),
-            error: (e, _) => Center(child: Text('待确认队列加载失败：$e')),
-            data: (drafts) => _content(accounts, drafts),
+            error: (e, _) =>
+                Center(child: Text(l10n.ingestQueueLoadError('$e'))),
+            data: (drafts) => _content(l10n, accounts, drafts),
           ),
         ),
       ),
     );
   }
 
-  Widget _content(List<Account> accounts, List<IngestDraft> drafts) {
+  Widget _content(
+    AppLocalizations l10n,
+    List<Account> accounts,
+    List<IngestDraft> drafts,
+  ) {
     if (drafts.isEmpty) {
       return _EmptyState(onPaste: _busy ? null : _openPasteDialog);
     }
@@ -89,7 +97,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Text(
-            '支出账户',
+            l10n.ingestExpenseAccountLabel,
             style: context.theme.typography.xs.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
@@ -136,7 +144,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 onPress: _busy
                     ? null
                     : () => _confirmAllFresh(drafts, selectedId),
-                child: Text('全部确认 · 仅新增（$freshCount）'),
+                child: Text(l10n.ingestConfirmAllFresh(freshCount)),
               ),
             ),
           ),
@@ -154,8 +162,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _confirm(IngestDraft draft, String? accountId) async {
+    final l10n = AppLocalizations.of(context);
     if (accountId == null || accountId.isEmpty) {
-      AppMessenger.show(context, ToastKind.warning, '请先选择支出账户');
+      AppMessenger.show(context, ToastKind.warning, l10n.ingestSelectAccountFirst);
       return;
     }
     setState(() => _busy = true);
@@ -163,12 +172,14 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       final svc = await ref.read(ingestConfirmServiceProvider.future);
       if (svc == null) {
         if (mounted) {
-          AppMessenger.show(context, ToastKind.error, '服务尚未就绪');
+          AppMessenger.show(context, ToastKind.error, l10n.ingestServiceNotReady);
         }
         return;
       }
       await svc.confirm(draft, fromAccountId: accountId);
-      if (mounted) AppMessenger.show(context, ToastKind.success, '已记录');
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.ingestRecorded);
+      }
     } on IngestConfirmException catch (e) {
       if (mounted) AppMessenger.show(context, ToastKind.error, e.message);
     } finally {
@@ -185,8 +196,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     List<IngestDraft> drafts,
     String? accountId,
   ) async {
+    final l10n = AppLocalizations.of(context);
     if (accountId == null || accountId.isEmpty) {
-      AppMessenger.show(context, ToastKind.warning, '请先选择支出账户');
+      AppMessenger.show(context, ToastKind.warning, l10n.ingestSelectAccountFirst);
       return;
     }
     setState(() => _busy = true);
@@ -195,7 +207,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       if (svc == null) return;
       final n = await svc.confirmAllFresh(drafts, fromAccountId: accountId);
       if (mounted) {
-        AppMessenger.show(context, ToastKind.success, '已记录 $n 笔');
+        AppMessenger.show(context, ToastKind.success, l10n.ingestRecordedN(n));
       }
     } on IngestConfirmException catch (e) {
       if (mounted) AppMessenger.show(context, ToastKind.error, e.message);
@@ -205,11 +217,12 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _openPasteDialog() async {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
     final text = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('粘贴账单文本'),
+        title: Text(l10n.ingestPasteTitle),
         content: SizedBox(
           width: 420,
           child: TextField(
@@ -217,20 +230,20 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             maxLines: 10,
             minLines: 6,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: '粘贴 CSV / 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: l10n.ingestPasteHint,
+              border: const OutlineInputBorder(),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('取消'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('解析'),
+            child: Text(l10n.ingestParseAction),
           ),
         ],
       ),
@@ -246,20 +259,25 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             IngestSource(
               kind: IngestSourceKind.pasteText,
               payload: text,
-              originLabel: '粘贴文本',
+              // Stable non-display breadcrumb (persisted + traced);
+              // the localized button label is rendered separately.
+              originLabel: 'paste',
             ),
           );
       if (!mounted) return;
       if (result.isRejected) {
         AppMessenger.show(context, ToastKind.warning, result.rejectedReason!);
       } else if (result.total == 0) {
-        AppMessenger.show(context, ToastKind.info, '未解析出可识别的交易');
+        AppMessenger.show(context, ToastKind.info, l10n.ingestNoTransactions);
       } else {
         AppMessenger.show(
           context,
           ToastKind.success,
-          '解析 ${result.total} 笔（新增 ${result.newCount} · '
-          '疑似重复 ${result.duplicateCount}）',
+          l10n.ingestParseSummary(
+            result.total,
+            result.newCount,
+            result.duplicateCount,
+          ),
         );
       }
     } finally {
@@ -283,6 +301,7 @@ class _DraftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final p = draft.parsed;
     return SoftCard(
@@ -324,7 +343,7 @@ class _DraftCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                p.categoryHint ?? '未分类',
+                p.categoryHint ?? l10n.ingestUncategorized,
                 style: context.theme.typography.xs.copyWith(
                   color: colors.mutedForeground,
                 ),
@@ -340,7 +359,7 @@ class _DraftCard extends StatelessWidget {
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: busy ? null : onSkip,
-                  child: const Text('跳过'),
+                  child: Text(l10n.ingestSkip),
                 ),
               ),
               const SizedBox(width: 8),
@@ -348,7 +367,7 @@ class _DraftCard extends StatelessWidget {
                 child: FButton(
                   variant: FButtonVariant.primary,
                   onPress: busy ? null : onConfirm,
-                  child: const Text('记录'),
+                  child: Text(l10n.ingestConfirm),
                 ),
               ),
             ],
@@ -372,10 +391,17 @@ class _VerdictPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final (label, state) = switch (verdict) {
-      DedupVerdict.newTxn => ('新增', AiPillState.neutral),
-      DedupVerdict.likelyDuplicate => ('疑似重复', AiPillState.selected),
-      DedupVerdict.duplicate => ('重复', AiPillState.error),
+      DedupVerdict.newTxn => (l10n.ingestVerdictNew, AiPillState.neutral),
+      DedupVerdict.likelyDuplicate => (
+        l10n.ingestVerdictLikely,
+        AiPillState.selected,
+      ),
+      DedupVerdict.duplicate => (
+        l10n.ingestVerdictDuplicate,
+        AiPillState.error,
+      ),
     };
     return AiPill(label: label, state: state);
   }
@@ -388,6 +414,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Center(
       child: Padding(
@@ -402,14 +429,14 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '没有待确认的记录',
+              l10n.ingestEmptyTitle,
               style: context.theme.typography.sm.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              '粘贴账单 / CSV 文本，自动解析为草稿，\n去重对账后在这里确认入账。',
+              l10n.ingestEmptyBody,
               textAlign: TextAlign.center,
               style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,
@@ -420,7 +447,7 @@ class _EmptyState extends StatelessWidget {
               variant: FButtonVariant.outline,
               onPress: onPaste,
               prefix: const Icon(Icons.content_paste_outlined),
-              child: const Text('粘贴文本'),
+              child: Text(l10n.ingestPasteAction),
             ),
           ],
         ),

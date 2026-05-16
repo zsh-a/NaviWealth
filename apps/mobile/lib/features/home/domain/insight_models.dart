@@ -19,6 +19,9 @@ enum InsightKind {
   // §5.10.1 — first-week-of-month recap of the prior month's net
   // worth delta.
   monthlySummary,
+  // §5.10.10 / S5a.1 — Layer 4 ingest queue has parsed-but-unconfirmed
+  // drafts waiting for the user to confirm / skip.
+  ingestQueue,
 }
 
 /// One actionable insight surfaced on the dashboard. The view layer
@@ -45,6 +48,8 @@ class InsightItem {
     this.summaryMonth,
     this.summaryDeltaMinor,
     this.summaryCurrency,
+    this.ingestPendingCount,
+    this.ingestFreshCount,
   });
 
   final IconData icon;
@@ -77,4 +82,10 @@ class InsightItem {
   /// Positive = grew, negative = shrank.
   final int? summaryDeltaMinor;
   final String? summaryCurrency;
+
+  // ── ingestQueue fields ──────────────────────────────────────────
+  /// Total parsed-but-unconfirmed drafts in the Layer 4 queue.
+  final int? ingestPendingCount;
+  /// Subset flagged as new (no dedup match) — safe to bulk-confirm.
+  final int? ingestFreshCount;
 }

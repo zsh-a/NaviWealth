@@ -3799,4 +3799,91 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiCapsuleExpandFallback => '展开';
+
+  @override
+  String get dashboardInsightIngestQueueLabel => '录入待确认';
+
+  @override
+  String dashboardInsightIngestQueueValue(int count, int fresh) {
+    return '解析 $count 条 · $fresh 条可入账';
+  }
+
+  @override
+  String get ingestReviewTitle => '录入待确认';
+
+  @override
+  String ingestAccountsLoadError(String error) {
+    return '账户加载失败：$error';
+  }
+
+  @override
+  String ingestQueueLoadError(String error) {
+    return '待确认队列加载失败：$error';
+  }
+
+  @override
+  String get ingestExpenseAccountLabel => '支出账户';
+
+  @override
+  String ingestConfirmAllFresh(int count) {
+    return '全部确认 · 仅新增（$count）';
+  }
+
+  @override
+  String get ingestSelectAccountFirst => '请先选择支出账户';
+
+  @override
+  String get ingestServiceNotReady => '服务尚未就绪';
+
+  @override
+  String get ingestRecorded => '已记录';
+
+  @override
+  String ingestRecordedN(int count) {
+    return '已记录 $count 笔';
+  }
+
+  @override
+  String get ingestPasteTitle => '粘贴账单文本';
+
+  @override
+  String get ingestPasteHint => '粘贴 CSV / 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY';
+
+  @override
+  String get ingestParseAction => '解析';
+
+  @override
+  String get ingestNoTransactions => '未解析出可识别的交易';
+
+  @override
+  String ingestParseSummary(int total, int fresh, int dup) {
+    return '解析 $total 笔（新增 $fresh · 疑似重复 $dup）';
+  }
+
+  @override
+  String get ingestUncategorized => '未分类';
+
+  @override
+  String get ingestSkip => '跳过';
+
+  @override
+  String get ingestConfirm => '记录';
+
+  @override
+  String get ingestVerdictNew => '新增';
+
+  @override
+  String get ingestVerdictLikely => '疑似重复';
+
+  @override
+  String get ingestVerdictDuplicate => '重复';
+
+  @override
+  String get ingestEmptyTitle => '没有待确认的记录';
+
+  @override
+  String get ingestEmptyBody => '粘贴账单 / CSV 文本，自动解析为草稿，\n去重对账后在这里确认入账。';
+
+  @override
+  String get ingestPasteAction => '粘贴文本';
 }

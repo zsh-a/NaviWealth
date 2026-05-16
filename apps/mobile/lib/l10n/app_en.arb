@@ -2272,5 +2272,74 @@
   "aiReplyChipExpandDetails": "Expand details",
   "aiReplyChipActionPlanGeneric": "Give an action plan",
   "aiReplyChipVsLastMonth": "Compare with last month",
-  "aiCapsuleExpandFallback": "Expand"
+  "aiCapsuleExpandFallback": "Expand",
+
+  "dashboardInsightIngestQueueLabel": "Records to confirm",
+  "@dashboardInsightIngestQueueLabel": { "description": "Dashboard insight label: Layer 4 ingest queue has parsed drafts awaiting confirmation" },
+  "dashboardInsightIngestQueueValue": "{count} parsed · {fresh} ready to add",
+  "@dashboardInsightIngestQueueValue": {
+    "description": "Dashboard ingest-queue insight value",
+    "placeholders": { "count": { "type": "int" }, "fresh": { "type": "int" } }
+  },
+  "ingestReviewTitle": "Review entries",
+  "@ingestReviewTitle": { "description": "Layer 4 ingest review page title" },
+  "ingestAccountsLoadError": "Failed to load accounts: {error}",
+  "@ingestAccountsLoadError": {
+    "description": "Ingest review: accounts stream error",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "ingestQueueLoadError": "Failed to load the queue: {error}",
+  "@ingestQueueLoadError": {
+    "description": "Ingest review: drafts stream error",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "ingestExpenseAccountLabel": "Paid from",
+  "@ingestExpenseAccountLabel": { "description": "Ingest review: paying-account selector label" },
+  "ingestConfirmAllFresh": "Confirm all · new only ({count})",
+  "@ingestConfirmAllFresh": {
+    "description": "Ingest review: batch-confirm button (new drafts only)",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "ingestSelectAccountFirst": "Pick a paying account first",
+  "@ingestSelectAccountFirst": { "description": "Ingest review: no account chosen warning" },
+  "ingestServiceNotReady": "Service not ready yet",
+  "@ingestServiceNotReady": { "description": "Ingest review: confirm service unavailable" },
+  "ingestRecorded": "Recorded",
+  "@ingestRecorded": { "description": "Ingest review: single confirm success toast" },
+  "ingestRecordedN": "Recorded {count}",
+  "@ingestRecordedN": {
+    "description": "Ingest review: batch confirm success toast",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "ingestPasteTitle": "Paste statement text",
+  "@ingestPasteTitle": { "description": "Ingest paste dialog title" },
+  "ingestPasteHint": "Paste CSV / statement text\ne.g. 2026-05-10,Starbucks,-38.00,CNY",
+  "@ingestPasteHint": { "description": "Ingest paste dialog text-field hint" },
+  "ingestParseAction": "Parse",
+  "@ingestParseAction": { "description": "Ingest paste dialog confirm button" },
+  "ingestNoTransactions": "No recognizable transactions",
+  "@ingestNoTransactions": { "description": "Ingest review: parse produced zero rows" },
+  "ingestParseSummary": "Parsed {total} · {fresh} new · {dup} possible dup",
+  "@ingestParseSummary": {
+    "description": "Ingest review: parse result summary toast",
+    "placeholders": { "total": { "type": "int" }, "fresh": { "type": "int" }, "dup": { "type": "int" } }
+  },
+  "ingestUncategorized": "Uncategorized",
+  "@ingestUncategorized": { "description": "Ingest review: draft with no category hint" },
+  "ingestSkip": "Skip",
+  "@ingestSkip": { "description": "Ingest review: dismiss one draft" },
+  "ingestConfirm": "Record",
+  "@ingestConfirm": { "description": "Ingest review: confirm one draft" },
+  "ingestVerdictNew": "New",
+  "@ingestVerdictNew": { "description": "Ingest dedup verdict: no match" },
+  "ingestVerdictLikely": "Likely dup",
+  "@ingestVerdictLikely": { "description": "Ingest dedup verdict: probable duplicate" },
+  "ingestVerdictDuplicate": "Duplicate",
+  "@ingestVerdictDuplicate": { "description": "Ingest dedup verdict: exact duplicate" },
+  "ingestEmptyTitle": "Nothing to confirm",
+  "@ingestEmptyTitle": { "description": "Ingest review empty-state title" },
+  "ingestEmptyBody": "Paste statement / CSV text — it is parsed into drafts,\nreconciled, and confirmed here.",
+  "@ingestEmptyBody": { "description": "Ingest review empty-state body" },
+  "ingestPasteAction": "Paste text",
+  "@ingestPasteAction": { "description": "Ingest review: open paste dialog" }
 }

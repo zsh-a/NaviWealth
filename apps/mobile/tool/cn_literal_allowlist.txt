@@ -28,13 +28,12 @@ lib/features/ai_chat/domain/proposal_plan.dart
 lib/features/ai_chat/ui/tool_invocation_renderers.dart
 # AI chat surface strings and suggested prompts. These are user-facing and
 # should move to ARB in a focused AI-chat l10n pass; keep baselined so FIR-99
-# continues to block new CN literals elsewhere.
-lib/features/ai_chat/ui/ai_bottom_sheet.dart
-lib/features/ai_chat/ui/ai_object_capsule.dart
+# continues to block new CN literals elsewhere. (S5a.1 pruned three stale
+# entries the scanner had been flagging: ai_bottom_sheet.dart removed in
+# Wave 37; ai_object_capsule.dart + reply_chips.dart no longer hold CN.)
 lib/features/ai_chat/ui/ai_transparency_badge.dart
 lib/features/ai_chat/ui/message_bubble.dart
 lib/features/ai_chat/ui/propose_card.dart
-lib/features/ai_chat/ui/reply_chips.dart
 
 # ─── AI local semantics / prompt corpora (intentional for now) ───────
 # These strings are not simple display copy: they are user-query keywords,
@@ -75,25 +74,33 @@ lib/data/repositories/account_repository.dart
 # point — the alias has to match the user's typed input regardless of
 # their app locale.
 lib/core/command_palette/default_commands.dart
+# ask_ai_result_pane.dart (S2) holds the irreversible-intent keyword
+# guard ("转账"/"下单"/"删除账户" …) that pattern-matches the user's
+# raw NL query before the command bar acts (§5.10.6). Same category as
+# the search aliases above: matching corpora, not display copy — the
+# token must equal what a CN user types regardless of app locale.
+lib/core/command_palette/ask_ai_result_pane.dart
 
 # ─── Remaining feature UI — l10n follow-up ───────────────────────────
+# (ai_insight_feed.dart cleared in S5a.1 — fully routes through
+# insight_feed_strings/AppLocalizations; only English breadcrumbs left.)
 lib/features/expense/ui/expense_form_page.dart
-lib/features/home/ui/ai_insight_feed.dart
 
-# ─── Layer 4 ingest pipeline (S5a — §5.10.10) ───────────────────────
-# First device-only slice of the record-entry pipeline. Two distinct
-# reasons these carry CN literals:
+# ─── Layer 4 ingest pipeline (S5a.1 — §5.10.10) ─────────────────────
+# The UI (ingest_review_page.dart) was fully migrated to ARB in S5a.1
+# and is intentionally NOT listed. What remains are two non-UI cases:
 #   1. csv_ingest_parser.dart — `_headerAliases` matches Chinese bank
-#      statement column headers ("日期"/"金额"/"摘要"…). These are
-#      *parser data matched against external files*, not UI copy, so
-#      they cannot be localised by nature (same rationale as the
-#      command-palette search-keyword exemption above).
-#   2. ingest_review_page.dart + the data-layer error/summary strings
-#      are user-facing copy not yet migrated. Owned by the deferred
-#      S5a.1 line (which also lands the Layer-3 ambient card + the
-#      bilingual ARB pass) — see docs/ai-architecture.md §5.10.9.
+#      statement column headers ("日期"/"金额"/"摘要"…). Parser data
+#      matched against external files, not display copy; cannot be
+#      localised by nature (same rationale as the command-palette
+#      keyword exemption above).
+#   2. ingest_pipeline / ingest_confirm_service / providers carry
+#      data-layer reject/exception strings with no BuildContext —
+#      identical situation to the ai_chat persisted-data layer block
+#      at the top (proposal_applier / chat_repository). A future pass
+#      restructures these to structured handles rendered at display
+#      time; tracked with the ai_chat data-layer follow-up.
 lib/features/ingest/data/csv_ingest_parser.dart
 lib/features/ingest/data/ingest_confirm_service.dart
 lib/features/ingest/data/ingest_pipeline.dart
 lib/features/ingest/data/providers.dart
-lib/features/ingest/ui/ingest_review_page.dart
