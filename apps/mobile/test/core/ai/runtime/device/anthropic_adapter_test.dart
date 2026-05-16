@@ -207,12 +207,18 @@ void main() {
         ],
         stream: false,
       );
-      final streaming = jsonDecode(req.encodeStreaming()) as Map;
-      final oneShot = jsonDecode(req.encodeOneShot()) as Map;
+      final streaming =
+          jsonDecode(req.encodeStreaming()) as Map<String, Object?>;
+      final oneShot =
+          jsonDecode(req.encodeOneShot()) as Map<String, Object?>;
       expect(streaming['stream'], true);
       expect(oneShot['stream'], false);
-      expect(streaming['messages'][0]['content'], 'hi');
-      expect(streaming['tools'][0]['input_schema'], {'type': 'object'});
+      final msg0 =
+          (streaming['messages']! as List).first as Map<String, Object?>;
+      expect(msg0['content'], 'hi');
+      final tool0 =
+          (streaming['tools']! as List).first as Map<String, Object?>;
+      expect(tool0['input_schema'], {'type': 'object'});
       expect(streaming['max_tokens'], 256);
     });
 

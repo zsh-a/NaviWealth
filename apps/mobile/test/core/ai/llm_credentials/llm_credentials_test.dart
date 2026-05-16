@@ -197,14 +197,12 @@ void main() {
     });
   });
 
-  test('platform-support provider follows the native gate', () {
-    // Default test target platform is android ⇒ supported.
+  test('platform gate = all native (incl. desktop); only web excluded', () {
+    // §4.6.1 (amended): every native platform is supported; the gate
+    // is `!kIsWeb`. The test VM is native ⇒ supported.
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    expect(
-      container.read(deviceLlmPlatformSupportedProvider),
-      defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS,
-    );
+    expect(container.read(deviceLlmPlatformSupportedProvider), !kIsWeb);
+    expect(container.read(deviceLlmPlatformSupportedProvider), isTrue);
   });
 }

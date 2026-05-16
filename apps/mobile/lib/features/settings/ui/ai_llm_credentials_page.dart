@@ -244,7 +244,8 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            '自带 Key 的端侧 AI 仅在 iOS / Android 上可用'
+            '自带 Key 的端侧 AI 在原生平台'
+            '（iOS / Android / macOS / Windows / Linux）可用'
             '（需要系统级安全存储）。Web 继续使用云端 AI。',
             style: context.theme.typography.xs.copyWith(
               color: context.theme.colors.mutedForeground,

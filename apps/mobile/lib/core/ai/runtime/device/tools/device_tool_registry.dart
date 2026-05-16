@@ -24,6 +24,7 @@ import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
 import 'device_tool.dart';
+import 'get_anomaly_flags_tool.dart';
 import 'get_asset_allocation_tool.dart';
 import 'get_holdings_tool.dart';
 import 'list_payment_accounts_tool.dart';
@@ -40,6 +41,7 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   ListPaymentAccountsTool(),
   GetHoldingsTool(),
   GetAssetAllocationTool(),
+  GetAnomalyFlagsTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

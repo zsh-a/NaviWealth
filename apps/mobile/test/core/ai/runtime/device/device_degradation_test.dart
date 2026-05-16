@@ -217,6 +217,7 @@ void main() {
     test('registry advertises exactly the canonical set, sorted', () {
       final names = defaultDeviceToolRegistry().schemas().map((s) => s.name);
       expect(names, [
+        'get_anomaly_flags',
         'get_asset_allocation',
         'get_holdings',
         'list_payment_accounts',

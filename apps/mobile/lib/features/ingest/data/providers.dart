@@ -13,6 +13,7 @@ import '../../../core/ai/contracts/ai_trace.dart';
 import '../../../core/ai/contracts/intent.dart';
 import '../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../../../core/ai/local/skills/skills.dart';
+import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/providers.dart';
@@ -21,6 +22,7 @@ import '../../../data/repositories/journal_entry_providers.dart';
 import '../../ai_chat/data/providers.dart';
 import '../domain/ingest_models.dart';
 import 'cloud_ingest_client.dart';
+import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
 import 'ingest_pipeline.dart';
@@ -60,9 +62,21 @@ final ingestPipelineProvider = Provider<IngestPipeline>(
 /// §5.10.10 / S5b-vision — backend Vision client. Reuses the
 /// base-URL-configured AI Dio; auth rides per-request like the chat
 /// client.
-final cloudIngestClientProvider = Provider<CloudIngestClient>(
-  (ref) => DioCloudIngestClient(dio: ref.watch(aiChatDioProvider)),
-);
+/// §4.6 W-D5 — routes Vision parse device-direct when the on-device
+/// runtime is available (native incl. desktop × user key × opt-in),
+/// reusing the *same* [AnthropicClient] the chat path built (one
+/// credential/Dio source). Otherwise the Worker relay, so behaviour
+/// with no key is identical to before. No device→cloud failover by
+/// design — see [DeviceVisionIngestClient].
+final cloudIngestClientProvider = Provider<CloudIngestClient>((ref) {
+  final DeviceLlmRuntime? runtime = ref.watch(deviceLlmRuntimeProvider);
+  return RoutingCloudIngestClient(
+    cloud: DioCloudIngestClient(dio: ref.watch(aiChatDioProvider)),
+    device: runtime == null
+        ? null
+        : DeviceVisionIngestClient(client: runtime.client),
+  );
+});
 
 /// Dedup ledger snapshot — the device's expense truth, projected into
 /// the neutral skill shape. Resolved fresh per ingest run.

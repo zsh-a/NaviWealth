@@ -435,7 +435,7 @@ sealed class ProposalEnvelope {
 
 Confirmation gate 对 source 不敏感 — 任何高风险 proposal 都走同一确认 UI。**Privacy Policy 永远优先于 source。**
 
-### 4.6 Phase 5 — 端侧 LLM Runtime（用户自带 key · 最小后端 · 原生 only）
+### 4.6 Phase 5 — 端侧 LLM Runtime（用户自带 key · 最小后端 · 全原生平台，含桌面）
 
 > 状态: ❌ 未实现 → 本节为已锁定的落地决策（取代 §9 P3 「Phase 5 — 端侧 LLM runtime」的占位描述）。
 > 取舍详见 §11；逐 Wave 清单见 §8 / §9。
@@ -448,14 +448,14 @@ Confirmation gate 对 source 不敏感 — 任何高风险 proposal 都走同一
 2. **`DeviceLlmRuntime` 直连 provider**: 端侧 Dart Anthropic adapter（port 自 `apps/backend/src/ai/adapters/anthropic/`，Messages API + SSE streaming + `tool_use`）。agent loop / tool dispatch / prompt 组装 / proposal 全在端侧。
 3. **工具读 Drift 本地真源**: 不再读 D1 read models。**§4.2 freshness gate 与 ScopedDisclosure 兜底通道在 device runtime 路径上整体消失** —— 端侧本就是 local-first 真值源，不存在 read model stale，也不存在「原始 ledger 出设备」需要脱敏的问题。
 4. **Vision 端侧直发**: 图像 base64 → content block，用用户 key 直发 provider。比 §5.10.10 的 Worker 中转**更私密**（原图根本不出设备到我方服务器）。AiTrace 文案改为「端侧直连 provider · 原图未经我方服务器」。
-5. **平台边界 = 仅 iOS/Android 原生**: 原生有 Keychain/Keystore 安全存储 + 无浏览器 CORS。**Web 继续走 `CloudAnthropicRuntime`**（cloud relay 仍在时），由 registry 按 `platform × keyPresent × optIn` 选择。
+5. **平台边界 = 全部原生平台（iOS / Android / macOS / Windows / Linux），仅排除 Web**（决策已修订，原为「仅 iOS/Android」）: 所有原生平台都有系统级安全存储（iOS/macOS Keychain、Android Keystore、Windows 凭据库、Linux libsecret，均经 `flutter_secure_storage` ^10）且用原生 HTTP（无浏览器 CORS / 无 JS key 暴露）——桌面与移动的安全前提**完全相同**，故端侧 agent 同样支持桌面。**只有 Web 继续走 `CloudAnthropicRuntime`**（IndexedDB-only key + 浏览器直连 CORS）。门控就是 `!kIsWeb`，由 registry 按 `platform × keyPresent × optIn` 选择。
 
 #### 4.6.2 Runtime 选择（`RuntimeRegistry` 改造）
 
 新增 `RuntimeId.deviceLlm`。`pickFor` 不再单纯按 `Backend` 枚举一一映射，改为能力 + 环境联合判定：
 
 ```text
-if  platform == native(iOS/Android)
+if  platform == native(iOS/Android/macOS/Windows/Linux，即 !web)
  && userLlmKeyPresent
  && userOptedInDeviceAi          → RuntimeId.deviceLlm
 else if cloud relay 仍存在        → RuntimeId.cloudAnthropic   (web / 无 key / 未 opt-in / 降级)
@@ -1056,7 +1056,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | **★ AiTraceStore 持久化** | Drift 表 `ai_traces` (request_id PK + owner partition) + `DriftAiTraceStore`；provider 自动从 in-memory 切换到 Drift | ✅ Wave 23 落地；30 天清理由 caller 调度 |
 | **★ Undo stack 持久化** | Drift 表 `ai_undo_stack` (token PK + expires_at) + `DriftUndoStack` (put/take 原子 / pruneExpiredBefore) | ✅ Wave 24 落地；closure-based `LocalImmediateWriteExecutor` 保留作为内存路径，需持久化的 caller 直接用 `DriftUndoStack` |
 | **★ `tools.rs` 拆分** | `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法提到 `tools/xirr.rs` | ✅ Wave 25 起步；剩余 read/propose 二级拆分待后续增量 |
-| **Phase 5** | 端侧 LLM runtime（§4.6：用户自带 key · 直连 provider · 工具读 Drift · 原生 only · cloud 先并存后删） | ❌ 未实现（W-D1–W-D7 见 §9） |
+| **Phase 5** | 端侧 LLM runtime（§4.6：用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · cloud 先并存后删） | 🚧 W-D1–4/4.2/4.2b/6 + 桌面支持已落；W-D5/4.3/4.4/4.5/4.2c/7 待续 |
 
 **ToolDescriptor 总数**: 27（Read 20 + Propose 5 + 兼容保留 2）— 见 `apps/backend/src/ai/policy/tool_policy.rs`。每条描述符含七个轴：`name` / `access` / `risk` / `requires_confirmation` / `allowed_context_tier` / `allowed_runtimes` / `side_effect` / `read_model_layer`。`risk_policy.rs::every_dispatch_target_has_a_descriptor` 与 `tools.rs::schemas_advertise_all_dispatch_targets` 双向同步。
 
@@ -1171,7 +1171,9 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
   - [~] **W-D4** 端侧 tool registry（框架 + proof tool 完成；其余工具族增量）— `runtime/device/tools/`：`DeviceTool`/`DeviceToolContext`、`DeviceToolRegistry`（schemas feed + 排序）、`DriftDeviceToolDispatcher`（per-tool 15s timeout + backend `policy_denied`/`tool_timeout`/`tool_error` 信封逐字 port + §4.5 external_call 拒绝）；proof tool `list_payment_accounts`（schema/desc 逐字 port，读 `accountsStreamProvider` + 纯 `shape()` 复刻 backend payload filter）；接入 `deviceLlmRuntimeProvider`；11 tests。**allow-list 决策见 §11**。剩余工具族（Snapshot/XIRR 复用 `domain/services/` · Analytical 直连 detector · Scoped Detail 查 Drift 去 HMAC · propose_*）= W-D4.2~W-D4.5 增量
     - **W-D4.2 进行中**：`get_holdings` 落地（schema/desc 逐字 port）。提取 `devicePortfolioSnapshotProvider`（`_buildPortfolioSnapshot` 从 ai_chat 移到 `investment/data/providers.dart`，云/端两路共用一个 builder，DRY）；端侧 `get_holdings` 复刻 backend `client_portfolio_snapshot` 分支（端侧持仓引擎即真值，无 read model 故无 freshness gate）；纯 `shape()` 单测；23 个 chat_repository 回归测试零退化。其余 Snapshot/XIRR 继续增量
     - **W-D4.2b 进行中**：`get_asset_allocation` 落地——schema/desc 逐字 port，纯 `shape()` 逐字 port backend `asset_allocation_snapshot::aggregate`（(asset_type,currency) 双键聚合 cost basis，weight 同币种内归一，currency asc + weight desc 排序），复用已提取的 `devicePortfolioSnapshotProvider`（零新 provider，与 `get_holdings` 同源同模式），无 read model 故无 freshness gate。registry 现 3 工具。剩余 `get_net_worth_summary`/`compute_net_worth`/`compute_xirr`/`get_xirr_summary`/breakdown(industry/geo/market_cap，需 asset 分类元数据)/cashflow → W-D4.2c
-  - [ ] **W-D5** 端侧 Vision 摄取（image → content block，用户 key 直发）+ AiTrace 文案「原图未经我方服务器」
+  - [x] ~~**桌面平台支持**（/goal 修订）~~ — `deviceLlmPlatformSupportedProvider` 改为 `!kIsWeb`（含 macOS/Windows/Linux）；§4.6.1 决策 5 + §11 修订；设置页文案 + 测试更新
+  - [~] **W-D4.3** Analytical device tools（proof tool 完成）— `get_anomaly_flags` 落地：schema/desc 逐字 port；§4.3.3「端侧是唯一计算者」→ 抽 `analyticalAnomalyUpload` 共享 converter（cloud `ContextPack.analytical_uploads` 与 device 工具单一来源，不漂移），纯 `shape()` 把 upload 投影成 backend flag-row + severity_min 过滤。剩余 `get_recurring_patterns`/`get_refund_links`/`get_transfer_links`/`get_investment_performance`/`get_subscription_changes` 同模式增量（W-D4.3b）
+  - [x] ~~**W-D5** 端侧 Vision 摄取（image → content block，用户 key 直发）~~ — `device_vision_parse.dart` 逐字 port `ingest/parse.rs`（emit 工具 schema / system prompt / `buildVisionMessages` PDF→document·其余→image / `extractVisionDraftRows` 含 200 上限 + 缺工具→`VisionNoExtraction`）；`DeviceVisionIngestClient implements CloudIngestClient` 用 `AnthropicClient.complete()` 一发 forced-tool，行映射复用**共享** `parsedTransactionFromWire`（端/云对同一模型 JSON 产出一致 `ParsedTransaction`）；`RoutingCloudIngestClient` 复用 chat 路径同一 `AnthropicClient`（单一凭证/Dio 源）按可用性选 device-or-cloud。**隐私正确分歧**：device Vision 失败**不回落我方 cloud**（用户已选「原图不经我方服务器」，静默重发会破坏该承诺）。privacy gate 不变（在 client 之前已裁决，device-direct 仍属对外 egress，只是换成用户自己的 provider、移除我方服务器）。7 tests（含 parse.rs 平价用例）；test/features/ingest+core/ai+ai_chat 共 422 测试零回归。注：ingest 非 chat turn，AiTrace 不在此路径；透明度文案归 ingest 自有 surface（后续）
   - [x] ~~**W-D6** AiTrace / 透明度页适配「端侧直连 provider」+ 降级路径测试 + 回归 corpus~~ — 透明度保真:`_prepareChatTrace` 在 device runtime 可用时把 seed `copyWith(backend: device, routingReason: 'device_llm_direct', usedCloud: false)`(`kDeviceLlmDirectRoutingReason` + `AiTrace.copyWith` 新增,local-only 无 wire 破坏);徽章 `formatAiTraceBadge` device-direct → 「端侧直连模型 · 请求与数据未经我方服务器」(区别于零模型 rules-device 的「全部本地处理」)。**§4.6.4 失效转移**:`RuntimeRoutingAiChatApiClient` 提取 `DeviceChatRunner` 接口 + buffer-until-content 逻辑——device 未产出任何 assistant 内容(provider 报错/空答/抛错)→ 静默回落 cloud;已出内容后再失败则透传不重启。**静态契约**(corpus 精神适配 device 路径):`kDeviceTools` 单一来源 + `defaultDeviceToolRegistry()`,测试断言每个 device 工具名在 `tool_descriptor.dart` 镜像可解析(§10 漂移守卫)。11 tests;test/core/ai + test/features/ai_chat 共 368 测试零回归
   - [ ] **W-D7（后续）** 删除 `apps/backend/src/ai/` + `/ai/chat` + guardrails；read model 表/migration 保留为历史；文档收尾
 - [ ] **Phase 5 — 真实 Embedder** — 替换 `StubEmbedder` 为 MiniLM (~30MB ONNX)。`Embedder` 接口已稳定，仅换实现类。
@@ -1241,7 +1243,7 @@ packages/ai_contracts/
 - **为什么 device runtime 路径上 freshness gate / ScopedDisclosure 整体消失**（§4.6）— 这两条通道存在的前提是「云端推理需要绕回端侧拿最新真值 / 原始 ledger 不能出设备」。当推理本身就在端侧、直接读 Drift 真源时，既无 stale 也无「出设备」边界，兜底通道在该路径上无意义（cloud relay 路径仍保留它们直到删除）。
 - **为什么 Scoped Detail 端侧不再 HMAC 脱敏**（§4.6）— `merchant_hashed` 的唯一目的是「原始字段不出设备到云」。端侧推理明细本就不出设备，脱敏只剩 token/可读性负担；保留 `purpose` 必填 + 写 AiTrace 即可维持同等透明度。
 - **为什么 Vision 端侧直发比 Worker 中转更私密**（对比 §11 末条「云端 Vision 无状态零留存」）— 那条的边界是「Worker in-request 处理后即弃」，仍有原图短暂经我方服务器。用户自带 key 直发 provider 后原图根本不到我方服务器，是更强而非更弱的隐私边界。
-- **为什么 web 仍走 cloud relay**（§4.6.1）— 浏览器无系统级安全存储（key 只能落 IndexedDB/localStorage），且 Anthropic 浏览器直连需 dangerous header 并把 key 暴露在 JS 内存；原生有 Keychain/Keystore，边界本质不同，不强行统一。
+- **为什么 web 仍走 cloud relay，而桌面与移动一视同仁**（§4.6.1，决策修订）— 浏览器无系统级安全存储（key 只能落 IndexedDB/localStorage），且 Anthropic 浏览器直连需 dangerous header 并把 key 暴露在 JS 内存。**所有原生平台（含 macOS/Windows/Linux）都有系统密钥库 + 原生 HTTP**，与移动端安全前提完全一致，没有理由把桌面排除在端侧 agent 之外；真正的边界是「web vs 原生」而非「移动 vs 桌面」。门控收敛为单一 `!kIsWeb`。原「仅 iOS/Android」是 Phase 5 初版的保守范围，已按需求修订。
 - **为什么先并存再删 cloud AI**（§4.6 / §8 / §9 W-D7）— 140 backend tests + 已验证的 read model 主通道是资产；`AiRuntime` registry 让端云并存零成本，端侧路径生产验证稳定后再单独 Wave 做不可逆删除，降低回归风险。
 - **为什么 device tool 的 allow-list 是「registry 成员」而非 `allowed_runtimes` 字段**（§4.6.3 / W-D4）— backend `tool_policy.rs` 所有描述符当前是 `CLOUD_ONLY`，mobile 镜像 `tool_descriptor.dart` 也默认 cloud-only。把 `allowed_runtimes` 当 device gate 需要么改 backend（冻结至 W-D7）、么批量改 wire 镜像（§10 漂移风险）。改用「只有注册了 Drift 实现的工具才可被 device 调用」——「没有实现」比「元数据标志」是更强的保证，且零 backend 改动。`allowed_runtimes` 与 backend 的对账并入 W-D7（删 cloud 时一并 flip）。dispatcher 仍按 §4.5 拒绝 `external_call` 副作用作纵深防御。
 - **为什么端侧 agent 全 Dart 而非复用 Rust（FFI）**（§4.6）— 复用 Rust 的标准理由是「两份实现永久同步」，但 W-D7 删 cloud 后只剩端侧一份，dual-impl 只是 W-D1~W-D6 共存窗口的临时成本，会自然蒸发。换 FFI 的代价（backend crate 拆 runtime-无关 core / 从零搭 cargo-ndk + iOS xcframework + FRB / Drift 数据只能回调进 Dart 故 tool 取数仍是 Dart）是永久负债。唯一永久漂移风险是数值算法（XIRR Newton-Raphson 等），用 `test/core/ai/.../*_parity_test.dart` roundtrip 对齐 backend 直到 W-D7 删除即可，不值得为此引入 FFI 工具链。

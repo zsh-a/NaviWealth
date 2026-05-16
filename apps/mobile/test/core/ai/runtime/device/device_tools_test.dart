@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
@@ -10,6 +13,7 @@ import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
 
 SyncMeta _stamp() => SyncMeta(
   ownerUserId: 'u',
@@ -87,12 +91,15 @@ void main() {
         ListPaymentAccountsTool(),
         GetHoldingsTool(),
         GetAssetAllocationTool(),
+        GetAnomalyFlagsTool(),
       ]);
       final schemas = reg.schemas();
-      expect(
-        schemas.map((s) => s.name),
-        ['get_asset_allocation', 'get_holdings', 'list_payment_accounts'],
-      );
+      expect(schemas.map((s) => s.name), [
+        'get_anomaly_flags',
+        'get_asset_allocation',
+        'get_holdings',
+        'list_payment_accounts',
+      ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
         contains('支付账户候选'),
@@ -328,6 +335,91 @@ void main() {
       expect(m['buckets'], isEmpty);
       expect(m['count'], 0);
       expect(m['note'], contains('cost basis'));
+    });
+  });
+
+  group('analyticalAnomalyUpload — shared cloud/device converter', () {
+    test('null anomaly → null upload', () {
+      expect(analyticalAnomalyUpload(null), isNull);
+    });
+
+    test('buckets severity by |deltaRatio| and stamps stable id', () {
+      final u = analyticalAnomalyUpload(
+        const ExpenseAnomalySummary(deltaRatio: 0.6),
+        now: DateTime.utc(2026, 5, 16),
+      )!;
+      expect(u.kind, 'anomaly_flag');
+      expect(u.id, 'expense_monthly_spike|2026-05');
+      expect(u.payload['severity'], 'critical');
+      expect(u.payload['delta_pct'], 60);
+      expect(u.payload['kind'], 'monthly_spike');
+      expect(u.payload['category'], 'all_expense');
+      expect(
+        analyticalAnomalyUpload(
+          const ExpenseAnomalySummary(deltaRatio: 0.3),
+          now: DateTime.utc(2026),
+        )!.payload['severity'],
+        'warn',
+      );
+      expect(
+        analyticalAnomalyUpload(
+          const ExpenseAnomalySummary(deltaRatio: 0.1),
+          now: DateTime.utc(2026),
+        )!.payload['severity'],
+        'info',
+      );
+    });
+  });
+
+  group('GetAnomalyFlagsTool.shape — projects upload → flag row', () {
+    AnalyticalUpload up(double d) => analyticalAnomalyUpload(
+      ExpenseAnomalySummary(deltaRatio: d),
+      now: DateTime.utc(2026, 5, 16),
+    )!;
+
+    test('no anomaly → empty, device-sourced envelope', () {
+      final m = GetAnomalyFlagsTool.shape(null);
+      expect(m['flags'], isEmpty);
+      expect(m['count'], 0);
+      expect(m['source'], 'device_analytical_read_model');
+      expect(m['note'], contains('device-sourced'));
+    });
+
+    test('projects the backend flag-row shape', () {
+      final m = GetAnomalyFlagsTool.shape(up(0.6));
+      final f = (m['flags'] as List).single as Map<String, Object?>;
+      expect(f['id'], 'expense_monthly_spike|2026-05');
+      expect(f['category'], 'all_expense');
+      expect(f['kind'], 'monthly_spike');
+      expect(f['delta_pct'], 60);
+      expect(f['severity'], 'critical');
+      expect(f['detected_at'], isA<String>());
+      expect(f['payload'], isA<Map<String, Object?>>());
+      expect(m['count'], 1);
+    });
+
+    test('severity_min filters (info ≤ warn ≤ critical)', () {
+      expect(
+        (GetAnomalyFlagsTool.shape(up(0.3), severityMin: 'critical')['flags']
+                as List)
+            .isEmpty,
+        isTrue, // warn < critical → dropped
+      );
+      expect(
+        (GetAnomalyFlagsTool.shape(up(0.6), severityMin: 'warn')['flags']
+                as List)
+            .length,
+        1, // critical ≥ warn → kept
+      );
+    });
+
+    test('invalid severity_min is ignored (no filter)', () {
+      expect(
+        (GetAnomalyFlagsTool.shape(up(0.1), severityMin: 'weird')['flags']
+                as List)
+            .length,
+        1,
+      );
     });
   });
 }
