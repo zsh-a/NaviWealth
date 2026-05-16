@@ -33,6 +33,8 @@ import 'get_refund_links_tool.dart';
 import 'get_subscription_changes_tool.dart';
 import 'get_transfer_links_tool.dart';
 import 'list_payment_accounts_tool.dart';
+import 'propose_account_create_tool.dart';
+import 'propose_asset_valuation_tool.dart';
 import 'propose_expense_tool.dart';
 
 /// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
@@ -54,6 +56,8 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   GetInvestmentPerformanceTool(),
   GetSubscriptionChangesTool(),
   ProposeExpenseTool(),
+  ProposeAccountCreateTool(),
+  ProposeAssetValuationTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

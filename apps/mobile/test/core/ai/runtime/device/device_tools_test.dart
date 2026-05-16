@@ -27,8 +27,11 @@ import 'package:naviwealth/core/ai/runtime/device/tools/get_subscription_changes
 import 'package:naviwealth/core/ai/runtime/device/tools/get_transfer_links_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose/proposal_plan.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/propose_account_create_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/propose_asset_valuation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
+import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
@@ -120,6 +123,8 @@ void main() {
         GetInvestmentPerformanceTool(),
         GetSubscriptionChangesTool(),
         ProposeExpenseTool(),
+        ProposeAccountCreateTool(),
+        ProposeAssetValuationTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -132,6 +137,8 @@ void main() {
         'get_subscription_changes',
         'get_transfer_links',
         'list_payment_accounts',
+        'propose_account_create',
+        'propose_asset_valuation',
         'propose_expense',
       ]);
       expect(
@@ -830,6 +837,146 @@ void main() {
       expect((plan['payload'] as Map)['category'], 'food');
       expect(plan['summary_zh'], '记一笔餐饮支出 12.5 CNY');
       expect(isRfc3339('2026-05-16'), isFalse); // tool would bad_request
+    });
+  });
+
+  group('W-D4.5b — resolveAsset + account_create + asset_valuation', () {
+    Asset asset(
+      String id,
+      String symbol, {
+      AssetType type = AssetType.stock,
+      String currency = 'USD',
+      String? name,
+    }) => Asset(
+      id: id,
+      type: type,
+      symbol: symbol,
+      currency: currency,
+      name: name,
+      sync: _stamp(),
+    );
+
+    test('resolveAsset: none / one(byId,bySymbol,byName) / many', () {
+      final assets = [
+        asset('a1', 'AAPL', name: 'Apple Inc'),
+        asset('a2', 'AAPLW', name: 'Apple Warrant'),
+        asset('h1', 'HOUSE', type: AssetType.realEstate, name: '北京房产'),
+      ];
+      expect(resolveAsset(assets, byName: 'nope'), isA<ResolvedNone<Asset>>());
+      expect(
+        (resolveAsset(assets, byId: 'h1') as ResolvedOne<Asset>).row.symbol,
+        'HOUSE',
+      );
+      expect(
+        (resolveAsset(assets, byName: '北京') as ResolvedOne<Asset>).row.id,
+        'h1',
+      );
+      final many = resolveAsset(assets, bySymbol: 'aapl') as ResolvedMany<Asset>;
+      expect(many.candidates, hasLength(2));
+      expect(many.candidates.first, containsPair('type', 'stock'));
+    });
+
+    Future<Object?> runTool(DeviceTool tool, Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => tool.invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('propose_account_create: validation + ready (pure, no provider)',
+        () async {
+      expect(
+        ((await runTool(const ProposeAccountCreateTool(), const {}))
+            as Map)['error'],
+        contains("field 'name'"),
+      );
+      expect(
+        ((await runTool(const ProposeAccountCreateTool(), const {
+              'name': '  ',
+              'type': 'bank',
+            }))
+            as Map)['error'],
+        contains('must not be blank'),
+      );
+      final amb = await runTool(const ProposeAccountCreateTool(), const {
+        'name': 'My Card',
+        'type': 'not-a-type',
+      }) as Map;
+      expect(amb['status'], 'needs_clarification');
+      expect(amb['ambiguous_field'], 'type');
+      expect(
+        (amb['candidates'] as List).map((e) => (e as Map)['id']),
+        kProposalAccountTypes,
+      );
+      final ok = await runTool(const ProposeAccountCreateTool(), const {
+        'name': '招行储蓄',
+        'type': 'bank',
+      }) as Map;
+      expect(ok['status'], 'ready');
+      expect(ok['kind'], 'account_create');
+      final p = ok['payload'] as Map;
+      expect(p['name'], '招行储蓄');
+      expect(p['type'], 'bank');
+      expect(p['currency'], 'CNY'); // defaulted
+      expect((p['id'] as String).isNotEmpty, isTrue);
+      expect(ok['summary_zh'], '创建账户「招行储蓄」（bank / CNY）');
+      expect((ok['warnings'] as List).single, contains('CNY'));
+    });
+
+    test('propose_asset_valuation: pre-resolve bad_request branches',
+        () async {
+      expect(
+        ((await runTool(const ProposeAssetValuationTool(), const {}))
+            as Map)['error'],
+        contains("field 'new_value'"),
+      );
+      expect(
+        ((await runTool(const ProposeAssetValuationTool(), const {
+              'new_value': -1,
+            }))
+            as Map)['error'],
+        contains('must be ≥ 0'),
+      );
+    });
+
+    test('asset_valuation post-resolve composition (pure)', () {
+      // Securities are NOT manual-valuation → tool bad_requests.
+      expect(
+        kProposalManualValuationTypes.contains(AssetType.stock.name),
+        isFalse,
+      );
+      // Real estate IS → ready plan shape.
+      expect(
+        kProposalManualValuationTypes.contains(AssetType.realEstate.name),
+        isTrue,
+      );
+      final house = asset(
+        'h1',
+        'HOUSE',
+        type: AssetType.realEstate,
+        name: '北京房产',
+        currency: 'CNY',
+      );
+      final display = house.name ?? house.symbol;
+      final plan = readyPlan(
+        kind: 'asset_valuation',
+        summaryZh: '更新「$display」估值为 ${formatProposalAmount(8500000)} CNY',
+        payload: {
+          'type': 'asset_valuation',
+          'asset_id': house.id,
+          'asset_name': display,
+          'new_value': 8500000.0,
+          'currency': house.currency,
+        },
+      );
+      expect(plan['summary_zh'], '更新「北京房产」估值为 8500000 CNY');
+      expect((plan['payload'] as Map)['asset_id'], 'h1');
+      expect((plan['payload'] as Map)['currency'], 'CNY');
     });
   });
 }
