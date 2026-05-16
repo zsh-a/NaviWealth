@@ -7167,6 +7167,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste text'**
   String get ingestPasteAction;
+
+  /// Ingest review: pick a receipt / statement / CSV file
+  ///
+  /// In en, this message translates to:
+  /// **'Import file'**
+  String get ingestImportFileAction;
 }
 
 class _AppLocalizationsDelegate

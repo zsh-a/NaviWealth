@@ -18,6 +18,7 @@ import '../../../data/domain/enums.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
 import '../domain/ingest_models.dart';
@@ -52,6 +53,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
+            icon: const Icon(Icons.attach_file_outlined),
+            onPress: _busy ? null : _pickFile,
+          ),
+          FHeaderAction(
             icon: const Icon(Icons.content_paste_outlined),
             onPress: _busy ? null : _openPasteDialog,
           ),
@@ -81,7 +86,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     List<IngestDraft> drafts,
   ) {
     if (drafts.isEmpty) {
-      return _EmptyState(onPaste: _busy ? null : _openPasteDialog);
+      return _EmptyState(
+        onPaste: _busy ? null : _openPasteDialog,
+        onImport: _busy ? null : _pickFile,
+      );
     }
     final payable = accounts
         .where((a) => !a.archived)
@@ -250,20 +258,31 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     );
     controller.dispose();
     if (text == null || text.trim().isEmpty) return;
+    await _runIngest(
+      IngestSource(
+        kind: IngestSourceKind.pasteText,
+        payload: text,
+        // Stable non-display breadcrumb (persisted + traced).
+        originLabel: 'paste',
+      ),
+    );
+  }
 
+  Future<void> _pickFile() async {
+    // The system picker provides its own modal UI; _runIngest owns the
+    // busy state for the parse that follows.
+    final source = await ref.read(ingestCaptureSourceProvider).pickFile();
+    if (source == null || !mounted) return;
+    await _runIngest(source);
+  }
+
+  /// Shared tail for every capture entry (paste / file): run the
+  /// pipeline and surface the outcome with one consistent toast set.
+  Future<void> _runIngest(IngestSource source) async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
-      final result = await ref
-          .read(ingestControllerProvider)
-          .ingest(
-            IngestSource(
-              kind: IngestSourceKind.pasteText,
-              payload: text,
-              // Stable non-display breadcrumb (persisted + traced);
-              // the localized button label is rendered separately.
-              originLabel: 'paste',
-            ),
-          );
+      final result = await ref.read(ingestControllerProvider).ingest(source);
       if (!mounted) return;
       if (result.isRejected) {
         AppMessenger.show(context, ToastKind.warning, result.rejectedReason!);
@@ -408,9 +427,10 @@ class _VerdictPill extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onPaste});
+  const _EmptyState({required this.onPaste, required this.onImport});
 
   final VoidCallback? onPaste;
+  final VoidCallback? onImport;
 
   @override
   Widget build(BuildContext context) {
@@ -443,11 +463,23 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: onPaste,
-              prefix: const Icon(Icons.content_paste_outlined),
-              child: Text(l10n.ingestPasteAction),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: onImport,
+                  prefix: const Icon(Icons.attach_file_outlined),
+                  child: Text(l10n.ingestImportFileAction),
+                ),
+                const SizedBox(width: 8),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: onPaste,
+                  prefix: const Icon(Icons.content_paste_outlined),
+                  child: Text(l10n.ingestPasteAction),
+                ),
+              ],
             ),
           ],
         ),

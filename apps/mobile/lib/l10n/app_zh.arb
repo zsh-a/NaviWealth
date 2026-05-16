@@ -1273,5 +1273,6 @@
   "ingestVerdictDuplicate": "重复",
   "ingestEmptyTitle": "没有待确认的记录",
   "ingestEmptyBody": "粘贴账单 / CSV 文本，自动解析为草稿，\n去重对账后在这里确认入账。",
-  "ingestPasteAction": "粘贴文本"
+  "ingestPasteAction": "粘贴文本",
+  "ingestImportFileAction": "导入文件"
 }
