@@ -7,6 +7,7 @@
 /// day, the matcher picks them in arrival order.
 library;
 
+import '../../contracts/task_context.dart' show AnalyticalUpload;
 import 'merchant_key.dart';
 import 'transaction_input.dart';
 
@@ -25,6 +26,24 @@ class RefundMatch {
   final int amountMinor;
 
   final String currency;
+}
+
+/// The canonical [RefundMatch] → [AnalyticalUpload] conversion
+/// (§4.3.3). Single source shared by the cloud
+/// `ContextPack.analytical_uploads` path and the device
+/// `get_refund_links` tool (W-D4.3b) so the device tool's output is
+/// exactly what the backend `refund_links` read model mirrors (§10).
+AnalyticalUpload refundMatchToUpload(RefundMatch m) {
+  return AnalyticalUpload(
+    kind: 'refund_link',
+    id: '${m.originalTxnId}|${m.refundTxnId}',
+    payload: <String, Object?>{
+      'original_txn_id': m.originalTxnId,
+      'refund_txn_id': m.refundTxnId,
+      'amount_minor': m.amountMinor.toString(),
+      'currency': m.currency,
+    },
+  );
 }
 
 /// Refunds typically settle within ~30 days of the original; longer

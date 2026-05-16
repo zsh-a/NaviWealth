@@ -6,6 +6,7 @@
 /// "transfer" and stop counting them as expense + income.
 library;
 
+import '../../contracts/task_context.dart' show AnalyticalUpload;
 import 'transaction_input.dart';
 
 class TransferMatch {
@@ -26,6 +27,24 @@ class TransferMatch {
   final int amountMinor;
 
   final String currency;
+}
+
+/// The canonical [TransferMatch] → [AnalyticalUpload] conversion
+/// (§4.3.3). Single source shared by the cloud
+/// `ContextPack.analytical_uploads` path and the device
+/// `get_transfer_links` tool (W-D4.3b) so the device tool's output is
+/// exactly what the backend `transfer_links` read model mirrors (§10).
+AnalyticalUpload transferMatchToUpload(TransferMatch m) {
+  return AnalyticalUpload(
+    kind: 'transfer_link',
+    id: '${m.fromTxnId}|${m.toTxnId}',
+    payload: <String, Object?>{
+      'from_txn_id': m.fromTxnId,
+      'to_txn_id': m.toTxnId,
+      'amount_minor': m.amountMinor.toString(),
+      'currency': m.currency,
+    },
+  );
 }
 
 const Duration kTransferMaxDateGap = Duration(days: 2);

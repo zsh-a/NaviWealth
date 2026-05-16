@@ -3,7 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
 import 'package:naviwealth/core/ai/local/skills/skills.dart'
-    show RecurringCadence, RecurringPattern, recurringPatternToUpload;
+    show
+        RecurringCadence,
+        RecurringPattern,
+        RefundMatch,
+        TransferMatch,
+        recurringPatternToUpload,
+        refundMatchToUpload,
+        transferMatchToUpload;
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
@@ -11,6 +18,8 @@ import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.d
 import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_refund_links_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_transfer_links_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -96,6 +105,8 @@ void main() {
         GetAssetAllocationTool(),
         GetAnomalyFlagsTool(),
         GetRecurringPatternsTool(),
+        GetRefundLinksTool(),
+        GetTransferLinksTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -103,6 +114,8 @@ void main() {
         'get_asset_allocation',
         'get_holdings',
         'get_recurring_patterns',
+        'get_refund_links',
+        'get_transfer_links',
         'list_payment_accounts',
       ]);
       expect(
@@ -501,6 +514,70 @@ void main() {
       expect(m['patterns'], isEmpty);
       expect(m['count'], 0);
       expect(m['note'], contains('device-sourced'));
+    });
+  });
+
+  group('refund/transfer link tools (W-D4.3b twins)', () {
+    test('refundMatchToUpload + GetRefundLinksTool.shape', () {
+      final u = refundMatchToUpload(
+        const RefundMatch(
+          originalTxnId: 'o1',
+          refundTxnId: 'r1',
+          amountMinor: 3800,
+          currency: 'USD',
+        ),
+      );
+      expect(u.kind, 'refund_link');
+      expect(u.id, 'o1|r1');
+      expect(u.payload['amount_minor'], '3800');
+
+      final m = GetRefundLinksTool.shape([u]);
+      final link = (m['links'] as List).single as Map;
+      expect(link['id'], 'o1|r1');
+      expect(link['original_txn_id'], 'o1');
+      expect(link['refund_txn_id'], 'r1');
+      expect(link['amount_minor'], '3800');
+      expect(link['currency'], 'USD');
+      expect(link['payload'], isA<Map<String, Object?>>());
+      expect(m['source'], 'device_analytical_read_model');
+
+      // currency filter case-insensitive
+      expect(
+        (GetRefundLinksTool.shape([u], currency: 'usd')['links'] as List),
+        hasLength(1),
+      );
+      expect(
+        (GetRefundLinksTool.shape([u], currency: 'CNY')['links'] as List),
+        isEmpty,
+      );
+      final empty = GetRefundLinksTool.shape(const []);
+      expect(empty['count'], 0);
+      expect(empty['note'], contains('refundMatcher'));
+    });
+
+    test('transferMatchToUpload + GetTransferLinksTool.shape', () {
+      final u = transferMatchToUpload(
+        const TransferMatch(
+          fromTxnId: 'a',
+          toTxnId: 'b',
+          amountMinor: 100000,
+          currency: 'CNY',
+        ),
+      );
+      expect(u.kind, 'transfer_link');
+      expect(u.id, 'a|b');
+
+      final m = GetTransferLinksTool.shape([u]);
+      final link = (m['links'] as List).single as Map;
+      expect(link['from_txn_id'], 'a');
+      expect(link['to_txn_id'], 'b');
+      expect(link['amount_minor'], '100000');
+      expect(link['currency'], 'CNY');
+      expect(m['note'], contains('transferMatcher'));
+      expect(
+        (GetTransferLinksTool.shape([u], currency: 'usd')['links'] as List),
+        isEmpty,
+      );
     });
   });
 }

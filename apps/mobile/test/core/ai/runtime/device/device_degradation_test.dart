@@ -221,6 +221,8 @@ void main() {
         'get_asset_allocation',
         'get_holdings',
         'get_recurring_patterns',
+        'get_refund_links',
+        'get_transfer_links',
         'list_payment_accounts',
       ]);
     });
