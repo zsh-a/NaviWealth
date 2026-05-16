@@ -30,10 +30,12 @@ import 'package:naviwealth/core/ai/runtime/device/tools/propose/proposal_plan.da
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_account_create_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_asset_valuation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/propose_liability_payment_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
 import 'package:naviwealth/features/investment/data/providers.dart'
@@ -125,6 +127,7 @@ void main() {
         ProposeExpenseTool(),
         ProposeAccountCreateTool(),
         ProposeAssetValuationTool(),
+        ProposeLiabilityPaymentTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -140,6 +143,7 @@ void main() {
         'propose_account_create',
         'propose_asset_valuation',
         'propose_expense',
+        'propose_liability_payment',
       ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -977,6 +981,79 @@ void main() {
       expect(plan['summary_zh'], '更新「北京房产」估值为 8500000 CNY');
       expect((plan['payload'] as Map)['asset_id'], 'h1');
       expect((plan['payload'] as Map)['currency'], 'CNY');
+    });
+  });
+
+  group('W-D4.5c — resolveLiability + propose_liability_payment', () {
+    Liability liab(
+      String id,
+      String name, {
+      LiabilityType type = LiabilityType.mortgage,
+      String currency = 'CNY',
+    }) => Liability(
+      id: id,
+      type: type,
+      name: name,
+      principal: Decimal.fromInt(1000000),
+      interestRate: Decimal.parse('0.045'),
+      currency: currency,
+      sync: _stamp(),
+    );
+
+    test('resolveLiability: none / one(id,name) / many(≤8,{id,name,type})',
+        () {
+      final ls = [
+        liab('l1', '招行房贷'),
+        liab('l2', '招行车贷', type: LiabilityType.carLoan),
+        liab('l3', '花呗', type: LiabilityType.consumerLoan),
+      ];
+      expect(
+        resolveLiability(ls, byName: 'nope'),
+        isA<ResolvedNone<Liability>>(),
+      );
+      expect(
+        (resolveLiability(ls, byId: 'l3') as ResolvedOne<Liability>).row.name,
+        '花呗',
+      );
+      final many =
+          resolveLiability(ls, byName: '招行') as ResolvedMany<Liability>;
+      expect(many.candidates, hasLength(2));
+      expect(many.candidates.first, containsPair('type', 'mortgage'));
+    });
+
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ProposeLiabilityPaymentTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('pre-resolve bad_request branches', () async {
+      expect(((await run(const {})) as Map)['error'], contains("'amount'"));
+      expect(
+        ((await run(const {'amount': 0})) as Map)['error'],
+        contains('amount must be > 0'),
+      );
+    });
+
+    test('liability not found → needs_clarification shape', () {
+      expect(
+        resolveLiability(const [], byName: 'whatever'),
+        isA<ResolvedNone<Liability>>(),
+      );
+      final plan = needsClarification(
+        kind: 'liability_payment',
+        field: 'liability',
+        reason: '未找到匹配的负债。请让用户先在「负债」里录入这笔贷款 / 信用卡。',
+        candidates: const [],
+      );
+      expect(plan['status'], 'needs_clarification');
+      expect(plan['ambiguous_field'], 'liability');
     });
   });
 }
