@@ -220,6 +220,7 @@ void main() {
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_holdings',
+        'get_recurring_patterns',
         'list_payment_accounts',
       ]);
     });

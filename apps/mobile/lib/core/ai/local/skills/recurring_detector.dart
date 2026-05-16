@@ -8,6 +8,7 @@
 /// finance app.
 library;
 
+import '../../contracts/task_context.dart' show AnalyticalUpload;
 import 'merchant_key.dart';
 import 'transaction_input.dart';
 
@@ -37,6 +38,27 @@ class RecurringPattern {
   final List<String> occurrenceIds;
 
   final DateTime lastSeenAt;
+}
+
+/// The canonical [RecurringPattern] → [AnalyticalUpload] conversion
+/// (§4.3.3). Single source shared by the cloud
+/// `ContextPack.analytical_uploads` path and the device
+/// `get_recurring_patterns` tool (W-D4.3b), so the device tool's output
+/// is exactly what the backend `recurring_patterns` read model mirrors
+/// (no Dart/Rust heuristic drift; §10).
+AnalyticalUpload recurringPatternToUpload(RecurringPattern p) {
+  return AnalyticalUpload(
+    kind: 'recurring_pattern',
+    id: '${p.merchantKey}|${p.currency}',
+    payload: <String, Object?>{
+      'merchant_key': p.merchantKey,
+      'cadence': p.cadence.name,
+      'median_amount_minor': p.medianAmountMinor.toString(),
+      'currency': p.currency,
+      'occurrences': p.occurrenceIds.length,
+      'last_seen_at': p.lastSeenAt.toIso8601String(),
+    },
+  );
 }
 
 /// Default tolerances. Exposed for tests; production callers should
