@@ -7,14 +7,20 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/contracts/ai_trace.dart';
+import '../../../core/ai/contracts/intent.dart';
 import '../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../../../core/ai/local/skills/skills.dart';
+import '../../../core/ai/trace/ai_trace_builder.dart';
+import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/providers.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../ai_chat/data/providers.dart';
 import '../domain/ingest_models.dart';
+import 'cloud_ingest_client.dart';
 import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
 import 'ingest_pipeline.dart';
@@ -49,6 +55,13 @@ final pendingIngestDraftsProvider =
 
 final ingestPipelineProvider = Provider<IngestPipeline>(
   (ref) => IngestPipeline(),
+);
+
+/// §5.10.10 / S5b-vision — backend Vision client. Reuses the
+/// base-URL-configured AI Dio; auth rides per-request like the chat
+/// client.
+final cloudIngestClientProvider = Provider<CloudIngestClient>(
+  (ref) => DioCloudIngestClient(dio: ref.watch(aiChatDioProvider)),
 );
 
 /// Dedup ledger snapshot — the device's expense truth, projected into
@@ -91,16 +104,13 @@ class IngestController {
               '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
         );
       case IngestGateVerdict.cloudAllowed:
-        // Gate passed — the backend Vision route lands in S5b-vision.
-        return const IngestResult(
-          drafts: <IngestDraft>[],
-          rejectedReason: '云端 Vision 解析尚未接入（S5b-vision）；'
-              '当前可用 CSV / 文本粘贴',
-        );
+        return _ingestCloud(source);
       case IngestGateVerdict.deviceParse:
-        break;
+        return _ingestDevice(source);
     }
+  }
 
+  Future<IngestResult> _ingestDevice(IngestSource source) async {
     final store = _ref.read(ingestDraftStoreProvider);
     if (store == null) {
       return const IngestResult(
@@ -110,9 +120,7 @@ class IngestController {
     }
     final auth = _ref.read(authSessionProvider);
     final ledger = await _ref.read(_ledgerSnapshotProvider.future);
-    final pipeline = _ref.read(ingestPipelineProvider);
-
-    final result = pipeline.plan(
+    final result = _ref.read(ingestPipelineProvider).plan(
       source: source,
       existingLedger: ledger,
       ownerUserId: auth?.userId ?? '',
@@ -121,5 +129,103 @@ class IngestController {
       await store.putAll(result.drafts);
     }
     return result;
+  }
+
+  /// §5.10.10 / S5b-vision — the cloud branch. Backend does ③ (Vision
+  /// parse); ④⑤⑥ stay on-device (same `planFromParsed` the CSV path
+  /// uses) so dedup runs against the Drift truth, and a full [AiTrace]
+  /// is appended because this *is* a real cloud model round-trip.
+  Future<IngestResult> _ingestCloud(IngestSource source) async {
+    final store = _ref.read(ingestDraftStoreProvider);
+    if (store == null) {
+      return const IngestResult(
+        drafts: <IngestDraft>[],
+        rejectedReason: '数据库尚未就绪，请稍后重试',
+      );
+    }
+    final session = _ref.read(authSessionProvider);
+    if (session == null) {
+      return const IngestResult(
+        drafts: <IngestDraft>[],
+        rejectedReason: '需要登录后才能使用云端解析',
+      );
+    }
+
+    final startedAt = DateTime.now().toUtc();
+    final requestId = const Uuid().v4();
+    List<ParsedTransaction> parsed;
+    try {
+      parsed = await _ref
+          .read(cloudIngestClientProvider)
+          .parse(
+            session: session,
+            kind: source.kind,
+            mime: source.mime ?? 'application/octet-stream',
+            contentBase64: source.payload,
+          );
+    } on CloudIngestException catch (e) {
+      return IngestResult(
+        drafts: const <IngestDraft>[],
+        rejectedReason: e.message,
+      );
+    }
+
+    final ledger = await _ref.read(_ledgerSnapshotProvider.future);
+    final result = _ref.read(ingestPipelineProvider).planFromParsed(
+      parsed: parsed,
+      source: source,
+      existingLedger: ledger,
+      ownerUserId: session.userId,
+      traceId: requestId,
+    );
+    if (result.drafts.isNotEmpty) {
+      await store.putAll(result.drafts);
+    }
+    await _appendCloudTrace(
+      requestId: requestId,
+      kind: source.kind,
+      startedAt: startedAt,
+      rowCount: result.total,
+    );
+    return result;
+  }
+
+  /// Best-effort transparency record — a Vision parse is a cloud model
+  /// call and must show up in the §5.10.5 audit surface. Failing to
+  /// write the trace never fails the ingest.
+  Future<void> _appendCloudTrace({
+    required String requestId,
+    required IngestSourceKind kind,
+    required DateTime startedAt,
+    required int rowCount,
+  }) async {
+    try {
+      final tier = _ref.read(aiPrivacySettingsProvider).maxBudgetTier;
+      final seed = AiTrace(
+        requestId: requestId,
+        startedAtIso: startedAt.toIso8601String(),
+        intent: const IntentHint(
+          capability: Capability.classify,
+          risk: RiskLevel.info,
+          label: 'ingest_vision',
+        ),
+        backend: Backend.cloud,
+        budgetTier: tier,
+        routingReason: 'layer4_cloud_vision',
+        usedCloud: true,
+        usedRawLedger: false,
+        totalDurationMs: 0,
+      );
+      final trace = (AiTraceBuilder.fromSeed(seed)
+            ..addToolCall(
+              name: 'parse_${cloudIngestKindWire(kind)}',
+              duration: DateTime.now().toUtc().difference(startedAt),
+              ok: true,
+            ))
+          .finalize(finishedAt: DateTime.now().toUtc());
+      await _ref.read(aiTraceStoreProvider).append(trace);
+    } catch (_) {
+      // Transparency is decorative relative to the parse itself.
+    }
   }
 }

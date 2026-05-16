@@ -47,6 +47,24 @@ class IngestPipeline {
       source.payload,
       defaultCurrency: defaultCurrency,
     );
+    return planFromParsed(
+      parsed: parsed,
+      source: source,
+      existingLedger: existingLedger,
+      ownerUserId: ownerUserId,
+      traceId: traceId,
+    );
+  }
+
+  /// Steps ④⑤⑥ on an already-parsed list. Shared by the device CSV
+  /// path ([plan]) and the S5b-vision cloud path (where the LLM did ③).
+  IngestResult planFromParsed({
+    required List<ParsedTransaction> parsed,
+    required IngestSource source,
+    required List<TransactionInput> existingLedger,
+    required String ownerUserId,
+    String? traceId,
+  }) {
     final now = _clock();
     final expiresAt = now.add(draftTtl);
 

@@ -31,6 +31,9 @@ pub mod adapters;
 #[allow(dead_code, unused_imports)]
 pub mod context;
 pub mod guardrails;
+// Layer 4 cloud Vision parse — §5.10.10 / S5b-vision. Standalone
+// (not a chat ToolRegistry member); consumed only by routes::ingest.
+pub mod ingest;
 // Phase 2-C: descriptor metadata is consulted by the dispatcher but
 // fields like `risk` / `requires_confirmation` and the `Typed` /
 // `ExternalWrite` variants exist for forward compatibility — they're

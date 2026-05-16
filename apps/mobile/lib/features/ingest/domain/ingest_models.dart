@@ -59,18 +59,22 @@ extension DraftStatusX on DraftStatus {
       .firstWhere((v) => v.name == s, orElse: () => DraftStatus.pending);
 }
 
-/// A raw input batch handed to the pipeline. For S5a [payload] is the
-/// textual content (CSV body or pasted statement text); [originLabel]
-/// is a human breadcrumb (filename or "粘贴文本") surfaced in the trace.
+/// A raw input batch handed to the pipeline. [payload] is the textual
+/// content for device kinds (CSV / pasted text) or the base64 binary
+/// for cloud kinds (receipt image / statement PDF); [mime] is set only
+/// for the latter (S5b-vision). [originLabel] is a human breadcrumb
+/// (filename / "粘贴文本") surfaced in the trace.
 class IngestSource {
   const IngestSource({
     required this.kind,
     required this.payload,
+    this.mime,
     this.originLabel,
   });
 
   final IngestSourceKind kind;
   final String payload;
+  final String? mime;
   final String? originLabel;
 }
 
