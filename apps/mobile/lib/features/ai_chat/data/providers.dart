@@ -10,6 +10,7 @@ import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/tools/device_tool_registry.dart';
+import '../../../core/ai/runtime/device/tools/get_holdings_tool.dart';
 import '../../../core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/ai/write/write.dart';
@@ -18,7 +19,6 @@ import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/domain/account.dart';
-import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
@@ -81,7 +81,10 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   // `list_payment_accounts` (the expense flow's dependency) as the
   // proof tool; remaining families land in W-D4.x. Tools not yet
   // ported simply aren't advertised, so the model never calls them.
-  final registry = DeviceToolRegistry(const [ListPaymentAccountsTool()]);
+  final registry = DeviceToolRegistry(const [
+    ListPaymentAccountsTool(),
+    GetHoldingsTool(),
+  ]);
   return DeviceLlmRuntime(
     client: AnthropicClient(
       dio: dio,
@@ -136,7 +139,8 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
     store: store,
     api: api,
     sessionReader: reader,
-    portfolioSnapshotReader: () => _buildPortfolioSnapshot(ref),
+    portfolioSnapshotReader: () =>
+        ref.read(devicePortfolioSnapshotProvider.future),
     tracePrep: ({required requestId}) => _prepareChatTrace(ref, requestId),
     traceStore: traceStore,
     onTraceFinalized: (trace) {
@@ -482,45 +486,6 @@ String _routeAreaFromPath(String path) {
   if (path.startsWith('/settings')) return 'settings';
   if (path == '/' || path.startsWith('/home')) return 'home';
   return 'unknown';
-}
-
-Future<Map<String, Object?>?> _buildPortfolioSnapshot(Ref ref) async {
-  final holdings = await ref.read(holdingsSnapshotProvider.future);
-  if (holdings.isEmpty) return null;
-  final assets = await ref.read(allAssetsStreamProvider.future);
-  final byId = {for (final asset in assets) asset.id: asset};
-  final asOf = holdings.values.first.asOf.toUtc().toIso8601String();
-  final baseCurrency = holdings.values.first.baseCurrency;
-  return <String, Object?>{
-    'as_of': asOf,
-    'base_currency': baseCurrency,
-    'holdings': <String, Object?>{
-      for (final entry in holdings.entries)
-        entry.key: _holdingSnapshotJson(entry.value, byId[entry.key]),
-    },
-  };
-}
-
-Map<String, Object?> _holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
-  return <String, Object?>{
-    'asset_id': snap.assetId,
-    'symbol': asset?.symbol,
-    'name': asset?.name,
-    'type': asset?.type.name,
-    'net_quantity': snap.quantity.toString(),
-    'asset_currency': snap.assetCurrency,
-    'market_value_asset_currency': snap.marketValueInAssetCurrency.toString(),
-    'cost_basis_asset_currency': snap.costBasisInAssetCurrency.toString(),
-    'base_currency': snap.baseCurrency,
-    'market_value_base': snap.marketValueInBase.toString(),
-    'cost_basis_base': snap.costBasisInBase.toString(),
-    'unrealized_pnl_base': snap.unrealizedPnlInBase.toString(),
-    'weight': snap.weight.toString(),
-    'as_of': snap.asOf.toUtc().toIso8601String(),
-    'price_confidence': snap.priceConfidence?.name,
-    'price_source': snap.priceSource,
-    'price_as_of': snap.priceAsOf?.toUtc().toIso8601String(),
-  };
 }
 
 /// Streamed list of all chat sessions for [ownerUserId]. Sidebar UI
