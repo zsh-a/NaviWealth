@@ -19,7 +19,8 @@
 /// them and is what the user cares about.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/visual/visual.dart';
@@ -51,9 +52,9 @@ sealed class TraceEvent {
   IconData get icon;
 
   /// Pick the rail / icon tone from the active scheme. Errors return
-  /// `cs.error`; normal events fall through to `cs.outline` so the
-  /// timeline stays muted.
-  Color tone(ColorScheme cs);
+  /// [AiTone.error]; normal events fall through to [AiTone.outline] so
+  /// the timeline stays muted.
+  Color tone(BuildContext context);
 
   /// When non-null, the row is expandable: tapping shows this body
   /// underneath. Return `null` for events that need no detail (most
@@ -101,15 +102,12 @@ class InvocationEvent extends TraceEvent {
   }
 
   @override
-  IconData get icon => Icons.flag_outlined;
+  IconData get icon => FIcons.flag;
 
   // Wave 36: AI surfaces commit to a single accent — invocation rail
   // uses `active`, every other "informational" event uses outline tone.
   @override
-  Color tone(ColorScheme cs) => cs.primary;
-  // ↑ kept as cs.primary (== AiTone.active) so this contract stays in
-  // place across themes. Switching to AiTone-based API in the row
-  // widget below.
+  Color tone(BuildContext context) => AiTone.active(context);
 
   @override
   Widget? expandedBody(BuildContext context) {
@@ -147,15 +145,16 @@ class RoutingEvent extends TraceEvent {
   String get subtitle => '$routingReason · tier=$budgetTier';
 
   @override
-  IconData get icon => Icons.alt_route_outlined;
+  IconData get icon => FIcons.route;
 
   // Wave 36 — routing is informational, not "alive": muted tone keeps
   // it out of visual competition with the active invocation marker.
   @override
-  Color tone(ColorScheme cs) => cs.outlineVariant;
+  Color tone(BuildContext context) => AiTone.outline(context);
 
   @override
-  Widget? expandedBody(BuildContext context) => _kvBlock(context, <(String, String)>[
+  Widget? expandedBody(BuildContext context) =>
+      _kvBlock(context, <(String, String)>[
         ('capability', capability),
         ('risk', risk),
         if (intentLabel != null && intentLabel!.isNotEmpty)
@@ -187,11 +186,11 @@ class ToolCallEvent extends TraceEvent {
   String get subtitle => '${durationMs}ms · ${ok ? 'ok' : 'error'}';
 
   @override
-  IconData get icon =>
-      ok ? Icons.bolt_outlined : Icons.error_outline;
+  IconData get icon => ok ? FIcons.bolt : FIcons.circleAlert;
 
   @override
-  Color tone(ColorScheme cs) => ok ? cs.outline : cs.error;
+  Color tone(BuildContext context) =>
+      ok ? AiTone.muted(context) : AiTone.error(context);
 }
 
 class DisclosureEvent extends TraceEvent {
@@ -217,14 +216,14 @@ class DisclosureEvent extends TraceEvent {
   String get subtitle => '$rowCount 行 · $fieldsCount 字段 · 同意=$consent';
 
   @override
-  IconData get icon => Icons.lock_outline;
+  IconData get icon => FIcons.lock;
 
   // Wave 36 — color discipline: disclosures don't get their own hue.
   // Denied → muted (this didn't actually happen), accepted → active
   // (signal that real data was shared).
   @override
-  Color tone(ColorScheme cs) =>
-      consent == 'denied' ? cs.outlineVariant : cs.primary;
+  Color tone(BuildContext context) =>
+      consent == 'denied' ? AiTone.outline(context) : AiTone.active(context);
 }
 
 class FreshnessAlertEvent extends TraceEvent {
@@ -242,21 +241,19 @@ class FreshnessAlertEvent extends TraceEvent {
   String get subtitle => '下次对话将强制刷新';
 
   @override
-  IconData get icon => Icons.update_outlined;
+  IconData get icon => FIcons.refreshCw;
 
   // Wave 36 — staleness is encoded by the `update_outlined` icon, not
   // by color. Tone is muted; the icon does the signaling.
   @override
-  Color tone(ColorScheme cs) => cs.outlineVariant;
+  Color tone(BuildContext context) => AiTone.outline(context);
 
   @override
   Widget? expandedBody(BuildContext context) => Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: [
-          for (final name in readModelNames) AiPill(label: name),
-        ],
-      );
+    spacing: 6,
+    runSpacing: 6,
+    children: [for (final name in readModelNames) AiPill(label: name)],
+  );
 }
 
 class TerminalEvent extends TraceEvent {
@@ -275,12 +272,11 @@ class TerminalEvent extends TraceEvent {
   String get subtitle => '总耗时 ${totalDurationMs}ms';
 
   @override
-  IconData get icon =>
-      reason == 'done' ? Icons.check_circle_outline : Icons.cancel_outlined;
+  IconData get icon => reason == 'done' ? FIcons.circleCheck : FIcons.circleX;
 
   @override
-  Color tone(ColorScheme cs) =>
-      reason == 'done' ? cs.primary : cs.error;
+  Color tone(BuildContext context) =>
+      reason == 'done' ? AiTone.active(context) : AiTone.error(context);
 }
 
 // ===========================================================================
@@ -350,9 +346,7 @@ List<TraceEvent> buildTimeline(AiTrace trace) {
 
   if (trace.staleReadModels > 0) {
     out.add(
-      FreshnessAlertEvent(
-        readModelNames: trace.staleReadModelNames.toList(),
-      ),
+      FreshnessAlertEvent(readModelNames: trace.staleReadModelNames.toList()),
     );
   }
 
@@ -402,9 +396,7 @@ class _AiTraceTimelineState extends State<AiTraceTimeline> {
 
   @override
   Widget build(BuildContext context) {
-    final available = <TraceEventKind>{
-      for (final e in widget.events) e.kind,
-    };
+    final available = <TraceEventKind>{for (final e in widget.events) e.kind};
     final visible = _visibleEvents;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -424,9 +416,9 @@ class _AiTraceTimelineState extends State<AiTraceTimeline> {
             child: Text(
               '当前筛选下没有事件',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AiType.body(
+                context,
+              ).copyWith(color: AiTone.muted(context)),
             ),
           )
         else
@@ -457,13 +449,13 @@ class _FilterRow extends StatelessWidget {
   final ValueChanged<TraceEventKind> onToggle;
 
   String _labelFor(TraceEventKind k) => switch (k) {
-        TraceEventKind.invocation => '触发',
-        TraceEventKind.routing => '路由',
-        TraceEventKind.toolCall => '工具',
-        TraceEventKind.disclosure => '披露',
-        TraceEventKind.freshnessAlert => '数据过期',
-        TraceEventKind.terminal => '结束',
-      };
+    TraceEventKind.invocation => '触发',
+    TraceEventKind.routing => '路由',
+    TraceEventKind.toolCall => '工具',
+    TraceEventKind.disclosure => '披露',
+    TraceEventKind.freshnessAlert => '数据过期',
+    TraceEventKind.terminal => '结束',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -506,112 +498,106 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tone = event.tone(cs);
-    return InkWell(
-      onTap: onTap,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Left rail: vertical line + dot ────────────────────────
-            SizedBox(
-              width: 32,
-              child: Column(
-                children: [
-                  // Top connector (hidden for the first row).
-                  SizedBox(
+    final outline = AiTone.outline(context);
+    final tone = event.tone(context);
+    final row = IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Left rail: vertical line + dot ────────────────────────
+          SizedBox(
+            width: 32,
+            child: Column(
+              children: [
+                // Top connector (hidden for the first row).
+                SizedBox(
+                  width: 2,
+                  height: 14,
+                  child: isFirst
+                      ? const SizedBox.shrink()
+                      : ColoredBox(color: outline.withValues(alpha: 0.7)),
+                ),
+                // Marker.
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: tone.withValues(alpha: 0.16),
+                    border: Border.all(color: tone, width: 1),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(event.icon, size: 13, color: tone),
+                ),
+                // Bottom connector (hidden for the last row).
+                Expanded(
+                  child: SizedBox(
                     width: 2,
-                    height: 14,
-                    child: isFirst
+                    child: isLast
                         ? const SizedBox.shrink()
-                        : ColoredBox(
-                            color: cs.outlineVariant.withValues(alpha: 0.7),
-                          ),
+                        : ColoredBox(color: outline.withValues(alpha: 0.7)),
                   ),
-                  // Marker.
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: tone.withValues(alpha: 0.16),
-                      border: Border.all(color: tone, width: 1),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          // ── Right: event card ─────────────────────────────────────
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 8, right: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          event.title,
+                          style: AiType.body(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w500),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (onTap != null)
+                        Icon(
+                          expanded ? FIcons.chevronUp : FIcons.chevronDown,
+                          size: 16,
+                          color: AiTone.muted(context),
+                        ),
+                    ],
+                  ),
+                  if (event.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      event.subtitle,
+                      style: AiType.meta(context),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(event.icon, size: 13, color: tone),
-                  ),
-                  // Bottom connector (hidden for the last row).
-                  Expanded(
-                    child: SizedBox(
-                      width: 2,
-                      child: isLast
-                          ? const SizedBox.shrink()
-                          : ColoredBox(
-                              color: cs.outlineVariant.withValues(alpha: 0.7),
-                            ),
+                  ],
+                  if (expanded) ...[
+                    const SizedBox(height: 6),
+                    AnimatedSize(
+                      duration: AiMotion.short,
+                      curve: AiMotion.standard,
+                      child:
+                          event.expandedBody(context) ??
+                          const SizedBox.shrink(),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(width: 4),
-            // ── Right: event card ─────────────────────────────────────
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 6, bottom: 8, right: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            event.title,
-                            style: AiType.body(context).copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (onTap != null)
-                          Icon(
-                            expanded
-                                ? Icons.expand_less
-                                : Icons.expand_more,
-                            size: 16,
-                            color: AiTone.muted(context),
-                          ),
-                      ],
-                    ),
-                    if (event.subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        event.subtitle,
-                        style: AiType.meta(context),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    if (expanded) ...[
-                      const SizedBox(height: 6),
-                      AnimatedSize(
-                        duration: AiMotion.short,
-                        curve: AiMotion.standard,
-                        child: event.expandedBody(context) ??
-                            const SizedBox.shrink(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+    if (onTap == null) return row;
+    return FTappable(onPress: onTap, child: row);
   }
 }
 
@@ -631,13 +617,16 @@ Widget _kvBlock(BuildContext context, List<(String, String)> rows) {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 88, child: Text(r.$1, style: AiType.meta(context))),
+                SizedBox(
+                  width: 88,
+                  child: Text(r.$1, style: AiType.meta(context)),
+                ),
                 Expanded(
                   child: Text(
                     r.$2,
-                    style: AiType.body(context).copyWith(
-                      fontFamily: 'monospace',
-                    ),
+                    style: AiType.body(
+                      context,
+                    ).copyWith(fontFamily: 'monospace'),
                   ),
                 ),
               ],
