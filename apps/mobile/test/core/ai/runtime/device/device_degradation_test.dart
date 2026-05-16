@@ -232,6 +232,7 @@ void main() {
         'get_asset_allocation',
         'get_holdings',
         'get_investment_performance',
+        'get_net_worth_summary',
         'get_recurring_patterns',
         'get_refund_links',
         'get_subscription_changes',

@@ -21,6 +21,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.d
 import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_investment_performance_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_net_worth_summary_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_refund_links_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_subscription_changes_tool.dart';
@@ -95,6 +96,14 @@ Posting _post(String accountId, String unit, String units) => Posting(
   sync: _stamp(),
 );
 
+Asset _asset(String id) => Asset(
+  id: id,
+  type: AssetType.stock,
+  symbol: id,
+  currency: 'USD',
+  sync: _stamp(),
+);
+
 DeviceSession _session() => DeviceSession(messages: []);
 
 class _ThrowingTool implements DeviceTool {
@@ -146,6 +155,7 @@ void main() {
         GetRefundLinksTool(),
         GetTransferLinksTool(),
         GetInvestmentPerformanceTool(),
+        GetNetWorthSummaryTool(),
         GetSubscriptionChangesTool(),
         ProposeExpenseTool(),
         ProposeAccountCreateTool(),
@@ -162,6 +172,7 @@ void main() {
         'get_asset_allocation',
         'get_holdings',
         'get_investment_performance',
+        'get_net_worth_summary',
         'get_recurring_patterns',
         'get_refund_links',
         'get_subscription_changes',
@@ -1408,6 +1419,129 @@ void main() {
           .map((e) => (e as Map)['currency'])
           .toSet();
       expect(byCur, {'USD', 'CNY'});
+    });
+  });
+
+  group('W-D4.2c — get_net_worth_summary (net_worth_snapshot parity)', () {
+    // Wide window so the aggregation, not the month filter, is under
+    // test (mirrors the backend `aggregate` unit tests directly).
+    final fixedNow = DateTime.utc(2026, 4, 15);
+    Map<String, Object?> agg(
+      List<JournalEntryWithPostings> entries, {
+      List<Asset> assets = const [],
+      String? currency,
+    }) => GetNetWorthSummaryTool.shape(
+      entries,
+      assets: assets,
+      monthsBack: 60,
+      currency: currency,
+      now: fixedNow,
+    );
+
+    List<Map<String, Object?>> series(Map<String, Object?> m) =>
+        (m['series'] as List).cast<Map<String, Object?>>();
+
+    test('cumulative runs forward per currency (backend parity)', () {
+      final m = agg([
+        _ewp('e_jan', DateTime.utc(2026, 1, 15), [_post('a', 'USD', '1000')]),
+        _ewp('e_feb', DateTime.utc(2026, 2, 10), [_post('a', 'USD', '-300')]),
+        _ewp('e_mar', DateTime.utc(2026, 3, 5), [_post('a', 'USD', '500')]),
+      ]);
+      final s = series(m);
+      expect(s.length, 3);
+      expect(s[0], {
+        'year_month': '2026-01',
+        'currency': 'USD',
+        'cumulative_minor': '100000',
+        'net_flow_minor': '100000',
+      });
+      expect(s[1]['cumulative_minor'], '70000');
+      expect(s[1]['net_flow_minor'], '-30000');
+      expect(s[2]['cumulative_minor'], '120000');
+    });
+
+    test('currencies run independently (backend parity)', () {
+      final m = agg([
+        _ewp('j_usd', DateTime.utc(2026, 1, 10), [_post('a', 'USD', '100')]),
+        _ewp('j_cny', DateTime.utc(2026, 1, 15), [_post('a', 'CNY', '700')]),
+        _ewp('f_cny', DateTime.utc(2026, 2, 10), [_post('a', 'CNY', '-200')]),
+      ]);
+      final byKey = {
+        for (final r in series(m))
+          '${r['year_month']}|${r['currency']}': r['cumulative_minor'],
+      };
+      expect(byKey['2026-01|USD'], '10000');
+      expect(byKey['2026-01|CNY'], '70000');
+      expect(byKey['2026-02|CNY'], '50000');
+    });
+
+    test('ignores asset legs (backend parity)', () {
+      final m = agg(
+        [
+          _ewp('buy', DateTime.utc(2026, 4, 1), [
+            _post('brk', 'asset_aapl', '10'), // asset leg → skipped
+            _post('cash', 'USD', '-1500'),
+          ]),
+        ],
+        assets: [_asset('asset_aapl')],
+      );
+      final s = series(m);
+      expect(s.length, 1);
+      expect(s.single['currency'], 'USD');
+      expect(s.single['net_flow_minor'], '-150000');
+    });
+
+    test('sums multiple postings in the same month (backend parity)', () {
+      final m = agg([
+        _ewp('e1', DateTime.utc(2026, 4, 5), [_post('a', 'USD', '50')]),
+        _ewp('e2', DateTime.utc(2026, 4, 15), [_post('a', 'USD', '-20')]),
+        _ewp('e3', DateTime.utc(2026, 4, 25), [_post('a', 'USD', '30')]),
+      ]);
+      final s = series(m);
+      expect(s.length, 1);
+      expect(s.single['net_flow_minor'], '6000');
+      expect(s.single['cumulative_minor'], '6000');
+    });
+
+    test('empty input yields no rows; shape envelope intact', () {
+      final m = agg(const []);
+      expect(series(m), isEmpty);
+      expect(m['to'], '2026-04');
+      expect(m['from'], '2021-05'); // 60 months back, inclusive
+      expect(m['currency'], isNull);
+      expect(m.containsKey('freshness'), isFalse); // §4.6.1 device-direct
+      expect(m['note'], contains('不减负债'));
+    });
+
+    test('months_back window clamps the series + currency filter', () {
+      final entries = [
+        _ewp('old', DateTime.utc(2025, 1, 10), [_post('a', 'USD', '999')]),
+        _ewp('recent', DateTime.utc(2026, 3, 10), [_post('a', 'USD', '100')]),
+        _ewp('cny', DateTime.utc(2026, 3, 11), [_post('a', 'CNY', '200')]),
+      ];
+      // months_back=3 ending 2026-04 → window [2026-02, 2026-04].
+      final m = GetNetWorthSummaryTool.shape(
+        entries,
+        assets: const [],
+        monthsBack: 3,
+        now: fixedNow,
+      );
+      expect(m['from'], '2026-02');
+      final yms = series(m).map((r) => r['year_month']).toSet();
+      expect(yms, {'2026-03'}); // 'old' (2025-01) excluded by window
+      // currency filter is an exact match on the pre-uppercased value
+      // (shape's contract; invoke does the trim+uppercase, like the
+      // backend tool layer).
+      final usd = GetNetWorthSummaryTool.shape(
+        entries,
+        assets: const [],
+        monthsBack: 3,
+        currency: 'USD',
+        now: fixedNow,
+      );
+      expect(m['currency'], isNull);
+      expect(usd['currency'], 'USD');
+      expect(series(usd).map((r) => r['currency']).toSet(), {'USD'});
     });
   });
 }
