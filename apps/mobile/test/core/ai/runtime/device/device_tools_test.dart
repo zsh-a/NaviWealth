@@ -32,6 +32,8 @@ import 'package:naviwealth/core/ai/runtime/device/tools/propose_asset_valuation_
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_liability_payment_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_trade_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/read_account_window_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/scoped/scoped_window.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -130,6 +132,7 @@ void main() {
         ProposeAssetValuationTool(),
         ProposeLiabilityPaymentTool(),
         ProposeTradeTool(),
+        ReadAccountWindowTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -147,6 +150,7 @@ void main() {
         'propose_expense',
         'propose_liability_payment',
         'propose_trade',
+        'read_account_window',
       ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -1103,6 +1107,88 @@ void main() {
       expect(intPlan['summary_zh'], '买入 AAPL 10 股 @ 190（券商）');
       expect(formatProposalAmount(190.0), '190');
       expect(formatProposalAmount(1.5), '1.5');
+    });
+  });
+
+  group('W-D4.4 — scoped_window helpers + read_account_window', () {
+    test('scopedParseIso: RFC3339 vs bare YYYY-MM-DD pinned UTC', () {
+      expect(scopedParseIso('2026-05-16'), DateTime.utc(2026, 5, 16));
+      expect(
+        scopedParseIso('2026-05-16T08:00:00Z'),
+        DateTime.utc(2026, 5, 16, 8),
+      );
+      expect(scopedParseIso('garbage'), isNull);
+    });
+
+    test('validateScopedRange / parseScopedLimit / excerpt / purpose', () {
+      expect(
+        validateScopedRange(DateTime.utc(2026, 5, 2), DateTime.utc(2026)),
+        'to must be after from',
+      );
+      expect(
+        validateScopedRange(DateTime.utc(2026), DateTime.utc(2026, 3)),
+        contains('range exceeds 31 days'),
+      );
+      expect(
+        validateScopedRange(DateTime.utc(2026), DateTime.utc(2026, 1, 20)),
+        isNull,
+      );
+      expect(parseScopedLimit(const {}), kScopedDefaultLimit);
+      expect(parseScopedLimit(const {'limit': 9999}), kScopedMaxLimit);
+      expect(parseScopedLimit(const {'limit': 5}), 5);
+      expect(scopedExcerpt('abcdef', 3), 'abc…');
+      expect(scopedExcerpt('ab', 3), 'ab');
+      expect(isScopedPurpose('drill_down_expense'), isTrue);
+      expect(isScopedPurpose('exfiltrate'), isFalse);
+    });
+
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ReadAccountWindowTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('mandatory-field + range + purpose validation (pre-read)', () async {
+      Future<String> err(Map<String, Object?> i) async =>
+          ((await run(i)) as Map)['error'] as String;
+      expect(await err(const {}), 'account_id required');
+      expect(
+        await err(const {'account_id': 'a', 'from': 'x'}),
+        'to required',
+      );
+      expect(
+        await err(const {
+          'account_id': 'a',
+          'from': 'nope',
+          'to': '2026-02-01',
+          'purpose': 'other',
+        }),
+        'from not ISO date',
+      );
+      expect(
+        await err(const {
+          'account_id': 'a',
+          'from': '2026-01-01',
+          'to': '2026-03-01', // 59d
+          'purpose': 'other',
+        }),
+        contains('range exceeds'),
+      );
+      expect(
+        await err(const {
+          'account_id': 'a',
+          'from': '2026-01-01',
+          'to': '2026-01-10',
+          'purpose': 'exfiltrate',
+        }),
+        contains('DisclosurePurpose'),
+      );
     });
   });
 }
