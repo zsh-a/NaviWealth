@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/auth/providers.dart';
 import '../../../data/db/providers.dart';
@@ -17,6 +18,7 @@ import '../domain/ingest_models.dart';
 import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
 import 'ingest_pipeline.dart';
+import 'ingest_privacy_gate.dart';
 
 /// Owner-scoped staging store. Null while the DB is mid-boot.
 final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
@@ -78,6 +80,27 @@ class IngestController {
   final Ref _ref;
 
   Future<IngestResult> ingest(IngestSource source) async {
+    // §5.10.10 / S5b — privacy gate (隐私门). Image / PDF / email need
+    // cloud Vision; the §5.10.5 posture decides if that is permitted.
+    final mode = _ref.read(aiPrivacySettingsProvider).mode;
+    switch (ingestPrivacyGate(source.kind, mode)) {
+      case IngestGateVerdict.blockedByPrivacy:
+        return const IngestResult(
+          drafts: <IngestDraft>[],
+          rejectedReason: '隐私模式「金额完全本地」已禁用云端解析；'
+              '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
+        );
+      case IngestGateVerdict.cloudAllowed:
+        // Gate passed — the backend Vision route lands in S5b-vision.
+        return const IngestResult(
+          drafts: <IngestDraft>[],
+          rejectedReason: '云端 Vision 解析尚未接入（S5b-vision）；'
+              '当前可用 CSV / 文本粘贴',
+        );
+      case IngestGateVerdict.deviceParse:
+        break;
+    }
+
     final store = _ref.read(ingestDraftStoreProvider);
     if (store == null) {
       return const IngestResult(
