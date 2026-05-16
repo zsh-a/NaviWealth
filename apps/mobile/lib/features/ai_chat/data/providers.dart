@@ -37,33 +37,6 @@ import 'chat_repository.dart';
 import 'proposal_applier.dart';
 import 'runtime_routing_api_client.dart';
 
-/// Dio dedicated to `/ai/*` endpoints. The receive timeout is large
-/// because a single chat turn can sit on a streaming connection for
-/// minutes (multi-tool loops + long Anthropic generations). We disable
-/// the receive timeout entirely by setting it to a very long bound;
-/// short of that, mid-stream the connection would be torn down even
-/// though the worker is still emitting frames.
-final aiChatDioProvider = Provider<Dio>((ref) {
-  final config = ref.watch(appConfigProvider);
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: config.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      sendTimeout: const Duration(seconds: 20),
-      receiveTimeout: const Duration(minutes: 5),
-    ),
-  );
-  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
-  return dio;
-});
-
-/// The cloud relay client, kept addressable on its own so the registry
-/// and the routing client both reference the *cloud* path (not the
-/// device-or-cloud facade) without recursing.
-final cloudAiChatApiClientProvider = Provider<AiChatApiClient>(
-  (ref) => DioAiChatApiClient(dio: ref.watch(aiChatDioProvider)),
-);
-
 /// §4.6 W-D3 — the on-device runtime, or `null` when unavailable (web /
 /// no key / opted out). Rebuilt automatically when credentials or the
 /// opt-in switch change, since [deviceLlmAvailableProvider] /
@@ -81,35 +54,30 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   // ported simply aren't advertised, so the model never calls them.
   final registry = defaultDeviceToolRegistry();
   return DeviceLlmRuntime(
-    client: AnthropicClient(
-      dio: dio,
-      config: LlmConfig.fromCredentials(creds),
-    ),
+    client: AnthropicClient(dio: dio, config: LlmConfig.fromCredentials(creds)),
     dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),
     toolSchemas: registry.schemas(),
   );
 });
 
-/// What `ChatRepository` injects. Routes each turn device-or-cloud
-/// (§4.6.2). When no device runtime exists this is transparently the
-/// cloud client, so behaviour with no key is identical to today.
+/// §4.6 W-D7 — what `ChatRepository` injects. Device-only: every turn
+/// runs on the on-device runtime; with no device (web / no key / opted
+/// out) the turn surfaces an explanatory error (no cloud relay — the
+/// `/ai/chat` backend was deleted in W-D7).
 final aiChatApiClientProvider = Provider<AiChatApiClient>((ref) {
   return RuntimeRoutingAiChatApiClient(
-    cloud: ref.watch(cloudAiChatApiClientProvider),
     device: ref.watch(deviceLlmRuntimeProvider),
   );
 });
 
-/// AiRuntime registry. Wires `cloud_anthropic` over the cloud client, a
-/// stub `rules_device`, and — when available — the §4.6 `device_llm`
-/// runtime. `ChatRepository` routes via [aiChatApiClientProvider]
-/// (which mirrors this selection); the registry stays the canonical
-/// id→runtime map for trace labelling.
+/// AiRuntime registry. Post-W-D7 the `cloud_anthropic` runtime is gone
+/// (cloud backend deleted); the map holds the stub `rules_device` and —
+/// when available — the §4.6 `device_llm` runtime. `ChatRepository`
+/// routes via [aiChatApiClientProvider]; the registry stays the
+/// canonical id→runtime map for trace labelling.
 final runtimeRegistryProvider = Provider<RuntimeRegistry>((ref) {
-  final cloud = ref.watch(cloudAiChatApiClientProvider);
   final device = ref.watch(deviceLlmRuntimeProvider);
   return RuntimeRegistry(<RuntimeId, AiRuntime>{
-    RuntimeId.cloudAnthropic: CloudAnthropicRuntime(apiClient: cloud),
     RuntimeId.rulesDevice: const RulesDeviceRuntime(),
     RuntimeId.deviceLlm: ?device,
   });
@@ -385,7 +353,6 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
 
   return out;
 }
-
 
 String _routeAreaFromPath(String path) {
   if (path.startsWith('/expense')) return 'expense';
