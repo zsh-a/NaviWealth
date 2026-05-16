@@ -374,55 +374,18 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
     // same input window).
     final subChanges = detectSubscriptionChanges(transactionInputs);
     for (final s in subChanges) {
-      out.add(_subscriptionChangeToUpload(s));
+      out.add(subscriptionChangeToUpload(s));
     }
   }
 
   // Wave 17: per-asset holding snapshot → investment_performance upload.
   for (final snap in holdings.values) {
-    out.add(_holdingSnapshotToUpload(snap));
+    out.add(holdingSnapshotToUpload(snap));
   }
 
   return out;
 }
 
-
-AnalyticalUpload _subscriptionChangeToUpload(SubscriptionChange c) {
-  return AnalyticalUpload(
-    kind: 'subscription_change',
-    id: '${c.merchantKey}|${c.currency}',
-    payload: <String, Object?>{
-      'merchant_key': c.merchantKey,
-      'cadence': c.cadence.name,
-      'currency': c.currency,
-      'prev_amount_minor': c.prevMedianAmountMinor.toString(),
-      'new_amount_minor': c.newMedianAmountMinor.toString(),
-      'delta_ratio': c.deltaRatio,
-      'since': c.since.toUtc().toIso8601String(),
-    },
-  );
-}
-
-AnalyticalUpload _holdingSnapshotToUpload(HoldingSnapshot snap) {
-  return AnalyticalUpload(
-    kind: 'investment_performance',
-    id: snap.assetId,
-    payload: <String, Object?>{
-      'asset_id': snap.assetId,
-      'asset_currency': snap.assetCurrency,
-      'base_currency': snap.baseCurrency,
-      'as_of': snap.asOf.toUtc().toIso8601String(),
-      'quantity': snap.quantity.toString(),
-      'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency.toString(),
-      'market_value_in_asset_currency': snap.marketValueInAssetCurrency
-          .toString(),
-      'cost_basis_in_base': snap.costBasisInBase.toString(),
-      'market_value_in_base': snap.marketValueInBase.toString(),
-      'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
-      'weight': snap.weight.toString(),
-    },
-  );
-}
 
 String _routeAreaFromPath(String path) {
   if (path.startsWith('/expense')) return 'expense';

@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ai/contracts/task_context.dart' show AnalyticalUpload;
 import '../../../data/db/app_database.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/domain/asset.dart';
@@ -486,4 +487,31 @@ Map<String, Object?> holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
     'price_source': snap.priceSource,
     'price_as_of': snap.priceAsOf?.toUtc().toIso8601String(),
   };
+}
+
+/// The canonical [HoldingSnapshot] → [AnalyticalUpload] conversion
+/// (§4.3.3). Single source shared by the cloud
+/// `ContextPack.analytical_uploads` path and the device
+/// `get_investment_performance` tool (W-D4.3b) so the device tool's
+/// output is exactly what the backend `investment_performance` read
+/// model mirrors (§10). Decimals are stringified to avoid float drift.
+AnalyticalUpload holdingSnapshotToUpload(HoldingSnapshot snap) {
+  return AnalyticalUpload(
+    kind: 'investment_performance',
+    id: snap.assetId,
+    payload: <String, Object?>{
+      'asset_id': snap.assetId,
+      'asset_currency': snap.assetCurrency,
+      'base_currency': snap.baseCurrency,
+      'as_of': snap.asOf.toUtc().toIso8601String(),
+      'quantity': snap.quantity.toString(),
+      'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency.toString(),
+      'market_value_in_asset_currency': snap.marketValueInAssetCurrency
+          .toString(),
+      'cost_basis_in_base': snap.costBasisInBase.toString(),
+      'market_value_in_base': snap.marketValueInBase.toString(),
+      'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
+      'weight': snap.weight.toString(),
+    },
+  );
 }
