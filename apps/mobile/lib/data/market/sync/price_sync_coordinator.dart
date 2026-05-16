@@ -23,7 +23,7 @@ enum PriceSyncReason {
   /// `didChangeAppLifecycleState(resumed)` fired after a background→foreground transition.
   appResume,
 
-  /// 30-minute foreground timer.
+  /// Daily foreground timer.
   periodic,
 
   /// External caller: pull-to-refresh, route hook, settings page button.
@@ -107,7 +107,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
     required FxSyncInputsReader fxInputs,
     PriceRepository? prices,
     bool Function()? writeDailySnapshots,
-    Duration interval = const Duration(minutes: 30),
+    Duration interval = const Duration(days: 1),
     Clock clock = const SystemClock(),
     AppLogger? logger,
     PriceSyncStatusBus? statusBus,
