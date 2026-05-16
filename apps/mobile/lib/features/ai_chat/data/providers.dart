@@ -339,29 +339,11 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   Map<String, HoldingSnapshot> holdings = const <String, HoldingSnapshot>{},
 }) {
   final out = <AnalyticalUpload>[];
-  if (anomaly != null) {
-    final now = DateTime.now().toUtc();
-    final yearMonth =
-        '${now.year.toString().padLeft(4, '0')}-'
-        '${now.month.toString().padLeft(2, '0')}';
-    final deltaPct = (anomaly.deltaRatio * 100).round();
-    final severity = anomaly.deltaRatio.abs() > 0.5
-        ? 'critical'
-        : (anomaly.deltaRatio.abs() > 0.25 ? 'warn' : 'info');
-    out.add(
-      AnalyticalUpload(
-        kind: 'anomaly_flag',
-        id: 'expense_monthly_spike|$yearMonth',
-        payload: <String, Object?>{
-          'category': 'all_expense',
-          'kind': 'monthly_spike',
-          'delta_pct': deltaPct,
-          'delta_ratio': anomaly.deltaRatio,
-          'severity': severity,
-          'detected_at': now.toIso8601String(),
-        },
-      ),
-    );
+  // §4.3.3 — single source shared with the device get_anomaly_flags
+  // tool (W-D4.3) so cloud upload and device tool can't drift.
+  final anomalyUpload = analyticalAnomalyUpload(anomaly);
+  if (anomalyUpload != null) {
+    out.add(anomalyUpload);
   }
 
   // Wave 15: run recurring_detector on expenses, convert each pattern.

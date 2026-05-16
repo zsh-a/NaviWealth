@@ -24,14 +24,15 @@ final llmCredentialStoreProvider = Provider<LlmCredentialStore>((ref) {
 
 /// Whether this build can host the device LLM runtime at all.
 ///
-/// §4.6.1 decision 5: **iOS/Android native only**. Web has no
-/// system-level secure storage and a browser-direct provider call
-/// would leak the key into JS memory, so web keeps using the cloud
-/// relay. Desktop is out of Phase 5 scope.
+/// §4.6.1 decision 5 (amended): **all native platforms** — iOS,
+/// Android, **and desktop (macOS / Windows / Linux)**. The original
+/// rationale (system-level secure storage for the key + native HTTP so
+/// no browser CORS / JS key exposure) holds identically on desktop:
+/// `flutter_secure_storage` ^10 maps to the macOS Keychain, the Windows
+/// credential store, and Linux libsecret. Only **web** stays on the
+/// cloud relay (IndexedDB-only key + browser-direct CORS).
 final deviceLlmPlatformSupportedProvider = Provider<bool>((ref) {
-  if (kIsWeb) return false;
-  return defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.android;
+  return !kIsWeb;
 });
 
 /// The user's stored credentials (or `null` if none / opted out /

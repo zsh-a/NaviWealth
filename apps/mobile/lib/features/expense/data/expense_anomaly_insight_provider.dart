@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ai/contracts/task_context.dart' show AnalyticalUpload;
 import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../domain/services/currency_converter.dart';
@@ -89,6 +90,39 @@ Decimal? _convertExpense(
 
 String _monthKey(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}';
+
+/// The canonical anomaly → [AnalyticalUpload] conversion (§4.3.3).
+///
+/// Single source for both the cloud `ContextPack.analytical_uploads`
+/// path and the device `get_anomaly_flags` tool (W-D4.3), so the
+/// device tool's output is exactly what the backend `anomaly_flags`
+/// read model mirrors. `null` ⇒ no anomaly to report.
+AnalyticalUpload? analyticalAnomalyUpload(
+  ExpenseAnomalySummary? anomaly, {
+  DateTime? now,
+}) {
+  if (anomaly == null) return null;
+  final ts = (now ?? DateTime.now()).toUtc();
+  final yearMonth =
+      '${ts.year.toString().padLeft(4, '0')}-'
+      '${ts.month.toString().padLeft(2, '0')}';
+  final deltaPct = (anomaly.deltaRatio * 100).round();
+  final severity = anomaly.deltaRatio.abs() > 0.5
+      ? 'critical'
+      : (anomaly.deltaRatio.abs() > 0.25 ? 'warn' : 'info');
+  return AnalyticalUpload(
+    kind: 'anomaly_flag',
+    id: 'expense_monthly_spike|$yearMonth',
+    payload: <String, Object?>{
+      'category': 'all_expense',
+      'kind': 'monthly_spike',
+      'delta_pct': deltaPct,
+      'delta_ratio': anomaly.deltaRatio,
+      'severity': severity,
+      'detected_at': ts.toIso8601String(),
+    },
+  );
+}
 
 final expenseAnomalyInsightProvider = Provider<ExpenseAnomalySummary?>((ref) {
   final expenses = ref.watch(journalExpensesStreamProvider).value;
