@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
@@ -85,11 +86,12 @@ void main() {
       final reg = DeviceToolRegistry(const [
         ListPaymentAccountsTool(),
         GetHoldingsTool(),
+        GetAssetAllocationTool(),
       ]);
       final schemas = reg.schemas();
       expect(
         schemas.map((s) => s.name),
-        ['get_holdings', 'list_payment_accounts'], // sorted
+        ['get_asset_allocation', 'get_holdings', 'list_payment_accounts'],
       );
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -259,6 +261,73 @@ void main() {
       expect(m['snapshot_base_currency'], isNull);
       expect(m['as_of'], isA<String>());
       expect((m['as_of'] as String).isNotEmpty, isTrue);
+    });
+  });
+
+  group('GetAssetAllocationTool.shape — ports aggregate()', () {
+    Map<String, Object?> snap(List<Map<String, Object?>> hs) => {
+      'holdings': {for (var i = 0; i < hs.length; i++) 'h$i': hs[i]},
+    };
+
+    Map<String, Object?> h(
+      String type,
+      String ccy,
+      String cost,
+    ) => {
+      'type': type,
+      'asset_currency': ccy,
+      'cost_basis_asset_currency': cost,
+    };
+
+    test('aggregates by (type,currency) and normalises weight per ccy', () {
+      final m = GetAssetAllocationTool.shape(
+        snap([
+          h('stock', 'USD', '600'),
+          h('stock', 'USD', '200'), // → stock/USD = 800, count 2
+          h('crypto', 'USD', '200'), // → crypto/USD = 200
+        ]),
+      );
+      final buckets = (m['buckets'] as List).cast<Map<String, Object?>>();
+      expect(m['count'], 2);
+      // sorted: currency asc then weight desc → stock first (0.8)
+      expect(buckets[0]['bucket_key'], 'stock');
+      expect(buckets[0]['currency'], 'USD');
+      expect(buckets[0]['position_count'], 2);
+      expect(buckets[0]['total_cost_minor'], '80000');
+      expect(buckets[0]['weight'], closeTo(0.8, 1e-9));
+      expect(buckets[1]['bucket_key'], 'crypto');
+      expect(buckets[1]['weight'], closeTo(0.2, 1e-9));
+      // weights within USD sum to 1
+      final sum = buckets.fold<double>(
+        0,
+        (a, b) => a + (b['weight'] as double),
+      );
+      expect(sum, closeTo(1.0, 1e-9));
+    });
+
+    test('separate currencies normalise independently; ccy sorted asc', () {
+      final m = GetAssetAllocationTool.shape(
+        snap([h('stock', 'USD', '100'), h('bond', 'CNY', '50')]),
+      );
+      final b = (m['buckets'] as List).cast<Map<String, Object?>>();
+      expect(b.map((x) => x['currency']), ['CNY', 'USD']);
+      expect(b.every((x) => (x['weight'] as double) == 1.0), isTrue);
+    });
+
+    test('missing type falls back to "unknown"', () {
+      final m = GetAssetAllocationTool.shape(
+        snap([
+          {'asset_currency': 'USD', 'cost_basis_asset_currency': '10'},
+        ]),
+      );
+      expect((m['buckets'] as List).single, containsPair('bucket_key', 'unknown'));
+    });
+
+    test('no holdings → empty buckets', () {
+      final m = GetAssetAllocationTool.shape(null);
+      expect(m['buckets'], isEmpty);
+      expect(m['count'], 0);
+      expect(m['note'], contains('cost basis'));
     });
   });
 }
