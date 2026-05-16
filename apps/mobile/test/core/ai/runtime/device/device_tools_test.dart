@@ -34,13 +34,18 @@ import 'package:naviwealth/core/ai/runtime/device/tools/propose_liability_paymen
 import 'package:naviwealth/core/ai/runtime/device/tools/propose_trade_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/read_account_window_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/read_asset_window_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/read_category_window_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/scoped/scoped_window.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/data/domain/journal_entry.dart';
 import 'package:naviwealth/data/domain/liability.dart';
+import 'package:naviwealth/data/domain/posting.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/data/repositories/journal_entry_repository.dart'
+    show JournalEntryWithPostings;
 import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
 import 'package:naviwealth/features/investment/data/providers.dart'
     show holdingSnapshotToUpload;
@@ -67,6 +72,31 @@ Account _acct(
   currency: currency,
   archived: archived,
   category: category,
+  sync: _stamp(),
+);
+
+JournalEntryWithPostings _ewp(
+  String id,
+  DateTime date,
+  List<Posting> postings, {
+  String narration = '',
+}) => JournalEntryWithPostings(
+  entry: JournalEntry(
+    id: id,
+    date: date,
+    narration: narration,
+    sync: _stamp(),
+  ),
+  postings: postings,
+);
+
+Posting _post(String accountId, String unit, String units) => Posting(
+  id: 'p_${accountId}_$unit',
+  journalEntryId: 'je',
+  position: 0,
+  accountId: accountId,
+  units: Decimal.parse(units),
+  unit: unit,
   sync: _stamp(),
 );
 
@@ -135,6 +165,7 @@ void main() {
         ProposeTradeTool(),
         ReadAccountWindowTool(),
         ReadAssetWindowTool(),
+        ReadCategoryWindowTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
@@ -154,6 +185,7 @@ void main() {
         'propose_trade',
         'read_account_window',
         'read_asset_window',
+        'read_category_window',
       ]);
       expect(
         schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
@@ -1230,6 +1262,162 @@ void main() {
             as Map)['error'],
         contains('DisclosurePurpose'),
       );
+    });
+  });
+
+  group('W-D4.4b — read_category_window (remap + validation)', () {
+    Future<Object?> run(Map<String, Object?> input) {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      return _withRef(
+        c,
+        (ref) => const ReadCategoryWindowTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+    }
+
+    test('category / range / purpose mandatory (pre-read)', () async {
+      expect(((await run(const {})) as Map)['error'], 'category required');
+      expect(
+        ((await run(const {
+              'category': 'food',
+              'from': '2026-01-01',
+              'to': '2026-03-01', // 59d
+              'purpose': 'other',
+            }))
+            as Map)['error'],
+        contains('range exceeds'),
+      );
+      expect(
+        ((await run(const {
+              'category': 'food',
+              'from': '2026-01-01',
+              'to': '2026-01-10',
+              'purpose': 'nope',
+            }))
+            as Map)['error'],
+        contains('DisclosurePurpose'),
+      );
+    });
+
+    final from = DateTime.utc(2026, 4, 1);
+    final to = DateTime.utc(2026, 5, 1);
+    final accounts = [
+      _acct('exp_food', 'Food', category: AccountSide.expense),
+      _acct('exp_txp', 'Transport', category: AccountSide.expense),
+      _acct('bank', 'Bank', category: AccountSide.asset),
+    ];
+
+    test('remaps category→expense account; window + amount + summary', () {
+      final entries = [
+        _ewp('e1', DateTime.utc(2026, 4, 15), [
+          _post('exp_food', 'CNY', '12.50'),
+          _post('bank', 'CNY', '-12.50'),
+        ], narration: 'Noodle lunch'),
+        _ewp('e2', DateTime.utc(2026, 4, 16), [
+          _post('exp_txp', 'CNY', '8.00'),
+          _post('bank', 'CNY', '-8.00'),
+        ]),
+        _ewp('out', DateTime.utc(2026, 5, 2), [
+          _post('exp_food', 'CNY', '99.00'),
+        ]),
+      ];
+      final m = ReadCategoryWindowTool.shape(
+        entries,
+        accounts: accounts,
+        category: 'food',
+        from: from,
+        to: to,
+        limit: 20,
+        purpose: 'drill_down_expense',
+      );
+      final txns = m['transactions'] as List;
+      expect(txns.length, 1);
+      expect((txns.single as Map)['id'], 'e1');
+      expect((txns.single as Map)['amount_minor'], '1250');
+      expect((txns.single as Map)['currency'], 'CNY');
+      expect((txns.single as Map)['note_excerpt'], 'Noodle lunch');
+      final summary = m['summary'] as Map;
+      expect(summary['count'], 1);
+      expect(summary['returned'], 1);
+      expect(summary['total_minor'], '1250');
+      expect(summary['currency'], 'CNY');
+      expect(m['device_note'], contains('已将 category=food 解析为 1 个支出账户'));
+    });
+
+    test('unmatched category → empty + explicit device_note', () {
+      final m = ReadCategoryWindowTool.shape(
+        [
+          _ewp('e1', DateTime.utc(2026, 4, 15), [
+            _post('exp_food', 'CNY', '5.00'),
+          ]),
+        ],
+        accounts: accounts,
+        category: 'groceries',
+        from: from,
+        to: to,
+        limit: 20,
+        purpose: 'other',
+      );
+      expect((m['transactions'] as List), isEmpty);
+      expect((m['summary'] as Map)['count'], 0);
+      expect(
+        m['device_note'],
+        contains('未找到名称/ID 匹配 category=groceries'),
+      );
+    });
+
+    test('merchant_substring filters on narration', () {
+      final entries = [
+        _ewp('e1', DateTime.utc(2026, 4, 15), [
+          _post('exp_food', 'CNY', '4.50'),
+        ], narration: 'STARBUCKS 04291'),
+        _ewp('e2', DateTime.utc(2026, 4, 16), [
+          _post('exp_food', 'CNY', '12.00'),
+        ], narration: 'Lunch noodle'),
+      ];
+      final m = ReadCategoryWindowTool.shape(
+        entries,
+        accounts: accounts,
+        category: 'food',
+        from: from,
+        to: to,
+        limit: 20,
+        purpose: 'drill_down_expense',
+        merchantSubstring: 'starbucks',
+      );
+      final txns = m['transactions'] as List;
+      expect(txns.length, 1);
+      expect((txns.single as Map)['id'], 'e1');
+    });
+
+    test('mixed currency → by_currency summary branch', () {
+      final entries = [
+        _ewp('u', DateTime.utc(2026, 4, 10), [
+          _post('exp_food', 'USD', '5.00'),
+        ]),
+        _ewp('c', DateTime.utc(2026, 4, 11), [
+          _post('exp_food', 'CNY', '10.00'),
+        ]),
+      ];
+      final m = ReadCategoryWindowTool.shape(
+        entries,
+        accounts: accounts,
+        category: 'food',
+        from: from,
+        to: to,
+        limit: 20,
+        purpose: 'drill_down_expense',
+      );
+      final summary = m['summary'] as Map;
+      expect(summary['count'], 2);
+      expect(summary.containsKey('total_minor'), isFalse);
+      final byCur = (summary['by_currency'] as List)
+          .map((e) => (e as Map)['currency'])
+          .toSet();
+      expect(byCur, {'USD', 'CNY'});
     });
   });
 }

@@ -239,6 +239,7 @@ void main() {
         'propose_trade',
         'read_account_window',
         'read_asset_window',
+        'read_category_window',
       ]);
     });
   });

@@ -40,6 +40,7 @@ import 'propose_liability_payment_tool.dart';
 import 'propose_trade_tool.dart';
 import 'read_account_window_tool.dart';
 import 'read_asset_window_tool.dart';
+import 'read_category_window_tool.dart';
 
 /// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
 const Duration kPerToolTimeout = Duration(seconds: 15);
@@ -66,6 +67,7 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   ProposeTradeTool(),
   ReadAccountWindowTool(),
   ReadAssetWindowTool(),
+  ReadCategoryWindowTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>
