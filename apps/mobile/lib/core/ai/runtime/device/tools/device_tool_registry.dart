@@ -27,8 +27,10 @@ import 'device_tool.dart';
 import 'get_anomaly_flags_tool.dart';
 import 'get_asset_allocation_tool.dart';
 import 'get_holdings_tool.dart';
+import 'get_investment_performance_tool.dart';
 import 'get_recurring_patterns_tool.dart';
 import 'get_refund_links_tool.dart';
+import 'get_subscription_changes_tool.dart';
 import 'get_transfer_links_tool.dart';
 import 'list_payment_accounts_tool.dart';
 
@@ -48,6 +50,8 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   GetRecurringPatternsTool(),
   GetRefundLinksTool(),
   GetTransferLinksTool(),
+  GetInvestmentPerformanceTool(),
+  GetSubscriptionChangesTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

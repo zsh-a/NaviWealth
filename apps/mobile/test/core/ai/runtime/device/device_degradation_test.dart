@@ -220,8 +220,10 @@ void main() {
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_holdings',
+        'get_investment_performance',
         'get_recurring_patterns',
         'get_refund_links',
+        'get_subscription_changes',
         'get_transfer_links',
         'list_payment_accounts',
       ]);

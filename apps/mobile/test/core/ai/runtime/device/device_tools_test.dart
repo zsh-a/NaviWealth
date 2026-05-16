@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
@@ -7,9 +8,11 @@ import 'package:naviwealth/core/ai/local/skills/skills.dart'
         RecurringCadence,
         RecurringPattern,
         RefundMatch,
+        SubscriptionChange,
         TransferMatch,
         recurringPatternToUpload,
         refundMatchToUpload,
+        subscriptionChangeToUpload,
         transferMatchToUpload;
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
@@ -17,8 +20,10 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dar
 import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_investment_performance_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_refund_links_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_subscription_changes_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_transfer_links_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/data/domain/account.dart';
@@ -26,6 +31,9 @@ import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
+import 'package:naviwealth/features/investment/data/providers.dart'
+    show holdingSnapshotToUpload;
+import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 
 SyncMeta _stamp() => SyncMeta(
   ownerUserId: 'u',
@@ -107,14 +115,18 @@ void main() {
         GetRecurringPatternsTool(),
         GetRefundLinksTool(),
         GetTransferLinksTool(),
+        GetInvestmentPerformanceTool(),
+        GetSubscriptionChangesTool(),
       ]);
       final schemas = reg.schemas();
       expect(schemas.map((s) => s.name), [
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_holdings',
+        'get_investment_performance',
         'get_recurring_patterns',
         'get_refund_links',
+        'get_subscription_changes',
         'get_transfer_links',
         'list_payment_accounts',
       ]);
@@ -578,6 +590,94 @@ void main() {
         (GetTransferLinksTool.shape([u], currency: 'usd')['links'] as List),
         isEmpty,
       );
+    });
+  });
+
+  group('investment_performance + subscription_changes (W-D4.3b)', () {
+    test('subscriptionChangeToUpload + GetSubscriptionChangesTool.shape', () {
+      final u = subscriptionChangeToUpload(
+        SubscriptionChange(
+          merchantKey: 'netflix',
+          cadence: RecurringCadence.monthly,
+          currency: 'USD',
+          prevMedianAmountMinor: 1099,
+          newMedianAmountMinor: 1299,
+          deltaRatio: 0.18,
+          since: DateTime.utc(2026, 4, 1),
+        ),
+      );
+      expect(u.kind, 'subscription_change');
+      expect(u.id, 'netflix|USD');
+      expect(u.payload['prev_amount_minor'], '1099');
+      expect(u.payload['new_amount_minor'], '1299');
+
+      final m = GetSubscriptionChangesTool.shape([u]);
+      final c = (m['changes'] as List).single as Map;
+      expect(c['id'], 'netflix|USD');
+      expect(c['merchant_key'], 'netflix');
+      expect(c['cadence'], 'monthly');
+      expect(c['prev_amount_minor'], '1099');
+      expect(c['new_amount_minor'], '1299');
+      expect(c['delta_ratio'], 0.18);
+      expect(c['since'], '2026-04-01T00:00:00.000Z');
+      expect(c['payload'], isA<Map<String, Object?>>());
+      expect(m['source'], 'device_analytical_read_model');
+      // currency filter
+      expect(
+        (GetSubscriptionChangesTool.shape([u], currency: 'cny')['changes']
+            as List),
+        isEmpty,
+      );
+      expect(GetSubscriptionChangesTool.shape(const [])['count'], 0);
+    });
+
+    test('holdingSnapshotToUpload + GetInvestmentPerformanceTool.shape', () {
+      final snap = HoldingSnapshot(
+        assetId: 'AAPL',
+        quantity: Decimal.parse('10'),
+        costBasisInAssetCurrency: Decimal.parse('1500'),
+        marketValueInAssetCurrency: Decimal.parse('1900'),
+        assetCurrency: 'USD',
+        costBasisInBase: Decimal.parse('1500'),
+        marketValueInBase: Decimal.parse('1900'),
+        unrealizedPnlInBase: Decimal.parse('400'),
+        weight: Decimal.parse('0.42'),
+        baseCurrency: 'USD',
+        asOf: DateTime.utc(2026, 5, 16),
+      );
+      final u = holdingSnapshotToUpload(snap);
+      expect(u.kind, 'investment_performance');
+      expect(u.id, 'AAPL');
+      expect(u.payload['market_value_in_base'], '1900');
+      expect(u.payload['unrealized_pnl_in_base'], '400');
+
+      final m = GetInvestmentPerformanceTool.shape([u]);
+      final a = (m['assets'] as List).single as Map;
+      expect(a['id'], 'AAPL');
+      expect(a['asset_id'], 'AAPL');
+      expect(a['asset_currency'], 'USD');
+      expect(a['base_currency'], 'USD');
+      expect(a['market_value_base'], '1900'); // mapped from *_in_base
+      expect(a['cost_basis_base'], '1500');
+      expect(a['unrealized_pnl_base'], '400');
+      expect(a['weight'], '0.42');
+      expect(a['holding_days'], isNull); // device converter omits it
+      expect(a['as_of'], '2026-05-16T00:00:00.000Z');
+      expect(m['count'], 1);
+      expect(m['note'], contains('holdingsSnapshotProvider'));
+
+      // base_currency filter (case-insensitive)
+      expect(
+        (GetInvestmentPerformanceTool.shape([u], baseCurrency: 'usd')['assets']
+            as List),
+        hasLength(1),
+      );
+      expect(
+        (GetInvestmentPerformanceTool.shape([u], baseCurrency: 'EUR')['assets']
+            as List),
+        isEmpty,
+      );
+      expect(GetInvestmentPerformanceTool.shape(const [])['count'], 0);
     });
   });
 }

@@ -15,6 +15,7 @@
 /// (future wave) we can switch to long-history comparison.
 library;
 
+import '../../contracts/task_context.dart' show AnalyticalUpload;
 import 'recurring_detector.dart';
 import 'transaction_input.dart';
 
@@ -47,6 +48,28 @@ class SubscriptionChange {
   /// Earliest occurredAt in the later window — i.e. "the change started
   /// being seen since this date".
   final DateTime since;
+}
+
+/// The canonical [SubscriptionChange] → [AnalyticalUpload] conversion
+/// (§4.3.3). Single source shared by the cloud
+/// `ContextPack.analytical_uploads` path and the device
+/// `get_subscription_changes` tool (W-D4.3b) so the device tool's
+/// output is exactly what the backend `subscription_changes` read
+/// model mirrors (§10).
+AnalyticalUpload subscriptionChangeToUpload(SubscriptionChange c) {
+  return AnalyticalUpload(
+    kind: 'subscription_change',
+    id: '${c.merchantKey}|${c.currency}',
+    payload: <String, Object?>{
+      'merchant_key': c.merchantKey,
+      'cadence': c.cadence.name,
+      'currency': c.currency,
+      'prev_amount_minor': c.prevMedianAmountMinor.toString(),
+      'new_amount_minor': c.newMedianAmountMinor.toString(),
+      'delta_ratio': c.deltaRatio,
+      'since': c.since.toUtc().toIso8601String(),
+    },
+  );
 }
 
 /// 10% minimum change to flag. Below this is normal merchant variance
