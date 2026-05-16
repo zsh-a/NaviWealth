@@ -1165,8 +1165,8 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [ ] **Read Models — Analytical 层 P2 四模型** — `spending_clusters` / `goal_progress_projection` / `tax_lot_analysis` / `financial_behavior_profile`，nightly cron
 - [ ] **Read Models — Scoped Detail 层完善** — purpose-bound 工具族补齐（`read_trip_cluster` / `read_subscription_history` 等），与 Analytical 层 drill-down 链路打通
 - [ ] **Phase 5 — 端侧 LLM runtime（决策见 §4.6：用户自带 key · 最小后端 · 原生 only · cloud 先并存后删）**:
-  - [ ] **W-D1** SecureKeyStore for LLM key + 设置页输入/校验/清除 UI（原生 only gate）
-  - [ ] **W-D2** Dart Anthropic adapter（Messages + SSE streaming + `tool_use`），port 自 `apps/backend/src/ai/adapters/anthropic/`
+  - [x] ~~**W-D1** SecureKeyStore for LLM key + 设置页输入/校验/清除 UI（原生 only gate）~~ — `core/ai/llm_credentials/`（model + store + providers）+ `settings/ui/ai_llm_credentials_page.dart` + `/settings/ai-llm` 路由；`deviceLlmAvailableProvider` 为 W-D3 registry 入口（fail-closed）；15 tests
+  - [x] ~~**W-D2** Dart Anthropic adapter（Messages + SSE streaming + `tool_use`），port 自 `apps/backend/src/ai/adapters/anthropic/`~~ — `core/ai/runtime/device/anthropic/`（wire + 流式 SSE decoder + dio client + 一发 `complete` for W-D5）+ provider-neutral `LlmStreamEvent`（backend `AgentEvent` 镜像）；16 tests（含 4 个 event_map.rs 平价用例 + chunk-boundary）
   - [ ] **W-D3** 端侧 `AgentLoop`（port `agent_loop.rs`：tool round budget + propose 拦截）+ `DeviceLlmRuntime` 注册 + `RuntimeRegistry.pickFor` 改造 + `ChatRepository` 改走 registry
   - [ ] **W-D4** 端侧 tool registry：Snapshot/XIRR 复用 `domain/services/` + Analytical 直连 detector + Scoped Detail 查 Drift（去 HMAC，保 purpose+AiTrace）；`allowed_runtimes` 校验
   - [ ] **W-D5** 端侧 Vision 摄取（image → content block，用户 key 直发）+ AiTrace 文案「原图未经我方服务器」
