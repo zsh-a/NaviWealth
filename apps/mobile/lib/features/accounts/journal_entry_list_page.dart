@@ -99,6 +99,7 @@ class _JournalList extends StatelessWidget {
         return _JournalEntryRow(
           entry: je,
           accountsById: accountsById,
+          formatter: formatter,
           dateLabel: formatter.date(je.entry.date),
         );
       },
@@ -110,11 +111,13 @@ class _JournalEntryRow extends StatelessWidget {
   const _JournalEntryRow({
     required this.entry,
     required this.accountsById,
+    required this.formatter,
     required this.dateLabel,
   });
 
   final JournalEntryWithPostings entry;
   final Map<String, Account> accountsById;
+  final AppFormatters formatter;
   final String dateLabel;
 
   @override
@@ -123,7 +126,7 @@ class _JournalEntryRow extends StatelessWidget {
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
-    final summary = _summariseAmount(entry.postings, accountsById);
+    final headline = _headlinePosting(entry.postings, accountsById);
 
     return Container(
       decoration: BoxDecoration(
@@ -147,14 +150,15 @@ class _JournalEntryRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (summary != null)
+                    if (headline != null)
                       Padding(
                         padding: const EdgeInsets.only(left: 8),
-                        child: Text(
-                          summary,
+                        child: SignedMoneyText(
+                          amount: headline.units,
+                          unit: headline.unit,
+                          formatters: formatter,
                           style: context.theme.typography.sm.copyWith(
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                            color: context.theme.colors.foreground,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -207,7 +211,7 @@ class _JournalEntryRow extends StatelessWidget {
   /// matches the "what changed for me" intuition for transfers,
   /// trades, expenses and dividends alike. Returns `null` when no
   /// posting matches (e.g. unit-self-balanced split with no cash leg).
-  String? _summariseAmount(
+  Posting? _headlinePosting(
     List<Posting> postings,
     Map<String, Account> accounts,
   ) {
@@ -226,16 +230,6 @@ class _JournalEntryRow extends StatelessWidget {
         headline = p;
       }
     }
-    if (headline == null) return null;
-    final value = headline.units;
-    return '${value > Decimal.zero ? '+' : ''}${_format(value)} ${headline.unit}';
+    return headline;
   }
-}
-
-String _format(Decimal d) {
-  if (d == Decimal.zero) return '0';
-  final s = d.toString();
-  if (!s.contains('.')) return s;
-  final trimmed = s.replaceFirst(RegExp(r'\.?0+$'), '');
-  return trimmed.isEmpty ? '0' : trimmed;
 }
