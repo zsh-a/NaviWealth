@@ -8,6 +8,7 @@
 /// FIR-99 allowlist by nature, see §5.10.9).
 library;
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -53,6 +54,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
+            icon: const Icon(Icons.photo_camera_outlined),
+            onPress: _busy ? null : _captureCamera,
+          ),
+          FHeaderAction(
             icon: const Icon(Icons.attach_file_outlined),
             onPress: _busy ? null : _pickFile,
           ),
@@ -63,21 +68,41 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) =>
-              Center(child: Text(l10n.ingestAccountsLoadError('$e'))),
-          data: (accounts) => draftsAsync.when(
+      // §5.10.10 / S5c-native — drag a receipt/statement onto the page
+      // (desktop/web). No-op on touch platforms.
+      child: DropTarget(
+        onDragDone: _busy ? (_) {} : _onDrop,
+        child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
             loading: () => const Center(child: FCircularProgress()),
             error: (e, _) =>
-                Center(child: Text(l10n.ingestQueueLoadError('$e'))),
-            data: (drafts) => _content(l10n, accounts, drafts),
+                Center(child: Text(l10n.ingestAccountsLoadError('$e'))),
+            data: (accounts) => draftsAsync.when(
+              loading: () => const Center(child: FCircularProgress()),
+              error: (e, _) =>
+                  Center(child: Text(l10n.ingestQueueLoadError('$e'))),
+              data: (drafts) => _content(l10n, accounts, drafts),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _captureCamera() async {
+    final source = await ref.read(cameraIngestCaptureProvider).capture();
+    if (source == null || !mounted) return;
+    await _runIngest(source);
+  }
+
+  Future<void> _onDrop(DropDoneDetails detail) async {
+    if (detail.files.isEmpty) return;
+    for (final file in detail.files) {
+      final source = await xFileToIngestSource(file);
+      if (source == null || !mounted) continue;
+      await _runIngest(source);
+    }
   }
 
   Widget _content(
@@ -89,6 +114,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       return _EmptyState(
         onPaste: _busy ? null : _openPasteDialog,
         onImport: _busy ? null : _pickFile,
+        onCamera: _busy ? null : _captureCamera,
       );
     }
     final payable = accounts
@@ -427,10 +453,15 @@ class _VerdictPill extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onPaste, required this.onImport});
+  const _EmptyState({
+    required this.onPaste,
+    required this.onImport,
+    required this.onCamera,
+  });
 
   final VoidCallback? onPaste;
   final VoidCallback? onImport;
+  final VoidCallback? onCamera;
 
   @override
   Widget build(BuildContext context) {
@@ -463,16 +494,23 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: onCamera,
+                  prefix: const Icon(Icons.photo_camera_outlined),
+                  child: Text(l10n.ingestCameraAction),
+                ),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: onImport,
                   prefix: const Icon(Icons.attach_file_outlined),
                   child: Text(l10n.ingestImportFileAction),
                 ),
-                const SizedBox(width: 8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: onPaste,

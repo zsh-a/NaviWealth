@@ -7,6 +7,7 @@ import '../core/ai/write/persistent_undo_banner.dart';
 import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/state/route_context_provider.dart';
+import '../features/ingest/data/share_intent_service.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
 
@@ -48,10 +49,15 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
       curve: Motion.emphasizedDecelerate,
     );
     _controller.value = 1.0;
+    // §5.10.10 / S5c-native — app-wide share receiver. Self-guarded:
+    // a no-op wherever the share channel is absent (tests / web /
+    // desktop), so this is safe to start unconditionally here.
+    ref.read(shareIntentServiceProvider).start();
   }
 
   @override
   void dispose() {
+    ref.read(shareIntentServiceProvider).stop();
     _controller.dispose();
     super.dispose();
   }
