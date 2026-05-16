@@ -364,11 +364,11 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
     }
     final refunds = matchRefunds(transactionInputs);
     for (final r in refunds) {
-      out.add(_refundMatchToUpload(r));
+      out.add(refundMatchToUpload(r));
     }
     final transfers = matchTransfers(transactionInputs);
     for (final t in transfers) {
-      out.add(_transferMatchToUpload(t));
+      out.add(transferMatchToUpload(t));
     }
     // Wave 19: subscription price changes (stateless detection over the
     // same input window).
@@ -386,31 +386,6 @@ List<AnalyticalUpload> _buildAnalyticalUploads({
   return out;
 }
 
-AnalyticalUpload _refundMatchToUpload(RefundMatch m) {
-  return AnalyticalUpload(
-    kind: 'refund_link',
-    id: '${m.originalTxnId}|${m.refundTxnId}',
-    payload: <String, Object?>{
-      'original_txn_id': m.originalTxnId,
-      'refund_txn_id': m.refundTxnId,
-      'amount_minor': m.amountMinor.toString(),
-      'currency': m.currency,
-    },
-  );
-}
-
-AnalyticalUpload _transferMatchToUpload(TransferMatch m) {
-  return AnalyticalUpload(
-    kind: 'transfer_link',
-    id: '${m.fromTxnId}|${m.toTxnId}',
-    payload: <String, Object?>{
-      'from_txn_id': m.fromTxnId,
-      'to_txn_id': m.toTxnId,
-      'amount_minor': m.amountMinor.toString(),
-      'currency': m.currency,
-    },
-  );
-}
 
 AnalyticalUpload _subscriptionChangeToUpload(SubscriptionChange c) {
   return AnalyticalUpload(
