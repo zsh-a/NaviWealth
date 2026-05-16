@@ -11,6 +11,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 
+import '../../../core/ai/write/drift_ai_touched_store.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart' show AccountCategory, AssetType;
 import '../../../data/domain/hlc.dart';
@@ -45,6 +46,7 @@ class ProposalApplier {
     required this.manualAssetRepo,
     required this.liabilityRepo,
     required this.currentUserId,
+    this.aiTouchedStore,
   });
 
   final TradeEntryService tradeEntryService;
@@ -53,6 +55,13 @@ class ProposalApplier {
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
+
+  /// Wave 39 — when present, every successful [apply] records an AI-
+  /// touch entry keyed by `(entityType, entityId)`. Optional so
+  /// existing tests (which inject the applier with hand-rolled stubs)
+  /// don't need a Drift DB to compile. Production wiring in
+  /// `features/ai_chat/data/providers.dart` always supplies it.
+  final DriftAiTouchedStore? aiTouchedStore;
 
   /// Resolves the current single-user owner id, used to mint stable
   /// `system-account:<userId>:<path>` ids for the FIR-133 seeded
@@ -88,24 +97,52 @@ class ProposalApplier {
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
     try {
       final at = DateTime.now().toUtc();
-      switch (plan.kind) {
-        case ProposalKind.trade:
-          return await _applyTrade(plan, at);
-        case ProposalKind.expense:
-          return await _applyExpense(plan, at);
-        case ProposalKind.liabilityPayment:
-          return await _applyLiabilityPayment(plan, at);
-        case ProposalKind.accountCreate:
-          return await _applyAccountCreate(plan, at);
-        case ProposalKind.assetValuation:
-          return await _applyAssetValuation(plan, at);
-        case ProposalKind.unknown:
-          throw ProposalApplyException('unknown proposal kind');
-      }
+      final state = switch (plan.kind) {
+        ProposalKind.trade => await _applyTrade(plan, at),
+        ProposalKind.expense => await _applyExpense(plan, at),
+        ProposalKind.liabilityPayment =>
+          await _applyLiabilityPayment(plan, at),
+        ProposalKind.accountCreate => await _applyAccountCreate(plan, at),
+        ProposalKind.assetValuation => await _applyAssetValuation(plan, at),
+        ProposalKind.unknown =>
+          throw ProposalApplyException('unknown proposal kind'),
+      };
+      // Wave 39 — when an apply succeeds, record the AI touch keyed by
+      // (entityType, entityId). Detail pages surface a tiny sparkle
+      // prefix for recent touches; the touch survives across restarts
+      // because the table is persisted in Drift.
+      await _recordTouch(plan, state, at);
+      return state;
     } on ProposalApplyException {
       rethrow;
     } catch (e) {
       throw ProposalApplyException(e.toString());
+    }
+  }
+
+  Future<void> _recordTouch(
+    ReadyProposalPlan plan,
+    ProposalApplyState state,
+    DateTime at,
+  ) async {
+    final store = aiTouchedStore;
+    if (store == null) return;
+    if (state.status != ProposalApplyStatus.applied) return;
+    final entityId = state.appliedEntityId;
+    final entityType = state.appliedTable;
+    if (entityId == null || entityType == null) return;
+    try {
+      await store.recordTouch(
+        AiTouchedEntity(
+          entityType: entityType,
+          entityId: entityId,
+          touchedAt: at,
+          kindLabel: plan.kind.name,
+        ),
+      );
+    } catch (_) {
+      // Best-effort — failing to record the AI-touch metadata must
+      // never break the apply path. The mark is decorative.
     }
   }
 

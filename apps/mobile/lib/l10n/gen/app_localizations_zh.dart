@@ -21,13 +21,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettings => '设置';
 
   @override
-  String get navAI => 'AI';
-
-  @override
   String get navActivity => '流水';
 
   @override
   String get navAccounts => '账户';
+
+  @override
+  String get navSearch => '搜索';
 
   @override
   String get accountsHubSectionCashDeposits => '现金与存款';
@@ -158,6 +158,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dashboardNetWorthLiabilitiesLabel => '负债';
+
+  @override
+  String get dashboardValuationUpdating => '正在更新估值…';
+
+  @override
+  String get dashboardLedgerSyncing => '正在同步最新账本…';
+
+  @override
+  String get dashboardValuationUpdated => '估值刚刚更新';
 
   @override
   String get portfolioAssetsTab => '资产';
@@ -822,12 +831,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get langChinese => '中文';
 
   @override
-  String get settingsCompactDensityTitle => '紧凑布局';
-
-  @override
-  String get settingsCompactDensitySubtitle => '更紧凑的列表行与控件，适合鼠标操作的桌面 / Web。';
-
-  @override
   String get commonRetry => '重试';
 
   @override
@@ -923,12 +926,63 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteSearchHint => '搜索命令…';
 
   @override
+  String get commandPaletteMobileEntryHint => '搜索、跳转、提问…';
+
+  @override
   String get commandPaletteEmpty => '没有匹配的命令';
 
   @override
   String commandPaletteAskAi(String query) {
     return '问 AI：$query';
   }
+
+  @override
+  String get askAiResultLocalBadge => '本地处理';
+
+  @override
+  String get askAiResultNoLocalMatch => '命令栏暂无法本地解析这个问题。可去 AI 历史里继续追问。';
+
+  @override
+  String get askAiResultContinueInChat => '去 AI 历史继续追问 →';
+
+  @override
+  String get askAiResultIrreversibleBlocked => '命令栏不执行转账 / 下单 / 删除账户。请到对应页面操作。';
+
+  @override
+  String askAiResultError(String error) {
+    return '查询执行失败：$error';
+  }
+
+  @override
+  String get askAiResultEmpty => '没有匹配的记录。';
+
+  @override
+  String askAiResultMoreRows(int count) {
+    return '还有 $count 条';
+  }
+
+  @override
+  String askAiResultRowCount(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String get askAiResultTitleSpending => '支出分类';
+
+  @override
+  String get askAiResultTitleTransactions => '交易明细';
+
+  @override
+  String get askAiResultTitleNetWorth => '净资产趋势';
+
+  @override
+  String get askAiResultTitleSubscriptions => '订阅';
+
+  @override
+  String get askAiResultTitleRefunds => '退款匹配';
+
+  @override
+  String get askAiResultTitleGeneric => '查询结果';
 
   @override
   String get commandPaletteGoOverview => '前往 总览';
@@ -2614,6 +2668,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSubtitle => '导出或导入加密数据备份';
 
   @override
+  String get settingsAiPrivacyTitle => 'AI 隐私';
+
+  @override
+  String get settingsAiPrivacySubtitle => '选择 AI 可以上传到云端的数据范围';
+
+  @override
+  String get aiPrivacyTitle => 'AI 隐私';
+
+  @override
+  String get aiPrivacyIntro => '选择 AI 离开本机时可以看到多少细节。可以随时更改。';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedLabel => '金额可上行';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedDescription => '上传精确金额和账户上下文，回答质量最佳。';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedLabel => '金额做掩码';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedDescription =>
+      '金额按数量级取整后再上传。云端能看到模式但看不到具体数字。';
+
+  @override
+  String get aiPrivacyModeAmountsLocalLabel => '金额完全本地';
+
+  @override
+  String get aiPrivacyModeAmountsLocalDescription => '只把意图和分类名上传，云端只能给定性建议。';
+
+  @override
+  String get aiPrivacyMaskAccountsLabel => '脱敏账户 / 机构名';
+
+  @override
+  String get aiPrivacyMaskAccountsDescription => '把银行 / 券商等名字替换成匿名 ID 后再上传。';
+
+  @override
+  String get aiPrivacyOnboardingTitle => '选择你的 AI 隐私偏好';
+
+  @override
+  String get aiPrivacyOnboardingBody =>
+      'NaviWealth 的 AI 默认本地优先。当需要走云端时，这个设置决定能上传什么。后续可在设置里改。';
+
+  @override
+  String get aiPrivacyOnboardingConfirm => '好的';
+
+  @override
+  String get aiTransparencyUndoSectionTitle => '待撤销的 AI 改动';
+
+  @override
+  String get aiTransparencyUndoEmpty => '暂无待撤销的 AI 改动。';
+
+  @override
+  String get aiTransparencyUndoAction => '撤销';
+
+  @override
   String get settingsDeveloperSection => '开发者';
 
   @override
@@ -3350,6 +3460,39 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightDuplicateChargeLabel => '疑似重复扣款';
+
+  @override
+  String dashboardInsightDuplicateChargeValue(int count, String amount) {
+    return '$count 组，共 $amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryLabel => '上月回顾';
+
+  @override
+  String dashboardInsightMonthlySummaryUp(String amount) {
+    return '净资产 +$amount';
+  }
+
+  @override
+  String dashboardInsightMonthlySummaryDown(String amount) {
+    return '净资产 -$amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryFlat => '净资产基本持平';
+
+  @override
+  String get dashboardInsightActionExpand => '展开';
+
+  @override
+  String get dashboardInsightActionAsk => '问一下';
+
+  @override
+  String get dashboardInsightActionDismiss => '忽略';
+
+  @override
   String get portfolioViewAssets => '资产';
 
   @override
@@ -3373,6 +3516,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioUnassignedAccount => '未分配';
+
+  @override
+  String get activityAddAction => '添加';
 
   @override
   String get activityFeedFilterTitle => '筛选';
@@ -3578,4 +3724,79 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStatusStatJustNow => '刚刚';
+
+  @override
+  String get aiReplyChipCompareLastPeriod => '对比上一周期';
+
+  @override
+  String get aiReplyChipFindKeyDrivers => '找出主要驱动';
+
+  @override
+  String get aiReplyChipHowControlSpending => '如何控制支出';
+
+  @override
+  String get aiReplyChipViewHoldings => '看持仓明细';
+
+  @override
+  String get aiReplyChipComputeXirr => '计算 XIRR';
+
+  @override
+  String get aiReplyChipCompareLastMonth => '对比上月';
+
+  @override
+  String get aiReplyChipMarketDrop20 => '如果市场下跌 20%?';
+
+  @override
+  String get aiReplyChipMonthlySaveDelta => '需要每月多存多少?';
+
+  @override
+  String get aiReplyChipRebalanceAdvice => '调整资产配置建议';
+
+  @override
+  String get aiReplyChipCompareAnotherPeriod => '再对比一个时段';
+
+  @override
+  String get aiReplyChipBiggestCategoryChange => '哪些类目变化最大';
+
+  @override
+  String get aiReplyChipTrendSummary => '给出趋势小结';
+
+  @override
+  String get aiReplyChipHandleInsight => '如何处理这条洞察?';
+
+  @override
+  String get aiReplyChipSimilarHistory => '看历史相似情况';
+
+  @override
+  String get aiReplyChipActionPlan => '给我具体行动方案';
+
+  @override
+  String get aiReplyChipRiskConcentration => '风险集中度评估';
+
+  @override
+  String get aiReplyChipUnusedSubscriptions => '哪些订阅没在用';
+
+  @override
+  String get aiReplyChipCancelPriciestSub => '取消最贵的订阅?';
+
+  @override
+  String get aiReplyChipUnmatchedRefunds => '未匹配的退款';
+
+  @override
+  String get aiReplyChipCompareBenchmark => '与基准对比';
+
+  @override
+  String get aiReplyChipForecast12mo => '未来 12 月预测';
+
+  @override
+  String get aiReplyChipExpandDetails => '展开细节';
+
+  @override
+  String get aiReplyChipActionPlanGeneric => '给出行动方案';
+
+  @override
+  String get aiReplyChipVsLastMonth => '与上月对比';
+
+  @override
+  String get aiCapsuleExpandFallback => '展开';
 }

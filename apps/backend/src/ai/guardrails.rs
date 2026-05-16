@@ -17,7 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use worker::{D1Database, D1Type};
 
-use crate::ai::anthropic::ChatMessage;
+use crate::ai::adapters::anthropic::wire::ChatMessage;
 use crate::error::AppError;
 
 /// System prompt prepended to every conversation. The model **must** be told,
@@ -46,6 +46,7 @@ pub const SYSTEM_PROMPT: &str = "你是 NaviWealth 用户的私人财务助手�
    propose_* 工具返回的是「待用户确认的计划」，不会落库；最终是否写入由前端 UI 上的人工确认决定。\n\
 6. 单次对话最多调用 5 次 propose_*（防止意外暴写）。逼近上限时主动告诉用户。\n\
 7. 缺少必要字段时**反问用户**，不要硬编一个值。例如「你说的银行卡是哪一张？」「这笔买入的成交价是多少？」。\n\
+   记录支出时，如果用户没有指定支付账户，先调用 list_payment_accounts 查看候选；只有工具返回空时才说没有可用支付账户并询问是否创建。\n\
 8. 用户提供相对日期时（昨天 / 上周三 / 这个月 1 号）由你解析为 ISO-8601（依据消息里给出的当前时间）后再传给工具。\n\
 9. 类目无法判断时，工具会返回 candidates，请把这些候选给用户挑选，而不是替用户选。\n\
 10. 如果工具返回 status=needs_clarification，立刻把 reason 转化为一个对用户友好的问句，不要再调用其他写工具。\n\

@@ -29,8 +29,11 @@ void main() {
       await tester.pumpWidget(await _wrap(prefs));
       await tester.pumpAndSettle();
 
-      // Default is 'CNY'; banner-style label is rendered next to the chevron.
-      expect(find.text('CNY'), findsOneWidget);
+      // Wave 41 — the row renders the full `currencyDisplayLabel`
+      // ("CNY · Chinese Yuan") rather than a bare code, so match by
+      // substring. The pre-Wave-36 trailing chip used bare codes; the
+      // test wasn't updated when the row migrated to InlineSettingRow.
+      expect(find.textContaining('CNY'), findsWidgets);
     });
 
     testWidgets(
@@ -64,8 +67,9 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(container.read(baseCurrencyProvider), 'USD');
-        // Trailing label updates to reflect the new selection.
-        expect(find.text('USD'), findsWidgets);
+        // Trailing label updates to reflect the new selection — match
+        // by substring (full label is "USD · US Dollar").
+        expect(find.textContaining('USD'), findsWidgets);
       },
     );
   });

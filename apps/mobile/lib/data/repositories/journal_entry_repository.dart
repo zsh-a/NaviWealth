@@ -315,21 +315,42 @@ class JournalEntryRepository {
     );
   }
 
-  /// Current balance for [accountId], computed as the algebraic sum of
-  /// all non-deleted posting units. Returns [Decimal.zero] when no
-  /// postings exist.
+  /// Raw algebraic sum of every non-deleted posting on [accountId].
+  ///
+  /// This is only meaningful for single-unit accounts. For cash balances,
+  /// prefer [balanceByAccountUnit] so security quantities on the same
+  /// brokerage account are not added to fiat cash.
   Future<Decimal> balanceByAccount(String accountId) async {
-    final rows =
-        await (_db.select(_db.postings).join([
-                innerJoin(
-                  _db.journalEntries,
-                  _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
-                ),
-              ])
-              ..where(_db.postings.accountId.equals(accountId))
-              ..where(_db.postings.deletedAt.isNull())
-              ..where(_db.journalEntries.deletedAt.isNull()))
-            .get();
+    return _sumPostings(accountId: accountId);
+  }
+
+  /// Current balance for one concrete unit on [accountId].
+  ///
+  /// Examples:
+  /// - cash balance: `accountId = brokerage cash account`, `unit = CNY`
+  /// - security position in one account: `unit = cn_a:600519`
+  Future<Decimal> balanceByAccountUnit(String accountId, String unit) async {
+    return _sumPostings(accountId: accountId, unit: unit);
+  }
+
+  Future<Decimal> _sumPostings({
+    required String accountId,
+    String? unit,
+  }) async {
+    final query =
+        _db.select(_db.postings).join([
+            innerJoin(
+              _db.journalEntries,
+              _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+            ),
+          ])
+          ..where(_db.postings.accountId.equals(accountId))
+          ..where(_db.postings.deletedAt.isNull())
+          ..where(_db.journalEntries.deletedAt.isNull());
+    if (unit != null) {
+      query.where(_db.postings.unit.equals(unit));
+    }
+    final rows = await query.get();
     var sum = Decimal.zero;
     for (final row in rows) {
       sum += row.readTable(_db.postings).units;
@@ -345,14 +366,15 @@ class JournalEntryRepository {
   /// — keeping it as a single bulk stream avoids O(N) per-account
   /// subscriptions when the user has dozens of accounts.
   Stream<Map<String, Map<String, Decimal>>> watchBalancesByUnit() {
-    final query = _db.select(_db.postings).join([
-      innerJoin(
-        _db.journalEntries,
-        _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
-      ),
-    ])
-      ..where(_db.postings.deletedAt.isNull())
-      ..where(_db.journalEntries.deletedAt.isNull());
+    final query =
+        _db.select(_db.postings).join([
+            innerJoin(
+              _db.journalEntries,
+              _db.journalEntries.id.equalsExp(_db.postings.journalEntryId),
+            ),
+          ])
+          ..where(_db.postings.deletedAt.isNull())
+          ..where(_db.journalEntries.deletedAt.isNull());
     return query.watch().map((rows) {
       final out = <String, Map<String, Decimal>>{};
       for (final row in rows) {

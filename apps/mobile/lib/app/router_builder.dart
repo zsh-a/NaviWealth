@@ -14,6 +14,7 @@ import '../features/accounts/accounts_page.dart';
 import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
 import '../features/activity/activity_page.dart';
+import '../features/activity/ui/activity_entry_detail_page.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
 import '../features/assets/asset_detail_page.dart';
@@ -43,6 +44,8 @@ import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
+import '../features/settings/ui/ai_privacy_page.dart';
+import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_shell.dart';
 import 'deferred_route.dart';
@@ -92,9 +95,10 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
         name: AppRouteNames.login,
         builder: (context, state) => const LoginPage(),
       ),
-      // Main shell: 5-branch IndexedStack preserves tab state across switches.
-      // Order matches kPrimaryTabPaths: Home / Activity / AI / Accounts /
-      // Settings — AI is the centered accent tab in the bottom nav.
+      // Main shell: 4-branch IndexedStack preserves tab state across switches.
+      // Order matches kPrimaryTabPaths: Home / Activity / Accounts / Settings.
+      // The former `/ai` tab is gone (§5.10) — AI is now an overlay (command
+      // palette) + inline capsules, not a destination.
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppRootShell(shell: shell),
         branches: [
@@ -162,6 +166,20 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     builder: (context, state) => const TransferFormPage(),
                   ),
                   GoRoute(
+                    path: 'entry/:entryId',
+                    name: AppRouteNames.activityEntryDetail,
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      if (extra is ActivityEntryDetailArgs) {
+                        return ActivityEntryDetailPage(
+                          entry: extra.entry,
+                          accountsById: extra.accountsById,
+                        );
+                      }
+                      return RouteErrorPage(state: state);
+                    },
+                  ),
+                  GoRoute(
                     path: 'journal',
                     name: AppRouteNames.journalEntries,
                     builder: (context, state) => const JournalEntryListPage(),
@@ -170,46 +188,8 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Branch 2: AI Assistant + Insights (FIRE/Rebalance/Analytics) ─
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.ai,
-                name: AppRouteNames.aiChat,
-                builder: (context, state) => DeferredRoute(
-                  load: ai_chat_lib.loadLibrary,
-                  builder: (_) => ai_chat_lib.AiChatPage(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'insights/fire',
-                    name: AppRouteNames.aiInsightsFire,
-                    builder: (context, state) => DeferredRoute(
-                      load: fire_lib.loadLibrary,
-                      builder: (_) => fire_lib.FirePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'insights/rebalance',
-                    name: AppRouteNames.aiInsightsRebalance,
-                    builder: (context, state) => DeferredRoute(
-                      load: rebalance_lib.loadLibrary,
-                      builder: (_) => rebalance_lib.RebalancePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'insights/analytics',
-                    name: AppRouteNames.aiInsightsAnalytics,
-                    builder: (context, state) => DeferredRoute(
-                      load: analytics_lib.loadLibrary,
-                      builder: (_) => analytics_lib.AnalyticsPage(),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // ── Branch 3: Accounts hub (assets + liabilities + bank list) ───
+          // ── Branch 2: Accounts hub (assets + liabilities + bank list +
+          //              plan dashboards: FIRE / Rebalance / Analytics) ─────
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -263,6 +243,30 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                       load: corp_action_lib.loadLibrary,
                       builder: (_) =>
                           corp_action_lib.CorporateActionEntryRoute(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'fire',
+                    name: AppRouteNames.accountsFire,
+                    builder: (context, state) => DeferredRoute(
+                      load: fire_lib.loadLibrary,
+                      builder: (_) => fire_lib.FirePage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'rebalance',
+                    name: AppRouteNames.accountsRebalance,
+                    builder: (context, state) => DeferredRoute(
+                      load: rebalance_lib.loadLibrary,
+                      builder: (_) => rebalance_lib.RebalancePage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'analytics',
+                    name: AppRouteNames.accountsAnalytics,
+                    builder: (context, state) => DeferredRoute(
+                      load: analytics_lib.loadLibrary,
+                      builder: (_) => analytics_lib.AnalyticsPage(),
                     ),
                   ),
                   GoRoute(
@@ -322,7 +326,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Branch 4: Settings ───────────────────────────────────────────
+          // ── Branch 3: Settings ───────────────────────────────────────────
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -360,6 +364,33 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'sync',
                     name: AppRouteNames.sync,
                     builder: (context, state) => const SyncStatusPage(),
+                  ),
+                  GoRoute(
+                    path: 'ai-history',
+                    name: AppRouteNames.aiHistory,
+                    builder: (context, state) => DeferredRoute(
+                      load: ai_chat_lib.loadLibrary,
+                      builder: (_) => ai_chat_lib.AiChatPage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'ai-privacy',
+                    name: AppRouteNames.aiPrivacy,
+                    builder: (context, state) => const AiPrivacyPage(),
+                  ),
+                  GoRoute(
+                    path: 'ai-transparency',
+                    name: AppRouteNames.aiTransparency,
+                    builder: (context, state) => const AiTransparencyPage(),
+                    routes: [
+                      GoRoute(
+                        path: ':requestId',
+                        name: AppRouteNames.aiTransparencyDetail,
+                        builder: (context, state) => AiTransparencyDetailPage(
+                          requestId: state.pathParameters['requestId'] ?? '',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

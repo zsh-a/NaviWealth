@@ -75,12 +75,9 @@ than 1% — this catches BaoStock data lag and mootdx protocol drift.
 | workflow | when it runs | what it does |
 |---|---|---|
 | `asset-catalog.yml` | on PRs touching `tool/asset_catalog/**` or `tool/build-asset-catalog.sh` | `pytest` (offline parser tests) + stub bake + gzip-budget + body-sha256 parity check against the committed bundle |
-| `release.yml` (`mobile-release` job) | on `mobile-vX.Y.Z` tag push | refreshes the catalog from the globally-reachable feeds (HKEX + NASDAQ Trader + SEC + CoinGecko) via `--full --allow-degraded --sources hk_stock,us_stock,crypto`, then bakes a fresh NDJSON that the Flutter web/Android build packages into the release artifact. A-share gracefully degrades to the last-committed CSV. |
+| `release.yml` (`mobile release` job) | on `vX.Y.Z` tag push | refreshes the catalog from the globally-reachable feeds (HKEX + NASDAQ Trader + SEC + CoinGecko) via `--full --allow-degraded --sources hk_stock,us_stock,crypto`, then bakes a fresh NDJSON that the Flutter web/Android build packages into the release artifact. A-share gracefully degrades to the last-committed CSV. |
 
-To pick up A-share refreshes in a release, run `--full` (no source
-filter) locally on a CN host and commit the regenerated CSVs + bundle
-before tagging. Alternatively, move the release step onto a self-hosted
-runner with `runs-on: [self-hosted, cn]`.
+To pick up A-share refreshes in a release, run `--full` (no source filter) locally on a CN host and commit the regenerated CSVs + bundle before tagging. Alternatively move the release step onto a self-hosted runner with `runs-on: [self-hosted, cn]`.
 
 ## Output
 

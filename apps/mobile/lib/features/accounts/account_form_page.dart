@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/enums.dart';
@@ -174,42 +175,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.accountFormDeleteTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.accountFormDeleteContent(_initial!.name)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.accountFormCancelAction),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.accountFormDeleteAction),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.accountFormDeleteTitle),
+      body: Text(l10n.accountFormDeleteContent(_initial!.name)),
+      cancelLabel: l10n.accountFormCancelAction,
+      confirmLabel: l10n.accountFormDeleteAction,
+      destructive: true,
     );
     if (ok != true) return;
     setState(() => _busy = true);
@@ -267,125 +239,134 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: loadingExisting
-            ? const Center(child: FCircularProgress())
-            : Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  children: [
-                    // Wealth-container category picker — semantic
-                    // icon-grid, not a dropdown. The accounting side
-                    // (`_category`) auto-derives via
-                    // [accountSideForCategory] on every selection and
-                    // is never user-editable.
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
-                      child: Text(
-                        l10n.accountFormTypeLabel,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: context.theme.colors.mutedForeground,
-                        ),
+      child: loadingExisting
+          ? const Center(child: FCircularProgress())
+          : Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                children: [
+                  // Wave 40 — surface AI provenance when this
+                  // account was last touched by an AI proposal
+                  // (`propose_account_create`). The widget is
+                  // self-gating: renders nothing when the entity
+                  // has no recent touch.
+                  if (widget.isEdit && widget.accountId != null) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: AiTouchMark(
+                        entityType: 'accounts',
+                        entityId: widget.accountId!,
                       ),
                     ),
-                    AccountCategoryPicker(
-                      value: _type,
-                      onChanged: (v) {
-                        setState(() {
-                          _type = v;
-                          _category = accountSideForCategory(v);
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    FTextFormField(
-                      control: FTextFieldControl.managed(
-                        controller: _nameController,
+                    const SizedBox(height: 8),
+                  ],
+                  // Wealth-container category picker — semantic
+                  // icon-grid, not a dropdown. The accounting side
+                  // (`_category`) auto-derives via
+                  // [accountSideForCategory] on every selection and
+                  // is never user-editable.
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 8),
+                    child: Text(
+                      l10n.accountFormTypeLabel,
+                      style: context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: context.theme.colors.mutedForeground,
                       ),
-                      label: Text(l10n.accountFormNameLabel),
-                      focusNode: _nameFocus,
-                      textInputAction: TextInputAction.next,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l10n.accountFormNameRequired
-                          : null,
-                      onSubmit: (_) => _institutionFocus.requestFocus(),
                     ),
+                  ),
+                  AccountCategoryPicker(
+                    value: _type,
+                    onChanged: (v) {
+                      setState(() {
+                        _type = v;
+                        _category = accountSideForCategory(v);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  FTextFormField(
+                    control: FTextFieldControl.managed(
+                      controller: _nameController,
+                    ),
+                    label: Text(l10n.accountFormNameLabel),
+                    focusNode: _nameFocus,
+                    textInputAction: TextInputAction.next,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? l10n.accountFormNameRequired
+                        : null,
+                    onSubmit: (_) => _institutionFocus.requestFocus(),
+                  ),
+                  const SizedBox(height: 12),
+                  _ParentAccountPickerSection(
+                    currentAccountId: _initial?.id,
+                    category: _category,
+                    parentId: _parentId,
+                    onChanged: (v) => setState(() => _parentId = v),
+                  ),
+                  const SizedBox(height: 12),
+                  _IconPickerSection(
+                    selected: _icon,
+                    color: _color,
+                    onChanged: (v) => setState(() => _icon = v),
+                  ),
+                  const SizedBox(height: 12),
+                  _ColorPickerSection(
+                    selected: _color,
+                    onChanged: (v) => setState(() => _color = v),
+                  ),
+                  const SizedBox(height: 12),
+                  CurrencyPicker(
+                    value: _currency,
+                    onChanged: (v) => setState(() => _currency = v),
+                  ),
+                  const SizedBox(height: 12),
+                  FTextFormField(
+                    control: FTextFieldControl.managed(
+                      controller: _institutionController,
+                    ),
+                    label: Text(l10n.accountFormInstitutionLabel),
+                    description: Text(l10n.accountFormInstitutionHelper),
+                    focusNode: _institutionFocus,
+                    textInputAction: TextInputAction.next,
+                    onSubmit: (_) => _accountNumberFocus.requestFocus(),
+                  ),
+                  const SizedBox(height: 12),
+                  FTextFormField(
+                    control: FTextFieldControl.managed(
+                      controller: _accountNumberController,
+                    ),
+                    label: Text(l10n.accountFormAccountNumberLabel),
+                    focusNode: _accountNumberFocus,
+                    textInputAction: TextInputAction.next,
+                    onSubmit: (_) => _noteFocus.requestFocus(),
+                  ),
+                  const SizedBox(height: 12),
+                  NoteField(controller: _noteController, focusNode: _noteFocus),
+                  if (widget.isEdit) ...[
                     const SizedBox(height: 12),
-                    _ParentAccountPickerSection(
-                      currentAccountId: _initial?.id,
-                      category: _category,
-                      parentId: _parentId,
-                      onChanged: (v) => setState(() => _parentId = v),
-                    ),
-                    const SizedBox(height: 12),
-                    _IconPickerSection(
-                      selected: _icon,
-                      color: _color,
-                      onChanged: (v) => setState(() => _icon = v),
-                    ),
-                    const SizedBox(height: 12),
-                    _ColorPickerSection(
-                      selected: _color,
-                      onChanged: (v) => setState(() => _color = v),
-                    ),
-                    const SizedBox(height: 12),
-                    CurrencyPicker(
-                      value: _currency,
-                      onChanged: (v) => setState(() => _currency = v),
-                    ),
-                    const SizedBox(height: 12),
-                    FTextFormField(
-                      control: FTextFieldControl.managed(
-                        controller: _institutionController,
-                      ),
-                      label: Text(l10n.accountFormInstitutionLabel),
-                      description: Text(l10n.accountFormInstitutionHelper),
-                      focusNode: _institutionFocus,
-                      textInputAction: TextInputAction.next,
-                      onSubmit: (_) => _accountNumberFocus.requestFocus(),
-                    ),
-                    const SizedBox(height: 12),
-                    FTextFormField(
-                      control: FTextFieldControl.managed(
-                        controller: _accountNumberController,
-                      ),
-                      label: Text(l10n.accountFormAccountNumberLabel),
-                      focusNode: _accountNumberFocus,
-                      textInputAction: TextInputAction.next,
-                      onSubmit: (_) => _noteFocus.requestFocus(),
-                    ),
-                    const SizedBox(height: 12),
-                    NoteField(
-                      controller: _noteController,
-                      focusNode: _noteFocus,
-                    ),
-                    if (widget.isEdit) ...[
-                      const SizedBox(height: 12),
-                      FSwitch(
-                        label: Text(l10n.accountFormArchivedTitle),
-                        description: Text(l10n.accountFormArchivedSubtitle),
-                        value: _archived,
-                        onChange: (v) => setState(() => _archived = v),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    FButton(
-                      variant: FButtonVariant.primary,
-                      onPress: _busy ? null : _save,
-                      child: Text(
-                        _busy ? l10n.accountFormSaving : l10n.accountFormSave,
-                      ),
+                    FSwitch(
+                      label: Text(l10n.accountFormArchivedTitle),
+                      description: Text(l10n.accountFormArchivedSubtitle),
+                      value: _archived,
+                      onChange: (v) => setState(() => _archived = v),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 24),
+                  FButton(
+                    variant: FButtonVariant.primary,
+                    onPress: _busy ? null : _save,
+                    child: Text(
+                      _busy ? l10n.accountFormSaving : l10n.accountFormSave,
+                    ),
+                  ),
+                ],
               ),
-      ),
+            ),
     );
   }
 }

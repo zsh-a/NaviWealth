@@ -98,6 +98,23 @@ Account _account({
   ),
 );
 
+Finder _accountIcon(String name) {
+  final entry = kAccountIconCatalogue.firstWhere((e) => e.name == name);
+  return find.byIcon(entry.icon);
+}
+
+Finder _colorSwatch(String hex) {
+  final parsed = int.parse('FF${hex.substring(1)}', radix: 16);
+  final color = Color(parsed);
+  return find.byWidgetPredicate((widget) {
+    if (widget is! Container) return false;
+    final decoration = widget.decoration;
+    return decoration is BoxDecoration &&
+        decoration.shape == BoxShape.circle &&
+        decoration.color == color;
+  });
+}
+
 ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
   return ProviderScope(
     overrides: [
@@ -192,9 +209,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // The catalogue includes "savings" — tap that tile.
-    final savingsTooltip = find.byTooltip('savings');
-    expect(savingsTooltip, findsOneWidget);
-    await tester.tap(savingsTooltip);
+    final savingsIcon = _accountIcon('savings');
+    expect(savingsIcon, findsAtLeastNWidgets(1));
+    await tester.tap(savingsIcon.last);
     await tester.pumpAndSettle();
 
     // The savings icon is now rendered in a "selected" tile (border
@@ -212,7 +229,7 @@ void main() {
     // Pick a colour from the palette.
     const targetColor = '#10B981';
     expect(kAccountColorPalette, contains(targetColor));
-    await tester.tap(find.byTooltip(targetColor));
+    await tester.tap(_colorSwatch(targetColor));
     await tester.pumpAndSettle();
 
     // Fill the required name field.
@@ -241,9 +258,9 @@ void main() {
     await tester.pumpWidget(_wrap(h, accounts: const []));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('savings'));
+    await tester.tap(_accountIcon('savings').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('#3B82F6'));
+    await tester.tap(_colorSwatch('#3B82F6'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(FTextFormField, 'Account name'),

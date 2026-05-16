@@ -6,6 +6,7 @@ import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
+import 'package:naviwealth/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/data/repositories/price_repository.dart';
@@ -29,6 +30,7 @@ class _IdentityFx implements FxRateSource {
 void main() {
   late AppDatabase db;
   late PriceRepository priceRepo;
+  late JournalEntryRepository journalEntryRepo;
   late ManualAssetRepository repo;
 
   setUp(() async {
@@ -39,18 +41,19 @@ void main() {
       outbox: outbox,
       stamper: makeStubStamper(),
     );
+    journalEntryRepo = JournalEntryRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+      fxRateSource: const _IdentityFx(),
+      baseCurrency: 'CNY',
+    );
     repo = ManualAssetRepository(
       db: db,
       outbox: outbox,
       stamper: makeStubStamper(),
       priceRepo: priceRepo,
-      journalEntryRepo: JournalEntryRepository(
-        db: db,
-        outbox: outbox,
-        stamper: makeStubStamper(),
-        fxRateSource: const _IdentityFx(),
-        baseCurrency: 'CNY',
-      ),
+      journalEntryRepo: journalEntryRepo,
     );
     await _insertAccount(db, id: 'acc-cash', currency: 'CNY');
   });
@@ -150,6 +153,38 @@ void main() {
     );
     expect(latest?.perUnit, Decimal.zero);
   });
+
+  test(
+    'cash balance ignores security quantity postings on same account',
+    () async {
+      final cash = await repo.createCash(
+        accountId: 'acc-cash',
+        currency: 'CNY',
+        balance: Decimal.parse('10000'),
+      );
+      final buy = JournalEntryBuilders.buy(
+        date: DateTime.utc(2026, 5, 13),
+        accountId: 'acc-cash',
+        cashAccountId: 'acc-cash',
+        assetUnit: 'cn_a:600519',
+        qty: Decimal.parse('10'),
+        price: Decimal.parse('100'),
+        quoteCurrency: 'CNY',
+      );
+
+      await journalEntryRepo.create(entry: buy.entry, postings: buy.postings);
+
+      final rawAccountTotal = (await _accountPostings(
+        db,
+        'acc-cash',
+      )).fold<Decimal>(Decimal.zero, (sum, posting) => sum + posting.units);
+      expect(rawAccountTotal, Decimal.parse('9010'));
+      expect(
+        await repo.cashBalanceFromPostings(cash.id),
+        Decimal.parse('9000'),
+      );
+    },
+  );
 }
 
 Future<List<PostingRow>> _accountPostings(AppDatabase db, String accountId) {

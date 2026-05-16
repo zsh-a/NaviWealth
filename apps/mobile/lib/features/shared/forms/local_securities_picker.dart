@@ -80,6 +80,7 @@ class LocalSecuritiesPicker extends StatefulWidget {
 }
 
 class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
+  final _fieldKey = GlobalKey<FormFieldState<String>>();
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   Timer? _debounce;
@@ -87,6 +88,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
   bool _loading = false;
   LocalSecurityChoice? _selected;
   String _lastQuery = '';
+  bool _settingTextFromSelection = false;
 
   @override
   void dispose() {
@@ -97,6 +99,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
   }
 
   void _onChanged(String query) {
+    if (_settingTextFromSelection) return;
     _debounce?.cancel();
     final trimmed = query.trim();
     _lastQuery = trimmed;
@@ -134,25 +137,29 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
     final display = hit.nameCn ?? hit.nameEn;
     setState(() {
       _selected = choice;
-      _controller.text = display == null
-          ? hit.symbol
-          : '${hit.symbol} — $display';
+      _setControllerText(
+        display == null ? hit.symbol : '${hit.symbol} — $display',
+      );
       _results = const [];
     });
     _focusNode.unfocus();
     widget.onSelected?.call(choice);
+    _fieldKey.currentState?.validate();
   }
 
   void _selectManual(LocalSecurityChoice choice) {
     setState(() {
       _selected = choice;
-      _controller.text = choice.name == null
-          ? choice.symbol
-          : '${choice.symbol} — ${choice.name}';
+      _setControllerText(
+        choice.name == null
+            ? choice.symbol
+            : '${choice.symbol} — ${choice.name}',
+      );
       _results = const [];
     });
     _focusNode.unfocus();
     widget.onSelected?.call(choice);
+    _fieldKey.currentState?.validate();
   }
 
   void _clear() {
@@ -162,6 +169,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
       _results = const [];
     });
     widget.onSelected?.call(null);
+    _fieldKey.currentState?.validate();
   }
 
   Future<void> _openManualSheet({String? prefillSymbol}) async {
@@ -173,6 +181,15 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
     );
     if (result != null) {
       _selectManual(result);
+    }
+  }
+
+  void _setControllerText(String text) {
+    _settingTextFromSelection = true;
+    try {
+      _controller.text = text;
+    } finally {
+      _settingTextFromSelection = false;
     }
   }
 
@@ -200,6 +217,7 @@ class _LocalSecuritiesPickerState extends State<LocalSecuritiesPicker> {
       children: [
         FTextFormField(
           key: const Key('local-securities-picker-field'),
+          formFieldKey: _fieldKey,
           control: FTextFieldControl.managed(
             controller: _controller,
             onChange: (v) => _onChanged(v.text),

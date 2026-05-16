@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/auth/auth_session.dart';
 import '../domain/chat_events.dart';
 import 'sse_parser.dart';
@@ -28,6 +29,7 @@ abstract class AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   });
@@ -65,6 +67,15 @@ class SseIdleTimeout implements Exception {
 /// trip the alarm.
 const Duration kSseIdleTimeout = Duration(seconds: 30);
 
+/// Compile-time rollout switch for the AI SSE event shape.
+///
+/// Default is v2. Build with `--dart-define=AI_PROTOCOL=v1` to force
+/// the v1 compatibility stream during rollback.
+const String kAiSseProtocolVersion = String.fromEnvironment(
+  'AI_PROTOCOL',
+  defaultValue: 'v2',
+);
+
 /// Dio-backed implementation. Streams the SSE body via
 /// `ResponseType.stream` so the caller gets `text` / `tool_call` events
 /// as they arrive on native targets.
@@ -86,6 +97,7 @@ class DioAiChatApiClient implements AiChatApiClient {
     required AuthSession session,
     required List<WireMessage> messages,
     Map<String, Object?>? portfolioSnapshot,
+    ContextPack? contextPack,
     String? model,
     CancelToken? cancelToken,
   }) {
@@ -96,6 +108,7 @@ class DioAiChatApiClient implements AiChatApiClient {
       final body = <String, Object?>{
         'messages': messages.map((m) => m.toJson()).toList(),
         'portfolio_snapshot': ?portfolioSnapshot,
+        if (contextPack != null) 'context_pack': contextPack.toJson(),
         if (model != null && model.isNotEmpty) 'model': model,
       };
       final Response<ResponseBody> res;
@@ -111,6 +124,9 @@ class DioAiChatApiClient implements AiChatApiClient {
               'Accept': 'text/event-stream',
               'Authorization': 'Bearer ${session.accessToken}',
               'Sync-Protocol-Version': protocolVersion,
+              'X-Naviwealth-AI-Protocol': kAiSseProtocolVersion == 'v1'
+                  ? '1'
+                  : '2',
             },
             responseType: ResponseType.stream,
             // Honour the worker's status codes manually so a 401/429 with a

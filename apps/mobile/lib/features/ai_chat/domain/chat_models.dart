@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'chat_events.dart' show TokenUsage;
 import 'proposal_apply_state.dart';
 
 /// Roles understood by `POST /ai/chat`.
@@ -99,12 +100,14 @@ class ToolInvocation {
     required this.input,
     this.output,
     this.applyState,
+    this.partialInputJson,
   });
 
   final String id;
   final String name;
   final Object? input;
   final Object? output;
+  final String? partialInputJson;
 
   /// FIR-67 — apply state for `propose_*` tool calls. `null` for read-only
   /// tools and for propose tools the user hasn't acted on yet (the UI
@@ -113,14 +116,18 @@ class ToolInvocation {
   final ProposalApplyState? applyState;
 
   ToolInvocation copyWith({
+    String? name,
+    Object? input,
     Object? output,
+    String? partialInputJson,
     ProposalApplyState? applyState,
     bool clearApplyState = false,
   }) => ToolInvocation(
     id: id,
-    name: name,
-    input: input,
+    name: name ?? this.name,
+    input: input ?? this.input,
     output: output ?? this.output,
+    partialInputJson: partialInputJson ?? this.partialInputJson,
     applyState: clearApplyState ? null : (applyState ?? this.applyState),
   );
 
@@ -128,6 +135,7 @@ class ToolInvocation {
     'id': id,
     'name': name,
     'input': input,
+    if (partialInputJson != null) 'partial_input_json': partialInputJson,
     'output': output,
     if (applyState != null) 'apply_state': applyState!.toJson(),
   };
@@ -144,6 +152,7 @@ class ToolInvocation {
       name: (json['name'] ?? '') as String,
       input: json['input'],
       output: json['output'],
+      partialInputJson: json['partial_input_json'] as String?,
       applyState: apply,
     );
   }
@@ -196,6 +205,8 @@ class ChatMessage {
     this.textSegments = const <String>[],
     this.errorMessage,
     this.stopReason,
+    this.reasoningText,
+    this.usage,
   });
 
   final String id;
@@ -216,6 +227,8 @@ class ChatMessage {
   final ChatMessageStatus status;
   final String? errorMessage;
   final ChatStopReason? stopReason;
+  final String? reasoningText;
+  final TokenUsage? usage;
   final DateTime createdAt;
 
   /// Render-ready segment list. Always returns
@@ -239,6 +252,8 @@ class ChatMessage {
     ChatMessageStatus? status,
     String? errorMessage,
     ChatStopReason? stopReason,
+    String? reasoningText,
+    TokenUsage? usage,
   }) => ChatMessage(
     id: id,
     sessionId: sessionId,
@@ -250,6 +265,8 @@ class ChatMessage {
     status: status ?? this.status,
     errorMessage: errorMessage ?? this.errorMessage,
     stopReason: stopReason ?? this.stopReason,
+    reasoningText: reasoningText ?? this.reasoningText,
+    usage: usage ?? this.usage,
     createdAt: createdAt,
   );
 }

@@ -51,21 +51,19 @@ class ActivityTimelinePreview extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => context.go(AppRoutes.activity),
-                    style: TextButton.styleFrom(
+                  FTappable(
+                    onPress: () => context.go(AppRoutes.activity),
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 4,
                         vertical: 2,
                       ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      l10n.dashboardActivityPreviewViewAll,
-                      style: context.theme.typography.xs.copyWith(
-                        color: context.theme.colors.primary,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        l10n.dashboardActivityPreviewViewAll,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -85,8 +83,9 @@ class ActivityTimelinePreview extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Container(
                           height: 1,
-                          color: context.theme.colors.foreground
-                              .withValues(alpha: 0.06),
+                          color: context.theme.colors.foreground.withValues(
+                            alpha: 0.06,
+                          ),
                         ),
                       ),
                   ],
@@ -141,16 +140,15 @@ class _PreviewRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    entry.entry.narration.isEmpty
-                        ? '—'
-                        : entry.entry.narration,
+                    entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
                     style: context.theme.typography.sm.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (entry.entry.payee != null && entry.entry.payee!.isNotEmpty)
+                  if (entry.entry.payee != null &&
+                      entry.entry.payee!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(

@@ -219,7 +219,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
-          command: d1 migrations apply naviwealth
+          command: d1 migrations apply naviwealth --remote
       - name: Deploy to Cloudflare Workers
         if: steps.deploy-gate.outputs.enabled == 'true' && env.HAS_LLM_API_KEY != 'true'
         uses: cloudflare/wrangler-action@v3

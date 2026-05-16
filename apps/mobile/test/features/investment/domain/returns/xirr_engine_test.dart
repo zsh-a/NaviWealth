@@ -211,6 +211,41 @@ void main() {
       expect((solution as XirrConverged).rate, closeToD(0.20, 1e-4));
     });
 
+    test(
+      'small mid-year buy + large terminal bookend never returns absurd rate',
+      () {
+        // Regression for the dashboard YTD overflow: a user with no
+        // positions on Jan 1, a small mid-year purchase, and a much
+        // larger terminal portfolio bookend used to make Newton spiral
+        // into a numerically meaningless finite "converged" rate (e.g.
+        // 1e150) — which then `* 100` for percent rendering blew the
+        // home page hero past the screen by ~1500 px.
+        //
+        // The engine must either converge to a sane bounded rate **or**
+        // fall back to absolute return — never return a finite rate
+        // outside a few orders of magnitude of `bisectionHigh`.
+        final solution = const XirrEngine().compute([
+          cf('2026-04-01T00:00:00Z', -1000), // mid-year buy
+          cf('2026-05-15T00:00:00Z', 32336), // terminal bookend
+        ]);
+        // Either path is acceptable; an absurd converged rate is not.
+        switch (solution) {
+          case XirrConverged(:final rate):
+            expect(
+              rate.abs(),
+              lessThan(1e7),
+              reason:
+                  'Converged rate must stay within a few orders of '
+                  'magnitude of bisectionHigh — got $rate',
+            );
+          case XirrFallbackAbsolute():
+            // Falling back here is fine; the absoluteReturn is bounded
+            // by the input magnitudes.
+            break;
+        }
+      },
+    );
+
     test('bisection gives up after maxBisectionIterations and falls back', () {
       // Newton off + bisection off → no converger; engine must fall back.
       // Use a pathological input that shouldn't even reach bisection (the

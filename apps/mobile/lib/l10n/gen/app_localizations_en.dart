@@ -21,13 +21,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get navAI => 'AI';
-
-  @override
   String get navActivity => 'Activity';
 
   @override
   String get navAccounts => 'Accounts';
+
+  @override
+  String get navSearch => 'Search';
 
   @override
   String get accountsHubSectionCashDeposits => 'Cash & Deposits';
@@ -162,6 +162,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboardNetWorthLiabilitiesLabel => 'Liabilities';
+
+  @override
+  String get dashboardValuationUpdating => 'Updating valuations…';
+
+  @override
+  String get dashboardLedgerSyncing => 'Syncing latest records…';
+
+  @override
+  String get dashboardValuationUpdated => 'Valuations updated just now';
 
   @override
   String get portfolioAssetsTab => 'Assets';
@@ -854,13 +863,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get langChinese => '中文';
 
   @override
-  String get settingsCompactDensityTitle => 'Compact density';
-
-  @override
-  String get settingsCompactDensitySubtitle =>
-      'Tighter list rows and controls. Recommended for mouse use.';
-
-  @override
   String get commonRetry => 'Retry';
 
   @override
@@ -956,12 +958,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteSearchHint => 'Search commands…';
 
   @override
+  String get commandPaletteMobileEntryHint => 'Search, jump, ask…';
+
+  @override
   String get commandPaletteEmpty => 'No commands match your search';
 
   @override
   String commandPaletteAskAi(String query) {
     return 'Ask AI: $query';
   }
+
+  @override
+  String get askAiResultLocalBadge => 'Local';
+
+  @override
+  String get askAiResultNoLocalMatch =>
+      'Can\'t answer this here. Continue in AI history for a full chat.';
+
+  @override
+  String get askAiResultContinueInChat => 'Continue in AI history →';
+
+  @override
+  String get askAiResultIrreversibleBlocked =>
+      'The command palette doesn\'t execute transfers, orders, or account deletion. Use the corresponding page.';
+
+  @override
+  String askAiResultError(String error) {
+    return 'Could not run this query: $error';
+  }
+
+  @override
+  String get askAiResultEmpty => 'No matching records.';
+
+  @override
+  String askAiResultMoreRows(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String askAiResultRowCount(int count) {
+    return '$count rows';
+  }
+
+  @override
+  String get askAiResultTitleSpending => 'Spending by category';
+
+  @override
+  String get askAiResultTitleTransactions => 'Transactions';
+
+  @override
+  String get askAiResultTitleNetWorth => 'Net worth trend';
+
+  @override
+  String get askAiResultTitleSubscriptions => 'Subscriptions';
+
+  @override
+  String get askAiResultTitleRefunds => 'Refund matches';
+
+  @override
+  String get askAiResultTitleGeneric => 'Result';
 
   @override
   String get commandPaletteGoOverview => 'Go to Overview';
@@ -2713,6 +2768,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSubtitle => 'Export or import encrypted data backups';
 
   @override
+  String get settingsAiPrivacyTitle => 'AI privacy';
+
+  @override
+  String get settingsAiPrivacySubtitle =>
+      'Pick what the AI can send to the cloud';
+
+  @override
+  String get aiPrivacyTitle => 'AI privacy';
+
+  @override
+  String get aiPrivacyIntro =>
+      'Choose how much detail the AI can see when it leaves the device. You can change this at any time.';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedLabel => 'Amounts allowed';
+
+  @override
+  String get aiPrivacyModeAmountsAllowedDescription =>
+      'Send exact amounts and account context. Best answer quality.';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedLabel => 'Amounts bucketed';
+
+  @override
+  String get aiPrivacyModeAmountsBucketedDescription =>
+      'Round amounts to the nearest order of magnitude before sending. Cloud sees patterns but not exact numbers.';
+
+  @override
+  String get aiPrivacyModeAmountsLocalLabel => 'Amounts stay local';
+
+  @override
+  String get aiPrivacyModeAmountsLocalDescription =>
+      'Only intent and category names leave the device. Cloud answers narrow to qualitative tips.';
+
+  @override
+  String get aiPrivacyMaskAccountsLabel => 'Mask account / institution names';
+
+  @override
+  String get aiPrivacyMaskAccountsDescription =>
+      'Replace bank and broker names with anonymous IDs before they\'re sent.';
+
+  @override
+  String get aiPrivacyOnboardingTitle => 'Pick your AI privacy posture';
+
+  @override
+  String get aiPrivacyOnboardingBody =>
+      'NaviWealth\'s AI is local-first. When it needs to use the cloud, this setting decides what it can send. You can change it later in Settings.';
+
+  @override
+  String get aiPrivacyOnboardingConfirm => 'Got it';
+
+  @override
+  String get aiTransparencyUndoSectionTitle => 'Pending AI changes';
+
+  @override
+  String get aiTransparencyUndoEmpty => 'No pending AI changes.';
+
+  @override
+  String get aiTransparencyUndoAction => 'Undo';
+
+  @override
   String get settingsDeveloperSection => 'Developer';
 
   @override
@@ -3468,6 +3584,46 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightDuplicateChargeLabel =>
+      'Possible duplicate charge';
+
+  @override
+  String dashboardInsightDuplicateChargeValue(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pairs',
+      one: '1 pair',
+    );
+    return '$_temp0 totaling $amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryLabel => 'Last month recap';
+
+  @override
+  String dashboardInsightMonthlySummaryUp(String amount) {
+    return 'Net worth grew $amount';
+  }
+
+  @override
+  String dashboardInsightMonthlySummaryDown(String amount) {
+    return 'Net worth shrank $amount';
+  }
+
+  @override
+  String get dashboardInsightMonthlySummaryFlat => 'Net worth was flat';
+
+  @override
+  String get dashboardInsightActionExpand => 'Expand';
+
+  @override
+  String get dashboardInsightActionAsk => 'Ask';
+
+  @override
+  String get dashboardInsightActionDismiss => 'Dismiss';
+
+  @override
   String get portfolioViewAssets => 'Assets';
 
   @override
@@ -3491,6 +3647,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioUnassignedAccount => 'Unassigned';
+
+  @override
+  String get activityAddAction => 'Add';
 
   @override
   String get activityFeedFilterTitle => 'Filter';
@@ -3723,4 +3882,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncStatusStatJustNow => 'now';
+
+  @override
+  String get aiReplyChipCompareLastPeriod => 'Compare to previous period';
+
+  @override
+  String get aiReplyChipFindKeyDrivers => 'Find the key drivers';
+
+  @override
+  String get aiReplyChipHowControlSpending => 'How do I rein in spending?';
+
+  @override
+  String get aiReplyChipViewHoldings => 'View holdings detail';
+
+  @override
+  String get aiReplyChipComputeXirr => 'Compute XIRR';
+
+  @override
+  String get aiReplyChipCompareLastMonth => 'Compare to last month';
+
+  @override
+  String get aiReplyChipMarketDrop20 => 'What if the market drops 20%?';
+
+  @override
+  String get aiReplyChipMonthlySaveDelta => 'How much more to save each month?';
+
+  @override
+  String get aiReplyChipRebalanceAdvice => 'Rebalancing advice';
+
+  @override
+  String get aiReplyChipCompareAnotherPeriod => 'Compare another period';
+
+  @override
+  String get aiReplyChipBiggestCategoryChange =>
+      'Which categories changed most?';
+
+  @override
+  String get aiReplyChipTrendSummary => 'Give a trend summary';
+
+  @override
+  String get aiReplyChipHandleInsight => 'How should I handle this?';
+
+  @override
+  String get aiReplyChipSimilarHistory => 'Show similar past cases';
+
+  @override
+  String get aiReplyChipActionPlan => 'Give me a concrete action plan';
+
+  @override
+  String get aiReplyChipRiskConcentration => 'Risk concentration check';
+
+  @override
+  String get aiReplyChipUnusedSubscriptions => 'Which subscriptions go unused?';
+
+  @override
+  String get aiReplyChipCancelPriciestSub =>
+      'Cancel the priciest subscription?';
+
+  @override
+  String get aiReplyChipUnmatchedRefunds => 'Unmatched refunds';
+
+  @override
+  String get aiReplyChipCompareBenchmark => 'Compare with benchmark';
+
+  @override
+  String get aiReplyChipForecast12mo => '12-month forecast';
+
+  @override
+  String get aiReplyChipExpandDetails => 'Expand details';
+
+  @override
+  String get aiReplyChipActionPlanGeneric => 'Give an action plan';
+
+  @override
+  String get aiReplyChipVsLastMonth => 'Compare with last month';
+
+  @override
+  String get aiCapsuleExpandFallback => 'Expand';
 }

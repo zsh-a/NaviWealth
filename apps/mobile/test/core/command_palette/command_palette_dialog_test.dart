@@ -1,17 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/core/ai/local/skills/drift_query_plan_executor.dart';
+import 'package:naviwealth/core/ai/local/skills/query_plan_executor.dart';
 import 'package:naviwealth/core/command_palette/command_palette.dart';
 import 'package:naviwealth/core/command_palette/command_palette_dialog.dart'
     show resetCommandPaletteForTest;
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
-  return MaterialApp(
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: child,
+  return ProviderScope(
+    overrides: [
+      // The palette dialog watches the live Drift executor; tests don't
+      // have a real database so plug in the in-memory variant with no
+      // fixtures — enough to keep AskAiResultPane's pipeline alive
+      // without crashing.
+      driftQueryPlanExecutorProvider.overrideWithValue(
+        InMemoryQueryPlanExecutor(transactions: const []),
+      ),
+    ],
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    ),
   );
 }
 
@@ -351,9 +365,7 @@ void main() {
         ids,
         containsAll(<String>[
           'nav.home',
-          'nav.portfolio',
           'nav.activity',
-          'nav.plan',
           'nav.accounts',
           'nav.expenses',
           'nav.analytics',

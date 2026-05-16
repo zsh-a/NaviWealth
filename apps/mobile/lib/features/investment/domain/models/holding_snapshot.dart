@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 
+import '../../../../domain/values/price_confidence.dart';
 import 'lot.dart';
 
 /// Per-asset position summary at a given point in time.
@@ -26,6 +27,9 @@ class HoldingSnapshot {
     required this.weight,
     required this.baseCurrency,
     required this.asOf,
+    this.priceConfidence,
+    this.priceSource,
+    this.priceAsOf,
   });
 
   final String assetId;
@@ -45,12 +49,29 @@ class HoldingSnapshot {
   final String baseCurrency;
   final DateTime asOf;
 
+  /// Trust level of the price used to derive [marketValueInAssetCurrency].
+  /// Null when the snapshot was built without a resolver-sourced price
+  /// (legacy tests, manual-valuation cost-basis fallback path).
+  final PriceConfidence? priceConfidence;
+
+  /// Provenance string of the price source — see [ResolvedPrice.source]
+  /// for the convention.
+  final String? priceSource;
+
+  /// Observation timestamp of the price. Distinct from [asOf] (which is
+  /// the snapshot computation moment); for forward-filled or daily-close
+  /// prices this can be hours or days earlier.
+  final DateTime? priceAsOf;
+
   HoldingSnapshot copyWith({
     Decimal? weight,
     Decimal? marketValueInAssetCurrency,
     Decimal? marketValueInBase,
     Decimal? unrealizedPnlInBase,
     DateTime? asOf,
+    PriceConfidence? priceConfidence,
+    String? priceSource,
+    DateTime? priceAsOf,
   }) {
     return HoldingSnapshot(
       assetId: assetId,
@@ -65,6 +86,9 @@ class HoldingSnapshot {
       weight: weight ?? this.weight,
       baseCurrency: baseCurrency,
       asOf: asOf ?? this.asOf,
+      priceConfidence: priceConfidence ?? this.priceConfidence,
+      priceSource: priceSource ?? this.priceSource,
+      priceAsOf: priceAsOf ?? this.priceAsOf,
     );
   }
 
@@ -82,7 +106,10 @@ class HoldingSnapshot {
         other.unrealizedPnlInBase == unrealizedPnlInBase &&
         other.weight == weight &&
         other.baseCurrency == baseCurrency &&
-        other.asOf == asOf;
+        other.asOf == asOf &&
+        other.priceConfidence == priceConfidence &&
+        other.priceSource == priceSource &&
+        other.priceAsOf == priceAsOf;
   }
 
   @override
@@ -98,6 +125,9 @@ class HoldingSnapshot {
     weight,
     baseCurrency,
     asOf,
+    priceConfidence,
+    priceSource,
+    priceAsOf,
   );
 
   @override

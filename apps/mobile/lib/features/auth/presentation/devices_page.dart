@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Icons;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -67,22 +68,23 @@ class DevicesPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
+            icon: const Icon(Icons.refresh),
+            onPress: () => ref.invalidate(devicesProvider),
+          ),
+          FHeaderAction(
             icon: const Icon(Icons.logout),
             onPress: () => _confirmLogoutCurrent(context, ref),
           ),
         ],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: state.when(
-          data: (data) => _DevicesList(response: data),
-          loading: () => const Center(child: FCircularProgress()),
-          error: (error, _) => _ErrorView(
-            message: l10n.authDevicesLoadError,
-            details: error is AuthException ? error.message : '$error',
-            onRetry: () => ref.invalidate(devicesProvider),
-          ),
+      child: state.when(
+        data: (data) => _DevicesList(response: data),
+        loading: () => const Center(child: FCircularProgress()),
+        error: (error, _) => _ErrorView(
+          message: l10n.authDevicesLoadError,
+          details: error is AuthException ? error.message : '$error',
+          onRetry: () => ref.invalidate(devicesProvider),
         ),
       ),
     );
@@ -93,42 +95,12 @@ class DevicesPage extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.authLogoutDialogTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.authLogoutDialogBody),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.authLogoutDialogConfirm),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.authLogoutDialogTitle),
+      body: Text(l10n.authLogoutDialogBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.authLogoutDialogConfirm,
     );
     if (ok != true) return;
     await ref.read(authControllerProvider.notifier).logoutCurrent();
@@ -148,41 +120,38 @@ class _DevicesList extends ConsumerWidget {
     );
     final devices = [...response.devices]
       ..sort((a, b) => b.lastSeenAt.compareTo(a.lastSeenAt));
-    return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(devicesProvider),
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: devices.length,
-        separatorBuilder: (_, _) => const FDivider(),
-        itemBuilder: (context, i) {
-          final device = devices[i];
-          final isCurrent = device.id == response.currentDeviceId;
-          return FTile(
-            title: Text(
-              device.name?.isNotEmpty == true
-                  ? device.name!
-                  : l10n.authDeviceUnnamed,
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: devices.length,
+      separatorBuilder: (_, _) => const FDivider(),
+      itemBuilder: (context, i) {
+        final device = devices[i];
+        final isCurrent = device.id == response.currentDeviceId;
+        return FTile(
+          title: Text(
+            device.name?.isNotEmpty == true
+                ? device.name!
+                : l10n.authDeviceUnnamed,
+          ),
+          prefix: Icon(isCurrent ? Icons.verified_user : Icons.devices_other),
+          subtitle: Text(
+            l10n.authDeviceLastSeen(
+              formatters.dateTime(device.lastSeenAt.toLocal()),
             ),
-            prefix: Icon(isCurrent ? Icons.verified_user : Icons.devices_other),
-            subtitle: Text(
-              l10n.authDeviceLastSeen(
-                formatters.dateTime(device.lastSeenAt.toLocal()),
-              ),
-            ),
-            suffix: isCurrent
-                ? FBadge(child: Text(l10n.authDeviceCurrent))
-                : FTooltip(
-                    tipBuilder: (_, _) => Text(l10n.authDeviceRevokeTooltip),
-                    child: FButton.icon(
-                      variant: FButtonVariant.ghost,
-                      onPress: () => _confirmRevoke(context, ref, device),
-                      child: const Icon(Icons.logout, size: 18),
-                    ),
+          ),
+          suffix: isCurrent
+              ? FBadge(child: Text(l10n.authDeviceCurrent))
+              : FTooltip(
+                  tipBuilder: (_, _) => Text(l10n.authDeviceRevokeTooltip),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => _confirmRevoke(context, ref, device),
+                    child: const Icon(Icons.logout, size: 18),
                   ),
-          );
-        },
-      ),
+                ),
+        );
+      },
     );
   }
 
@@ -193,48 +162,18 @@ class _DevicesList extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final fallback = l10n.authDeviceRevokeError;
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.authDeviceRevokeDialogTitle,
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.authDeviceRevokeDialogBody(
-                device.name?.isNotEmpty == true
-                    ? device.name!
-                    : l10n.authDeviceUnnamed,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.authDeviceRevokeConfirm),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
+      title: Text(l10n.authDeviceRevokeDialogTitle),
+      body: Text(
+        l10n.authDeviceRevokeDialogBody(
+          device.name?.isNotEmpty == true
+              ? device.name!
+              : l10n.authDeviceUnnamed,
         ),
       ),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.authDeviceRevokeConfirm,
     );
     if (ok != true) return;
     try {

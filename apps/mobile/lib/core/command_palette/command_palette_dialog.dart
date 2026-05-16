@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../ai/local/skills/drift_query_plan_executor.dart';
+import 'ask_ai_result_pane.dart';
 import 'command_palette_entry.dart';
 
 /// Show the global command palette. Idempotent — a second call while the
 /// palette is already on screen is a no-op so the Cmd+K binding stays safe to
 /// hammer.
 ///
-/// [onAskAi] is called with the user's query when they select the dynamic
-/// "Ask AI: …" entry that appears when the search text doesn't fully match
-/// any command.
+/// [onAskAi] is called with the user's query when they select the "Continue
+/// in AI history" affordance below the inline result pane. When the query
+/// parses to a local plan, the pane renders the structured answer in place
+/// and the callback is never invoked.
 Future<void> showCommandPalette(
   BuildContext context, {
   required List<CommandPaletteEntry> commands,
@@ -42,23 +46,25 @@ void resetCommandPaletteForTest() {
 
 bool _isOpen = false;
 
-class _CommandPaletteDialog extends StatefulWidget {
+class _CommandPaletteDialog extends ConsumerStatefulWidget {
   const _CommandPaletteDialog({required this.commands, this.onAskAi});
 
   final List<CommandPaletteEntry> commands;
   final void Function(String query)? onAskAi;
 
   @override
-  State<_CommandPaletteDialog> createState() => _CommandPaletteDialogState();
+  ConsumerState<_CommandPaletteDialog> createState() =>
+      _CommandPaletteDialogState();
 }
 
-class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
+class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
   final ScrollController _listScroll = ScrollController();
 
   late List<CommandPaletteEntry> _filtered = widget.commands;
   int _selectedIndex = 0;
+  String _query = '';
 
   @override
   void initState() {
@@ -82,19 +88,8 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
         ? widget.commands
         : widget.commands.where((c) => c.matches(q)).toList(growable: false);
 
-    if (raw.isNotEmpty && widget.onAskAi != null) {
-      final l10n = AppLocalizations.of(context);
-      final aiEntry = CommandPaletteEntry(
-        id: 'action.askAi',
-        label: l10n.commandPaletteAskAi(raw),
-        icon: Icons.auto_awesome,
-        keywords: <String>[raw, 'ai', 'ask'],
-        run: (_) => widget.onAskAi!(raw),
-      );
-      next.insert(0, aiEntry);
-    }
-
     setState(() {
+      _query = raw;
       _filtered = next;
       _selectedIndex = next.isEmpty
           ? 0
@@ -161,6 +156,16 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
     });
   }
 
+  void _onContinueInChat(String query) {
+    final NavigatorState navigator = Navigator.of(context);
+    navigator.pop();
+    if (widget.onAskAi != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onAskAi!(query);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
@@ -169,6 +174,8 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
 
     final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
     final double maxHeight = mediaSize.height * 0.6;
+
+    final executor = ref.watch(driftQueryPlanExecutorProvider);
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
@@ -203,6 +210,15 @@ class _CommandPaletteDialogState extends State<_CommandPaletteDialog> {
                 ),
               ),
               const FDivider(),
+              if (_query.isNotEmpty)
+                AskAiResultPane(
+                  query: _query,
+                  executor: executor,
+                  now: DateTime.now(),
+                  onContinueInChat: widget.onAskAi == null
+                      ? null
+                      : _onContinueInChat,
+                ),
               Flexible(
                 child: _filtered.isEmpty
                     ? _EmptyState(message: l10n.commandPaletteEmpty)

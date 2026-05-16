@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/freshness/freshness_gate.dart';
+import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
@@ -10,6 +13,25 @@ import '../domain/proposal_apply_state.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
+
+/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire,
+/// the seed [AiTrace] that the repository finalises after the stream
+/// closes, and the local HLC snapshot taken at request start (used
+/// by the freshness gate when tool_result frames carry a
+/// [Freshness] watermark). Any field may be `null` if the caller
+/// chose not to wire AI tracing for this repository instance
+/// (legacy tests, etc.).
+typedef ChatTracePrepResult = ({
+  ContextPack? pack,
+  AiTrace? traceSeed,
+  String? localHlcText,
+});
+
+/// Closure that builds the per-request ContextPack + AiTrace seed.
+/// Lives in providers.dart so it can capture Riverpod `Ref` without
+/// pulling provider state into the repository's constructor surface.
+typedef ChatTracePrep =
+    Future<ChatTracePrepResult> Function({required String requestId});
 
 /// Sentinel value for new session titles. UI layer should resolve to
 /// localized string when displaying.
@@ -38,17 +60,26 @@ class ChatRepository {
     required AiChatApiClient api,
     required AuthSessionReader sessionReader,
     Future<Map<String, Object?>?> Function()? portfolioSnapshotReader,
+    ChatTracePrep? tracePrep,
+    AiTraceStore? traceStore,
+    void Function(AiTrace finalized)? onTraceFinalized,
     Uuid? uuid,
   }) : _store = store,
        _api = api,
        _sessionReader = sessionReader,
        _portfolioSnapshotReader = portfolioSnapshotReader,
+       _tracePrep = tracePrep,
+       _traceStore = traceStore,
+       _onTraceFinalized = onTraceFinalized,
        _uuid = uuid ?? const Uuid();
 
   final ChatHistoryStore _store;
   final AiChatApiClient _api;
   final AuthSessionReader _sessionReader;
   final Future<Map<String, Object?>?> Function()? _portfolioSnapshotReader;
+  final ChatTracePrep? _tracePrep;
+  final AiTraceStore? _traceStore;
+  final void Function(AiTrace finalized)? _onTraceFinalized;
   final Uuid _uuid;
 
   Stream<List<ChatSession>> watchSessions(String ownerUserId) =>
@@ -113,6 +144,13 @@ class ChatRepository {
     String? systemContext,
     String? model,
     CancelToken? cancelToken,
+
+    /// Wave 33 — when this turn was triggered through an
+    /// [AiIntentInvocation] (capsule / insight / command), pass the
+    /// invocation's `toTraceJson()` here so the finalised trace
+    /// records the entry point. Plain "user typed in chat tab" calls
+    /// leave this `null`.
+    Map<String, Object?>? invocationTrace,
   }) async {
     final session = _sessionReader();
     if (session == null) {
@@ -177,6 +215,24 @@ class ChatRepository {
     }
     final portfolioSnapshot = await _portfolioSnapshotReader?.call();
 
+    // Phase 2-A: build the typed ContextPack + seed an AiTrace keyed by
+    // the assistant message id. Failures here are absorbed: chat must
+    // never break because the AI transparency layer hiccupped, so the
+    // prep closure already returns null on its own errors.
+    final prepResult = _tracePrep == null
+        ? null
+        : await _tracePrep.call(requestId: assistantId);
+    final contextPack = prepResult?.pack;
+    final traceSeed = prepResult?.traceSeed;
+    final localHlcText = prepResult?.localHlcText;
+    final traceBuilder = traceSeed == null
+        ? null
+        : AiTraceBuilder.fromSeed(traceSeed);
+    if (traceBuilder != null && invocationTrace != null) {
+      traceBuilder.attachInvocation(invocationTrace);
+    }
+    final toolStarts = <String, DateTime>{};
+
     // Interleaved record of the assistant turn. `segments` and
     // `invocationOrder` together rebuild the original
     // text → tool → text → tool sequence the model emitted: each new
@@ -184,10 +240,16 @@ class ChatRepository {
     // fresh empty one. Invariant: `segments.length ==
     // invocationOrder.length + 1`.
     final segments = <String>[''];
+    final reasoning = StringBuffer();
     final invocations = <String, ToolInvocation>{};
     final invocationOrder = <String>[];
     final localCancel = cancelToken ?? CancelToken();
     SendOutcome outcome = SendOutcome.completed;
+    // Wave 30: granular terminal reason for the finalised trace.
+    // SendOutcome collapses error/cancel into the user-visible shape;
+    // the trace surface needs the finer split so the audit page can
+    // tell "user cancelled" from "stream errored" from "policy denied".
+    TerminalReason terminalReason = TerminalReason.done;
     var sawStreamEvent = false;
     var sawDone = false;
 
@@ -200,6 +262,7 @@ class ChatRepository {
         session: session,
         messages: wireMessages,
         portfolioSnapshot: portfolioSnapshot,
+        contextPack: contextPack,
         model: model,
         cancelToken: localCancel,
       );
@@ -214,6 +277,46 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
+          case ThinkingDeltaEvent(:final text):
+            reasoning.write(text);
+            assistant = assistant.copyWith(reasoningText: reasoning.toString());
+            await _store.updateMessage(assistant);
+          case ToolCallStartEvent(:final id, :final name):
+            if (!invocationOrder.contains(id)) {
+              invocationOrder.add(id);
+              segments.add('');
+            }
+            invocations[id] = ToolInvocation(id: id, name: name, input: null);
+            toolStarts[id] = DateTime.now().toUtc();
+            assistant = assistant.copyWith(
+              toolCalls: [for (final k in invocationOrder) invocations[k]!],
+              textSegments: List<String>.unmodifiable(segments),
+            );
+            await _store.updateMessage(assistant);
+          case ToolCallDeltaEvent(:final id, :final partialInputJson):
+            final existing = invocations[id];
+            if (existing == null) {
+              if (!invocationOrder.contains(id)) {
+                invocationOrder.add(id);
+                segments.add('');
+              }
+              invocations[id] = ToolInvocation(
+                id: id,
+                name: '',
+                input: partialInputJson,
+                partialInputJson: partialInputJson,
+              );
+            } else {
+              invocations[id] = existing.copyWith(
+                input: partialInputJson,
+                partialInputJson: partialInputJson,
+              );
+            }
+            assistant = assistant.copyWith(
+              toolCalls: [for (final k in invocationOrder) invocations[k]!],
+              textSegments: List<String>.unmodifiable(segments),
+            );
+            await _store.updateMessage(assistant);
           case ToolCallEvent(:final id, :final name, :final input):
             // First sighting of this id → close the active text
             // segment and start a new trailing one.
@@ -221,13 +324,20 @@ class ChatRepository {
               invocationOrder.add(id);
               segments.add('');
             }
-            invocations[id] = ToolInvocation(id: id, name: name, input: input);
+            final existing = invocations[id];
+            invocations[id] = ToolInvocation(
+              id: id,
+              name: name.isEmpty ? (existing?.name ?? '') : name,
+              input: input,
+              output: existing?.output,
+            );
+            toolStarts[id] ??= DateTime.now().toUtc();
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
-          case ToolResultEvent(:final id, :final output):
+          case ToolResultEvent(:final id, :final output, :final freshness):
             final existing = invocations[id];
             // A tool_result for an unseen id means the call was
             // synthesised server-side (e.g. proposal cap rejection).
@@ -245,12 +355,38 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
+            if (traceBuilder != null) {
+              final start = toolStarts[id];
+              final duration = start == null
+                  ? Duration.zero
+                  : DateTime.now().toUtc().difference(start);
+              traceBuilder.addToolCall(
+                name: invocations[id]?.name ?? '',
+                duration: duration,
+                ok: !_isToolError(output),
+              );
+              // Freshness gate (docs/ai-architecture.md §4.2 Phase 2):
+              // when the read-model watermark is behind our local HLC,
+              // record the read_model name. The next prep closure
+              // picks these up off the finalised AiTrace and injects
+              // `force_refresh_read_models` into the next ContextPack
+              // so the cloud re-projects before dispatching.
+              if (freshness != null && localHlcText != null) {
+                if (isStale(cloud: freshness, localHlcText: localHlcText)) {
+                  traceBuilder.markStaleReadModel(freshness.readModel);
+                }
+              }
+            }
           case ErrorEvent(:final message):
             outcome = SendOutcome.errored;
+            terminalReason = TerminalReason.streamError;
             assistant = assistant.copyWith(
               status: ChatMessageStatus.errored,
               errorMessage: message,
             );
+            await _store.updateMessage(assistant);
+          case UsageEvent(:final usage):
+            assistant = assistant.copyWith(usage: usage);
             await _store.updateMessage(assistant);
           case DoneEvent(:final stopReason):
             sawDone = true;
@@ -273,6 +409,7 @@ class ChatRepository {
       }
       if (!sawStreamEvent) {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.closedEarly;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended without any events',
@@ -281,6 +418,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       } else if (!sawDone && assistant.status == ChatMessageStatus.streaming) {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.closedEarly;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended before done',
@@ -291,6 +429,7 @@ class ChatRepository {
     } catch (e) {
       if (e is SseIdleTimeout) {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.streamError;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: kIdleTimeoutError,
@@ -299,6 +438,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       } else if (_isUserCancelled(localCancel)) {
         outcome = SendOutcome.cancelled;
+        terminalReason = TerminalReason.userCancel;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: kCancelledError,
@@ -307,6 +447,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       } else {
         outcome = SendOutcome.errored;
+        terminalReason = TerminalReason.streamError;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
           errorMessage: _describeError(e),
@@ -316,9 +457,34 @@ class ChatRepository {
       }
     } finally {
       await _store.touchSession(sessionId, DateTime.now().toUtc());
+      // Append the trace last so a failure here can never sneak past
+      // and skip session.touch — chat history takes priority over
+      // transparency. The optional onTraceFinalized callback is the
+      // bridge that feeds stale-read-model names into the next chat
+      // request's FreshnessHint (lib/.../providers.dart).
+      if (traceBuilder != null && _traceStore != null) {
+        try {
+          final trace = traceBuilder.finalize(
+            finishedAt: DateTime.now().toUtc(),
+            terminalReason: terminalReason,
+          );
+          await _traceStore.append(trace);
+          _onTraceFinalized?.call(trace);
+        } catch (_) {
+          // Tracing is best-effort.
+        }
+      }
     }
 
     return outcome;
+  }
+
+  /// `true` when a tool result payload represents a failure (the
+  /// backend uses a `{ "error": "...", "code": "..." }` shape for
+  /// synthesised errors like the proposal cap or guardrail rejections).
+  static bool _isToolError(Object? output) {
+    if (output is! Map) return false;
+    return output['error'] is String;
   }
 
   /// Mutate the apply state of one tool invocation inside [messageId].

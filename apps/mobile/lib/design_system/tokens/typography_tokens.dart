@@ -189,6 +189,19 @@ class TypographyTokens {
     weight: FontWeight.w500,
   );
 
+  /// §5.10.4 — true monospace numeral style for surfaces that explicitly
+  /// want a "data-grid" read (structured answer tables in the command
+  /// palette result pane, ingest preview rows, etc.). MoneyText keeps its
+  /// proportional Inter + tabular-figures default from FIR-104; reach for
+  /// this token only when a surface needs every character to occupy the
+  /// same width.
+  static final TextStyle numericMono = _t(
+    14,
+    height: 1.4,
+    weight: FontWeight.w500,
+    fontFamily: fontFamilyMono,
+  );
+
   /// Section header title — bold, accent-colored (Apple News style).
   static TextStyle sectionHeaderTitle(Color accentColor) =>
       titleLarge.copyWith(color: accentColor);

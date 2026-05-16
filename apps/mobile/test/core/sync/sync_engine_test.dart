@@ -362,6 +362,35 @@ void main() {
     expect(outbox.failures.single.opId, 'bad');
   });
 
+  // SP-C-9: push response advances local HLC state
+  test('push response merges server_hlc_high into local clock', () async {
+    clock.set(1_000);
+    await cursors.writeLocalHlc(
+      const Hlc(wallMillis: 1_000, counter: 0, nodeId: dev),
+    );
+    api.programmedResponses.add(
+      PushResponse(
+        accepted: 1,
+        rejected: const [],
+        serverHlcHigh: const Hlc(
+          wallMillis: 5_000,
+          counter: 3,
+          nodeId: Hlc.serverNodeId,
+        ),
+        serverNow: DateTime.fromMillisecondsSinceEpoch(5_000, isUtc: true),
+      ),
+    );
+    await outbox.enqueue(_localOp(id: '1', wall: 1_500, dev: dev));
+
+    final result = await engine.run();
+
+    expect(result.success, isTrue);
+    expect(
+      await cursors.readLocalHlc(),
+      const Hlc(wallMillis: 5_000, counter: 4, nodeId: dev),
+    );
+  });
+
   // SP-D-4: pagination drains all pages
   test('multi-page pull drains until has_more = false', () async {
     const otherDev = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
@@ -373,6 +402,44 @@ void main() {
     await engine.run();
     expect(applier.applied.length, 1500);
   });
+
+  test(
+    'truncated pull page advances cursor only to last returned op',
+    () async {
+      const otherDev = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+      final h1 = Hlc.parse('1500000000001.0000-${Hlc.serverNodeId}');
+      final h2 = Hlc.parse('1500000000002.0000-${Hlc.serverNodeId}');
+      final h3 = Hlc.parse('1500000000003.0000-${Hlc.serverNodeId}');
+      api.programmedResponses.addAll([
+        PullResponse(
+          ops: [_localOp(id: 'r1', wall: 1, dev: otherDev).copyWith(hlc: h1)],
+          serverHlcHigh: h3,
+          hasMore: true,
+          serverNow: DateTime.fromMillisecondsSinceEpoch(
+            h3.wallMillis,
+            isUtc: true,
+          ),
+        ),
+        PullResponse(
+          ops: [_localOp(id: 'r2', wall: 2, dev: otherDev).copyWith(hlc: h2)],
+          serverHlcHigh: h3,
+          hasMore: false,
+          serverNow: DateTime.fromMillisecondsSinceEpoch(
+            h3.wallMillis,
+            isUtc: true,
+          ),
+        ),
+      ]);
+
+      final result = await engine.run();
+
+      expect(result.success, isTrue);
+      expect(api.pullCalls, hasLength(2));
+      expect(api.pullCalls[1].since, h1);
+      expect(await cursors.readCursor(), h3);
+      expect(applier.applied.map((op) => op.opId), ['r1', 'r2']);
+    },
+  );
 
   // SP-J-3: cursor ahead of server is harmless
   test('cursor ahead of server returns no ops, no error', () async {

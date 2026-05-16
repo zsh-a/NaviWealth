@@ -14,35 +14,26 @@ Final acceptance for the [FIR-103](https://multica/issues/FIR-103) "premium UI" 
 
 | Page | File | Variants |
 |------|------|----------|
-| Home (dashboard) | `apps/mobile/test/golden/home_page_golden_test.dart` | light / dark / colorblind |
-| Assets list | `apps/mobile/test/golden/assets_list_golden_test.dart` | light / dark / colorblind |
-| Asset detail (skeleton) | `apps/mobile/test/golden/asset_detail_page_golden_test.dart` | light / dark / colorblind |
-| Analytics (empty) | `apps/mobile/test/golden/analytics_page_golden_test.dart` | light / dark / colorblind |
-| FIRE (unconfigured) | `apps/mobile/test/golden/fire_page_golden_test.dart` | light / dark / colorblind |
-| AI Chat (login required) | `apps/mobile/test/golden/ai_chat_page_golden_test.dart` | light / dark / colorblind |
-| Settings | `apps/mobile/test/golden/settings_page_golden_test.dart` | light / dark / colorblind |
+| Home (dashboard) | `apps/mobile/test/golden/home_page_golden_test.dart` | dark / colorblind |
+| Asset detail (skeleton) | `apps/mobile/test/golden/asset_detail_page_golden_test.dart` | dark / colorblind |
+| Analytics (empty) | `apps/mobile/test/golden/analytics_page_golden_test.dart` | dark / colorblind |
+| FIRE (unconfigured) | `apps/mobile/test/golden/fire_page_golden_test.dart` | dark / colorblind |
+| AI Chat (login required) | `apps/mobile/test/golden/ai_chat_page_golden_test.dart` | dark / colorblind |
+| Settings | `apps/mobile/test/golden/settings_page_golden_test.dart` | dark / colorblind |
 
-7 pages × 3 themes = **21 PNG baselines** under `apps/mobile/test/golden/goldens/`.
+6 pages × 2 themes = **12 PNG baselines** under `apps/mobile/test/golden/goldens/`. (Light-mode was dropped — see *Variant choice* below.)
 
-Mobile-only for now. Per FIR-103 §11 R7 ("截图回归在 CI 上跨端不稳"), tablet and desktop snapshots are
-deferred — the 600dp / 1240dp layouts use the same primitives that the mobile goldens already cover, and the
-master-detail surfaces add CI flake without a visual signal we don't already get from the unit suite.
+Mobile-only for now. Per FIR-103 §11 R7 ("截图回归在 CI 上跨端不稳"), tablet and desktop snapshots are deferred — those layouts use the same primitives the mobile goldens already cover, and the master-detail surfaces add CI flake without a visual signal we don't already get from the unit suite.
 
 ### Variant choice
 
-The "three modes" requirement is light-mode (red-up-green-down), dark-mode (red-up-green-down),
-dark-mode (colorblind blue+orange). All three exercise `MarketColors`, `GlassTokens` and the type ramp
-under different brightness + accent regimes. Switching the colorblind variant to light too would catch
-nothing the existing pair doesn't already cover.
+Two variants: dark (red-up-green-down) and dark-colorblind (blue+orange). Both exercise `MarketColors`, `GlassTokens`, and the type ramp under different accent regimes. A light variant adds CI cost without catching anything the dark+colorblind pair doesn't.
 
 ### Where the baselines come from
 
-Goldens are byte-compared PNGs and depend on the rasteriser. **Linux is the source of truth** —
-`mobile.yml`'s `golden-regression` job runs on `ubuntu-latest` and asserts against the checked-in PNGs.
+Goldens are byte-compared PNGs and depend on the rasteriser. **Linux is the source of truth** — `mobile.yml`'s `golden regression (mobile)` job runs on `ubuntu-latest` and asserts against the checked-in PNGs.
 
-`apps/mobile/test/golden/flutter_test_config.dart` skips the comparison off-Linux so devs on macOS /
-Windows still see a green bar locally; the matcher executes (so a render-time exception still fails the
-test) but the byte diff is suppressed. `--update-goldens` always writes, regardless of platform.
+`apps/mobile/test/golden/flutter_test_config.dart` skips the byte comparison off-Linux so devs on macOS / Windows still see a green bar locally; the matcher still executes (a render-time exception still fails the test). `--update-goldens` always writes, regardless of platform.
 
 ### Workflow
 
@@ -59,40 +50,22 @@ flutter test test/golden --tags=golden
 
 In CI:
 
-- `analyze-and-test` runs `flutter test --exclude-tags=golden` for the unit / widget suite.
-- `golden-regression` runs `flutter test test/golden --tags=golden`. Fails the PR on byte-diff.
-- On failure the diff PNGs (`apps/mobile/test/golden/failures/`) are uploaded as a workflow artifact,
-  retained 7 days, so the reviewer can see what changed without re-running locally.
+- `analyze + test (coverage)` runs `flutter test --exclude-tags=golden` for the unit / widget suite.
+- `golden regression (mobile)` runs `flutter test test/golden --tags=golden`. Fails the PR on byte-diff. On failure the diff PNGs (`apps/mobile/test/golden/failures/`) are uploaded as a workflow artifact (7-day retention).
 
 ### Adding a new golden
 
-1. Add a test file under `apps/mobile/test/golden/`. Reuse `pumpAndSnapshotMobile` and the
-   `runAllVariants(name, body)` helper from `_golden_setup.dart` — they handle the device profile,
-   font fallback, theme variants, and motion suppression.
-2. Override every `StreamProvider` / `FutureProvider` your page touches that would otherwise reach
-   the real Drift database (look for `appDatabaseProvider` / `outboxStoreProvider` /
-   `syncEngineProvider` in the dependency chain — those leave a stream-query timer dangling at scope
-   dispose and break the test). When in doubt, copy the override block from a sibling page test.
-3. Run with `--update-goldens` once on a Linux machine (or in the GitHub Actions workflow via a
-   "regenerate goldens" PR) and commit the resulting `goldens/<name>_<variant>.png` files.
+1. Add a test file under `apps/mobile/test/golden/`. Reuse `pumpAndSnapshotMobile` + `runAllVariants(name, body)` from `_golden_setup.dart` — they handle device profile, font fallback, theme variants, motion suppression.
+2. Override every `StreamProvider` / `FutureProvider` that would otherwise reach the real Drift DB (`appDatabaseProvider` / `outboxStoreProvider` / `syncEngineProvider` leave a stream-query timer dangling at scope dispose). When in doubt, copy the override block from a sibling page test.
+3. Run with `--update-goldens` on a Linux box (locally or via a "regenerate goldens" PR) and commit the resulting `goldens/<name>_<variant>.png`.
 
-### Bootstrapping (one-time)
-
-The seed PNGs in this PR were generated on macOS by the FIR-113 commit and **will fail the first
-Linux CI run**. The first maintainer landing this needs to:
+If you need to regenerate from a non-Linux machine, use Docker:
 
 ```bash
-gh workflow run mobile.yml --ref <branch>
-# wait for golden-regression failure → download mobile-golden-failures artifact
-# extract failure PNGs into apps/mobile/test/golden/goldens/
-# OR re-run with --update-goldens locally on a Linux box / Docker:
 docker run --rm -v "$(pwd):/work" -w /work/apps/mobile \
   ghcr.io/cirruslabs/flutter:stable \
   flutter test test/golden --tags=golden --update-goldens
-git add apps/mobile/test/golden/goldens && git commit -m "chore(golden): bootstrap Linux baseline"
 ```
-
-After that one churn commit, every subsequent PR runs as a real regression check.
 
 ---
 

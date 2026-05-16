@@ -1,12 +1,15 @@
 /// Canonical route paths for NaviWealth's information architecture.
 ///
-/// Five primary tabs in display order:
-///   Home → Activity → AI (centered, accent) → Accounts → Settings.
+/// Four primary tabs in display order:
+///   Home → Activity → Accounts → Settings.
 ///
-/// "Plan" is gone — its content (FIRE / Rebalance / Analytics) lives under
-/// `/ai/insights/*` so the AI Assistant page becomes the single context +
-/// action layer. "Portfolio" is renamed to "Accounts" — the new hub
-/// surfaces every asset class plus liabilities in one place.
+/// History: the old "Plan" tab was killed; its content (FIRE / Rebalance /
+/// Analytics) lived briefly under `/ai/insights/*` and now lives under
+/// `/accounts/*` as part of the §5.10 four-layer AI surface refactor — the
+/// `/ai` tab itself is gone. AI is no longer a destination: explicit AI
+/// surfaces live in the command palette overlay (Layer 1) and inline
+/// capsules (Layer 2); chat session history is read-only under
+/// `/settings/ai-history`.
 abstract final class AppRoutes {
   // ── Auth ────────────────────────────────────────────────────────────────
   static const login = '/login';
@@ -14,15 +17,8 @@ abstract final class AppRoutes {
   // ── Primary tabs ────────────────────────────────────────────────────────
   static const home = '/';
   static const activity = '/activity';
-  static const ai = '/ai';
   static const accounts = '/accounts';
   static const settings = '/settings';
-
-  // ── AI insights (FIRE / Rebalance / Analytics now live under /ai) ──────
-  static const aiInsights = '/ai/insights';
-  static const aiInsightsFire = '/ai/insights/fire';
-  static const aiInsightsRebalance = '/ai/insights/rebalance';
-  static const aiInsightsAnalytics = '/ai/insights/analytics';
 
   // ── Activity sub-flows (things that happen) ────────────────────────────
   static const activityExpenses = '/activity/expenses';
@@ -32,7 +28,7 @@ abstract final class AppRoutes {
   static const transfer = '/activity/transfer';
   static const journalEntries = '/activity/journal';
 
-  // ── Accounts hub sub-flows (things you own / owe) ──────────────────────
+  // ── Accounts hub sub-flows (things you own / owe + plan dashboards) ────
   static const accountsList = '/accounts/list';
   static const accountListNew = '/accounts/list/new';
   static const accountNewCash = '/accounts/new/cash';
@@ -41,6 +37,12 @@ abstract final class AppRoutes {
   static const accountCorporateAction = '/accounts/corporate-action';
   static const liabilities = '/accounts/liabilities';
   static const liabilityNew = '/accounts/liabilities/new';
+  // Former /ai/insights/* — these are deterministic dashboards, not AI
+  // surfaces. They live under Accounts because they all operate on the
+  // portfolio + net-worth picture.
+  static const accountsFire = '/accounts/fire';
+  static const accountsRebalance = '/accounts/rebalance';
+  static const accountsAnalytics = '/accounts/analytics';
 
   // ── Settings sub-flows ─────────────────────────────────────────────────
   static const settingsDevices = '/settings/devices';
@@ -48,6 +50,14 @@ abstract final class AppRoutes {
   static const settingsBackup = '/settings/backup';
   static const settingsLogs = '/settings/logs';
   static const settingsSync = '/settings/sync';
+  static const settingsAiTransparency = '/settings/ai-transparency';
+  // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
+  // under Settings as part of the AI audit surface.
+  static const settingsAiHistory = '/settings/ai-history';
+  // §5.10.5 — user-facing privacy posture for cloud-bound AI requests.
+  static const settingsAiPrivacy = '/settings/ai-privacy';
+  static String settingsAiTransparencyDetail(String requestId) =>
+      '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
 
   // ── Detail-page builders ───────────────────────────────────────────────
   static String accountAsset(String id) =>
@@ -65,6 +75,9 @@ abstract final class AppRoutes {
   static String expense(String id) =>
       '/activity/expenses/${Uri.encodeComponent(id)}';
 
+  static String activityEntry(String id) =>
+      '/activity/entry/${Uri.encodeComponent(id)}';
+
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
 }
@@ -74,16 +87,16 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const login = 'login';
   static const home = 'home';
-  static const aiChat = 'ai-chat';
-  static const aiInsightsFire = 'ai-insights-fire';
-  static const aiInsightsRebalance = 'ai-insights-rebalance';
-  static const aiInsightsAnalytics = 'ai-insights-analytics';
   static const settings = 'settings';
   static const devices = 'devices';
   static const fxRates = 'fx-rates';
   static const backup = 'backup';
   static const logs = 'logs';
   static const sync = 'sync';
+  static const aiTransparency = 'ai-transparency';
+  static const aiTransparencyDetail = 'ai-transparency-detail';
+  static const aiHistory = 'ai-history';
+  static const aiPrivacy = 'ai-privacy';
 
   static const accounts = 'accounts';
   static const accountsList = 'accounts-list';
@@ -98,8 +111,12 @@ abstract final class AppRouteNames {
   static const liabilityNew = 'liability-new';
   static const liabilityDetail = 'liabilityDetail';
   static const accountAssetDetail = 'account-asset-detail';
+  static const accountsFire = 'accounts-fire';
+  static const accountsRebalance = 'accounts-rebalance';
+  static const accountsAnalytics = 'accounts-analytics';
 
   static const activity = 'activity';
+  static const activityEntryDetail = 'activity-entry-detail';
   static const expenses = 'expenses';
   static const expenseNew = 'expense-new';
   static const expenseReport = 'expense-report';
@@ -109,12 +126,11 @@ abstract final class AppRouteNames {
   static const journalEntries = 'journal-entries';
 }
 
-/// Primary shell tab paths in display order. Index 2 (AI) is the centered
-/// accent tab — see `app_shell.dart` for the visual treatment.
+/// Primary shell tab paths in display order. See `app_shell.dart` for the
+/// visual treatment.
 const List<String> kPrimaryTabPaths = <String>[
   AppRoutes.home,
   AppRoutes.activity,
-  AppRoutes.ai,
   AppRoutes.accounts,
   AppRoutes.settings,
 ];

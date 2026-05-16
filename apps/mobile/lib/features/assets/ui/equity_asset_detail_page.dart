@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/ai/write/write.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/market/market_data_providers.dart';
 import '../../../data/repositories/providers.dart';
@@ -139,6 +140,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               tag: 'asset-${asset.id}-name',
               child: Text(asset.name ?? asset.symbol),
             ),
+            prefixes: [backHeaderAction(context)],
             suffixes: [
               FHeaderAction(
                 icon: _syncing
@@ -158,6 +160,14 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // Wave 40.1 — AI provenance hint for stock/etf/crypto
+                // assets touched by `propose_asset_valuation`. Self-
+                // gating; absent when no recent touch on this id.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AiTouchMark(entityType: 'assets', entityId: asset.id),
+                ),
+                const SizedBox(height: 8),
                 AssetSummaryCard(asset: asset),
                 const SizedBox(height: 12),
                 AssetHoldingCard(asset: asset),

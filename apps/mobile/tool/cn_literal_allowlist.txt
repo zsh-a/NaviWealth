@@ -26,6 +26,35 @@ lib/features/ai_chat/domain/proposal_plan.dart
 # switches; migration wants its own focused PR so the renderer test
 # suite can be ported in lockstep.
 lib/features/ai_chat/ui/tool_invocation_renderers.dart
+# AI chat surface strings and suggested prompts. These are user-facing and
+# should move to ARB in a focused AI-chat l10n pass; keep baselined so FIR-99
+# continues to block new CN literals elsewhere.
+lib/features/ai_chat/ui/ai_bottom_sheet.dart
+lib/features/ai_chat/ui/ai_object_capsule.dart
+lib/features/ai_chat/ui/ai_transparency_badge.dart
+lib/features/ai_chat/ui/message_bubble.dart
+lib/features/ai_chat/ui/propose_card.dart
+lib/features/ai_chat/ui/reply_chips.dart
+
+# ─── AI local semantics / prompt corpora (intentional for now) ───────
+# These strings are not simple display copy: they are user-query keywords,
+# merchant/category dictionaries, prompt templates, regression prompts, and
+# structured zh fields persisted or sent to AI components. Migrating them
+# requires separating locale display text from semantic matching corpora.
+lib/core/ai/intent/intent_policy.dart
+lib/core/ai/local/skills/context_compressor.dart
+lib/core/ai/local/skills/merchant_key.dart
+lib/core/ai/local/skills/nl_to_query_plan.dart
+lib/core/ai/local/skills/txn_classifier.dart
+lib/core/ai/regression/regression_corpus.dart
+lib/core/ai/router/routing_policy.dart
+lib/core/ai/write/ai_source_mark.dart
+lib/core/ai/write/persistent_undo_banner.dart
+
+# ─── AI transparency UI — l10n follow-up ─────────────────────────────
+lib/features/settings/ui/ai_trace_timeline.dart
+lib/features/settings/ui/ai_transparency_page.dart
+lib/features/settings/ui/settings_overview.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
 # FIR-126: system account seed names ('系统收入账户', '系统支出账户',
@@ -47,14 +76,6 @@ lib/data/repositories/account_repository.dart
 # their app locale.
 lib/core/command_palette/default_commands.dart
 
-# ─── 散落 features 子文件 — i18n 第三波 ──────────────────────────────
-# All entries below need migration in a follow-up PR. Listed here so
-# CI can baseline the codebase today and fail fast on any new CN
-# literal introduced anywhere outside this list.
-lib/features/assets/asset_detail_page.dart
-lib/features/assets/deposit_form_page.dart
-lib/features/assets/wealth_product_form_page.dart
-lib/features/expense/ui/expense_list_page.dart
-lib/features/expense/ui/expense_report_page.dart
-lib/features/shared/forms/local_securities_picker.dart
-lib/features/shared/forms/manual_security_sheet.dart
+# ─── Remaining feature UI — l10n follow-up ───────────────────────────
+lib/features/expense/ui/expense_form_page.dart
+lib/features/home/ui/ai_insight_feed.dart

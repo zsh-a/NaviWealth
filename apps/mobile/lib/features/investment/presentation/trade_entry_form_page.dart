@@ -180,50 +180,23 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       final cashOut =
           quantity * price + (fee ?? Decimal.zero) + (tax ?? Decimal.zero);
       final cashAccountId = _cashAccountId ?? accountId;
-      final currentBalance = await jeRepo.balanceByAccount(cashAccountId);
+      final currentBalance = await jeRepo.balanceByAccountUnit(
+        cashAccountId,
+        currency,
+      );
       if (!mounted) return;
       final resulting = currentBalance - cashOut;
       if (resulting < Decimal.zero) {
-        final confirmed = await showFSheet<bool>(
-          side: FLayout.btt,
+        final confirmed = await showConfirmDialog(
           context: context,
-          builder: (ctx) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.tradeEntryCashOverdrawTitle,
-                  style: context.theme.typography.md,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.tradeEntryCashOverdrawMessage(
-                    '${resulting.toStringAsFixed(2)} $currency',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FButton(
-                      variant: FButtonVariant.ghost,
-                      onPress: () => Navigator.of(ctx).pop(false),
-                      child: Text(l10n.commonCancel),
-                    ),
-                    const SizedBox(width: 8),
-                    FButton(
-                      variant: FButtonVariant.primary,
-                      onPress: () => Navigator.of(ctx).pop(true),
-                      child: Text(l10n.tradeEntryCashOverdrawProceed),
-                    ),
-                  ],
-                ),
-                SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-              ],
+          title: Text(l10n.tradeEntryCashOverdrawTitle),
+          body: Text(
+            l10n.tradeEntryCashOverdrawMessage(
+              '${resulting.toStringAsFixed(2)} $currency',
             ),
           ),
+          cancelLabel: l10n.commonCancel,
+          confirmLabel: l10n.tradeEntryCashOverdrawProceed,
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -405,7 +378,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.tradeEntryAppBarTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.tradeEntryAppBarTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,

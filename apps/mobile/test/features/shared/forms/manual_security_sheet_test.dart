@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/market/exceptions.dart';
 import 'package:naviwealth/data/market/market_data_providers.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/historical_bar.dart';
 import 'package:naviwealth/domain/entities/quote.dart';
 import 'package:naviwealth/domain/entities/symbol_info.dart';
@@ -75,10 +77,9 @@ Future<LocalSecurityChoice?> _openSheet(
   LocalSecurityChoice? captured;
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [
-        marketDataServiceProvider.overrideWith((_) async => market),
-      ],
+      overrides: [marketDataServiceProvider.overrideWith((_) async => market)],
       child: MaterialApp(
+        builder: (context, child) => AppMessenger.init(child: child!),
         // The sheet now reads validator messages and the picker labels via
         // AppLocalizations; without these delegates the shared widgets
         // throw at build time. The sheet itself still renders Chinese
@@ -86,19 +87,22 @@ Future<LocalSecurityChoice?> _openSheet(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('zh'),
-        home: Builder(
-          builder: (ctx) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  captured = await showModalBottomSheet<LocalSecurityChoice>(
-                    context: ctx,
-                    isScrollControlled: true,
-                    builder: (_) =>
-                        ManualSecuritySheet(prefillSymbol: prefillSymbol),
-                  );
-                },
-                child: const Text('open'),
+        home: FTheme(
+          data: FThemes.slate.light.desktop,
+          child: Builder(
+            builder: (ctx) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    captured = await showModalBottomSheet<LocalSecurityChoice>(
+                      context: ctx,
+                      isScrollControlled: true,
+                      builder: (_) =>
+                          ManualSecuritySheet(prefillSymbol: prefillSymbol),
+                    );
+                  },
+                  child: const Text('open'),
+                ),
               ),
             ),
           ),
@@ -112,8 +116,9 @@ Future<LocalSecurityChoice?> _openSheet(
 }
 
 void main() {
-  testWidgets('"从网络导入" populates fields from a single search hit',
-      (tester) async {
+  testWidgets('"从网络导入" populates fields from a single search hit', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -142,18 +147,22 @@ void main() {
     // Name field auto-filled from the search hit. The currency picker
     // already defaults to USD for US stocks, so we focus on the field
     // the import path actually changes.
-    final nameField = tester.widget<TextFormField>(
-      find.byKey(const Key('manual-security-name')),
+    final nameField = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('manual-security-name')),
+        matching: find.byType(EditableText),
+      ),
     );
-    expect(nameField.controller!.text, 'Apple Inc.');
+    expect(nameField.controller.text, 'Apple Inc.');
     expect(find.text('已从网络导入元数据'), findsOneWidget);
 
     // Expire the AppMessenger dismiss timer so the test ends cleanly.
     await tester.pump(const Duration(seconds: 7));
   });
 
-  testWidgets('"从网络导入" lets the user pick from multiple candidates',
-      (tester) async {
+  testWidgets('"从网络导入" lets the user pick from multiple candidates', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -191,92 +200,107 @@ void main() {
     await tester.tap(find.textContaining('Apple (other listing)'));
     await tester.pumpAndSettle();
 
-    final nameField = tester.widget<TextFormField>(
-      find.byKey(const Key('manual-security-name')),
+    final nameField = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('manual-security-name')),
+        matching: find.byType(EditableText),
+      ),
     );
-    expect(nameField.controller!.text, 'Apple (other listing)');
+    expect(nameField.controller.text, 'Apple (other listing)');
 
     // Expire the AppMessenger dismiss timer so the test ends cleanly.
     await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets(
-      '"从网络导入" failure shows offline message and never blocks the save',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    '"从网络导入" failure shows offline message and never blocks the save',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final market = _ConfigurableMarket(
-      searchError:
-          const NoMarketDataAvailableException('every provider failed'),
-    );
+      final market = _ConfigurableMarket(
+        searchError: const NoMarketDataAvailableException(
+          'every provider failed',
+        ),
+      );
 
-    LocalSecurityChoice? choice;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          marketDataServiceProvider.overrideWith((_) async => market),
-        ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('zh'),
-          home: Builder(
-            builder: (ctx) => Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    choice = await showModalBottomSheet<LocalSecurityChoice>(
-                      context: ctx,
-                      isScrollControlled: true,
-                      builder: (_) =>
-                          const ManualSecuritySheet(prefillSymbol: 'AAPL'),
-                    );
-                  },
-                  child: const Text('open'),
+      LocalSecurityChoice? choice;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            marketDataServiceProvider.overrideWith((_) async => market),
+          ],
+          child: MaterialApp(
+            builder: (context, child) => AppMessenger.init(child: child!),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('zh'),
+            home: FTheme(
+              data: FThemes.slate.light.desktop,
+              child: Builder(
+                builder: (ctx) => Scaffold(
+                  body: Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        choice =
+                            await showModalBottomSheet<LocalSecurityChoice>(
+                              context: ctx,
+                              isScrollControlled: true,
+                              builder: (_) => const ManualSecuritySheet(
+                                prefillSymbol: 'AAPL',
+                              ),
+                            );
+                      },
+                      child: const Text('open'),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('manual-security-import')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('manual-security-import')));
+      await tester.pumpAndSettle();
 
-    // Failure surfaces as the FIR-78 friendly message — never a "搜索失败"
-    // / raw exception toast.
-    expect(find.text('网络不可用，请使用手动输入'), findsOneWidget);
-    expect(find.textContaining('搜索失败'), findsNothing);
+      // Failure surfaces as the FIR-78 friendly message — never a "搜索失败"
+      // / raw exception toast.
+      expect(find.text('网络不可用，请使用手动输入'), findsOneWidget);
+      expect(find.textContaining('搜索失败'), findsNothing);
 
-    // The form must still save without ever having reached the network.
-    await tester.tap(find.byKey(const Key('manual-security-submit')));
-    await tester.pumpAndSettle();
-    expect(choice, isNotNull);
-    expect(choice!.symbol, 'AAPL');
-    expect(choice!.fromCatalog, isFalse);
+      // The form must still save without ever having reached the network.
+      tester
+          .widget<FButton>(find.byKey(const Key('manual-security-submit')))
+          .onPress
+          ?.call();
+      await tester.pumpAndSettle();
+      expect(choice, isNotNull);
+      expect(choice!.symbol, 'AAPL');
+      expect(choice!.fromCatalog, isFalse);
 
-    // Expire the AppMessenger dismiss timer so the test ends cleanly.
-    await tester.pump(const Duration(seconds: 7));
-  });
+      // Expire the AppMessenger dismiss timer so the test ends cleanly.
+      await tester.pump(const Duration(seconds: 7));
+    },
+  );
 
   testWidgets(
-      'empty result set shows "未找到匹配项" without faking a successful import',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    'empty result set shows "未找到匹配项" without faking a successful import',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final market = _ConfigurableMarket(searchResults: const []);
-    await _openSheet(tester, market: market);
-    await tester.tap(find.byKey(const Key('manual-security-import')));
-    await tester.pumpAndSettle();
+      final market = _ConfigurableMarket(searchResults: const []);
+      await _openSheet(tester, market: market);
+      await tester.tap(find.byKey(const Key('manual-security-import')));
+      await tester.pumpAndSettle();
 
-    expect(find.text('未找到匹配项，请使用手动输入'), findsOneWidget);
+      expect(find.text('未找到匹配项，请使用手动输入'), findsOneWidget);
 
-    // Expire the AppMessenger dismiss timer so the test ends cleanly.
-    await tester.pump(const Duration(seconds: 7));
-  });
+      // Expire the AppMessenger dismiss timer so the test ends cleanly.
+      await tester.pump(const Duration(seconds: 7));
+    },
+  );
 }

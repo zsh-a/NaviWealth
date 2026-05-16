@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -55,7 +56,10 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Asset? _initial;
   bool _hydratedFromList = false;
 
-  static const _eligibleAccountTypes = {AccountCategory.bank, AccountCategory.cash};
+  static const _eligibleAccountTypes = {
+    AccountCategory.bank,
+    AccountCategory.cash,
+  };
 
   @override
   void initState() {
@@ -168,42 +172,13 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.depositDeleteTitle,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.depositDeleteBody),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.commonDelete),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.depositDeleteTitle),
+      body: Text(l10n.depositDeleteBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
     );
     if (ok != true) return;
     setState(() => _busy = true);
@@ -285,6 +260,18 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage> {
         padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
+          // Wave 40 — surface AI provenance for assets touched by
+          // `propose_asset_valuation`. Self-gating.
+          if (widget.isEdit && widget.assetId != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AiTouchMark(
+                entityType: 'assets',
+                entityId: widget.assetId!,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           FCard.raw(
             child: Padding(
               padding: const EdgeInsets.all(4),

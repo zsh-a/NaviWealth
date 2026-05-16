@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
@@ -21,48 +23,85 @@ class TrendCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final trendAsync = ref.watch(dashboardTrendProvider);
 
-    return SoftCard(
+    // §5.10 Layer 2 — advertise this card's identity/timeframe so any
+    // AI surface fired from inside the card gets the right context.
+    final selectedRange = ref.watch(dashboardTimeRangeProvider);
+    return AiContextChipScope(
+      chips: <AiContextChip>[
+        AiContextChip(
+          key: 'chart',
+          label: l10n.dashboardTrendTitle,
+          value: 'net_worth_trend',
+        ),
+        AiContextChip(
+          key: 'timeframe',
+          label: selectedRange.preset.name,
+          value: selectedRange.preset.name,
+        ),
+      ],
+      child: SoftCard(
       padding: const EdgeInsets.all(20),
       borderRadius: 18,
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.dashboardTrendTitle,
-                    style: context.theme.typography.md,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.dashboardTrendTitle,
+                  style: context.theme.typography.md,
+                ),
+              ),
+              // Layer 2 trailing capsule — opens the AI bottom sheet
+              // pre-loaded with chart context (read from the
+              // surrounding AiContextChipScope).
+              trendAsync.maybeWhen(
+                data: (trend) => trend.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: AiObjectCapsule(
+                          source: 'home_trend_card',
+                          intent: 'explain_chart',
+                          object: const AiObjectRef(
+                            type: 'chart',
+                            id: 'net_worth_trend',
+                          ),
+                          objectLabel: l10n.dashboardTrendTitle,
+                        ),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+              trendAsync.maybeWhen(
+                data: (trend) => FTooltip(
+                  tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: trend.isEmpty
+                        ? null
+                        : () => showDashboardChartFullscreen(
+                            context: context,
+                            title: l10n.dashboardTrendTitle,
+                            child: const _TrendFullscreenContent(),
+                          ),
+                    child: const Icon(Icons.fullscreen, size: 20),
                   ),
                 ),
-                trendAsync.maybeWhen(
-                  data: (trend) => FTooltip(
-                    tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
-                    child: FButton.icon(
-                      variant: FButtonVariant.ghost,
-                      onPress: trend.isEmpty
-                          ? null
-                          : () => showDashboardChartFullscreen(
-                              context: context,
-                              title: l10n.dashboardTrendTitle,
-                              child: const _TrendFullscreenContent(),
-                            ),
-                      child: const Icon(Icons.fullscreen, size: 20),
-                    ),
-                  ),
-                  orElse: () => const SizedBox(width: 48, height: 48),
-                ),
-              ],
-            ),
-            const _RangeChips(),
-            const SizedBox(height: 12),
-            trendAsync.when(
-              loading: () => const _TrendSkeleton(),
-              error: (e, st) => _TrendError(error: e),
-              data: (trend) => _TrendChart(trend: trend),
-            ),
-          ],
-        ),
+                orElse: () => const SizedBox(width: 48, height: 48),
+              ),
+            ],
+          ),
+          const _RangeChips(),
+          const SizedBox(height: 12),
+          trendAsync.when(
+            loading: () => const _TrendSkeleton(),
+            error: (e, st) => _TrendError(error: e),
+            data: (trend) => _TrendChart(trend: trend),
+          ),
+        ],
+      ),
+      ),
     );
   }
 }
@@ -299,11 +338,9 @@ class _LineChartBody extends StatelessWidget {
     return NwLineChart(
       series: [series],
       xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
-      yAxis: ValueAxis.currency(
-        currencyCode: trend.baseCurrency,
-        maxLabels: 3,
-      ),
+      yAxis: ValueAxis.currency(currencyCode: trend.baseCurrency, maxLabels: 3),
       filled: true,
+      interpolation: ChartInterpolation.linear,
       heroDots: true,
       showXAxis: false,
       showTouchXAxisLabel: true,

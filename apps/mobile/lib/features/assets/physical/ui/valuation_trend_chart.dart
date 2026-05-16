@@ -43,6 +43,7 @@ class ValuationTrendChart extends StatelessWidget {
       ],
       yAxis: ValueAxis.currency(currencyCode: currency),
       filled: true,
+      interpolation: ChartInterpolation.linear,
       semanticLabel: l10n.physicalAssetValuationTrendSemanticLabel,
     );
   }

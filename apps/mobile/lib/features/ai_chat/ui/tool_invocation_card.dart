@@ -52,6 +52,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FTappable(
+              key: const Key('tool-invocation-card-header'),
               onPress: () => setState(() => _expanded = !_expanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(

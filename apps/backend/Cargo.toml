@@ -1,13 +1,13 @@
 [package]
 name = "naviwealth-backend"
-version = "0.4.0"
+version = "0.4.5"
 edition = "2021"
 authors = ["NaviWealth"]
 description = "NaviWealth backend on Cloudflare Workers (Rust)"
 publish = false
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 worker = { version = "0.8", features = ["http", "d1"] }
@@ -15,6 +15,7 @@ worker-macros = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
+async-trait = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["serde", "wasmbind", "clock"] }
 uuid = { version = "1", features = ["v4", "serde", "js"] }
 console_error_panic_hook = "0.1"
@@ -43,6 +44,9 @@ wasm-bindgen-futures = "0.4"
 # stalls inside `spawn_local`. The `futures` feature exposes
 # `TimeoutFuture` so we can `select` it against work futures.
 gloo-timers = { version = "0.3", features = ["futures"] }
+
+[dev-dependencies]
+futures-executor = "0.3"
 
 [profile.release]
 opt-level = "s"

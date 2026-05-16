@@ -12,8 +12,13 @@ import 'shortcut_intents.dart';
 /// [globalShortcutMap] dispatch to the callbacks supplied here.
 ///
 /// On platforms where [areKeyboardShortcutsAvailable] is `false` (iOS /
-/// Android native), this widget is a transparent passthrough — no listener,
-/// no overhead, no chance of a Bluetooth keyboard hijacking the shell.
+/// Android native), the **keyboard** layer (`Shortcuts` map + vim `g`+key
+/// handler) is skipped entirely — no listener, no chance of a Bluetooth
+/// keyboard hijacking the shell. The `Actions` layer is still mounted with
+/// the surface-invokable intents ([OpenCommandPaletteIntent],
+/// [OpenAiChatIntent]) so a touch UI element (the mobile command-bar pill —
+/// §5.10.2 / S2.5) can `Actions.maybeInvoke(context, OpenCommandPaletteIntent())`
+/// without depending on a physical keyboard.
 class GlobalShortcutsScope extends StatefulWidget {
   const GlobalShortcutsScope({
     required this.onSwitchPrimaryTab,
@@ -87,49 +92,49 @@ class _GlobalShortcutsScopeState extends State<GlobalShortcutsScope> {
     super.dispose();
   }
 
+  Map<Type, Action<Intent>> _actionMap() => <Type, Action<Intent>>{
+    OpenCommandPaletteIntent: _GuardedContextAction<OpenCommandPaletteIntent>(
+      onInvoke: (Intent _, BuildContext? ctx) {
+        if (ctx != null) widget.onOpenCommandPalette(ctx);
+      },
+    ),
+    ShowShortcutHelpIntent: _GuardedContextAction<ShowShortcutHelpIntent>(
+      onInvoke: (Intent _, BuildContext? ctx) {
+        if (ctx != null) showShortcutHelpDialog(ctx);
+      },
+    ),
+    OpenAiChatIntent: _GuardedContextAction<OpenAiChatIntent>(
+      onInvoke: (Intent _, BuildContext? ctx) {
+        if (ctx != null) widget.onOpenAiChat(ctx);
+      },
+    ),
+    DismissOverlayIntent: _DismissOverlayAction(),
+    SwitchPrimaryTabIntent: _GuardedAction<SwitchPrimaryTabIntent>(
+      onInvoke: (Intent intent) {
+        final SwitchPrimaryTabIntent i = intent as SwitchPrimaryTabIntent;
+        if (i.index < 0 || i.index >= kPrimaryTabCount) return;
+        widget.onSwitchPrimaryTab(i.index);
+      },
+    ),
+    ToggleSidebarIntent: _GuardedAction<ToggleSidebarIntent>(
+      onInvoke: (_) => widget.onToggleSidebar(),
+    ),
+  };
+
   @override
   Widget build(BuildContext context) {
+    // §5.10.2 / S2.5 — the command-palette + AI-chat intents are
+    // surface-invokable (a mobile pill taps them), so the `Actions`
+    // layer mounts on every platform. Only the keyboard layer
+    // (`Shortcuts` map + vim handler) is gated behind a physical
+    // keyboard.
     if (!areKeyboardShortcutsAvailable) {
-      return widget.child;
+      return Actions(actions: _actionMap(), child: widget.child);
     }
     return Shortcuts(
       shortcuts: globalShortcutMap(),
       child: Actions(
-        actions: <Type, Action<Intent>>{
-          OpenCommandPaletteIntent:
-              _GuardedContextAction<OpenCommandPaletteIntent>(
-                onInvoke: (Intent _, BuildContext? ctx) {
-                  if (ctx != null) {
-                    widget.onOpenCommandPalette(ctx);
-                  }
-                },
-              ),
-          ShowShortcutHelpIntent: _GuardedContextAction<ShowShortcutHelpIntent>(
-            onInvoke: (Intent _, BuildContext? ctx) {
-              if (ctx != null) {
-                showShortcutHelpDialog(ctx);
-              }
-            },
-          ),
-          OpenAiChatIntent: _GuardedContextAction<OpenAiChatIntent>(
-            onInvoke: (Intent _, BuildContext? ctx) {
-              if (ctx != null) {
-                widget.onOpenAiChat(ctx);
-              }
-            },
-          ),
-          DismissOverlayIntent: _DismissOverlayAction(),
-          SwitchPrimaryTabIntent: _GuardedAction<SwitchPrimaryTabIntent>(
-            onInvoke: (Intent intent) {
-              final SwitchPrimaryTabIntent i = intent as SwitchPrimaryTabIntent;
-              if (i.index < 0 || i.index >= kPrimaryTabCount) return;
-              widget.onSwitchPrimaryTab(i.index);
-            },
-          ),
-          ToggleSidebarIntent: _GuardedAction<ToggleSidebarIntent>(
-            onInvoke: (_) => widget.onToggleSidebar(),
-          ),
-        },
+        actions: _actionMap(),
         child: _VimKeyHandler(onKey: _onVimG, child: widget.child),
       ),
     );

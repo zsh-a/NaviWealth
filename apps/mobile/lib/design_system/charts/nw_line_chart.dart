@@ -14,6 +14,9 @@ import 'downsample.dart';
 import 'drilldown.dart';
 import 'empty_chart_placeholder.dart';
 
+const double _kLeftTitleReservedSize = 44;
+const double _kBottomTitleReservedSize = 24;
+
 /// Theme-aware line chart wrapper around `fl_chart`.
 ///
 /// Pass an unbounded number of [ChartSeries]; intent + ordinal decide the
@@ -35,6 +38,8 @@ class NwLineChart extends StatefulWidget {
     this.downsampleTarget = kDefaultDownsampleTarget,
     this.semanticLabel,
     this.filled = false,
+    this.interpolation = ChartInterpolation.curved,
+    this.curved,
     this.curveSmoothness = 0.28,
     this.heroDots = false,
     this.showXAxis = true,
@@ -59,6 +64,18 @@ class NwLineChart extends StatefulWidget {
   /// fill uses a gradient from 70% of the line color to transparent.
   /// For multi-series stacked fills use [NwAreaChart] with `stacked: true`.
   final bool filled;
+
+  /// Line interpolation mode. Keep [ChartInterpolation.curved] for
+  /// decorative sparklines, projections, and smoothed indicators. Use
+  /// [ChartInterpolation.linear] for observed prices, balances, net worth,
+  /// and asset values where the line should not visually anticipate the next
+  /// sample. Step lines can be added as a future interpolation mode.
+  final ChartInterpolation interpolation;
+
+  /// Backward-compatible shorthand for [interpolation].
+  ///
+  /// When supplied, this overrides [interpolation].
+  final bool? curved;
 
   /// Bezier curve smoothness. 0 = straight segments, 1 = maximum smoothing.
   /// Default 0.28 prevents overshoot on volatile data.
@@ -85,10 +102,12 @@ class NwLineChart extends StatefulWidget {
   State<NwLineChart> createState() => _NwLineChartState();
 }
 
+enum ChartInterpolation { linear, curved }
+
 class _NwLineChartState extends State<NwLineChart> {
-  double? _touchLocalX;
   ChartPoint? _touchStartPoint;
   int _lastSpotIndex = -1;
+  FlSpot? _touchedSpot;
   _PreparedLineData? _prepared;
   List<ChartSeries>? _preparedSource;
   bool? _preparedDownsample;
@@ -113,6 +132,9 @@ class _NwLineChartState extends State<NwLineChart> {
     final minY = prepared.minY;
     final maxY = prepared.maxY;
     final yPad = prepared.yPad;
+    final chartMinY = minY - yPad;
+    final chartMaxY = maxY + yPad;
+    final plotInsets = _plotInsets;
 
     final lineBars = <LineChartBarData>[];
     for (var i = 0; i < processed.length; i++) {
@@ -137,8 +159,7 @@ class _NwLineChartState extends State<NwLineChart> {
     }
 
     final showGrid =
-        !widget.minimal &&
-        (widget.yAxis.showGrid || widget.xAxis.showGrid);
+        !widget.minimal && (widget.yAxis.showGrid || widget.xAxis.showGrid);
     final stack = Stack(
       children: [
         RepaintBoundary(
@@ -146,8 +167,8 @@ class _NwLineChartState extends State<NwLineChart> {
             LineChartData(
               minX: minX,
               maxX: maxX,
-              minY: minY - yPad,
-              maxY: maxY + yPad,
+              minY: chartMinY,
+              maxY: chartMaxY,
               gridData: FlGridData(
                 show: showGrid,
                 drawHorizontalLine: showGrid && widget.yAxis.showGrid,
@@ -168,16 +189,19 @@ class _NwLineChartState extends State<NwLineChart> {
             ),
           ),
         ),
-        if (_touchLocalX != null) ...[
+        if (_touchedSpot != null) ...[
           IgnorePointer(
             child: RepaintBoundary(
               child: CustomPaint(
                 size: Size.infinite,
                 painter: _CrosshairPainter(
-                  touchX: _touchLocalX!,
+                  spot: _touchedSpot!,
                   lineBars: lineBars,
                   minX: minX,
                   maxX: maxX,
+                  minY: chartMinY,
+                  maxY: chartMaxY,
+                  plotInsets: plotInsets,
                   color: palette.axisLabel,
                 ),
               ),
@@ -202,7 +226,10 @@ class _NwLineChartState extends State<NwLineChart> {
             Positioned.fill(
               child: IgnorePointer(
                 child: _TouchXAxisLabel(
-                  touchX: _touchLocalX!,
+                  spot: _touchedSpot!,
+                  minX: minX,
+                  maxX: maxX,
+                  plotInsets: plotInsets,
                   label: widget.xAxis.formatTimestamp(
                     processed.first.points[_touchedSpotIndex].x,
                   ),
@@ -249,9 +276,11 @@ class _NwLineChartState extends State<NwLineChart> {
         ? (dashArray ?? const [6, 4])
         : (dashArray ?? (isProjection ? const [4, 4] : null));
 
+    final isCurved =
+        widget.curved ?? widget.interpolation == ChartInterpolation.curved;
     return LineChartBarData(
       spots: spots,
-      isCurved: true,
+      isCurved: isCurved,
       curveSmoothness: widget.curveSmoothness,
       color: effectiveColor,
       dashArray: effectiveDash,
@@ -353,6 +382,11 @@ class _NwLineChartState extends State<NwLineChart> {
     return prepared;
   }
 
+  _ChartPlotInsets get _plotInsets => _ChartPlotInsets(
+    left: widget.minimal ? 0 : _kLeftTitleReservedSize,
+    bottom: !widget.minimal && widget.showXAxis ? _kBottomTitleReservedSize : 0,
+  );
+
   FlTitlesData _buildTitles(
     ChartPalette palette,
     double minX,
@@ -377,7 +411,7 @@ class _NwLineChartState extends State<NwLineChart> {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: widget.showXAxis,
-          reservedSize: widget.showXAxis ? 24 : 0,
+          reservedSize: widget.showXAxis ? _kBottomTitleReservedSize : 0,
           interval: xInterval,
           getTitlesWidget: (value, meta) {
             return Padding(
@@ -393,7 +427,7 @@ class _NwLineChartState extends State<NwLineChart> {
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 44,
+          reservedSize: _kLeftTitleReservedSize,
           interval: yInterval,
           getTitlesWidget: (value, meta) {
             return Padding(
@@ -439,10 +473,10 @@ class _NwLineChartState extends State<NwLineChart> {
         }).toList();
       },
       touchCallback: (event, response) {
-        final localDx = event.localPosition?.dx;
         if (event is FlLongPressStart || event is FlPanStartEvent) {
+          final touched = _primaryTouchedSpot(response);
           setState(() {
-            _touchLocalX = localDx;
+            _touchedSpot = touched;
             _touchStartPoint = null;
             _lastSpotIndex = -1;
           });
@@ -451,8 +485,10 @@ class _NwLineChartState extends State<NwLineChart> {
           return;
         }
         if (event is FlLongPressMoveUpdate || event is FlPanUpdateEvent) {
+          final touched = _primaryTouchedSpot(response);
           setState(() {
-            _touchLocalX = localDx;
+            _touchedSpot = touched;
+            if (touched == null) _lastSpotIndex = -1;
           });
           _fireCrossingHaptic(response, processed);
           return;
@@ -466,7 +502,7 @@ class _NwLineChartState extends State<NwLineChart> {
             dd.onTap(s.points[idx]);
           }
           setState(() {
-            _touchLocalX = null;
+            _touchedSpot = null;
             _touchStartPoint = null;
             _lastSpotIndex = -1;
           });
@@ -493,7 +529,7 @@ class _NwLineChartState extends State<NwLineChart> {
             }
           }
           setState(() {
-            _touchLocalX = null;
+            _touchedSpot = null;
             _touchStartPoint = null;
             _lastSpotIndex = -1;
           });
@@ -502,18 +538,28 @@ class _NwLineChartState extends State<NwLineChart> {
     );
   }
 
+  TouchLineBarSpot? _primaryTouchedSpot(LineTouchResponse? response) {
+    final touched = response?.lineBarSpots;
+    if (touched == null || touched.isEmpty) return null;
+    return touched.firstWhere(
+      (spot) => spot.barIndex == 0,
+      orElse: () => touched.first,
+    );
+  }
+
   void _fireCrossingHaptic(
     LineTouchResponse? response,
     List<ChartSeries> processed,
   ) {
-    final touched = response?.lineBarSpots;
-    if (touched == null || touched.isEmpty) return;
-    final spotIndex = touched.first.spotIndex;
+    final touched = _primaryTouchedSpot(response);
+    if (touched == null) return;
+    final spotIndex = touched.spotIndex;
     if (spotIndex != _lastSpotIndex && _lastSpotIndex >= 0) {
       HapticFeedback.selectionClick();
     }
     _lastSpotIndex = spotIndex;
-    final s = processed[touched.first.barIndex];
+    _touchedSpot = touched;
+    final s = processed[touched.barIndex];
     final idx = spotIndex.clamp(0, s.points.length - 1);
     _touchStartPoint ??= s.points[idx];
   }
@@ -541,23 +587,47 @@ class _PreparedLineData {
   final double yPad;
 }
 
+class _ChartPlotInsets {
+  const _ChartPlotInsets({this.left = 0, this.bottom = 0});
+
+  final double left;
+  final double bottom;
+
+  Rect resolve(Size size) =>
+      Rect.fromLTRB(left, 0, size.width, math.max(0, size.height - bottom));
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _ChartPlotInsets && left == other.left && bottom == other.bottom;
+
+  @override
+  int get hashCode => Object.hash(left, bottom);
+}
+
 // ---------------------------------------------------------------------------
 // Crosshair painter — vertical dashed hairline + circle dot
 // ---------------------------------------------------------------------------
 
 class _CrosshairPainter extends CustomPainter {
   _CrosshairPainter({
-    required this.touchX,
+    required this.spot,
     required this.lineBars,
     required this.minX,
     required this.maxX,
+    required this.minY,
+    required this.maxY,
+    required this.plotInsets,
     required this.color,
   });
 
-  final double touchX;
+  final FlSpot spot;
   final List<LineChartBarData> lineBars;
   final double minX;
   final double maxX;
+  final double minY;
+  final double maxY;
+  final _ChartPlotInsets plotInsets;
   final Color color;
 
   // Cached Paint objects — reused across frames.
@@ -574,44 +644,17 @@ class _CrosshairPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (lineBars.isEmpty) return;
-    final spots = lineBars.first.spots;
-    if (spots.isEmpty) return;
+    final plot = plotInsets.resolve(size);
+    if (plot.width <= 0 || plot.height <= 0) return;
 
-    // Map touchX to data X, then find nearest spot.
-    final dataX = minX + (touchX / size.width) * (maxX - minX);
-    var nearest = spots.first;
-    var nearestDist = (nearest.x - dataX).abs();
-    for (final spot in spots.skip(1)) {
-      final d = (spot.x - dataX).abs();
-      if (d < nearestDist) {
-        nearest = spot;
-        nearestDist = d;
-      }
-    }
-
-    // Map nearest data X back to pixel X.
-    final pixelX = ((nearest.x - minX) / (maxX - minX)) * size.width;
-    // Map Y: chart Y increases upward, pixel Y increases downward.
-    double yMin = double.infinity;
-    double yMax = double.negativeInfinity;
-    for (final bar in lineBars) {
-      for (final s in bar.spots) {
-        if (s.y < yMin) yMin = s.y;
-        if (s.y > yMax) yMax = s.y;
-      }
-    }
-    final yPad = (yMax - yMin).abs() * 0.1 + 1;
-    final chartMinY = yMin - yPad;
-    final chartMaxY = yMax + yPad;
-    final pixelY =
-        size.height -
-        ((nearest.y - chartMinY) / (chartMaxY - chartMinY)) * size.height;
+    final pixelX = _spotPixelX(spot.x, plot, minX, maxX);
+    final pixelY = _spotPixelY(spot.y, plot, minY, maxY);
 
     // Vertical dashed hairline.
     _drawDashedLine(
       canvas,
-      Offset(pixelX, 0),
-      Offset(pixelX, size.height),
+      Offset(pixelX, plot.top),
+      Offset(pixelX, plot.bottom),
       _hairlinePaint,
       dashLength: 4,
       gapLength: 3,
@@ -620,8 +663,8 @@ class _CrosshairPainter extends CustomPainter {
     // Horizontal dashed hairline at the touched value.
     _drawDashedLine(
       canvas,
-      Offset(0, pixelY),
-      Offset(size.width, pixelY),
+      Offset(plot.left, pixelY),
+      Offset(plot.right, pixelY),
       _hairlinePaint,
       dashLength: 4,
       gapLength: 3,
@@ -665,7 +708,13 @@ class _CrosshairPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CrosshairPainter old) => old.touchX != touchX;
+  bool shouldRepaint(_CrosshairPainter old) =>
+      old.spot != spot ||
+      old.minX != minX ||
+      old.maxX != maxX ||
+      old.minY != minY ||
+      old.maxY != maxY ||
+      old.plotInsets != plotInsets;
 }
 
 // ---------------------------------------------------------------------------
@@ -769,9 +818,18 @@ class _ChartTooltip extends StatelessWidget {
 }
 
 class _TouchXAxisLabel extends StatelessWidget {
-  const _TouchXAxisLabel({required this.touchX, required this.label});
+  const _TouchXAxisLabel({
+    required this.spot,
+    required this.minX,
+    required this.maxX,
+    required this.plotInsets,
+    required this.label,
+  });
 
-  final double touchX;
+  final FlSpot spot;
+  final double minX;
+  final double maxX;
+  final _ChartPlotInsets plotInsets;
   final String label;
 
   @override
@@ -783,12 +841,16 @@ class _TouchXAxisLabel extends StatelessWidget {
         final maxLeft = (constraints.maxWidth - width)
             .clamp(0.0, double.infinity)
             .toDouble();
-        final left = (touchX - width / 2).clamp(0.0, maxLeft).toDouble();
+        final plot = plotInsets.resolve(
+          Size(constraints.maxWidth, constraints.maxHeight),
+        );
+        final centerX = _spotPixelX(spot.x, plot, minX, maxX);
+        final left = (centerX - width / 2).clamp(0.0, maxLeft).toDouble();
         return Stack(
           children: [
             Positioned(
               left: left,
-              bottom: 2,
+              bottom: plotInsets.bottom + 2,
               width: width,
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -818,6 +880,18 @@ class _TouchXAxisLabel extends StatelessWidget {
       },
     );
   }
+}
+
+double _spotPixelX(double x, Rect plot, double minX, double maxX) {
+  final range = maxX - minX;
+  if (range == 0) return plot.left;
+  return plot.left + ((x - minX) / range) * plot.width;
+}
+
+double _spotPixelY(double y, Rect plot, double minY, double maxY) {
+  final range = maxY - minY;
+  if (range == 0) return plot.bottom;
+  return plot.bottom - ((y - minY) / range) * plot.height;
 }
 
 // ---------------------------------------------------------------------------

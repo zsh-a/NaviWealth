@@ -91,12 +91,9 @@ class AccountsDetailEmpty extends StatelessWidget {
     return FScaffold(
       header: FHeader.nested(title: Text(l10n.accountsAppBarTitle)),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: MasterDetailEmpty(
-          icon: Icons.account_balance_outlined,
-          message: l10n.accountsDetailEmpty,
-        ),
+      child: MasterDetailEmpty(
+        icon: Icons.account_balance_outlined,
+        message: l10n.accountsDetailEmpty,
       ),
     );
   }
@@ -129,7 +126,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
         ],
       ),
       childPad: false,
-      child: Material(color: Colors.transparent, child: child),
+      child: child,
     );
   }
 }
@@ -150,10 +147,11 @@ class _EmptyAccounts extends StatelessWidget {
             const SizedBox(height: 12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton.icon(
-              icon: const Icon(Icons.add_card_outlined),
-              label: Text(l10n.accountFormCreateTitle),
-              onPressed: () => context.go(AppRoutes.accountListNew),
+            FButton(
+              variant: FButtonVariant.primary,
+              onPress: () => context.go(AppRoutes.accountListNew),
+              prefix: const Icon(Icons.add_card_outlined),
+              child: Text(l10n.accountFormCreateTitle),
             ),
           ],
         ),
@@ -180,9 +178,20 @@ class _AccountsByType extends StatelessWidget {
     for (final a in accounts) {
       grouped.putIfAbsent(a.type, () => []).add(a);
     }
-    final order = AccountCategory.values
+    const renderOrder = [
+      AccountCategory.cash,
+      AccountCategory.bank,
+      AccountCategory.broker,
+      AccountCategory.crypto,
+      AccountCategory.credit,
+      AccountCategory.loan,
+      AccountCategory.asset,
+      AccountCategory.liability,
+    ];
+    final order = renderOrder
         .where((t) => grouped.containsKey(t))
         .toList(growable: false);
+    final colors = context.theme.colors;
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -194,21 +203,27 @@ class _AccountsByType extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: Text(
-                accountCategoryLabel(l10n, type),
-                style: context.theme.typography.md,
+                accountCategoryLabel(l10n, type).toUpperCase(),
+                style: context.theme.typography.xs2.copyWith(
+                  color: colors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
               ),
             ),
             FCard.raw(
               child: Column(
                 children: [
-                  for (final a in group)
+                  for (var j = 0; j < group.length; j++) ...[
                     _AccountTile(
-                      account: a,
-                      selected: a.id == selectedId,
+                      account: group[j],
+                      selected: group[j].id == selectedId,
                       heroEnabled: !inMasterDetail,
                     ),
+                    if (j < group.length - 1) const FDivider(),
+                  ],
                 ],
               ),
             ),

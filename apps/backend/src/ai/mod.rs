@@ -23,8 +23,26 @@
 //! `tool_result` block. The system prompt enforces that contract; see
 //! `guardrails::SYSTEM_PROMPT`.
 
-pub mod anthropic;
+// Phase B adapter surface: defined ahead of route migration in Phase C.
+#[allow(dead_code, unused_imports)]
+pub mod adapters;
+// Phase 1 contracts: types are defined ahead of consumers. The
+// allow lifts when the routes/policy/tools modules start using them.
+#[allow(dead_code, unused_imports)]
+pub mod context;
 pub mod guardrails;
+// Phase 2-C: descriptor metadata is consulted by the dispatcher but
+// fields like `risk` / `requires_confirmation` and the `Typed` /
+// `ExternalWrite` variants exist for forward compatibility — they're
+// referenced from review-only sites today. The allow lifts in Phase 3
+// when the policy flips from advisory to enforced.
+#[allow(dead_code)]
+pub mod policy;
 pub mod proposals;
+// AI Read Models — 主通道（docs/ai-architecture.md §4.3）
+pub mod read_models;
+// Phase A runtime protocol: defined ahead of adapters / agent loop / SSE v2.
+#[allow(dead_code, unused_imports)]
+pub mod runtime;
 pub mod sse;
 pub mod tools;

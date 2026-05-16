@@ -122,12 +122,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// Bottom nav: AI assistant tab (centered accent)
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get navAI;
-
   /// Bottom nav: activity tab (single timeline)
   ///
   /// In en, this message translates to:
@@ -139,6 +133,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accounts'**
   String get navAccounts;
+
+  /// Bottom nav action that opens the command palette on touch shells
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get navSearch;
 
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
@@ -349,6 +349,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Liabilities'**
   String get dashboardNetWorthLiabilitiesLabel;
+
+  /// Home net-worth card status while market prices or FX rates are refreshing
+  ///
+  /// In en, this message translates to:
+  /// **'Updating valuations…'**
+  String get dashboardValuationUpdating;
+
+  /// Home net-worth card status while cloud ledger sync is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing latest records…'**
+  String get dashboardLedgerSyncing;
+
+  /// Home net-worth card status shortly after valuation refresh finishes
+  ///
+  /// In en, this message translates to:
+  /// **'Valuations updated just now'**
+  String get dashboardValuationUpdated;
 
   /// Portfolio segmented control: assets sub-tab
   ///
@@ -1598,18 +1616,6 @@ abstract class AppLocalizations {
   /// **'中文'**
   String get langChinese;
 
-  /// Settings: toggle for tighter UI density on desktop / web
-  ///
-  /// In en, this message translates to:
-  /// **'Compact density'**
-  String get settingsCompactDensityTitle;
-
-  /// Settings: helper text for compact density toggle
-  ///
-  /// In en, this message translates to:
-  /// **'Tighter list rows and controls. Recommended for mouse use.'**
-  String get settingsCompactDensitySubtitle;
-
   /// No description provided for @commonRetry.
   ///
   /// In en, this message translates to:
@@ -1784,6 +1790,12 @@ abstract class AppLocalizations {
   /// **'Search commands…'**
   String get commandPaletteSearchHint;
 
+  /// Placeholder text on the mobile shell's command-bar pill (§5.10.2 / S2.5)
+  ///
+  /// In en, this message translates to:
+  /// **'Search, jump, ask…'**
+  String get commandPaletteMobileEntryHint;
+
   /// Shown in the command palette when the query matches no commands
   ///
   /// In en, this message translates to:
@@ -1795,6 +1807,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask AI: {query}'**
   String commandPaletteAskAi(String query);
+
+  /// Tiny badge on the command palette result pane showing the answer was computed on-device
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get askAiResultLocalBadge;
+
+  /// Shown when the natural-language parser can't resolve a query locally
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t answer this here. Continue in AI history for a full chat.'**
+  String get askAiResultNoLocalMatch;
+
+  /// Link below the no-local-match notice that opens /settings/ai-history with the query prefilled
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in AI history →'**
+  String get askAiResultContinueInChat;
+
+  /// §5.10.6 guardrail copy shown when the user types a write-shaped natural language query
+  ///
+  /// In en, this message translates to:
+  /// **'The command palette doesn\'t execute transfers, orders, or account deletion. Use the corresponding page.'**
+  String get askAiResultIrreversibleBlocked;
+
+  /// Shown when the local executor throws while running a parsed query plan
+  ///
+  /// In en, this message translates to:
+  /// **'Could not run this query: {error}'**
+  String askAiResultError(String error);
+
+  /// Shown when a parsed query returns zero rows
+  ///
+  /// In en, this message translates to:
+  /// **'No matching records.'**
+  String get askAiResultEmpty;
+
+  /// Footer hint when only the first N rows are previewed
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String askAiResultMoreRows(int count);
+
+  /// Summary line: number of rows in the result
+  ///
+  /// In en, this message translates to:
+  /// **'{count} rows'**
+  String askAiResultRowCount(int count);
+
+  /// Title for the spending-by-category result card
+  ///
+  /// In en, this message translates to:
+  /// **'Spending by category'**
+  String get askAiResultTitleSpending;
+
+  /// Title for the transactions-filter result card
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get askAiResultTitleTransactions;
+
+  /// Title for the net-worth-trend result card
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth trend'**
+  String get askAiResultTitleNetWorth;
+
+  /// Title for the subscription-list result card
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions'**
+  String get askAiResultTitleSubscriptions;
+
+  /// Title for the refund-matching result card
+  ///
+  /// In en, this message translates to:
+  /// **'Refund matches'**
+  String get askAiResultTitleRefunds;
+
+  /// Generic title for query result cards we haven't specialized
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get askAiResultTitleGeneric;
 
   /// Command palette: navigate to the home/overview tab
   ///
@@ -4818,6 +4914,114 @@ abstract class AppLocalizations {
   /// **'Export or import encrypted data backups'**
   String get settingsDataSubtitle;
 
+  /// Settings tile that opens the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'AI privacy'**
+  String get settingsAiPrivacyTitle;
+
+  /// Settings tile subtitle for the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'Pick what the AI can send to the cloud'**
+  String get settingsAiPrivacySubtitle;
+
+  /// Title of the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'AI privacy'**
+  String get aiPrivacyTitle;
+
+  /// Intro copy on the AI privacy page
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how much detail the AI can see when it leaves the device. You can change this at any time.'**
+  String get aiPrivacyIntro;
+
+  /// Radio label: amounts can go to the cloud
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts allowed'**
+  String get aiPrivacyModeAmountsAllowedLabel;
+
+  /// Radio description: amounts can go to the cloud
+  ///
+  /// In en, this message translates to:
+  /// **'Send exact amounts and account context. Best answer quality.'**
+  String get aiPrivacyModeAmountsAllowedDescription;
+
+  /// Radio label: amounts go up as ballpark buckets
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts bucketed'**
+  String get aiPrivacyModeAmountsBucketedLabel;
+
+  /// Radio description for bucketed amounts
+  ///
+  /// In en, this message translates to:
+  /// **'Round amounts to the nearest order of magnitude before sending. Cloud sees patterns but not exact numbers.'**
+  String get aiPrivacyModeAmountsBucketedDescription;
+
+  /// Radio label: amounts never leave the device
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts stay local'**
+  String get aiPrivacyModeAmountsLocalLabel;
+
+  /// Radio description for local-only amounts
+  ///
+  /// In en, this message translates to:
+  /// **'Only intent and category names leave the device. Cloud answers narrow to qualitative tips.'**
+  String get aiPrivacyModeAmountsLocalDescription;
+
+  /// Toggle label for masking account names
+  ///
+  /// In en, this message translates to:
+  /// **'Mask account / institution names'**
+  String get aiPrivacyMaskAccountsLabel;
+
+  /// Toggle description for masking account names
+  ///
+  /// In en, this message translates to:
+  /// **'Replace bank and broker names with anonymous IDs before they\'re sent.'**
+  String get aiPrivacyMaskAccountsDescription;
+
+  /// Title of the first-launch privacy onboarding sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Pick your AI privacy posture'**
+  String get aiPrivacyOnboardingTitle;
+
+  /// Body copy of the first-launch privacy onboarding sheet
+  ///
+  /// In en, this message translates to:
+  /// **'NaviWealth\'s AI is local-first. When it needs to use the cloud, this setting decides what it can send. You can change it later in Settings.'**
+  String get aiPrivacyOnboardingBody;
+
+  /// Confirm button on the privacy onboarding sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get aiPrivacyOnboardingConfirm;
+
+  /// Section header above the list of undo-able AI changes on the transparency page
+  ///
+  /// In en, this message translates to:
+  /// **'Pending AI changes'**
+  String get aiTransparencyUndoSectionTitle;
+
+  /// Empty state for the pending-undo section
+  ///
+  /// In en, this message translates to:
+  /// **'No pending AI changes.'**
+  String get aiTransparencyUndoEmpty;
+
+  /// Per-row undo button on the transparency page
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get aiTransparencyUndoAction;
+
   /// Settings section header for developer tools
   ///
   /// In en, this message translates to:
@@ -6154,6 +6358,60 @@ abstract class AppLocalizations {
   /// **'Projected {percent}'**
   String dashboardInsightAnomalyValue(String percent);
 
+  /// Dashboard insight label: same merchant + amount within ±2 days
+  ///
+  /// In en, this message translates to:
+  /// **'Possible duplicate charge'**
+  String get dashboardInsightDuplicateChargeLabel;
+
+  /// Dashboard duplicate-charge insight value
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pair} other{{count} pairs}} totaling {amount}'**
+  String dashboardInsightDuplicateChargeValue(int count, String amount);
+
+  /// Dashboard insight label: prior-month net-worth summary, fired in the first week of a new month
+  ///
+  /// In en, this message translates to:
+  /// **'Last month recap'**
+  String get dashboardInsightMonthlySummaryLabel;
+
+  /// Monthly summary insight value when net worth grew
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth grew {amount}'**
+  String dashboardInsightMonthlySummaryUp(String amount);
+
+  /// Monthly summary insight value when net worth declined
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth shrank {amount}'**
+  String dashboardInsightMonthlySummaryDown(String amount);
+
+  /// Monthly summary insight value when net worth was unchanged
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth was flat'**
+  String get dashboardInsightMonthlySummaryFlat;
+
+  /// Insight card action: expand inline detail
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get dashboardInsightActionExpand;
+
+  /// Insight card action: open the command palette with the insight as context
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get dashboardInsightActionAsk;
+
+  /// Insight card action: hide this insight kind on the dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dashboardInsightActionDismiss;
+
   /// Portfolio view switcher: assets list
   ///
   /// In en, this message translates to:
@@ -6195,6 +6453,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unassigned'**
   String get portfolioUnassignedAccount;
+
+  /// Activity feed add action label
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get activityAddAction;
 
   /// Activity feed filter action title
   ///
@@ -6579,6 +6843,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'now'**
   String get syncStatusStatJustNow;
+
+  /// No description provided for @aiReplyChipCompareLastPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to previous period'**
+  String get aiReplyChipCompareLastPeriod;
+
+  /// No description provided for @aiReplyChipFindKeyDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find the key drivers'**
+  String get aiReplyChipFindKeyDrivers;
+
+  /// No description provided for @aiReplyChipHowControlSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I rein in spending?'**
+  String get aiReplyChipHowControlSpending;
+
+  /// No description provided for @aiReplyChipViewHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'View holdings detail'**
+  String get aiReplyChipViewHoldings;
+
+  /// No description provided for @aiReplyChipComputeXirr.
+  ///
+  /// In en, this message translates to:
+  /// **'Compute XIRR'**
+  String get aiReplyChipComputeXirr;
+
+  /// No description provided for @aiReplyChipCompareLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare to last month'**
+  String get aiReplyChipCompareLastMonth;
+
+  /// No description provided for @aiReplyChipMarketDrop20.
+  ///
+  /// In en, this message translates to:
+  /// **'What if the market drops 20%?'**
+  String get aiReplyChipMarketDrop20;
+
+  /// No description provided for @aiReplyChipMonthlySaveDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'How much more to save each month?'**
+  String get aiReplyChipMonthlySaveDelta;
+
+  /// No description provided for @aiReplyChipRebalanceAdvice.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalancing advice'**
+  String get aiReplyChipRebalanceAdvice;
+
+  /// No description provided for @aiReplyChipCompareAnotherPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare another period'**
+  String get aiReplyChipCompareAnotherPeriod;
+
+  /// No description provided for @aiReplyChipBiggestCategoryChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Which categories changed most?'**
+  String get aiReplyChipBiggestCategoryChange;
+
+  /// No description provided for @aiReplyChipTrendSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Give a trend summary'**
+  String get aiReplyChipTrendSummary;
+
+  /// No description provided for @aiReplyChipHandleInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'How should I handle this?'**
+  String get aiReplyChipHandleInsight;
+
+  /// No description provided for @aiReplyChipSimilarHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show similar past cases'**
+  String get aiReplyChipSimilarHistory;
+
+  /// No description provided for @aiReplyChipActionPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Give me a concrete action plan'**
+  String get aiReplyChipActionPlan;
+
+  /// No description provided for @aiReplyChipRiskConcentration.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk concentration check'**
+  String get aiReplyChipRiskConcentration;
+
+  /// No description provided for @aiReplyChipUnusedSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Which subscriptions go unused?'**
+  String get aiReplyChipUnusedSubscriptions;
+
+  /// No description provided for @aiReplyChipCancelPriciestSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel the priciest subscription?'**
+  String get aiReplyChipCancelPriciestSub;
+
+  /// No description provided for @aiReplyChipUnmatchedRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmatched refunds'**
+  String get aiReplyChipUnmatchedRefunds;
+
+  /// No description provided for @aiReplyChipCompareBenchmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with benchmark'**
+  String get aiReplyChipCompareBenchmark;
+
+  /// No description provided for @aiReplyChipForecast12mo.
+  ///
+  /// In en, this message translates to:
+  /// **'12-month forecast'**
+  String get aiReplyChipForecast12mo;
+
+  /// No description provided for @aiReplyChipExpandDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand details'**
+  String get aiReplyChipExpandDetails;
+
+  /// No description provided for @aiReplyChipActionPlanGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Give an action plan'**
+  String get aiReplyChipActionPlanGeneric;
+
+  /// No description provided for @aiReplyChipVsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with last month'**
+  String get aiReplyChipVsLastMonth;
+
+  /// No description provided for @aiCapsuleExpandFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get aiCapsuleExpandFallback;
 }
 
 class _AppLocalizationsDelegate

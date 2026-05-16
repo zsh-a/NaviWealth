@@ -24,6 +24,8 @@ class NwAreaChart extends StatelessWidget {
     this.downsampleTarget = kDefaultDownsampleTarget,
     this.semanticLabel,
     this.stacked = false,
+    this.interpolation = ChartInterpolation.curved,
+    this.curved,
   });
 
   final List<ChartSeries> series;
@@ -35,6 +37,8 @@ class NwAreaChart extends StatelessWidget {
   final int downsampleTarget;
   final String? semanticLabel;
   final bool stacked;
+  final ChartInterpolation interpolation;
+  final bool? curved;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +53,8 @@ class NwAreaChart extends StatelessWidget {
       downsampleTarget: downsampleTarget,
       semanticLabel: semanticLabel,
       filled: true,
+      interpolation: interpolation,
+      curved: curved,
     );
   }
 

@@ -123,6 +123,38 @@ void main() {
     expect(reloaded.postings.first.unit, 'us_stock:AAPL');
   });
 
+  test('balanceByAccountUnit isolates units on mixed-unit accounts', () async {
+    await repo.create(
+      entry: JournalEntryDraft(
+        date: DateTime.utc(2026, 1, 15),
+        narration: 'Buy security',
+      ),
+      postings: [
+        PostingDraft(
+          accountId: 'broker',
+          units: Decimal.parse('10'),
+          unit: 'cn_a:600519',
+          cost: Cost(perUnit: Decimal.parse('100'), currency: 'USD'),
+        ),
+        PostingDraft(
+          accountId: 'broker',
+          units: Decimal.parse('-1000'),
+          unit: 'USD',
+        ),
+      ],
+    );
+
+    expect(await repo.balanceByAccount('broker'), Decimal.parse('-990'));
+    expect(
+      await repo.balanceByAccountUnit('broker', 'USD'),
+      Decimal.parse('-1000'),
+    );
+    expect(
+      await repo.balanceByAccountUnit('broker', 'cn_a:600519'),
+      Decimal.parse('10'),
+    );
+  });
+
   test(
     'softDelete tombstones JE + every posting and queues delete ops',
     () async {

@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/asset.dart';
@@ -165,42 +166,13 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   Future<void> _delete() async {
     if (_initial == null) return;
     final l10n = AppLocalizations.of(context);
-    final ok = await showFSheet<bool>(
-      side: FLayout.btt,
+    final ok = await showConfirmDialog(
       context: context,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.wealthProductDeleteTitle,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(l10n.wealthProductDeleteBody),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.commonDelete),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.paddingOf(ctx).bottom),
-          ],
-        ),
-      ),
+      title: Text(l10n.wealthProductDeleteTitle),
+      body: Text(l10n.wealthProductDeleteBody),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.commonDelete,
+      destructive: true,
     );
     if (ok != true) return;
     setState(() => _busy = true);
@@ -311,6 +283,17 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
         padding: const EdgeInsets.all(16),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
+          // Wave 40.1 — AI provenance for `propose_asset_valuation`.
+          if (widget.isEdit && widget.assetId != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AiTouchMark(
+                entityType: 'assets',
+                entityId: widget.assetId!,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           AccountPicker(
             accounts: eligible,
             value: _accountId,

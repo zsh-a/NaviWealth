@@ -7,7 +7,7 @@ import '../core/command_palette/command_palette.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
-import '../features/ai_chat/ui/ai_chat_sheet.dart';
+import '../features/ai_chat/ui/ai_sheet.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
@@ -16,12 +16,11 @@ import 'shell_preferences.dart';
 
 /// Vim-style `g`+key → route path mapping.
 ///
-/// Mnemonics align with the 5-tab IA:
-///   g h → Home, g a → Activity, g i → AI, g n → Accounts, g s → Settings.
+/// Mnemonics align with the 4-tab IA:
+///   g h → Home, g a → Activity, g n → Accounts, g s → Settings.
 const Map<String, String> _kVimGotoRoutes = <String, String>{
   'home': AppRoutes.home,
   'activity': AppRoutes.activity,
-  'ai': AppRoutes.ai,
   'accounts': AppRoutes.accounts,
   'settings': AppRoutes.settings,
 };
@@ -34,7 +33,7 @@ class NaviWealthApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
-    final compact = ref.watch(compactDensityProvider);
+    final compact = useCompactDensity(defaultTargetPlatform, kIsWeb);
     final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
 
     return MaterialApp.router(
@@ -122,13 +121,13 @@ class NaviWealthApp extends ConsumerWidget {
                       },
                     ),
                     onAskAi: (String query) =>
-                        showAiChatSheet(invokeCtx, prefill: query),
+                        showAiSheet(invokeCtx, prefill: query),
                   );
                 },
                 onToggleSidebar: () =>
                     ref.read(sidebarCollapsedProvider.notifier).toggle(),
                 onOpenAiChat: (BuildContext invokeCtx) =>
-                    showAiChatSheet(invokeCtx),
+                    showAiSheet(invokeCtx),
                 onVimGoto: (String target) {
                   final path = _kVimGotoRoutes[target];
                   if (path != null) router.go(path);

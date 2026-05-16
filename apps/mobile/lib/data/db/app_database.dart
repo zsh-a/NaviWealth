@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,9 @@ class AppDatabase extends _$AppDatabase {
       await _createSecuritiesCatalogFts(this);
       await _createSecuritiesCatalogIndexes(this);
       await _createDomainEventLog(this);
+      await _createAiTraceTable(this);
+      await _createAiUndoStackTable(this);
+      await _createAiTouchedEntitiesTable(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -113,6 +116,33 @@ class AppDatabase extends _$AppDatabase {
         // accounts (income/expense/equity) and for user accounts whose
         // legacy value (asset/liability) maps 1:1 to AccountSide.
       }
+      // v4 → v5: persist AI transparency traces + ai_chat undo stack.
+      // Both surfaces previously lived only in process memory; survival
+      // across restarts is needed for: (a) the AI transparency audit
+      // page (recentAiTraces), (b) the undo stack so toolings the user
+      // confirmed minutes ago still rollback after a reload.
+      if (from < 5) {
+        await _createAiTraceTable(this);
+        await _createAiUndoStackTable(this);
+      }
+      // v5 → v6: side-table that records "this entity was touched by
+      // an AI proposal" so detail pages can surface a subtle sparkle
+      // prefix (Wave 39). Side table > new column on entity tables —
+      // domain models stay clean and the migration is additive only.
+      if (from < 6) {
+        await _createAiTouchedEntitiesTable(this);
+      }
+      // v6 → v7: persist v2 AI SSE side channels. Reasoning text stays
+      // separate from assistant-visible content, and usage is stored as
+      // compact JSON for debug surfaces.
+      if (from < 7) {
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN reasoning_text TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN usage_json TEXT',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -142,6 +172,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   content             TEXT NOT NULL DEFAULT '',
   tool_calls_json     TEXT,
   text_segments_json  TEXT,
+  reasoning_text      TEXT,
+  usage_json          TEXT,
   status              TEXT NOT NULL,
   error_message       TEXT,
   stop_reason         TEXT,
@@ -276,4 +308,71 @@ Future<void> _createSecuritiesCatalogIndexes(AppDatabase db) async {
   for (final stmt in _securitiesCatalogIndexStmts) {
     await db.customStatement(stmt);
   }
+}
+
+// ---------------------------------------------------------------------------
+// AI surfaces (Waves 23 / 24) — local-only audit + undo stack.
+// Both tables stay device-local (never sync). Per-user partitioning is the
+// caller's responsibility; we store the owner alongside each row so a
+// multi-user install can scope queries.
+// ---------------------------------------------------------------------------
+
+Future<void> _createAiTraceTable(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ai_traces ('
+    '  request_id     TEXT PRIMARY KEY,'
+    '  owner_user_id  TEXT NOT NULL,'
+    '  started_at_iso TEXT NOT NULL,'
+    '  payload_json   TEXT NOT NULL'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_traces_started_at '
+    'ON ai_traces(started_at_iso DESC)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_traces_owner '
+    'ON ai_traces(owner_user_id, started_at_iso DESC)',
+  );
+}
+
+Future<void> _createAiUndoStackTable(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ai_undo_stack ('
+    '  token          TEXT PRIMARY KEY,'
+    '  owner_user_id  TEXT NOT NULL,'
+    '  created_at_iso TEXT NOT NULL,'
+    '  expires_at_iso TEXT,'
+    '  kind           TEXT NOT NULL,'
+    '  payload_json   TEXT NOT NULL'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_undo_owner '
+    'ON ai_undo_stack(owner_user_id, created_at_iso DESC)',
+  );
+}
+
+Future<void> _createAiTouchedEntitiesTable(AppDatabase db) async {
+  // Wave 39 — records "this entity was last touched by an AI
+  // proposal apply at <touched_at>". Detail pages query this side
+  // table to render `AiSourceMark` next to recently AI-modified
+  // entities; storing the touch out-of-band keeps the underlying
+  // entity schemas (journal_entries / accounts / liabilities /
+  // assets) unaware of the AI write path.
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ai_touched_entities ('
+    '  owner_user_id TEXT NOT NULL,'
+    '  entity_type   TEXT NOT NULL,'
+    '  entity_id     TEXT NOT NULL,'
+    '  touched_at    TEXT NOT NULL,'
+    '  kind_label    TEXT,'           // 'expense' / 'trade' / 'memo_edit' / ...
+    '  trace_id      TEXT,'           // AiTrace.requestId for jump-to-trace
+    '  PRIMARY KEY (owner_user_id, entity_type, entity_id)'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ai_touched_owner '
+    'ON ai_touched_entities(owner_user_id, touched_at DESC)',
+  );
 }

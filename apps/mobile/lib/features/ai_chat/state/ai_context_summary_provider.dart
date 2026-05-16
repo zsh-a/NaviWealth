@@ -11,6 +11,15 @@ import '../../home/data/dashboard_providers.dart';
 /// computation. The four cells render the rolling pulse the user wants
 /// the assistant to be aware of: net-worth direction, recent expense
 /// anomalies, upcoming deposit maturities, and base currency.
+///
+/// **Relationship to `core/ai/local/skills/context_compressor.dart`**:
+/// the new [ContextCompressor] reads the same upstream providers
+/// (header metrics, expense anomaly, deposit maturity) and produces
+/// a wire-format [ContextPack]. This UI summary is intentionally a
+/// different shape — it carries display-only fields (todaysChange,
+/// upcomingMaturitiesDays) that the cloud planner doesn't need. The
+/// two surfaces are kept aligned by sharing the same providers as
+/// inputs; do not derive one from the other.
 @immutable
 class AiContextSummary {
   const AiContextSummary({

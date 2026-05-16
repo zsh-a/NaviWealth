@@ -1,25 +1,17 @@
 # `web_smoke` — Cross-Browser Smoke for the Flutter Web Build
 
-Automated companion to [`docs/web-compat-matrix.md`](../../../docs/web-compat-matrix.md)
-(FIR-40). Runs Playwright against the production-shaped Flutter web bundle
-on **Chromium, WebKit, and Firefox**, and asserts the things that have
-silently regressed before:
+Automated companion to [`docs/web-compat-matrix.md`](../../../docs/web-compat-matrix.md) (FIR-40). Runs Playwright against the production-shaped Flutter web bundle on **Chromium, WebKit, and Firefox**, asserting things that have silently regressed before:
 
-- Drift opens a persistent storage backend (and on Firefox, that backend
-  is not OPFS).
+- Drift opens a persistent storage backend (and on Firefox, that backend is not OPFS).
 - `PathUrlStrategy` routes resolve as direct hits and after reload.
-- `manifest.json` and Drift's web assets (`sqlite3.wasm`,
-  `drift_worker.dart.js`) are reachable from the served bundle.
+- `manifest.json` and Drift's web assets (`sqlite3.wasm`, `drift_worker.dart.js`) are reachable.
 - The boot flow doesn't leak console errors or unhandled page errors.
 
-What this **isn't**:
+Out of scope:
 
-- A user-flow E2E. Flutter renders into a canvas; without enabling
-  semantics, Playwright can't reach widgets by text or role. The flows
-  that need a real human (PWA install, font fallback, keyboard quirks)
-  live in the manual checklist.
-- A perf benchmark. First-paint budgets live with FIR-39.
-- An iOS test. Real iOS Safari isn't reachable from a Linux runner.
+- User-flow E2E (Flutter renders into a canvas; flows needing a real human — PWA install, font fallback, keyboard quirks — live in the manual checklist).
+- Perf benchmarks (first-paint budgets live in FIR-39).
+- Real iOS Safari (not reachable from a Linux runner).
 
 ## Local run
 
@@ -47,23 +39,15 @@ and run against a deployed build instead.
 
 ## CI
 
-The `web-smoke` workflow runs nightly (and on manual dispatch) — see
-`.github/workflows/web-smoke.yml`. It downloads the `mobile-web-build`
-artifact produced by the `mobile` workflow on the same commit, then runs
-the three browser projects in a matrix so a Firefox-only failure (the
-most common shape) doesn't block Chromium / WebKit results.
+`web-smoke` workflow runs nightly + on manual dispatch (`.github/workflows/web-smoke.yml`). It downloads the `mobile-web-build` artifact from the `mobile` workflow on the same commit and runs the three browser projects in a matrix, so a Firefox-only failure (most common shape) doesn't block Chromium / WebKit.
 
 ## Adding a check
 
-Each `tests/*.spec.ts` file follows the same shape:
+Each `tests/*.spec.ts` follows the same shape:
 
 1. `attachConsoleSpy(page)` before the first navigation.
-2. `await page.goto(...)` then `waitForFlutterReady(page)` so we don't
-   race the first frame.
+2. `await page.goto(...)` then `waitForFlutterReady(page)` to avoid racing the first frame.
 3. Assert the invariant.
-4. End with `await expectNoConsoleErrors(spy)` so a regression in
-   unrelated code (e.g. a missed `.dart` exception) shows up here.
+4. End with `await expectNoConsoleErrors(spy)` so an unrelated `.dart` exception still trips this suite.
 
-If you need to assert on a Drift-internal invariant, prefer
-`detectDriftImpl` over re-implementing the IndexedDB/OPFS probe inline —
-the helper centralizes the brittle storage-API calls.
+For Drift internals, prefer `detectDriftImpl` over re-implementing the IndexedDB/OPFS probe inline — the helper centralizes the brittle storage-API calls.

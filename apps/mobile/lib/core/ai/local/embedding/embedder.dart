@@ -1,0 +1,78 @@
+/// Pure Dart embedding abstraction.
+///
+/// Phase 4 ships [StubEmbedder] only — a hash-based pseudo-vector
+/// good enough for the storage / retrieval / ranking pipeline tests
+/// and for the `disabled` device path. The real on-device model
+/// (MiniLM via ONNX or platform-specific runtime) lands in Phase 5
+/// as a swappable [Embedder] implementation; the rest of the
+/// semantic-memory plumbing does not change when the model swaps.
+library;
+
+import 'dart:math' as math;
+
+abstract class Embedder {
+  /// Output vector dimension. Stable across calls.
+  int get dimension;
+
+  /// Embed a single text. The returned vector has length [dimension]
+  /// and is unit-length (L2-normalised) so consumers can use a plain
+  /// dot product for similarity.
+  Future<List<double>> embed(String text);
+}
+
+/// Convenience batch helper exposed as an extension so concrete
+/// `implements Embedder` types don't need to re-implement it.
+/// Concrete embedders that benefit from batched inference (real ONNX
+/// in Phase 5) can add their own `embedAll` method directly without
+/// hiding the extension.
+extension EmbedderBatch on Embedder {
+  Future<List<List<double>>> embedAll(Iterable<String> texts) async {
+    final out = <List<double>>[];
+    for (final t in texts) {
+      out.add(await embed(t));
+    }
+    return out;
+  }
+}
+
+/// Deterministic pseudo-embedder for tests + the Phase 4 'no real
+/// model yet' path. Same input → same vector across processes; close
+/// inputs produce moderately close vectors (token-overlap collapses
+/// onto the same hash bits).
+///
+/// Cosine quality is *not* great — this is not a substitute for a
+/// real embedder. Tests verify ranking topology (the same string
+/// always wins) rather than absolute similarity scores.
+class StubEmbedder implements Embedder {
+  StubEmbedder({this.dimension = 32});
+
+  @override
+  final int dimension;
+
+  @override
+  Future<List<double>> embed(String text) async {
+    final v = List<double>.filled(dimension, 0);
+    final tokens = text
+        .toLowerCase()
+        .split(RegExp(r'[\s\p{P}]+', unicode: true))
+        .where((t) => t.isNotEmpty);
+    for (final token in tokens) {
+      final h = token.hashCode;
+      for (var i = 0; i < dimension; i++) {
+        // Map bit i of the hash to ±1 contribution at vector slot i.
+        v[i] += ((h >> i) & 1) == 1 ? 1.0 : -1.0;
+      }
+    }
+    return _normalise(v);
+  }
+}
+
+List<double> _normalise(List<double> v) {
+  var sumSq = 0.0;
+  for (final x in v) {
+    sumSq += x * x;
+  }
+  if (sumSq == 0) return v;
+  final norm = math.sqrt(sumSq);
+  return <double>[for (final x in v) x / norm];
+}

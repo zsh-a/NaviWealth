@@ -23,8 +23,13 @@ ToolInvocation _inv(String name, Object? output) => ToolInvocation(
   output: output,
 );
 
+/// Wave 41 — Forui's `FTappable` decomposes at build time, so finder
+/// by type doesn't resolve. The card now ships an explicit Key on the
+/// header tap target; tests drive expansion via that key.
+const _headerKey = Key('tool-invocation-card-header');
+
 Future<void> _expandCard(WidgetTester tester) async {
-  await tester.tap(find.byType(InkWell).first);
+  await tester.tap(find.byKey(_headerKey));
   await tester.pumpAndSettle();
 }
 

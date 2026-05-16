@@ -26,36 +26,39 @@ class SettingsOverview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-
-    return ListView(
-      padding: const EdgeInsets.all(16).copyWith(
-        bottom:
-            const EdgeInsets.all(16).bottom +
-            64 +
-            MediaQuery.paddingOf(context).bottom,
-      ),
+    final accountGroup = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _AccountHeader(),
-        const SizedBox(height: 16),
         _SectionHeader(title: l10n.settingsAccountSection),
         SoftCard(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            children: [
-              _AccountSection(),
-            ],
-          ),
+          child: Column(children: [_AccountSection()]),
         ),
-        _SectionHeader(title: l10n.settingsAppearanceSection),
-        const SoftCard(
+      ],
+    );
+    const appearanceGroup = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AppearanceSectionHeader(),
+        SoftCard(
           padding: EdgeInsets.symmetric(vertical: 4),
           child: _AppearanceSection(),
         ),
+      ],
+    );
+    final riskGroup = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         _SectionHeader(title: l10n.settingsRiskSection),
         const SoftCard(
           padding: EdgeInsets.symmetric(vertical: 4),
           child: _RiskThresholdSettings(),
         ),
+      ],
+    );
+    final dataGroup = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         _SectionHeader(title: l10n.settingsDataSection),
         SoftCard(
           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -74,27 +77,122 @@ class SettingsOverview extends ConsumerWidget {
                 subtitle: l10n.settingsDataSubtitle,
                 onTap: () => context.goNamed(AppRouteNames.backup),
               ),
+              _SectionDivider(),
+              InlineLinkRow(
+                icon: Icons.lock_outline,
+                label: l10n.settingsAiPrivacyTitle,
+                subtitle: l10n.settingsAiPrivacySubtitle,
+                onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
+              ),
+              _SectionDivider(),
+              InlineLinkRow(
+                icon: Icons.visibility_outlined,
+                label: 'AI 透明度',
+                subtitle: '查看最近 AI 调用的详细轨迹',
+                onTap: () => context.goNamed(AppRouteNames.aiTransparency),
+              ),
             ],
           ),
         ),
-        if (kDebugMode) ...[
-          _SectionHeader(title: l10n.settingsDeveloperSection),
-          SoftCard(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: InlineLinkRow(
-              icon: Icons.bug_report_outlined,
-              label: l10n.settingsLogsTitle,
-              subtitle: l10n.settingsLogsSubtitle,
-              onTap: () => context.goNamed(AppRouteNames.logs),
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        const SoftCard(
-          padding: EdgeInsets.symmetric(vertical: 4),
-          child: _AboutTile(),
-        ),
       ],
+    );
+    final developerGroup = kDebugMode
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SectionHeader(title: l10n.settingsDeveloperSection),
+              SoftCard(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: InlineLinkRow(
+                  icon: Icons.bug_report_outlined,
+                  label: l10n.settingsLogsTitle,
+                  subtitle: l10n.settingsLogsSubtitle,
+                  onTap: () => context.goNamed(AppRouteNames.logs),
+                ),
+              ),
+            ],
+          )
+        : const SizedBox.shrink();
+    const aboutGroup = SoftCard(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: _AboutTile(),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 1024;
+        final basePadding = Breakpoints.isMobile(constraints.maxWidth)
+            ? const EdgeInsets.all(16)
+            : const EdgeInsets.all(24);
+        final padding = basePadding.copyWith(
+          bottom:
+              basePadding.bottom + 64 + MediaQuery.paddingOf(context).bottom,
+        );
+        return ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            AdaptiveContentFrame(
+              maxWidth: isDesktop
+                  ? AdaptiveMaxWidth.page
+                  : AdaptiveMaxWidth.narrow,
+              layout: isDesktop
+                  ? AdaptiveFrameLayout.twoColumn
+                  : AdaptiveFrameLayout.singleColumn,
+              primaryFlex: 1,
+              secondaryFlex: 1,
+              padding: padding,
+              header: const _AccountHeader(),
+              primary: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  accountGroup,
+                  const SizedBox(height: 16),
+                  appearanceGroup,
+                  if (!isDesktop) ...[
+                    const SizedBox(height: 16),
+                    riskGroup,
+                    const SizedBox(height: 16),
+                    dataGroup,
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 16),
+                      developerGroup,
+                    ],
+                    const SizedBox(height: 16),
+                    aboutGroup,
+                  ],
+                ],
+              ),
+              secondary: isDesktop
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        riskGroup,
+                        const SizedBox(height: 16),
+                        dataGroup,
+                        if (kDebugMode) ...[
+                          const SizedBox(height: 16),
+                          developerGroup,
+                        ],
+                        const SizedBox(height: 16),
+                        aboutGroup,
+                      ],
+                    )
+                  : null,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AppearanceSectionHeader extends StatelessWidget {
+  const _AppearanceSectionHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionHeader(
+      title: AppLocalizations.of(context).settingsAppearanceSection,
     );
   }
 }
@@ -239,7 +337,6 @@ class _AppearanceSection extends ConsumerWidget {
     final marketMode = ref.watch(marketColorModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
-    final compact = ref.watch(compactDensityProvider);
 
     return Column(
       children: [
@@ -264,21 +361,11 @@ class _AppearanceSection extends ConsumerWidget {
             for (final m in MarketColorMode.values)
               _marketModeLabel(l10n, m): m,
           },
-          onChanged: (m) =>
-              ref.read(marketColorModeProvider.notifier).set(m),
+          onChanged: (m) => ref.read(marketColorModeProvider.notifier).set(m),
         ),
         const Padding(
           padding: EdgeInsets.fromLTRB(14, 0, 14, 8),
           child: _MarketColorPreview(),
-        ),
-        _SectionDivider(),
-        InlineSwitchRow(
-          icon: Icons.density_medium_outlined,
-          label: l10n.settingsCompactDensityTitle,
-          subtitle: l10n.settingsCompactDensitySubtitle,
-          value: compact,
-          onChanged: (next) =>
-              ref.read(compactDensityProvider.notifier).set(next),
         ),
         _SectionDivider(),
         InlineSettingRow<String>(
@@ -349,7 +436,10 @@ class _AboutTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(l10n.settingsAboutTitle, style: context.theme.typography.sm),
+                Text(
+                  l10n.settingsAboutTitle,
+                  style: context.theme.typography.sm,
+                ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
@@ -436,10 +526,7 @@ class _RiskThresholdSettings extends ConsumerWidget {
                   .read(concentrationThresholdsProvider.notifier)
                   .resetToDefaults(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Text(
                   l10n.settingsRiskResetDefaults,
                   style: context.theme.typography.xs.copyWith(
@@ -557,7 +644,9 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
           ),
           Expanded(
             child: FSlider(
-              control: FSliderControl.managedContinuous(controller: _controller),
+              control: FSliderControl.managedContinuous(
+                controller: _controller,
+              ),
               tooltipBuilder: (_, v) =>
                   Text('${((0.05 + v * 0.90) * 100).round()}%'),
             ),

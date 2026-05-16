@@ -5,18 +5,18 @@ import 'package:forui/forui.dart';
 import '../../../app/master_detail_layout.dart';
 import '../../../app/route_paths.dart';
 import '../../../app/selection_query.dart';
+import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
-import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
+import '../state/chat_session_scope.dart';
 import '../state/route_context_provider.dart';
 import 'ai_action_cards_rail.dart';
 import 'ai_context_summary_header.dart';
-import 'ai_insights_panel.dart';
 import 'chat_composer.dart';
-import 'message_bubble.dart';
+import 'chat_conversation_view.dart';
 import 'sessions_panel.dart';
 
 /// Top-level "AI 助手" surface (FIR-60).
@@ -40,90 +40,38 @@ class AiChatPage extends ConsumerStatefulWidget {
 }
 
 class _AiChatPageState extends ConsumerState<AiChatPage> {
-  String? _activeSessionId;
-  bool _bootstrapped = false;
-  String? _lastBootstrappedUserId;
-  String? _bootstrappingUserId;
-  Object? _bootstrapError;
+  /// The session the user explicitly selected (sessions panel / "+").
+  /// `null` ⇒ fall back to [defaultChatSessionProvider]. Session
+  /// *resolution* (resume newest / create first) now lives in that
+  /// provider; this is purely "which thread is the user looking at".
+  String? _selectedSessionId;
 
   @override
   void initState() {
     super.initState();
-    _activeSessionId = widget.initialSessionId;
-  }
-
-  Future<void> _ensureSession(String ownerUserId) async {
-    if (_bootstrapped && _lastBootstrappedUserId == ownerUserId) return;
-    if (_bootstrappingUserId == ownerUserId) return;
-    _bootstrappingUserId = ownerUserId;
-    try {
-      final repo = await ref.read(chatRepositoryProvider.future);
-      final activeSessionId = _activeSessionId;
-      if (activeSessionId != null) {
-        final active = await repo.findSession(activeSessionId);
-        if (!mounted) return;
-        if (active != null && active.ownerUserId == ownerUserId) {
-          setState(() {
-            _bootstrapped = true;
-            _lastBootstrappedUserId = ownerUserId;
-            _bootstrapError = null;
-          });
-          return;
-        }
-        setState(() => _activeSessionId = null);
-      }
-      final existing = await repo.listSessions(ownerUserId);
-      if (!mounted) return;
-      if (existing.isNotEmpty) {
-        setState(() {
-          _activeSessionId = existing.first.id;
-          _bootstrapped = true;
-          _lastBootstrappedUserId = ownerUserId;
-          _bootstrapError = null;
-        });
-        return;
-      }
-      final session = await repo.createSession(ownerUserId: ownerUserId);
-      if (!mounted) return;
-      setState(() {
-        _activeSessionId = session.id;
-        _bootstrapped = true;
-        _lastBootstrappedUserId = ownerUserId;
-        _bootstrapError = null;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _bootstrapped = false;
-        _bootstrapError = e;
-      });
-    } finally {
-      if (_bootstrappingUserId == ownerUserId) {
-        _bootstrappingUserId = null;
-      }
-    }
+    _selectedSessionId = widget.initialSessionId;
   }
 
   Future<void> _newSession(String ownerUserId) async {
     final repo = await ref.read(chatRepositoryProvider.future);
     final session = await repo.createSession(ownerUserId: ownerUserId);
     if (!mounted) return;
-    setState(() {
-      _activeSessionId = session.id;
-    });
+    setState(() => _selectedSessionId = session.id);
   }
 
-  Future<void> _openSessionsSheet(String ownerUserId) async {
+  Future<void> _openSessionsSheet(String ownerUserId, String? activeId) async {
     await showFSheet<void>(
       context: context,
       side: FLayout.rtl,
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => AppSheetSurface(
+        borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+        safeTop: true,
         child: SizedBox(
           width: 320,
           child: SessionsPanel(
-            activeSessionId: _activeSessionId,
+            activeSessionId: activeId,
             onSelect: (id) {
-              setState(() => _activeSessionId = id);
+              setState(() => _selectedSessionId = id);
               Navigator.of(ctx).pop();
             },
             onNew: () async {
@@ -142,68 +90,70 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final session = ref.watch(authSessionProvider);
     if (session == null) {
       return FScaffold(
-        header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
+        header: FHeader.nested(
+          title: Text(l10n.aiChatAppBarTitle),
+          prefixes: [backHeaderAction(context)],
+        ),
         childPad: false,
         child: const _LoginRequired(),
       );
     }
 
-    final bootstrappedForUser =
-        _bootstrapped && _lastBootstrappedUserId == session.userId;
-
-    if (!bootstrappedForUser &&
-        _bootstrappingUserId != session.userId &&
-        _bootstrapError == null) {
-      // Schedule the bootstrap after build so it doesn't fight the
-      // first frame.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _ensureSession(session.userId);
-      });
-    }
+    final defaultAsync = ref.watch(
+      defaultChatSessionProvider(session.userId),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isDesktop = MasterDetailLayout.shouldUseMasterDetail(width);
-        final activeId = bootstrappedForUser ? _activeSessionId : null;
-        // At desktop width the URL is the source of truth for the active
-        // session — the master-detail surface follows `?selected=`. We
-        // still keep `_activeSessionId` populated so the bootstrap path
-        // can pick a default.
-        final selectedFromQuery = isDesktop && bootstrappedForUser
+        // At desktop width the URL is the source of truth for the
+        // active session — the master-detail surface follows
+        // `?selected=`. Explicit selection wins; otherwise the
+        // provider resolves the default thread.
+        final selectedFromQuery = isDesktop
             ? selectedQueryOf(context)
             : null;
-        final desktopActiveId = selectedFromQuery ?? activeId;
-        final pendingPane = _bootstrapError == null
-            ? const _BootstrappingPane()
-            : _BootstrapErrorPane(
-                error: _bootstrapError!,
-                onRetry: () {
-                  setState(() => _bootstrapError = null);
-                  _ensureSession(session.userId);
-                },
-              );
+        final activeId =
+            _selectedSessionId ??
+            selectedFromQuery ??
+            defaultAsync.asData?.value;
+
+        Widget pendingPane() {
+          if (defaultAsync.hasError) {
+            return _BootstrapErrorPane(
+              error: defaultAsync.error!,
+              onRetry: () => ref.invalidate(
+                defaultChatSessionProvider(session.userId),
+              ),
+            );
+          }
+          return const _BootstrappingPane();
+        }
 
         if (isDesktop) {
           return FScaffold(
-            header: FHeader.nested(title: Text(l10n.aiChatAppBarTitle)),
+            header: FHeader.nested(
+              title: Text(l10n.aiChatAppBarTitle),
+              prefixes: [backHeaderAction(context)],
+            ),
             childPad: false,
             child: MasterDetailLayout(
               master: SessionsPanel(
-                activeSessionId: desktopActiveId,
+                activeSessionId: activeId,
                 onSelect: (id) {
-                  setState(() => _activeSessionId = id);
+                  setState(() => _selectedSessionId = id);
                   replaceSelectedQuery(
                     context,
-                    path: AppRoutes.ai,
+                    path: AppRoutes.settingsAiHistory,
                     selected: id,
                   );
                 },
                 onNew: () => _newSession(session.userId),
               ),
-              detail: desktopActiveId == null
-                  ? pendingPane
-                  : _ChatPane(sessionId: desktopActiveId),
+              detail: activeId == null
+                  ? pendingPane()
+                  : _ChatPane(sessionId: activeId),
             ),
           );
         }
@@ -212,10 +162,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         return FScaffold(
           header: FHeader.nested(
             title: Text(_titleForActive(session.userId, activeId, l10n)),
+            prefixes: [backHeaderAction(context)],
             suffixes: [
               FHeaderAction(
                 icon: const Icon(Icons.history),
-                onPress: () => _openSessionsSheet(session.userId),
+                onPress: () =>
+                    _openSessionsSheet(session.userId, activeId),
               ),
               FHeaderAction(
                 icon: const Icon(Icons.add),
@@ -225,7 +177,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           ),
           childPad: false,
           child: activeId == null
-              ? pendingPane
+              ? pendingPane()
               : _ChatPane(sessionId: activeId),
         );
       },
@@ -247,126 +199,61 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   }
 }
 
-class _ChatPane extends ConsumerStatefulWidget {
+class _ChatPane extends ConsumerWidget {
   const _ChatPane({required this.sessionId});
   final String sessionId;
 
   @override
-  ConsumerState<_ChatPane> createState() => _ChatPaneState();
-}
-
-class _ChatPaneState extends ConsumerState<_ChatPane> {
-  final ScrollController _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _scrollToBottom() {
-    if (!_scroll.hasClients) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scroll.hasClients) return;
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: Motion.fast,
-        curve: Motion.standardDecelerate,
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final messagesAsync = ref.watch(
-      chatMessagesStreamProvider(widget.sessionId),
-    );
-    final turn = ref.watch(chatControllerProvider(widget.sessionId));
-
-    // Auto-scroll on every new message snapshot.
-    ref.listen(chatMessagesStreamProvider(widget.sessionId), (prev, next) {
-      next.whenData((_) => _scrollToBottom());
-    });
-
+  Widget build(BuildContext context, WidgetRef ref) {
+    final turn = ref.watch(chatControllerProvider(sessionId));
     final l10n = AppLocalizations.of(context);
     final routeCtx = ref.watch(aiRouteContextProvider);
     final systemContext = routeCtx.toSystemContext();
+
+    // "Discovery" chrome (this-month summary + next-action rail) belongs
+    // to the *blank* conversation only. Once a thread is underway it is
+    // noise competing with the answer, so it collapses entirely and the
+    // conversation owns the screen. `false` while the stream is still
+    // loading so an existing thread never flashes the chrome.
+    final isBlank =
+        ref.watch(chatMessagesStreamProvider(sessionId)).asData?.value.isEmpty ??
+        false;
+
+    void send(String text) => ref
+        .read(chatControllerProvider(sessionId).notifier)
+        .send(
+          text,
+          staleSyncNotice: l10n.aiChatStaleSyncNotice,
+          systemContext: systemContext,
+        );
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 960),
         child: Column(
           children: [
-            const AiContextSummaryHeader(),
-            const AiActionCardsRail(),
+            if (isBlank) ...[
+              const AiContextSummaryHeader(),
+              const AiActionCardsRail(),
+            ],
             Expanded(
-              child: messagesAsync.when(
-                loading: () => const AiChatSkeleton(),
-                error: (e, _) =>
-                    Center(child: Text(l10n.commonLoadError(e.toString()))),
-                data: (messages) => _MessagesList(
-                  sessionId: widget.sessionId,
-                  messages: messages,
-                  scroll: _scroll,
-                  onSuggest: (text) => ref
-                      .read(chatControllerProvider(widget.sessionId).notifier)
-                      .send(
-                        text,
-                        staleSyncNotice: l10n.aiChatStaleSyncNotice,
-                        systemContext: systemContext,
-                      ),
-                ),
+              child: ChatConversationView(
+                sessionId: sessionId,
+                loadingBuilder: (_) => const AiChatSkeleton(),
+                emptyBuilder: (_) => _EmptyConversation(onSuggest: send),
               ),
             ),
-            const AiInsightsPanel(),
             ChatComposer(
               isStreaming: turn.isStreaming,
               isFlushing: turn.isFlushing,
-              onSend: (text) {
-                ref
-                    .read(chatControllerProvider(widget.sessionId).notifier)
-                    .send(
-                      text,
-                      staleSyncNotice: l10n.aiChatStaleSyncNotice,
-                      systemContext: systemContext,
-                    );
-              },
-              onCancel: () {
-                ref
-                    .read(chatControllerProvider(widget.sessionId).notifier)
-                    .cancel();
-              },
+              onSend: send,
+              onCancel: () => ref
+                  .read(chatControllerProvider(sessionId).notifier)
+                  .cancel(),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MessagesList extends StatelessWidget {
-  const _MessagesList({
-    required this.sessionId,
-    required this.messages,
-    required this.scroll,
-    required this.onSuggest,
-  });
-
-  final String sessionId;
-  final List<ChatMessage> messages;
-  final ScrollController scroll;
-  final ValueChanged<String> onSuggest;
-
-  @override
-  Widget build(BuildContext context) {
-    if (messages.isEmpty) {
-      return _EmptyConversation(onSuggest: onSuggest);
-    }
-    return ListView.builder(
-      controller: scroll,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: messages.length,
-      itemBuilder: (_, i) =>
-          MessageBubble(sessionId: sessionId, message: messages[i]),
     );
   }
 }
@@ -406,22 +293,16 @@ class _EmptyConversation extends StatelessWidget {
                     child: Container(
                       width: 64,
                       height: 64,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colors.primary.withValues(alpha: 0.85),
-                            colors.mutedForeground.withValues(alpha: 0.85),
-                          ],
-                        ),
+                        color: AiTone.surfaceTint(context),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AiTone.outline(context),
+                          width: 1,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.auto_awesome,
-                        size: 28,
-                        color: colors.primaryForeground,
-                      ),
+                      child: const AiSparkle(size: 28),
                     ),
                   ),
                   const SizedBox(height: 16),

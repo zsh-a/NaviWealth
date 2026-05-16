@@ -1,25 +1,44 @@
 import 'package:decimal/decimal.dart';
 
+import '../../../domain/values/price_confidence.dart';
+import '../../../domain/values/resolved_price.dart';
+
 /// Per-asset price observation used by the holding pipeline.
 ///
 /// Carries its own [currency] because a multi-market portfolio routinely
 /// holds USD, CNY and HKD assets side by side; collapsing to base currency
 /// at the source of truth would discard the native-currency view that
 /// [HoldingSnapshot.marketValueInAssetCurrency] needs.
+///
+/// [confidence], [source] and [asOf] are populated when the price came
+/// from the layered resolver. They are nullable so legacy in-memory test
+/// fakes (which only carry the raw decimal) still construct.
 class HoldingPrice {
-  const HoldingPrice({required this.price, required this.currency});
+  const HoldingPrice({
+    required this.price,
+    required this.currency,
+    this.confidence,
+    this.source,
+    this.asOf,
+  });
 
   final Decimal price;
   final String currency;
+  final PriceConfidence? confidence;
+  final String? source;
+  final DateTime? asOf;
 
   @override
   bool operator ==(Object other) =>
       other is HoldingPrice &&
       other.price == price &&
-      other.currency == currency;
+      other.currency == currency &&
+      other.confidence == confidence &&
+      other.source == source &&
+      other.asOf == asOf;
 
   @override
-  int get hashCode => Object.hash(price, currency);
+  int get hashCode => Object.hash(price, currency, confidence, source, asOf);
 
   @override
   String toString() => '$price $currency';
@@ -91,4 +110,49 @@ class HoldingPriceObservation {
   final Decimal price;
   final String currency;
   final DateTime asOf;
+}
+
+/// [HoldingPriceSource] composed of two layers:
+///
+///   - [resolved]: a pre-computed map of [ResolvedPrice]s from the
+///     [PriceResolver], captured at [resolvedAt]. Used when the caller's
+///     `asOf` is within [resolvedFreshness] of [resolvedAt] — typically
+///     "now-ish" lookups for the live dashboard.
+///   - [fallback]: a `HoldingPriceSource` over the `prices` ledger.
+///     Used for historical lookups and as a safety net when the resolver
+///     returned `null` for an asset.
+///
+/// This composition lets Phase B switch the live valuation path to the
+/// resolver without breaking historical valuation, which still depends
+/// on the synced observation history.
+class ResolvedPriceHoldingSource implements HoldingPriceSource {
+  ResolvedPriceHoldingSource({
+    required Map<String, ResolvedPrice?> resolved,
+    required this.resolvedAt,
+    required this.fallback,
+    this.resolvedFreshness = const Duration(days: 1),
+  }) : _resolved = resolved;
+
+  final Map<String, ResolvedPrice?> _resolved;
+  final DateTime resolvedAt;
+  final HoldingPriceSource fallback;
+  final Duration resolvedFreshness;
+
+  @override
+  HoldingPrice? priceFor(String assetId, {required DateTime asOf}) {
+    final lookback = resolvedAt.difference(asOf).abs();
+    if (lookback <= resolvedFreshness) {
+      final r = _resolved[assetId];
+      if (r != null) {
+        return HoldingPrice(
+          price: r.value,
+          currency: r.currency,
+          confidence: r.confidence,
+          source: r.source,
+          asOf: r.asOf,
+        );
+      }
+    }
+    return fallback.priceFor(assetId, asOf: asOf);
+  }
 }

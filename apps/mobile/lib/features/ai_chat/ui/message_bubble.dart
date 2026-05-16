@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/visual/visual.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
+import 'ai_transparency_badge.dart';
 import 'propose_card.dart';
-import 'tool_invocation_card.dart';
+import 'reply_chips.dart';
+import 'tool_invocation_inline.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
 ///
@@ -26,10 +29,22 @@ class MessageBubble extends StatelessWidget {
     super.key,
     required this.sessionId,
     required this.message,
+    this.onReplyChip,
+    this.invocationIntent,
   });
 
   final String sessionId;
   final ChatMessage message;
+
+  /// Wave 34 — when non-null, completed assistant turns render reply
+  /// chips below the body and call this back with the tapped chip
+  /// text. Caller sends it as the next user turn. Streaming/error
+  /// messages render no chips regardless.
+  final void Function(String chip)? onReplyChip;
+
+  /// Wave 34 — invocation intent that triggered this turn (Wave 33
+  /// invocation). Drives the rules-based chip suggester.
+  final String? invocationIntent;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +54,8 @@ class MessageBubble extends StatelessWidget {
       ChatRole.assistant || ChatRole.error => _AssistantBubble(
         sessionId: sessionId,
         message: message,
+        onReplyChip: onReplyChip,
+        invocationIntent: invocationIntent,
       ),
     };
     return TweenAnimationBuilder<double>(
@@ -108,10 +125,17 @@ class _UserBubble extends StatelessWidget {
 }
 
 class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.sessionId, required this.message});
+  const _AssistantBubble({
+    required this.sessionId,
+    required this.message,
+    this.onReplyChip,
+    this.invocationIntent,
+  });
 
   final String sessionId;
   final ChatMessage message;
+  final void Function(String chip)? onReplyChip;
+  final String? invocationIntent;
 
   bool get _isError =>
       message.role == ChatRole.error ||
@@ -134,6 +158,10 @@ class _AssistantBubble extends StatelessWidget {
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if ((message.reasoningText ?? '').isNotEmpty) ...[
+          _ReasoningPanel(text: message.reasoningText!),
+          const SizedBox(height: 8),
+        ],
         ..._buildInterleavedBlocks(
           context: context,
           textColor: textColor,
@@ -151,6 +179,27 @@ class _AssistantBubble extends StatelessWidget {
         ],
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
+        if (!isStreaming &&
+            !_isError &&
+            message.role == ChatRole.assistant &&
+            message.status == ChatMessageStatus.complete)
+          AiTransparencyBadge(messageId: message.id),
+        // Wave 34 — reply chips under completed assistant turns. Skip
+        // when no onReplyChip handler is supplied (older surfaces) or
+        // when the turn errored / was cancelled.
+        if (onReplyChip != null &&
+            !isStreaming &&
+            !_isError &&
+            message.role == ChatRole.assistant &&
+            message.status == ChatMessageStatus.complete)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: _ReplyChips(
+              toolNames: {for (final t in message.toolCalls) t.name},
+              invocationIntent: invocationIntent,
+              onTap: onReplyChip!,
+            ),
+          ),
       ],
     );
 
@@ -253,11 +302,20 @@ class _AssistantBubble extends StatelessWidget {
       final shouldRenderText = seg.isNotEmpty || (isLastSeg && isStreaming);
       if (shouldRenderText) {
         addGapIfNeeded();
+        // Wave 37 — when the model is mid-flight and has called a tool
+        // whose result hasn't arrived yet, surface the tool name so the
+        // streaming indicator reads "正在 <tool>" instead of generic
+        // "思考中". The pending tool is the *last* invocation without
+        // output (per Anthropic's serial tool-use protocol).
+        final pendingTool = (isLastSeg && isStreaming)
+            ? _findPendingToolName(tools)
+            : null;
         blocks.add(
           _AssistantBody(
             text: seg,
             isStreaming: isLastSeg && isStreaming,
             textColor: textColor,
+            pendingToolName: pendingTool,
           ),
         );
         anythingEmittedYet = true;
@@ -284,8 +342,21 @@ class _AssistantBubble extends StatelessWidget {
         plan: plan,
       );
     }
-    return ToolInvocationCard(invocation: invocation);
+    // Wave 37 — inline rendering when a domain renderer is registered;
+    // the legacy card (chevron + raw JSON) remains the fallback for
+    // tools without one, and accessible via long-press on the inline.
+    return ToolInvocationInline(invocation: invocation);
   }
+}
+
+/// Wave 37 — last unresolved tool name. The model emits tool_use frames
+/// serially under the Anthropic protocol, so the most recent
+/// invocation without an output is the one currently being awaited.
+String? _findPendingToolName(List<ToolInvocation> tools) {
+  for (var i = tools.length - 1; i >= 0; i--) {
+    if (tools[i].output == null) return tools[i].name;
+  }
+  return null;
 }
 
 class _AssistantBody extends StatelessWidget {
@@ -293,15 +364,42 @@ class _AssistantBody extends StatelessWidget {
     required this.text,
     required this.isStreaming,
     required this.textColor,
+    this.pendingToolName,
   });
   final String text;
   final bool isStreaming;
   final Color textColor;
 
+  /// Wave 37 — when the model has dispatched a tool but is still
+  /// waiting for the result, surface the tool name. Beats a generic
+  /// "thinking" placeholder for agentic flows.
+  final String? pendingToolName;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (text.isEmpty && isStreaming) {
+      // Active-tool variant: replace dots + 思考中 with
+      // ✦ 正在 get_holdings ... so the user can see what the agent is
+      // doing right now.
+      if (pendingToolName != null) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AiSparkle(active: true),
+            const SizedBox(width: 6),
+            Text(
+              '正在 $pendingToolName',
+              style: AiType.meta(context).copyWith(
+                color: AiTone.active(context),
+                fontFamily: 'monospace',
+              ),
+            ),
+            const SizedBox(width: 2),
+            _TypingDots(color: AiTone.active(context).withValues(alpha: 0.7)),
+          ],
+        );
+      }
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -549,20 +647,83 @@ class _ContinueButton extends StatelessWidget {
   }
 }
 
-class _AssistantAvatar extends StatelessWidget {
+class _ReasoningPanel extends StatefulWidget {
+  const _ReasoningPanel({required this.text});
+
+  final String text;
+
+  @override
+  State<_ReasoningPanel> createState() => _ReasoningPanelState();
+}
+
+class _ReasoningPanelState extends State<_ReasoningPanel> {
+  bool _expanded = false;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final labelStyle = context.theme.typography.xs.copyWith(
+      color: colors.mutedForeground,
+      fontWeight: FontWeight.w600,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FTappable(
+          onPress: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  AppLocalizations.of(context).aiChatThinking,
+                  style: labelStyle,
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 16,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: SelectableText(
+              widget.text,
+              style: context.theme.typography.xs.copyWith(
+                height: 1.45,
+                color: colors.mutedForeground,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AssistantAvatar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Wave 36 visual language: the assistant identity glyph is a framed
+    // [AiSparkle]. No ad-hoc `secondary` hue — surface tint + hairline
+    // only (AiTone), per core/ai/visual §5.8.
     return Container(
       width: 28,
       height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: colors.secondary,
-        border: Border.all(color: colors.border, width: 1),
+        color: AiTone.surfaceTint(context),
+        border: Border.all(color: AiTone.outline(context), width: 1),
       ),
       alignment: Alignment.center,
-      child: Icon(Icons.auto_awesome, size: 16, color: colors.foreground),
+      child: const AiSparkle(size: 16),
     );
   }
 }
@@ -590,6 +751,42 @@ class _SystemNotice extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Wave 34 / 36 — reply chip row under completed assistant turns.
+/// Now backed by [AiPill] (Wave 36) so chips share the capsule's
+/// visual language. Up to 3 chips sourced from `suggestReplyChips`.
+class _ReplyChips extends StatelessWidget {
+  const _ReplyChips({
+    required this.toolNames,
+    required this.invocationIntent,
+    required this.onTap,
+  });
+
+  final Set<String> toolNames;
+  final String? invocationIntent;
+  final void Function(String chip) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = suggestReplyChips(
+      invocationIntent: invocationIntent,
+      turnTools: toolNames,
+    );
+    if (ids.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    // The localized phrase is both the chip label and the user turn
+    // sent on tap — the model sees natural language, never the id.
+    final labels = [for (final id in ids) localizedReplyChip(l10n, id)];
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final label in labels)
+          AiPill(label: label, onTap: () => onTap(label)),
+      ],
     );
   }
 }
