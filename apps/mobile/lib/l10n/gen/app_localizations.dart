@@ -284,6 +284,24 @@ abstract class AppLocalizations {
   /// **'No insight available for this entry.'**
   String get activityEntryDetailNoExplanation;
 
+  /// Heuristic AI insight shown for subscription-like transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring subscription. Review whether it still fits your plan before the next renewal.'**
+  String get activityEntryDetailInsightSubscription;
+
+  /// Heuristic AI insight shown for rent or mortgage-like transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring housing payment. Keep it in the essential-spending baseline.'**
+  String get activityEntryDetailInsightHousing;
+
+  /// Heuristic AI insight shown for salary or payroll-like transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Primary income inflow. Keep it stable in cash-flow projections.'**
+  String get activityEntryDetailInsightIncome;
+
   /// AI context summary section eyebrow
   ///
   /// In en, this message translates to:
@@ -1675,6 +1693,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to load: {error}'**
   String commonLoadError(String error);
+
+  /// Generic load failure message that hides raw exception details from the UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this view. Please try again.'**
+  String get commonLoadFailed;
 
   /// Generic failure snackbar shown when an optimistic form submit fails after the form has already popped.
   ///
@@ -4331,12 +4355,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Valuation trend'**
   String get physicalAssetValuationTrendSemanticLabel;
-
-  /// No description provided for @accountsAppBarTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get accountsAppBarTitle;
 
   /// Master-detail empty state for /activity/accounts at desktop width
   ///

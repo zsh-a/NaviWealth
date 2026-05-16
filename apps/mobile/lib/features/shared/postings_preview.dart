@@ -2,8 +2,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../../core/format/formatters.dart';
 import '../../data/domain/account.dart';
 import '../../data/domain/posting.dart';
+import '../../design_system/design_system.dart';
 
 /// FIR-128 §1.3 — read-only ledger card that mirrors the Beancount
 /// posting layout: account path on the left, signed `units` and (when
@@ -98,13 +100,9 @@ class _PostingRow extends StatelessWidget {
         ? posting.accountId
         : _accountPath(account, accounts);
 
-    final isDebit = posting.units >= Decimal.zero;
-    final amountColor = isDebit
-        ? context.theme.colors.foreground
-        : context.theme.colors.destructive;
-
     final cost = posting.cost;
     final price = posting.price;
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,12 +135,11 @@ class _PostingRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          '${_format(posting.units)} ${posting.unit}',
-          style: context.theme.typography.sm.copyWith(
-            color: amountColor,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
+        SignedMoneyText(
+          amount: posting.units,
+          unit: posting.unit,
+          formatters: formatters,
+          style: context.theme.typography.sm,
         ),
       ],
     );
@@ -160,6 +157,7 @@ class _UnitBalanceRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final balanced = total == Decimal.zero;
     final tone = balanced ? scheme.tertiary : context.theme.colors.destructive;
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Row(
@@ -176,12 +174,12 @@ class _UnitBalanceRow extends StatelessWidget {
               style: context.theme.typography.xs2.copyWith(color: tone),
             ),
           ),
-          Text(
-            _format(total),
-            style: context.theme.typography.xs2.copyWith(
-              color: tone,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+          SignedMoneyText(
+            amount: total,
+            unit: unit,
+            formatters: formatters,
+            style: context.theme.typography.xs2,
+            color: tone,
           ),
         ],
       ),
