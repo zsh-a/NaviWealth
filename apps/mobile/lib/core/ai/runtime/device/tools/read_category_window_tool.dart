@@ -75,12 +75,7 @@ class ReadCategoryWindowTool implements DeviceTool {
         'enum': kScopedPurposes.toList(),
         'description': '调用动机；写入 AiTrace 审计',
       },
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 50,
-        'default': 20,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 20},
       'merchant_substring': {
         'type': 'string',
         'description': '可选；按 note 的子串过滤（hash 后明细只能数 distinct 不能搜，所以匹配在原文上做）',
@@ -88,8 +83,10 @@ class ReadCategoryWindowTool implements DeviceTool {
     },
   };
 
-  Map<String, Object?> _bad(String message) =>
-      <String, Object?>{'error': message, 'code': 'bad_request'};
+  Map<String, Object?> _bad(String message) => <String, Object?>{
+    'error': message,
+    'code': 'bad_request',
+  };
 
   @override
   Future<Object?> invoke(
@@ -178,14 +175,16 @@ class ReadCategoryWindowTool implements DeviceTool {
     final needle = merchantSubstring?.toLowerCase();
 
     final hits =
-        <({
-          String id,
-          BigInt amount,
-          String? currency,
-          String accountKind,
-          DateTime date,
-          String? note,
-        })>[];
+        <
+          ({
+            String id,
+            BigInt amount,
+            String? currency,
+            String accountKind,
+            DateTime date,
+            String? note,
+          })
+        >[];
     for (final ewp in entries) {
       final date = ewp.entry.date.toUtc();
       if (date.isBefore(from) || !date.isBefore(to)) continue;

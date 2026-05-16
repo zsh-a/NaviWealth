@@ -125,11 +125,7 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
     }
     // §4.5 — external side effects are never auto-dispatched.
     if (lookupToolDescriptor(name)?.sideEffect == SideEffect.externalCall) {
-      return _policyDenied(
-        name,
-        'runtime_not_allowed',
-        '该工具有外部副作用，端侧不自动执行。',
-      );
+      return _policyDenied(name, 'runtime_not_allowed', '该工具有外部副作用，端侧不自动执行。');
     }
 
     final args = input is Map

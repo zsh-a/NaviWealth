@@ -81,12 +81,7 @@ JournalEntryWithPostings _ewp(
   List<Posting> postings, {
   String narration = '',
 }) => JournalEntryWithPostings(
-  entry: JournalEntry(
-    id: id,
-    date: date,
-    narration: narration,
-    sync: _stamp(),
-  ),
+  entry: JournalEntry(id: id, date: date, narration: narration, sync: _stamp()),
   postings: postings,
 );
 
@@ -122,20 +117,14 @@ class _SlowTool implements DeviceTool {
   @override
   Map<String, Object?> get inputSchema => const {'type': 'object'};
   @override
-  Future<Object?> invoke(
-    DeviceToolContext ctx,
-    Map<String, Object?> i,
-  ) async {
+  Future<Object?> invoke(DeviceToolContext ctx, Map<String, Object?> i) async {
     await Future<void>.delayed(const Duration(seconds: 1));
     return {'ok': true};
   }
 }
 
 /// Runs [body] with a real Riverpod [Ref] from inside the container.
-Future<T> _withRef<T>(
-  ProviderContainer c,
-  Future<T> Function(Ref ref) body,
-) {
+Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   // Non-autoDispose so the probe (and the autoDispose providers it
   // reads, e.g. accountsStreamProvider) stay mounted until the
   // container is torn down — an autoDispose probe gets reclaimed
@@ -188,7 +177,9 @@ void main() {
         'read_category_window',
       ]);
       expect(
-        schemas.firstWhere((s) => s.name == 'list_payment_accounts').description,
+        schemas
+            .firstWhere((s) => s.name == 'list_payment_accounts')
+            .description,
         contains('支付账户候选'),
       );
       expect(reg.lookup('get_holdings'), isNotNull);
@@ -203,8 +194,10 @@ void main() {
       final reg = DeviceToolRegistry(const []);
       final out = await _withRef(
         c,
-        (ref) => DriftDeviceToolDispatcher(ref: ref, registry: reg)
-            .dispatch(_session(), 'ghost', const {}),
+        (ref) => DriftDeviceToolDispatcher(
+          ref: ref,
+          registry: reg,
+        ).dispatch(_session(), 'ghost', const {}),
       );
       final m = out! as Map;
       expect(m['policy_denied'], true);
@@ -219,8 +212,10 @@ void main() {
       final reg = DeviceToolRegistry([_ThrowingTool()]);
       final out = await _withRef(
         c,
-        (ref) => DriftDeviceToolDispatcher(ref: ref, registry: reg)
-            .dispatch(_session(), 'boom', const {}),
+        (ref) => DriftDeviceToolDispatcher(
+          ref: ref,
+          registry: reg,
+        ).dispatch(_session(), 'boom', const {}),
       );
       final m = out! as Map;
       expect(m['code'], 'tool_error');
@@ -248,22 +243,19 @@ void main() {
 
   group('ListPaymentAccountsTool.shape', () {
     test('keeps only non-archived asset-side payment containers', () {
-      final m = ListPaymentAccountsTool.shape(
-        [
-          _acct('a', 'Alpha Bank', type: AccountCategory.bank),
-          _acct('b', 'Cash', type: AccountCategory.cash),
-          _acct('c', 'Archived', type: AccountCategory.bank, archived: true),
-          // generic manual-valuation container — excluded like backend
-          _acct('d', 'House', type: AccountCategory.asset),
-          _acct(
-            'e',
-            'Mortgage',
-            type: AccountCategory.loan,
-            category: AccountSide.liability,
-          ),
-        ],
-        purpose: 'record_expense',
-      );
+      final m = ListPaymentAccountsTool.shape([
+        _acct('a', 'Alpha Bank', type: AccountCategory.bank),
+        _acct('b', 'Cash', type: AccountCategory.cash),
+        _acct('c', 'Archived', type: AccountCategory.bank, archived: true),
+        // generic manual-valuation container — excluded like backend
+        _acct('d', 'House', type: AccountCategory.asset),
+        _acct(
+          'e',
+          'Mortgage',
+          type: AccountCategory.loan,
+          category: AccountSide.liability,
+        ),
+      ], purpose: 'record_expense');
       final ids = (m['accounts'] as List).map((a) => (a as Map)['id']);
       expect(ids, ['a', 'b']); // sorted by name: Alpha Bank, Cash
       expect(m['total_count'], 2);
@@ -301,8 +293,7 @@ void main() {
   });
 
   group('ListPaymentAccountsTool.invoke', () {
-    test('rejects an unsupported purpose before any provider read',
-        () async {
+    test('rejects an unsupported purpose before any provider read', () async {
       final c = ProviderContainer();
       addTearDown(c.dispose);
       final out = await _withRef(
@@ -343,7 +334,10 @@ void main() {
     });
 
     test('input as_of overrides the snapshot timestamp', () {
-      final m = GetHoldingsTool.shape(snapshot, inputAsOf: '2026-06-09T00:00:00Z');
+      final m = GetHoldingsTool.shape(
+        snapshot,
+        inputAsOf: '2026-06-09T00:00:00Z',
+      );
       expect(m['as_of'], '2026-06-09T00:00:00Z');
     });
 
@@ -363,11 +357,7 @@ void main() {
       'holdings': {for (var i = 0; i < hs.length; i++) 'h$i': hs[i]},
     };
 
-    Map<String, Object?> h(
-      String type,
-      String ccy,
-      String cost,
-    ) => {
+    Map<String, Object?> h(String type, String ccy, String cost) => {
       'type': type,
       'asset_currency': ccy,
       'cost_basis_asset_currency': cost,
@@ -414,7 +404,10 @@ void main() {
           {'asset_currency': 'USD', 'cost_basis_asset_currency': '10'},
         ]),
       );
-      expect((m['buckets'] as List).single, containsPair('bucket_key', 'unknown'));
+      expect(
+        (m['buckets'] as List).single,
+        containsPair('bucket_key', 'unknown'),
+      );
     });
 
     test('no holdings → empty buckets', () {
@@ -562,14 +555,17 @@ void main() {
 
       // currency filter (case-insensitive)
       final usd = GetRecurringPatternsTool.shape(uploads, currency: 'usd');
-      expect((usd['patterns'] as List).single, containsPair('id', 'netflix|USD'));
+      expect(
+        (usd['patterns'] as List).single,
+        containsPair('id', 'netflix|USD'),
+      );
 
       // cadence filter
-      final weekly = GetRecurringPatternsTool.shape(
-        uploads,
-        cadence: 'weekly',
+      final weekly = GetRecurringPatternsTool.shape(uploads, cadence: 'weekly');
+      expect(
+        (weekly['patterns'] as List).single,
+        containsPair('cadence', 'weekly'),
       );
-      expect((weekly['patterns'] as List).single, containsPair('cadence', 'weekly'));
 
       // invalid cadence ignored (no filter)
       expect(
@@ -740,14 +736,8 @@ void main() {
 
   group('W-D4.5 proposal scaffolding (ports proposals.rs)', () {
     test('matchExpenseCategory: slug / label / substring / ambiguous', () {
-      expect(
-        (matchExpenseCategory('food') as CategoryExact).slug,
-        'food',
-      );
-      expect(
-        (matchExpenseCategory('餐饮') as CategoryExact).slug,
-        'food',
-      );
+      expect((matchExpenseCategory('food') as CategoryExact).slug, 'food');
+      expect((matchExpenseCategory('餐饮') as CategoryExact).slug, 'food');
       // single substring → exact
       expect(
         (matchExpenseCategory('transp') as CategoryExact).slug,
@@ -774,7 +764,10 @@ void main() {
         _acct('a2', 'Citi Savings', type: AccountCategory.bank),
         _acct('a3', 'Cash', type: AccountCategory.cash),
       ];
-      expect(resolveAccount(accts, byName: 'nope'), isA<ResolvedNone<Account>>());
+      expect(
+        resolveAccount(accts, byName: 'nope'),
+        isA<ResolvedNone<Account>>(),
+      );
       expect(
         (resolveAccount(accts, byName: 'cash') as ResolvedOne<Account>).row.id,
         'a3',
@@ -840,17 +833,19 @@ void main() {
       );
     });
 
-    test('ambiguous category → needs_clarification (before account read)',
-        () async {
-      final m = await run(const {'amount': 10, 'category': 'zzz'}) as Map;
-      expect(m['status'], 'needs_clarification');
-      expect(m['ambiguous_field'], 'category');
-      expect((m['candidates'] as List).map((e) => (e as Map)['id']), [
-        'food',
-        'shopping',
-        'other',
-      ]);
-    });
+    test(
+      'ambiguous category → needs_clarification (before account read)',
+      () async {
+        final m = await run(const {'amount': 10, 'category': 'zzz'}) as Map;
+        expect(m['status'], 'needs_clarification');
+        expect(m['ambiguous_field'], 'category');
+        expect((m['candidates'] as List).map((e) => (e as Map)['id']), [
+          'food',
+          'shopping',
+          'other',
+        ]);
+      },
+    );
 
     // The post-account-read branches (currency default, RFC3339 date
     // reject, ready-plan shaping) reach `accountsStreamProvider.future`
@@ -917,7 +912,8 @@ void main() {
         (resolveAsset(assets, byName: '北京') as ResolvedOne<Asset>).row.id,
         'h1',
       );
-      final many = resolveAsset(assets, bySymbol: 'aapl') as ResolvedMany<Asset>;
+      final many =
+          resolveAsset(assets, bySymbol: 'aapl') as ResolvedMany<Asset>;
       expect(many.candidates, hasLength(2));
       expect(many.candidates.first, containsPair('type', 'stock'));
     });
@@ -934,48 +930,53 @@ void main() {
       );
     }
 
-    test('propose_account_create: validation + ready (pure, no provider)',
-        () async {
-      expect(
-        ((await runTool(const ProposeAccountCreateTool(), const {}))
-            as Map)['error'],
-        contains("field 'name'"),
-      );
-      expect(
-        ((await runTool(const ProposeAccountCreateTool(), const {
-              'name': '  ',
-              'type': 'bank',
-            }))
-            as Map)['error'],
-        contains('must not be blank'),
-      );
-      final amb = await runTool(const ProposeAccountCreateTool(), const {
-        'name': 'My Card',
-        'type': 'not-a-type',
-      }) as Map;
-      expect(amb['status'], 'needs_clarification');
-      expect(amb['ambiguous_field'], 'type');
-      expect(
-        (amb['candidates'] as List).map((e) => (e as Map)['id']),
-        kProposalAccountTypes,
-      );
-      final ok = await runTool(const ProposeAccountCreateTool(), const {
-        'name': '招行储蓄',
-        'type': 'bank',
-      }) as Map;
-      expect(ok['status'], 'ready');
-      expect(ok['kind'], 'account_create');
-      final p = ok['payload'] as Map;
-      expect(p['name'], '招行储蓄');
-      expect(p['type'], 'bank');
-      expect(p['currency'], 'CNY'); // defaulted
-      expect((p['id'] as String).isNotEmpty, isTrue);
-      expect(ok['summary_zh'], '创建账户「招行储蓄」（bank / CNY）');
-      expect((ok['warnings'] as List).single, contains('CNY'));
-    });
+    test(
+      'propose_account_create: validation + ready (pure, no provider)',
+      () async {
+        expect(
+          ((await runTool(const ProposeAccountCreateTool(), const {}))
+              as Map)['error'],
+          contains("field 'name'"),
+        );
+        expect(
+          ((await runTool(const ProposeAccountCreateTool(), const {
+                'name': '  ',
+                'type': 'bank',
+              }))
+              as Map)['error'],
+          contains('must not be blank'),
+        );
+        final amb =
+            await runTool(const ProposeAccountCreateTool(), const {
+                  'name': 'My Card',
+                  'type': 'not-a-type',
+                })
+                as Map;
+        expect(amb['status'], 'needs_clarification');
+        expect(amb['ambiguous_field'], 'type');
+        expect(
+          (amb['candidates'] as List).map((e) => (e as Map)['id']),
+          kProposalAccountTypes,
+        );
+        final ok =
+            await runTool(const ProposeAccountCreateTool(), const {
+                  'name': '招行储蓄',
+                  'type': 'bank',
+                })
+                as Map;
+        expect(ok['status'], 'ready');
+        expect(ok['kind'], 'account_create');
+        final p = ok['payload'] as Map;
+        expect(p['name'], '招行储蓄');
+        expect(p['type'], 'bank');
+        expect(p['currency'], 'CNY'); // defaulted
+        expect((p['id'] as String).isNotEmpty, isTrue);
+        expect(ok['summary_zh'], '创建账户「招行储蓄」（bank / CNY）');
+        expect((ok['warnings'] as List).single, contains('CNY'));
+      },
+    );
 
-    test('propose_asset_valuation: pre-resolve bad_request branches',
-        () async {
+    test('propose_asset_valuation: pre-resolve bad_request branches', () async {
       expect(
         ((await runTool(const ProposeAssetValuationTool(), const {}))
             as Map)['error'],
@@ -1042,8 +1043,7 @@ void main() {
       sync: _stamp(),
     );
 
-    test('resolveLiability: none / one(id,name) / many(≤8,{id,name,type})',
-        () {
+    test('resolveLiability: none / one(id,name) / many(≤8,{id,name,type})', () {
       final ls = [
         liab('l1', '招行房贷'),
         liab('l2', '招行车贷', type: LiabilityType.carLoan),
@@ -1112,12 +1112,8 @@ void main() {
       );
     }
 
-    test('type / quantity validation bad_requests (before resolve)',
-        () async {
-      expect(
-        ((await run(const {})) as Map)['error'],
-        contains("field 'type'"),
-      );
+    test('type / quantity validation bad_requests (before resolve)', () async {
+      expect(((await run(const {})) as Map)['error'], contains("field 'type'"));
       expect(
         ((await run(const {'type': 'gift', 'quantity': 1})) as Map)['error'],
         contains("unsupported transaction type 'gift'"),
@@ -1193,10 +1189,7 @@ void main() {
       Future<String> err(Map<String, Object?> i) async =>
           ((await run(i)) as Map)['error'] as String;
       expect(await err(const {}), 'account_id required');
-      expect(
-        await err(const {'account_id': 'a', 'from': 'x'}),
-        'to required',
-      );
+      expect(await err(const {'account_id': 'a', 'from': 'x'}), 'to required');
       expect(
         await err(const {
           'account_id': 'a',
@@ -1363,10 +1356,7 @@ void main() {
       );
       expect((m['transactions'] as List), isEmpty);
       expect((m['summary'] as Map)['count'], 0);
-      expect(
-        m['device_note'],
-        contains('未找到名称/ID 匹配 category=groceries'),
-      );
+      expect(m['device_note'], contains('未找到名称/ID 匹配 category=groceries'));
     });
 
     test('merchant_substring filters on narration', () {
