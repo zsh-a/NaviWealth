@@ -3959,4 +3959,93 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiCapsuleExpandFallback => 'Expand';
+
+  @override
+  String get dashboardInsightIngestQueueLabel => 'Records to confirm';
+
+  @override
+  String dashboardInsightIngestQueueValue(int count, int fresh) {
+    return '$count parsed · $fresh ready to add';
+  }
+
+  @override
+  String get ingestReviewTitle => 'Review entries';
+
+  @override
+  String ingestAccountsLoadError(String error) {
+    return 'Failed to load accounts: $error';
+  }
+
+  @override
+  String ingestQueueLoadError(String error) {
+    return 'Failed to load the queue: $error';
+  }
+
+  @override
+  String get ingestExpenseAccountLabel => 'Paid from';
+
+  @override
+  String ingestConfirmAllFresh(int count) {
+    return 'Confirm all · new only ($count)';
+  }
+
+  @override
+  String get ingestSelectAccountFirst => 'Pick a paying account first';
+
+  @override
+  String get ingestServiceNotReady => 'Service not ready yet';
+
+  @override
+  String get ingestRecorded => 'Recorded';
+
+  @override
+  String ingestRecordedN(int count) {
+    return 'Recorded $count';
+  }
+
+  @override
+  String get ingestPasteTitle => 'Paste statement text';
+
+  @override
+  String get ingestPasteHint =>
+      'Paste CSV / statement text\ne.g. 2026-05-10,Starbucks,-38.00,CNY';
+
+  @override
+  String get ingestParseAction => 'Parse';
+
+  @override
+  String get ingestNoTransactions => 'No recognizable transactions';
+
+  @override
+  String ingestParseSummary(int total, int fresh, int dup) {
+    return 'Parsed $total · $fresh new · $dup possible dup';
+  }
+
+  @override
+  String get ingestUncategorized => 'Uncategorized';
+
+  @override
+  String get ingestSkip => 'Skip';
+
+  @override
+  String get ingestConfirm => 'Record';
+
+  @override
+  String get ingestVerdictNew => 'New';
+
+  @override
+  String get ingestVerdictLikely => 'Likely dup';
+
+  @override
+  String get ingestVerdictDuplicate => 'Duplicate';
+
+  @override
+  String get ingestEmptyTitle => 'Nothing to confirm';
+
+  @override
+  String get ingestEmptyBody =>
+      'Paste statement / CSV text — it is parsed into drafts,\nreconciled, and confirmed here.';
+
+  @override
+  String get ingestPasteAction => 'Paste text';
 }

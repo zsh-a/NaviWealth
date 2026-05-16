@@ -17,6 +17,7 @@ String insightHeadline(AppLocalizations l10n, InsightItem item) {
     InsightKind.duplicateCharge =>
       l10n.dashboardInsightDuplicateChargeLabel,
     InsightKind.monthlySummary => l10n.dashboardInsightMonthlySummaryLabel,
+    InsightKind.ingestQueue => l10n.dashboardInsightIngestQueueLabel,
   };
 }
 
@@ -34,6 +35,10 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
     ),
     InsightKind.duplicateCharge => _duplicateCharge(l10n, item),
     InsightKind.monthlySummary => _monthlySummary(l10n, item),
+    InsightKind.ingestQueue => l10n.dashboardInsightIngestQueueValue(
+      item.ingestPendingCount ?? 0,
+      item.ingestFreshCount ?? 0,
+    ),
   };
 }
 

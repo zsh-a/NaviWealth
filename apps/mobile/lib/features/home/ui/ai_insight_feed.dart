@@ -242,6 +242,9 @@ class _ExpandedDetail extends StatelessWidget {
         return 'Deposit matures within the alert window.';
       case InsightKind.anomaly:
         return 'Projected month-end spend vs. the last 3 months.';
+      case InsightKind.ingestQueue:
+        return 'Parsed transactions awaiting confirmation. Tap to '
+            'review, confirm, or skip duplicates before they post.';
     }
   }
 }

@@ -6993,6 +6993,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expand'**
   String get aiCapsuleExpandFallback;
+
+  /// Dashboard insight label: Layer 4 ingest queue has parsed drafts awaiting confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'Records to confirm'**
+  String get dashboardInsightIngestQueueLabel;
+
+  /// Dashboard ingest-queue insight value
+  ///
+  /// In en, this message translates to:
+  /// **'{count} parsed · {fresh} ready to add'**
+  String dashboardInsightIngestQueueValue(int count, int fresh);
+
+  /// Layer 4 ingest review page title
+  ///
+  /// In en, this message translates to:
+  /// **'Review entries'**
+  String get ingestReviewTitle;
+
+  /// Ingest review: accounts stream error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load accounts: {error}'**
+  String ingestAccountsLoadError(String error);
+
+  /// Ingest review: drafts stream error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load the queue: {error}'**
+  String ingestQueueLoadError(String error);
+
+  /// Ingest review: paying-account selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Paid from'**
+  String get ingestExpenseAccountLabel;
+
+  /// Ingest review: batch-confirm button (new drafts only)
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm all · new only ({count})'**
+  String ingestConfirmAllFresh(int count);
+
+  /// Ingest review: no account chosen warning
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a paying account first'**
+  String get ingestSelectAccountFirst;
+
+  /// Ingest review: confirm service unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Service not ready yet'**
+  String get ingestServiceNotReady;
+
+  /// Ingest review: single confirm success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded'**
+  String get ingestRecorded;
+
+  /// Ingest review: batch confirm success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded {count}'**
+  String ingestRecordedN(int count);
+
+  /// Ingest paste dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Paste statement text'**
+  String get ingestPasteTitle;
+
+  /// Ingest paste dialog text-field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Paste CSV / statement text\ne.g. 2026-05-10,Starbucks,-38.00,CNY'**
+  String get ingestPasteHint;
+
+  /// Ingest paste dialog confirm button
+  ///
+  /// In en, this message translates to:
+  /// **'Parse'**
+  String get ingestParseAction;
+
+  /// Ingest review: parse produced zero rows
+  ///
+  /// In en, this message translates to:
+  /// **'No recognizable transactions'**
+  String get ingestNoTransactions;
+
+  /// Ingest review: parse result summary toast
+  ///
+  /// In en, this message translates to:
+  /// **'Parsed {total} · {fresh} new · {dup} possible dup'**
+  String ingestParseSummary(int total, int fresh, int dup);
+
+  /// Ingest review: draft with no category hint
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get ingestUncategorized;
+
+  /// Ingest review: dismiss one draft
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get ingestSkip;
+
+  /// Ingest review: confirm one draft
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get ingestConfirm;
+
+  /// Ingest dedup verdict: no match
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get ingestVerdictNew;
+
+  /// Ingest dedup verdict: probable duplicate
+  ///
+  /// In en, this message translates to:
+  /// **'Likely dup'**
+  String get ingestVerdictLikely;
+
+  /// Ingest dedup verdict: exact duplicate
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get ingestVerdictDuplicate;
+
+  /// Ingest review empty-state title
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to confirm'**
+  String get ingestEmptyTitle;
+
+  /// Ingest review empty-state body
+  ///
+  /// In en, this message translates to:
+  /// **'Paste statement / CSV text — it is parsed into drafts,\nreconciled, and confirmed here.'**
+  String get ingestEmptyBody;
+
+  /// Ingest review: open paste dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Paste text'**
+  String get ingestPasteAction;
 }
 
 class _AppLocalizationsDelegate

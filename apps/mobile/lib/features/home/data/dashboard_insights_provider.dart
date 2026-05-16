@@ -5,6 +5,7 @@ import '../../../app/route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
+import '../../ingest/data/ingest_queue_insight_provider.dart';
 import '../../rebalance/data/rebalance_drift_insight_provider.dart';
 import '../domain/insight_models.dart';
 import 'dismissed_insights_store.dart';
@@ -119,6 +120,21 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     );
   }
 
+  // §5.10.10 / S5a.1 — Layer 4 queue surfaces as a calm ambient card;
+  // row tap deep-links to the review page (AppRoutes.activityIngest).
+  final ingest = ref.watch(ingestQueueInsightProvider);
+  if (ingest != null && !ingest.isEmpty) {
+    insights.add(
+      InsightItem(
+        icon: Icons.move_to_inbox_outlined,
+        kind: InsightKind.ingestQueue,
+        ingestPendingCount: ingest.pendingCount,
+        ingestFreshCount: ingest.freshCount,
+        route: AppRoutes.activityIngest,
+      ),
+    );
+  }
+
   final dismissed = ref.watch(dismissedInsightKeysProvider).value ??
       const <DismissedInsightKey>{};
   if (dismissed.isEmpty) return insights;
@@ -159,5 +175,7 @@ String insightScopeHash(InsightItem item) {
       ].join(':');
     case InsightKind.monthlySummary:
       return '${item.summaryYear ?? 0}-${item.summaryMonth ?? 0}';
+    case InsightKind.ingestQueue:
+      return '${item.ingestPendingCount ?? 0}:${item.ingestFreshCount ?? 0}';
   }
 }
