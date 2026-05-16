@@ -19,6 +19,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/get_cashflow_buckets_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_investment_performance_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/get_net_worth_summary_tool.dart';
@@ -150,6 +151,7 @@ void main() {
         ListPaymentAccountsTool(),
         GetHoldingsTool(),
         GetAssetAllocationTool(),
+        GetCashflowBucketsTool(),
         GetAnomalyFlagsTool(),
         GetRecurringPatternsTool(),
         GetRefundLinksTool(),
@@ -170,6 +172,7 @@ void main() {
       expect(schemas.map((s) => s.name), [
         'get_anomaly_flags',
         'get_asset_allocation',
+        'get_cashflow_buckets',
         'get_holdings',
         'get_investment_performance',
         'get_net_worth_summary',
@@ -1540,6 +1543,124 @@ void main() {
         now: fixedNow,
       );
       expect(m['currency'], isNull);
+      expect(usd['currency'], 'USD');
+      expect(series(usd).map((r) => r['currency']).toSet(), {'USD'});
+    });
+  });
+
+  group('W-D4.2c — get_cashflow_buckets (cashflow_buckets parity)', () {
+    final fixedNow = DateTime.utc(2026, 6, 15);
+    Map<String, Object?> agg(
+      List<JournalEntryWithPostings> entries, {
+      List<Asset> assets = const [],
+      String? currency,
+    }) => GetCashflowBucketsTool.shape(
+      entries,
+      assets: assets,
+      monthsBack: 60,
+      currency: currency,
+      now: fixedNow,
+    );
+
+    List<Map<String, Object?>> series(Map<String, Object?> m) =>
+        (m['series'] as List).cast<Map<String, Object?>>();
+
+    test('splits inflow and outflow (backend parity)', () {
+      final m = agg([
+        _ewp('salary', DateTime.utc(2026, 5, 1), [_post('a', 'USD', '5000')]),
+        _ewp('rent', DateTime.utc(2026, 5, 5), [_post('a', 'USD', '-1800')]),
+        _ewp('c1', DateTime.utc(2026, 5, 10), [_post('a', 'USD', '-5.5')]),
+        _ewp('c2', DateTime.utc(2026, 5, 12), [_post('a', 'USD', '-4')]),
+      ]);
+      final r = series(m).single;
+      expect(r['year_month'], '2026-05');
+      expect(r['currency'], 'USD');
+      expect(r['inflow_minor'], '500000');
+      expect(r['outflow_minor'], '180950'); // 1800 + 5.50 + 4.00
+      expect(r['net_minor'], '319050');
+      expect(r['inflow_count'], 1);
+      expect(r['outflow_count'], 3);
+    });
+
+    test('separates currencies (backend parity)', () {
+      final m = agg([
+        _ewp('e_usd', DateTime.utc(2026, 5, 1), [_post('a', 'USD', '100')]),
+        _ewp('e_cny', DateTime.utc(2026, 5, 2), [_post('a', 'CNY', '-700')]),
+      ]);
+      final byCur = {for (final r in series(m)) r['currency'] as String: r};
+      expect(byCur['USD']!['inflow_minor'], '10000');
+      expect(byCur['USD']!['outflow_minor'], '0');
+      expect(byCur['CNY']!['inflow_minor'], '0');
+      expect(byCur['CNY']!['outflow_minor'], '70000');
+    });
+
+    test('ignores asset legs (backend parity)', () {
+      final m = agg(
+        [
+          _ewp('buy', DateTime.utc(2026, 4, 15), [
+            _post('brk', 'asset_aapl', '10'), // asset leg → skipped
+            _post('cash', 'USD', '-1500'),
+          ]),
+        ],
+        assets: [_asset('asset_aapl')],
+      );
+      final r = series(m).single;
+      expect(r['outflow_minor'], '150000');
+      expect(r['inflow_minor'], '0');
+    });
+
+    test('ignores zero-units legs (backend parity)', () {
+      final m = agg([
+        _ewp('z', DateTime.utc(2026, 4, 15), [_post('a', 'USD', '0')]),
+      ]);
+      expect(series(m), isEmpty);
+    });
+
+    test('sorts by (year_month, currency) (backend parity)', () {
+      final m = agg([
+        _ewp('may_cny', DateTime.utc(2026, 5, 1), [_post('a', 'CNY', '100')]),
+        _ewp('apr_usd', DateTime.utc(2026, 4, 15), [_post('a', 'USD', '200')]),
+        _ewp('may_usd', DateTime.utc(2026, 5, 2), [_post('a', 'USD', '300')]),
+      ]);
+      final keys = series(
+        m,
+      ).map((r) => '${r['year_month']}|${r['currency']}').toList();
+      expect(keys, ['2026-04|USD', '2026-05|CNY', '2026-05|USD']);
+    });
+
+    test('empty input → no rows; §4.6.1 envelope', () {
+      final m = agg(const []);
+      expect(series(m), isEmpty);
+      expect(m['to'], '2026-06');
+      expect(m['from'], '2021-07'); // 60 months back, inclusive
+      expect(m['currency'], isNull);
+      expect(m['source'], 'device_ledger'); // not "read_model"
+      expect(m.containsKey('freshness'), isFalse); // device-direct
+      expect(m['note'], contains('inflow - outflow'));
+    });
+
+    test('months_back window clamps + exact uppercased currency filter', () {
+      final entries = [
+        _ewp('old', DateTime.utc(2025, 1, 10), [_post('a', 'USD', '999')]),
+        _ewp('recent', DateTime.utc(2026, 5, 10), [_post('a', 'USD', '100')]),
+        _ewp('cny', DateTime.utc(2026, 5, 11), [_post('a', 'CNY', '-200')]),
+      ];
+      // months_back=3 ending 2026-06 → window [2026-04, 2026-06].
+      final all = GetCashflowBucketsTool.shape(
+        entries,
+        assets: const [],
+        monthsBack: 3,
+        now: fixedNow,
+      );
+      expect(all['from'], '2026-04');
+      expect(series(all).map((r) => r['year_month']).toSet(), {'2026-05'});
+      final usd = GetCashflowBucketsTool.shape(
+        entries,
+        assets: const [],
+        monthsBack: 3,
+        currency: 'USD',
+        now: fixedNow,
+      );
       expect(usd['currency'], 'USD');
       expect(series(usd).map((r) => r['currency']).toSet(), {'USD'});
     });

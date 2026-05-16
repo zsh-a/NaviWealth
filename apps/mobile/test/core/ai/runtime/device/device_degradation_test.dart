@@ -230,6 +230,7 @@ void main() {
       expect(names, [
         'get_anomaly_flags',
         'get_asset_allocation',
+        'get_cashflow_buckets',
         'get_holdings',
         'get_investment_performance',
         'get_net_worth_summary',
