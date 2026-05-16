@@ -10,6 +10,10 @@ command = "cargo install -q worker-build && worker-build --release"
 ENVIRONMENT = "dev"
 LLM_BASE_URL = "https://api-inference.modelscope.cn"
 LLM_MODEL = "deepseek-ai/DeepSeek-V4-Flash"
+# Layer 4 cloud Vision (§5.10.10 / S5b-vision). Non-secret operational
+# config; the auth token is a SECRET (see below), never committed here.
+ANTHROPIC_BASE_URL = "https://token-plan-cn.xiaomimimo.com/anthropic"
+ANTHROPIC_DEFAULT_OPUS_MODEL = "mimo-v2.5-pro"
 
 # D1 database. Migrations under ./migrations/ are applied via:
 #   wrangler d1 migrations apply naviwealth
@@ -25,3 +29,6 @@ migrations_dir = "migrations"
 # - JWT_SECRET           # HS256 signing key for the single-user JWT
 # - LLM_API_KEY          # ModelScope/Anthropic-compatible API key used by /ai/chat
 # - ANTHROPIC_API_KEY    # Legacy fallback name, still supported
+# - ANTHROPIC_AUTH_TOKEN # Layer 4 Vision (/ingest/parse) bearer token.
+#                        # Set with: wrangler secret put ANTHROPIC_AUTH_TOKEN
+#                        # Falls back to LLM_API_KEY / ANTHROPIC_API_KEY.

@@ -54,6 +54,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/sync/push", routes::sync::push)
         .get_async("/sync/pull", routes::sync::pull)
         .post_async("/ai/chat", routes::ai::chat)
+        .post_async("/ingest/parse", routes::ingest::parse)
         .run(req, env)
         .await?;
 

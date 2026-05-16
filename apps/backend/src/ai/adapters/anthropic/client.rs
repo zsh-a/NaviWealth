@@ -7,7 +7,7 @@ use worker::wasm_bindgen::JsValue;
 use worker::{Fetch, Headers, Method, Request, RequestInit};
 
 use super::event_map::map_sse_text;
-use super::wire::{AnthropicRequest, ChatMessage, ToolSchema};
+use super::wire::{AnthropicMessage, AnthropicRequest, ChatMessage, ToolSchema};
 use crate::ai::runtime::{AgentEvent, AgentRequest, LlmAdapter};
 use crate::error::AppError;
 
@@ -78,6 +78,48 @@ impl AnthropicAdapter {
         let events = map_sse_text(&text)?;
         Ok(stream::iter(events).boxed())
     }
+
+    /// Non-streaming single-shot Messages call. Used by the Layer 4
+    /// ingest Vision path (§5.10.10 / S5b-vision): one image/PDF in,
+    /// one forced `tool_use` block out — streaming buys nothing there
+    /// and complicates structured extraction. Returns the raw
+    /// [`AnthropicMessage`] so the caller can pull the tool block.
+    pub async fn complete(
+        &self,
+        payload: &AnthropicRequest<'_>,
+    ) -> Result<AnthropicMessage, AppError> {
+        let mut body =
+            serde_json::to_value(payload).map_err(|e| AppError::Internal(format!("ser: {e}")))?;
+        body["stream"] = Value::Bool(false);
+        let body =
+            serde_json::to_string(&body).map_err(|e| AppError::Internal(format!("ser: {e}")))?;
+
+        let mut init = RequestInit::new();
+        init.with_method(Method::Post)
+            .with_headers(auth_headers_bearer(&self.config.api_key)?)
+            .with_body(Some(JsValue::from_str(&body)));
+        let req = Request::new_with_init(&self.config.messages_url(), &init)
+            .map_err(|e| AppError::Internal(format!("req: {e}")))?;
+
+        let mut resp = Fetch::Request(req)
+            .send()
+            .await
+            .map_err(|e| AppError::Internal(format!("llm fetch: {e}")))?;
+        if resp.status_code() >= 400 {
+            let text = resp.text().await.unwrap_or_else(|_| "<unreadable>".into());
+            return Err(AppError::Internal(format!(
+                "llm {}: {}",
+                resp.status_code(),
+                text
+            )));
+        }
+        let text = resp
+            .text()
+            .await
+            .map_err(|e| AppError::Internal(format!("llm body: {e}")))?;
+        serde_json::from_str::<AnthropicMessage>(&text)
+            .map_err(|e| AppError::Internal(format!("llm json: {e}")))
+    }
 }
 
 #[async_trait(?Send)]
@@ -117,6 +159,24 @@ where
 fn auth_headers(api_key: &str) -> Result<Headers, AppError> {
     let h = Headers::new();
     h.set("x-api-key", api_key)
+        .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
+    h.set("anthropic-version", ANTHROPIC_VERSION)
+        .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
+    h.set("content-type", "application/json")
+        .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
+    Ok(h)
+}
+
+/// Headers for proxies that accept either Anthropic-native auth
+/// (`x-api-key`) or bearer auth (`Authorization: Bearer …`, e.g. the
+/// `ANTHROPIC_AUTH_TOKEN` style xiaomimimo gateway). Sending both is
+/// harmless — the native API ignores the bearer header and bearer
+/// gateways ignore `x-api-key`.
+fn auth_headers_bearer(api_key: &str) -> Result<Headers, AppError> {
+    let h = Headers::new();
+    h.set("x-api-key", api_key)
+        .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
+    h.set("authorization", &format!("Bearer {api_key}"))
         .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
     h.set("anthropic-version", ANTHROPIC_VERSION)
         .map_err(|e| AppError::Internal(format!("hdr: {e}")))?;
