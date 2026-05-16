@@ -4063,4 +4063,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestPasteAction => 'Paste text';
+
+  @override
+  String get ingestImportFileAction => 'Import file';
 }

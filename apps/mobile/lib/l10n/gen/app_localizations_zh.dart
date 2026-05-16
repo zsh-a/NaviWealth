@@ -3899,4 +3899,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestPasteAction => '粘贴文本';
+
+  @override
+  String get ingestImportFileAction => '导入文件';
 }

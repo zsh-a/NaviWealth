@@ -694,7 +694,7 @@ const intentDescriptors = <IntentDescriptor>[
 
 ### 5.10 四层入口重构（S0–S6 蓝图）
 
-> 状态: **S0–S4 + S6 已落地**（命令栏成为 AI 主入口 / Layer 3 三动作 + 两类新洞察 / Layer 2 capsule 铺开 / 隐私 UI），**S5（Layer 4 录入管道）S5a + S5a.1 + S5b（gate+vision）已落地**（端侧解析/去重/草稿/确认链 + Layer 3 洞察卡 + 全量 l10n + 隐私门 + 后端多模态 Vision + 完整 AiTrace；S5c/S5d 待做，详细方案 §5.10.10）。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。详见 §5.10.8 状态表与 §5.10.9 偏离记录。
+> 状态: **S0–S4 + S6 已落地**（命令栏成为 AI 主入口 / Layer 3 三动作 + 两类新洞察 / Layer 2 capsule 铺开 / 隐私 UI），**S5（Layer 4 录入管道）S5a + S5a.1 + S5b + S5c-pick 已落地**（端侧解析/去重/草稿/确认链 + Layer 3 洞察卡 + 全量 l10n + 隐私门 + 后端多模态 Vision + 完整 AiTrace + 跨平台文件捕获；S5c-native/S5d 待做，详细方案 §5.10.10）。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。详见 §5.10.8 状态表与 §5.10.9 偏离记录。
 
 #### 5.10.1 四层模型
 
@@ -778,7 +778,8 @@ const intentDescriptors = <IntentDescriptor>[
 | S5a.1 | ✅ | Layer 4 环境式洞察 + l10n | `features/home/{domain/insight_models,data/dashboard_insights_provider,ui/{ai_insight_feed,insight_feed_strings}}.dart` + `InsightKind.ingestQueue`、新 `features/ingest/data/ingest_queue_insight_provider.dart`、`l10n/app_*.arb`（+25 key 双语）、`cn_literal_allowlist.txt` 收口 | S5a | 落地：队列以 Layer 3 洞察卡静默冒泡（行点 deep-link `/activity/ingest`，dismissable scopeHash `pending:fresh`）；`ingest_review_page` 全量 ARB 化并移出 allowlist；顺带清掉 main 上既有 cn-gate 红（`ask_ai_result_pane` 按 intentional-keyword 归类 + 4 条 stale 项剪除）→ cn/enum/l10n-parity/known-failing 四 gate 全 exit 0 |
 | S5b-gate | ✅ | Layer 4 隐私门（端侧） | 新 `features/ingest/data/ingest_privacy_gate.dart`（纯决策）、`providers.dart` `IngestController` 接 `aiPrivacySettingsProvider` | S5a | 落地：image/pdf/email 需云端 → `amountsLocal` 直接拒绝（隐私文案）、`amountsAllowed/Bucketed` 放行但回「S5b-vision 待接入」；csv/paste 永不过门。穷举单测（kind×mode）|
 | S5b-vision | ✅ | Layer 4 后端 Vision + 完整 AiTrace | 新 `apps/backend/src/routes/ingest.rs`(`POST /ingest/parse`)、新 `apps/backend/src/ai/ingest/{mod,parse}.rs`（`emit_parsed_transactions` 强制 tool_use，**非 chat ToolRegistry**）、`AnthropicAdapter::complete()` 非流式单发（Bearer+x-api-key）、mobile `cloud_ingest_client.dart` + `IngestController._ingestCloud` + 完整 `AiTrace` append；多模态模型经 `ANTHROPIC_AUTH_TOKEN`/`ANTHROPIC_BASE_URL`/`ANTHROPIC_DEFAULT_OPUS_MODEL`（token 走 wrangler secret，不入库） | S5b-gate | 落地：图像即用即弃零留存；cargo fmt/clippy(wasm32 -D warn)/test 157 pass；mobile analyze+37 ingest 测试+known-failing gate 全绿。顺带修复 main 既有 `sha2 0.11`/`hmac 0.12` 构建破（#133），见 §5.10.9 |
-| S5c | ⬜ | Layer 4 平台 Capture | `pubspec.yaml`（`image_picker`、`desktop_drop`）、iOS Share Extension / Android Intent filter、媒体权限 | S5a | 见 §5.10.10 |
+| S5c-pick | ✅ | Layer 4 文件捕获（跨平台） | 新 `features/ingest/data/{capture_encoder,ingest_capture_source}.dart`、`ingest_review_page` 顶栏/空态「导入文件」+ 共享 `_runIngest`、ARB `ingestImportFileAction`（双语） | S5b | 落地：复用**既有** `file_picker`（零新依赖）—— 选图/PDF/CSV → 纯 `ingestSourceFromCapture`（扩展名定 kind/mime；二进制 base64、文本 utf8）→ 经隐私门走 device/cloud；analyze + 41 ingest 测试 + 四 gate 全绿 |
+| S5c-native | ⬜ | Layer 4 原生捕获入口 | `image_picker`（相机）、`desktop_drop`（拖拽）、iOS Share Extension target、Android `SEND` intent-filter receiver、媒体权限 | S5c-pick | 段开理由见 §5.10.9：均需平台 IDE/签名/真机或桌面运行时，不可盲验；`file_picker` 已覆盖全平台文件捕获 |
 | S5d | ⬜ | Layer 4 邮件 webhook | Cloudflare Email Routing、`/ingest/email`、服务端 `ingest_inbox` 队列 + 设备拉取 | S5b-vision | 见 §5.10.10 |
 | S6 | ✅ | 隐私 UI + Onboarding | 新 `features/settings/ui/ai_privacy_page.dart`、新 `core/ai/contracts/privacy_mode_provider.dart`、新 `features/settings/ui/ai_privacy_onboarding.dart`、`features/settings/ui/ai_transparency_page.dart` 加 undo section | S2 之后任意插入 | 三选一 mode→`maxBudgetTier`/`AnonymizationLevel` 映射；首启 onboarding sheet 挂 HomePage；审计页列待撤销项 |
 
@@ -802,6 +803,7 @@ const intentDescriptors = <IntentDescriptor>[
 - **S5b 拆 S5b-gate（✅）/ S5b-vision（⬜）**。隐私门是纯端侧确定性逻辑、可穷举单测，已落地（`ingest_privacy_gate.dart` + `IngestController` 接 `aiPrivacySettingsProvider`：`amountsLocal` 拒云端摄取，其余放行）。后端 Vision 段开理由：(1) 现有 LLM 适配器**只有流式** `stream()` 接口，Vision 抽取要的是单发 tool-use，需新增非流式路径；(2) 默认模型经 ModelScope Anthropic-compat（`deepseek-ai/DeepSeek-V4-Flash`），Vision 能力与 image content-block 支持未经真 API 验证；(3) ingest 解析工具**不是 chat ToolRegistry 成员**（不能进 LLM tool-loop，否则污染 chat 工具面），是 `/ingest` 路由专用 schema——需独立设计 + 真机/真 API 验证。盲写不可信代码违背「忠实报告」，故段开为 S5b-vision 单独 PR，契约/策略/路由在该 PR 内一次到位。
 - **S5b-vision 已落地（解段开）**。后端单发路径以 `AnthropicAdapter::complete()`（`stream:false`，Bearer+x-api-key 双发，复用 `messages_url()`）实现；`/ingest/parse` 路由 auth+rate-limit、零持久化、`emit_parsed_transactions` 强制 tool_use 抽取（坏行跳过非整批失败）；解析工具刻意**不进 chat ToolRegistry**（仅 ingest 路由专用 schema，§5.10.9 第 3 点已遵守）。多模态模型由 `ANTHROPIC_AUTH_TOKEN`（**wrangler secret，绝不入库/不入 git**）+ `ANTHROPIC_BASE_URL` + `ANTHROPIC_DEFAULT_OPUS_MODEL`（非密，`[vars]`）配置，回退 `LLM_API_KEY`/`LLM_BASE_URL`/`LLM_MODEL`。mobile `_ingestCloud` 复用 `planFromParsed`（与 CSV 路径同一 ④⑤⑥：归一/去重/草稿），并 append 一条 `Backend.cloud` 的 `AiTrace`。验证：backend `cargo fmt`/`clippy --target wasm32 -D warnings`/`cargo test --lib` **157 pass**；mobile `analyze --fatal-infos` clean + ingest 37 测试 + known-failing/enum/l10n/cn gate 全 exit 0。
 - **顺带修复 main 既有构建破（非 S5 引入）**。`cargo check --target wasm32` 在 pristine HEAD 即失败（已 `git stash` 实证）：commit `86fbd42` 把 `sha2` 0.10.9→0.11.0（digest 0.11），但 `hmac 0.12` 仍要 digest 0.10 → `Hmac<Sha256>: Mac` 不成立，`auth/jwt.rs` + `scoped_detail/{common,category_window}.rs` 全编不过。最小正确修复：`Cargo.toml` `sha2 = "0.10"` + `cargo update -p sha2 --precise 0.10.9`（hmac 0.12 尚无 digest-0.11 兼容版，回退是唯一对齐方式）。这不在 S5 范畴但不修则后端无法验证，按「让所交付可验证」一并处理并记此。
+- **S5c 拆 S5c-pick（✅）/ S5c-native（⬜）**。S5c-pick 复用**既有** `file_picker`（零新依赖）落地跨平台文件捕获：纯 `ingestSourceFromCapture`（扩展名 → kind/mime；image/pdf base64、csv/txt utf8）+ 选择器薄封装 + 复用 §5.10.10 隐私门与 device/cloud 双路；可单测（编码纯函数）+ analyze/gate 全绿。S5c-native（`image_picker` 相机 / `desktop_drop` 拖拽 / iOS Share Extension target / Android `SEND` intent-filter receiver / 媒体权限）段开：均需平台 IDE + 签名 + 真机/桌面运行时验证（Share Extension 还是独立 native target + app group + entitlements），盲写不可验证违背「忠实报告」。`file_picker` 已覆盖「把收据/账单/CSV 喂进管道」的全平台诉求，S5c-native 是发现性增强而非阻塞项。
 
 > 计划外 bugfix（非 §5.10 范畴，记此备查）: home hero「年初至今」整数溢出（XIRR Newton 无 rate 上界，对「年初 0 + 年中小买入 + 大 bookend」shape 收敛到 1e12+ 无意义 rate，`*100` 后撑屏 1448px）。已在 `xirr_engine.dart` 加 `_convergedOrFallback` sanity gate（`|rate| > bisectionHigh` → `XirrFallbackAbsolute(reason:'runaway')`）+ Newton 步进 clamp，并在 `home_page.dart` 加 `_isSaneRatio`（`|ratio|≥100` 退回 currency delta）双层防御。回归用例见 `test/features/investment/domain/returns/xirr_engine_test.dart`。
 
@@ -846,7 +848,8 @@ ingest_attachments (draft_id PK, blob, mime, expires_at)   -- SQLCipher 加密
 | S5a | Drift schema + 草稿队列 + 确认 UI；仅 CSV/手动 paste 端侧解析，零云端 | OpLog 表迁移线 |
 | S5b-gate | 端侧隐私门（privacyMode 接线） | S5a |
 | S5b-vision | 后端 Vision 工具 + 完整 AiTrace | S5b-gate |
-| S5c | 平台 Capture（Share Extension / Intent / `desktop_drop` / `image_picker`）+ 媒体权限 | S5a |
+| S5c-pick | 跨平台文件捕获（既有 file_picker） | S5b |
+| S5c-native | 相机/拖拽/Share Extension/Intent receiver | S5c-pick |
 | S5d | 邮件 webhook + `ingest_inbox` 拉取 | S5b-vision |
 
 每条 PR review 在 §5.8 + §5.10.7 之上**再加一条**：摄取草稿在确认前不得出现在 `journal_entries` / OpLog / read model 任一处。
