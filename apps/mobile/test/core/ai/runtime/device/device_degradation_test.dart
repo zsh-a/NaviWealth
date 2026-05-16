@@ -15,7 +15,10 @@ AiTrace _trace({
 }) => AiTrace(
   requestId: 'r',
   startedAtIso: '2026-05-16T00:00:00Z',
-  intent: const IntentHint(capability: Capability.analyze, risk: RiskLevel.info),
+  intent: const IntentHint(
+    capability: Capability.analyze,
+    risk: RiskLevel.info,
+  ),
   backend: backend,
   budgetTier: BudgetTier.small,
   routingReason: routingReason,
@@ -76,9 +79,10 @@ class _SpyCloud implements AiChatApiClient {
 }
 
 Future<List<AiChatEvent>> _run(RuntimeRoutingAiChatApiClient c) => c
-    .chat(session: _session(), messages: const [
-      WireMessage(role: 'user', content: 'hi'),
-    ])
+    .chat(
+      session: _session(),
+      messages: const [WireMessage(role: 'user', content: 'hi')],
+    )
     .toList();
 
 void main() {
@@ -153,22 +157,24 @@ void main() {
       expect(out.last, isA<DoneEvent>());
     });
 
-    test('device errors with no content → silently fails over to cloud',
-        () async {
-      final cloud = _SpyCloud();
-      final c = RuntimeRoutingAiChatApiClient(
-        cloud: cloud,
-        device: _ScriptedDevice(const [
-          ErrorEvent('bad api key', code: 'provider_error'),
-          DoneEvent(stopReason: 'error', rounds: 1),
-        ]),
-      );
-      final out = await _run(c);
-      expect(cloud.called, isTrue);
-      // the device's error is suppressed; user sees the cloud answer
-      expect(out.whereType<ErrorEvent>(), isEmpty);
-      expect((out.first as TextEvent).text, 'cloud-answer');
-    });
+    test(
+      'device errors with no content → silently fails over to cloud',
+      () async {
+        final cloud = _SpyCloud();
+        final c = RuntimeRoutingAiChatApiClient(
+          cloud: cloud,
+          device: _ScriptedDevice(const [
+            ErrorEvent('bad api key', code: 'provider_error'),
+            DoneEvent(stopReason: 'error', rounds: 1),
+          ]),
+        );
+        final out = await _run(c);
+        expect(cloud.called, isTrue);
+        // the device's error is suppressed; user sees the cloud answer
+        expect(out.whereType<ErrorEvent>(), isEmpty);
+        expect((out.first as TextEvent).text, 'cloud-answer');
+      },
+    );
 
     test('device throws before any content → fails over to cloud', () async {
       final cloud = _SpyCloud();
@@ -181,21 +187,20 @@ void main() {
       expect((out.first as TextEvent).text, 'cloud-answer');
     });
 
-    test('device throws AFTER content → propagates, cloud NOT called',
-        () async {
-      final cloud = _SpyCloud();
-      final c = RuntimeRoutingAiChatApiClient(
-        cloud: cloud,
-        device: _ScriptedDevice(
-          const [TextEvent('partial')],
-          throwAfter: 1,
-        ),
-      );
-      expect(_run(c), throwsA(isA<StateError>()));
-      // give the stream a tick to surface; cloud must not be retried
-      await Future<void>.delayed(Duration.zero);
-      expect(cloud.called, isFalse);
-    });
+    test(
+      'device throws AFTER content → propagates, cloud NOT called',
+      () async {
+        final cloud = _SpyCloud();
+        final c = RuntimeRoutingAiChatApiClient(
+          cloud: cloud,
+          device: _ScriptedDevice(const [TextEvent('partial')], throwAfter: 1),
+        );
+        expect(_run(c), throwsA(isA<StateError>()));
+        // give the stream a tick to surface; cloud must not be retried
+        await Future<void>.delayed(Duration.zero);
+        expect(cloud.called, isFalse);
+      },
+    );
   });
 
   group('device tool static contract (W-D6)', () {
