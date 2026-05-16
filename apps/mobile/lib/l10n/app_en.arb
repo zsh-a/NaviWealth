@@ -1255,7 +1255,6 @@
   "physicalAssetValuationTrendSemanticLabel": "Valuation trend",
   "@physicalAssetValuationTrendSemanticLabel": { "description": "Accessibility label for the physical asset valuation-trend chart." },
 
-  "accountsAppBarTitle": "Accounts",
   "accountsDetailEmpty": "Select an account on the left to edit its details.",
   "@accountsDetailEmpty": { "description": "Master-detail empty state for /activity/accounts at desktop width" },
   "accountsCreateAction": "New account",

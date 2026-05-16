@@ -4350,12 +4350,6 @@ abstract class AppLocalizations {
   /// **'Valuation trend'**
   String get physicalAssetValuationTrendSemanticLabel;
 
-  /// No description provided for @accountsAppBarTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get accountsAppBarTitle;
-
   /// Master-detail empty state for /activity/accounts at desktop width
   ///
   /// In en, this message translates to:

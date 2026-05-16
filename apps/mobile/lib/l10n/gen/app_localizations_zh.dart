@@ -2352,9 +2352,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get physicalAssetValuationTrendSemanticLabel => '估值走势';
 
   @override
-  String get accountsAppBarTitle => '账户';
-
-  @override
   String get accountsDetailEmpty => '请在左侧选择账户以编辑详情。';
 
   @override

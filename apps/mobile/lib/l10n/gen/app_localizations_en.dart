@@ -2441,9 +2441,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get physicalAssetValuationTrendSemanticLabel => 'Valuation trend';
 
   @override
-  String get accountsAppBarTitle => 'Accounts';
-
-  @override
   String get accountsDetailEmpty =>
       'Select an account on the left to edit its details.';
 
