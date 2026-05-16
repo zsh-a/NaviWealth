@@ -10,6 +10,7 @@ import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/tools/device_tool_registry.dart';
+import '../../../core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
 import '../../../core/ai/runtime/device/tools/get_holdings_tool.dart';
 import '../../../core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
 import '../../../core/ai/trace/trace.dart';
@@ -84,6 +85,7 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   final registry = DeviceToolRegistry(const [
     ListPaymentAccountsTool(),
     GetHoldingsTool(),
+    GetAssetAllocationTool(),
   ]);
   return DeviceLlmRuntime(
     client: AnthropicClient(
