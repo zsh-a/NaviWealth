@@ -51,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,6 +66,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAiTraceTable(this);
       await _createAiUndoStackTable(this);
       await _createAiTouchedEntitiesTable(this);
+      await _createIngestTables(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -142,6 +143,16 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'ALTER TABLE chat_messages ADD COLUMN usage_json TEXT',
         );
+      }
+      // v7 → v8: Layer 4 ingest pipeline (§5.10.10 / S5a). Parsed-but-
+      // unconfirmed transactions live in `ingest_drafts` — a local-only,
+      // never-synced staging table. Drafts do NOT enter journal_entries
+      // / OpLog until the user confirms; this is what makes §4.2's
+      // "draft gate" hold by construction. `ingest_attachments` is
+      // created now (schema-ready) but only wired by S5b/S5c when the
+      // cloud Vision path actually has a blob to stage.
+      if (from < 8) {
+        await _createIngestTables(this);
       }
     },
     beforeOpen: (details) async {
@@ -374,5 +385,51 @@ Future<void> _createAiTouchedEntitiesTable(AppDatabase db) async {
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_ai_touched_owner '
     'ON ai_touched_entities(owner_user_id, touched_at DESC)',
+  );
+}
+
+Future<void> _createIngestTables(AppDatabase db) async {
+  // §5.10.10 / S5a — Layer 4 record-entry pipeline staging.
+  //
+  // `ingest_drafts` holds parsed-but-unconfirmed transactions. It is
+  // deliberately a raw-SQL side table (same pattern as ai_undo_stack /
+  // ai_touched_entities) and is **never added to the sync OpLog**: a
+  // draft only becomes durable ledger truth after the user confirms it,
+  // at which point it is written through the normal repository path.
+  // This keeps "Raw Write-side Truth · AI 永远不能直接访问" intact and
+  // makes §4.2's draft gate hold by construction rather than by policy.
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ingest_drafts ('
+    '  draft_id              TEXT PRIMARY KEY,'
+    '  owner_user_id         TEXT NOT NULL,'
+    '  created_at_iso        TEXT NOT NULL,'
+    '  source_kind           TEXT NOT NULL,' // csv / pasteText / ...
+    '  origin_label          TEXT,' //          filename or "粘贴文本"
+    '  parsed_json           TEXT NOT NULL,' // ParsedTransaction payload
+    '  confidence            REAL NOT NULL,'
+    '  dedup_verdict         TEXT NOT NULL,' // newTxn/likelyDuplicate/duplicate
+    '  dedup_target_entry_id TEXT,' //          matched journal_entries.id
+    '  trace_id              TEXT,' //          AiTrace.requestId
+    '  status                TEXT NOT NULL,' // pending/confirmed/dismissed
+    '  expires_at_iso        TEXT'
+    ')',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_ingest_drafts_owner '
+    'ON ingest_drafts(owner_user_id, status, created_at_iso DESC)',
+  );
+  // Forward-compat: the original capture artefact (receipt image / PDF)
+  // for the S5b/S5c cloud-Vision path. Encrypted at rest by SQLCipher
+  // like the rest of the DB; purged on confirm or after expiry. Unused
+  // in S5a (text/CSV has no binary blob) but created here so S5b does
+  // not need a second schema bump.
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS ingest_attachments ('
+    '  draft_id       TEXT PRIMARY KEY,'
+    '  owner_user_id  TEXT NOT NULL,'
+    '  mime           TEXT NOT NULL,'
+    '  blob           BLOB NOT NULL,'
+    '  expires_at_iso TEXT'
+    ')',
   );
 }

@@ -694,7 +694,7 @@ const intentDescriptors = <IntentDescriptor>[
 
 ### 5.10 四层入口重构（S0–S6 蓝图）
 
-> 状态: **S0–S4 + S6 已落地**（命令栏成为 AI 主入口 / Layer 3 三动作 + 两类新洞察 / Layer 2 capsule 铺开 / 隐私 UI），**S5（Layer 4 录入管道）未开始**。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。详见 §5.10.8 状态表与 §5.10.9 偏离记录。
+> 状态: **S0–S4 + S6 已落地**（命令栏成为 AI 主入口 / Layer 3 三动作 + 两类新洞察 / Layer 2 capsule 铺开 / 隐私 UI），**S5（Layer 4 录入管道）拆 S5a–S5d 推进中**（详细方案 §5.10.10；S5a 端侧草稿队列为第一刀）。§5.1–5.9 的 wire / 视觉 / 风险契约不变，本节只重构**入口拓扑与全局形态**——把 AI 表面从「一个目的地 tab + sheet + page」改写为「**无目的地的环境能力**」。判断标准: 把 AI 全部拿掉，产品依然完整、好看、好用。详见 §5.10.8 状态表与 §5.10.9 偏离记录。
 
 #### 5.10.1 四层模型
 
@@ -774,7 +774,11 @@ const intentDescriptors = <IntentDescriptor>[
 | S2.5 | ✅⚠ | 移动端命令栏入口（回归修补） | `core/shortcuts/global_shortcuts_scope.dart`（Actions 层在触屏平台也挂载）、`app/app_shell.dart`（`_CommandBarPill`）、`l10n`（`commandPaletteMobileEntryHint`） | S2 | S1a 删了 `/ai` tab 但没补移动端入口 → 触屏一度无任何方式打开命令栏。补：`_MobileShell` 顶部 spotlight 式 pill → `Actions.maybeInvoke(OpenCommandPaletteIntent)`。⚠ 主屏下拉手势仍 deferred——见 §5.10.9 |
 | S3 | ✅⚠ | Layer 3 卡片三动作 + 两类新洞察 | `features/home/ui/ai_insight_feed.dart`、新 `features/home/data/duplicate_charge_insight_provider.dart`、新 `monthly_summary_insight_provider.dart`、新 `dismissed_insights_store`、新 `core/ai/local/skills/duplicate_charge_detector.dart` + `expense_to_transaction_input.dart` | S2 | 三动作（展开/问一下/忽略）；新 `InsightKind.duplicateCharge`/`monthlySummary`。⚠ dismissed store 用 `shared_preferences` 而非 Drift 表——见 §5.10.9 |
 | S4 | ✅⚠ | Layer 2 Capsule 铺开 | 新 `core/ai/intent/ai_context_chip_scope.dart`、`intent_policy` 注册 `explain_chart`+`transactions.explainSelection`、`features/home/ui/{trend_card,allocation_card}.dart` capsule、`regression_corpus.dart` | S2 | `AiObjectCapsule` 自动 merge scope chips。⚠ expense_list 选区工具条 deferred 到 S4.5——见 §5.10.9 |
-| S5 | ⬜ | Layer 4 录入解析管道 | 新 `features/ingest/`（pipeline/dedup/draft queue）、新 `apps/backend/src/routes/ingest.rs`、新 `apps/backend/src/ai/tools/{parse_receipt_image,parse_statement_pdf}.rs`、`pubspec.yaml`（`image_picker`、`desktop_drop`）、iOS/Android 媒体权限 | OpLog 表迁移（独立线） | **未开始**；体量为独立大 PR（Drift schema bump + 后端 Vision + 邮件 webhook + 新 Flutter 模块 + 平台权限） |
+| S5a | ✅⚠ | Layer 4 草稿队列 + 端侧解析（零云端） | `features/ingest/`（domain/data/ui · pipeline/dedup/draft store/confirm）、Drift v7→v8（`ingest_drafts` + `ingest_attachments`）、`activity_page.dart` 入口 + `/activity/ingest` 路由 | OpLog 表迁移（独立线） | 落地：CSV/paste 端侧解析 → 复用 `txn_classifier` 归一 → 对 Drift 真源去重 → `ingest_drafts`（本地不入 OpLog）→ 确认走现有 `ProposalApplier`（expense 计划）→ Drift/OpLog/AiTouch。30 个单测 + analyze clean。偏离见 §5.10.9 |
+| S5a.1 | ⬜ | Layer 4 环境式洞察 + l10n | `features/home/{domain/insight_models,data/dashboard_insights_provider,ui/{ai_insight_feed,insight_feed_strings}}.dart` 加 `InsightKind.ingestQueue`、`l10n/app_*.arb` 全量 ARB 化、`cn_literal_allowlist.txt` 收口 | S5a | 把 §5.10.10「Layer 3 静默冒泡」从 Activity 入口升级为家屏洞察卡；S5a 的 zh 字面量 + 解析器 CN 表头令牌一并随此线处理 |
+| S5b | ⬜ | Layer 4 后端 Vision + 隐私门 | 新 `apps/backend/src/routes/ingest.rs`、新 `apps/backend/src/ai/tools/{parse_receipt_image,parse_statement_pdf}.rs`、`privacyModeProvider` 接线 | S5a | 见 §5.10.10 |
+| S5c | ⬜ | Layer 4 平台 Capture | `pubspec.yaml`（`image_picker`、`desktop_drop`）、iOS Share Extension / Android Intent filter、媒体权限 | S5a | 见 §5.10.10 |
+| S5d | ⬜ | Layer 4 邮件 webhook | Cloudflare Email Routing、`/ingest/email`、服务端 `ingest_inbox` 队列 + 设备拉取 | S5b | 见 §5.10.10 |
 | S6 | ✅ | 隐私 UI + Onboarding | 新 `features/settings/ui/ai_privacy_page.dart`、新 `core/ai/contracts/privacy_mode_provider.dart`、新 `features/settings/ui/ai_privacy_onboarding.dart`、`features/settings/ui/ai_transparency_page.dart` 加 undo section | S2 之后任意插入 | 三选一 mode→`maxBudgetTier`/`AnonymizationLevel` 映射；首启 onboarding sheet 挂 HomePage；审计页列待撤销项 |
 
 状态图例: ✅ 已落地 · ✅* 已落地但有外部待办 · ✅⚠ 已落地但偏离 spec（见 §5.10.9）· ⬜ 未开始
@@ -791,8 +795,56 @@ const intentDescriptors = <IntentDescriptor>[
 - **S4 — expense_list 选区工具条 deferred 到 S4.5**。`transactions.explainSelection` 意图与 regression corpus 已注册，`AiContextChipScope` 基础设施已就绪；缺的是 `ExpenseGroupedList` 的多选状态 + 浮起工具条 + tap 切换 vs navigate 的歧义处理——这是独立的一条 UX 工作线，单独 PR review 更稳。
 - **S1b — golden 基线未在本机重拍**。`flutter_test_config.dart` 把 byte-compare 限定在 Linux；macOS 本地 skip 像素 diff（页面仍 pump，render 异常仍会 fail）。S1a/S1b 的视觉改动需 Linux CI 跑 `--update-goldens` 后基线才真正更新。
 - **S2.5 — 移动端命令栏入口（S1a 回归修补）**。S1a 删 `/ai` tab 时漏补移动端入口，触屏平台一度完全无法打开命令栏（`Cmd-K` 在 iOS/Android 原生不可用，`GlobalShortcutsScope` 整体透传）。修补: `Actions` 层改为全平台挂载（只把键盘 `Shortcuts` map + vim 处理 gate 在 `areKeyboardShortcutsAvailable`），`_MobileShell` 顶部加 spotlight 式 pill 调 `Actions.maybeInvoke(OpenCommandPaletteIntent())`。**仍 deferred**: §5.10.2 mock 里的「主屏下拉唤出」手势——下拉手势需 overscroll 检测且与各页 ScrollView 协调，单独一条 UX 工作线；持久 pill 已满足"有入口"且更可发现、风险更低。
+- **S5a — Layer 3 环境式洞察卡 deferred 到 S5a.1**。§5.10.10 要求待确认队列「以 Layer 3 环境式洞察静默冒泡」。S5a 实际落地为 **Activity 顶栏 `move_to_inbox` 入口 + `/activity/ingest` 审阅页**，未接入 `ai_insight_feed`。理由: `InsightKind` 在 `insight_models` / `dashboard_insights_provider`(`insightScopeHash`) / `insight_feed_strings`(`insightHeadline`/`insightDetail`) / `ai_insight_feed`(`_expandedDetailFor`) 四处是**穷举 switch**，加一个 kind 牵动四文件 + 双语 ARB + 触 Wave 43 golden 基线——与 S4→S4.5 同形的独立 UX 线（参照 §5.10.8 S4 偏离）。引擎/去重/草稿/确认链是 S5a 的实质且可独立测试；卡片是发现性外壳。Activity 入口已满足"有入口"。
+- **S5a — zh 字面量 + 解析器 CN 表头令牌进 `cn_literal_allowlist.txt`**。`features/ingest/{ui/ingest_review_page, data/{csv_ingest_parser,ingest_pipeline,ingest_confirm_service,providers}}.dart` 加入 FIR-99 allowlist（带 justification 块）。两类原因分开记：(1) `csv_ingest_parser` 的 `_headerAliases`（"日期"/"金额"/"摘要"…）是**对外部银行账单表头做匹配的解析数据**，本质不可 l10n（同 command-palette 搜索关键词豁免）；(2) 审阅页 + 数据层错误/摘要文案是未迁移的用户文案，随 S5a.1 的双语 ARB 线一并收口。代价: 这些 UI 串暂不随 app locale 切换（zh-primary，可接受）。
+- **S5a — 全量 AiTrace append deferred 到 S5b**。S5a 设备侧解析不做一次完整 `AiTrace` 落库（`AiTrace` seed 需 `IntentHint`/`Backend`/`BudgetTier` 等多契约字段，为纯设备摄取合成成本高且脆）。审计闭环已由两点覆盖: `ingest_drafts.trace_id` 列预留 + 确认后 `ProposalApplier` 写 `ai_touched_entities`（AiTouchMark）。当 S5b 引入云端 Vision（真正的模型往返）时再补完整 trace。
 
 > 计划外 bugfix（非 §5.10 范畴，记此备查）: home hero「年初至今」整数溢出（XIRR Newton 无 rate 上界，对「年初 0 + 年中小买入 + 大 bookend」shape 收敛到 1e12+ 无意义 rate，`*100` 后撑屏 1448px）。已在 `xirr_engine.dart` 加 `_convergedOrFallback` sanity gate（`|rate| > bisectionHigh` → `XirrFallbackAbsolute(reason:'runaway')`）+ Newton 步进 clamp，并在 `home_page.dart` 加 `_isSaneRatio`（`|ratio|≥100` 退回 currency delta）双层防御。回归用例见 `test/features/investment/domain/returns/xirr_engine_test.dart`。
+
+#### 5.10.10 Layer 4 录入解析管道（S5 详细方案）
+
+**定位**: 无入口的隐形 AI。用户的任何「粘贴 / 拖拽 / 转发 / 截图」都被理解，解析成草稿，去重对账后**静默排进待确认队列**——从不自动落账（§5.10.6），从不进 OpLog 直到用户确认（§4.2 draft gate）。判断标准: 把 AI 全部拿掉，产品仍是一个可手动记账的 App。
+
+**管道七段**:
+
+```
+①Capture ──▶ ②Route ──▶ ③Parse ──▶ ④Normalize ──▶ ⑤Dedup ──▶ ⑥Draft Queue ──▶ ⑦Confirm
+ 无入口      端云分流    结构化      复用端侧skill   端侧对账    本地非同步表    ProposalEnvelope
+```
+
+| 段 | 做什么 | 关键约束 |
+|----|--------|----------|
+| ① **Capture** | iOS Share Extension / Android Intent filter / `desktop_drop` 拖拽 / 剪贴板粘贴检测 / 邮件转发 webhook。**不放任何 ✨ 按钮**（§5.10.7） | 入口收敛为单一 `IngestSource{kind, payload, originLabel}` |
+| ② **Route** | 按 `kind` 分流：CSV / 银行短信 → 端侧确定性解析器（零联网）；图片 / PDF → cloud Vision。遵循「device-first，云端仅在必要时」 | privacyMode `完全本地` → 云端解析禁用，降级为占位项逐条 opt-in |
+| ③ **Parse** | 云端走 `parse_receipt_image` / `parse_statement_pdf` 两个 ToolDescriptor 工具，返回结构化 `{merchant, amount_minor, currency, date, category_hint, confidence, source_span}`——**不是自由文本**（§5.10.7「LLM 直接计算金额」禁止） | 图像在 Worker 内即用即弃，云端零留存；AiTrace 记「原始图像已上云解析（未留存）」 |
+| ④ **Normalize** | 复用现成 `merchant_key.dart` / `txn_classifier.dart`；金额转 `Money`（Decimal，minor units） | 不新造启发式——端侧是唯一计算者（§11） |
+| ⑤ **Dedup/对账** | 针对 **Drift 真源**（非 read model，避免刚录入未投影）跑模糊匹配 `(merchant_key, amount, date±N)`；复用 `transfer_matcher` / `refund_matcher`；输出 `new / likelyDup / dup` | 去重天然是端侧操作，与 §4.2 freshness 哲学一致 |
+| ⑥ **Draft Queue** | 落新 Drift 表 `ingest_drafts`（schema bump，**本地、不进 OpLog / 不同步**）；附件加密本地存 `ingest_attachments`，确认或 N 天后清除 | 守住「Raw Write-side Truth · AI 永远不能直接访问」 |
+| ⑦ **Confirm** | 以 Layer 3 环境式洞察静默冒泡（「N 条待确认」）。高置信+无重 → `LocalProposal` one-tap；重复项预标 skip；低置信需先编辑；批量「全部确认」。确认后走**现有 `proposal_applier` → Drift → OpLog**，打 `AiTouchMark`（复用 Wave 39/40） | 永不自动 commit（§5.10.6）；interaction_mode 经 `deriveInteractionMode` 派生，禁降级（§5.5） |
+
+**数据模型（新增，均本地、不同步）**:
+
+```
+ingest_drafts      (owner_user_id, draft_id PK, source_kind, parsed_json,
+                     confidence, dedup_verdict, dedup_target_entry_id?,
+                     trace_id, status[pending|confirmed|dismissed], created_at)
+ingest_attachments (draft_id PK, blob, mime, expires_at)   -- SQLCipher 加密
+```
+
+后端：`routes/ingest.rs`（图片 / PDF → Anthropic Vision 结构化工具 → `IngestDraft[]` + freshness + trace，**无持久化**）。邮件路径用 Cloudflare Email Routing → `/ingest/email` → 解析后写**独立 `ingest_inbox` 服务端队列**，设备下个同步 tick 拉取落本地 `ingest_drafts`——**绝不注入 OpLog**。
+
+**ToolDescriptor 注册**: `parse_receipt_image` / `parse_statement_pdf` — `access=none`（摄取非查询，不碰 ledger）、`risk=Suggest`、`side_effect=None`（产草稿非写账）、`confirmation=OneTap`、`allowed_runtimes=cloud`（Vision 端侧待 Phase 5）、`read_model_layer` 豁免三层规则（摄取类）。
+
+**执行序列（拆 S5a–S5d，见 §5.10.8 表）**:
+
+| 序号 | 范围 | 依赖 |
+|------|------|------|
+| S5a | Drift schema + 草稿队列 + 确认 UI；仅 CSV/手动 paste 端侧解析，零云端 | OpLog 表迁移线 |
+| S5b | 后端 Vision 工具 + 隐私门（privacyMode 接线） | S5a |
+| S5c | 平台 Capture（Share Extension / Intent / `desktop_drop` / `image_picker`）+ 媒体权限 | S5a |
+| S5d | 邮件 webhook + `ingest_inbox` 拉取 | S5b |
+
+每条 PR review 在 §5.8 + §5.10.7 之上**再加一条**：摄取草稿在确认前不得出现在 `journal_entries` / OpLog / read model 任一处。
 
 ## 6. 模块映射
 
@@ -1130,6 +1182,9 @@ packages/ai_contracts/
 - **端侧 LLM 必须 opt-in** — 200MB 级别下载不应阻塞首屏。
 - **NL→QueryPlan 不直接写 SQL** — sealed plan + Drift query builder。新增意图必须改类型，不会「忘了」。
 - **Privacy Policy 永久优先于 Source** — 任何 high-risk proposal 不论端侧/云端生成都走同一确认 UI；隐私设置不论 runtime 都执行。
+- **为什么摄取草稿用独立本地表而非「待审 OpLog 行」**（§5.10.10）— OpLog 是同步真值，塞入未确认草稿会污染所有设备并绕过确认门；独立本地表让 §4.2 draft gate 自然成立，确认后才经 `proposal_applier` 进 OpLog。
+- **为什么去重对账跑 Drift 而非 read model**（§5.10.10）— 用户常「手动记一笔 + 账单又来一笔」，刚录入的还没投影到 read model，只有 Drift 真源能正确判重；这与 §4.2 freshness gate 同源（端侧才有最新真值）。
+- **为什么云端 Vision 解析无状态零留存**（§5.10.10）— 截图/账单是最敏感的原始数据，Vision 必须看图像内容（无法脱敏），唯一可接受的边界是 Worker in-request 处理后即弃 + AiTrace 明示「已上云解析（未留存）」。
 
 ## 12. 引用 / 入口表
 
