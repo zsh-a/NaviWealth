@@ -27,6 +27,7 @@ import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/accounts/accounts_hub_page.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
@@ -36,6 +37,8 @@ import 'package:naviwealth/features/analytics/data/providers.dart'
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
@@ -137,6 +140,14 @@ Future<ProviderContainer> _pumpAt(
       // dashboard pages settle without hanging on the missing key store.
       holdingServiceProvider.overrideWith(
         (ref) async => _EmptyHoldingService(),
+      ),
+      cashFlowSummaryProvider.overrideWith(
+        (ref, request) async => CashFlowSummary(
+          period: request.period,
+          baseCurrency: 'CNY',
+          buckets: const [],
+          totalInBase: Money.zero('CNY'),
+        ),
       ),
     ],
   );

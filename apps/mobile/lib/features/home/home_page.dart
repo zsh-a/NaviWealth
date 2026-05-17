@@ -9,6 +9,8 @@ import '../../data/market/sync/price_sync_coordinator.dart';
 import '../../data/market/sync/price_sync_providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../cashflow/ui/cashflow_calendar_card.dart';
+import '../cashflow/ui/passive_income_card.dart';
 import '../settings/ui/ai_privacy_onboarding.dart';
 import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';
@@ -115,6 +117,8 @@ class _DashboardBody extends ConsumerWidget {
                 primary: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const _CashFlowCardsGrid(),
+                    const SizedBox(height: 20),
                     AllocationSummary(snapshot: snapshot),
                     const SizedBox(height: 20),
                     const TrendCard(),
@@ -140,6 +144,8 @@ class _DashboardBody extends ConsumerWidget {
                   children: [
                     const HomeGreetingHeader(),
                     _NetWorthHeader(snapshot: snapshot),
+                    const SizedBox(height: 20),
+                    const _CashFlowCardsGrid(),
                     if (insights.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       AiInsightFeed(insights: insights),
@@ -153,6 +159,37 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CashFlowCardsGrid extends StatelessWidget {
+  const _CashFlowCardsGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final twoColumns = constraints.maxWidth >= 620;
+        if (!twoColumns) {
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PassiveIncomeCard(),
+              SizedBox(height: 12),
+              CashflowCalendarCard(),
+            ],
+          );
+        }
+        return const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: PassiveIncomeCard()),
+            SizedBox(width: 12),
+            Expanded(child: CashflowCalendarCard()),
           ],
         );
       },

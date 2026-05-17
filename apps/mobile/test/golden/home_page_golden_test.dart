@@ -7,8 +7,11 @@ import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/home_page.dart';
@@ -70,6 +73,14 @@ void main() {
         ),
         holdingsSnapshotProvider.overrideWith(
           (_) async => const <String, HoldingSnapshot>{},
+        ),
+        cashFlowSummaryProvider.overrideWith(
+          (ref, request) async => CashFlowSummary(
+            period: request.period,
+            baseCurrency: 'CNY',
+            buckets: const [],
+            totalInBase: Money.zero('CNY'),
+          ),
         ),
       ],
       child: const HomePage(),

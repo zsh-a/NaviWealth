@@ -250,6 +250,43 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get homePassiveIncomeTitle => '被动收入';
+
+  @override
+  String get homePassiveIncomeSubtitle => 'TTM 股息、利息与其他被动收入';
+
+  @override
+  String get homePassiveIncomeEmpty => '记录股息或利息后开始跟踪 TTM';
+
+  @override
+  String get homePassiveIncomeDeltaNew => '新增';
+
+  @override
+  String get homeMonthlyCashFlowTitle => '本月现金流';
+
+  @override
+  String homeMonthlyCashFlowSubtitle(String inflow, String outflow) {
+    return '流入 $inflow · 流出 $outflow';
+  }
+
+  @override
+  String get homeMonthlyCashFlowEmpty => '添加收入或支出后显示本月现金流';
+
+  @override
+  String homeMonthlyCashFlowBaseline(String average) {
+    return '对比近 3 月均值 $average';
+  }
+
+  @override
+  String get homeMonthlyCashFlowBaselineEmpty => '入账后显示近 3 月均值';
+
+  @override
+  String get homeCashFlowEmptyValue => '暂无数据';
+
+  @override
+  String get homeCashFlowCardError => '现金流汇总暂不可用';
+
+  @override
   String get assetsAppBarTitle => '资产';
 
   @override
@@ -3819,6 +3856,14 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String dashboardInsightIngestQueueValue(int count, int fresh) {
     return '解析 $count 条 · $fresh 条可入账';
+  }
+
+  @override
+  String get dashboardInsightCashFlowDeficitLabel => '现金流缺口';
+
+  @override
+  String dashboardInsightCashFlowDeficitValue(String amount) {
+    return '本月缺口 $amount';
   }
 
   @override

@@ -46,6 +46,7 @@ abstract final class AppRoutes {
   static const accountsFire = '/accounts/fire';
   static const accountsRebalance = '/accounts/rebalance';
   static const accountsAnalytics = '/accounts/analytics';
+  static const accountsDividends = '/accounts/dividends';
 
   // ── Settings sub-flows ─────────────────────────────────────────────────
   static const settingsDevices = '/settings/devices';
@@ -143,3 +144,4 @@ const List<String> kPrimaryTabPaths = <String>[
 ];
 
 const String kCashflowPath = AppRoutes.cashflow;
+const String kDividendCenterPath = AppRoutes.accountsDividends;

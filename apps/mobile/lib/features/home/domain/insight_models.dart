@@ -22,6 +22,8 @@ enum InsightKind {
   // §5.10.10 / S5a.1 — Layer 4 ingest queue has parsed-but-unconfirmed
   // drafts waiting for the user to confirm / skip.
   ingestQueue,
+  // FIR-142 — current-month operating cashflow is below zero.
+  cashFlowDeficit,
 }
 
 /// One actionable insight surfaced on the dashboard. The view layer
@@ -50,6 +52,9 @@ class InsightItem {
     this.summaryCurrency,
     this.ingestPendingCount,
     this.ingestFreshCount,
+    this.cashFlowMonthKey,
+    this.cashFlowNetMinor,
+    this.cashFlowCurrency,
   });
 
   final IconData icon;
@@ -67,6 +72,7 @@ class InsightItem {
   // ── duplicateCharge fields ──────────────────────────────────────
   /// Total number of suspected duplicate-charge pairs found.
   final int? duplicateChargeCount;
+
   /// Sum of the absolute pair amounts in minor units (worst-case
   /// over-charge if the user actually got billed twice for every
   /// pair). Drives the "you may have been overcharged ¥X" summary.
@@ -78,6 +84,7 @@ class InsightItem {
   /// calendar month.
   final int? summaryYear;
   final int? summaryMonth;
+
   /// Net-worth delta over the summarised month, in minor units.
   /// Positive = grew, negative = shrank.
   final int? summaryDeltaMinor;
@@ -86,6 +93,12 @@ class InsightItem {
   // ── ingestQueue fields ──────────────────────────────────────────
   /// Total parsed-but-unconfirmed drafts in the Layer 4 queue.
   final int? ingestPendingCount;
+
   /// Subset flagged as new (no dedup match) — safe to bulk-confirm.
   final int? ingestFreshCount;
+
+  // ── cashFlowDeficit fields ─────────────────────────────────────
+  final String? cashFlowMonthKey;
+  final int? cashFlowNetMinor;
+  final String? cashFlowCurrency;
 }

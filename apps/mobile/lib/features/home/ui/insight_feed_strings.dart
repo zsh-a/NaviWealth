@@ -14,10 +14,10 @@ String insightHeadline(AppLocalizations l10n, InsightItem item) {
     InsightKind.portfolioDrift => l10n.dashboardInsightDriftLabel,
     InsightKind.maturity => l10n.dashboardInsightMaturityLabel,
     InsightKind.anomaly => l10n.dashboardInsightAnomalyLabel,
-    InsightKind.duplicateCharge =>
-      l10n.dashboardInsightDuplicateChargeLabel,
+    InsightKind.duplicateCharge => l10n.dashboardInsightDuplicateChargeLabel,
     InsightKind.monthlySummary => l10n.dashboardInsightMonthlySummaryLabel,
     InsightKind.ingestQueue => l10n.dashboardInsightIngestQueueLabel,
+    InsightKind.cashFlowDeficit => l10n.dashboardInsightCashFlowDeficitLabel,
   };
 }
 
@@ -39,7 +39,16 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
       item.ingestPendingCount ?? 0,
       item.ingestFreshCount ?? 0,
     ),
+    InsightKind.cashFlowDeficit => _cashFlowDeficit(l10n, item),
   };
+}
+
+String _cashFlowDeficit(AppLocalizations l10n, InsightItem item) {
+  final delta = item.cashFlowNetMinor ?? 0;
+  final currency = item.cashFlowCurrency ?? 'USD';
+  return l10n.dashboardInsightCashFlowDeficitValue(
+    _formatMoney(delta.abs(), currency),
+  );
 }
 
 String _duplicateCharge(AppLocalizations l10n, InsightItem item) {
