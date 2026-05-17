@@ -264,4 +264,89 @@ void main() {
       expect((out.last as DoneEvent).stopReason, 'error');
     });
   });
+
+  group('multi-round CancelToken isolation', () {
+    // Regression: `AnthropicClient.streamMessages` cancels whatever
+    // token it is given when its SSE listener goes away — which is
+    // every normal round end. Sharing the turn token across rounds
+    // therefore poisoned round-2 (`DioException [request cancelled]`,
+    // surfaced as `round-2 provider_error`). The loop must hand each
+    // round a disposable child token so round-1's teardown can't kill
+    // round-2.
+    test('round-1 stream teardown does not poison round-2', () async {
+      final adapter = _TokenPoisoningAdapter([
+        [
+          const LlmToolCallStart(id: 't1', name: 'get_holdings'),
+          const LlmToolCallEnd(id: 't1', name: 'get_holdings', input: {}),
+          const LlmMessageStop(LlmStopReason.toolUse),
+        ],
+        [
+          const LlmTextDelta('完成'),
+          const LlmMessageStop(LlmStopReason.endTurn),
+        ],
+      ]);
+      final loop = DeviceAgentLoop(
+        streamFn: adapter.stream,
+        model: 'm',
+        dispatcher: _RecordingDispatcher(),
+      );
+
+      final events = await loop
+          .run(_session([_user('hi')]), cancelToken: CancelToken())
+          .toList();
+
+      // Round-2 actually ran and the turn ended cleanly — no
+      // `provider_error` from a token cancelled by round-1.
+      expect(adapter.calls, 2);
+      expect(
+        events.whereType<TextEvent>().map((e) => e.text).join(),
+        contains('完成'),
+      );
+      expect(events.whereType<ErrorEvent>(), isEmpty);
+      final done = events.whereType<DoneEvent>().single;
+      expect(done.stopReason, 'end_turn');
+      expect(done.rounds, 2);
+    });
+  });
+}
+
+/// Mirrors the real `AnthropicClient.streamMessages` cancel behaviour:
+/// a controller-backed stream that (a) cancels the supplied token when
+/// its own listener is torn down, and (b) rejects like Dio if handed an
+/// already-cancelled token. Replays one scripted round per call.
+class _TokenPoisoningAdapter {
+  _TokenPoisoningAdapter(this._rounds);
+  final List<List<LlmStreamEvent>> _rounds;
+  int calls = 0;
+
+  Stream<LlmStreamEvent> stream(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) {
+    final controller = StreamController<LlmStreamEvent>();
+    final idx = calls++;
+    if (cancelToken != null && cancelToken.isCancelled) {
+      controller.addError(
+        DioException(
+          requestOptions: RequestOptions(path: '/v1/messages'),
+          type: DioExceptionType.cancel,
+          error: 'request cancelled',
+        ),
+      );
+      controller.close();
+      return controller.stream;
+    }
+    controller.onCancel = () {
+      if (cancelToken != null && !cancelToken.isCancelled) {
+        cancelToken.cancel('listener cancelled');
+      }
+    };
+    () async {
+      for (final e in _rounds[idx]) {
+        controller.add(e);
+      }
+      await controller.close();
+    }();
+    return controller.stream;
+  }
 }
