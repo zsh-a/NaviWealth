@@ -2255,6 +2255,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalanceDriftAfter => '再平衡后偏离';
 
   @override
+  String get rebalanceExecuteAction => '按此调仓';
+
+  @override
+  String get rebalanceExecutionSheetTitle => '确认调仓';
+
+  @override
+  String rebalanceExecutionSheetSubtitle(int count) {
+    return '继续前请核对 $count 笔交易草稿。';
+  }
+
+  @override
+  String get rebalanceExecutionCreateDrafts => '生成草稿';
+
+  @override
+  String get rebalanceExecutionTradeValue => '建议金额';
+
+  @override
+  String rebalanceExecutionDraftNote(
+    Object direction,
+    Object category,
+    Object amount,
+    Object currency,
+  ) {
+    return '再平衡建议：$direction$category，金额 $amount $currency';
+  }
+
+  @override
   String get rebalanceEmptyTitle => '暂无数据';
 
   @override

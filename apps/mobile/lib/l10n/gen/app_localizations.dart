@@ -4122,6 +4122,47 @@ abstract class AppLocalizations {
   /// **'Drift after rebalance'**
   String get rebalanceDriftAfter;
 
+  /// No description provided for @rebalanceExecuteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance now'**
+  String get rebalanceExecuteAction;
+
+  /// No description provided for @rebalanceExecutionSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm rebalance'**
+  String get rebalanceExecutionSheetTitle;
+
+  /// No description provided for @rebalanceExecutionSheetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Review 1 draft trade before continuing.} other{Review {count} draft trades before continuing.}}'**
+  String rebalanceExecutionSheetSubtitle(int count);
+
+  /// No description provided for @rebalanceExecutionCreateDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Create drafts'**
+  String get rebalanceExecutionCreateDrafts;
+
+  /// No description provided for @rebalanceExecutionTradeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested value'**
+  String get rebalanceExecutionTradeValue;
+
+  /// No description provided for @rebalanceExecutionDraftNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance suggestion: {direction} {category} for {amount} {currency}'**
+  String rebalanceExecutionDraftNote(
+    Object direction,
+    Object category,
+    Object amount,
+    Object currency,
+  );
+
   /// No description provided for @rebalanceEmptyTitle.
   ///
   /// In en, this message translates to:

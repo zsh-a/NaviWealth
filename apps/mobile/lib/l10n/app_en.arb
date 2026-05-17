@@ -1292,6 +1292,25 @@
   "rebalanceEstimatedFees": "Estimated fees",
   "rebalanceEstimatedTaxes": "Estimated taxes",
   "rebalanceDriftAfter": "Drift after rebalance",
+  "rebalanceExecuteAction": "Rebalance now",
+  "rebalanceExecutionSheetTitle": "Confirm rebalance",
+  "rebalanceExecutionSheetSubtitle": "{count, plural, =1{Review 1 draft trade before continuing.} other{Review {count} draft trades before continuing.}}",
+  "@rebalanceExecutionSheetSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "rebalanceExecutionCreateDrafts": "Create drafts",
+  "rebalanceExecutionTradeValue": "Suggested value",
+  "rebalanceExecutionDraftNote": "Rebalance suggestion: {direction} {category} for {amount} {currency}",
+  "@rebalanceExecutionDraftNote": {
+    "placeholders": {
+      "direction": {},
+      "category": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
   "rebalanceEmptyTitle": "No data yet",
   "rebalanceEmptyHint": "Add assets to see your allocation drift and rebalance suggestions.",
   "rebalanceSettingsTooltip": "Rebalance settings",
