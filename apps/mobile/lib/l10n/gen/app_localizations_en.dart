@@ -124,6 +124,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Forecasting is not enabled yet.';
 
   @override
+  String dividendCenterForecastSource(String source) {
+    return 'Source: $source';
+  }
+
+  @override
   String get dividendCenterEmptyTitle => 'No dividend records yet';
 
   @override
@@ -137,6 +142,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String dividendCenterLoadError(String error) {
     return 'Dividend center failed to load: $error';
   }
+
+  @override
+  String get dividendForecastStrategyDeclared => 'Declared';
+
+  @override
+  String get dividendForecastStrategyDps => 'DPS';
+
+  @override
+  String get dividendForecastStrategyTtm => 'TTM';
+
+  @override
+  String get dividendForecastStrategyComposite => 'Composite';
+
+  @override
+  String get dividendForecastStrategyUnknown => 'Forecast';
 
   @override
   String get commonNotAvailable => 'N/A';
@@ -411,6 +431,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homePassiveIncomeSubtitle =>
       'TTM dividends, interest, and other passive income';
+
+  @override
+  String homePassiveIncomeSubtitleWithNextMonth(String amount) {
+    return 'TTM passive income · next month est. $amount';
+  }
 
   @override
   String get homePassiveIncomeEmpty =>

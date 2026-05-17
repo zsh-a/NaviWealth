@@ -326,6 +326,12 @@ abstract class AppLocalizations {
   /// **'Forecasting is not enabled yet.'**
   String get dividendCenterForecastUnavailable;
 
+  /// Dividend center forecast source label
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {source}'**
+  String dividendCenterForecastSource(String source);
+
   /// Dividend center empty-state title
   ///
   /// In en, this message translates to:
@@ -349,6 +355,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dividend center failed to load: {error}'**
   String dividendCenterLoadError(String error);
+
+  /// Dividend forecast strategy label: declared corporate actions
+  ///
+  /// In en, this message translates to:
+  /// **'Declared'**
+  String get dividendForecastStrategyDeclared;
+
+  /// Dividend forecast strategy label: annualized dividend per share extrapolation
+  ///
+  /// In en, this message translates to:
+  /// **'DPS'**
+  String get dividendForecastStrategyDps;
+
+  /// Dividend forecast strategy label: trailing twelve months
+  ///
+  /// In en, this message translates to:
+  /// **'TTM'**
+  String get dividendForecastStrategyTtm;
+
+  /// Dividend forecast strategy label: multiple strategies combined
+  ///
+  /// In en, this message translates to:
+  /// **'Composite'**
+  String get dividendForecastStrategyComposite;
+
+  /// Fallback dividend forecast strategy label
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast'**
+  String get dividendForecastStrategyUnknown;
 
   /// Short fallback label when a metric is not available
   ///
@@ -823,6 +859,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TTM dividends, interest, and other passive income'**
   String get homePassiveIncomeSubtitle;
+
+  /// Home passive income card subtitle when the next-month forecast is available
+  ///
+  /// In en, this message translates to:
+  /// **'TTM passive income · next month est. {amount}'**
+  String homePassiveIncomeSubtitleWithNextMonth(String amount);
 
   /// Home passive income card empty-state guidance
   ///

@@ -11,6 +11,7 @@ import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/cash_flow_providers.dart';
+import '../data/dividend_forecast_providers.dart';
 import '../domain/cash_flow_aggregator.dart';
 import '../domain/home_cash_flow_metrics.dart';
 
@@ -43,6 +44,11 @@ class _PassiveIncomeContent extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final colors = context.theme.colors;
+    final forecast = ref.watch(dividendForecast12mProvider);
+    final projection = forecast.hasValue ? forecast.value : null;
+    final nextMonthAmount =
+        projection?.amountInMonth(_nextMonthStart(DateTime.now().toUtc())) ??
+        Decimal.zero;
     final hasData = metrics.hasData;
     final changeRatio = metrics.changeRatio;
     final trendColor = changeRatio == null
@@ -82,7 +88,14 @@ class _PassiveIncomeContent extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(
               hasData
-                  ? l10n.homePassiveIncomeSubtitle
+                  ? nextMonthAmount > Decimal.zero && projection != null
+                        ? l10n.homePassiveIncomeSubtitleWithNextMonth(
+                            formatters.compactCurrency(
+                              nextMonthAmount,
+                              code: projection.currency,
+                            ),
+                          )
+                        : l10n.homePassiveIncomeSubtitle
                   : l10n.homePassiveIncomeEmpty,
               style: context.theme.typography.xs.copyWith(
                 color: colors.mutedForeground,
@@ -118,6 +131,12 @@ class _PassiveIncomeContent extends ConsumerWidget {
       ),
     );
   }
+}
+
+DateTime _nextMonthStart(DateTime now) {
+  final utc = now.toUtc();
+  final monthIndex = utc.year * 12 + utc.month;
+  return DateTime.utc(monthIndex ~/ 12, monthIndex % 12 + 1);
 }
 
 class _PassiveIncomeSkeleton extends StatelessWidget {

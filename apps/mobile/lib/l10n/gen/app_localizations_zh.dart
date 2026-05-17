@@ -123,6 +123,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dividendCenterForecastUnavailable => '预测尚未启用。';
 
   @override
+  String dividendCenterForecastSource(String source) {
+    return '来源：$source';
+  }
+
+  @override
   String get dividendCenterEmptyTitle => '暂无股息记录';
 
   @override
@@ -135,6 +140,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String dividendCenterLoadError(String error) {
     return '股息中心加载失败：$error';
   }
+
+  @override
+  String get dividendForecastStrategyDeclared => '已声明';
+
+  @override
+  String get dividendForecastStrategyDps => 'DPS';
+
+  @override
+  String get dividendForecastStrategyTtm => 'TTM';
+
+  @override
+  String get dividendForecastStrategyComposite => '组合';
+
+  @override
+  String get dividendForecastStrategyUnknown => '预测';
 
   @override
   String get commonNotAvailable => '暂无';
@@ -400,6 +420,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homePassiveIncomeSubtitle => 'TTM 股息、利息与其他被动收入';
+
+  @override
+  String homePassiveIncomeSubtitleWithNextMonth(String amount) {
+    return 'TTM 被动收入 · 预计下月 $amount';
+  }
 
   @override
   String get homePassiveIncomeEmpty => '记录股息或利息后开始跟踪 TTM';
