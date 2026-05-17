@@ -124,14 +124,10 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: Stub web-only font assets so test asset bundle resolves
-        # Same stubs as analyze-and-test — see that job for context.
+      - name: Build golden font assets
         run: |
-          mkdir -p assets/fonts
-          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
-          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
-                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
-                assets/fonts/outfit-bold.woff2
+          tool/build-cn-fonts.sh
+          tool/build-latin-fonts.sh
       - name: Run mobile golden suite (FIR-113)
         # The visual baseline is locked to Linux rasterisation. Devs on
         # macOS / Windows skip the comparison via flutter_test_config.dart;
