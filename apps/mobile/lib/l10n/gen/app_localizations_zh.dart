@@ -96,6 +96,67 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFlowKindOther => '其他';
 
   @override
+  String get dividendCenterTitle => '股息中心';
+
+  @override
+  String get dividendCenterYearToDate => '年初至今';
+
+  @override
+  String get dividendCenterTrailingTwelveMonths => '滚动 12 个月';
+
+  @override
+  String get dividendCenterYoySamePeriod => '同比同期';
+
+  @override
+  String get dividendCenterWithholdingTax => '预扣税';
+
+  @override
+  String get dividendCenterHoldingRanking => '持仓排行';
+
+  @override
+  String get dividendCenterHistoryTimeline => '历史时间轴';
+
+  @override
+  String get dividendCenterNextTwelveMonths => '未来 12 个月';
+
+  @override
+  String dividendCenterForecastSource(String source) {
+    return '来源：$source';
+  }
+
+  @override
+  String get dividendCenterForecastUnavailable => '暂无可用股息预测。';
+
+  @override
+  String get dividendCenterNoRecords => '暂无股息记录';
+
+  @override
+  String get dividendCenterEmptyDescription => '录入现金股息或公司行动后即可生成时间轴。';
+
+  @override
+  String get dividendCenterRecordAction => '录入股息';
+
+  @override
+  String dividendCenterLoadFailed(String error) {
+    return '股息中心加载失败：$error';
+  }
+
+  @override
+  String get dividendForecastStrategyDeclared => '已声明';
+
+  @override
+  String get dividendForecastStrategyDps => 'DPS';
+
+  @override
+  String get dividendForecastStrategyTtm => 'TTM';
+
+  @override
+  String get dividendForecastStrategyComposite => '组合';
+
+  @override
+  String get dividendForecastStrategyUnknown => '预测';
+
+  @override
   String get accountsHubSectionCashDeposits => '现金与存款';
 
   @override
@@ -320,6 +381,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homePassiveIncomeSubtitle => 'TTM 股息、利息与其他被动收入';
+
+  @override
+  String homePassiveIncomeSubtitleWithNextMonth(String amount) {
+    return 'TTM 被动收入 · 预计下月 $amount';
+  }
 
   @override
   String get homePassiveIncomeEmpty => '记录股息或利息后开始跟踪 TTM';

@@ -61,6 +61,31 @@
   "@cashFlowKindOpening": { "description": "Cash-flow category label" },
   "cashFlowKindOther": "Other",
   "@cashFlowKindOther": { "description": "Cash-flow category label" },
+  "dividendCenterTitle": "Dividend Center",
+  "dividendCenterYearToDate": "Year to date",
+  "dividendCenterTrailingTwelveMonths": "Trailing 12 months",
+  "dividendCenterYoySamePeriod": "YoY same period",
+  "dividendCenterWithholdingTax": "Withholding tax",
+  "dividendCenterHoldingRanking": "Holding ranking",
+  "dividendCenterHistoryTimeline": "History timeline",
+  "dividendCenterNextTwelveMonths": "Next 12 months",
+  "dividendCenterForecastSource": "Source: {source}",
+  "@dividendCenterForecastSource": {
+    "placeholders": { "source": { "type": "String", "example": "DPS" } }
+  },
+  "dividendCenterForecastUnavailable": "No dividend forecast available yet.",
+  "dividendCenterNoRecords": "No dividend records yet",
+  "dividendCenterEmptyDescription": "Record a cash dividend or corporate action to start the timeline.",
+  "dividendCenterRecordAction": "Record dividend",
+  "dividendCenterLoadFailed": "Dividend center failed to load: {error}",
+  "@dividendCenterLoadFailed": {
+    "placeholders": { "error": { "type": "String", "example": "TimeoutException" } }
+  },
+  "dividendForecastStrategyDeclared": "Declared",
+  "dividendForecastStrategyDps": "DPS",
+  "dividendForecastStrategyTtm": "TTM",
+  "dividendForecastStrategyComposite": "Composite",
+  "dividendForecastStrategyUnknown": "Forecast",
   "accountsHubSectionCashDeposits": "Cash & Deposits",
   "@accountsHubSectionCashDeposits": { "description": "Accounts hub section header for cash + deposit + bonds & funds" },
   "accountsHubSectionInvestments": "Investments",
@@ -209,6 +234,10 @@
   "@homePassiveIncomeTitle": { "description": "Home cashflow card title: trailing twelve month passive income" },
   "homePassiveIncomeSubtitle": "TTM dividends, interest, and other passive income",
   "@homePassiveIncomeSubtitle": { "description": "Home passive income card subtitle when data exists" },
+  "homePassiveIncomeSubtitleWithNextMonth": "TTM passive income · next month est. {amount}",
+  "@homePassiveIncomeSubtitleWithNextMonth": {
+    "placeholders": { "amount": { "type": "String", "example": "$120" } }
+  },
   "homePassiveIncomeEmpty": "Record dividends or interest to start TTM tracking",
   "@homePassiveIncomeEmpty": { "description": "Home passive income card empty-state guidance" },
   "homePassiveIncomeDeltaNew": "New",

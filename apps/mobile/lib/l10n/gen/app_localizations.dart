@@ -272,6 +272,120 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get cashFlowKindOther;
 
+  /// No description provided for @dividendCenterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend Center'**
+  String get dividendCenterTitle;
+
+  /// No description provided for @dividendCenterYearToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Year to date'**
+  String get dividendCenterYearToDate;
+
+  /// No description provided for @dividendCenterTrailingTwelveMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Trailing 12 months'**
+  String get dividendCenterTrailingTwelveMonths;
+
+  /// No description provided for @dividendCenterYoySamePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'YoY same period'**
+  String get dividendCenterYoySamePeriod;
+
+  /// No description provided for @dividendCenterWithholdingTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Withholding tax'**
+  String get dividendCenterWithholdingTax;
+
+  /// No description provided for @dividendCenterHoldingRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding ranking'**
+  String get dividendCenterHoldingRanking;
+
+  /// No description provided for @dividendCenterHistoryTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'History timeline'**
+  String get dividendCenterHistoryTimeline;
+
+  /// No description provided for @dividendCenterNextTwelveMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 12 months'**
+  String get dividendCenterNextTwelveMonths;
+
+  /// No description provided for @dividendCenterForecastSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {source}'**
+  String dividendCenterForecastSource(String source);
+
+  /// No description provided for @dividendCenterForecastUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend forecast available yet.'**
+  String get dividendCenterForecastUnavailable;
+
+  /// No description provided for @dividendCenterNoRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend records yet'**
+  String get dividendCenterNoRecords;
+
+  /// No description provided for @dividendCenterEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a cash dividend or corporate action to start the timeline.'**
+  String get dividendCenterEmptyDescription;
+
+  /// No description provided for @dividendCenterRecordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Record dividend'**
+  String get dividendCenterRecordAction;
+
+  /// No description provided for @dividendCenterLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend center failed to load: {error}'**
+  String dividendCenterLoadFailed(String error);
+
+  /// No description provided for @dividendForecastStrategyDeclared.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared'**
+  String get dividendForecastStrategyDeclared;
+
+  /// No description provided for @dividendForecastStrategyDps.
+  ///
+  /// In en, this message translates to:
+  /// **'DPS'**
+  String get dividendForecastStrategyDps;
+
+  /// No description provided for @dividendForecastStrategyTtm.
+  ///
+  /// In en, this message translates to:
+  /// **'TTM'**
+  String get dividendForecastStrategyTtm;
+
+  /// No description provided for @dividendForecastStrategyComposite.
+  ///
+  /// In en, this message translates to:
+  /// **'Composite'**
+  String get dividendForecastStrategyComposite;
+
+  /// No description provided for @dividendForecastStrategyUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast'**
+  String get dividendForecastStrategyUnknown;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:
@@ -667,6 +781,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TTM dividends, interest, and other passive income'**
   String get homePassiveIncomeSubtitle;
+
+  /// No description provided for @homePassiveIncomeSubtitleWithNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'TTM passive income · next month est. {amount}'**
+  String homePassiveIncomeSubtitleWithNextMonth(String amount);
 
   /// Home passive income card empty-state guidance
   ///

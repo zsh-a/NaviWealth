@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -6,7 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../investment/domain/dividend_forecast.dart';
 import '../data/dividend_center_providers.dart';
+import '../data/dividend_forecast_providers.dart';
 import '../domain/dividend_center.dart';
 
 class DividendCenterPage extends ConsumerWidget {
@@ -14,10 +18,11 @@ class DividendCenterPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final snapshot = ref.watch(dividendCenterSnapshotProvider);
     return FScaffold(
       header: FHeader.nested(
-        title: const Text('Dividend Center'),
+        title: Text(l10n.dividendCenterTitle),
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
@@ -64,7 +69,7 @@ class _DividendCenterBody extends StatelessWidget {
               const SizedBox(height: 16),
               _RankingSection(snapshot: snapshot),
               const SizedBox(height: 16),
-              const _ForecastStub(),
+              const _ForecastCard(),
               const SizedBox(height: 16),
               _TimelineSection(snapshot: snapshot),
             ],
@@ -82,6 +87,7 @@ class _KpiGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -95,27 +101,27 @@ class _KpiGrid extends ConsumerWidget {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             _MetricCard(
-              label: 'Year to date',
+              label: l10n.dividendCenterYearToDate,
               value: formatters.currency(
                 snapshot.yearToDateGross,
                 code: snapshot.baseCurrency,
               ),
             ),
             _MetricCard(
-              label: 'Trailing 12 months',
+              label: l10n.dividendCenterTrailingTwelveMonths,
               value: formatters.currency(
                 snapshot.ttmGross,
                 code: snapshot.baseCurrency,
               ),
             ),
             _MetricCard(
-              label: 'YoY same period',
+              label: l10n.dividendCenterYoySamePeriod,
               value: snapshot.yearOverYearRatio == null
-                  ? 'N/A'
+                  ? '—'
                   : formatters.signedPercent(snapshot.yearOverYearRatio!),
             ),
             _MetricCard(
-              label: 'Withholding tax',
+              label: l10n.dividendCenterWithholdingTax,
               value: formatters.currency(
                 snapshot.ttmWithholding,
                 code: snapshot.baseCurrency,
@@ -169,6 +175,7 @@ class _RankingSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final rows = snapshot.ranking.take(8).toList();
     return SoftCard(
@@ -177,7 +184,10 @@ class _RankingSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _SectionHeading(title: 'Holding ranking', trailing: 'TTM'),
+          _SectionHeading(
+            title: l10n.dividendCenterHoldingRanking,
+            trailing: l10n.dividendForecastStrategyTtm,
+          ),
           const SizedBox(height: 12),
           for (final row in rows) ...[
             _RankRow(
@@ -188,7 +198,7 @@ class _RankingSection extends ConsumerWidget {
               ),
               share: formatters.percent(row.portfolioShare),
               yieldOnCost: row.yieldOnCost == null
-                  ? 'N/A'
+                  ? '—'
                   : formatters.percent(row.yieldOnCost!),
               withholding: formatters.currency(
                 row.withholdingInBase,
@@ -250,6 +260,7 @@ class _TimelineSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return SoftCard(
       padding: const EdgeInsets.all(16),
@@ -257,7 +268,7 @@ class _TimelineSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _SectionHeading(title: 'History timeline'),
+          _SectionHeading(title: l10n.dividendCenterHistoryTimeline),
           const SizedBox(height: 12),
           for (final month in snapshot.months) ...[
             Text(
@@ -322,11 +333,14 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
-class _ForecastStub extends StatelessWidget {
-  const _ForecastStub();
+class _ForecastCard extends ConsumerWidget {
+  const _ForecastCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = context.formatters(ref);
+    final forecast = ref.watch(dividendForecast12mProvider);
     return SoftCard(
       padding: const EdgeInsets.all(16),
       borderRadius: 8,
@@ -335,22 +349,72 @@ class _ForecastStub extends StatelessWidget {
           Icon(Icons.auto_graph_outlined, color: context.theme.colors.primary),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Next 12 months', style: context.theme.typography.sm),
-                const SizedBox(height: 4),
-                Text(
-                  'Forecasting is not enabled yet.',
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
-              ],
+            child: forecast.when(
+              loading: () => const SkeletonBox(width: 180, height: 42),
+              error: (error, stackTrace) => _ForecastText(
+                title: l10n.dividendCenterNextTwelveMonths,
+                subtitle: l10n.dividendCenterForecastUnavailable,
+              ),
+              data: (projection) {
+                final hasForecast = projection.total > Decimal.zero;
+                final subtitle = hasForecast
+                    ? l10n.dividendCenterForecastSource(
+                        _strategyLabel(l10n, _dominantStrategy(projection)),
+                      )
+                    : l10n.dividendCenterForecastUnavailable;
+                return _ForecastText(
+                  title: l10n.dividendCenterNextTwelveMonths,
+                  value: hasForecast
+                      ? formatters.currency(
+                          projection.total,
+                          code: projection.currency,
+                        )
+                      : null,
+                  subtitle: subtitle,
+                );
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ForecastText extends StatelessWidget {
+  const _ForecastText({
+    required this.title,
+    required this.subtitle,
+    this.value,
+  });
+
+  final String title;
+  final String subtitle;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: context.theme.typography.sm),
+        if (value != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            value!,
+            style: context.theme.typography.lg.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -360,6 +424,7 @@ class _EmptyDividendState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(24),
       borderRadius: 8,
@@ -368,10 +433,13 @@ class _EmptyDividendState extends StatelessWidget {
         children: [
           Icon(Icons.payments_outlined, color: context.theme.colors.primary),
           const SizedBox(height: 12),
-          Text('No dividend records yet', style: context.theme.typography.lg),
+          Text(
+            l10n.dividendCenterNoRecords,
+            style: context.theme.typography.lg,
+          ),
           const SizedBox(height: 8),
           Text(
-            'Record a cash dividend or corporate action to start the timeline.',
+            l10n.dividendCenterEmptyDescription,
             style: context.theme.typography.sm.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
@@ -380,7 +448,7 @@ class _EmptyDividendState extends StatelessWidget {
           FButton(
             key: const Key('dividend-center-record-cta'),
             onPress: () => context.push(AppRoutes.accountCorporateAction),
-            child: const Text('Record dividend'),
+            child: Text(l10n.dividendCenterRecordAction),
           ),
         ],
       ),
@@ -425,11 +493,29 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text('Dividend center failed to load: $error'),
+        child: Text(l10n.dividendCenterLoadFailed(error.toString())),
       ),
     );
   }
+}
+
+String _dominantStrategy(ProjectedDividend projection) {
+  if (projection.strategyBreakdown.isEmpty) return projection.strategy;
+  return projection.strategyBreakdown.entries.reduce((a, b) {
+    return a.value >= b.value ? a : b;
+  }).key;
+}
+
+String _strategyLabel(AppLocalizations l10n, String strategy) {
+  return switch (strategy) {
+    'declared' => l10n.dividendForecastStrategyDeclared,
+    'dps' => l10n.dividendForecastStrategyDps,
+    'ttm' => l10n.dividendForecastStrategyTtm,
+    'composite' => l10n.dividendForecastStrategyComposite,
+    _ => l10n.dividendForecastStrategyUnknown,
+  };
 }
