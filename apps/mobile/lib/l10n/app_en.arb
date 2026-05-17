@@ -1299,6 +1299,18 @@
   "rebalanceWarningThreshold": "Warning threshold",
   "rebalanceCriticalThreshold": "Critical threshold",
   "rebalanceNavLink": "Rebalance",
+  "targetAllocationEditorTitle": "Custom target",
+  "targetAllocationEditorSubtitle": "Tune category weights; the total must equal 100%.",
+  "targetAllocationEditorEditAction": "Custom target",
+  "targetAllocationEditorTotalLabel": "Total allocation",
+  "targetAllocationEditorTotalHint": "Total must be 100%. Current total: {value}%.",
+  "@targetAllocationEditorTotalHint": {
+    "placeholders": { "value": { "type": "String", "example": "98.5" } }
+  },
+  "targetAllocationEditorPercentLabel": "Weight",
+  "targetAllocationEditorRequiredError": "Required",
+  "targetAllocationEditorRangeError": "Use 0-100",
+  "targetAllocationEditorPreviewTitle": "Target mix",
   "riskAlertTitle": "Concentration Alerts",
   "@riskAlertTitle": { "description": "Header for the risk concentration alert panel on the analytics page." },
 
