@@ -272,6 +272,162 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get cashFlowKindOther;
 
+  /// Dividend center page and command palette title
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend Center'**
+  String get dividendCenterTitle;
+
+  /// Dividend center KPI label: current year-to-date gross dividends
+  ///
+  /// In en, this message translates to:
+  /// **'Year to date'**
+  String get dividendCenterMetricYtd;
+
+  /// Dividend center KPI label: trailing twelve month gross dividends
+  ///
+  /// In en, this message translates to:
+  /// **'Trailing 12 months'**
+  String get dividendCenterMetricTtm;
+
+  /// Dividend center KPI label: year-over-year comparison for the same period
+  ///
+  /// In en, this message translates to:
+  /// **'YoY same period'**
+  String get dividendCenterMetricYoy;
+
+  /// Dividend center KPI label: withholding tax total
+  ///
+  /// In en, this message translates to:
+  /// **'Withholding tax'**
+  String get dividendCenterMetricWithholding;
+
+  /// Dividend center section title for ranked holdings
+  ///
+  /// In en, this message translates to:
+  /// **'Holding ranking'**
+  String get dividendCenterHoldingRanking;
+
+  /// Dividend center section title for dividend history
+  ///
+  /// In en, this message translates to:
+  /// **'History timeline'**
+  String get dividendCenterHistoryTimeline;
+
+  /// Dividend center forecast placeholder title
+  ///
+  /// In en, this message translates to:
+  /// **'Next 12 months'**
+  String get dividendCenterForecastTitle;
+
+  /// Dividend center forecast placeholder body
+  ///
+  /// In en, this message translates to:
+  /// **'Forecasting is not enabled yet.'**
+  String get dividendCenterForecastUnavailable;
+
+  /// Dividend center empty-state title
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend records yet'**
+  String get dividendCenterEmptyTitle;
+
+  /// Dividend center empty-state body
+  ///
+  /// In en, this message translates to:
+  /// **'Record a cash dividend or corporate action to start the timeline.'**
+  String get dividendCenterEmptyBody;
+
+  /// Dividend center empty-state CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Record dividend'**
+  String get dividendCenterRecordAction;
+
+  /// Dividend center error state
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend center failed to load: {error}'**
+  String dividendCenterLoadError(String error);
+
+  /// Short fallback label when a metric is not available
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get commonNotAvailable;
+
+  /// Chinese command-palette search keyword for cash flow; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'现金流'**
+  String get commandKeywordCashFlowCn;
+
+  /// Chinese command-palette search keyword for income; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'收入'**
+  String get commandKeywordIncomeCn;
+
+  /// Chinese command-palette search keyword for dividends; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'股息'**
+  String get commandKeywordDividendCn;
+
+  /// Chinese command-palette search keyword for salary; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'工资'**
+  String get commandKeywordSalaryCn;
+
+  /// Chinese command-palette search keyword for the dividend center; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'股息中心'**
+  String get commandKeywordDividendCenterCn;
+
+  /// Chinese command-palette search keyword for a user's dividends; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'我的股息'**
+  String get commandKeywordMyDividendsCn;
+
+  /// Chinese command-palette search keyword for passive income; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'被动收入'**
+  String get commandKeywordPassiveIncomeCn;
+
+  /// Chinese command-palette search keyword for dividend distributions; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'分红'**
+  String get commandKeywordBonusDividendCn;
+
+  /// Chinese command-palette search keyword for withholding tax; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'代扣税'**
+  String get commandKeywordWithholdingTaxCn;
+
+  /// Chinese command-palette search keyword for corporate actions; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'公司行动'**
+  String get commandKeywordCorporateActionCn;
+
+  /// Chinese command-palette search keyword for stock splits; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'拆股'**
+  String get commandKeywordSplitCn;
+
+  /// Chinese command-palette search keyword for rights issues; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'配股'**
+  String get commandKeywordRightsIssueCn;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:

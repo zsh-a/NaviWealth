@@ -96,6 +96,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFlowKindOther => 'Other';
 
   @override
+  String get dividendCenterTitle => 'Dividend Center';
+
+  @override
+  String get dividendCenterMetricYtd => 'Year to date';
+
+  @override
+  String get dividendCenterMetricTtm => 'Trailing 12 months';
+
+  @override
+  String get dividendCenterMetricYoy => 'YoY same period';
+
+  @override
+  String get dividendCenterMetricWithholding => 'Withholding tax';
+
+  @override
+  String get dividendCenterHoldingRanking => 'Holding ranking';
+
+  @override
+  String get dividendCenterHistoryTimeline => 'History timeline';
+
+  @override
+  String get dividendCenterForecastTitle => 'Next 12 months';
+
+  @override
+  String get dividendCenterForecastUnavailable =>
+      'Forecasting is not enabled yet.';
+
+  @override
+  String get dividendCenterEmptyTitle => 'No dividend records yet';
+
+  @override
+  String get dividendCenterEmptyBody =>
+      'Record a cash dividend or corporate action to start the timeline.';
+
+  @override
+  String get dividendCenterRecordAction => 'Record dividend';
+
+  @override
+  String dividendCenterLoadError(String error) {
+    return 'Dividend center failed to load: $error';
+  }
+
+  @override
+  String get commonNotAvailable => 'N/A';
+
+  @override
+  String get commandKeywordCashFlowCn => '现金流';
+
+  @override
+  String get commandKeywordIncomeCn => '收入';
+
+  @override
+  String get commandKeywordDividendCn => '股息';
+
+  @override
+  String get commandKeywordSalaryCn => '工资';
+
+  @override
+  String get commandKeywordDividendCenterCn => '股息中心';
+
+  @override
+  String get commandKeywordMyDividendsCn => '我的股息';
+
+  @override
+  String get commandKeywordPassiveIncomeCn => '被动收入';
+
+  @override
+  String get commandKeywordBonusDividendCn => '分红';
+
+  @override
+  String get commandKeywordWithholdingTaxCn => '代扣税';
+
+  @override
+  String get commandKeywordCorporateActionCn => '公司行动';
+
+  @override
+  String get commandKeywordSplitCn => '拆股';
+
+  @override
+  String get commandKeywordRightsIssueCn => '配股';
+
+  @override
   String get accountsHubSectionCashDeposits => 'Cash & Deposits';
 
   @override

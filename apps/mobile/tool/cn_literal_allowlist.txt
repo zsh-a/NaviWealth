@@ -119,7 +119,6 @@ lib/core/command_palette/ask_ai_result_pane.dart
 # insight_feed_strings/AppLocalizations; only English breadcrumbs left.)
 lib/features/expense/ui/expense_form_page.dart
 lib/features/activity/ui/activity_entry_detail_page.dart
-lib/features/cashflow/domain/cash_flow_aggregator.dart
 lib/features/ai_chat/data/runtime_routing_api_client.dart
 
 # ─── Layer 4 ingest pipeline (S5a.1 — §5.10.10) ─────────────────────
