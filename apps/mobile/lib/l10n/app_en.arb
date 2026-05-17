@@ -1391,6 +1391,11 @@
   "aiChatComposerSendTooltip": "Send (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "Stop generating",
   "aiChatThinking": "Thinking…",
+  "aiChatRunningTool": "Running {tool}",
+  "@aiChatRunningTool": {
+    "description": "Streaming indicator while the assistant is waiting for a tool call",
+    "placeholders": { "tool": { "type": "String" } }
+  },
   "aiChatStaleSyncNotice": "Local data hasn't finished syncing; answers may lag behind your most recent edits.",
 
   "aiChatTruncatedMaxTokens": "Reply was cut off — output length limit reached",
@@ -2689,5 +2694,140 @@
   "ingestImportFileAction": "Import file",
   "@ingestImportFileAction": { "description": "Ingest review: pick a receipt / statement / CSV file" },
   "ingestCameraAction": "Take photo",
-  "@ingestCameraAction": { "description": "Ingest review: snap a receipt with the camera" }
+  "@ingestCameraAction": { "description": "Ingest review: snap a receipt with the camera" },
+
+  "settingsAiTransparencyTitle": "AI transparency",
+  "@settingsAiTransparencyTitle": { "description": "Settings tile and page title for AI trace transparency" },
+  "settingsAiTransparencySubtitle": "View detailed traces from recent AI calls",
+  "@settingsAiTransparencySubtitle": { "description": "Settings tile subtitle for AI trace transparency" },
+  "settingsAiLlmTitle": "On-device AI · Bring your own key",
+  "@settingsAiLlmTitle": { "description": "Settings tile and page title for on-device LLM credentials" },
+  "settingsAiLlmSubtitle": "Manage multiple provider keys and switch local direct connections",
+  "@settingsAiLlmSubtitle": { "description": "Settings tile subtitle for on-device LLM credentials" },
+
+  "aiLlmMissingApiKey": "Enter an API key first",
+  "@aiLlmMissingApiKey": { "description": "Toast shown when saving an LLM profile without a usable key" },
+  "aiLlmSaved": "Saved to secure device storage",
+  "@aiLlmSaved": { "description": "Toast after saving an LLM provider profile" },
+  "aiLlmSwitched": "Switched",
+  "@aiLlmSwitched": { "description": "Toast after activating an LLM provider profile" },
+  "aiLlmRemoved": "Removed from this device",
+  "@aiLlmRemoved": { "description": "Toast after deleting an LLM provider profile" },
+  "aiLlmEmpty": "No providers yet. Add an API key to run AI through a local direct connection.",
+  "@aiLlmEmpty": { "description": "Empty state on the LLM credentials page" },
+  "aiLlmAddProvider": "Add provider",
+  "@aiLlmAddProvider": { "description": "Button and editor title for adding an LLM provider" },
+  "aiLlmEditProvider": "Edit provider",
+  "@aiLlmEditProvider": { "description": "Editor title for updating an LLM provider" },
+  "aiLlmActiveTag": "Active",
+  "@aiLlmActiveTag": { "description": "Tag on the active LLM provider profile" },
+  "aiLlmTapToSwitch": "Tap to switch",
+  "@aiLlmTapToSwitch": { "description": "Hint on an inactive LLM provider profile" },
+  "aiLlmNameLabel": "Name (optional)",
+  "@aiLlmNameLabel": { "description": "LLM profile name field label" },
+  "aiLlmNameHint": "Anthropic official / company gateway …",
+  "@aiLlmNameHint": { "description": "LLM profile name field hint" },
+  "aiLlmProviderLabel": "Provider",
+  "@aiLlmProviderLabel": { "description": "LLM profile provider picker label" },
+  "aiLlmStoredKeyHint": "Configured · leave blank to keep unchanged",
+  "@aiLlmStoredKeyHint": { "description": "API key field hint when editing a profile that already has a stored key" },
+  "aiLlmBaseUrlLabel": "Custom Base URL (optional)",
+  "@aiLlmBaseUrlLabel": { "description": "LLM profile base URL field label" },
+  "aiLlmModelLabel": "Model (optional; blank uses default)",
+  "@aiLlmModelLabel": { "description": "LLM profile model field label" },
+  "aiLlmTestConnectivity": "Test connectivity",
+  "@aiLlmTestConnectivity": { "description": "Button label for probing an LLM provider" },
+  "aiLlmTesting": "Testing…",
+  "@aiLlmTesting": { "description": "Button label while probing an LLM provider" },
+  "aiLlmSaving": "Saving…",
+  "@aiLlmSaving": { "description": "Button label while saving an LLM provider" },
+  "aiLlmIntro": "Use your own LLM API key so AI runs through a local direct connection to the provider. You can save multiple providers and switch anytime. Keys stay in this device's secure storage (Keychain/Keystore); they are not uploaded, synced, or backed up. Your provider account owns cost and rate limits.",
+  "@aiLlmIntro": { "description": "Intro copy on the LLM credentials page" },
+  "aiLlmUnsupportedTitle": "This platform does not support on-device direct connections",
+  "@aiLlmUnsupportedTitle": { "description": "Unsupported-platform card title on the LLM credentials page" },
+  "aiLlmUnsupportedBody": "Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web continues to use cloud AI.",
+  "@aiLlmUnsupportedBody": { "description": "Unsupported-platform card body on the LLM credentials page" },
+  "aiLlmStatusActive": "Active: {name} · local direct connection",
+  "@aiLlmStatusActive": {
+    "description": "Status line when an LLM provider is active",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "aiLlmStatusSavedNoActive": "Providers saved, but none selected",
+  "@aiLlmStatusSavedNoActive": { "description": "Status line when profiles exist but no active usable profile is selected" },
+  "aiLlmStatusReadFailed": "Could not read secure storage",
+  "@aiLlmStatusReadFailed": { "description": "Status line when secure storage read fails" },
+  "aiLlmStatusNotConfigured": "Not configured · no on-device AI available",
+  "@aiLlmStatusNotConfigured": { "description": "Status line when there is no usable LLM provider" },
+  "aiLlmAnthropicProtocol": "{provider} (Anthropic Messages protocol)",
+  "@aiLlmAnthropicProtocol": {
+    "description": "Provider picker label for Anthropic protocol",
+    "placeholders": { "provider": { "type": "String" } }
+  },
+  "aiLlmOpenAiProtocol": "{provider} (Chat Completions protocol)",
+  "@aiLlmOpenAiProtocol": {
+    "description": "Provider picker label for OpenAI protocol",
+    "placeholders": { "provider": { "type": "String" } }
+  },
+
+  "aiTransparencyFilteredEmpty": "No records match the current filter",
+  "@aiTransparencyFilteredEmpty": { "description": "AI transparency list empty state after applying the error filter" },
+  "aiTransparencyLoadError": "Failed to load: {error}",
+  "@aiTransparencyLoadError": {
+    "description": "AI transparency page load error",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "aiTransparencyVerboseTitle": "Detailed capture",
+  "@aiTransparencyVerboseTitle": { "description": "AI trace verbose capture setting title" },
+  "aiTransparencyVerboseSubtitle": "Record each step's input and output (local only; cleaned after 30 days)",
+  "@aiTransparencyVerboseSubtitle": { "description": "AI trace verbose capture setting subtitle" },
+  "aiTransparencyToggleOn": "On",
+  "@aiTransparencyToggleOn": { "description": "Toggle state label: on" },
+  "aiTransparencyToggleOff": "Off",
+  "@aiTransparencyToggleOff": { "description": "Toggle state label: off" },
+  "aiTransparencyRecentCalls": "Last {count} calls",
+  "@aiTransparencyRecentCalls": {
+    "description": "AI transparency aggregate title",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiTransparencyErrors": "Errors {count}",
+  "@aiTransparencyErrors": {
+    "description": "AI trace error-count pill",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiTransparencyEmpty": "No AI call records yet.\nAfter the next conversation, the full trace will appear here.",
+  "@aiTransparencyEmpty": { "description": "AI transparency page empty state" },
+  "aiTransparencyToolsCount": "Tools {count}",
+  "@aiTransparencyToolsCount": {
+    "description": "AI trace tool-count pill",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiTransparencyStaleCount": "Stale x{count}",
+  "@aiTransparencyStaleCount": {
+    "description": "AI trace stale read-model count pill",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiTransparencyUnnamedTurn": "(unnamed turn)",
+  "@aiTransparencyUnnamedTurn": { "description": "Fallback title for an AI trace without an intent label" },
+  "aiTransparencyDetailTitle": "Call chain",
+  "@aiTransparencyDetailTitle": { "description": "AI transparency detail page title" },
+  "aiTransparencyTraceNotFound": "This call record was not found",
+  "@aiTransparencyTraceNotFound": { "description": "AI trace detail not-found state" },
+  "aiTransparencyNoSpans": "This record has no execution chain (it predates the span model and will be cleaned automatically within 30 days).",
+  "@aiTransparencyNoSpans": { "description": "AI trace detail message for old trace records without spans" },
+  "aiTransparencyEventSummary": "{count} events · started {time}",
+  "@aiTransparencyEventSummary": {
+    "description": "AI trace detail header summary",
+    "placeholders": { "count": { "type": "int" }, "time": { "type": "String" } }
+  },
+  "aiTraceRoundsCount": "{count} rounds",
+  "@aiTraceRoundsCount": {
+    "description": "AI trace round-count pill",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiTraceNoPayloadCaptured": "input/output was not captured (compact mode). Turn on Detailed capture on the AI transparency page; new calls will record each step's parameters and return values for debugging.",
+  "@aiTraceNoPayloadCaptured": { "description": "AI span detail notice when verbose payload capture is disabled" },
+  "aiChatDeviceUnavailable": "AI requires your own API key in Settings before it can run. The model connection is made directly from this device, and requests/data do not pass through our servers. On-device AI is not supported on web yet.",
+  "@aiChatDeviceUnavailable": { "description": "Chat error shown when no usable on-device AI runtime is available" },
+  "expenseFormAiTimeframeRecent90Days": "Last 90 days",
+  "@expenseFormAiTimeframeRecent90Days": { "description": "AI context timeframe passed from the expense form" }
 }

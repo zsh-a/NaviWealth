@@ -4554,6 +4554,12 @@ abstract class AppLocalizations {
   /// **'Thinking…'**
   String get aiChatThinking;
 
+  /// Streaming indicator while the assistant is waiting for a tool call
+  ///
+  /// In en, this message translates to:
+  /// **'Running {tool}'**
+  String aiChatRunningTool(String tool);
+
   /// No description provided for @aiChatStaleSyncNotice.
   ///
   /// In en, this message translates to:
@@ -8025,6 +8031,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Take photo'**
   String get ingestCameraAction;
+
+  /// Settings tile and page title for AI trace transparency
+  ///
+  /// In en, this message translates to:
+  /// **'AI transparency'**
+  String get settingsAiTransparencyTitle;
+
+  /// Settings tile subtitle for AI trace transparency
+  ///
+  /// In en, this message translates to:
+  /// **'View detailed traces from recent AI calls'**
+  String get settingsAiTransparencySubtitle;
+
+  /// Settings tile and page title for on-device LLM credentials
+  ///
+  /// In en, this message translates to:
+  /// **'On-device AI · Bring your own key'**
+  String get settingsAiLlmTitle;
+
+  /// Settings tile subtitle for on-device LLM credentials
+  ///
+  /// In en, this message translates to:
+  /// **'Manage multiple provider keys and switch local direct connections'**
+  String get settingsAiLlmSubtitle;
+
+  /// Toast shown when saving an LLM profile without a usable key
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an API key first'**
+  String get aiLlmMissingApiKey;
+
+  /// Toast after saving an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to secure device storage'**
+  String get aiLlmSaved;
+
+  /// Toast after activating an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Switched'**
+  String get aiLlmSwitched;
+
+  /// Toast after deleting an LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from this device'**
+  String get aiLlmRemoved;
+
+  /// Empty state on the LLM credentials page
+  ///
+  /// In en, this message translates to:
+  /// **'No providers yet. Add an API key to run AI through a local direct connection.'**
+  String get aiLlmEmpty;
+
+  /// Button and editor title for adding an LLM provider
+  ///
+  /// In en, this message translates to:
+  /// **'Add provider'**
+  String get aiLlmAddProvider;
+
+  /// Editor title for updating an LLM provider
+  ///
+  /// In en, this message translates to:
+  /// **'Edit provider'**
+  String get aiLlmEditProvider;
+
+  /// Tag on the active LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get aiLlmActiveTag;
+
+  /// Hint on an inactive LLM provider profile
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to switch'**
+  String get aiLlmTapToSwitch;
+
+  /// LLM profile name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get aiLlmNameLabel;
+
+  /// LLM profile name field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Anthropic official / company gateway …'**
+  String get aiLlmNameHint;
+
+  /// LLM profile provider picker label
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get aiLlmProviderLabel;
+
+  /// API key field hint when editing a profile that already has a stored key
+  ///
+  /// In en, this message translates to:
+  /// **'Configured · leave blank to keep unchanged'**
+  String get aiLlmStoredKeyHint;
+
+  /// LLM profile base URL field label
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Base URL (optional)'**
+  String get aiLlmBaseUrlLabel;
+
+  /// LLM profile model field label
+  ///
+  /// In en, this message translates to:
+  /// **'Model (optional; blank uses default)'**
+  String get aiLlmModelLabel;
+
+  /// Button label for probing an LLM provider
+  ///
+  /// In en, this message translates to:
+  /// **'Test connectivity'**
+  String get aiLlmTestConnectivity;
+
+  /// Button label while probing an LLM provider
+  ///
+  /// In en, this message translates to:
+  /// **'Testing…'**
+  String get aiLlmTesting;
+
+  /// Button label while saving an LLM provider
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get aiLlmSaving;
+
+  /// Intro copy on the LLM credentials page
+  ///
+  /// In en, this message translates to:
+  /// **'Use your own LLM API key so AI runs through a local direct connection to the provider. You can save multiple providers and switch anytime. Keys stay in this device\'s secure storage (Keychain/Keystore); they are not uploaded, synced, or backed up. Your provider account owns cost and rate limits.'**
+  String get aiLlmIntro;
+
+  /// Unsupported-platform card title on the LLM credentials page
+  ///
+  /// In en, this message translates to:
+  /// **'This platform does not support on-device direct connections'**
+  String get aiLlmUnsupportedTitle;
+
+  /// Unsupported-platform card body on the LLM credentials page
+  ///
+  /// In en, this message translates to:
+  /// **'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web continues to use cloud AI.'**
+  String get aiLlmUnsupportedBody;
+
+  /// Status line when an LLM provider is active
+  ///
+  /// In en, this message translates to:
+  /// **'Active: {name} · local direct connection'**
+  String aiLlmStatusActive(String name);
+
+  /// Status line when profiles exist but no active usable profile is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Providers saved, but none selected'**
+  String get aiLlmStatusSavedNoActive;
+
+  /// Status line when secure storage read fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read secure storage'**
+  String get aiLlmStatusReadFailed;
+
+  /// Status line when there is no usable LLM provider
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured · no on-device AI available'**
+  String get aiLlmStatusNotConfigured;
+
+  /// Provider picker label for Anthropic protocol
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} (Anthropic Messages protocol)'**
+  String aiLlmAnthropicProtocol(String provider);
+
+  /// Provider picker label for OpenAI protocol
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} (Chat Completions protocol)'**
+  String aiLlmOpenAiProtocol(String provider);
+
+  /// AI transparency list empty state after applying the error filter
+  ///
+  /// In en, this message translates to:
+  /// **'No records match the current filter'**
+  String get aiTransparencyFilteredEmpty;
+
+  /// AI transparency page load error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String aiTransparencyLoadError(String error);
+
+  /// AI trace verbose capture setting title
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed capture'**
+  String get aiTransparencyVerboseTitle;
+
+  /// AI trace verbose capture setting subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Record each step\'s input and output (local only; cleaned after 30 days)'**
+  String get aiTransparencyVerboseSubtitle;
+
+  /// Toggle state label: on
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get aiTransparencyToggleOn;
+
+  /// Toggle state label: off
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get aiTransparencyToggleOff;
+
+  /// AI transparency aggregate title
+  ///
+  /// In en, this message translates to:
+  /// **'Last {count} calls'**
+  String aiTransparencyRecentCalls(int count);
+
+  /// AI trace error-count pill
+  ///
+  /// In en, this message translates to:
+  /// **'Errors {count}'**
+  String aiTransparencyErrors(int count);
+
+  /// AI transparency page empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No AI call records yet.\nAfter the next conversation, the full trace will appear here.'**
+  String get aiTransparencyEmpty;
+
+  /// AI trace tool-count pill
+  ///
+  /// In en, this message translates to:
+  /// **'Tools {count}'**
+  String aiTransparencyToolsCount(int count);
+
+  /// AI trace stale read-model count pill
+  ///
+  /// In en, this message translates to:
+  /// **'Stale x{count}'**
+  String aiTransparencyStaleCount(int count);
+
+  /// Fallback title for an AI trace without an intent label
+  ///
+  /// In en, this message translates to:
+  /// **'(unnamed turn)'**
+  String get aiTransparencyUnnamedTurn;
+
+  /// AI transparency detail page title
+  ///
+  /// In en, this message translates to:
+  /// **'Call chain'**
+  String get aiTransparencyDetailTitle;
+
+  /// AI trace detail not-found state
+  ///
+  /// In en, this message translates to:
+  /// **'This call record was not found'**
+  String get aiTransparencyTraceNotFound;
+
+  /// AI trace detail message for old trace records without spans
+  ///
+  /// In en, this message translates to:
+  /// **'This record has no execution chain (it predates the span model and will be cleaned automatically within 30 days).'**
+  String get aiTransparencyNoSpans;
+
+  /// AI trace detail header summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count} events · started {time}'**
+  String aiTransparencyEventSummary(int count, String time);
+
+  /// AI trace round-count pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} rounds'**
+  String aiTraceRoundsCount(int count);
+
+  /// AI span detail notice when verbose payload capture is disabled
+  ///
+  /// In en, this message translates to:
+  /// **'input/output was not captured (compact mode). Turn on Detailed capture on the AI transparency page; new calls will record each step\'s parameters and return values for debugging.'**
+  String get aiTraceNoPayloadCaptured;
+
+  /// Chat error shown when no usable on-device AI runtime is available
+  ///
+  /// In en, this message translates to:
+  /// **'AI requires your own API key in Settings before it can run. The model connection is made directly from this device, and requests/data do not pass through our servers. On-device AI is not supported on web yet.'**
+  String get aiChatDeviceUnavailable;
+
+  /// AI context timeframe passed from the expense form
+  ///
+  /// In en, this message translates to:
+  /// **'Last 90 days'**
+  String get expenseFormAiTimeframeRecent90Days;
 }
 
 class _AppLocalizationsDelegate

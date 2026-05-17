@@ -144,6 +144,7 @@ class _AssistantBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final errorMessage = _localizedErrorMessage(context, message.errorMessage);
     // Calm error treatment (§5.6): the body — reasoning panel, tool
     // cards, model text — must stay readable. The error is signalled by
     // a soft destructive border + the destructive `errorMessage` line,
@@ -170,11 +171,10 @@ class _AssistantBubble extends StatelessWidget {
           textColor: textColor,
           isStreaming: isStreaming,
         ),
-        if (message.errorMessage != null &&
-            message.errorMessage!.isNotEmpty) ...[
+        if (errorMessage != null && errorMessage.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
-            message.errorMessage!,
+            errorMessage,
             style: context.theme.typography.xs.copyWith(
               color: context.theme.colors.destructive,
             ),
@@ -241,6 +241,16 @@ class _AssistantBubble extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String? _localizedErrorMessage(BuildContext context, String? message) {
+    if (message == null || message.isEmpty) return message;
+    return switch (message) {
+      'device_unavailable' => AppLocalizations.of(
+        context,
+      ).aiChatDeviceUnavailable,
+      _ => message,
+    };
   }
 
   /// Walks `displaySegments` and `toolCalls` in lock-step so the bubble
@@ -387,7 +397,7 @@ class _AssistantBody extends StatelessWidget {
             const AiSparkle(active: true),
             const SizedBox(width: 6),
             Text(
-              '正在 $pendingToolName',
+              l10n.aiChatRunningTool(pendingToolName!),
               style: AiType.meta(context).copyWith(
                 color: AiTone.active(context),
                 fontFamily: 'monospace',

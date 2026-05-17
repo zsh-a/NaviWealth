@@ -20,6 +20,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/visual/visual.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// One flattened row: a span plus its tree depth (for indentation).
 typedef SpanRow = ({AiSpan span, int depth});
@@ -120,6 +121,7 @@ class _RollupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tok = trace.tokenTotals;
     final cost = estimateTraceCostCny(trace);
     return Wrap(
@@ -127,15 +129,15 @@ class _RollupHeader extends StatelessWidget {
       runSpacing: 6,
       children: [
         AiPill(label: '${trace.totalDurationMs} ms'),
-        AiPill(label: '${trace.llmRoundCount} rounds'),
-        AiPill(label: '${trace.toolSpans.length} tools'),
+        AiPill(label: l10n.aiTraceRoundsCount(trace.llmRoundCount)),
+        AiPill(label: l10n.aiTransparencyToolsCount(trace.toolSpans.length)),
         if (tok.total > 0) AiPill(label: '${_compact(tok.total)} tok'),
         if (tok.cacheRead > 0)
           AiPill(label: 'cacheR ${_compact(tok.cacheRead)}'),
         if (cost != null) AiPill(label: '≈¥${cost.toStringAsFixed(4)}'),
         if (trace.errorSpanCount > 0)
           AiPill(
-            label: '错误 ${trace.errorSpanCount}',
+            label: l10n.aiTransparencyErrors(trace.errorSpanCount),
             state: AiPillState.error,
           ),
       ],
@@ -216,10 +218,11 @@ class _WaterfallRow extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, c) {
                   final w = c.maxWidth;
-                  final left = (span.startOffsetMs / scaleMs * w)
-                      .clamp(0.0, w);
-                  final barW = (span.durationMs / scaleMs * w)
-                      .clamp(3.0, w - left < 3 ? 3.0 : w - left);
+                  final left = (span.startOffsetMs / scaleMs * w).clamp(0.0, w);
+                  final barW = (span.durationMs / scaleMs * w).clamp(
+                    3.0,
+                    w - left < 3 ? 3.0 : w - left,
+                  );
                   return Stack(
                     children: [
                       Container(
@@ -254,9 +257,9 @@ class _WaterfallRow extends StatelessWidget {
               width: 56,
               child: Text(
                 '${span.durationMs}ms',
-                style: AiType.meta(context).copyWith(
-                  color: AiTone.muted(context),
-                ),
+                style: AiType.meta(
+                  context,
+                ).copyWith(color: AiTone.muted(context)),
                 textAlign: TextAlign.right,
               ),
             ),
@@ -277,6 +280,7 @@ class _SpanDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tok = span.tokens;
     final isPayloadKind =
         span.kind == AiSpanKind.tool || span.kind == AiSpanKind.llm;
@@ -300,16 +304,14 @@ class _SpanDetail extends StatelessWidget {
               Expanded(
                 child: Text(
                   span.name,
-                  style: AiType.body(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AiType.body(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               AiPill(
                 label: span.status.wire,
-                state: span.isError
-                    ? AiPillState.error
-                    : AiPillState.neutral,
+                state: span.isError ? AiPillState.error : AiPillState.neutral,
               ),
             ],
           ),
@@ -322,8 +324,7 @@ class _SpanDetail extends StatelessWidget {
             '+${span.startOffsetMs}ms → +${span.endOffsetMs}ms',
           ),
           if (span.model != null) _kv(context, 'model', span.model!),
-          if (span.stopReason != null)
-            _kv(context, 'stop', span.stopReason!),
+          if (span.stopReason != null) _kv(context, 'stop', span.stopReason!),
           if (tok != null)
             _kv(
               context,
@@ -335,9 +336,10 @@ class _SpanDetail extends StatelessWidget {
             _kv(
               context,
               'error',
-              [span.errorCode, span.errorMessage]
-                  .where((e) => e != null)
-                  .join(' · '),
+              [
+                span.errorCode,
+                span.errorMessage,
+              ].where((e) => e != null).join(' · '),
               tone: AiTone.error(context),
             ),
           if (span.input != null) ...[
@@ -351,8 +353,7 @@ class _SpanDetail extends StatelessWidget {
           if (isPayloadKind && span.input == null && span.output == null) ...[
             const SizedBox(height: 10),
             Text(
-              '未采集 input/output（精简模式）。在「AI 透明度」页打开'
-              '“详细采集”后，新的调用会记录每步的传参与返回，便于调试。',
+              l10n.aiTraceNoPayloadCaptured,
               style: AiType.meta(
                 context,
               ).copyWith(color: AiTone.muted(context)),
@@ -373,18 +374,17 @@ class _SpanDetail extends StatelessWidget {
             width: 76,
             child: Text(
               k,
-              style: AiType.meta(context).copyWith(
-                color: AiTone.muted(context),
-              ),
+              style: AiType.meta(
+                context,
+              ).copyWith(color: AiTone.muted(context)),
             ),
           ),
           Expanded(
             child: Text(
               v,
-              style: AiType.meta(context).copyWith(
-                fontFamily: 'monospace',
-                color: tone,
-              ),
+              style: AiType.meta(
+                context,
+              ).copyWith(fontFamily: 'monospace', color: tone),
             ),
           ),
         ],

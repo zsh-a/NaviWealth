@@ -22,9 +22,7 @@ import 'ai_chat_api_client.dart';
 /// Surfaced to the user when AI is invoked with no usable on-device
 /// runtime. Web has no device runtime; native/desktop needs a
 /// user-supplied API key + opt-in (§4.6.2).
-const String kDeviceUnavailableMessage =
-    'AI 需要在设置中配置自带 API Key 后启用（本机直连模型，请求与数据不经我方服务器）。'
-    'Web 端暂不支持设备侧 AI。';
+const String kDeviceUnavailableMessage = 'device_unavailable';
 
 class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
   const RuntimeRoutingAiChatApiClient({DeviceChatRunner? device})

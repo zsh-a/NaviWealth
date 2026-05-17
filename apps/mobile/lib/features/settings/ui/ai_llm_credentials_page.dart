@@ -21,6 +21,7 @@ import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 class AiLlmCredentialsPage extends ConsumerStatefulWidget {
   const AiLlmCredentialsPage({super.key});
@@ -115,7 +116,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         ? typedKey
         : (existing?.apiKey ?? '');
     if (effectiveKey.isEmpty) {
-      _toast(ToastKind.warning, '请先填入 API Key');
+      _toast(
+        ToastKind.warning,
+        AppLocalizations.of(context).aiLlmMissingApiKey,
+      );
       return;
     }
     final profile = LlmProfile(
@@ -137,20 +141,20 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       _saving = false;
       _editingId = null;
     });
-    _toast(ToastKind.success, '已保存到设备安全存储');
+    _toast(ToastKind.success, AppLocalizations.of(context).aiLlmSaved);
   }
 
   Future<void> _activate(String id) async {
     await ref.read(llmCredentialsProvider.notifier).setActive(id);
     if (!mounted) return;
-    _toast(ToastKind.success, '已切换');
+    _toast(ToastKind.success, AppLocalizations.of(context).aiLlmSwitched);
   }
 
   Future<void> _delete(LlmProfile profile) async {
     await ref.read(llmCredentialsProvider.notifier).removeProfile(profile.id);
     if (!mounted) return;
     if (_editingId == profile.id) _closeEditor();
-    _toast(ToastKind.success, '已从设备移除');
+    _toast(ToastKind.success, AppLocalizations.of(context).aiLlmRemoved);
   }
 
   void _toast(ToastKind kind, String msg) =>
@@ -158,10 +162,11 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final supported = ref.watch(deviceLlmPlatformSupportedProvider);
     return FScaffold(
       header: FHeader.nested(
-        title: const Text('端侧 AI · 自带 Key'),
+        title: Text(l10n.settingsAiLlmTitle),
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
@@ -176,6 +181,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
 
   List<Widget> _supportedBody(BuildContext context) {
     final asyncCreds = ref.watch(llmCredentialsProvider);
+    final l10n = AppLocalizations.of(context);
     final creds = asyncCreds.asData?.value ?? const LlmCredentials();
     final profiles = creds.profiles;
 
@@ -186,7 +192,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         SoftCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           child: Text(
-            '还没有 Provider。添加一个 API Key 即可让 AI 在本机直连运行。',
+            l10n.aiLlmEmpty,
             style: context.theme.typography.sm.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
@@ -211,11 +217,11 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         FButton(
           variant: FButtonVariant.outline,
           onPress: () => _openEditor(),
-          child: const Text('添加 Provider'),
+          child: Text(l10n.aiLlmAddProvider),
         ),
       ],
       const SizedBox(height: 16),
-      _statusLine(context, asyncCreds),
+      _statusLine(context, asyncCreds, l10n),
     ];
   }
 
@@ -224,6 +230,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     LlmProfile p, {
     required bool isActive,
   }) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final meta = <String>[
       p.provider.label,
@@ -254,10 +261,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                     ),
                     const SizedBox(width: 8),
                     if (isActive)
-                      _tag(context, '使用中', colors.primary)
+                      _tag(context, l10n.aiLlmActiveTag, colors.primary)
                     else
                       Text(
-                        '点按切换',
+                        l10n.aiLlmTapToSwitch,
                         style: context.theme.typography.xs.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -297,6 +304,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   }
 
   Widget _editorCard(BuildContext context, LlmProfile? existing) {
+    final l10n = AppLocalizations.of(context);
     final hasStoredKey = existing?.hasKey ?? false;
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -304,25 +312,27 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            existing == null ? '添加 Provider' : '编辑 Provider',
+            existing == null ? l10n.aiLlmAddProvider : l10n.aiLlmEditProvider,
             style: context.theme.typography.sm.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 14),
-          _label(context, '名称（可选）'),
+          _label(context, l10n.aiLlmNameLabel),
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nameController),
-            hint: 'Anthropic 官方 / 公司网关 …',
+            hint: l10n.aiLlmNameHint,
             autocorrect: false,
             enableSuggestions: false,
           ),
           const SizedBox(height: 16),
-          _label(context, '提供商'),
+          _label(context, l10n.aiLlmProviderLabel),
           const SizedBox(height: 4),
           FSelect<LlmProvider>(
-            items: {for (final p in LlmProvider.values) _providerLabel(p): p},
+            items: {
+              for (final p in LlmProvider.values) _providerLabel(l10n, p): p,
+            },
             control: FSelectControl<LlmProvider>.managed(
               initial: _provider,
               onChange: (value) {
@@ -339,13 +349,13 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _keyController),
-            hint: hasStoredKey ? '已配置 · 留空则保持不变' : _keyHint(_provider),
+            hint: hasStoredKey ? l10n.aiLlmStoredKeyHint : _keyHint(_provider),
             obscureText: true,
             autocorrect: false,
             enableSuggestions: false,
           ),
           const SizedBox(height: 16),
-          _label(context, '自定义 Base URL（可选）'),
+          _label(context, l10n.aiLlmBaseUrlLabel),
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _baseUrlController),
@@ -354,7 +364,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             enableSuggestions: false,
           ),
           const SizedBox(height: 16),
-          _label(context, '模型（可选，留空用默认）'),
+          _label(context, l10n.aiLlmModelLabel),
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _modelController),
@@ -366,7 +376,9 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
           FButton(
             variant: FButtonVariant.outline,
             onPress: (_probing || _saving) ? null : () => _test(existing),
-            child: Text(_probing ? '测试中…' : '测试连通性'),
+            child: Text(
+              _probing ? l10n.aiLlmTesting : l10n.aiLlmTestConnectivity,
+            ),
           ),
           if (_probeResult != null) ...[
             const SizedBox(height: 8),
@@ -388,7 +400,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               Expanded(
                 child: FButton(
                   onPress: _saving ? null : () => _save(existing),
-                  child: Text(_saving ? '保存中…' : '保存'),
+                  child: Text(_saving ? l10n.aiLlmSaving : l10n.commonSave),
                 ),
               ),
               const SizedBox(width: 12),
@@ -396,7 +408,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: _saving ? null : _closeEditor,
-                  child: const Text('取消'),
+                  child: Text(l10n.commonCancel),
                 ),
               ),
             ],
@@ -407,13 +419,11 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   }
 
   Widget _intro(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Text(
-        '使用你自己的 LLM API Key，让 AI 在本机直连提供商运行。'
-        '可保存多个 Provider 并随时切换。Key 仅存于本设备安全存储'
-        '（Keychain/Keystore），不会上传、不进云同步、不进备份。'
-        '费用与限流由你的提供商账户承担。',
+        l10n.aiLlmIntro,
         style: context.theme.typography.sm.copyWith(
           color: context.theme.colors.mutedForeground,
         ),
@@ -422,22 +432,21 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   }
 
   Widget _unsupportedCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '当前平台不支持端侧直连',
+            l10n.aiLlmUnsupportedTitle,
             style: context.theme.typography.sm.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            '自带 Key 的端侧 AI 在原生平台'
-            '（iOS / Android / macOS / Windows / Linux）可用'
-            '（需要系统级安全存储）。Web 继续使用云端 AI。',
+            l10n.aiLlmUnsupportedBody,
             style: context.theme.typography.xs.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
@@ -447,14 +456,18 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     );
   }
 
-  Widget _statusLine(BuildContext context, AsyncValue<LlmCredentials?> async) {
+  Widget _statusLine(
+    BuildContext context,
+    AsyncValue<LlmCredentials?> async,
+    AppLocalizations l10n,
+  ) {
     final text = switch (async) {
       AsyncData(:final value) when value?.isUsable == true =>
-        '● 使用中：${value!.active!.displayName} · 本机直连运行',
+        '● ${l10n.aiLlmStatusActive(value!.active!.displayName)}',
       AsyncData(:final value) when (value?.profiles.isNotEmpty ?? false) =>
-        '○ 已保存 Provider，但未选择可用项',
-      AsyncError() => '读取安全存储失败',
-      _ => '未配置 · 当前无可用端侧 AI',
+        '○ ${l10n.aiLlmStatusSavedNoActive}',
+      AsyncError() => l10n.aiLlmStatusReadFailed,
+      _ => l10n.aiLlmStatusNotConfigured,
     };
     return Text(
       text,
@@ -512,10 +525,11 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     return url.trim();
   }
 
-  String _providerLabel(LlmProvider provider) => switch (provider) {
-    LlmProvider.anthropic => '${provider.label}（Anthropic Messages 协议）',
-    LlmProvider.openai => '${provider.label}（Chat Completions 协议）',
-  };
+  String _providerLabel(AppLocalizations l10n, LlmProvider provider) =>
+      switch (provider) {
+        LlmProvider.anthropic => l10n.aiLlmAnthropicProtocol(provider.label),
+        LlmProvider.openai => l10n.aiLlmOpenAiProtocol(provider.label),
+      };
 
   String _keyHint(LlmProvider provider) => switch (provider) {
     LlmProvider.anthropic => 'sk-ant-…',

@@ -2454,6 +2454,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatThinking => '正在思考…';
 
   @override
+  String aiChatRunningTool(String tool) {
+    return '正在 $tool';
+  }
+
+  @override
   String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
 
   @override
@@ -4360,4 +4365,181 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestCameraAction => '拍照';
+
+  @override
+  String get settingsAiTransparencyTitle => 'AI 透明度';
+
+  @override
+  String get settingsAiTransparencySubtitle => '查看最近 AI 调用的详细轨迹';
+
+  @override
+  String get settingsAiLlmTitle => '端侧 AI · 自带 Key';
+
+  @override
+  String get settingsAiLlmSubtitle => '管理多个 Provider Key，一键切换本机直连';
+
+  @override
+  String get aiLlmMissingApiKey => '请先填入 API Key';
+
+  @override
+  String get aiLlmSaved => '已保存到设备安全存储';
+
+  @override
+  String get aiLlmSwitched => '已切换';
+
+  @override
+  String get aiLlmRemoved => '已从设备移除';
+
+  @override
+  String get aiLlmEmpty => '还没有 Provider。添加一个 API Key 即可让 AI 在本机直连运行。';
+
+  @override
+  String get aiLlmAddProvider => '添加 Provider';
+
+  @override
+  String get aiLlmEditProvider => '编辑 Provider';
+
+  @override
+  String get aiLlmActiveTag => '使用中';
+
+  @override
+  String get aiLlmTapToSwitch => '点按切换';
+
+  @override
+  String get aiLlmNameLabel => '名称（可选）';
+
+  @override
+  String get aiLlmNameHint => 'Anthropic 官方 / 公司网关 …';
+
+  @override
+  String get aiLlmProviderLabel => '提供商';
+
+  @override
+  String get aiLlmStoredKeyHint => '已配置 · 留空则保持不变';
+
+  @override
+  String get aiLlmBaseUrlLabel => '自定义 Base URL（可选）';
+
+  @override
+  String get aiLlmModelLabel => '模型（可选，留空用默认）';
+
+  @override
+  String get aiLlmTestConnectivity => '测试连通性';
+
+  @override
+  String get aiLlmTesting => '测试中…';
+
+  @override
+  String get aiLlmSaving => '保存中…';
+
+  @override
+  String get aiLlmIntro =>
+      '使用你自己的 LLM API Key，让 AI 在本机直连提供商运行。可保存多个 Provider 并随时切换。Key 仅存于本设备安全存储（Keychain/Keystore），不会上传、不进云同步、不进备份。费用与限流由你的提供商账户承担。';
+
+  @override
+  String get aiLlmUnsupportedTitle => '当前平台不支持端侧直连';
+
+  @override
+  String get aiLlmUnsupportedBody =>
+      '自带 Key 的端侧 AI 在原生平台（iOS / Android / macOS / Windows / Linux）可用（需要系统级安全存储）。Web 继续使用云端 AI。';
+
+  @override
+  String aiLlmStatusActive(String name) {
+    return '使用中：$name · 本机直连运行';
+  }
+
+  @override
+  String get aiLlmStatusSavedNoActive => '已保存 Provider，但未选择可用项';
+
+  @override
+  String get aiLlmStatusReadFailed => '读取安全存储失败';
+
+  @override
+  String get aiLlmStatusNotConfigured => '未配置 · 当前无可用端侧 AI';
+
+  @override
+  String aiLlmAnthropicProtocol(String provider) {
+    return '$provider（Anthropic Messages 协议）';
+  }
+
+  @override
+  String aiLlmOpenAiProtocol(String provider) {
+    return '$provider（Chat Completions 协议）';
+  }
+
+  @override
+  String get aiTransparencyFilteredEmpty => '当前筛选下没有记录';
+
+  @override
+  String aiTransparencyLoadError(String error) {
+    return '加载失败: $error';
+  }
+
+  @override
+  String get aiTransparencyVerboseTitle => '详细采集';
+
+  @override
+  String get aiTransparencyVerboseSubtitle => '记录每步传参与返回（仅本机，30 天后清理）';
+
+  @override
+  String get aiTransparencyToggleOn => '开';
+
+  @override
+  String get aiTransparencyToggleOff => '关';
+
+  @override
+  String aiTransparencyRecentCalls(int count) {
+    return '最近 $count 次调用';
+  }
+
+  @override
+  String aiTransparencyErrors(int count) {
+    return '错误 $count';
+  }
+
+  @override
+  String get aiTransparencyEmpty => '暂无 AI 调用记录。\n下次发起对话后，会在此处看到完整轨迹。';
+
+  @override
+  String aiTransparencyToolsCount(int count) {
+    return '工具 $count';
+  }
+
+  @override
+  String aiTransparencyStaleCount(int count) {
+    return '过期 x$count';
+  }
+
+  @override
+  String get aiTransparencyUnnamedTurn => '(未命名调用)';
+
+  @override
+  String get aiTransparencyDetailTitle => '调用链路';
+
+  @override
+  String get aiTransparencyTraceNotFound => '未找到该次调用记录';
+
+  @override
+  String get aiTransparencyNoSpans => '该记录无执行链路（早于 span 模型，将在 30 天内自动清理）。';
+
+  @override
+  String aiTransparencyEventSummary(int count, String time) {
+    return '$count 个事件 · 始于 $time';
+  }
+
+  @override
+  String aiTraceRoundsCount(int count) {
+    return '$count 轮';
+  }
+
+  @override
+  String get aiTraceNoPayloadCaptured =>
+      '未采集 input/output（精简模式）。在「AI 透明度」页打开“详细采集”后，新的调用会记录每步的传参与返回，便于调试。';
+
+  @override
+  String get aiChatDeviceUnavailable =>
+      'AI 需要在设置中配置自带 API Key 后启用（本机直连模型，请求与数据不经我方服务器）。Web 端暂不支持设备侧 AI。';
+
+  @override
+  String get expenseFormAiTimeframeRecent90Days => '最近 90 天';
 }
