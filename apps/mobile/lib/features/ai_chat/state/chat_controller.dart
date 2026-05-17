@@ -8,9 +8,9 @@ import 'chat_sync_gate.dart';
 
 /// Phases of the user's outgoing turn:
 ///  - [idle]: composer enabled, no work in flight
-///  - [flushing]: pre-chat sync gate is draining the OpLog so the AI
-///    backend's D1 view reflects the user's latest edits (FIR-71).
-///  - [streaming]: SSE stream from `/ai/chat` is being consumed.
+///  - [flushing]: pre-chat sync gate is draining the OpLog before the
+///    device runtime reads local state.
+///  - [streaming]: runtime events are being consumed.
 enum ChatTurnPhase { idle, flushing, streaming }
 
 /// UI-side state for one chat session: where we are in the send pipeline,

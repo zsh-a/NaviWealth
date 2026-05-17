@@ -1,10 +1,9 @@
-/// Sealed wire events emitted by `POST /ai/chat`'s SSE stream. See
-/// `apps/backend/src/routes/ai.rs` for the producer.
+/// Sealed events emitted by the active device runtime.
 ///
-/// v1 streams emit `text` / `tool_call` / `tool_result` / `error` /
-/// `done`. v2 streams emit token-level `text_delta`, optional
-/// `thinking_delta`, tool-call construction events, `usage`, and
-/// terminal `stop`.
+/// Before W-D7 these mirrored `/ai/chat` SSE frames. The cloud route is
+/// gone, but the repository/UI contract intentionally keeps the same
+/// event vocabulary: text deltas, optional thinking deltas, tool-call
+/// construction, tool results, usage, spans, error, and done.
 library;
 
 import '../../../core/ai/contracts/contracts.dart'

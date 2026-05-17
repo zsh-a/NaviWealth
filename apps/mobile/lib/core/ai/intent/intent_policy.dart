@@ -81,10 +81,8 @@ const intentDescriptors = <IntentDescriptor>[
       AiCapability.chat,
       AiCapability.visualization,
     },
-    promptTemplate:
-        '请解释 {{object_label}} 在 {{timeframe}} 内的变化原因，并指出相关趋势。',
+    promptTemplate: '请解释 {{object_label}} 在 {{timeframe}} 内的变化原因，并指出相关趋势。',
     preferredReadModels: <String>[
-      'monthly_spend_by_category',
       'subscription_changes',
       'recurring_patterns',
       'cashflow_buckets',
@@ -113,9 +111,12 @@ const intentDescriptors = <IntentDescriptor>[
       AiCapability.chat,
       AiCapability.proposal,
     },
-    promptTemplate:
-        '请评估 {{object_label}} 在不利市场条件下的稳健性，并给出 2–3 个具体改进建议。',
-    preferredReadModels: <String>['net_worth_snapshot', 'xirr_snapshot'],
+    promptTemplate: '请评估 {{object_label}} 在不利市场条件下的稳健性，并给出 2–3 个具体改进建议。',
+    preferredReadModels: <String>[
+      'net_worth_snapshot',
+      'holdings_snapshot',
+      'investment_performance',
+    ],
   ),
   IntentDescriptor(
     name: 'compare_period',
@@ -131,10 +132,7 @@ const intentDescriptors = <IntentDescriptor>[
       AiCapability.visualization,
     },
     promptTemplate: '请对比 {{object_label}} 在两个不同时期的差异并说明驱动因素。',
-    preferredReadModels: <String>[
-      'cashflow_buckets',
-      'monthly_spend_by_category',
-    ],
+    preferredReadModels: <String>['cashflow_buckets'],
   ),
   IntentDescriptor(
     name: 'explain_insight',
@@ -144,8 +142,7 @@ const intentDescriptors = <IntentDescriptor>[
       AiCapability.chat,
       AiCapability.proposal,
     },
-    promptTemplate:
-        '请详细解释这条洞察 ({{object_label}})，说明触发原因、严重程度和可采取的行动。',
+    promptTemplate: '请详细解释这条洞察 ({{object_label}})，说明触发原因、严重程度和可采取的行动。',
     preferredReadModels: <String>[
       'anomaly_flags',
       'subscription_changes',
@@ -169,7 +166,6 @@ const intentDescriptors = <IntentDescriptor>[
     preferredReadModels: <String>[
       'net_worth_snapshot',
       'cashflow_buckets',
-      'monthly_spend_by_category',
       'holdings_snapshot',
     ],
   ),
@@ -181,10 +177,9 @@ const intentDescriptors = <IntentDescriptor>[
       AiCapability.chat,
       AiCapability.visualization,
     },
-    promptTemplate:
-        '请解读用户选中的这些交易 ({{object_label}})，给出共同点 / 异常 / 可能归类。',
+    promptTemplate: '请解读用户选中的这些交易 ({{object_label}})，给出共同点 / 异常 / 可能归类。',
     preferredReadModels: <String>[
-      'monthly_spend_by_category',
+      'cashflow_buckets',
       'subscription_changes',
       'refund_links',
     ],
@@ -217,8 +212,7 @@ String renderPromptFor(
       'AiIntentInvocation uses unregistered intent "${invocation.intent}". '
       'Add to intent_policy.intentDescriptors or use suggestedPrompt.',
     );
-    return invocation.suggestedPrompt ??
-        '请就 ${objectLabel ?? "当前对象"} 提供分析。';
+    return invocation.suggestedPrompt ?? '请就 ${objectLabel ?? "当前对象"} 提供分析。';
   }
   if (invocation.object != null &&
       desc.allowedObjectTypes.isNotEmpty &&
@@ -234,9 +228,7 @@ String renderPromptFor(
       defaultTimeframe ??
       '最近 30 天';
   final currency =
-      (invocation.context['currency'] as String?) ??
-      defaultCurrency ??
-      'USD';
+      (invocation.context['currency'] as String?) ?? defaultCurrency ?? 'USD';
   final label = objectLabel ?? invocation.object?.toString() ?? '当前对象';
   return desc.promptTemplate
       .replaceAll('{{object_label}}', label)

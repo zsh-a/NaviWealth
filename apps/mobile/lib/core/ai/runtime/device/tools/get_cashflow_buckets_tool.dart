@@ -22,9 +22,8 @@
 /// Sibling of `get_net_worth_summary`: same monthly-bucket window math
 /// and asset-leg exclusion, the complementary split (this one buckets
 /// inflow vs outflow per month·currency; net_worth accumulates the
-/// signed net). A shared `snapshot_window` helper is the natural DRY
-/// extraction once `compute_net_worth` becomes the third caller
-/// (rule-of-three).
+/// signed net). The broader day/week net-worth computer was cloud-only
+/// and is not advertised after W-D7.
 library;
 
 import 'package:decimal/decimal.dart';

@@ -191,6 +191,19 @@ void main() {
       }
     });
 
+    test('every descriptor is advertised by the device registry', () {
+      final advertised = defaultDeviceToolRegistry().names.toSet();
+      for (final descriptor in allToolDescriptors) {
+        expect(
+          advertised,
+          contains(descriptor.name),
+          reason:
+              '${descriptor.name} has ToolDescriptor metadata but is not '
+              'registered in kDeviceTools',
+        );
+      }
+    });
+
     test('registry advertises exactly the canonical set, sorted', () {
       final names = defaultDeviceToolRegistry().schemas().map((s) => s.name);
       expect(names, [

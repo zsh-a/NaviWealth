@@ -175,25 +175,28 @@ void main() {
       expect(decoded.humanReasonZh, req.humanReasonZh);
     });
 
-    test('unknown LedgerField wire values are dropped, not parsed as default', () {
-      final raw = <String, Object?>{
-        'request_id': 'req_1',
-        'purpose': 'drill_down_expense',
-        'fields': <Object?>['amount', 'ssn', 'iban', 'category'],
-        'range': <String, Object?>{
-          'from_inclusive': '2026-04-01',
-          'to_exclusive': '2026-05-01',
-        },
-        'max_rows': 10,
-        'anonymization': 'hash',
-        'human_reason_zh': '',
-      };
-      final req = DisclosureRequest.fromJson(raw);
-      expect(req.fields, <LedgerField>[
-        LedgerField.amount,
-        LedgerField.category,
-      ]);
-    });
+    test(
+      'unknown LedgerField wire values are dropped, not parsed as default',
+      () {
+        final raw = <String, Object?>{
+          'request_id': 'req_1',
+          'purpose': 'drill_down_expense',
+          'fields': <Object?>['amount', 'ssn', 'iban', 'category'],
+          'range': <String, Object?>{
+            'from_inclusive': '2026-04-01',
+            'to_exclusive': '2026-05-01',
+          },
+          'max_rows': 10,
+          'anonymization': 'hash',
+          'human_reason_zh': '',
+        };
+        final req = DisclosureRequest.fromJson(raw);
+        expect(req.fields, <LedgerField>[
+          LedgerField.amount,
+          LedgerField.category,
+        ]);
+      },
+    );
 
     test('response with rows round-trips', () {
       const resp = DisclosureResponse(
@@ -246,8 +249,8 @@ void main() {
       expect(decoded.allowedContextTier, desc.allowedContextTier);
     });
 
-    test('mobile descriptor mirror carries all backend tools', () {
-      expect(allToolDescriptors, hasLength(28));
+    test('mobile descriptor catalog carries active device tools', () {
+      expect(allToolDescriptors, hasLength(22));
       expect(
         lookupToolDescriptor('get_holdings')?.readModelLayer,
         ReadModelLayer.snapshot,
@@ -260,6 +263,7 @@ void main() {
         lookupToolDescriptor('propose_expense')?.sideEffect,
         SideEffect.deviceLocalWrite,
       );
+      expect(lookupToolDescriptor('get_journal_entries'), isNull);
     });
   });
 
@@ -322,7 +326,10 @@ void main() {
       expect(decoded.backend, Backend.hybrid);
       expect(decoded.usedRawLedger, isTrue);
       expect(decoded.disclosures, hasLength(1));
-      expect(decoded.disclosures.first.purpose, DisclosurePurpose.anomalyExplain);
+      expect(
+        decoded.disclosures.first.purpose,
+        DisclosurePurpose.anomalyExplain,
+      );
       expect(decoded.spans, hasLength(3));
       expect(decoded.toolSpans.single.name, 'tool:request_disclosure');
       expect(decoded.llmRoundCount, 1);
@@ -355,38 +362,41 @@ void main() {
       }
     });
 
-    test('Wave 33: AiTrace.invocation round-trips with object + context keys', () {
-      const seed = AiTrace(
-        requestId: 'r',
-        startedAtIso: '2026-05-12T00:00:00Z',
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.suggest,
-        ),
-        backend: Backend.cloud,
-        budgetTier: BudgetTier.small,
-        routingReason: 'capsule_explain',
-        usedCloud: true,
-        usedRawLedger: false,
-        totalDurationMs: 200,
-        invocation: <String, Object?>{
-          'source': 'expense_detail',
-          'intent': 'explain_change',
-          'object_type': 'expense',
-          'object_id': 'exp_42',
-          'context_keys': <String>['timeframe'],
-        },
-      );
-      final decoded = AiTrace.fromJson(
-        jsonDecode(jsonEncode(seed.toJson())) as Map<String, Object?>,
-      );
-      expect(decoded.invocation, isNotNull);
-      expect(decoded.invocation!['source'], 'expense_detail');
-      expect(decoded.invocation!['intent'], 'explain_change');
-      expect(decoded.invocation!['object_type'], 'expense');
-      expect(decoded.invocation!['object_id'], 'exp_42');
-      expect(decoded.invocation!['context_keys'], <String>['timeframe']);
-    });
+    test(
+      'Wave 33: AiTrace.invocation round-trips with object + context keys',
+      () {
+        const seed = AiTrace(
+          requestId: 'r',
+          startedAtIso: '2026-05-12T00:00:00Z',
+          intent: IntentHint(
+            capability: Capability.analyze,
+            risk: RiskLevel.suggest,
+          ),
+          backend: Backend.cloud,
+          budgetTier: BudgetTier.small,
+          routingReason: 'capsule_explain',
+          usedCloud: true,
+          usedRawLedger: false,
+          totalDurationMs: 200,
+          invocation: <String, Object?>{
+            'source': 'expense_detail',
+            'intent': 'explain_change',
+            'object_type': 'expense',
+            'object_id': 'exp_42',
+            'context_keys': <String>['timeframe'],
+          },
+        );
+        final decoded = AiTrace.fromJson(
+          jsonDecode(jsonEncode(seed.toJson())) as Map<String, Object?>,
+        );
+        expect(decoded.invocation, isNotNull);
+        expect(decoded.invocation!['source'], 'expense_detail');
+        expect(decoded.invocation!['intent'], 'explain_change');
+        expect(decoded.invocation!['object_type'], 'expense');
+        expect(decoded.invocation!['object_id'], 'exp_42');
+        expect(decoded.invocation!['context_keys'], <String>['timeframe']);
+      },
+    );
 
     test('Wave 33: AiTrace.invocation omitted when null', () {
       const seed = AiTrace(
@@ -476,10 +486,9 @@ void main() {
       final decoded = TaskContext.fromJson(
         jsonDecode(jsonEncode(json)) as Map<String, Object?>,
       );
-      expect(
-        decoded.freshnessHint?.forceRefreshReadModels,
-        <String>['monthly_spend_by_category'],
-      );
+      expect(decoded.freshnessHint?.forceRefreshReadModels, <String>[
+        'monthly_spend_by_category',
+      ]);
     });
   });
 
@@ -567,10 +576,10 @@ void main() {
       final decoded = AiTrace.fromJson(
         jsonDecode(jsonEncode(json)) as Map<String, Object?>,
       );
-      expect(
-        decoded.staleReadModelNames,
-        <String>{'monthly_spend_by_category', 'holdings_snapshot'},
-      );
+      expect(decoded.staleReadModelNames, <String>{
+        'monthly_spend_by_category',
+        'holdings_snapshot',
+      });
       expect(decoded.staleReadModels, 2);
     });
 

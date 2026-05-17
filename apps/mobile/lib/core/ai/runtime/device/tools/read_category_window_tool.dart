@@ -44,14 +44,13 @@ class ReadCategoryWindowTool implements DeviceTool {
   @override
   String get name => 'read_category_window';
 
-  // Verbatim from backend `read_category_window.rs` DESCRIPTION
-  // (whitespace collapsed). Kept identical cloud↔device for prompt
-  // parity; the output `device_note` explains the device remap.
+  // Originally ported from backend `read_category_window.rs`; updated
+  // after W-D7 so it only references tools advertised on device.
   @override
   String get description =>
       'Scoped Detail 工具：返回某一类目在指定时间窗口内的交易明细（drill-down）。'
       '只在用户问「为什么 / 哪些」需要例证时调用 —— 默认应当先用 '
-      'get_monthly_spend_by_category 的聚合结果回答。'
+      'get_cashflow_buckets 的聚合结果回答。'
       '硬限额：窗口 ≤ 31 天，limit ≤ 50。明细字段已脱敏：'
       'merchant_hashed（同用户内稳定，跨用户不可逆）+ account_kind（不返名字）。'
       'purpose 必填，用于 AiTrace 审计。';

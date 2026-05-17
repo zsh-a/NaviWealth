@@ -1,18 +1,13 @@
 /// Device tool registry + Drift-backed dispatcher (§4.6 W-D4).
 ///
-/// Port of `apps/backend/src/ai/tools/registry.rs`: an id→tool map, a
-/// `schemas()` feed for the agent loop, a per-tool timeout, and the
-/// **exact** backend error envelopes (`policy_denied` / `tool_timeout`)
-/// so the model sees the same failure shapes on device and cloud.
+/// The canonical id→tool map, a `schemas()` feed for the agent loop,
+/// a per-tool timeout, and stable error envelopes (`policy_denied` /
+/// `tool_timeout`) consumed by the model.
 ///
 /// **Allow-list decision** (see §11): registry *membership* is the
-/// device allow-list — a tool runs on device iff a Drift-backed port
-/// is registered here. The `ToolDescriptor.allowed_runtimes` field
-/// stays `cloud_only` on both sides until W-D7 reconciles it with the
-/// backend (a frozen-code change), so it is *not* used as the gate; a
-/// missing impl is a stronger guarantee than a metadata flag. The
-/// dispatcher still refuses `external_call` side-effects as
-/// defense-in-depth (§4.5 — ExternalSideEffect is never LLM-triggered).
+/// device allow-list. `ToolDescriptor` is metadata for registered
+/// tools; dispatch authority still comes from this list because a
+/// missing implementation is the strongest possible deny.
 library;
 
 import 'dart:async';
@@ -156,7 +151,8 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
     }
   }
 
-  /// Exact backend `policy_denied_result` envelope.
+  /// Stable `policy_denied` envelope retained from the retired backend
+  /// contract so older UI/debug expectations keep the same shape.
   Map<String, Object?> _policyDenied(
     String tool,
     String policy,

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'chat_events.dart' show TokenUsage;
 import 'proposal_apply_state.dart';
 
-/// Roles understood by `POST /ai/chat`.
+/// Roles understood by the chat runtime.
 ///
 /// `system` and `error` are local-only roles the UI uses to surface
 /// truncation banners and stream failures; they never get sent back to

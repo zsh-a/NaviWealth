@@ -14,9 +14,9 @@
 /// `to` / `currency` / `series` rows / `note`) is byte-identical to the
 /// cloud tool so the model reads one shape on both runtimes.
 ///
-/// This is the foundational W-D4.2c increment: the monthly net-flow
-/// aggregation here is the shared shape `compute_net_worth` and the
-/// cashflow-buckets tool will reuse.
+/// This is the monthly net-flow view currently available to the device
+/// runtime. The broader day/week net-worth computer was a cloud-only
+/// tool and is not advertised after W-D7.
 library;
 
 import 'package:decimal/decimal.dart';
@@ -40,9 +40,9 @@ class GetNetWorthSummaryTool implements DeviceTool {
   String get description =>
       '返回最近 N 个月的净现金流累计（月度净资产快照）。'
       '数据来自 AI Read Model `net_worth_snapshot`（Snapshot 层 P0）—— 月粒度，'
-      '每月按币种独立累积。Phase 1 不减负债 / 不算资产市值（这两个走 compute_net_worth）。'
+      '每月按币种独立累积。当前端侧工具不提供 day/week 粒度，也不减负债 / 不算资产市值。'
       '适合场景：「最近半年净现金流趋势」「上半年现金净流入多少」等月度问题。'
-      '需要 day/week 粒度或资产市值时改用 compute_net_worth.';
+      '需要更细粒度时请基于此月度序列解释限制，不要调用未广告工具。';
 
   @override
   Map<String, Object?> get inputSchema => {
@@ -180,7 +180,7 @@ class GetNetWorthSummaryTool implements DeviceTool {
       'currency': currency,
       'series': series,
       // §4.6.1: ledger-direct, no D1 read model → no `freshness`.
-      'note': '月粒度；不减负债，不算资产市值。day/week 粒度或负债 / 市值需要 compute_net_worth.',
+      'note': '月粒度；不减负债，不算资产市值。端侧运行时当前不广告 day/week 净资产工具。',
     };
   }
 }

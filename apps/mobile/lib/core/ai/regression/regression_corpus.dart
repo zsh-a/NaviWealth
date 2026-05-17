@@ -70,16 +70,13 @@ class RegressionPrompt {
 /// is good enough for now". Removing here ≈ "we need to write a
 /// custom renderer for this tool" (Wave 34.x kind of work).
 const Set<String> jsonOnlyRenderTools = <String>{
-  // Inline computers — no structured shape worth styling.
-  'compute_xirr',
   // Read models with simple tabular outputs (number + currency +
   // optional breakdown). The raw JSON is short and the LLM mostly
   // narrates the numbers in prose anyway.
-  'get_monthly_spend_by_category',
   'get_cashflow_buckets',
+  'get_net_worth_summary',
   'get_anomaly_flags',
   'get_investment_performance',
-  'get_xirr_summary',
 };
 
 const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
@@ -88,7 +85,10 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     id: 'explain_change.expense_netflix',
     intent: 'explain_change',
     userPrompt: '为什么 Netflix 这个月比上月贵了？',
-    expectedTools: <String>{'get_subscription_changes', 'get_recurring_patterns'},
+    expectedTools: <String>{
+      'get_subscription_changes',
+      'get_recurring_patterns',
+    },
     objectType: 'expense',
     objectId: 'exp_netflix',
   ),
@@ -96,7 +96,7 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     id: 'explain_change.spending_jump',
     intent: 'explain_change',
     userPrompt: '本月支出比上月多了 18%，主要花在哪？',
-    expectedTools: <String>{'get_monthly_spend_by_category', 'get_cashflow_buckets'},
+    expectedTools: <String>{'get_cashflow_buckets'},
   ),
 
   // ── summarize_account ──────────────────────────────────────────
@@ -114,7 +114,10 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     id: 'stress_test_plan.fire',
     intent: 'stress_test_plan',
     userPrompt: '如果市场再下跌 20%，我的 FIRE 计划还稳吗？',
-    expectedTools: <String>{'get_xirr_summary', 'compute_net_worth'},
+    expectedTools: <String>{
+      'get_net_worth_summary',
+      'get_investment_performance',
+    },
     objectType: 'fire_plan',
     objectId: 'plan_default',
   ),
@@ -124,7 +127,7 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     id: 'compare_period.cashflow',
     intent: 'compare_period',
     userPrompt: '对比 Q1 和 Q2 的现金流',
-    expectedTools: <String>{'get_cashflow_buckets', 'get_monthly_spend_by_category'},
+    expectedTools: <String>{'get_cashflow_buckets'},
   ),
 
   // ── explain_insight ────────────────────────────────────────────
@@ -150,7 +153,7 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     id: 'explain_chart.net_worth_trend',
     intent: 'explain_chart',
     userPrompt: '请解释这张净资产趋势图最近 12 个月的变化。',
-    expectedTools: <String>{'compute_net_worth'},
+    expectedTools: <String>{'get_net_worth_summary', 'get_cashflow_buckets'},
     objectType: 'chart',
     objectId: 'net_worth_trend',
   ),
@@ -168,7 +171,7 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     id: 'transactions.explainSelection.three_coffee_charges',
     intent: 'transactions.explainSelection',
     userPrompt: '解读这 3 笔咖啡支出的共同点和异常。',
-    expectedTools: <String>{'get_monthly_spend_by_category'},
+    expectedTools: <String>{'get_cashflow_buckets', 'get_subscription_changes'},
     objectType: 'transactions',
     objectId: 'sel_coffee_3',
   ),
