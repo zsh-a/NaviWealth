@@ -269,8 +269,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                             id: widget.expenseId!,
                           ),
                           objectLabel: _objectLabelForCapsule(l10n),
-                          context: const <String, Object?>{
-                            'timeframe': '最近 90 天',
+                          context: <String, Object?>{
+                            'timeframe':
+                                l10n.expenseFormAiTimeframeRecent90Days,
                           },
                         ),
                         const SizedBox(width: 8),

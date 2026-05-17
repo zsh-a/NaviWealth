@@ -2552,6 +2552,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatThinking => 'Thinking…';
 
   @override
+  String aiChatRunningTool(String tool) {
+    return 'Running $tool';
+  }
+
+  @override
   String get aiChatStaleSyncNotice =>
       'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
 
@@ -4537,4 +4542,190 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestCameraAction => 'Take photo';
+
+  @override
+  String get settingsAiTransparencyTitle => 'AI transparency';
+
+  @override
+  String get settingsAiTransparencySubtitle =>
+      'View detailed traces from recent AI calls';
+
+  @override
+  String get settingsAiLlmTitle => 'On-device AI · Bring your own key';
+
+  @override
+  String get settingsAiLlmSubtitle =>
+      'Manage multiple provider keys and switch local direct connections';
+
+  @override
+  String get aiLlmMissingApiKey => 'Enter an API key first';
+
+  @override
+  String get aiLlmSaved => 'Saved to secure device storage';
+
+  @override
+  String get aiLlmSwitched => 'Switched';
+
+  @override
+  String get aiLlmRemoved => 'Removed from this device';
+
+  @override
+  String get aiLlmEmpty =>
+      'No providers yet. Add an API key to run AI through a local direct connection.';
+
+  @override
+  String get aiLlmAddProvider => 'Add provider';
+
+  @override
+  String get aiLlmEditProvider => 'Edit provider';
+
+  @override
+  String get aiLlmActiveTag => 'Active';
+
+  @override
+  String get aiLlmTapToSwitch => 'Tap to switch';
+
+  @override
+  String get aiLlmNameLabel => 'Name (optional)';
+
+  @override
+  String get aiLlmNameHint => 'Anthropic official / company gateway …';
+
+  @override
+  String get aiLlmProviderLabel => 'Provider';
+
+  @override
+  String get aiLlmStoredKeyHint => 'Configured · leave blank to keep unchanged';
+
+  @override
+  String get aiLlmBaseUrlLabel => 'Custom Base URL (optional)';
+
+  @override
+  String get aiLlmModelLabel => 'Model (optional; blank uses default)';
+
+  @override
+  String get aiLlmTestConnectivity => 'Test connectivity';
+
+  @override
+  String get aiLlmTesting => 'Testing…';
+
+  @override
+  String get aiLlmSaving => 'Saving…';
+
+  @override
+  String get aiLlmIntro =>
+      'Use your own LLM API key so AI runs through a local direct connection to the provider. You can save multiple providers and switch anytime. Keys stay in this device\'s secure storage (Keychain/Keystore); they are not uploaded, synced, or backed up. Your provider account owns cost and rate limits.';
+
+  @override
+  String get aiLlmUnsupportedTitle =>
+      'This platform does not support on-device direct connections';
+
+  @override
+  String get aiLlmUnsupportedBody =>
+      'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web continues to use cloud AI.';
+
+  @override
+  String aiLlmStatusActive(String name) {
+    return 'Active: $name · local direct connection';
+  }
+
+  @override
+  String get aiLlmStatusSavedNoActive => 'Providers saved, but none selected';
+
+  @override
+  String get aiLlmStatusReadFailed => 'Could not read secure storage';
+
+  @override
+  String get aiLlmStatusNotConfigured =>
+      'Not configured · no on-device AI available';
+
+  @override
+  String aiLlmAnthropicProtocol(String provider) {
+    return '$provider (Anthropic Messages protocol)';
+  }
+
+  @override
+  String aiLlmOpenAiProtocol(String provider) {
+    return '$provider (Chat Completions protocol)';
+  }
+
+  @override
+  String get aiTransparencyFilteredEmpty =>
+      'No records match the current filter';
+
+  @override
+  String aiTransparencyLoadError(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String get aiTransparencyVerboseTitle => 'Detailed capture';
+
+  @override
+  String get aiTransparencyVerboseSubtitle =>
+      'Record each step\'s input and output (local only; cleaned after 30 days)';
+
+  @override
+  String get aiTransparencyToggleOn => 'On';
+
+  @override
+  String get aiTransparencyToggleOff => 'Off';
+
+  @override
+  String aiTransparencyRecentCalls(int count) {
+    return 'Last $count calls';
+  }
+
+  @override
+  String aiTransparencyErrors(int count) {
+    return 'Errors $count';
+  }
+
+  @override
+  String get aiTransparencyEmpty =>
+      'No AI call records yet.\nAfter the next conversation, the full trace will appear here.';
+
+  @override
+  String aiTransparencyToolsCount(int count) {
+    return 'Tools $count';
+  }
+
+  @override
+  String aiTransparencyStaleCount(int count) {
+    return 'Stale x$count';
+  }
+
+  @override
+  String get aiTransparencyUnnamedTurn => '(unnamed turn)';
+
+  @override
+  String get aiTransparencyDetailTitle => 'Call chain';
+
+  @override
+  String get aiTransparencyTraceNotFound => 'This call record was not found';
+
+  @override
+  String get aiTransparencyNoSpans =>
+      'This record has no execution chain (it predates the span model and will be cleaned automatically within 30 days).';
+
+  @override
+  String aiTransparencyEventSummary(int count, String time) {
+    return '$count events · started $time';
+  }
+
+  @override
+  String aiTraceRoundsCount(int count) {
+    return '$count rounds';
+  }
+
+  @override
+  String get aiTraceNoPayloadCaptured =>
+      'input/output was not captured (compact mode). Turn on Detailed capture on the AI transparency page; new calls will record each step\'s parameters and return values for debugging.';
+
+  @override
+  String get aiChatDeviceUnavailable =>
+      'AI requires your own API key in Settings before it can run. The model connection is made directly from this device, and requests/data do not pass through our servers. On-device AI is not supported on web yet.';
+
+  @override
+  String get expenseFormAiTimeframeRecent90Days => 'Last 90 days';
 }

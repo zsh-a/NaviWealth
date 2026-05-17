@@ -45,10 +45,11 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tracesAsync = ref.watch(recentAiTracesProvider);
     return FScaffold(
       header: FHeader.nested(
-        title: const Text('AI 透明度'),
+        title: Text(l10n.settingsAiTransparencyTitle),
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
@@ -63,9 +64,7 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
               }
               final shown = _errorsOnly
                   ? traces
-                        .where(
-                          (t) => t.terminalReason != TerminalReason.done,
-                        )
+                        .where((t) => t.terminalReason != TerminalReason.done)
                         .toList(growable: false)
                   : traces;
               return SliverMainAxisGroup(
@@ -79,10 +78,12 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
                     ),
                   ),
                   if (shown.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: Text('当前筛选下没有记录')),
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(l10n.aiTransparencyFilteredEmpty),
+                        ),
                       ),
                     )
                   else
@@ -100,8 +101,9 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
             loading: () => const SliverToBoxAdapter(
               child: Center(child: FCircularProgress()),
             ),
-            error: (e, _) =>
-                SliverToBoxAdapter(child: Center(child: Text('加载失败: $e'))),
+            error: (e, _) => SliverToBoxAdapter(
+              child: Center(child: Text(l10n.aiTransparencyLoadError('$e'))),
+            ),
           ),
         ],
       ),
@@ -117,6 +119,7 @@ class _CaptureToggle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final verbose = ref.watch(aiTraceVerboseProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -129,27 +132,28 @@ class _CaptureToggle extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '详细采集',
-                    style: AiType.body(context).copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                    l10n.aiTransparencyVerboseTitle,
+                    style: AiType.body(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '记录每步传参与返回（仅本机，30 天后清理）',
-                    style: AiType.meta(context).copyWith(
-                      color: AiTone.muted(context),
-                    ),
+                    l10n.aiTransparencyVerboseSubtitle,
+                    style: AiType.meta(
+                      context,
+                    ).copyWith(color: AiTone.muted(context)),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
             AiPill(
-              label: verbose ? '开' : '关',
+              label: verbose
+                  ? l10n.aiTransparencyToggleOn
+                  : l10n.aiTransparencyToggleOff,
               state: verbose ? AiPillState.selected : AiPillState.neutral,
-              onTap: () =>
-                  ref.read(aiTraceVerboseProvider.notifier).toggle(),
+              onTap: () => ref.read(aiTraceVerboseProvider.notifier).toggle(),
             ),
           ],
         ),
@@ -174,6 +178,7 @@ class _AggregateHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final n = traces.length;
     final errors = traces
         .where((t) => t.terminalReason != TerminalReason.done)
@@ -201,10 +206,8 @@ class _AggregateHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '最近 $n 次调用',
-              style: AiType.body(context).copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              l10n.aiTransparencyRecentCalls(n),
+              style: AiType.body(context).copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -212,7 +215,7 @@ class _AggregateHeader extends StatelessWidget {
               runSpacing: 6,
               children: [
                 AiPill(
-                  label: '错误 $errors',
+                  label: l10n.aiTransparencyErrors(errors),
                   state: errors > 0 && errorsOnly
                       ? AiPillState.error
                       : (errors > 0
@@ -364,7 +367,7 @@ class _EmptyState extends StatelessWidget {
     child: Padding(
       padding: const EdgeInsets.all(24),
       child: Text(
-        '暂无 AI 调用记录。\n下次发起对话后，会在此处看到完整轨迹。',
+        AppLocalizations.of(context).aiTransparencyEmpty,
         textAlign: TextAlign.center,
         style: context.theme.typography.sm.copyWith(
           color: context.theme.colors.mutedForeground,
@@ -380,7 +383,8 @@ class _TraceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = _displayTitle(trace);
+    final l10n = AppLocalizations.of(context);
+    final title = _displayTitle(trace, l10n);
     final source = _displaySource(trace);
     final isError = trace.terminalReason != TerminalReason.done;
     return FTappable(
@@ -425,9 +429,17 @@ class _TraceRow extends StatelessWidget {
                       if (trace.hasSpans && trace.tokenTotals.total > 0)
                         AiPill(label: '${trace.tokenTotals.total} tok'),
                       if (trace.toolSpans.isNotEmpty)
-                        AiPill(label: '工具 ${trace.toolSpans.length}'),
+                        AiPill(
+                          label: l10n.aiTransparencyToolsCount(
+                            trace.toolSpans.length,
+                          ),
+                        ),
                       if (trace.staleReadModels > 0)
-                        AiPill(label: '过期 x${trace.staleReadModels}'),
+                        AiPill(
+                          label: l10n.aiTransparencyStaleCount(
+                            trace.staleReadModels,
+                          ),
+                        ),
                       if (isError)
                         AiPill(
                           label: trace.terminalReason.wire,
@@ -454,12 +466,12 @@ class _TraceRow extends StatelessWidget {
   /// intent is more user-actionable ("explain_change" tells you *what*
   /// the turn was for, while `label` is often the chat tab's
   /// auto-generated title).
-  static String _displayTitle(AiTrace trace) {
+  static String _displayTitle(AiTrace trace, AppLocalizations l10n) {
     final intent = trace.invocation?['intent']?.toString();
     if (intent != null && intent.isNotEmpty) return intent;
     final label = trace.intent.label;
     if (label != null && label.isNotEmpty) return label;
-    return '(unnamed turn)';
+    return l10n.aiTransparencyUnnamedTurn;
   }
 
   /// "expense_detail · exp_123" — present only when the trace was
@@ -504,22 +516,24 @@ class AiTransparencyDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final traceAsync = ref.watch(aiTraceByIdProvider(requestId));
     return FScaffold(
       header: FHeader.nested(
-        title: const Text('调用链路'),
+        title: Text(l10n.aiTransparencyDetailTitle),
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
       child: traceAsync.when(
         data: (trace) {
           if (trace == null) {
-            return const Center(child: Text('未找到该次调用记录'));
+            return Center(child: Text(l10n.aiTransparencyTraceNotFound));
           }
           return _TraceWaterfallBody(trace: trace);
         },
         loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('加载失败: $e')),
+        error: (e, _) =>
+            Center(child: Text(l10n.aiTransparencyLoadError('$e'))),
       ),
     );
   }
@@ -545,7 +559,7 @@ class _TraceWaterfallBody extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(
-              '该记录无执行链路（早于 span 模型，将在 30 天内自动清理）。',
+              AppLocalizations.of(context).aiTransparencyNoSpans,
               textAlign: TextAlign.center,
               style: AiType.body(
                 context,
@@ -566,8 +580,10 @@ class _HeaderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final intent = trace.invocation?['intent']?.toString();
-    final title = intent ?? trace.intent.label ?? '(unnamed turn)';
+    final title =
+        intent ?? trace.intent.label ?? l10n.aiTransparencyUnnamedTurn;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -580,7 +596,10 @@ class _HeaderSummary extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '$eventCount 个事件 · 始于 ${_longTimestamp(trace.startedAtIso)}',
+          l10n.aiTransparencyEventSummary(
+            eventCount,
+            _longTimestamp(trace.startedAtIso),
+          ),
           style: AiType.meta(context),
         ),
         const SizedBox(height: 6),
