@@ -267,11 +267,7 @@ _Withholding _withholdingFor(
 bool _isWithholdingAccount(Account account) {
   if (account.category != AccountSide.expense) return false;
   final token = '${account.id} ${account.name}'.toLowerCase();
-  return token.contains('withholding') ||
-      token.contains('tax') ||
-      token.contains('\u9884\u6263') ||
-      token.contains('\u4ee3\u6263') ||
-      token.contains('\u7a0e');
+  return token.contains('withholding') || token.contains('tax');
 }
 
 String? _assetIdFromTags(List<String> tagIds) {

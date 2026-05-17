@@ -198,8 +198,9 @@ Map<String, Object?> aggregateLegacyCashflowBuckets({
     'series': series,
     'source': 'device_ledger',
     'note':
-        '月粒度 inflow / outflow 分桶；net_minor = inflow - outflow'
-        '（与 net_worth_snapshot.net_flow 同源但形态不同，本工具拆分桶不累计）。',
+        'Monthly inflow / outflow buckets; net_minor = inflow - outflow. '
+        'Same source as net_worth_snapshot.net_flow, but split by bucket '
+        'instead of accumulated.',
   };
 }
 

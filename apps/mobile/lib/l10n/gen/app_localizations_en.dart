@@ -99,16 +99,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dividendCenterTitle => 'Dividend Center';
 
   @override
-  String get dividendCenterYearToDate => 'Year to date';
+  String get dividendCenterMetricYtd => 'Year to date';
 
   @override
-  String get dividendCenterTrailingTwelveMonths => 'Trailing 12 months';
+  String get dividendCenterMetricTtm => 'Trailing 12 months';
 
   @override
-  String get dividendCenterYoySamePeriod => 'YoY same period';
+  String get dividendCenterMetricYoy => 'YoY same period';
 
   @override
-  String get dividendCenterWithholdingTax => 'Withholding tax';
+  String get dividendCenterMetricWithholding => 'Withholding tax';
 
   @override
   String get dividendCenterHoldingRanking => 'Holding ranking';
@@ -117,7 +117,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dividendCenterHistoryTimeline => 'History timeline';
 
   @override
-  String get dividendCenterNextTwelveMonths => 'Next 12 months';
+  String get dividendCenterForecastTitle => 'Next 12 months';
+
+  @override
+  String get dividendCenterForecastUnavailable =>
+      'Forecasting is not enabled yet.';
 
   @override
   String dividendCenterForecastSource(String source) {
@@ -125,21 +129,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dividendCenterForecastUnavailable =>
-      'No dividend forecast available yet.';
+  String get dividendCenterEmptyTitle => 'No dividend records yet';
 
   @override
-  String get dividendCenterNoRecords => 'No dividend records yet';
-
-  @override
-  String get dividendCenterEmptyDescription =>
+  String get dividendCenterEmptyBody =>
       'Record a cash dividend or corporate action to start the timeline.';
 
   @override
   String get dividendCenterRecordAction => 'Record dividend';
 
   @override
-  String dividendCenterLoadFailed(String error) {
+  String dividendCenterLoadError(String error) {
     return 'Dividend center failed to load: $error';
   }
 
@@ -157,6 +157,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dividendForecastStrategyUnknown => 'Forecast';
+
+  @override
+  String get commonNotAvailable => 'N/A';
+
+  @override
+  String get commandKeywordCashFlowCn => '现金流';
+
+  @override
+  String get commandKeywordIncomeCn => '收入';
+
+  @override
+  String get commandKeywordDividendCn => '股息';
+
+  @override
+  String get commandKeywordSalaryCn => '工资';
+
+  @override
+  String get commandKeywordDividendCenterCn => '股息中心';
+
+  @override
+  String get commandKeywordMyDividendsCn => '我的股息';
+
+  @override
+  String get commandKeywordPassiveIncomeCn => '被动收入';
+
+  @override
+  String get commandKeywordBonusDividendCn => '分红';
+
+  @override
+  String get commandKeywordWithholdingTaxCn => '代扣税';
+
+  @override
+  String get commandKeywordCorporateActionCn => '公司行动';
+
+  @override
+  String get commandKeywordSplitCn => '拆股';
+
+  @override
+  String get commandKeywordRightsIssueCn => '配股';
 
   @override
   String get accountsHubSectionCashDeposits => 'Cash & Deposits';

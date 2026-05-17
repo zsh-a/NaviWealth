@@ -101,27 +101,27 @@ class _KpiGrid extends ConsumerWidget {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             _MetricCard(
-              label: l10n.dividendCenterYearToDate,
+              label: l10n.dividendCenterMetricYtd,
               value: formatters.currency(
                 snapshot.yearToDateGross,
                 code: snapshot.baseCurrency,
               ),
             ),
             _MetricCard(
-              label: l10n.dividendCenterTrailingTwelveMonths,
+              label: l10n.dividendCenterMetricTtm,
               value: formatters.currency(
                 snapshot.ttmGross,
                 code: snapshot.baseCurrency,
               ),
             ),
             _MetricCard(
-              label: l10n.dividendCenterYoySamePeriod,
+              label: l10n.dividendCenterMetricYoy,
               value: snapshot.yearOverYearRatio == null
-                  ? '—'
+                  ? l10n.commonNotAvailable
                   : formatters.signedPercent(snapshot.yearOverYearRatio!),
             ),
             _MetricCard(
-              label: l10n.dividendCenterWithholdingTax,
+              label: l10n.dividendCenterMetricWithholding,
               value: formatters.currency(
                 snapshot.ttmWithholding,
                 code: snapshot.baseCurrency,
@@ -198,7 +198,7 @@ class _RankingSection extends ConsumerWidget {
               ),
               share: formatters.percent(row.portfolioShare),
               yieldOnCost: row.yieldOnCost == null
-                  ? '—'
+                  ? l10n.commonNotAvailable
                   : formatters.percent(row.yieldOnCost!),
               withholding: formatters.currency(
                 row.withholdingInBase,
@@ -352,7 +352,7 @@ class _ForecastCard extends ConsumerWidget {
             child: forecast.when(
               loading: () => const SkeletonBox(width: 180, height: 42),
               error: (error, stackTrace) => _ForecastText(
-                title: l10n.dividendCenterNextTwelveMonths,
+                title: l10n.dividendCenterForecastTitle,
                 subtitle: l10n.dividendCenterForecastUnavailable,
               ),
               data: (projection) {
@@ -363,7 +363,7 @@ class _ForecastCard extends ConsumerWidget {
                       )
                     : l10n.dividendCenterForecastUnavailable;
                 return _ForecastText(
-                  title: l10n.dividendCenterNextTwelveMonths,
+                  title: l10n.dividendCenterForecastTitle,
                   value: hasForecast
                       ? formatters.currency(
                           projection.total,
@@ -434,12 +434,12 @@ class _EmptyDividendState extends StatelessWidget {
           Icon(Icons.payments_outlined, color: context.theme.colors.primary),
           const SizedBox(height: 12),
           Text(
-            l10n.dividendCenterNoRecords,
+            l10n.dividendCenterEmptyTitle,
             style: context.theme.typography.lg,
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.dividendCenterEmptyDescription,
+            l10n.dividendCenterEmptyBody,
             style: context.theme.typography.sm.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
@@ -454,6 +454,23 @@ class _EmptyDividendState extends StatelessWidget {
       ),
     );
   }
+}
+
+String _dominantStrategy(ProjectedDividend projection) {
+  if (projection.strategyBreakdown.isEmpty) return projection.strategy;
+  return projection.strategyBreakdown.entries.reduce((a, b) {
+    return a.value >= b.value ? a : b;
+  }).key;
+}
+
+String _strategyLabel(AppLocalizations l10n, String strategy) {
+  return switch (strategy) {
+    'declared' => l10n.dividendForecastStrategyDeclared,
+    'dps' => l10n.dividendForecastStrategyDps,
+    'ttm' => l10n.dividendForecastStrategyTtm,
+    'composite' => l10n.dividendForecastStrategyComposite,
+    _ => l10n.dividendForecastStrategyUnknown,
+  };
 }
 
 class _SectionHeading extends StatelessWidget {
@@ -497,25 +514,8 @@ class _ErrorState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(l10n.dividendCenterLoadFailed(error.toString())),
+        child: Text(l10n.dividendCenterLoadError(error.toString())),
       ),
     );
   }
-}
-
-String _dominantStrategy(ProjectedDividend projection) {
-  if (projection.strategyBreakdown.isEmpty) return projection.strategy;
-  return projection.strategyBreakdown.entries.reduce((a, b) {
-    return a.value >= b.value ? a : b;
-  }).key;
-}
-
-String _strategyLabel(AppLocalizations l10n, String strategy) {
-  return switch (strategy) {
-    'declared' => l10n.dividendForecastStrategyDeclared,
-    'dps' => l10n.dividendForecastStrategyDps,
-    'ttm' => l10n.dividendForecastStrategyTtm,
-    'composite' => l10n.dividendForecastStrategyComposite,
-    _ => l10n.dividendForecastStrategyUnknown,
-  };
 }

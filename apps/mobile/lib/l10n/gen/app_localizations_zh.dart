@@ -99,25 +99,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dividendCenterTitle => '股息中心';
 
   @override
-  String get dividendCenterYearToDate => '年初至今';
+  String get dividendCenterMetricYtd => '年初至今';
 
   @override
-  String get dividendCenterTrailingTwelveMonths => '滚动 12 个月';
+  String get dividendCenterMetricTtm => '近 12 个月';
 
   @override
-  String get dividendCenterYoySamePeriod => '同比同期';
+  String get dividendCenterMetricYoy => '同比同期';
 
   @override
-  String get dividendCenterWithholdingTax => '预扣税';
+  String get dividendCenterMetricWithholding => '预扣税';
 
   @override
   String get dividendCenterHoldingRanking => '持仓排行';
 
   @override
-  String get dividendCenterHistoryTimeline => '历史时间轴';
+  String get dividendCenterHistoryTimeline => '历史时间线';
 
   @override
-  String get dividendCenterNextTwelveMonths => '未来 12 个月';
+  String get dividendCenterForecastTitle => '未来 12 个月';
+
+  @override
+  String get dividendCenterForecastUnavailable => '预测尚未启用。';
 
   @override
   String dividendCenterForecastSource(String source) {
@@ -125,19 +128,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get dividendCenterForecastUnavailable => '暂无可用股息预测。';
+  String get dividendCenterEmptyTitle => '暂无股息记录';
 
   @override
-  String get dividendCenterNoRecords => '暂无股息记录';
+  String get dividendCenterEmptyBody => '记录现金分红或公司行动后开始生成时间线。';
 
   @override
-  String get dividendCenterEmptyDescription => '录入现金股息或公司行动后即可生成时间轴。';
+  String get dividendCenterRecordAction => '记录股息';
 
   @override
-  String get dividendCenterRecordAction => '录入股息';
-
-  @override
-  String dividendCenterLoadFailed(String error) {
+  String dividendCenterLoadError(String error) {
     return '股息中心加载失败：$error';
   }
 
@@ -155,6 +155,45 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dividendForecastStrategyUnknown => '预测';
+
+  @override
+  String get commonNotAvailable => '暂无';
+
+  @override
+  String get commandKeywordCashFlowCn => '现金流';
+
+  @override
+  String get commandKeywordIncomeCn => '收入';
+
+  @override
+  String get commandKeywordDividendCn => '股息';
+
+  @override
+  String get commandKeywordSalaryCn => '工资';
+
+  @override
+  String get commandKeywordDividendCenterCn => '股息中心';
+
+  @override
+  String get commandKeywordMyDividendsCn => '我的股息';
+
+  @override
+  String get commandKeywordPassiveIncomeCn => '被动收入';
+
+  @override
+  String get commandKeywordBonusDividendCn => '分红';
+
+  @override
+  String get commandKeywordWithholdingTaxCn => '代扣税';
+
+  @override
+  String get commandKeywordCorporateActionCn => '公司行动';
+
+  @override
+  String get commandKeywordSplitCn => '拆股';
+
+  @override
+  String get commandKeywordRightsIssueCn => '配股';
 
   @override
   String get accountsHubSectionCashDeposits => '现金与存款';

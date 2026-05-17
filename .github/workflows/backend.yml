@@ -2,7 +2,9 @@ name: backend
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - feat/fir-170-cashflow-dividend-epic
     paths:
       - 'apps/backend/**'
       - '.github/workflows/backend.yml'

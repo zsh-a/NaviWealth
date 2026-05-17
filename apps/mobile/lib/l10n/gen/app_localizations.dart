@@ -272,119 +272,197 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get cashFlowKindOther;
 
-  /// No description provided for @dividendCenterTitle.
+  /// Dividend center page and command palette title
   ///
   /// In en, this message translates to:
   /// **'Dividend Center'**
   String get dividendCenterTitle;
 
-  /// No description provided for @dividendCenterYearToDate.
+  /// Dividend center KPI label: current year-to-date gross dividends
   ///
   /// In en, this message translates to:
   /// **'Year to date'**
-  String get dividendCenterYearToDate;
+  String get dividendCenterMetricYtd;
 
-  /// No description provided for @dividendCenterTrailingTwelveMonths.
+  /// Dividend center KPI label: trailing twelve month gross dividends
   ///
   /// In en, this message translates to:
   /// **'Trailing 12 months'**
-  String get dividendCenterTrailingTwelveMonths;
+  String get dividendCenterMetricTtm;
 
-  /// No description provided for @dividendCenterYoySamePeriod.
+  /// Dividend center KPI label: year-over-year comparison for the same period
   ///
   /// In en, this message translates to:
   /// **'YoY same period'**
-  String get dividendCenterYoySamePeriod;
+  String get dividendCenterMetricYoy;
 
-  /// No description provided for @dividendCenterWithholdingTax.
+  /// Dividend center KPI label: withholding tax total
   ///
   /// In en, this message translates to:
   /// **'Withholding tax'**
-  String get dividendCenterWithholdingTax;
+  String get dividendCenterMetricWithholding;
 
-  /// No description provided for @dividendCenterHoldingRanking.
+  /// Dividend center section title for ranked holdings
   ///
   /// In en, this message translates to:
   /// **'Holding ranking'**
   String get dividendCenterHoldingRanking;
 
-  /// No description provided for @dividendCenterHistoryTimeline.
+  /// Dividend center section title for dividend history
   ///
   /// In en, this message translates to:
   /// **'History timeline'**
   String get dividendCenterHistoryTimeline;
 
-  /// No description provided for @dividendCenterNextTwelveMonths.
+  /// Dividend center forecast placeholder title
   ///
   /// In en, this message translates to:
   /// **'Next 12 months'**
-  String get dividendCenterNextTwelveMonths;
+  String get dividendCenterForecastTitle;
 
-  /// No description provided for @dividendCenterForecastSource.
+  /// Dividend center forecast placeholder body
+  ///
+  /// In en, this message translates to:
+  /// **'Forecasting is not enabled yet.'**
+  String get dividendCenterForecastUnavailable;
+
+  /// Dividend center forecast source label
   ///
   /// In en, this message translates to:
   /// **'Source: {source}'**
   String dividendCenterForecastSource(String source);
 
-  /// No description provided for @dividendCenterForecastUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'No dividend forecast available yet.'**
-  String get dividendCenterForecastUnavailable;
-
-  /// No description provided for @dividendCenterNoRecords.
+  /// Dividend center empty-state title
   ///
   /// In en, this message translates to:
   /// **'No dividend records yet'**
-  String get dividendCenterNoRecords;
+  String get dividendCenterEmptyTitle;
 
-  /// No description provided for @dividendCenterEmptyDescription.
+  /// Dividend center empty-state body
   ///
   /// In en, this message translates to:
   /// **'Record a cash dividend or corporate action to start the timeline.'**
-  String get dividendCenterEmptyDescription;
+  String get dividendCenterEmptyBody;
 
-  /// No description provided for @dividendCenterRecordAction.
+  /// Dividend center empty-state CTA
   ///
   /// In en, this message translates to:
   /// **'Record dividend'**
   String get dividendCenterRecordAction;
 
-  /// No description provided for @dividendCenterLoadFailed.
+  /// Dividend center error state
   ///
   /// In en, this message translates to:
   /// **'Dividend center failed to load: {error}'**
-  String dividendCenterLoadFailed(String error);
+  String dividendCenterLoadError(String error);
 
-  /// No description provided for @dividendForecastStrategyDeclared.
+  /// Dividend forecast strategy label: declared corporate actions
   ///
   /// In en, this message translates to:
   /// **'Declared'**
   String get dividendForecastStrategyDeclared;
 
-  /// No description provided for @dividendForecastStrategyDps.
+  /// Dividend forecast strategy label: annualized dividend per share extrapolation
   ///
   /// In en, this message translates to:
   /// **'DPS'**
   String get dividendForecastStrategyDps;
 
-  /// No description provided for @dividendForecastStrategyTtm.
+  /// Dividend forecast strategy label: trailing twelve months
   ///
   /// In en, this message translates to:
   /// **'TTM'**
   String get dividendForecastStrategyTtm;
 
-  /// No description provided for @dividendForecastStrategyComposite.
+  /// Dividend forecast strategy label: multiple strategies combined
   ///
   /// In en, this message translates to:
   /// **'Composite'**
   String get dividendForecastStrategyComposite;
 
-  /// No description provided for @dividendForecastStrategyUnknown.
+  /// Fallback dividend forecast strategy label
   ///
   /// In en, this message translates to:
   /// **'Forecast'**
   String get dividendForecastStrategyUnknown;
+
+  /// Short fallback label when a metric is not available
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get commonNotAvailable;
+
+  /// Chinese command-palette search keyword for cash flow; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'现金流'**
+  String get commandKeywordCashFlowCn;
+
+  /// Chinese command-palette search keyword for income; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'收入'**
+  String get commandKeywordIncomeCn;
+
+  /// Chinese command-palette search keyword for dividends; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'股息'**
+  String get commandKeywordDividendCn;
+
+  /// Chinese command-palette search keyword for salary; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'工资'**
+  String get commandKeywordSalaryCn;
+
+  /// Chinese command-palette search keyword for the dividend center; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'股息中心'**
+  String get commandKeywordDividendCenterCn;
+
+  /// Chinese command-palette search keyword for a user's dividends; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'我的股息'**
+  String get commandKeywordMyDividendsCn;
+
+  /// Chinese command-palette search keyword for passive income; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'被动收入'**
+  String get commandKeywordPassiveIncomeCn;
+
+  /// Chinese command-palette search keyword for dividend distributions; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'分红'**
+  String get commandKeywordBonusDividendCn;
+
+  /// Chinese command-palette search keyword for withholding tax; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'代扣税'**
+  String get commandKeywordWithholdingTaxCn;
+
+  /// Chinese command-palette search keyword for corporate actions; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'公司行动'**
+  String get commandKeywordCorporateActionCn;
+
+  /// Chinese command-palette search keyword for stock splits; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'拆股'**
+  String get commandKeywordSplitCn;
+
+  /// Chinese command-palette search keyword for rights issues; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'配股'**
+  String get commandKeywordRightsIssueCn;
 
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
@@ -782,7 +860,7 @@ abstract class AppLocalizations {
   /// **'TTM dividends, interest, and other passive income'**
   String get homePassiveIncomeSubtitle;
 
-  /// No description provided for @homePassiveIncomeSubtitleWithNextMonth.
+  /// Home passive income card subtitle when the next-month forecast is available
   ///
   /// In en, this message translates to:
   /// **'TTM passive income · next month est. {amount}'**
