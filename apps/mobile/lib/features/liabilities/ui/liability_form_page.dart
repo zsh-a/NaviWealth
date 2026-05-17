@@ -107,16 +107,6 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         header: FHeader.nested(
           title: Text(l10n.liabilitiesAddAction),
           prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-          suffixes: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: _saving ? null : _save,
-                child: Text(l10n.liabilitySaveAction),
-              ),
-            ),
-          ],
         ),
         childPad: false,
         child: Material(
@@ -124,9 +114,15 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: AppFormScaffoldBody(
+              action: SizedBox(
+                width: double.infinity,
+                child: FButton(
+                  variant: FButtonVariant.primary,
+                  onPress: _saving ? null : _save,
+                  child: Text(l10n.liabilitySaveAction),
+                ),
+              ),
               children: [
                 FSelect<LiabilityType>(
                   items: {

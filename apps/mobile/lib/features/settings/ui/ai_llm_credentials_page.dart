@@ -164,26 +164,60 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final supported = ref.watch(deviceLlmPlatformSupportedProvider);
+    final asyncCreds = ref.watch(llmCredentialsProvider);
+    final creds = asyncCreds.asData?.value ?? const LlmCredentials();
+    final profiles = creds.profiles;
+    final editing = _editingId != null;
+    final existing = editing
+        ? profiles
+              .where((p) => p.id == _editingId)
+              .cast<LlmProfile?>()
+              .firstWhere((_) => true, orElse: () => null)
+        : null;
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.settingsAiLlmTitle),
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        children: supported
-            ? _supportedBody(context)
-            : [_unsupportedCard(context)],
-      ),
+      child: !supported
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [_unsupportedCard(context)],
+            )
+          : editing
+          ? AppFormScaffoldBody(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              action: _editorActions(context, existing),
+              children: _supportedBody(
+                context,
+                asyncCreds: asyncCreds,
+                profiles: profiles,
+                existing: existing,
+                includeEditorActions: false,
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: _supportedBody(
+                context,
+                asyncCreds: asyncCreds,
+                profiles: profiles,
+                existing: null,
+              ),
+            ),
     );
   }
 
-  List<Widget> _supportedBody(BuildContext context) {
-    final asyncCreds = ref.watch(llmCredentialsProvider);
+  List<Widget> _supportedBody(
+    BuildContext context, {
+    required AsyncValue<LlmCredentials?> asyncCreds,
+    required List<LlmProfile> profiles,
+    required LlmProfile? existing,
+    bool includeEditorActions = true,
+  }) {
     final l10n = AppLocalizations.of(context);
     final creds = asyncCreds.asData?.value ?? const LlmCredentials();
-    final profiles = creds.profiles;
 
     return [
       _intro(context),
@@ -205,13 +239,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         ],
       if (_editingId != null) ...[
         const SizedBox(height: 2),
-        _editorCard(
-          context,
-          profiles
-              .where((p) => p.id == _editingId)
-              .cast<LlmProfile?>()
-              .firstWhere((_) => true, orElse: () => null),
-        ),
+        _editorCard(context, existing, includeActions: includeEditorActions),
       ] else ...[
         const SizedBox(height: 4),
         FButton(
@@ -303,7 +331,11 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     );
   }
 
-  Widget _editorCard(BuildContext context, LlmProfile? existing) {
+  Widget _editorCard(
+    BuildContext context,
+    LlmProfile? existing, {
+    bool includeActions = true,
+  }) {
     final l10n = AppLocalizations.of(context);
     final hasStoredKey = existing?.hasKey ?? false;
     return SoftCard(
@@ -394,27 +426,34 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  onPress: _saving ? null : () => _save(existing),
-                  child: Text(_saving ? l10n.aiLlmSaving : l10n.commonSave),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: _saving ? null : _closeEditor,
-                  child: Text(l10n.commonCancel),
-                ),
-              ),
-            ],
-          ),
+          if (includeActions) ...[
+            const SizedBox(height: 14),
+            _editorActions(context, existing),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _editorActions(BuildContext context, LlmProfile? existing) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: FButton(
+            onPress: _saving ? null : () => _save(existing),
+            child: Text(_saving ? l10n.aiLlmSaving : l10n.commonSave),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FButton(
+            variant: FButtonVariant.outline,
+            onPress: _saving ? null : _closeEditor,
+            child: Text(l10n.commonCancel),
+          ),
+        ),
+      ],
     );
   }
 
