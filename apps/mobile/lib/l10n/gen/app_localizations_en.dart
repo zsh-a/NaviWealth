@@ -554,6 +554,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubAssetTypeWealthProduct => 'Wealth product';
 
   @override
+  String get portfolioHubEnginesTitle => 'Engine views';
+
+  @override
+  String get portfolioHubRealizedPnlTitle => 'Realized P/L';
+
+  @override
+  String portfolioHubRealizedPnlCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lots',
+      one: '1 lot',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubRealizedPnlEmpty => 'No closed lots yet.';
+
+  @override
+  String portfolioHubHoldingPeriod(String period) {
+    return 'Held $period';
+  }
+
+  @override
+  String portfolioHubHoldingYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count years',
+      one: '1 year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubDividendForecastTitle => 'Dividend forecast';
+
+  @override
+  String get portfolioHubDividendForecastEmpty => 'No projected dividends yet.';
+
+  @override
+  String get portfolioHubDividendForecastEvent => 'Projected payout';
+
+  @override
+  String get portfolioHubForecastConfidenceHigh => 'High confidence';
+
+  @override
+  String get portfolioHubForecastConfidenceMedium => 'Medium confidence';
+
+  @override
+  String get portfolioHubForecastConfidenceLow => 'Low confidence';
+
+  @override
+  String get portfolioHubEventTimelineTitle => 'Event timeline';
+
+  @override
+  String portfolioHubEventTimelineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count events',
+      one: '1 event',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubEventTimelineEmpty =>
+      'No dividend or corporate-action events yet.';
+
+  @override
+  String get assetDetailFxPnlTitle => 'Price vs FX contribution';
+
+  @override
+  String get assetDetailFxPnlMarketLeg => 'Price movement';
+
+  @override
+  String get assetDetailFxPnlCurrencyLeg => 'FX movement';
+
+  @override
+  String get assetDetailFxPnlTotal => 'Total base P/L';
+
+  @override
+  String assetDetailFxPnlLoadError(String error) {
+    return 'FX P/L failed to load: $error';
+  }
+
+  @override
   String get dashboardAiInsightsTitle => 'Insights for you';
 
   @override

@@ -1,10 +1,15 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/dividend_forecast.dart';
+import 'package:naviwealth/features/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/investment/domain/reporting/holding_report.dart';
 import 'package:naviwealth/features/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/investment/domain/returns/xirr_engine.dart';
 import 'package:naviwealth/features/investment/presentation/portfolio_hub_page.dart';
@@ -133,6 +138,15 @@ void main() {
         cashFlows: const [],
         solution: const XirrConverged(rate: 0.12, iterations: 3),
       ),
+      realizedPnl: const [],
+      dividendForecast: ProjectedDividend.empty(
+        assetId: 'portfolio',
+        currency: 'USD',
+        strategy: 'composite',
+        confidence: DividendForecastConfidence.low,
+      ),
+      dividendEvents: const [],
+      corporateActions: const [],
     );
 
     final accountGroups = state.groupsFor(PortfolioHubView.account, l10n);
@@ -147,5 +161,31 @@ void main() {
     final assetClassGroups = state.groupsFor(PortfolioHubView.assetClass, l10n);
     expect(assetClassGroups.map((group) => group.title), ['ETF', 'Stock']);
     expect(assetClassGroups.first.unrealizedPnlInBase, _d('60'));
+  });
+
+  test('portfolio FX PnL provider exposes total report breakdown', () async {
+    final report = PortfolioHoldingReport(
+      assets: const {},
+      totalCostBasisAtOpenFxInBase: _d('100'),
+      totalMarketValueInBase: _d('130'),
+      totalPnlBreakdown: FxPnLBreakdown(
+        marketPnLInBase: _d('20'),
+        fxPnLInBase: _d('10'),
+        baseCurrency: 'USD',
+      ),
+      baseCurrency: 'USD',
+      asOf: DateTime.utc(2026, 5, 17),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        portfolioHoldingReportProvider.overrideWith((_) async => report),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(portfolioHoldingReportProvider.future);
+
+    expect(container.read(portfolioFxPnlProvider).marketPnLInBase, _d('20'));
+    expect(container.read(portfolioFxPnlProvider).fxPnLInBase, _d('10'));
   });
 }

@@ -1100,6 +1100,138 @@ abstract class AppLocalizations {
   /// **'Wealth product'**
   String get portfolioHubAssetTypeWealthProduct;
 
+  /// No description provided for @portfolioHubEnginesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine views'**
+  String get portfolioHubEnginesTitle;
+
+  /// No description provided for @portfolioHubRealizedPnlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized P/L'**
+  String get portfolioHubRealizedPnlTitle;
+
+  /// No description provided for @portfolioHubRealizedPnlCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 lot} other{{count} lots}}'**
+  String portfolioHubRealizedPnlCount(int count);
+
+  /// No description provided for @portfolioHubRealizedPnlEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No closed lots yet.'**
+  String get portfolioHubRealizedPnlEmpty;
+
+  /// No description provided for @portfolioHubHoldingPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Held {period}'**
+  String portfolioHubHoldingPeriod(String period);
+
+  /// No description provided for @portfolioHubHoldingYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 year} other{{count} years}}'**
+  String portfolioHubHoldingYears(int count);
+
+  /// No description provided for @portfolioHubHoldingMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 month} other{{count} months}}'**
+  String portfolioHubHoldingMonths(int count);
+
+  /// No description provided for @portfolioHubHoldingDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String portfolioHubHoldingDays(int count);
+
+  /// No description provided for @portfolioHubDividendForecastTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend forecast'**
+  String get portfolioHubDividendForecastTitle;
+
+  /// No description provided for @portfolioHubDividendForecastEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No projected dividends yet.'**
+  String get portfolioHubDividendForecastEmpty;
+
+  /// No description provided for @portfolioHubDividendForecastEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Projected payout'**
+  String get portfolioHubDividendForecastEvent;
+
+  /// No description provided for @portfolioHubForecastConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High confidence'**
+  String get portfolioHubForecastConfidenceHigh;
+
+  /// No description provided for @portfolioHubForecastConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium confidence'**
+  String get portfolioHubForecastConfidenceMedium;
+
+  /// No description provided for @portfolioHubForecastConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low confidence'**
+  String get portfolioHubForecastConfidenceLow;
+
+  /// No description provided for @portfolioHubEventTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event timeline'**
+  String get portfolioHubEventTimelineTitle;
+
+  /// No description provided for @portfolioHubEventTimelineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 event} other{{count} events}}'**
+  String portfolioHubEventTimelineCount(int count);
+
+  /// No description provided for @portfolioHubEventTimelineEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend or corporate-action events yet.'**
+  String get portfolioHubEventTimelineEmpty;
+
+  /// No description provided for @assetDetailFxPnlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Price vs FX contribution'**
+  String get assetDetailFxPnlTitle;
+
+  /// No description provided for @assetDetailFxPnlMarketLeg.
+  ///
+  /// In en, this message translates to:
+  /// **'Price movement'**
+  String get assetDetailFxPnlMarketLeg;
+
+  /// No description provided for @assetDetailFxPnlCurrencyLeg.
+  ///
+  /// In en, this message translates to:
+  /// **'FX movement'**
+  String get assetDetailFxPnlCurrencyLeg;
+
+  /// No description provided for @assetDetailFxPnlTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total base P/L'**
+  String get assetDetailFxPnlTotal;
+
+  /// No description provided for @assetDetailFxPnlLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'FX P/L failed to load: {error}'**
+  String assetDetailFxPnlLoadError(String error);
+
   /// Section header above the home AI Insight Feed
   ///
   /// In en, this message translates to:
