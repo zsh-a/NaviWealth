@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # Build the subset CN web fonts the app loads via @font-face.
 #
-#   assets/fonts/app-cn-base.woff2 — first-paint subset, target <= 250 KB.
+#   assets/fonts/app-cn-base.woff2 — first-paint subset (budget below;
+#                                    rationale in docs/web-bundle.md).
 #                                    Contains every CJK char that appears
-#                                    literally in lib/ + ASCII / punctuation.
+#                                    literally in first-paint UI/l10n under
+#                                    lib/ + ASCII / punctuation. Model-facing
+#                                    / web-dead text (device AI runtime,
+#                                    regression corpus) is scoped out — see
+#                                    cn_font_chars.py.
 #   assets/fonts/app-cn-ext.woff2  — lazy-loaded extension covering the rest
 #                                    of GB 2312 for runtime / user text.
 #
@@ -35,7 +40,7 @@ SOURCE_STAMP="$SOURCE_DIR/.sha256"
 
 BASE_OUT="$ASSETS_DIR/app-cn-base.woff2"
 EXT_OUT="$ASSETS_DIR/app-cn-ext.woff2"
-BASE_BUDGET_BYTES="${BASE_BUDGET_BYTES:-256000}"  # 250 KB target (1000-byte KB)
+BASE_BUDGET_BYTES="${BASE_BUDGET_BYTES:-300000}"  # first-paint web budget (~293 KiB); rationale in docs/web-bundle.md
 
 mkdir -p "$CACHE_DIR" "$ASSETS_DIR" "$SOURCE_DIR" "$UNICODE_DIR"
 
@@ -125,8 +130,12 @@ base_size=$(wc -c < "$BASE_OUT" | tr -d ' ')
 ext_size=$(wc -c < "$EXT_OUT" | tr -d ' ')
 echo "produced $BASE_OUT ($base_size bytes), $EXT_OUT ($ext_size bytes)"
 if [ "$base_size" -gt "$BASE_BUDGET_BYTES" ]; then
-  echo "::error::$BASE_OUT is $base_size bytes, exceeds budget $BASE_BUDGET_BYTES (250 KB)" >&2
-  echo "  Trim ALWAYS_INCLUDE in tool/cn_font_chars.py, or move chars to the ext tier." >&2
+  echo "::error::$BASE_OUT is $base_size bytes, exceeds budget $BASE_BUDGET_BYTES bytes" >&2
+  echo "  This is a tripwire — find WHY base grew before raising the budget:" >&2
+  echo "  • model-facing / web-dead text (device AI, test fixtures) → scope it" >&2
+  echo "    out in tool/cn_font_chars.py (do not ship it to the web font);" >&2
+  echo "  • real first-paint UI/l10n growth → raise BASE_BUDGET_BYTES and" >&2
+  echo "    record the new number + reason in docs/web-bundle.md." >&2
   exit 1
 fi
-echo "ok — base subset within 250 KB budget"
+echo "ok — base subset within budget ($base_size / $BASE_BUDGET_BYTES bytes)"

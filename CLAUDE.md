@@ -121,8 +121,10 @@ lib/
                     accounts, activity, ai_chat, analytics, assets, auth,
                     expense, fire, home, investment, liabilities, rebalance,
                     settings, shared
-  design_system/  W3C Design Tokens, themes, charts, reusable widgets.
-                  UI is built on Forui (FCard / FButton / FTheme(zinc)).
+  design_system/  W3C Design Tokens (color / typography / motion / dimension),
+                  themes, charts, reusable widgets. UI is built on Forui
+                  (FCard / FButton / FTheme(zinc)); spacing & radius via
+                  AppSpacing / AppRadius tokens (no magic numbers in chrome).
   l10n/           Localization (en + zh, ARB files)
 ```
 
@@ -147,7 +149,7 @@ migrations/       D1 SQL migrations (AI read-model tables kept as history; W-D7)
 - **Database**: Drift ORM; SQLCipher (native), sqlite3 WASM (web).
 - **Auth**: single-user JWT (HS256), no registration endpoint; `BYPASS_AUTH` for dev.
 - **Routing**: go_router with Path URL strategy; deferred imports for web code-splitting.
-- **AI**: device-only — on-device agent runtime calls the Anthropic API directly with the user's own key (W-D7 deleted the cloud AI backend; no `/ai/chat` relay, no cloud fallback; web has no AI). See `docs/ai-architecture.md` §4.6.
+- **AI**: device-only — on-device agent runtime calls the user's chosen LLM provider (Anthropic- **or** OpenAI-compatible endpoint) directly with the user's own key; provider + key managed as switchable `LlmProfile`s in Settings, no opt-in toggle (W-D7 deleted the cloud AI backend; no `/ai/chat` relay, no cloud fallback; web has no AI). See `docs/ai-architecture.md` §4.6 + §8 Wave 46.
 
 ---
 

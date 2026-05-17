@@ -144,49 +144,52 @@ class AppSheet extends StatelessWidget {
     final colors = context.theme.colors;
 
     // ── Footer branch: scrollable body + pinned, keyboard-aware footer.
+    //
+    // Keyboard avoidance is owned entirely by forui's modal sheet
+    // (`showFSheet(resizeToAvoidBottomInset: true)`), which translates
+    // the whole min-sized sheet — footer included — up above the
+    // keyboard. We must NOT also pad by `viewInsets.bottom` here: that
+    // double-counts the keyboard, inflating the sheet so it's jammed to
+    // the top with a keyboard-sized empty band above the keyboard.
     if (footer != null) {
-      final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
       final hairline = colors.foreground.withValues(
         alpha: colors.brightness == Brightness.dark ? 0.12 : 0.10,
       );
       return AppSheetSurface(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: keyboardInset),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _dragHandle(colors),
-              _header(context),
-              Flexible(
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s4,
-                    AppSpacing.s16,
-                    AppSpacing.s12,
-                  ),
-                  child: child,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _dragHandle(colors),
+            _header(context),
+            Flexible(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s4,
+                  AppSpacing.s16,
+                  AppSpacing.s12,
                 ),
+                child: child,
               ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: hairline)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s12,
-                    AppSpacing.s16,
-                    AppSpacing.s12,
-                  ),
-                  child: footer,
-                ),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: hairline)),
               ),
-            ],
-          ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s12,
+                  AppSpacing.s16,
+                  AppSpacing.s12,
+                ),
+                child: footer,
+              ),
+            ),
+          ],
         ),
       );
     }
