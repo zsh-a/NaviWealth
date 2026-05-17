@@ -7,7 +7,8 @@
 /// terminal `stop`.
 library;
 
-import '../../../core/ai/contracts/contracts.dart' show Freshness;
+import '../../../core/ai/contracts/contracts.dart'
+    show AiSpanKind, AiSpanStatus, Freshness, SpanTokens;
 
 sealed class AiChatEvent {
   const AiChatEvent();
@@ -127,6 +128,49 @@ class ErrorEvent extends AiChatEvent {
   const ErrorEvent(this.message, {this.code});
   final String message;
   final String? code;
+}
+
+/// Observability-only frame: one finished execution span (an LLM
+/// round or a tool dispatch). **Additive** — emitted by
+/// `DeviceAgentLoop` after the unit completes, consumed solely by the
+/// trace builder. Message-state consumers ignore it (it never mutates
+/// the assistant turn). Carries absolute wall-clock `startedAt` /
+/// `endedAt`; `AiTraceBuilder` anchors them to the trace start to get
+/// the waterfall offset.
+class SpanEvent extends AiChatEvent {
+  const SpanEvent({
+    required this.id,
+    this.parentId,
+    required this.kind,
+    required this.name,
+    required this.startedAt,
+    required this.endedAt,
+    this.status = AiSpanStatus.ok,
+    this.errorCode,
+    this.errorMessage,
+    this.tokens,
+    this.model,
+    this.stopReason,
+    this.input,
+    this.output,
+    this.attributes,
+  });
+
+  final String id;
+  final String? parentId;
+  final AiSpanKind kind;
+  final String name;
+  final DateTime startedAt;
+  final DateTime endedAt;
+  final AiSpanStatus status;
+  final String? errorCode;
+  final String? errorMessage;
+  final SpanTokens? tokens;
+  final String? model;
+  final String? stopReason;
+  final Object? input;
+  final Object? output;
+  final Map<String, Object?>? attributes;
 }
 
 /// Stream terminator. `stopReason` is Anthropic's verbatim value

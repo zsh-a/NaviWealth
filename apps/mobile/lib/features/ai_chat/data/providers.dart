@@ -231,9 +231,19 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
           )
         : seed;
 
-    return (pack: pack, traceSeed: effectiveSeed, localHlcText: localHlcText);
+    return (
+      pack: pack,
+      traceSeed: effectiveSeed,
+      localHlcText: localHlcText,
+      traceVerbose: ref.read(aiTraceVerboseProvider),
+    );
   } catch (_) {
-    return (pack: null, traceSeed: null, localHlcText: null);
+    return (
+      pack: null,
+      traceSeed: null,
+      localHlcText: null,
+      traceVerbose: false,
+    );
   }
 }
 

@@ -91,12 +91,15 @@ AiTrace _trace({
   usedCloud: backend != Backend.device,
   usedRawLedger: usedRawLedger,
   totalDurationMs: durationMs,
-  toolCalls: List<TraceToolCall>.generate(
+  spans: List<AiSpan>.generate(
     toolCount,
-    (i) => TraceToolCall(
-      name: 'tool_$i',
+    (i) => AiSpan(
+      id: 'tool:$i',
+      parentId: 'r1',
+      kind: AiSpanKind.tool,
+      name: 'tool:tool_$i',
+      startOffsetMs: i * 10,
       durationMs: 10,
-      ok: true,
     ),
   ),
   staleReadModelNames: Set<String>.from(

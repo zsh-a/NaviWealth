@@ -534,7 +534,12 @@ void main() {
             usedRawLedger: false,
             totalDurationMs: 0,
           );
-          return (pack: pack, traceSeed: seed, localHlcText: null);
+          return (
+            pack: pack,
+            traceSeed: seed,
+            localHlcText: null,
+            traceVerbose: false,
+          );
         },
         traceStore: traceStore,
       );
@@ -562,20 +567,29 @@ void main() {
       expect(api.lastContextPack!.budget.tier, BudgetTier.standard);
     });
 
-    test('appends a finalised AiTrace to the store with tool calls', () async {
-      api.script.addAll(const <AiChatEvent>[
-        TextEvent('查到了。'),
-        ToolCallEvent(
+    test('appends a finalised AiTrace to the store with tool spans', () async {
+      final t0 = DateTime.parse('2026-05-10T10:00:00.100Z');
+      api.script.addAll(<AiChatEvent>[
+        const TextEvent('查到了。'),
+        const ToolCallEvent(
           id: 't_1',
           name: 'list_recent_expenses',
           input: <String, Object?>{},
         ),
-        ToolResultEvent(
+        const ToolResultEvent(
           id: 't_1',
           name: 'list_recent_expenses',
           output: <String, Object?>{'count': 12},
         ),
-        DoneEvent(stopReason: 'end_turn', rounds: 1),
+        SpanEvent(
+          id: 'tool:t_1',
+          parentId: 'r1',
+          kind: AiSpanKind.tool,
+          name: 'tool:list_recent_expenses',
+          startedAt: t0,
+          endedAt: t0.add(const Duration(milliseconds: 40)),
+        ),
+        const DoneEvent(stopReason: 'end_turn', rounds: 1),
       ]);
       final id = await activeSessionId();
       await repo.sendMessage(
@@ -590,19 +604,20 @@ void main() {
       expect(trace.intent.label, 'chat_turn');
       expect(trace.backend, Backend.hybrid);
       expect(trace.usedCloud, isTrue);
-      expect(trace.toolCalls, hasLength(1));
-      expect(trace.toolCalls.single.name, 'list_recent_expenses');
-      expect(trace.toolCalls.single.ok, isTrue);
+      expect(trace.toolSpans, hasLength(1));
+      expect(trace.toolSpans.single.name, 'tool:list_recent_expenses');
+      expect(trace.toolSpans.single.isError, isFalse);
     });
 
-    test('flags tool error in trace when output has error field', () async {
-      api.script.addAll(const <AiChatEvent>[
-        ToolCallEvent(
+    test('flags tool error in trace when span status is error', () async {
+      final t0 = DateTime.parse('2026-05-10T10:00:00.100Z');
+      api.script.addAll(<AiChatEvent>[
+        const ToolCallEvent(
           id: 't_err',
           name: 'propose_trade',
           input: <String, Object?>{},
         ),
-        ToolResultEvent(
+        const ToolResultEvent(
           id: 't_err',
           name: 'propose_trade',
           output: <String, Object?>{
@@ -610,7 +625,17 @@ void main() {
             'code': 'proposal_cap_exceeded',
           },
         ),
-        DoneEvent(stopReason: 'end_turn', rounds: 1),
+        SpanEvent(
+          id: 'tool:t_err',
+          parentId: 'r1',
+          kind: AiSpanKind.tool,
+          name: 'tool:propose_trade',
+          startedAt: t0,
+          endedAt: t0.add(const Duration(milliseconds: 5)),
+          status: AiSpanStatus.error,
+          errorCode: 'proposal_cap_exceeded',
+        ),
+        const DoneEvent(stopReason: 'end_turn', rounds: 1),
       ]);
       final id = await activeSessionId();
       await repo.sendMessage(
@@ -620,7 +645,8 @@ void main() {
       );
 
       final trace = (await traceStore.recent()).single;
-      expect(trace.toolCalls.single.ok, isFalse);
+      expect(trace.toolSpans.single.isError, isTrue);
+      expect(trace.toolSpans.single.errorCode, 'proposal_cap_exceeded');
     });
 
     test('still finalises trace when stream errors mid-flight', () async {
@@ -667,7 +693,12 @@ void main() {
         usedRawLedger: false,
         totalDurationMs: 0,
       );
-      return (pack: pack, traceSeed: seed, localHlcText: localHlcText);
+      return (
+        pack: pack,
+        traceSeed: seed,
+        localHlcText: localHlcText,
+        traceVerbose: false,
+      );
     }
 
     setUp(() async {

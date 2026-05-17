@@ -26,7 +26,7 @@ class AiRouter {
   RoutingDecision decide(RoutingInputs inputs) => decideRouting(inputs);
 
   /// Build the initial trace row for this decision. The caller fills
-  /// in [AiTrace.totalDurationMs] / disclosures / toolCalls once
+  /// in [AiTrace.totalDurationMs] / disclosures / spans once
   /// execution completes; until then this is a 'started' record only.
   AiTrace seedTrace({
     required String requestId,

@@ -56,8 +56,8 @@ String formatAiTraceBadge(AiTrace trace) {
       parts.add('本地数据 + 云端推理');
   }
   parts.add(trace.usedRawLedger ? '已授权使用明细数据' : '未上传原始交易明细');
-  if (trace.toolCalls.isNotEmpty) {
-    parts.add('${trace.toolCalls.length} 个工具');
+  if (trace.toolSpans.isNotEmpty) {
+    parts.add('${trace.toolSpans.length} 个工具');
   }
   // 当云端 read model 落后本地写入时，提示数据陈旧（freshness gate
   // §4.2 兜底通道的轻量级形态：日志 + 用户可见提示，不重发请求）。

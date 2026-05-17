@@ -6,6 +6,7 @@
 /// retention; older rows are pruned by [AiTraceStore].
 library;
 
+import 'ai_span.dart';
 import 'intent.dart';
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 import 'scoped_disclosure.dart'
@@ -32,35 +33,6 @@ extension BackendWire on Backend {
     'hybrid' => Backend.hybrid,
     _ => Backend.device,
   };
-}
-
-class TraceToolCall {
-  const TraceToolCall({
-    required this.name,
-    required this.durationMs,
-    required this.ok,
-  });
-
-  final String name;
-  final int durationMs;
-  final bool ok;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'name': name,
-    'duration_ms': durationMs,
-    'ok': ok,
-  };
-
-  factory TraceToolCall.fromJson(Map<String, Object?> json) {
-    final n = json['name'];
-    final d = json['duration_ms'];
-    final ok = json['ok'];
-    return TraceToolCall(
-      name: n is String ? n : '',
-      durationMs: d is int ? d : 0,
-      ok: ok is bool ? ok : false,
-    );
-  }
 }
 
 class DisclosureSummary {
@@ -148,10 +120,10 @@ class AiTrace {
     required this.usedRawLedger,
     required this.totalDurationMs,
     this.disclosures = const <DisclosureSummary>[],
-    this.toolCalls = const <TraceToolCall>[],
     this.staleReadModelNames = const <String>{},
     this.terminalReason = TerminalReason.done,
     this.invocation,
+    this.spans = const <AiSpan>[],
   });
 
   final String requestId;
@@ -173,7 +145,6 @@ class AiTrace {
 
   final int totalDurationMs;
   final List<DisclosureSummary> disclosures;
-  final List<TraceToolCall> toolCalls;
 
   /// Read model names whose `source_hlc_watermark` was behind the
   /// device's local HLC at tool_result time. Drives the transparency
@@ -193,8 +164,45 @@ class AiTrace {
   /// in the chat tab directly).
   final Map<String, Object?>? invocation;
 
+  /// Opik-style hierarchical execution spans (LLM rounds + tool
+  /// calls + the synthesised root `turn`). Additive: empty for traces
+  /// written before spans existed, so the transparency page falls
+  /// back to the flat timeline. Flat list + `parentId`; the tree is
+  /// rebuilt in the UI.
+  final List<AiSpan> spans;
+
   /// Count form for UI / older callers.
   int get staleReadModels => staleReadModelNames.length;
+
+  /// True when this trace carries the new span model (drives the
+  /// waterfall view vs. the legacy flat-timeline fallback).
+  bool get hasSpans => spans.isNotEmpty;
+
+  Iterable<AiSpan> get llmSpans =>
+      spans.where((s) => s.kind == AiSpanKind.llm);
+
+  Iterable<AiSpan> get toolSpans =>
+      spans.where((s) => s.kind == AiSpanKind.tool);
+
+  /// Number of inner LLM round-trips (Opik "spans" count proxy).
+  int get llmRoundCount => llmSpans.length;
+
+  int get errorSpanCount => spans.where((s) => s.isError).length;
+
+  /// Sum of every LLM span's token usage — powers the list-page
+  /// aggregate header and the per-trace token chip.
+  SpanTokens get tokenTotals {
+    var i = 0, o = 0, cr = 0, cw = 0;
+    for (final s in llmSpans) {
+      final t = s.tokens;
+      if (t == null) continue;
+      i += t.input;
+      o += t.output;
+      cr += t.cacheRead;
+      cw += t.cacheWrite;
+    }
+    return SpanTokens(input: i, output: o, cacheRead: cr, cacheWrite: cw);
+  }
 
   Map<String, Object?> toJson() => <String, Object?>{
     'request_id': requestId,
@@ -207,12 +215,13 @@ class AiTrace {
     'used_raw_ledger': usedRawLedger,
     'total_duration_ms': totalDurationMs,
     'disclosures': disclosures.map((d) => d.toJson()).toList(growable: false),
-    'tool_calls': toolCalls.map((t) => t.toJson()).toList(growable: false),
     if (staleReadModelNames.isNotEmpty)
       'stale_read_model_names': staleReadModelNames.toList(growable: false),
     'terminal_reason': terminalReason.wire,
     if (invocation != null && invocation!.isNotEmpty)
       'invocation': invocation,
+    if (spans.isNotEmpty)
+      'spans': spans.map((s) => s.toJson()).toList(growable: false),
   };
 
   factory AiTrace.fromJson(Map<String, Object?> json) {
@@ -250,7 +259,6 @@ class AiTrace {
       usedRawLedger: ul is bool ? ul : false,
       totalDurationMs: td is int ? td : 0,
       disclosures: _list(json['disclosures'], DisclosureSummary.fromJson),
-      toolCalls: _list(json['tool_calls'], TraceToolCall.fromJson),
       staleReadModelNames: staleNames,
       terminalReason: switch (json['terminal_reason']) {
         final String s => TerminalReasonWire.parse(s),
@@ -260,6 +268,7 @@ class AiTrace {
         final Map<Object?, Object?> raw => _strKeyed(raw),
         _ => null,
       },
+      spans: _list(json['spans'], AiSpan.fromJson),
     );
   }
 
@@ -283,10 +292,10 @@ class AiTrace {
     usedRawLedger: usedRawLedger,
     totalDurationMs: totalDurationMs,
     disclosures: disclosures,
-    toolCalls: toolCalls,
     staleReadModelNames: staleReadModelNames,
     terminalReason: terminalReason,
     invocation: invocation,
+    spans: spans,
   );
 }
 

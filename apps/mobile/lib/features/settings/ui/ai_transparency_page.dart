@@ -5,13 +5,12 @@
 ///     compact row per turn. The row carries the chips that matter
 ///     most for quick scanning (backend, duration, terminal reason,
 ///     tool count, stale count).
-///   - [AiTransparencyDetailPage] — vertical **timeline** of the
-///     selected trace's call chain. Replaces the old flat-section
-///     layout: see `ai_trace_timeline.dart` for the event model.
+///   - [AiTransparencyDetailPage] — Opik-style **span tree +
+///     waterfall** of the selected trace, with a per-span detail
+///     panel. See `ai_trace_waterfall.dart`.
 ///
 /// The list page intentionally stays thin so the detail page does the
-/// heavy lifting. Adding a new event type to a turn requires zero
-/// changes here (timeline builder takes care of it).
+/// heavy lifting.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -21,23 +20,31 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/trace/ai_trace_capture_preference.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/drift_undo_stack.dart';
 import '../../../core/ai/write/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'ai_trace_timeline.dart';
+import 'ai_trace_waterfall.dart';
 
 // ===========================================================================
 // List page.
 // ===========================================================================
 
-class AiTransparencyPage extends ConsumerWidget {
+class AiTransparencyPage extends ConsumerStatefulWidget {
   const AiTransparencyPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AiTransparencyPage> createState() => _AiTransparencyPageState();
+}
+
+class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
+  bool _errorsOnly = false;
+
+  @override
+  Widget build(BuildContext context) {
     final tracesAsync = ref.watch(recentAiTracesProvider);
     return FScaffold(
       header: FHeader.nested(
@@ -48,18 +55,46 @@ class AiTransparencyPage extends ConsumerWidget {
       child: CustomScrollView(
         slivers: <Widget>[
           const SliverToBoxAdapter(child: _UndoSection()),
+          const SliverToBoxAdapter(child: _CaptureToggle()),
           tracesAsync.when(
             data: (traces) {
               if (traces.isEmpty) {
                 return const SliverToBoxAdapter(child: _EmptyState());
               }
-              return SliverList.separated(
-                itemCount: traces.length,
-                separatorBuilder: (_, _) => const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: FDivider(),
-                ),
-                itemBuilder: (context, i) => _TraceRow(trace: traces[i]),
+              final shown = _errorsOnly
+                  ? traces
+                        .where(
+                          (t) => t.terminalReason != TerminalReason.done,
+                        )
+                        .toList(growable: false)
+                  : traces;
+              return SliverMainAxisGroup(
+                slivers: <Widget>[
+                  SliverToBoxAdapter(
+                    child: _AggregateHeader(
+                      traces: traces,
+                      errorsOnly: _errorsOnly,
+                      onToggleErrors: () =>
+                          setState(() => _errorsOnly = !_errorsOnly),
+                    ),
+                  ),
+                  if (shown.isEmpty)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: Text('当前筛选下没有记录')),
+                      ),
+                    )
+                  else
+                    SliverList.separated(
+                      itemCount: shown.length,
+                      separatorBuilder: (_, _) => const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: FDivider(),
+                      ),
+                      itemBuilder: (context, i) => _TraceRow(trace: shown[i]),
+                    ),
+                ],
               );
             },
             loading: () => const SliverToBoxAdapter(
@@ -71,6 +106,136 @@ class AiTransparencyPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Verbose-capture switch. Off (default) = metadata-only spans; on =
+/// also persist each step's input/output for deep debugging. Snapshot
+/// per turn, so flipping it only affects *future* calls.
+class _CaptureToggle extends ConsumerWidget {
+  const _CaptureToggle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final verbose = ref.watch(aiTraceVerboseProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '详细采集',
+                    style: AiType.body(context).copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '记录每步传参与返回（仅本机，30 天后清理）',
+                    style: AiType.meta(context).copyWith(
+                      color: AiTone.muted(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            AiPill(
+              label: verbose ? '开' : '关',
+              state: verbose ? AiPillState.selected : AiPillState.neutral,
+              onTap: () =>
+                  ref.read(aiTraceVerboseProvider.notifier).toggle(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Opik-style aggregate strip over the recent-trace window: volume,
+/// error rate, p50/p95 latency, token + cost totals. Doubles as the
+/// "errors only" filter toggle.
+class _AggregateHeader extends StatelessWidget {
+  const _AggregateHeader({
+    required this.traces,
+    required this.errorsOnly,
+    required this.onToggleErrors,
+  });
+
+  final List<AiTrace> traces;
+  final bool errorsOnly;
+  final VoidCallback onToggleErrors;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = traces.length;
+    final errors = traces
+        .where((t) => t.terminalReason != TerminalReason.done)
+        .length;
+    final durations =
+        traces.map((t) => t.totalDurationMs).toList(growable: false)..sort();
+    final p50 = _pct(durations, 0.50);
+    final p95 = _pct(durations, 0.95);
+    var tokens = 0;
+    var cost = 0.0;
+    var hasCost = false;
+    for (final t in traces) {
+      tokens += t.tokenTotals.total;
+      final c = estimateTraceCostCny(t);
+      if (c != null) {
+        cost += c;
+        hasCost = true;
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '最近 $n 次调用',
+              style: AiType.body(context).copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                AiPill(
+                  label: '错误 $errors',
+                  state: errors > 0 && errorsOnly
+                      ? AiPillState.error
+                      : (errors > 0
+                            ? AiPillState.selected
+                            : AiPillState.neutral),
+                  onTap: errors > 0 ? onToggleErrors : null,
+                ),
+                AiPill(label: 'p50 ${p50}ms'),
+                AiPill(label: 'p95 ${p95}ms'),
+                if (tokens > 0) AiPill(label: '$tokens tok'),
+                if (hasCost) AiPill(label: '≈¥${cost.toStringAsFixed(3)}'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static int _pct(List<int> sortedAsc, double q) {
+    if (sortedAsc.isEmpty) return 0;
+    final idx = ((sortedAsc.length - 1) * q).round();
+    return sortedAsc[idx];
   }
 }
 
@@ -257,8 +422,10 @@ class _TraceRow extends StatelessWidget {
                         AiPill(label: source, state: AiPillState.selected),
                       AiPill(label: '${trace.totalDurationMs} ms'),
                       AiPill(label: trace.backend.wire),
-                      if (trace.toolCalls.isNotEmpty)
-                        AiPill(label: '工具 ${trace.toolCalls.length}'),
+                      if (trace.hasSpans && trace.tokenTotals.total > 0)
+                        AiPill(label: '${trace.tokenTotals.total} tok'),
+                      if (trace.toolSpans.isNotEmpty)
+                        AiPill(label: '工具 ${trace.toolSpans.length}'),
                       if (trace.staleReadModels > 0)
                         AiPill(label: '过期 x${trace.staleReadModels}'),
                       if (isError)
@@ -328,7 +495,7 @@ class _StatusDot extends StatelessWidget {
 }
 
 // ===========================================================================
-// Detail page (timeline).
+// Detail page (waterfall).
 // ===========================================================================
 
 class AiTransparencyDetailPage extends ConsumerWidget {
@@ -349,7 +516,7 @@ class AiTransparencyDetailPage extends ConsumerWidget {
           if (trace == null) {
             return const Center(child: Text('未找到该次调用记录'));
           }
-          return _TraceTimelineBody(trace: trace);
+          return _TraceWaterfallBody(trace: trace);
         },
         loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
@@ -358,25 +525,39 @@ class AiTransparencyDetailPage extends ConsumerWidget {
   }
 }
 
-class _TraceTimelineBody extends StatelessWidget {
-  const _TraceTimelineBody({required this.trace});
+class _TraceWaterfallBody extends StatelessWidget {
+  const _TraceWaterfallBody({required this.trace});
   final AiTrace trace;
 
   @override
   Widget build(BuildContext context) {
-    final events = buildTimeline(trace);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _HeaderSummary(trace: trace, eventCount: events.length),
+        _HeaderSummary(trace: trace, eventCount: trace.spans.length),
         const SizedBox(height: 20),
-        AiTraceTimeline(events: events),
+        if (trace.hasSpans)
+          AiTraceWaterfall(trace: trace)
+        else
+          // Traces written before the span model existed have no
+          // call chain to draw (no backward-compat shim — they age
+          // out within the 30-day retention window).
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              '该记录无执行链路（早于 span 模型，将在 30 天内自动清理）。',
+              textAlign: TextAlign.center,
+              style: AiType.body(
+                context,
+              ).copyWith(color: AiTone.muted(context)),
+            ),
+          ),
       ],
     );
   }
 }
 
-/// Compact summary above the timeline. Mirrors the list-row chips
+/// Compact summary above the waterfall. Mirrors the list-row chips
 /// plus the request id (so users reporting bugs can quote it).
 class _HeaderSummary extends StatelessWidget {
   const _HeaderSummary({required this.trace, required this.eventCount});

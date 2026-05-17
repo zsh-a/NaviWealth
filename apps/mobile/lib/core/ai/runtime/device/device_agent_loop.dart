@@ -19,6 +19,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../../../../features/ai_chat/domain/chat_events.dart';
+import '../../contracts/contracts.dart'
+    show AiSpanKind, AiSpanStatus, SpanTokens, kTurnSpanId;
 import 'anthropic/anthropic_wire.dart';
 import 'device_session.dart';
 import 'device_system_prompt.dart';
@@ -123,6 +125,8 @@ class DeviceAgentLoop {
     for (var round = 0; round < budget.maxRounds; round++) {
       if (aborted()) return;
       session.roundsUsed = round + 1;
+      final roundId = 'r${round + 1}';
+      final roundStart = DateTime.now().toUtc();
 
       final request = AnthropicRequest(
         model: model,
@@ -133,6 +137,36 @@ class DeviceAgentLoop {
         stream: true,
       );
 
+      // Emit the LLM-round span on every exit path so the waterfall
+      // captures latency / tokens / stop reason even for the failing
+      // round. Observability-only — message state is unaffected.
+      void emitLlmSpan(
+        _ModelRound mr, {
+        required AiSpanStatus status,
+        String? errCode,
+        String? errMsg,
+      }) {
+        emit(
+          SpanEvent(
+            id: roundId,
+            parentId: kTurnSpanId,
+            kind: AiSpanKind.llm,
+            name: 'llm:round-${round + 1}',
+            startedAt: roundStart,
+            endedAt: DateTime.now().toUtc(),
+            status: status,
+            errorCode: errCode,
+            errorMessage: errMsg,
+            tokens: mr.tokens,
+            model: model,
+            stopReason: mr.stopReason.wire,
+            input: <String, Object?>{'messages': session.messages.length},
+            output: mr.text.isEmpty ? null : _clip(mr.text),
+            attributes: <String, Object?>{'round': round + 1},
+          ),
+        );
+      }
+
       final _ModelRound mr;
       try {
         mr = await _collectModelRound(
@@ -142,6 +176,16 @@ class DeviceAgentLoop {
         );
       } catch (e) {
         if (aborted()) return;
+        emitLlmSpan(
+          const _ModelRound(
+            assistantContent: [],
+            toolUses: [],
+            stopReason: LlmStopReason.endTurn,
+          ),
+          status: AiSpanStatus.error,
+          errCode: 'provider_error',
+          errMsg: '$e',
+        );
         emit(ErrorEvent('$e', code: 'provider_error'));
         emit(DoneEvent(stopReason: 'error', rounds: session.roundsUsed));
         return;
@@ -149,10 +193,17 @@ class DeviceAgentLoop {
       if (aborted()) return;
 
       if (mr.error != null) {
+        emitLlmSpan(
+          mr,
+          status: AiSpanStatus.error,
+          errCode: mr.error!.code,
+          errMsg: mr.error!.message,
+        );
         emit(ErrorEvent(mr.error!.message, code: mr.error!.code));
         emit(DoneEvent(stopReason: 'error', rounds: session.roundsUsed));
         return;
       }
+      emitLlmSpan(mr, status: AiSpanStatus.ok);
       lastStop = mr.stopReason;
 
       if (mr.toolUses.isEmpty) break;
@@ -167,6 +218,7 @@ class DeviceAgentLoop {
       for (final tu in mr.toolUses) {
         if (aborted()) return;
         final isPropose = tu.name.startsWith('propose_');
+        final toolStart = DateTime.now().toUtc();
         final Object? output;
         if (isPropose &&
             proposalsBefore + proposalsThisTurn >=
@@ -176,6 +228,26 @@ class DeviceAgentLoop {
           if (isPropose) proposalsThisTurn++;
           output = await dispatcher.dispatch(session, tu.name, tu.input);
         }
+        emit(
+          SpanEvent(
+            id: 'tool:${tu.id}',
+            parentId: roundId,
+            kind: AiSpanKind.tool,
+            name: 'tool:${tu.name}',
+            startedAt: toolStart,
+            endedAt: DateTime.now().toUtc(),
+            status: _toolOutputIsError(output)
+                ? AiSpanStatus.error
+                : AiSpanStatus.ok,
+            errorCode: _toolErrorCode(output),
+            input: tu.input,
+            output: output,
+            attributes: <String, Object?>{
+              'round': round + 1,
+              'tool_use_id': tu.id,
+            },
+          ),
+        );
         emit(ToolResultEvent(id: tu.id, name: tu.name, output: output));
         toolResults.add(
           AnthropicBlocks.toolResult(
@@ -211,10 +283,14 @@ class DeviceAgentLoop {
     bool Function() aborted,
   ) async {
     final textBuf = StringBuffer();
+    // Full assistant text for the round span's output digest — kept
+    // separate from `textBuf` (which `flushText` clears per block).
+    final fullText = StringBuffer();
     final toolNames = <String, String>{};
     final assistantContent = <Map<String, Object?>>[];
     final toolUses = <_ToolUse>[];
     var stopReason = LlmStopReason.endTurn;
+    SpanTokens? tokens;
 
     void flushText() {
       if (textBuf.isNotEmpty) {
@@ -228,6 +304,7 @@ class DeviceAgentLoop {
       switch (event) {
         case LlmTextDelta(:final text):
           textBuf.write(text);
+          fullText.write(text);
           emit(TextEvent(text));
         case LlmThinkingDelta(:final text):
           emit(ThinkingDeltaEvent(text));
@@ -255,6 +332,12 @@ class DeviceAgentLoop {
             :final cacheReadTokens,
             :final cacheWriteTokens,
           ):
+          tokens = SpanTokens(
+            input: inputTokens,
+            output: outputTokens,
+            cacheRead: cacheReadTokens,
+            cacheWrite: cacheWriteTokens,
+          );
           emit(
             UsageEvent(
               TokenUsage(
@@ -272,6 +355,8 @@ class DeviceAgentLoop {
             assistantContent: assistantContent,
             toolUses: toolUses,
             stopReason: stopReason,
+            tokens: tokens,
+            text: fullText.toString(),
             error: (code: code, message: message),
           );
       }
@@ -282,6 +367,8 @@ class DeviceAgentLoop {
       assistantContent: assistantContent,
       toolUses: toolUses,
       stopReason: stopReason,
+      tokens: tokens,
+      text: fullText.toString(),
     );
   }
 }
@@ -298,13 +385,33 @@ class _ModelRound {
     required this.assistantContent,
     required this.toolUses,
     required this.stopReason,
+    this.tokens,
+    this.text = '',
     this.error,
   });
   final List<Map<String, Object?>> assistantContent;
   final List<_ToolUse> toolUses;
   final LlmStopReason stopReason;
+  final SpanTokens? tokens;
+  final String text;
   final ({String code, String message})? error;
 }
+
+/// Clip a digest string so a verbose-capture blob stays bounded even
+/// for very long model turns. Metadata-only capture drops it entirely
+/// in the trace builder; this only caps the verbose path.
+String _clip(String s, [int max = 4000]) =>
+    s.length <= max ? s : '${s.substring(0, max)}…(+${s.length - max})';
+
+/// Mirror of `ChatRepository._isToolError`: device tools surface
+/// failures as `{ "error": "...", "code": "..." }`.
+bool _toolOutputIsError(Object? output) =>
+    output is Map && output['error'] is String;
+
+String? _toolErrorCode(Object? output) =>
+    output is Map && output['code'] is String
+    ? output['code'] as String
+    : null;
 
 /// Port of `guardrails::count_existing_proposals`.
 int _countExistingProposals(List<AnthropicChatMessage> messages) {
