@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/haptics/haptics.dart';
+import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../shared/forms/forms.dart';
 import '../data/physical_asset.dart';
@@ -23,15 +24,9 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required PhysicalAsset asset,
   }) {
-    return showFSheet<bool>(
-      side: FLayout.btt,
+    return showAppFormSheet<bool>(
       context: context,
-      mainAxisMaxRatio: null,
-      useSafeArea: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: ValuationUpdateSheet(asset: asset),
-      ),
+      builder: (_) => ValuationUpdateSheet(asset: asset),
     );
   }
 }
@@ -66,73 +61,55 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: context.theme.colors.border,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+    return AppSheet(
+      title: l10n.physicalAssetUpdateValuationTitle,
+      footer: AppSheetFooter(
+        submitLabel: l10n.physicalAssetUpdateValuationSubmit,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: _submit,
+        busy: _saving,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _amountCtrl),
+              label: Text(l10n.physicalAssetUpdateValuationAmount),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return l10n.physicalAssetValidationRequired;
+                }
+                final parsed = Decimal.tryParse(v.trim());
+                if (parsed == null || parsed < Decimal.zero) {
+                  return l10n.physicalAssetValidationPositive;
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _saving ? null : _pickDate,
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: l10n.physicalAssetUpdateValuationDate,
                 ),
+                child: Text(dateFormat.format(_asOf)),
               ),
-              Text(
-                l10n.physicalAssetUpdateValuationTitle,
-                style: context.theme.typography.lg,
-              ),
-              const SizedBox(height: 16),
-              FTextFormField(
-                control: FTextFieldControl.managed(controller: _amountCtrl),
-                label: Text(l10n.physicalAssetUpdateValuationAmount),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return l10n.physicalAssetValidationRequired;
-                  }
-                  final parsed = Decimal.tryParse(v.trim());
-                  if (parsed == null || parsed < Decimal.zero) {
-                    return l10n.physicalAssetValidationPositive;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              InkWell(
-                onTap: _saving ? null : _pickDate,
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: l10n.physicalAssetUpdateValuationDate,
-                  ),
-                  child: Text(dateFormat.format(_asOf)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              FTextFormField(
-                control: FTextFieldControl.managed(controller: _noteCtrl),
-                label: Text(l10n.physicalAssetFieldNote),
-                maxLines: 3,
-                minLines: 1,
-              ),
-              const SizedBox(height: 24),
-              FButton(
-                variant: FButtonVariant.primary,
-                onPress: _saving ? null : _submit,
-                child: Text(l10n.physicalAssetUpdateValuationSubmit),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _noteCtrl),
+              label: Text(l10n.physicalAssetFieldNote),
+              maxLines: 3,
+              minLines: 1,
+            ),
+          ],
         ),
       ),
     );

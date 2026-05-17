@@ -117,9 +117,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         onCamera: _busy ? null : _captureCamera,
       );
     }
-    final payable = accounts
-        .where((a) => !a.archived)
-        .toList(growable: false);
+    final payable = accounts.where((a) => !a.archived).toList(growable: false);
     final selectedId = _accountId ?? _defaultAccountId(payable);
     final freshCount = drafts
         .where((d) => d.verdict == DedupVerdict.newTxn)
@@ -198,7 +196,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Future<void> _confirm(IngestDraft draft, String? accountId) async {
     final l10n = AppLocalizations.of(context);
     if (accountId == null || accountId.isEmpty) {
-      AppMessenger.show(context, ToastKind.warning, l10n.ingestSelectAccountFirst);
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        l10n.ingestSelectAccountFirst,
+      );
       return;
     }
     setState(() => _busy = true);
@@ -206,7 +208,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       final svc = await ref.read(ingestConfirmServiceProvider.future);
       if (svc == null) {
         if (mounted) {
-          AppMessenger.show(context, ToastKind.error, l10n.ingestServiceNotReady);
+          AppMessenger.show(
+            context,
+            ToastKind.error,
+            l10n.ingestServiceNotReady,
+          );
         }
         return;
       }
@@ -232,7 +238,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   ) async {
     final l10n = AppLocalizations.of(context);
     if (accountId == null || accountId.isEmpty) {
-      AppMessenger.show(context, ToastKind.warning, l10n.ingestSelectAccountFirst);
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        l10n.ingestSelectAccountFirst,
+      );
       return;
     }
     setState(() => _busy = true);
@@ -251,38 +261,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _openPasteDialog() async {
-    final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController();
-    final text = await showDialog<String>(
+    final text = await showAppFormSheet<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.ingestPasteTitle),
-        content: SizedBox(
-          width: 420,
-          child: TextField(
-            controller: controller,
-            maxLines: 10,
-            minLines: 6,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: l10n.ingestPasteHint,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: Text(l10n.ingestParseAction),
-          ),
-        ],
-      ),
+      builder: (_) => const _PasteSheet(),
     );
-    controller.dispose();
     if (text == null || text.trim().isEmpty) return;
     await _runIngest(
       IngestSource(
@@ -521,6 +503,45 @@ class _EmptyState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Multiline paste form, presented as a unified app sheet (replaces the
+/// old Material `AlertDialog`). Returns the pasted text or null.
+class _PasteSheet extends StatefulWidget {
+  const _PasteSheet();
+
+  @override
+  State<_PasteSheet> createState() => _PasteSheetState();
+}
+
+class _PasteSheetState extends State<_PasteSheet> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.ingestPasteTitle,
+      footer: AppSheetFooter(
+        submitLabel: l10n.ingestParseAction,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: () => Navigator.of(context).pop(_controller.text),
+      ),
+      child: FTextField(
+        control: FTextFieldControl.managed(controller: _controller),
+        autofocus: true,
+        maxLines: 10,
+        minLines: 6,
+        hint: l10n.ingestPasteHint,
       ),
     );
   }
