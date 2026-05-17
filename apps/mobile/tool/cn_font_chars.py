@@ -4,12 +4,15 @@
 Two tiers are emitted:
 
   base — characters the app actually renders on first paint:
-         * every CJK code point that appears literally in lib/ (Dart + ARB)
+         * every CJK code point that appears literally in lib/ (Dart + ARB),
+           excluding model-facing / web-dead trees (see
+           _FIRST_PAINT_EXCLUDE_PREFIXES) — those never paint on web
          * ASCII printable + Latin-1 currency / sign characters we use
          * CJK symbols and punctuation (U+3000–U+303F)
          * halfwidth / fullwidth forms (U+FF00–U+FFEF)
          * arrows + bullets used by delta_text / chips
-         The base file should stay <= 250 KB after pyftsubset; everything
+         The base file must stay within the first-paint budget enforced by
+         build-cn-fonts.sh (rationale in docs/web-bundle.md); everything
          shipped here loads on the first HTTP request.
 
   ext  — coverage padding for user-entered text and server payloads.
@@ -69,6 +72,27 @@ _ALWAYS_INCLUDE: list[int] = (
 )
 
 
+# Source trees whose Chinese text is NOT first-paint web UI and therefore
+# must not inflate the `base` (first-paint) subset:
+#
+#   core/ai/runtime/device/  The device LLM runtime is !kIsWeb-gated — web
+#                            has no AI (see docs/ai-architecture.md §4.6).
+#                            Its tool descriptions / system prompt are
+#                            model-facing strings, and on the web build this
+#                            font ships to they are dead code: those glyphs
+#                            can never paint on web.
+#   core/ai/regression/      AI eval / regression corpus fixtures — test
+#                            data, never rendered as UI on any platform.
+#
+# Anything these legitimately render on native (the *deferred* /ai route) is
+# still covered by the lazy `ext` tier, so excluding them here costs at most
+# a one-time FOUT on first AI use on native — never tofu, never a web cost.
+_FIRST_PAINT_EXCLUDE_PREFIXES: tuple[str, ...] = (
+    "core/ai/runtime/device/",
+    "core/ai/regression/",
+)
+
+
 def _gb2312_codepoints() -> set[int]:
     """All hanzi in GB 2312 (Level-1 + Level-2, ≈6763 chars).
 
@@ -110,6 +134,9 @@ def scan_codebase(root: pathlib.Path) -> set[int]:
         rel = path.relative_to(root).as_posix()
         # Skip generated files — they're derived from the .arb scan anyway.
         if "/gen/" in rel or rel.endswith(".g.dart") or rel.endswith(".freezed.dart"):
+            continue
+        # Skip model-facing / web-dead trees — not first-paint web UI.
+        if rel.startswith(_FIRST_PAINT_EXCLUDE_PREFIXES):
             continue
         try:
             text = path.read_text(encoding="utf-8")

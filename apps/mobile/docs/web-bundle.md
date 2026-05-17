@@ -142,3 +142,50 @@ a code-review blocker and either:
 
 Run the measurement snippet from [How to measure](#how-to-measure) locally
 or in CI to compare before merging.
+
+## CN web font budget (first-paint @font-face)
+
+`apps/mobile/tool/build-cn-fonts.sh` subsets Noto Sans SC into two woff2
+tiers that `flutter build web` loads via `@font-face`:
+
+- `app-cn-base.woff2` — **first-paint** subset, fetched on the first request.
+  Holds every CJK glyph that literally appears in first-paint UI/l10n
+  (`lib/**` Dart string literals + `*.arb`), plus ASCII and punctuation.
+- `app-cn-ext.woff2` — the rest of GB 2312, lazy-loaded only when a glyph
+  outside `base` is first needed (server text, free input, the deferred
+  `/ai` route).
+
+woff2 is already brotli-compressed, so the on-disk size *is* the wire size.
+It is **not** part of the `main.dart.js` 800 KB target above — it is a
+separate first-paint asset, HTTP-cached after the cold visit.
+
+**Budget: `BASE_BUDGET_BYTES` = 300,000 B (~293 KiB).** This is a tripwire,
+not a hard limit: the build fails when `base` exceeds it so a human looks at
+*why* it grew before the line moves.
+
+Raised from the original ~250 KiB on 2026-05-17 after the device-AI wave.
+That work added a few hundred hanzi, but ~90% were finance vocabulary the UI
+already needed; the genuinely new tail was LLM-prompt / tool-schema /
+regression-fixture text that does **not** paint on web (the device AI
+runtime is `!kIsWeb`-gated — see `docs/ai-architecture.md` §4.6). Two
+changes landed together:
+
+1. `tool/cn_font_chars.py` now scopes `core/ai/runtime/device/**` and
+   `core/ai/regression/**` out of the *base* scan (model-facing / web-dead;
+   `ext` still covers anything they render on native).
+2. The budget was raised to ~293 KiB so the legitimate, ever-growing
+   l10n/UI corpus has headroom without nuisance CI failures per feature.
+
+When the build fails on this budget:
+
+1. Find what grew — the `base set: N code points` line plus a per-file
+   scan of unique hanzi pinpoint the source.
+2. If it's model-facing or web-dead (AI prompts, tool descriptions, test
+   fixtures), scope it out in `cn_font_chars.py` — don't ship it to web.
+3. If it's real first-paint UI/l10n growth, raise `BASE_BUDGET_BYTES` and
+   update this section with the new number and a one-line reason.
+
+Bigger structural lever, deferred: the subset preserves the full Noto Sans
+SC variable `wght` axis (100–900) though the app uses only 400/500/600/700.
+Instancing the axis would cut size far more than glyph-count triage —
+tracked separately (real vs. synthetic weight quality tradeoff).
