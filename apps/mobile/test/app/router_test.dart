@@ -13,6 +13,7 @@
 // on: a given URL deterministically maps to a given page, and the bottom nav
 // keeps the URL up to date.
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +28,7 @@ import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/accounts/accounts_hub_page.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
@@ -36,6 +38,9 @@ import 'package:naviwealth/features/analytics/data/providers.dart'
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
@@ -138,6 +143,14 @@ Future<ProviderContainer> _pumpAt(
       holdingServiceProvider.overrideWith(
         (ref) async => _EmptyHoldingService(),
       ),
+      cashFlowSummaryProvider.overrideWith(
+        (ref, request) async => CashFlowSummary(
+          period: request.period,
+          baseCurrency: 'USD',
+          buckets: const [],
+          totalInBase: Money(Decimal.zero, 'USD'),
+        ),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -229,6 +242,15 @@ void main() {
     testWidgets('/accounts/analytics renders Analytics', (tester) async {
       await _pumpAt(tester, initialLocation: AppRoutes.accountsAnalytics);
       expect(find.byType(AnalyticsPage), findsOneWidget);
+    });
+
+    testWidgets('/cashflow?period=year renders CashFlow', (tester) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: '${AppRoutes.cashflow}?period=year',
+      );
+      expect(find.byType(CashFlowPage), findsOneWidget);
+      expect(_currentPath(container), AppRoutes.cashflow);
     });
 
     testWidgets('/settings renders Settings', (tester) async {
