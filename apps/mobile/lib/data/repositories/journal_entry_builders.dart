@@ -499,6 +499,93 @@ class JournalEntryBuilders {
     );
   }
 
+  /// Dividend Reinvestment Plan: gross dividend is credited to dividend
+  /// income, withholding/fee land on expense accounts, and the remaining
+  /// value opens a new asset lot. There is no cash leg because the net cash
+  /// is immediately reinvested by the broker.
+  static JournalEntryBuild drip({
+    required DateTime date,
+    required String accountId,
+    required String incomeAccountId,
+    required String assetUnit,
+    required Decimal grossAmount,
+    required Decimal reinvestedQuantity,
+    required Decimal pricePerUnit,
+    required String currency,
+    String? lotId,
+    DateTime? acquiredOn,
+    Decimal? withholdingAmount,
+    String? withholdingAccountId,
+    Decimal? feeAmount,
+    String? feeAccountId,
+    String? narration,
+    String? payee,
+    DateTime? settledOn,
+    List<String> tagIds = const <String>[],
+  }) {
+    _assertPositive(grossAmount, 'grossAmount');
+    _assertPositive(reinvestedQuantity, 'reinvestedQuantity');
+    _assertPositive(pricePerUnit, 'pricePerUnit');
+    final withholding = _normalizeOptionalAmount(
+      withholdingAmount,
+      withholdingAccountId,
+      label: 'withholding',
+    );
+    final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');
+
+    final postings = <PostingDraft>[
+      PostingDraft(
+        position: 0,
+        accountId: accountId,
+        units: reinvestedQuantity,
+        unit: assetUnit,
+        cost: Cost(
+          perUnit: pricePerUnit,
+          currency: currency,
+          lotId: lotId,
+          acquiredOn: acquiredOn ?? date,
+        ),
+      ),
+      PostingDraft(
+        position: 1,
+        accountId: incomeAccountId,
+        units: -grossAmount,
+        unit: currency,
+      ),
+    ];
+    if (withholding != null) {
+      postings.add(
+        PostingDraft(
+          position: postings.length,
+          accountId: withholdingAccountId!,
+          units: withholding,
+          unit: currency,
+        ),
+      );
+    }
+    if (fee != null) {
+      postings.add(
+        PostingDraft(
+          position: postings.length,
+          accountId: feeAccountId!,
+          units: fee,
+          unit: currency,
+        ),
+      );
+    }
+
+    return JournalEntryBuild(
+      entry: JournalEntryDraft(
+        date: date,
+        settledOn: settledOn,
+        narration: narration ?? 'Dividend reinvestment',
+        payee: payee,
+        tagIds: _withAssetTag(tagIds, assetUnit),
+      ),
+      postings: postings,
+    );
+  }
+
   // ---------- Liability payment ----------
 
   /// Three-leg payment: principal reduction + interest expense + cash
@@ -642,6 +729,78 @@ class JournalEntryBuilders {
           units: -addedQuantity,
           unit: assetUnit,
           cost: cost,
+        ),
+      ],
+    );
+  }
+
+  /// Replaces one open lot with its post-corporate-action shape while
+  /// preserving total cost basis. Used for stock dividends and forward /
+  /// reverse splits where the economic value stays constant but the share
+  /// count and per-unit cost change.
+  static JournalEntryBuild lotAdjustment({
+    required DateTime date,
+    required String accountId,
+    required String assetUnit,
+    required String currency,
+    required Decimal beforeQuantity,
+    required Decimal beforeCostPerUnit,
+    required Decimal afterQuantity,
+    required Decimal afterCostPerUnit,
+    String? oldLotId,
+    DateTime? oldAcquiredOn,
+    String? newLotId,
+    String? narration,
+    DateTime? settledOn,
+    List<String> tagIds = const <String>[],
+  }) {
+    _assertPositive(beforeQuantity, 'beforeQuantity');
+    _assertPositive(afterQuantity, 'afterQuantity');
+    if (beforeCostPerUnit < Decimal.zero) {
+      throw ArgumentError.value(
+        beforeCostPerUnit,
+        'beforeCostPerUnit',
+        'must be ≥ 0',
+      );
+    }
+    if (afterCostPerUnit < Decimal.zero) {
+      throw ArgumentError.value(
+        afterCostPerUnit,
+        'afterCostPerUnit',
+        'must be ≥ 0',
+      );
+    }
+    return JournalEntryBuild(
+      entry: JournalEntryDraft(
+        date: date,
+        settledOn: settledOn,
+        narration: narration ?? 'Lot adjustment',
+        tagIds: _withAssetTag(tagIds, assetUnit),
+      ),
+      postings: <PostingDraft>[
+        PostingDraft(
+          position: 0,
+          accountId: accountId,
+          units: -beforeQuantity,
+          unit: assetUnit,
+          cost: Cost(
+            perUnit: beforeCostPerUnit,
+            currency: currency,
+            lotId: oldLotId,
+            acquiredOn: oldAcquiredOn,
+          ),
+        ),
+        PostingDraft(
+          position: 1,
+          accountId: accountId,
+          units: afterQuantity,
+          unit: assetUnit,
+          cost: Cost(
+            perUnit: afterCostPerUnit,
+            currency: currency,
+            lotId: newLotId,
+            acquiredOn: date,
+          ),
         ),
       ],
     );

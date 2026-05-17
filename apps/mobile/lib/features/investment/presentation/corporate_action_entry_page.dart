@@ -64,7 +64,7 @@ class CorporateActionEntryPage extends StatefulWidget {
   });
 
   final List<CorporateActionAsset> assets;
-  final List<Lot> Function(String assetId) lotsForAsset;
+  final List<Lot> Function(CorporateActionAsset asset) lotsForAsset;
   final void Function(CorporateActionPreview preview) onSubmit;
 
   final CostBasisEngine? engine;
@@ -226,7 +226,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     if (asset == null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     try {
-      final lots = widget.lotsForAsset(asset.id);
+      final lots = widget.lotsForAsset(asset);
       final action = _buildAction(asset);
       final preview = CorporateActionPreview.compute(
         engine: _engine,
@@ -264,7 +264,10 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final asset = _selectedAsset;
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.corpActionTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.corpActionTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,

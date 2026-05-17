@@ -372,6 +372,8 @@ void main() {
           'nav.fire',
           'nav.settings',
           'action.newTrade',
+          'action.newDividend',
+          'action.corporateAction',
           'action.newExpense',
           'action.openAi',
           'action.shortcutHelp',
