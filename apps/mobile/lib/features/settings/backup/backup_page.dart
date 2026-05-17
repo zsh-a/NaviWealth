@@ -261,19 +261,22 @@ class BackupPage extends ConsumerWidget {
     required String hint,
     required String confirmLabel,
   }) {
-    return showAppSheet<String>(
+    return showAppFormSheet<String>(
       context: context,
-      title: title,
-      builder: (_) => _PassphraseSheet(hint: hint, confirmLabel: confirmLabel),
+      builder: (_) => _PassphraseSheet(
+        title: title,
+        hint: hint,
+        confirmLabel: confirmLabel,
+      ),
     );
   }
 
   Future<String?> _showRestoreConfirmSheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return showAppSheet<String>(
+    return showAppFormSheet<String>(
       context: context,
-      title: l10n.backupConfirmRestoreTitle,
-      builder: (_) => const _RestoreConfirmSheet(),
+      builder: (_) =>
+          _RestoreConfirmSheet(title: l10n.backupConfirmRestoreTitle),
     );
   }
 
@@ -336,8 +339,13 @@ class _WebBackupSecurityBanner extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _PassphraseSheet extends StatefulWidget {
-  const _PassphraseSheet({required this.hint, required this.confirmLabel});
+  const _PassphraseSheet({
+    required this.title,
+    required this.hint,
+    required this.confirmLabel,
+  });
 
+  final String title;
   final String hint;
   final String confirmLabel;
 
@@ -363,39 +371,19 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FTextFormField(
-            control: FTextFieldControl.managed(controller: _controller),
-            label: Text(l10n.backupPassphraseLabel),
-            hint: widget.hint,
-            obscureText: true,
-            autofocus: true,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(context).pop(),
-                  child: Text(l10n.backupCancelAction),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FButton(
-                  onPress: _submit,
-                  child: Text(widget.confirmLabel),
-                ),
-              ),
-            ],
-          ),
-        ],
+    return AppSheet(
+      title: widget.title,
+      footer: AppSheetFooter(
+        submitLabel: widget.confirmLabel,
+        cancelLabel: l10n.backupCancelAction,
+        onSubmit: _submit,
+      ),
+      child: FTextFormField(
+        control: FTextFieldControl.managed(controller: _controller),
+        label: Text(l10n.backupPassphraseLabel),
+        hint: widget.hint,
+        obscureText: true,
+        autofocus: true,
       ),
     );
   }
@@ -415,7 +403,9 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
 }
 
 class _RestoreConfirmSheet extends StatefulWidget {
-  const _RestoreConfirmSheet();
+  const _RestoreConfirmSheet({required this.title});
+
+  final String title;
 
   @override
   State<_RestoreConfirmSheet> createState() => _RestoreConfirmSheetState();
@@ -439,8 +429,13 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    return AppSheet(
+      title: widget.title,
+      footer: AppSheetFooter(
+        submitLabel: l10n.backupConfirmRestoreAction,
+        cancelLabel: l10n.backupCancelAction,
+        onSubmit: _submit,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -459,25 +454,6 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
             hint: l10n.backupRestorePassphraseHint,
             obscureText: true,
             autofocus: true,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(context).pop(),
-                  child: Text(l10n.backupCancelAction),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FButton(
-                  onPress: _submit,
-                  child: Text(l10n.backupConfirmRestoreAction),
-                ),
-              ),
-            ],
           ),
         ],
       ),

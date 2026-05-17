@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/haptics/haptics.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_goal_preferences.dart';
 import '../domain/fire_goal.dart';
@@ -15,10 +16,8 @@ import '../domain/fire_goal.dart';
 /// [fireGoalProvider], lets the user edit it, and persists via
 /// [FireGoalController.save] on submit. Cancellation discards changes.
 Future<void> showFireGoalSheet(BuildContext context) {
-  return showFSheet<void>(
-    side: FLayout.btt,
+  return showAppFormSheet<void>(
     context: context,
-    mainAxisMaxRatio: null,
     builder: (_) => const _FireGoalSheet(),
   );
 }
@@ -36,6 +35,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   late final TextEditingController _expensesCtrl;
   late final TextEditingController _surplusCtrl;
   late double _inflation;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -64,83 +64,53 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + viewInsets.bottom),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l10n.fireGoalSheetTitle,
-                  style: context.theme.typography.lg,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.fireGoalSheetSubtitle,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _MoneyField(
-                  controller: _targetCtrl,
-                  label: l10n.fireGoalFieldTarget,
-                  helper: l10n.fireGoalFieldTargetHelper,
-                  required: true,
-                ),
-                const SizedBox(height: 12),
-                _MoneyField(
-                  controller: _expensesCtrl,
-                  label: l10n.fireGoalFieldMonthlyExpenses,
-                  helper: l10n.fireGoalFieldMonthlyExpensesHelper,
-                ),
-                const SizedBox(height: 12),
-                _MoneyField(
-                  controller: _surplusCtrl,
-                  label: l10n.fireGoalFieldMonthlySurplus,
-                  helper: l10n.fireGoalFieldMonthlySurplusHelper,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.fireGoalFieldInflation(
-                    (_inflation * 100).toStringAsFixed(1),
-                  ),
-                  style: context.theme.typography.sm,
-                ),
-                FSlider(
-                  control: FSliderControl.managedContinuous(
-                    initial: FSliderValue(max: _inflation / 0.10),
-                    onChange: (v) => setState(() => _inflation = v.max * 0.10),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FButton(
-                        variant: FButtonVariant.outline,
-                        onPress: () => Navigator.of(context).pop(),
-                        child: Text(l10n.fireGoalSheetCancel),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FButton(
-                        variant: FButtonVariant.primary,
-                        onPress: _submit,
-                        child: Text(l10n.fireGoalSheetSave),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    return AppSheet(
+      title: l10n.fireGoalSheetTitle,
+      subtitle: l10n.fireGoalSheetSubtitle,
+      footer: AppSheetFooter(
+        submitLabel: l10n.fireGoalSheetSave,
+        cancelLabel: l10n.fireGoalSheetCancel,
+        onSubmit: _submit,
+        busy: _saving,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _MoneyField(
+              controller: _targetCtrl,
+              label: l10n.fireGoalFieldTarget,
+              helper: l10n.fireGoalFieldTargetHelper,
+              required: true,
             ),
-          ),
+            const SizedBox(height: 12),
+            _MoneyField(
+              controller: _expensesCtrl,
+              label: l10n.fireGoalFieldMonthlyExpenses,
+              helper: l10n.fireGoalFieldMonthlyExpensesHelper,
+            ),
+            const SizedBox(height: 12),
+            _MoneyField(
+              controller: _surplusCtrl,
+              label: l10n.fireGoalFieldMonthlySurplus,
+              helper: l10n.fireGoalFieldMonthlySurplusHelper,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.fireGoalFieldInflation(
+                (_inflation * 100).toStringAsFixed(1),
+              ),
+              style: context.theme.typography.sm,
+            ),
+            FSlider(
+              control: FSliderControl.managedContinuous(
+                initial: FSliderValue(max: _inflation / 0.10),
+                onChange: (v) => setState(() => _inflation = v.max * 0.10),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -148,16 +118,20 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final goal = FireGoal(
-      targetAmount: _parseDecimal(_targetCtrl.text),
-      monthlyExpenses: _parseDecimal(_expensesCtrl.text),
-      monthlySurplus: _parseDecimal(_surplusCtrl.text),
-      inflationRate: _inflation,
-    );
-    await ref.read(fireGoalProvider.notifier).save(goal);
-    if (mounted) {
+    setState(() => _saving = true);
+    try {
+      final goal = FireGoal(
+        targetAmount: _parseDecimal(_targetCtrl.text),
+        monthlyExpenses: _parseDecimal(_expensesCtrl.text),
+        monthlySurplus: _parseDecimal(_surplusCtrl.text),
+        inflationRate: _inflation,
+      );
+      await ref.read(fireGoalProvider.notifier).save(goal);
+      if (!mounted) return;
       Haptics.success();
       Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 

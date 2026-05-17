@@ -43,11 +43,10 @@ class RebalancePage extends ConsumerWidget {
   }
 
   void _openSettings(BuildContext context, WidgetRef ref) {
-    showFSheet<void>(
-      side: FLayout.btt,
+    showAppSheet<void>(
       context: context,
-      mainAxisMaxRatio: null,
-      builder: (ctx) => const _SettingsSheet(),
+      title: AppLocalizations.of(context).rebalanceSettingsTitle,
+      builder: (_) => const _SettingsSheet(),
     );
   }
 }
@@ -409,50 +408,40 @@ class _SettingsSheet extends ConsumerWidget {
     final warning = ref.watch(warningThresholdProvider);
     final critical = ref.watch(criticalThresholdProvider);
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.rebalanceSettingsTitle,
-              style: context.theme.typography.lg,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.rebalanceWarningThreshold,
-              style: context.theme.typography.sm,
-            ),
-            FSlider(
-              control: FSliderControl.managedContinuous(
-                initial: FSliderValue(max: (warning - 0.01) / 0.19),
-                onChange: (v) => ref
-                    .read(warningThresholdProvider.notifier)
-                    .set(0.01 + v.max * 0.19),
-              ),
-              tooltipBuilder: (_, v) =>
-                  Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.rebalanceCriticalThreshold,
-              style: context.theme.typography.sm,
-            ),
-            FSlider(
-              control: FSliderControl.managedContinuous(
-                initial: FSliderValue(max: (critical - 0.05) / 0.25),
-                onChange: (v) => ref
-                    .read(criticalThresholdProvider.notifier)
-                    .set(0.05 + v.max * 0.25),
-              ),
-              tooltipBuilder: (_, v) =>
-                  Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),
-            ),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.rebalanceWarningThreshold,
+          style: context.theme.typography.sm,
         ),
-      ),
+        FSlider(
+          control: FSliderControl.managedContinuous(
+            initial: FSliderValue(max: (warning - 0.01) / 0.19),
+            onChange: (v) => ref
+                .read(warningThresholdProvider.notifier)
+                .set(0.01 + v.max * 0.19),
+          ),
+          tooltipBuilder: (_, v) =>
+              Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.rebalanceCriticalThreshold,
+          style: context.theme.typography.sm,
+        ),
+        FSlider(
+          control: FSliderControl.managedContinuous(
+            initial: FSliderValue(max: (critical - 0.05) / 0.25),
+            onChange: (v) => ref
+                .read(criticalThresholdProvider.notifier)
+                .set(0.05 + v.max * 0.25),
+          ),
+          tooltipBuilder: (_, v) =>
+              Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),
+        ),
+      ],
     );
   }
 }

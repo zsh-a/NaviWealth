@@ -94,41 +94,23 @@ class SessionsPanel extends ConsumerWidget {
     ChatSession session,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showAppSheet<bool>(
+    final ok = await showAppFormSheet<bool>(
       context: context,
-      title: l10n.aiChatSessionDeleteTitle,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.aiChatSessionDeleteBody(session.title),
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              height: 1.4,
-            ),
+      builder: (ctx) => AppSheet(
+        title: l10n.aiChatSessionDeleteTitle,
+        footer: AppSheetFooter(
+          submitLabel: l10n.commonDelete,
+          cancelLabel: l10n.commonCancel,
+          destructive: true,
+          onSubmit: () => Navigator.of(ctx).pop(true),
+        ),
+        child: Text(
+          l10n.aiChatSessionDeleteBody(session.title),
+          style: context.theme.typography.sm.copyWith(
+            color: context.theme.colors.mutedForeground,
+            height: 1.4,
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(false),
-                  child: Text(l10n.commonCancel),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.destructive,
-                  onPress: () => Navigator.of(ctx).pop(true),
-                  child: Text(l10n.commonDelete),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
     if (ok != true) return;
@@ -143,40 +125,21 @@ class SessionsPanel extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: session.title);
-    final result = await showAppSheet<String>(
+    final result = await showAppFormSheet<String>(
       context: context,
-      title: l10n.aiChatSessionRenameTitle,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FTextField(
-            control: FTextFieldControl.managed(controller: controller),
-            autofocus: true,
-            maxLength: 60,
-            label: Text(l10n.aiChatSessionTitleLabel),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(ctx).pop(),
-                  child: Text(l10n.commonCancel),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FButton(
-                  onPress: () =>
-                      Navigator.of(ctx).pop(controller.text.trim()),
-                  child: Text(l10n.commonSave),
-                ),
-              ),
-            ],
-          ),
-        ],
+      builder: (ctx) => AppSheet(
+        title: l10n.aiChatSessionRenameTitle,
+        footer: AppSheetFooter(
+          submitLabel: l10n.commonSave,
+          cancelLabel: l10n.commonCancel,
+          onSubmit: () => Navigator.of(ctx).pop(controller.text.trim()),
+        ),
+        child: FTextField(
+          control: FTextFieldControl.managed(controller: controller),
+          autofocus: true,
+          maxLength: 60,
+          label: Text(l10n.aiChatSessionTitleLabel),
+        ),
       ),
     );
     if (result == null || result.isEmpty || result == session.title) return;

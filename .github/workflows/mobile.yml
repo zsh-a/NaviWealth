@@ -11,6 +11,7 @@ on:
       - 'codecov.yml'
       - 'docs/ai-protocol.md'
       - 'tool/check-tool-descriptors.sh'
+      - 'tool/check-modal-helpers.sh'
   pull_request:
     paths:
       - 'apps/mobile/**'
@@ -20,6 +21,7 @@ on:
       - 'codecov.yml'
       - 'docs/ai-protocol.md'
       - 'tool/check-tool-descriptors.sh'
+      - 'tool/check-modal-helpers.sh'
 
 concurrency:
   group: mobile-${{ github.ref }}
@@ -77,6 +79,12 @@ jobs:
         # otherwise zh users see English at runtime via the silent
         # fallback path.
         run: ./tool/check-l10n-parity.sh
+      - name: Unified modal system — no raw Material modals in features
+        # Every sheet/dialog must go through the design-system helpers
+        # (showAppSheet / showAppFormSheet / showConfirmDialog) so chrome
+        # stays identical. Bans showDialog/AlertDialog/etc. in features.
+        working-directory: ${{ github.workspace }}
+        run: ./tool/check-modal-helpers.sh
       - name: Run tests + pin failure footprint (Wave 41)
         # We can't yet bring the failing-test footprint to zero (~50
         # files broken by design-system API drift unrelated to the AI

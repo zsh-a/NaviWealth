@@ -249,13 +249,9 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 
   Future<void> _onEdit(ReadyProposalPlan plan) async {
-    final result = await showFSheet<Map<String, Object?>>(
+    final result = await showAppFormSheet<Map<String, Object?>>(
       context: context,
-      side: FLayout.btt,
-      mainAxisMaxRatio: null,
-      builder: (ctx) => AppSheetSurface(
-        child: ProposalEditSheet(plan: plan, initial: _overrides),
-      ),
+      builder: (_) => ProposalEditSheet(plan: plan, initial: _overrides),
     );
     if (result == null || !mounted) return;
     setState(() => _overrides = result);
@@ -894,56 +890,33 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     _ensureFieldsInitialized(l10n);
-    final padding = MediaQuery.viewInsetsOf(context).bottom;
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: padding + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Text(
-                  l10n.aiChatProposalEditKindTitle(
-                    proposalKindLabel(l10n, widget.plan.kind),
-                  ),
-                  style: context.theme.typography.md,
-                ),
-                const Spacer(),
-                FButton.icon(
-                  variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close, size: 18),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            for (final f in _fields) ...[
-              FTextField(
-                control: FTextFieldControl.managed(
-                  controller: _controllers[f.payloadKey],
-                ),
-                keyboardType: f.numeric
-                    ? const TextInputType.numberWithOptions(decimal: true)
-                    : TextInputType.text,
-                label: Text(f.label),
-                hint: f.hint,
+    return AppSheet(
+      title: l10n.aiChatProposalEditKindTitle(
+        proposalKindLabel(l10n, widget.plan.kind),
+      ),
+      footer: AppSheetFooter(
+        submitLabel: l10n.aiChatProposalSaveEdits,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: () => Navigator.of(context).pop(_collect()),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final f in _fields) ...[
+            FTextField(
+              control: FTextFieldControl.managed(
+                controller: _controllers[f.payloadKey],
               ),
-              const SizedBox(height: 12),
-            ],
-            FButton(
-              variant: FButtonVariant.primary,
-              onPress: () => Navigator.of(context).pop(_collect()),
-              child: Text(l10n.aiChatProposalSaveEdits),
+              keyboardType: f.numeric
+                  ? const TextInputType.numberWithOptions(decimal: true)
+                  : TextInputType.text,
+              label: Text(f.label),
+              hint: f.hint,
             ),
+            const SizedBox(height: 12),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/haptics/haptics.dart';
 import '../../../../data/domain/enums.dart';
+import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../shared/forms/forms.dart';
 import '../data/physical_asset.dart';
@@ -30,15 +31,9 @@ class PhysicalAssetCreateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required AssetType type,
   }) {
-    return showFSheet<PhysicalAsset>(
-      side: FLayout.btt,
+    return showAppFormSheet<PhysicalAsset>(
       context: context,
-      mainAxisMaxRatio: null,
-      useSafeArea: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: PhysicalAssetCreateSheet(type: type),
-      ),
+      builder: (_) => PhysicalAssetCreateSheet(type: type),
     );
   }
 }
@@ -106,179 +101,156 @@ class _PhysicalAssetCreateSheetState
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AppSheet(
+      title: _isVehicle
+          ? l10n.physicalAssetAddVehicle
+          : l10n.physicalAssetAddRealEstate,
+      footer: AppSheetFooter(
+        submitLabel: l10n.physicalAssetCreateSubmit,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: _submit,
+        busy: _saving,
+      ),
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _nameCtrl),
+              label: Text(l10n.physicalAssetFieldName),
+              focusNode: _nameFocus,
+              textInputAction: TextInputAction.next,
+              validator: _required(l10n),
+              onSubmit: (_) => _isVehicle
+                  ? _currencyFocus.requestFocus()
+                  : _addressFocus.requestFocus(),
+            ),
+            const SizedBox(height: 12),
+            if (!_isVehicle) ...[
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _addressCtrl),
+                label: Text(l10n.physicalAssetFieldAddress),
+                focusNode: _addressFocus,
+                textInputAction: TextInputAction.next,
+                onSubmit: (_) => _currencyFocus.requestFocus(),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Row(
               children: [
-                Center(
-                  child: Container(
-                    width: 32,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: context.theme.colors.border,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                Text(
-                  _isVehicle
-                      ? l10n.physicalAssetAddVehicle
-                      : l10n.physicalAssetAddRealEstate,
-                  style: context.theme.typography.lg,
-                ),
-                const SizedBox(height: 16),
-                FTextFormField(
-                  control: FTextFieldControl.managed(controller: _nameCtrl),
-                  label: Text(l10n.physicalAssetFieldName),
-                  focusNode: _nameFocus,
-                  textInputAction: TextInputAction.next,
-                  validator: _required(l10n),
-                  onSubmit: (_) => _isVehicle
-                      ? _currencyFocus.requestFocus()
-                      : _addressFocus.requestFocus(),
-                ),
-                const SizedBox(height: 12),
-                if (!_isVehicle) ...[
-                  FTextFormField(
+                Expanded(
+                  child: FTextFormField(
                     control: FTextFieldControl.managed(
-                      controller: _addressCtrl,
+                      controller: _currencyCtrl,
                     ),
-                    label: Text(l10n.physicalAssetFieldAddress),
-                    focusNode: _addressFocus,
+                    label: Text(l10n.physicalAssetFieldCurrency),
+                    focusNode: _currencyFocus,
                     textInputAction: TextInputAction.next,
-                    onSubmit: (_) => _currencyFocus.requestFocus(),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: _required(l10n),
+                    onSubmit: (_) => _purchasePriceFocus.requestFocus(),
                   ),
-                  const SizedBox(height: 12),
-                ],
-                Row(
-                  children: [
-                    Expanded(
-                      child: FTextFormField(
-                        control: FTextFieldControl.managed(
-                          controller: _currencyCtrl,
-                        ),
-                        label: Text(l10n.physicalAssetFieldCurrency),
-                        focusNode: _currencyFocus,
-                        textInputAction: TextInputAction.next,
-                        textCapitalization: TextCapitalization.characters,
-                        validator: _required(l10n),
-                        onSubmit: (_) => _purchasePriceFocus.requestFocus(),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    onTap: _saving ? null : _pickPurchaseDate,
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: l10n.physicalAssetFieldPurchaseDate,
                       ),
+                      child: Text(dateFormat.format(_purchaseDate)),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: InkWell(
-                        onTap: _saving ? null : _pickPurchaseDate,
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: l10n.physicalAssetFieldPurchaseDate,
-                          ),
-                          child: Text(dateFormat.format(_purchaseDate)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                FTextFormField(
-                  control: FTextFieldControl.managed(
-                    controller: _purchasePriceCtrl,
                   ),
-                  label: Text(l10n.physicalAssetFieldPurchasePrice),
-                  focusNode: _purchasePriceFocus,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  textInputAction: TextInputAction.next,
-                  validator: _positiveDecimal(l10n),
-                  onSubmit: (_) => _currentValuationFocus.requestFocus(),
-                ),
-                const SizedBox(height: 12),
-                FTextFormField(
-                  control: FTextFieldControl.managed(
-                    controller: _currentValuationCtrl,
-                  ),
-                  label: Text(l10n.physicalAssetFieldCurrentValuation),
-                  focusNode: _currentValuationFocus,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  textInputAction: TextInputAction.next,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return null;
-                    return _positiveDecimal(l10n)(v);
-                  },
-                  onSubmit: (_) => _isVehicle
-                      ? _residualRateFocus.requestFocus()
-                      : _linkedLiabilityFocus.requestFocus(),
-                ),
-                if (_isVehicle) ...[
-                  const SizedBox(height: 12),
-                  FTextFormField(
-                    control: FTextFieldControl.managed(
-                      controller: _residualRateCtrl,
-                    ),
-                    label: Text(l10n.physicalAssetFieldAnnualResidualRate),
-                    description: const Text('0.85'),
-                    focusNode: _residualRateFocus,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.done,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) {
-                        return l10n.physicalAssetValidationRequired;
-                      }
-                      final parsed = Decimal.tryParse(v);
-                      if (parsed == null ||
-                          parsed <= Decimal.zero ||
-                          parsed >= Decimal.one) {
-                        return l10n.physicalAssetValidationResidualRange;
-                      }
-                      return null;
-                    },
-                    onSubmit: (_) => _saving ? null : _submit(),
-                  ),
-                  const SizedBox(height: 4),
-                  SwitchListTile.adaptive(
-                    title: Text(l10n.physicalAssetFieldAutoDepreciation),
-                    value: _autoDepreciation,
-                    onChanged: _saving
-                        ? null
-                        : (v) => setState(() => _autoDepreciation = v),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ],
-                if (!_isVehicle) ...[
-                  const SizedBox(height: 12),
-                  FTextFormField(
-                    control: FTextFieldControl.managed(
-                      controller: _linkedLiabilityCtrl,
-                    ),
-                    label: Text(l10n.physicalAssetFieldLinkedLiability),
-                    focusNode: _linkedLiabilityFocus,
-                    textInputAction: TextInputAction.done,
-                    onSubmit: (_) => _saving ? null : _submit(),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: _saving ? null : _submit,
-                  child: Text(l10n.physicalAssetCreateSubmit),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 12),
+            FTextFormField(
+              control: FTextFieldControl.managed(
+                controller: _purchasePriceCtrl,
+              ),
+              label: Text(l10n.physicalAssetFieldPurchasePrice),
+              focusNode: _purchasePriceFocus,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textInputAction: TextInputAction.next,
+              validator: _positiveDecimal(l10n),
+              onSubmit: (_) => _currentValuationFocus.requestFocus(),
+            ),
+            const SizedBox(height: 12),
+            FTextFormField(
+              control: FTextFieldControl.managed(
+                controller: _currentValuationCtrl,
+              ),
+              label: Text(l10n.physicalAssetFieldCurrentValuation),
+              focusNode: _currentValuationFocus,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textInputAction: TextInputAction.next,
+              validator: (v) {
+                if (v == null || v.isEmpty) return null;
+                return _positiveDecimal(l10n)(v);
+              },
+              onSubmit: (_) => _isVehicle
+                  ? _residualRateFocus.requestFocus()
+                  : _linkedLiabilityFocus.requestFocus(),
+            ),
+            if (_isVehicle) ...[
+              const SizedBox(height: 12),
+              FTextFormField(
+                control: FTextFieldControl.managed(
+                  controller: _residualRateCtrl,
+                ),
+                label: Text(l10n.physicalAssetFieldAnnualResidualRate),
+                description: const Text('0.85'),
+                focusNode: _residualRateFocus,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                textInputAction: TextInputAction.done,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return l10n.physicalAssetValidationRequired;
+                  }
+                  final parsed = Decimal.tryParse(v);
+                  if (parsed == null ||
+                      parsed <= Decimal.zero ||
+                      parsed >= Decimal.one) {
+                    return l10n.physicalAssetValidationResidualRange;
+                  }
+                  return null;
+                },
+                onSubmit: (_) => _saving ? null : _submit(),
+              ),
+              const SizedBox(height: 4),
+              SwitchListTile.adaptive(
+                title: Text(l10n.physicalAssetFieldAutoDepreciation),
+                value: _autoDepreciation,
+                onChanged: _saving
+                    ? null
+                    : (v) => setState(() => _autoDepreciation = v),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ],
+            if (!_isVehicle) ...[
+              const SizedBox(height: 12),
+              FTextFormField(
+                control: FTextFieldControl.managed(
+                  controller: _linkedLiabilityCtrl,
+                ),
+                label: Text(l10n.physicalAssetFieldLinkedLiability),
+                focusNode: _linkedLiabilityFocus,
+                textInputAction: TextInputAction.done,
+                onSubmit: (_) => _saving ? null : _submit(),
+              ),
+            ],
+          ],
         ),
       ),
     );

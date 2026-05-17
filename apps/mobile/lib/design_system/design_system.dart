@@ -14,6 +14,7 @@ export 'theme/market_colors_provider.dart';
 export 'theme/semantic_colors.dart';
 export 'tokens/breakpoints.dart';
 export 'tokens/color_palette.dart';
+export 'tokens/dimens_tokens.dart';
 export 'tokens/motion_tokens.dart';
 export 'tokens/typography_tokens.dart';
 export 'widgets/adaptive_content_frame.dart';
