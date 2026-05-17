@@ -152,11 +152,11 @@ abstract class AppLocalizations {
   /// **'Open cash flow'**
   String get cashFlowCommandOpen;
 
-  /// Command palette action for recording or reviewing income flow
+  /// Command palette entry that opens Activity filtered to income entries
   ///
   /// In en, this message translates to:
-  /// **'New income'**
-  String get cashFlowCommandNewIncome;
+  /// **'View income'**
+  String get cashFlowCommandViewIncome;
 
   /// Cash-flow period selector: monthly
   ///
@@ -212,11 +212,383 @@ abstract class AppLocalizations {
   /// **'Category mix'**
   String get cashFlowCategoryTitle;
 
-  /// Cash-flow shortcut into Activity filtered to income/dividend-like entries
+  /// Cash-flow page link into the Dividend Center
   ///
   /// In en, this message translates to:
-  /// **'View dividend activity'**
-  String get cashFlowDividendActivity;
+  /// **'View dividend center'**
+  String get cashFlowViewDividendCenter;
+
+  /// Cash-flow page empty-state title
+  ///
+  /// In en, this message translates to:
+  /// **'No cash flow yet'**
+  String get cashFlowEmptyTitle;
+
+  /// Cash-flow page empty-state body
+  ///
+  /// In en, this message translates to:
+  /// **'Income and expenses appear here once you record transactions.'**
+  String get cashFlowEmptyBody;
+
+  /// Cash-flow page error state
+  ///
+  /// In en, this message translates to:
+  /// **'Cash flow failed to load: {error}'**
+  String cashFlowLoadError(String error);
+
+  /// Recurring transactions list page title
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get recurringListTitle;
+
+  /// Command palette entry to open recurring transactions
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring transactions'**
+  String get recurringCommandOpen;
+
+  /// Chinese command-palette keyword for recurring; present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'周期'**
+  String get commandKeywordRecurringCn;
+
+  /// Recurring list error state
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring rules failed to load: {error}'**
+  String recurringLoadError(String error);
+
+  /// Recurring list empty-state title
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring rules'**
+  String get recurringEmptyTitle;
+
+  /// Recurring list empty-state body
+  ///
+  /// In en, this message translates to:
+  /// **'Set up rules for salary, subscriptions or other repeating cash flow.'**
+  String get recurringEmptyBody;
+
+  /// Recurring list empty-state CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Add recurring rule'**
+  String get recurringEmptyCta;
+
+  /// Recurring row next-due label
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {date}'**
+  String recurringNextDue(String date);
+
+  /// Shown when a recurring template cannot be decoded
+  ///
+  /// In en, this message translates to:
+  /// **'Template unreadable'**
+  String get recurringTemplateCorrupt;
+
+  /// Recurring row action sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring rule'**
+  String get recurringRowActionsTitle;
+
+  /// Recurring row action: edit
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get recurringActionEdit;
+
+  /// Subtitle for edit action
+  ///
+  /// In en, this message translates to:
+  /// **'Change amount or schedule'**
+  String get recurringActionEditHint;
+
+  /// Recurring row action: disable
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get recurringActionDisable;
+
+  /// Subtitle for disable action
+  ///
+  /// In en, this message translates to:
+  /// **'Stop generating new entries'**
+  String get recurringActionDisableHint;
+
+  /// Subtitle for delete action
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this rule permanently'**
+  String get recurringActionDeleteHint;
+
+  /// Disable confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Disable rule?'**
+  String get recurringDisableTitle;
+
+  /// Disable confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'It will stop creating new entries. You can recreate it later.'**
+  String get recurringDisableBody;
+
+  /// Delete confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete rule?'**
+  String get recurringDeleteTitle;
+
+  /// Delete confirm body
+  ///
+  /// In en, this message translates to:
+  /// **'This recurring rule will be removed. This cannot be undone.'**
+  String get recurringDeleteBody;
+
+  /// Toast after disabling a rule
+  ///
+  /// In en, this message translates to:
+  /// **'Rule disabled'**
+  String get recurringDisabled;
+
+  /// Toast after deleting a rule
+  ///
+  /// In en, this message translates to:
+  /// **'Rule deleted'**
+  String get recurringDeleted;
+
+  /// Toast when a recurring action fails
+  ///
+  /// In en, this message translates to:
+  /// **'Action failed'**
+  String get recurringActionFailed;
+
+  /// Recurrence summary: daily
+  ///
+  /// In en, this message translates to:
+  /// **'Every {n} day(s)'**
+  String recurringEveryDay(int n);
+
+  /// Recurrence summary: weekly
+  ///
+  /// In en, this message translates to:
+  /// **'Every {n} week(s)'**
+  String recurringEveryWeek(int n);
+
+  /// Recurrence summary: monthly
+  ///
+  /// In en, this message translates to:
+  /// **'Every {n} month(s)'**
+  String recurringEveryMonth(int n);
+
+  /// Recurrence summary: yearly
+  ///
+  /// In en, this message translates to:
+  /// **'Every {n} year(s)'**
+  String recurringEveryYear(int n);
+
+  /// Recurrence summary: day of month
+  ///
+  /// In en, this message translates to:
+  /// **'on day {day}'**
+  String recurringByMonthDay(int day);
+
+  /// Recurrence summary: end date
+  ///
+  /// In en, this message translates to:
+  /// **'until {date}'**
+  String recurringUntil(String date);
+
+  /// Recurring form title (create)
+  ///
+  /// In en, this message translates to:
+  /// **'New recurring rule'**
+  String get recurringFormNewTitle;
+
+  /// Recurring form title (edit)
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recurring rule'**
+  String get recurringFormEditTitle;
+
+  /// Recurring form subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Generates a journal entry on each occurrence'**
+  String get recurringFormSubtitle;
+
+  /// Recurring form submit label
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get recurringFormSave;
+
+  /// Recurring form: income/expense selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get recurringFieldKind;
+
+  /// Recurring kind: income
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get recurringKindIncome;
+
+  /// Recurring kind: expense
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get recurringKindExpense;
+
+  /// Recurring form amount field
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get recurringFieldAmount;
+
+  /// Recurring form cash account picker
+  ///
+  /// In en, this message translates to:
+  /// **'Cash account'**
+  String get recurringFieldCashAccount;
+
+  /// Recurring form counter account picker
+  ///
+  /// In en, this message translates to:
+  /// **'Category account'**
+  String get recurringFieldCategoryAccount;
+
+  /// Recurring form narration field
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get recurringFieldNote;
+
+  /// Recurring form first-occurrence date
+  ///
+  /// In en, this message translates to:
+  /// **'Starts on'**
+  String get recurringFieldStart;
+
+  /// Recurring form frequency selector
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get recurringFieldFrequency;
+
+  /// Frequency option: daily
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get recurringFreqDaily;
+
+  /// Frequency option: weekly
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get recurringFreqWeekly;
+
+  /// Frequency option: monthly
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get recurringFreqMonthly;
+
+  /// Frequency option: yearly
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get recurringFreqYearly;
+
+  /// Recurring form interval field
+  ///
+  /// In en, this message translates to:
+  /// **'Every N periods'**
+  String get recurringFieldInterval;
+
+  /// Recurring form day-of-month field
+  ///
+  /// In en, this message translates to:
+  /// **'Day of month'**
+  String get recurringFieldByMonthDay;
+
+  /// Day-of-month helper
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, 1–31'**
+  String get recurringFieldByMonthDayHelper;
+
+  /// Recurring form end-date field
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get recurringFieldUntil;
+
+  /// End-date helper
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get recurringFieldUntilHelper;
+
+  /// Recurring validation: required field
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get recurringValidationRequired;
+
+  /// Recurring validation: positive amount
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than 0'**
+  String get recurringValidationPositive;
+
+  /// Recurring validation: interval
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive whole number'**
+  String get recurringValidationInterval;
+
+  /// Recurring validation: day of month
+  ///
+  /// In en, this message translates to:
+  /// **'Day must be 1–31'**
+  String get recurringValidationByMonthDay;
+
+  /// Recurring validation: accounts required
+  ///
+  /// In en, this message translates to:
+  /// **'Pick both accounts'**
+  String get recurringValidationAccounts;
+
+  /// Recurring validation: distinct accounts
+  ///
+  /// In en, this message translates to:
+  /// **'Cash and category accounts must differ'**
+  String get recurringValidationSameAccount;
+
+  /// Recurring validation: currency required
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a currency'**
+  String get recurringValidationCurrency;
+
+  /// Default narration when note is blank
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring transaction'**
+  String get recurringDefaultNarration;
+
+  /// Toast when saving a recurring rule fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the rule'**
+  String get recurringSaveFailed;
 
   /// Cash-flow category label
   ///
@@ -355,6 +727,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dividend center failed to load: {error}'**
   String dividendCenterLoadError(String error);
+
+  /// Title of the dividend timeline row action sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend entry'**
+  String get dividendEventActionsTitle;
+
+  /// Dividend row action: open the journal entry detail
+  ///
+  /// In en, this message translates to:
+  /// **'View in activity'**
+  String get dividendEventViewInActivity;
+
+  /// Subtitle for view-in-activity action
+  ///
+  /// In en, this message translates to:
+  /// **'Open the underlying journal entry'**
+  String get dividendEventViewInActivityHint;
+
+  /// Dividend row action: re-record via corporate action form
+  ///
+  /// In en, this message translates to:
+  /// **'Edit (re-record)'**
+  String get dividendEventEdit;
+
+  /// Subtitle for the edit/re-record action
+  ///
+  /// In en, this message translates to:
+  /// **'Record a corrected corporate action'**
+  String get dividendEventEditHint;
+
+  /// Subtitle for the delete action
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this dividend entry'**
+  String get dividendEventDeleteHint;
+
+  /// Confirm dialog title for deleting a dividend entry
+  ///
+  /// In en, this message translates to:
+  /// **'Delete dividend?'**
+  String get dividendEventDeleteTitle;
+
+  /// Confirm dialog body for deleting a dividend entry
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the dividend for {asset}? This cannot be undone.'**
+  String dividendEventDeleteBody(String asset);
+
+  /// Toast after a dividend entry is deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend deleted'**
+  String get dividendEventDeleted;
+
+  /// Toast when dividend deletion fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the dividend'**
+  String get dividendEventDeleteFailed;
+
+  /// Toast when the journal entry cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this entry'**
+  String get dividendEventOpenFailed;
 
   /// Dividend forecast strategy label: declared corporate actions
   ///

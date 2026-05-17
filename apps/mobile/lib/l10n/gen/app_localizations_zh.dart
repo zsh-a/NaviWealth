@@ -36,7 +36,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFlowCommandOpen => '打开现金流';
 
   @override
-  String get cashFlowCommandNewIncome => '新增收入';
+  String get cashFlowCommandViewIncome => '查看收入流水';
 
   @override
   String get cashFlowPeriodMonth => '月';
@@ -66,7 +66,211 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFlowCategoryTitle => '类目分布';
 
   @override
-  String get cashFlowDividendActivity => '查看股息流水';
+  String get cashFlowViewDividendCenter => '查看股息中心';
+
+  @override
+  String get cashFlowEmptyTitle => '暂无现金流';
+
+  @override
+  String get cashFlowEmptyBody => '记录交易后，收入与支出会显示在这里。';
+
+  @override
+  String cashFlowLoadError(String error) {
+    return '现金流加载失败：$error';
+  }
+
+  @override
+  String get recurringListTitle => '周期收支';
+
+  @override
+  String get recurringCommandOpen => '周期收支';
+
+  @override
+  String get commandKeywordRecurringCn => '周期';
+
+  @override
+  String recurringLoadError(String error) {
+    return '周期规则加载失败：$error';
+  }
+
+  @override
+  String get recurringEmptyTitle => '暂无周期规则';
+
+  @override
+  String get recurringEmptyBody => '为工资、订阅或其他重复现金流设置规则。';
+
+  @override
+  String get recurringEmptyCta => '新增周期规则';
+
+  @override
+  String recurringNextDue(String date) {
+    return '下次：$date';
+  }
+
+  @override
+  String get recurringTemplateCorrupt => '模板无法读取';
+
+  @override
+  String get recurringRowActionsTitle => '周期规则';
+
+  @override
+  String get recurringActionEdit => '编辑';
+
+  @override
+  String get recurringActionEditHint => '修改金额或周期';
+
+  @override
+  String get recurringActionDisable => '停用';
+
+  @override
+  String get recurringActionDisableHint => '停止生成新记录';
+
+  @override
+  String get recurringActionDeleteHint => '永久删除该规则';
+
+  @override
+  String get recurringDisableTitle => '停用规则？';
+
+  @override
+  String get recurringDisableBody => '将停止生成新记录，之后可重新创建。';
+
+  @override
+  String get recurringDeleteTitle => '删除规则？';
+
+  @override
+  String get recurringDeleteBody => '该周期规则将被删除，此操作不可撤销。';
+
+  @override
+  String get recurringDisabled => '规则已停用';
+
+  @override
+  String get recurringDeleted => '规则已删除';
+
+  @override
+  String get recurringActionFailed => '操作失败';
+
+  @override
+  String recurringEveryDay(int n) {
+    return '每 $n 天';
+  }
+
+  @override
+  String recurringEveryWeek(int n) {
+    return '每 $n 周';
+  }
+
+  @override
+  String recurringEveryMonth(int n) {
+    return '每 $n 个月';
+  }
+
+  @override
+  String recurringEveryYear(int n) {
+    return '每 $n 年';
+  }
+
+  @override
+  String recurringByMonthDay(int day) {
+    return '每月 $day 号';
+  }
+
+  @override
+  String recurringUntil(String date) {
+    return '至 $date';
+  }
+
+  @override
+  String get recurringFormNewTitle => '新建周期规则';
+
+  @override
+  String get recurringFormEditTitle => '编辑周期规则';
+
+  @override
+  String get recurringFormSubtitle => '每次到期生成一笔记账分录';
+
+  @override
+  String get recurringFormSave => '保存';
+
+  @override
+  String get recurringFieldKind => '类型';
+
+  @override
+  String get recurringKindIncome => '收入';
+
+  @override
+  String get recurringKindExpense => '支出';
+
+  @override
+  String get recurringFieldAmount => '金额';
+
+  @override
+  String get recurringFieldCashAccount => '现金账户';
+
+  @override
+  String get recurringFieldCategoryAccount => '对方科目';
+
+  @override
+  String get recurringFieldNote => '备注';
+
+  @override
+  String get recurringFieldStart => '起始日';
+
+  @override
+  String get recurringFieldFrequency => '频率';
+
+  @override
+  String get recurringFreqDaily => '每天';
+
+  @override
+  String get recurringFreqWeekly => '每周';
+
+  @override
+  String get recurringFreqMonthly => '每月';
+
+  @override
+  String get recurringFreqYearly => '每年';
+
+  @override
+  String get recurringFieldInterval => '每隔几个周期';
+
+  @override
+  String get recurringFieldByMonthDay => '每月几号';
+
+  @override
+  String get recurringFieldByMonthDayHelper => '可选，1–31';
+
+  @override
+  String get recurringFieldUntil => '结束日期';
+
+  @override
+  String get recurringFieldUntilHelper => '可选';
+
+  @override
+  String get recurringValidationRequired => '必填';
+
+  @override
+  String get recurringValidationPositive => '请输入大于 0 的金额';
+
+  @override
+  String get recurringValidationInterval => '请输入正整数';
+
+  @override
+  String get recurringValidationByMonthDay => '日期需在 1–31 之间';
+
+  @override
+  String get recurringValidationAccounts => '请选择两个账户';
+
+  @override
+  String get recurringValidationSameAccount => '现金账户与对方科目不能相同';
+
+  @override
+  String get recurringValidationCurrency => '请选择币种';
+
+  @override
+  String get recurringDefaultNarration => '周期交易';
+
+  @override
+  String get recurringSaveFailed => '无法保存该规则';
 
   @override
   String get cashFlowKindSalary => '工资';
@@ -140,6 +344,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String dividendCenterLoadError(String error) {
     return '股息中心加载失败：$error';
   }
+
+  @override
+  String get dividendEventActionsTitle => '股息记录';
+
+  @override
+  String get dividendEventViewInActivity => '在流水中查看';
+
+  @override
+  String get dividendEventViewInActivityHint => '打开对应的记账分录';
+
+  @override
+  String get dividendEventEdit => '编辑（重新记录）';
+
+  @override
+  String get dividendEventEditHint => '通过公司行动表单修正记录';
+
+  @override
+  String get dividendEventDeleteHint => '删除这条股息记录';
+
+  @override
+  String get dividendEventDeleteTitle => '删除股息？';
+
+  @override
+  String dividendEventDeleteBody(String asset) {
+    return '确定删除 $asset 的股息记录？此操作不可撤销。';
+  }
+
+  @override
+  String get dividendEventDeleted => '股息已删除';
+
+  @override
+  String get dividendEventDeleteFailed => '无法删除该股息';
+
+  @override
+  String get dividendEventOpenFailed => '无法打开该记录';
 
   @override
   String get dividendForecastStrategyDeclared => '已声明';

@@ -25,6 +25,7 @@ abstract final class AppRoutes {
   static const expenseNew = '/activity/expenses/new';
   static const expenseReport = '/activity/expenses/report';
   static const cashflow = '/cashflow';
+  static const cashflowRecurring = '/cashflow/recurring';
   static const cashflowDividends = '/activity/cashflow/dividends';
   static const tradeEntry = '/activity/trade';
   static const transfer = '/activity/transfer';
@@ -129,6 +130,7 @@ abstract final class AppRouteNames {
   static const expenseNew = 'expense-new';
   static const expenseReport = 'expense-report';
   static const cashflow = 'cashflow';
+  static const cashflowRecurring = 'cashflow-recurring';
   static const expenseDetail = 'expense-detail';
   static const cashflowDividends = 'cashflow-dividends';
   static const tradeEntry = 'trade-entry';
@@ -147,5 +149,6 @@ const List<String> kPrimaryTabPaths = <String>[
 ];
 
 const String kCashflowPath = AppRoutes.cashflow;
+const String kCashflowRecurringPath = AppRoutes.cashflowRecurring;
 const String kDividendCenterPath = AppRoutes.cashflowDividends;
 const String kDividendsPath = AppRoutes.cashflowDividends;

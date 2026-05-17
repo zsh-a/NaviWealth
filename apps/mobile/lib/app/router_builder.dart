@@ -28,6 +28,7 @@ import '../features/auth/presentation/devices_page.dart'
 import '../features/auth/presentation/login_page.dart';
 import '../features/cashflow/ui/cashflow_page.dart';
 import '../features/cashflow/ui/dividend_center_page.dart';
+import '../features/cashflow/ui/recurring_transactions_page.dart';
 import '../features/expense/ui/expense_form_page.dart';
 import '../features/expense/ui/expense_list_page.dart';
 import '../features/expense/ui/expense_report_page.dart';
@@ -205,6 +206,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                 path: AppRoutes.cashflow,
                 name: AppRouteNames.cashflow,
                 builder: (context, state) => const CashFlowPage(),
+                routes: [
+                  GoRoute(
+                    path: 'recurring',
+                    name: AppRouteNames.cashflowRecurring,
+                    builder: (context, state) =>
+                        const RecurringTransactionsPage(),
+                  ),
+                ],
               ),
             ],
           ),

@@ -24,9 +24,9 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
       run: (BuildContext ctx) => ctx.go(AppRoutes.cashflow),
     ),
     CommandPaletteEntry(
-      id: 'action.newIncome',
-      label: l10n.cashFlowCommandNewIncome,
-      icon: Icons.add_circle_outline,
+      id: 'nav.income',
+      label: l10n.cashFlowCommandViewIncome,
+      icon: Icons.filter_list_outlined,
       keywords: <String>[
         'income',
         'salary',
@@ -37,6 +37,19 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
         l10n.commandKeywordDividendCn,
       ],
       run: (BuildContext ctx) => ctx.go('${AppRoutes.activity}?kinds=income'),
+    ),
+    CommandPaletteEntry(
+      id: 'nav.cashflow.recurring',
+      label: l10n.recurringCommandOpen,
+      icon: Icons.event_repeat_outlined,
+      keywords: <String>[
+        AppRoutes.cashflowRecurring,
+        'recurring',
+        'subscription',
+        'scheduled',
+        l10n.commandKeywordRecurringCn,
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowRecurring),
     ),
   ];
 }

@@ -49,30 +49,45 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatter = context.formatters(ref);
-    final summaryAsync = ref.watch(
-      cashFlowSummaryProvider(CashFlowSummaryRequest(period: _period)),
-    );
+    final request = CashFlowSummaryRequest(period: _period);
+    final summaryAsync = ref.watch(cashFlowSummaryProvider(request));
 
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.cashFlowTitle),
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.receipt_long_outlined),
-            onPress: () => context.go('${AppRoutes.activity}?kinds=income'),
+            icon: const Icon(Icons.event_repeat_outlined),
+            onPress: () => context.push(kCashflowRecurringPath),
+          ),
+          FHeaderAction(
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            onPress: () => context.push(kDividendCenterPath),
           ),
         ],
       ),
       childPad: false,
-      child: summaryAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _LoadError(error: error),
-        data: (summary) => _CashFlowContent(
-          period: _period,
-          summary: summary,
-          formatter: formatter,
-          now: ref.watch(cashFlowNowProvider),
-          onPeriodChanged: _changePeriod,
+      child: Material(
+        color: Colors.transparent,
+        child: PageSkeletonShell<CashFlowSummary>(
+          skeleton: const CashFlowSkeleton(),
+          isLoading: summaryAsync.isLoading,
+          child: summaryAsync.when(
+            loading: () => const CashFlowSkeleton(),
+            error: (error, _) => _LoadError(
+              message: l10n.cashFlowLoadError('$error'),
+              onRetry: () => ref.invalidate(cashFlowSummaryProvider(request)),
+            ),
+            data: (summary) => summary.buckets.isEmpty
+                ? const _EmptyState()
+                : _CashFlowContent(
+                    period: _period,
+                    summary: summary,
+                    formatter: formatter,
+                    now: ref.watch(cashFlowNowProvider),
+                    onPeriodChanged: _changePeriod,
+                  ),
+          ),
         ),
       ),
     );
@@ -109,44 +124,28 @@ class _CashFlowContent extends StatelessWidget {
       visibleKeys: keys,
       currentKey: currentKey,
     );
-    final isDesktop = MediaQuery.sizeOf(context).width >= 1024;
-
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PeriodSelector(period: period, onChanged: onPeriodChanged),
-        const SizedBox(height: 16),
-        _KpiGrid(model: model, formatter: formatter),
-        const SizedBox(height: 16),
-        if (isDesktop)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 3,
-                child: _ChartsPanel(model: model, formatter: formatter),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: _CategoryPanel(model: model, formatter: formatter),
-              ),
-            ],
-          )
-        else ...[
-          _ChartsPanel(model: model, formatter: formatter),
-          const SizedBox(height: 16),
-          _CategoryPanel(model: model, formatter: formatter),
-        ],
-      ],
-    );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: AdaptiveContentFrame(
         maxWidth: AdaptiveMaxWidth.dashboard,
         padding: EdgeInsets.zero,
-        primary: content,
+        layout: AdaptiveFrameLayout.twoColumn,
+        columnBreakpoint: 1024,
+        primaryFlex: 3,
+        secondaryFlex: 2,
+        sectionGap: AppSpacing.s16,
+        columnGap: AppSpacing.s16,
+        header: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _PeriodSelector(period: period, onChanged: onPeriodChanged),
+            const SizedBox(height: AppSpacing.s16),
+            _KpiGrid(model: model, formatter: formatter),
+          ],
+        ),
+        primary: _ChartsPanel(model: model, formatter: formatter),
+        secondary: _CategoryPanel(model: model, formatter: formatter),
       ),
     );
   }
@@ -162,8 +161,8 @@ class _PeriodSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
       children: [
         for (final candidate in CashFlowPeriod.values)
           _PeriodChip(
@@ -194,10 +193,13 @@ class _PeriodChip extends StatelessWidget {
       onPress: onTap,
       child: AnimatedContainer(
         duration: Motion.fast,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
         decoration: BoxDecoration(
           color: selected ? colors.primary : colors.muted,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         child: Text(
           label,
@@ -220,38 +222,54 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final tiles = <Widget>[
+      _KpiTile(
+        label: l10n.cashFlowKpiInflow,
+        money: model.currentInflow,
+        formatter: formatter,
+        tint: semantic.success,
+      ),
+      _KpiTile(
+        label: l10n.cashFlowKpiOutflow,
+        money: model.currentOutflow,
+        formatter: formatter,
+        tint: semantic.danger,
+      ),
+      _KpiTile(
+        label: l10n.cashFlowKpiNet,
+        money: model.currentNet,
+        formatter: formatter,
+        tint: model.currentNet.baseAmount < Decimal.zero
+            ? semantic.danger
+            : semantic.success,
+        signed: true,
+      ),
+    ];
+    // Intrinsic-height tiles instead of a fixed-aspect GridView: never
+    // overflows under large text-scale or intermediate widths.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 720 ? 3 : 1;
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: columns,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: columns == 1 ? 3.4 : 2.2,
+        if (constraints.maxWidth >= 720) {
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < tiles.length; i++) ...[
+                  if (i != 0) const SizedBox(width: AppSpacing.s12),
+                  Expanded(child: tiles[i]),
+                ],
+              ],
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _KpiTile(
-              label: l10n.cashFlowKpiInflow,
-              money: model.currentInflow,
-              formatter: formatter,
-              tint: SemanticColors.of(context).success,
-            ),
-            _KpiTile(
-              label: l10n.cashFlowKpiOutflow,
-              money: model.currentOutflow,
-              formatter: formatter,
-              tint: SemanticColors.of(context).danger,
-            ),
-            _KpiTile(
-              label: l10n.cashFlowKpiNet,
-              money: model.currentNet,
-              formatter: formatter,
-              tint: model.currentNet.baseAmount < Decimal.zero
-                  ? SemanticColors.of(context).danger
-                  : SemanticColors.of(context).success,
-              signed: true,
-            ),
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i != 0) const SizedBox(height: AppSpacing.s12),
+              tiles[i],
+            ],
           ],
         );
       },
@@ -277,31 +295,29 @@ class _KpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-              ),
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 8),
-            _DualMoneyText(
-              money: money,
-              formatter: formatter,
-              signed: signed,
-              style: TypographyTokens.numericTitle.copyWith(
-                color: tint,
-                fontWeight: FontWeight.w700,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          _DualMoneyText(
+            money: money,
+            formatter: formatter,
+            signed: signed,
+            style: TypographyTokens.numericTitle.copyWith(
+              color: tint,
+              fontWeight: FontWeight.w700,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -324,83 +340,81 @@ class _ChartsPanel extends StatelessWidget {
       locale: locale,
     );
     return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.cashFlowIncomeExpenseTitle,
-              style: context.theme.typography.md.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.cashFlowIncomeExpenseTitle,
+            style: context.theme.typography.md.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 12),
-            NwBarChart(
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          NwBarChart(
+            series: [
+              CategorySeries(
+                name: l10n.cashFlowKpiInflow,
+                data: model.periods
+                    .map(
+                      (period) => CategoryDatum(
+                        label: period.label,
+                        value: period.inflow.toDouble(),
+                        colorOverride: semantic.success,
+                      ),
+                    )
+                    .toList(),
+              ),
+              CategorySeries(
+                name: l10n.cashFlowKpiOutflow,
+                data: model.periods
+                    .map(
+                      (period) => CategoryDatum(
+                        label: period.label,
+                        value: period.outflow.toDouble(),
+                        colorOverride: semantic.danger,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+            yAxis: axis,
+            aspectRatio: 16 / 7,
+            barWidth: 10,
+            semanticLabel: l10n.cashFlowIncomeExpenseTitle,
+          ),
+          const SizedBox(height: AppSpacing.s20),
+          Text(
+            l10n.cashFlowNetTrendTitle,
+            style: context.theme.typography.md.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          SizedBox(
+            height: 220,
+            child: NwLineChart(
               series: [
-                CategorySeries(
-                  name: l10n.cashFlowKpiInflow,
-                  data: model.periods
+                ChartSeries(
+                  name: l10n.cashFlowKpiNet,
+                  points: model.periods
                       .map(
-                        (period) => CategoryDatum(
-                          label: period.label,
-                          value: period.inflow.toDouble(),
-                          colorOverride: semantic.success,
+                        (period) => ChartPoint(
+                          x: period.date.millisecondsSinceEpoch.toDouble(),
+                          y: period.net.toDouble(),
                         ),
                       )
                       .toList(),
-                ),
-                CategorySeries(
-                  name: l10n.cashFlowKpiOutflow,
-                  data: model.periods
-                      .map(
-                        (period) => CategoryDatum(
-                          label: period.label,
-                          value: period.outflow.toDouble(),
-                          colorOverride: semantic.danger,
-                        ),
-                      )
-                      .toList(),
+                  colorOverride: context.theme.colors.primary,
                 ),
               ],
+              xAxis: TimeAxis(locale: locale, showGrid: false),
               yAxis: axis,
-              aspectRatio: 16 / 7,
-              barWidth: 10,
-              semanticLabel: l10n.cashFlowIncomeExpenseTitle,
+              interpolation: ChartInterpolation.linear,
+              semanticLabel: l10n.cashFlowNetTrendTitle,
             ),
-            const SizedBox(height: 20),
-            Text(
-              l10n.cashFlowNetTrendTitle,
-              style: context.theme.typography.md.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 220,
-              child: NwLineChart(
-                series: [
-                  ChartSeries(
-                    name: l10n.cashFlowKpiNet,
-                    points: model.periods
-                        .map(
-                          (period) => ChartPoint(
-                            x: period.date.millisecondsSinceEpoch.toDouble(),
-                            y: period.net.toDouble(),
-                          ),
-                        )
-                        .toList(),
-                    colorOverride: context.theme.colors.primary,
-                  ),
-                ],
-                xAxis: TimeAxis(locale: locale, showGrid: false),
-                yAxis: axis,
-                interpolation: ChartInterpolation.linear,
-                semanticLabel: l10n.cashFlowNetTrendTitle,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -424,43 +438,40 @@ class _CategoryPanel extends StatelessWidget {
         )
         .toList();
     return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.cashFlowCategoryTitle,
-              style: context.theme.typography.md.copyWith(
-                fontWeight: FontWeight.w700,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.cashFlowCategoryTitle,
+            style: context.theme.typography.md.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          NwPieChart(
+            slices: slices,
+            aspectRatio: 4 / 3,
+            semanticLabel: l10n.cashFlowCategoryTitle,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          for (final category in model.categories)
+            _CategoryRow(
+              category: category,
+              formatter: formatter,
+              total: model.categoryTotal,
+            ),
+          if (model.categories.any((c) => c.kind == CashFlowKind.dividend))
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s12),
+              child: FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => context.push(kDividendCenterPath),
+                prefix: const Icon(Icons.account_balance_wallet_outlined),
+                child: Text(l10n.cashFlowViewDividendCenter),
               ),
             ),
-            const SizedBox(height: 12),
-            NwPieChart(
-              slices: slices,
-              aspectRatio: 4 / 3,
-              semanticLabel: l10n.cashFlowCategoryTitle,
-            ),
-            const SizedBox(height: 12),
-            for (final category in model.categories)
-              _CategoryRow(
-                category: category,
-                formatter: formatter,
-                total: model.categoryTotal,
-              ),
-            if (model.categories.any((c) => c.kind == CashFlowKind.dividend))
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () =>
-                      context.go('${AppRoutes.activity}?kinds=income'),
-                  prefix: const Icon(Icons.filter_list_outlined),
-                  child: Text(l10n.cashFlowDividendActivity),
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -484,7 +495,7 @@ class _CategoryRow extends StatelessWidget {
         ? 0
         : (category.amount / total).toDouble();
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
           Expanded(
@@ -501,11 +512,16 @@ class _CategoryRow extends StatelessWidget {
               color: context.theme.colors.mutedForeground,
             ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            formatter.currency(category.amount, code: category.currency),
-            style: TypographyTokens.numericBody.copyWith(
-              color: context.theme.colors.foreground,
+          const SizedBox(width: AppSpacing.s12),
+          Flexible(
+            child: Text(
+              formatter.currency(category.amount, code: category.currency),
+              style: TypographyTokens.numericBody.copyWith(
+                color: context.theme.colors.foreground,
+              ),
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -554,19 +570,70 @@ class _DualMoneyTextState extends State<_DualMoneyText> {
 }
 
 class _LoadError extends StatelessWidget {
-  const _LoadError({required this.error});
+  const _LoadError({required this.message, required this.onRetry});
 
-  final Object error;
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: context.theme.colors.destructive,
+            size: 32,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onRetry,
+            child: Text(l10n.commonRetry),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(
-          l10n.assetsLoadError(error.toString()),
-          textAlign: TextAlign.center,
+        padding: const EdgeInsets.all(AppSpacing.s24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 56,
+              color: context.theme.colors.primary,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            Text(
+              l10n.cashFlowEmptyTitle,
+              style: context.theme.typography.lg,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.cashFlowEmptyBody,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
