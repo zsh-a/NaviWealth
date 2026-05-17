@@ -67,6 +67,20 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go(AppRoutes.activityExpenses),
     ),
     CommandPaletteEntry(
+      id: 'nav.dividends',
+      label: 'Dividend Center',
+      icon: Icons.payments_outlined,
+      keywords: const <String>[
+        AppRoutes.cashflowDividends,
+        'dividends',
+        'passive income',
+        '股息中心',
+        '我的股息',
+        '被动收入',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowDividends),
+    ),
+    CommandPaletteEntry(
       id: 'nav.analytics',
       label: l10n.planAnalyticsTitle,
       icon: Icons.pie_chart_outline,
