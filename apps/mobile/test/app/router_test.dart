@@ -39,8 +39,11 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_compari
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/cashflow/ui/cashflow_page.dart';
+import 'package:naviwealth/features/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
@@ -151,6 +154,9 @@ Future<ProviderContainer> _pumpAt(
           totalInBase: Money(Decimal.zero, 'USD'),
         ),
       ),
+      dividendCenterSnapshotProvider.overrideWith(
+        (ref) async => _emptyDividendSnapshot(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -251,6 +257,13 @@ void main() {
       );
       expect(find.byType(CashFlowPage), findsOneWidget);
       expect(_currentPath(container), AppRoutes.cashflow);
+    });
+
+    testWidgets('/activity/cashflow/dividends renders Dividend Center', (
+      tester,
+    ) async {
+      await _pumpAt(tester, initialLocation: AppRoutes.cashflowDividends);
+      expect(find.byType(DividendCenterPage), findsOneWidget);
     });
 
     testWidgets('/settings renders Settings', (tester) async {
@@ -556,3 +569,14 @@ void main() {
     });
   });
 }
+
+DividendCenterSnapshot _emptyDividendSnapshot() => DividendCenterSnapshot(
+  baseCurrency: 'CNY',
+  yearToDateGross: Decimal.zero,
+  ttmGross: Decimal.zero,
+  priorYearToDateGross: Decimal.zero,
+  ttmWithholding: Decimal.zero,
+  events: const [],
+  ranking: const [],
+  months: const [],
+);

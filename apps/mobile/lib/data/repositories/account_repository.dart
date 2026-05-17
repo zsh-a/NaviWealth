@@ -601,12 +601,12 @@ class AccountRepository {
   ///
   /// ```
   /// Income/{Salary,Dividend,Interest,CapitalGains,Other}
-  /// Expenses/{Food,Transit,Housing,Trading/{Fee,Tax,Interest},Other}
+  /// Expenses/{Food,Transit,Housing,Trading/{Fee,Tax,Interest},Tax/{Withholding},Other}
   /// Equity/{OpeningBalance,Splits,Adjustments}
   /// ```
   ///
-  /// Three roots (carrying the existing FIR-126 ids) plus 16 children
-  /// for a total of 19 seeded accounts on a fresh install.
+  /// Three roots (carrying the existing FIR-126 ids) plus 18 children
+  /// for a total of 21 seeded accounts on a fresh install.
   ///
   /// Each row uses a deterministic id derived from
   /// [systemAccountIdForPath], so re-running the seed is a free no-op
@@ -943,6 +943,22 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Trading Interest',
     category: AccountSide.expense,
     icon: 'credit_card',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:tax',
+    parentPath: 'expense',
+    name: 'Tax',
+    category: AccountSide.expense,
+    icon: 'request_quote',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:tax:withholding',
+    parentPath: 'expense:tax',
+    name: 'Withholding Tax',
+    category: AccountSide.expense,
+    icon: 'request_quote',
     color: '#EF4444',
   ),
   _SystemAccountSeed(

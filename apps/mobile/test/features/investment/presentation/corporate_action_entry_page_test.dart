@@ -44,7 +44,7 @@ Future<void> _pump(
       supportedLocales: AppLocalizations.supportedLocales,
       home: CorporateActionEntryPage(
         assets: const [_testAsset],
-        lotsForAsset: _testLots,
+        lotsForAsset: (asset) => _testLots(asset.id),
         onSubmit: onSubmit,
         engine: CostBasisEngine(
           strategy: const FifoStrategy(),
@@ -64,11 +64,7 @@ Future<void> _selectType(WidgetTester tester, String typeName) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _enter(
-  WidgetTester tester,
-  String fieldKey,
-  String value,
-) async {
+Future<void> _enter(WidgetTester tester, String fieldKey, String value) async {
   await tester.ensureVisible(find.byKey(Key('corp-action-$fieldKey')));
   await tester.enterText(find.byKey(Key('corp-action-$fieldKey')), value);
   await tester.pumpAndSettle();
@@ -105,10 +101,7 @@ void main() {
 
       // Preview card visible; gross = 100 * 0.5 = 50, net = 45.
       // Net = 45 also appears as the "Cash flow" row → 2 occurrences.
-      expect(
-        find.byKey(const Key('corp-action-preview-card')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('corp-action-preview-card')), findsOneWidget);
       expect(find.text('50 USD'), findsOneWidget);
       expect(find.text('45 USD'), findsNWidgets(2));
 
@@ -145,8 +138,9 @@ void main() {
       await tester.pump(const Duration(seconds: 7));
     });
 
-    testWidgets('split → preview shows doubled quantity, halved cost',
-        (tester) async {
+    testWidgets('split → preview shows doubled quantity, halved cost', (
+      tester,
+    ) async {
       CorporateActionPreview? captured;
       await _pump(tester, onSubmit: (p) => captured = p);
       await _selectType(tester, 'split');
@@ -220,10 +214,7 @@ void main() {
       // Don't fill anything; tap preview.
       await _tapPreview(tester);
       // Form validates → no preview card.
-      expect(
-        find.byKey(const Key('corp-action-preview-card')),
-        findsNothing,
-      );
+      expect(find.byKey(const Key('corp-action-preview-card')), findsNothing);
 
       // Submit button disabled while preview is null.
       final submit = tester.widget<FButton>(
@@ -241,16 +232,10 @@ void main() {
       await _enter(tester, 'amount-per-share', '0.50');
       await _enter(tester, 'withholding-tax', '0');
       await _tapPreview(tester);
-      expect(
-        find.byKey(const Key('corp-action-preview-card')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('corp-action-preview-card')), findsOneWidget);
 
       await _selectType(tester, 'split');
-      expect(
-        find.byKey(const Key('corp-action-preview-card')),
-        findsNothing,
-      );
+      expect(find.byKey(const Key('corp-action-preview-card')), findsNothing);
     });
   });
 }

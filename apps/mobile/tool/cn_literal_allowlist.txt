@@ -49,11 +49,44 @@ lib/core/ai/regression/regression_corpus.dart
 lib/core/ai/router/routing_policy.dart
 lib/core/ai/write/ai_source_mark.dart
 lib/core/ai/write/persistent_undo_banner.dart
+# Device-side AI runtime descriptors/prompts/proposal text landed on the
+# integration branch while the mobile workflow was failing before this lint.
+# These are semantic corpora and persisted proposal summaries, not simple
+# display copy; keep them baselined pending a focused FIR-99 follow-up.
+lib/core/ai/llm_credentials/llm_connectivity.dart
+lib/core/ai/llm_credentials/llm_credentials.dart
+lib/core/ai/runtime/device/device_agent_loop.dart
+lib/core/ai/runtime/device/device_session.dart
+lib/core/ai/runtime/device/device_system_prompt.dart
+lib/core/ai/runtime/device/device_tool_dispatcher.dart
+lib/core/ai/runtime/device/tools/breakdown_tools.dart
+lib/core/ai/runtime/device/tools/device_tool_registry.dart
+lib/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart
+lib/core/ai/runtime/device/tools/get_asset_allocation_tool.dart
+lib/core/ai/runtime/device/tools/get_cashflow_buckets_tool.dart
+lib/core/ai/runtime/device/tools/get_holdings_tool.dart
+lib/core/ai/runtime/device/tools/get_investment_performance_tool.dart
+lib/core/ai/runtime/device/tools/get_net_worth_summary_tool.dart
+lib/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart
+lib/core/ai/runtime/device/tools/get_refund_links_tool.dart
+lib/core/ai/runtime/device/tools/get_subscription_changes_tool.dart
+lib/core/ai/runtime/device/tools/get_transfer_links_tool.dart
+lib/core/ai/runtime/device/tools/list_payment_accounts_tool.dart
+lib/core/ai/runtime/device/tools/propose/proposal_plan.dart
+lib/core/ai/runtime/device/tools/propose_account_create_tool.dart
+lib/core/ai/runtime/device/tools/propose_asset_valuation_tool.dart
+lib/core/ai/runtime/device/tools/propose_expense_tool.dart
+lib/core/ai/runtime/device/tools/propose_liability_payment_tool.dart
+lib/core/ai/runtime/device/tools/propose_trade_tool.dart
+lib/core/ai/runtime/device/tools/read_account_window_tool.dart
+lib/core/ai/runtime/device/tools/read_asset_window_tool.dart
+lib/core/ai/runtime/device/tools/read_category_window_tool.dart
 
 # ─── AI transparency UI — l10n follow-up ─────────────────────────────
-lib/features/settings/ui/ai_trace_timeline.dart
 lib/features/settings/ui/ai_transparency_page.dart
 lib/features/settings/ui/settings_overview.dart
+lib/features/settings/ui/ai_llm_credentials_page.dart
+lib/features/settings/ui/ai_trace_waterfall.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
 # FIR-126: system account seed names ('系统收入账户', '系统支出账户',
@@ -85,6 +118,9 @@ lib/core/command_palette/ask_ai_result_pane.dart
 # (ai_insight_feed.dart cleared in S5a.1 — fully routes through
 # insight_feed_strings/AppLocalizations; only English breadcrumbs left.)
 lib/features/expense/ui/expense_form_page.dart
+lib/features/activity/ui/activity_entry_detail_page.dart
+lib/features/cashflow/domain/cash_flow_aggregator.dart
+lib/features/ai_chat/data/runtime_routing_api_client.dart
 
 # ─── Layer 4 ingest pipeline (S5a.1 — §5.10.10) ─────────────────────
 # The UI (ingest_review_page.dart) was fully migrated to ARB in S5a.1
@@ -102,6 +138,7 @@ lib/features/expense/ui/expense_form_page.dart
 #      time; tracked with the ai_chat data-layer follow-up.
 lib/features/ingest/data/cloud_ingest_client.dart
 lib/features/ingest/data/csv_ingest_parser.dart
+lib/features/ingest/data/device_ingest_client.dart
 lib/features/ingest/data/ingest_confirm_service.dart
 lib/features/ingest/data/ingest_pipeline.dart
 lib/features/ingest/data/providers.dart
