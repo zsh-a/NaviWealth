@@ -25,6 +25,7 @@ typedef ChatTracePrepResult = ({
   ContextPack? pack,
   AiTrace? traceSeed,
   String? localHlcText,
+  bool traceVerbose,
 });
 
 /// Closure that builds the per-request ContextPack + AiTrace seed.
@@ -227,11 +228,13 @@ class ChatRepository {
     final localHlcText = prepResult?.localHlcText;
     final traceBuilder = traceSeed == null
         ? null
-        : AiTraceBuilder.fromSeed(traceSeed);
+        : AiTraceBuilder.fromSeed(
+            traceSeed,
+            capturePayloads: prepResult?.traceVerbose ?? false,
+          );
     if (traceBuilder != null && invocationTrace != null) {
       traceBuilder.attachInvocation(invocationTrace);
     }
-    final toolStarts = <String, DateTime>{};
 
     // Interleaved record of the assistant turn. `segments` and
     // `invocationOrder` together rebuild the original
@@ -286,7 +289,6 @@ class ChatRepository {
               segments.add('');
             }
             invocations[id] = ToolInvocation(id: id, name: name, input: null);
-            toolStarts[id] = DateTime.now().toUtc();
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
@@ -330,7 +332,6 @@ class ChatRepository {
               input: input,
               output: existing?.output,
             );
-            toolStarts[id] ??= DateTime.now().toUtc();
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
@@ -355,15 +356,9 @@ class ChatRepository {
             );
             await _store.updateMessage(assistant);
             if (traceBuilder != null) {
-              final start = toolStarts[id];
-              final duration = start == null
-                  ? Duration.zero
-                  : DateTime.now().toUtc().difference(start);
-              traceBuilder.addToolCall(
-                name: invocations[id]?.name ?? '',
-                duration: duration,
-                ok: !_isToolError(output),
-              );
+              // Tool latency / ok now live on the loop-emitted tool
+              // `AiSpan` (see SpanEvent). Here we only keep the
+              // freshness gate, which `SpanEvent` doesn't carry.
               // Freshness gate (docs/ai-architecture.md §4.2 Phase 2):
               // when the read-model watermark is behind our local HLC,
               // record the read_model name. The next prep closure
@@ -387,6 +382,27 @@ class ChatRepository {
           case UsageEvent(:final usage):
             assistant = assistant.copyWith(usage: usage);
             await _store.updateMessage(assistant);
+          case SpanEvent():
+            // Observability-only: never mutates the assistant turn.
+            // The builder anchors wall-clock times to the trace start
+            // and strips payloads unless verbose capture is on.
+            traceBuilder?.addSpan(
+              id: event.id,
+              parentId: event.parentId,
+              kind: event.kind,
+              name: event.name,
+              startedAt: event.startedAt,
+              endedAt: event.endedAt,
+              status: event.status,
+              errorCode: event.errorCode,
+              errorMessage: event.errorMessage,
+              tokens: event.tokens,
+              model: event.model,
+              stopReason: event.stopReason,
+              input: event.input,
+              output: event.output,
+              attributes: event.attributes,
+            );
           case DoneEvent(:final stopReason):
             sawDone = true;
             // Only flip to complete if no error frame already promoted
@@ -476,14 +492,6 @@ class ChatRepository {
     }
 
     return outcome;
-  }
-
-  /// `true` when a tool result payload represents a failure (the
-  /// backend uses a `{ "error": "...", "code": "..." }` shape for
-  /// synthesised errors like the proposal cap or guardrail rejections).
-  static bool _isToolError(Object? output) {
-    if (output is! Map) return false;
-    return output['error'] is String;
   }
 
   /// Mutate the apply state of one tool invocation inside [messageId].

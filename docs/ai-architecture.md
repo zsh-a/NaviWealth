@@ -117,7 +117,7 @@ Router    = 在二者之间按能力 / 风险 / 隐私 / 在线性 / 延迟选�
 | `DisclosureRequest/Response` | `scoped_disclosure.dart` | `disclosure.rs` | 兜底通道；freshness/privacy/draft gate 触发的最小补丁协议 |
 | `ToolDescriptor` | `tool_descriptor.dart` | `policy/tool_policy.rs` | access × risk × confirmation × tier × allowed_runtimes |
 | `ProposalEnvelope` (sealed) | `proposal_envelope.dart` | — (端侧消费) | 确认通道；副作用分级写入 |
-| `AiTrace` | `ai_trace.dart` | — (端侧本地) | 路由决策 + 工具调用 + 时长审计 |
+| `AiTrace` | `ai_trace.dart` | — (端侧本地) | 路由决策 + 披露/freshness 审计 + Opik 风格 `spans` 执行树（LLM round / tool / turn，Wave 45 取代旧 flat `toolCalls`） |
 | `IntentHint` | `intent.dart` | `context_pack.rs` | 路由输入 |
 | **Read Model schema** | — | `read_models/<name>.rs` (★ 待建) | 主通道；预计算视图 + HLC watermark + version |
 
@@ -917,7 +917,8 @@ lib/core/ai/
 │   ├── scoped_disclosure.dart   DisclosureRequest/Response / LedgerField / UserConsent
 │   ├── tool_descriptor.dart     ToolDescriptor (mirror)
 │   ├── proposal_envelope.dart   sealed ProposalEnvelope + 4 variants + UndoToken
-│   ├── ai_trace.dart            AiTrace / Backend / DisclosureSummary / TraceToolCall
+│   ├── ai_span.dart             AiSpan / AiSpanKind / AiSpanStatus / SpanTokens / kTurnSpanId（Wave 45）
+│   ├── ai_trace.dart            AiTrace / Backend / DisclosureSummary（+ spans rollup）
 │   └── contracts.dart           barrel
 ├── router/                      ★ Phase 5 重构: 注入 RuntimeRegistry，原 Backend 枚举降级为 audit label
 │   ├── routing_inputs.dart      RoutingInputs / PrivacySensitivity / LatencyHint
@@ -928,7 +929,8 @@ lib/core/ai/
 ├── runtime/                     ★ 待新增: AiRuntime 抽象 + RuntimeRegistry
 ├── trace/
 │   ├── ai_trace_store.dart      AiTraceStore 抽象 + InMemoryAiTraceStore
-│   ├── ai_trace_builder.dart    可变累加器
+│   ├── ai_trace_builder.dart    可变累加器（addSpan + capturePayloads，Wave 45）
+│   ├── ai_trace_capture_preference.dart  aiTraceVerboseProvider（SharedPreferences，Wave 45）
 │   ├── providers.dart           aiTraceStoreProvider / recentAiTracesProvider / aiTraceByIdProvider
 │   └── trace.dart               barrel
 ├── write/
@@ -1112,6 +1114,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 42 | **Schema-as-contract** | 新 `tool/check-enum-mirror.sh`（awk 解析 Dart 与 Rust 同名 enum，比对 variant set；12 enum 全绿）+ `apps/mobile/tool/check-l10n-parity.sh`（Python 解析 ARB，比对 top-level key 集；1078 keys 全 mirror）；mobile.yml 接入两个 gate |
 | 43 | **AI surface 视觉回归** | 新 `test/golden/ai_surfaces_golden_test.dart` 5 个组件级 golden（AiPill 3 态 / AiObjectCapsule / AssetAllocationView / SubscriptionChangesView / AiTraceTimeline），独立于 `_golden_setup.dart`（page 级 harness 因 `marketColorMode` 移除已破，列在 known-failing-tests.txt）；Wave 36 视觉 token 漂移会触发 golden 失败 |
 | 44 | **AI 回归 corpus + 静态契约** | 新 `lib/core/ai/regression/regression_corpus.dart` 含 7 个 fixed prompt × intent × 期望工具集；新 `test/core/ai/regression/regression_corpus_test.dart` 7 条静态契约（id 唯一 / intent 已注册 / 每条期望工具有 renderer 或 jsonOnly 标记 / 期望工具与 intent.preferredReadModels 一致 / 每个 intent 至少 1 条 prompt）；catch 了 2 处 intent_policy 与实际期望工具不一致的真实 drift（`explain_change` 缺 `recurring_patterns`、`explain_insight` 缺 `refund_links` — 同步补齐）；live LLM 跑 corpus 的 nightly 留作 P1 增量 |
+| 45 | **Opik 风格 span 可观测性（取代旧 flat trace 格式）** | 新 `lib/core/ai/contracts/ai_span.dart`（`AiSpan` 层级 span：`turn/llm/tool` × `parentId` × `startOffsetMs`/`durationMs` × `SpanTokens`/`model`/`stop`/`status`/`input`/`output`，自包含不依赖 features 层）成为**唯一执行记录**。**移除旧格式（不向后兼容）**：删 `TraceToolCall` / `AiTrace.toolCalls` / `AiTraceBuilder.addToolCall` / `ai_trace_timeline.dart`（`buildTimeline`/`AiTraceTimeline`/`TraceEvent` 全删）+ 其 golden（`ai_trace_timeline.png`）+ 其测试；`ChatRepository` 删 `toolStarts`/`_isToolError`；`ingest` 改发 tool span；早于 span 模型的旧 trace 行无链路（详情页提示，30 天 prune 自然清理）。`AiTrace` 保留 `disclosures`/`stale`/`terminal`/`invocation` + 新 rollup（`tokenTotals`/`llmRoundCount`/`errorSpanCount`/`toolSpans`），徽章/列表改用 `toolSpans`。埋点：新增 `SpanEvent` AiChatEvent 变体，`DeviceAgentLoop` 每个 LLM round / tool dispatch 发射（token/model/stop/IO/错误码精确捕获），`ChatRepository` 喂 `AiTraceBuilder.addSpan`（按 trace start 锚定偏移）。隐私/体积：`capturePayloads`（默认 metadata-only，verbose `aiTraceVerboseProvider` 经 SharedPreferences 持久化，逐 turn 快照），30 天 prune 兜底。UI：新 `ai_trace_waterfall.dart`（`buildSpanTree` + 瀑布树 + span 详情面板 + 聚合头 p50/p95/token/¥估算 + 仅错误筛选）+ `core/ai/visual/ai_json_view.dart`（可折叠 JSON 树 + 复制）；详情页统一走 waterfall。`flutter analyze --fatal-infos lib test` 全绿 + 456 测试零回归（旧 timeline 测试随文件删除） |
 
 ## 9. TODO
 

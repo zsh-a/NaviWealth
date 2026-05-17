@@ -61,7 +61,7 @@ void main() {
   });
 
   group('AiTraceBuilder', () {
-    test('finalize captures tool calls + disclosures and computes duration', () {
+    test('finalize captures spans + disclosures and computes duration', () {
       const seed = AiTrace(
         requestId: 'req-1',
         startedAtIso: '2026-05-10T10:00:00.000Z',
@@ -76,8 +76,17 @@ void main() {
         usedRawLedger: false,
         totalDurationMs: 0,
       );
+      final start = DateTime.parse('2026-05-10T10:00:00.000Z');
       final builder = AiTraceBuilder.fromSeed(seed)
-        ..addToolCall(name: 'query_plan', duration: const Duration(milliseconds: 12))
+        ..addSpan(
+          id: 'r1',
+          parentId: kTurnSpanId,
+          kind: AiSpanKind.llm,
+          name: 'llm:round-1',
+          startedAt: start.add(const Duration(milliseconds: 10)),
+          endedAt: start.add(const Duration(milliseconds: 60)),
+          tokens: const SpanTokens(input: 30, output: 9),
+        )
         ..addDisclosure(
           const DisclosureSummary(
             purpose: DisclosurePurpose.anomalyExplain,
@@ -86,9 +95,13 @@ void main() {
             consent: UserConsent.session,
           ),
         )
-        ..addToolCall(
-          name: 'request_disclosure',
-          duration: const Duration(milliseconds: 200),
+        ..addSpan(
+          id: 'tool:t1',
+          parentId: 'r1',
+          kind: AiSpanKind.tool,
+          name: 'tool:request_disclosure',
+          startedAt: start.add(const Duration(milliseconds: 20)),
+          endedAt: start.add(const Duration(milliseconds: 220)),
         );
 
       final trace = builder.finalize(
@@ -96,7 +109,10 @@ void main() {
       );
 
       expect(trace.totalDurationMs, 3000);
-      expect(trace.toolCalls, hasLength(2));
+      // turn root + llm + tool.
+      expect(trace.spans, hasLength(3));
+      expect(trace.llmRoundCount, 1);
+      expect(trace.toolSpans.single.name, 'tool:request_disclosure');
       expect(trace.disclosures, hasLength(1));
       // Consented disclosure flips the privacy badge.
       expect(trace.usedRawLedger, isTrue);

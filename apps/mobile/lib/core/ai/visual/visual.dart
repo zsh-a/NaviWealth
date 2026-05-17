@@ -7,6 +7,7 @@
 /// are forbidden by §5.8 PR review.
 library;
 
+export 'ai_json_view.dart';
 export 'ai_motion.dart';
 export 'ai_pill.dart';
 export 'ai_sparkle.dart';

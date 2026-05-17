@@ -9,6 +9,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/contracts/ai_span.dart';
 import '../../../core/ai/contracts/ai_trace.dart';
 import '../../../core/ai/contracts/intent.dart';
 import '../../../core/ai/contracts/privacy_mode_provider.dart';
@@ -235,13 +236,16 @@ class IngestController {
         usedRawLedger: false,
         totalDurationMs: 0,
       );
+      final parseEnd = DateTime.now().toUtc();
       final trace =
-          (AiTraceBuilder.fromSeed(seed)..addToolCall(
-                name: 'parse_${cloudIngestKindWire(kind)}',
-                duration: DateTime.now().toUtc().difference(startedAt),
-                ok: true,
+          (AiTraceBuilder.fromSeed(seed)..addSpan(
+                id: 'tool:parse',
+                kind: AiSpanKind.tool,
+                name: 'tool:parse_${cloudIngestKindWire(kind)}',
+                startedAt: startedAt,
+                endedAt: parseEnd,
               ))
-              .finalize(finishedAt: DateTime.now().toUtc());
+              .finalize(finishedAt: parseEnd);
       await _ref.read(aiTraceStoreProvider).append(trace);
     } catch (_) {
       // Transparency is decorative relative to the parse itself.

@@ -287,12 +287,30 @@ void main() {
             consent: UserConsent.session,
           ),
         ],
-        toolCalls: <TraceToolCall>[
-          TraceToolCall(name: 'query_plan', durationMs: 12, ok: true),
-          TraceToolCall(
-            name: 'request_disclosure',
+        spans: <AiSpan>[
+          AiSpan(
+            id: 'turn',
+            kind: AiSpanKind.turn,
+            name: 'turn',
+            startOffsetMs: 0,
+            durationMs: 200,
+          ),
+          AiSpan(
+            id: 'r1',
+            parentId: 'turn',
+            kind: AiSpanKind.llm,
+            name: 'llm:round-1',
+            startOffsetMs: 0,
             durationMs: 180,
-            ok: true,
+            tokens: SpanTokens(input: 40, output: 12),
+          ),
+          AiSpan(
+            id: 'tool:t1',
+            parentId: 'r1',
+            kind: AiSpanKind.tool,
+            name: 'tool:request_disclosure',
+            startOffsetMs: 20,
+            durationMs: 180,
           ),
         ],
       );
@@ -305,8 +323,10 @@ void main() {
       expect(decoded.usedRawLedger, isTrue);
       expect(decoded.disclosures, hasLength(1));
       expect(decoded.disclosures.first.purpose, DisclosurePurpose.anomalyExplain);
-      expect(decoded.toolCalls, hasLength(2));
-      expect(decoded.toolCalls.last.name, 'request_disclosure');
+      expect(decoded.spans, hasLength(3));
+      expect(decoded.toolSpans.single.name, 'tool:request_disclosure');
+      expect(decoded.llmRoundCount, 1);
+      expect(decoded.tokenTotals.input, 40);
       // Wave 30: terminalReason defaults to done when not provided.
       expect(decoded.terminalReason, TerminalReason.done);
     });
@@ -401,7 +421,6 @@ void main() {
         'used_raw_ledger': false,
         'total_duration_ms': 10,
         'disclosures': <Object?>[],
-        'tool_calls': <Object?>[],
       };
       final decoded = AiTrace.fromJson(json);
       expect(decoded.terminalReason, TerminalReason.done);

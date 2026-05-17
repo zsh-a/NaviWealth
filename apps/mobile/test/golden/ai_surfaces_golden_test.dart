@@ -9,7 +9,6 @@
 //   - ai_object_capsule
 //   - asset_allocation_view (Wave 34 domain renderer)
 //   - subscription_changes_view (Wave 34 domain renderer)
-//   - ai_trace_timeline (Wave-30/33/35 events together)
 //
 // Each golden runs at 360×N logical px, light theme, en locale. Drift
 // either side and the golden breaks — protection against accidental
@@ -18,10 +17,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
-import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
 import 'package:naviwealth/features/ai_chat/ui/tool_invocation_renderers.dart';
-import 'package:naviwealth/features/settings/ui/ai_trace_timeline.dart';
 
 const Size _surface = Size(360, 480);
 
@@ -141,46 +138,6 @@ void main() {
           ],
         },
       ),
-    );
-  }, tags: 'golden');
-
-  testGoldens('AiTraceTimeline — invocation → routing → tools → terminal', (
-    tester,
-  ) async {
-    const trace = AiTrace(
-      requestId: 'r_golden',
-      startedAtIso: '2026-05-12T09:00:00Z',
-      intent: IntentHint(
-        capability: Capability.analyze,
-        risk: RiskLevel.suggest,
-        label: 'turn',
-      ),
-      backend: Backend.cloud,
-      budgetTier: BudgetTier.small,
-      routingReason: 'capsule_explain',
-      usedCloud: true,
-      usedRawLedger: false,
-      totalDurationMs: 850,
-      toolCalls: [
-        TraceToolCall(name: 'get_holdings', durationMs: 30, ok: true),
-        TraceToolCall(name: 'compute_xirr', durationMs: 80, ok: true),
-        TraceToolCall(
-          name: 'get_subscription_changes',
-          durationMs: 12,
-          ok: false,
-        ),
-      ],
-      invocation: <String, Object?>{
-        'source': 'expense_detail',
-        'intent': 'explain_change',
-        'object_type': 'expense',
-        'object_id': 'exp_42',
-      },
-    );
-    await _pumpComponent(
-      tester,
-      name: 'ai_trace_timeline',
-      child: AiTraceTimeline(events: buildTimeline(trace)),
     );
   }, tags: 'golden');
 }
