@@ -544,6 +544,111 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubAssetTypeWealthProduct => '理财产品';
 
   @override
+  String get portfolioHubEnginesTitle => '引擎视图';
+
+  @override
+  String get portfolioHubRealizedPnlTitle => '已实现盈亏';
+
+  @override
+  String portfolioHubRealizedPnlCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个批次',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubRealizedPnlEmpty => '暂无已平仓批次。';
+
+  @override
+  String portfolioHubHoldingPeriod(String period) {
+    return '持有 $period';
+  }
+
+  @override
+  String portfolioHubHoldingYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 年',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 天',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubDividendForecastTitle => '股息预测';
+
+  @override
+  String get portfolioHubDividendForecastEmpty => '暂无预测股息。';
+
+  @override
+  String get portfolioHubDividendForecastEvent => '预计派息';
+
+  @override
+  String get portfolioHubForecastConfidenceHigh => '高置信度';
+
+  @override
+  String get portfolioHubForecastConfidenceMedium => '中置信度';
+
+  @override
+  String get portfolioHubForecastConfidenceLow => '低置信度';
+
+  @override
+  String get portfolioHubEventTimelineTitle => '事件时间线';
+
+  @override
+  String portfolioHubEventTimelineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个事件',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubEventTimelineEmpty => '暂无分红或公司行动事件。';
+
+  @override
+  String get assetDetailFxPnlTitle => '价格 vs 汇率贡献';
+
+  @override
+  String get assetDetailFxPnlMarketLeg => '价格贡献';
+
+  @override
+  String get assetDetailFxPnlCurrencyLeg => '汇率贡献';
+
+  @override
+  String get assetDetailFxPnlTotal => '本位币总盈亏';
+
+  @override
+  String assetDetailFxPnlLoadError(String error) {
+    return 'FX 盈亏加载失败：$error';
+  }
+
+  @override
   String get dashboardAiInsightsTitle => 'AI 洞察';
 
   @override
