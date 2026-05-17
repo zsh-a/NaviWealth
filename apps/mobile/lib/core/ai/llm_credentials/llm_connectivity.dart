@@ -1,12 +1,10 @@
 /// Wave 46 — one-tap connectivity probe for an [LlmProfile].
 ///
-/// Fires a **minimal real request** down the *exact* path the device
-/// runtime uses (`LlmConfig.fromProfile` → `AnthropicClient.complete`,
-/// same URL resolution + dual `x-api-key`/`Bearer` headers) so a green
-/// result means "this key + endpoint + model actually work", not just
-/// "the host pings". The probe is independent of the active selection
-/// and opt-in state — it can test a profile the user is still editing
-/// and hasn't saved.
+/// Fires a **minimal real request** down the *exact* provider path the
+/// device runtime uses so a green result means "this key + endpoint +
+/// model actually work", not just "the host pings". The probe is
+/// independent of the active selection and opt-in state — it can test a
+/// profile the user is still editing and hasn't saved.
 library;
 
 import 'dart:async';
@@ -15,6 +13,7 @@ import 'package:dio/dio.dart';
 
 import '../runtime/device/anthropic/anthropic_client.dart';
 import '../runtime/device/anthropic/anthropic_wire.dart';
+import '../runtime/device/openai/openai_client.dart';
 import 'llm_credentials.dart';
 
 enum LlmProbeStatus {
@@ -82,15 +81,21 @@ class LlmConnectivityProbe {
     Duration timeout = const Duration(seconds: 20),
   }) async {
     if (!profile.hasKey) {
-      return const LlmProbeResult(
-        LlmProbeStatus.authFailed,
-        '请先填入 API Key',
-      );
+      return const LlmProbeResult(LlmProbeStatus.authFailed, '请先填入 API Key');
     }
-    final config = LlmConfig.fromProfile(profile);
-    final client = AnthropicClient(dio: _dioFactory(), config: config);
+    final dio = _dioFactory();
+    final (client, model) = switch (profile.provider) {
+      LlmProvider.anthropic => (
+        AnthropicClient(dio: dio, config: LlmConfig.fromProfile(profile)),
+        LlmConfig.fromProfile(profile).model,
+      ),
+      LlmProvider.openai => (
+        OpenAiClient(dio: dio, config: OpenAiConfig.fromProfile(profile)),
+        OpenAiConfig.fromProfile(profile).model,
+      ),
+    };
     final request = AnthropicRequest(
-      model: config.model,
+      model: model,
       maxTokens: 1,
       system: '',
       messages: const [AnthropicChatMessage(role: 'user', content: 'ping')],
@@ -117,34 +122,34 @@ class LlmConnectivityProbe {
 LlmProbeResult classifyLlmProbeException(LlmRequestException e) {
   final s = e.statusCode;
   return switch (s) {
-      0 => LlmProbeResult(
-        LlmProbeStatus.network,
-        '无法连接 · 检查网络或 Base URL（${e.message}）',
-      ),
-      401 || 403 => LlmProbeResult(
-        LlmProbeStatus.authFailed,
-        '鉴权失败 · API Key 无效或无权限',
-        httpStatus: s,
-      ),
-      404 => LlmProbeResult(
-        LlmProbeStatus.notFound,
-        '端点不存在 · 检查 Base URL（404）',
-        httpStatus: s,
-      ),
-      429 => LlmProbeResult(
-        LlmProbeStatus.rateLimited,
-        '已连通，但被限流（429）· Key 有效',
-        httpStatus: s,
-      ),
-      400 => LlmProbeResult(
-        LlmProbeStatus.badRequest,
-        '已连通，但请求被拒（400）· 多为模型名无效：${e.message}',
-        httpStatus: s,
-      ),
-      _ => LlmProbeResult(
-        LlmProbeStatus.unknown,
-        '测试失败（HTTP $s）：${e.message}',
-        httpStatus: s,
-      ),
-    };
+    0 => LlmProbeResult(
+      LlmProbeStatus.network,
+      '无法连接 · 检查网络或 Base URL（${e.message}）',
+    ),
+    401 || 403 => LlmProbeResult(
+      LlmProbeStatus.authFailed,
+      '鉴权失败 · API Key 无效或无权限',
+      httpStatus: s,
+    ),
+    404 => LlmProbeResult(
+      LlmProbeStatus.notFound,
+      '端点不存在 · 检查 Base URL（404）',
+      httpStatus: s,
+    ),
+    429 => LlmProbeResult(
+      LlmProbeStatus.rateLimited,
+      '已连通，但被限流（429）· Key 有效',
+      httpStatus: s,
+    ),
+    400 => LlmProbeResult(
+      LlmProbeStatus.badRequest,
+      '已连通，但请求被拒（400）· 多为模型名无效：${e.message}',
+      httpStatus: s,
+    ),
+    _ => LlmProbeResult(
+      LlmProbeStatus.unknown,
+      '测试失败（HTTP $s）：${e.message}',
+      httpStatus: s,
+    ),
+  };
 }

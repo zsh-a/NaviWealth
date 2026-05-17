@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
+import '../../../core/ai/runtime/device/openai/openai_client.dart';
 import '../../../core/ai/runtime/device/tools/device_tool_registry.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/ai/write/write.dart';
@@ -48,13 +50,23 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   if (profile == null || !profile.hasKey) return null;
   final dio = Dio()
     ..interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  final client = switch (profile.provider) {
+    LlmProvider.anthropic => AnthropicClient(
+      dio: dio,
+      config: LlmConfig.fromProfile(profile),
+    ),
+    LlmProvider.openai => OpenAiClient(
+      dio: dio,
+      config: OpenAiConfig.fromProfile(profile),
+    ),
+  };
   // §4.6.3 — registry membership is the device allow-list. The
   // canonical set lives in `device_tool_registry.dart` (kDeviceTools)
   // so the W-D6 static-contract test shares one source. Tools not yet
   // ported simply aren't advertised, so the model never calls them.
   final registry = defaultDeviceToolRegistry();
   return DeviceLlmRuntime(
-    client: AnthropicClient(dio: dio, config: LlmConfig.fromProfile(profile)),
+    client: client,
     dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),
     toolSchemas: registry.schemas(),
   );

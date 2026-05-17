@@ -35,6 +35,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   final _keyController = TextEditingController();
   final _baseUrlController = TextEditingController();
   final _modelController = TextEditingController();
+  LlmProvider _provider = LlmProvider.anthropic;
 
   /// `null` ⇒ editor closed. Otherwise the id being edited, or the
   /// empty string for a brand-new profile.
@@ -59,6 +60,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     _modelController.text = profile?.model ?? '';
     setState(() {
       _editingId = profile?.id ?? '';
+      _provider = profile?.provider ?? LlmProvider.anthropic;
       _probeResult = null;
     });
   }
@@ -75,7 +77,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     return LlmProfile(
       id: existing?.id ?? 'probe',
       name: _nameController.text.trim(),
-      provider: LlmProvider.anthropic,
+      provider: _provider,
       apiKey: typed.isNotEmpty ? typed : (existing?.apiKey ?? ''),
       baseUrl: _baseUrlController.text.trim().isEmpty
           ? null
@@ -99,15 +101,12 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       _probing = false;
       _probeResult = result;
     });
-    _toast(
-      switch (result.status) {
-        LlmProbeStatus.ok => ToastKind.success,
-        LlmProbeStatus.rateLimited ||
-        LlmProbeStatus.badRequest => ToastKind.warning,
-        _ => ToastKind.error,
-      },
-      result.message,
-    );
+    _toast(switch (result.status) {
+      LlmProbeStatus.ok => ToastKind.success,
+      LlmProbeStatus.rateLimited ||
+      LlmProbeStatus.badRequest => ToastKind.warning,
+      _ => ToastKind.error,
+    }, result.message);
   }
 
   Future<void> _save(LlmProfile? existing) async {
@@ -122,7 +121,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final profile = LlmProfile(
       id: existing?.id ?? const Uuid().v4(),
       name: _nameController.text.trim(),
-      provider: LlmProvider.anthropic,
+      provider: _provider,
       apiKey: effectiveKey,
       baseUrl: _baseUrlController.text.trim().isEmpty
           ? null
@@ -228,55 +227,55 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final colors = context.theme.colors;
     final meta = <String>[
       p.provider.label,
-      _hostOf(p.baseUrl),
+      _hostOf(p),
       if (p.model != null && p.model!.isNotEmpty) p.model!,
     ].join(' · ');
     final card = SoftCard(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       onPress: isActive ? null : () => _activate(p.id),
       child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          p.displayName,
-                          style: context.theme.typography.sm.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        p.displayName,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (isActive)
+                      _tag(context, '使用中', colors.primary)
+                    else
+                      Text(
+                        '点按切换',
+                        style: context.theme.typography.xs.copyWith(
+                          color: colors.mutedForeground,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      if (isActive)
-                        _tag(context, '使用中', colors.primary)
-                      else
-                        Text(
-                          '点按切换',
-                          style: context.theme.typography.xs.copyWith(
-                            color: colors.mutedForeground,
-                          ),
-                        ),
-                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  meta,
+                  style: context.theme.typography.xs.copyWith(
+                    color: colors.mutedForeground,
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    meta,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
+          ),
           const SizedBox(width: 6),
           _iconAction(context, FIcons.pencil, () => _openEditor(profile: p)),
           _iconAction(context, FIcons.trash2, () => _delete(p)),
@@ -322,16 +321,25 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
           const SizedBox(height: 16),
           _label(context, '提供商'),
           const SizedBox(height: 4),
-          Text(
-            '${LlmProvider.anthropic.label}（Anthropic Messages 协议）',
-            style: context.theme.typography.sm,
+          FSelect<LlmProvider>(
+            items: {for (final p in LlmProvider.values) _providerLabel(p): p},
+            control: FSelectControl<LlmProvider>.managed(
+              initial: _provider,
+              onChange: (value) {
+                if (value == null) return;
+                setState(() {
+                  _provider = value;
+                  _probeResult = null;
+                });
+              },
+            ),
           ),
           const SizedBox(height: 16),
           _label(context, 'API Key'),
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _keyController),
-            hint: hasStoredKey ? '已配置 · 留空则保持不变' : 'sk-ant-…',
+            hint: hasStoredKey ? '已配置 · 留空则保持不变' : _keyHint(_provider),
             obscureText: true,
             autocorrect: false,
             enableSuggestions: false,
@@ -341,7 +349,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _baseUrlController),
-            hint: 'https://api.anthropic.com',
+            hint: _baseUrlHint(_provider),
             autocorrect: false,
             enableSuggestions: false,
           ),
@@ -350,7 +358,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
           const SizedBox(height: 6),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _modelController),
-            hint: 'claude-sonnet-4-6',
+            hint: _modelHint(_provider),
             autocorrect: false,
             enableSuggestions: false,
           ),
@@ -487,18 +495,40 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     onPress: onPress,
     child: Padding(
       padding: const EdgeInsets.all(8),
-      child: Icon(
-        icon,
-        size: 18,
-        color: context.theme.colors.mutedForeground,
-      ),
+      child: Icon(icon, size: 18, color: context.theme.colors.mutedForeground),
     ),
   );
 
-  String _hostOf(String? url) {
-    if (url == null || url.trim().isEmpty) return 'api.anthropic.com';
+  String _hostOf(LlmProfile profile) {
+    final url = profile.baseUrl;
+    if (url == null || url.trim().isEmpty) {
+      return switch (profile.provider) {
+        LlmProvider.anthropic => 'api.anthropic.com',
+        LlmProvider.openai => 'api.openai.com',
+      };
+    }
     final u = Uri.tryParse(url.trim());
     if (u != null && u.host.isNotEmpty) return u.host;
     return url.trim();
   }
+
+  String _providerLabel(LlmProvider provider) => switch (provider) {
+    LlmProvider.anthropic => '${provider.label}（Anthropic Messages 协议）',
+    LlmProvider.openai => '${provider.label}（Chat Completions 协议）',
+  };
+
+  String _keyHint(LlmProvider provider) => switch (provider) {
+    LlmProvider.anthropic => 'sk-ant-…',
+    LlmProvider.openai => 'sk-…',
+  };
+
+  String _baseUrlHint(LlmProvider provider) => switch (provider) {
+    LlmProvider.anthropic => 'https://api.anthropic.com',
+    LlmProvider.openai => 'https://api.openai.com',
+  };
+
+  String _modelHint(LlmProvider provider) => switch (provider) {
+    LlmProvider.anthropic => 'claude-sonnet-4-6',
+    LlmProvider.openai => 'gpt-4o-mini',
+  };
 }
