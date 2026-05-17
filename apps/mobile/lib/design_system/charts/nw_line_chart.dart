@@ -230,7 +230,7 @@ class _NwLineChartState extends State<NwLineChart> {
                   minX: minX,
                   maxX: maxX,
                   plotInsets: plotInsets,
-                  label: widget.xAxis.formatTimestamp(
+                  label: widget.xAxis.formatPrecise(
                     processed.first.points[_touchedSpotIndex].x,
                   ),
                 ),
@@ -430,9 +430,19 @@ class _NwLineChartState extends State<NwLineChart> {
           reservedSize: _kLeftTitleReservedSize,
           interval: yInterval,
           getTitlesWidget: (value, meta) {
+            // Single line, right-aligned — a wrapping currency/negative
+            // label used to break into a stray "-" + "¥0.50" stack and
+            // collide with anything below the chart.
             return Padding(
               padding: const EdgeInsets.only(right: 4),
-              child: Text(widget.yAxis.formatValue(value), style: labelStyle),
+              child: Text(
+                widget.yAxis.formatValue(value),
+                style: labelStyle,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.visible,
+              ),
             );
           },
         ),
@@ -770,7 +780,7 @@ class _ChartTooltip extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                xAxis.formatTimestamp(point.x),
+                xAxis.formatPrecise(point.x),
                 style: TypographyTokens.numericCaption.copyWith(
                   color: onSurface.withValues(alpha: 0.6),
                 ),

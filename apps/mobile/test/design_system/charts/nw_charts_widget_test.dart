@@ -353,7 +353,9 @@ void main() {
       await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
       await tester.pump();
 
-      final label = find.text('Jan 2');
+      // Focused point shows the full, day-resolution date (tooltip
+      // header + touch bubble) — not the coarse axis-tick format.
+      final label = find.text('Jan 2, 2026');
       expect(label, findsNWidgets(2));
       expect(tester.getCenter(label.last).dx, closeTo(expectedCenterX, 8));
 

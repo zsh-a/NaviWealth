@@ -42,6 +42,18 @@ class TimeAxis {
     };
     return pattern.format(dt);
   }
+
+  /// Full, day-resolution label for the **focused** sample (crosshair
+  /// tooltip / touch bubble).
+  ///
+  /// The resting axis ticks stay coarse via [formatTimestamp] (year /
+  /// month-year) so they don't collide, but once the user inspects a
+  /// single point they want the exact date — `2025` or `2025年3月` is
+  /// not actionable, `2025年3月31日` is.
+  String formatPrecise(double msSinceEpoch) {
+    final dt = DateTime.fromMillisecondsSinceEpoch(msSinceEpoch.round());
+    return DateFormat.yMMMd(locale).format(dt);
+  }
 }
 
 /// Axis configuration for a Y axis displaying numeric values.
