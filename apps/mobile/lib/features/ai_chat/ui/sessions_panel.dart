@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 
@@ -125,22 +126,29 @@ class SessionsPanel extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: session.title);
-    final result = await showAppFormSheet<String>(
+    final result = await showGuardedFormSheet<String>(
       context: context,
-      builder: (ctx) => AppSheet(
-        title: l10n.aiChatSessionRenameTitle,
-        footer: AppSheetFooter(
-          submitLabel: l10n.commonSave,
-          cancelLabel: l10n.commonCancel,
-          onSubmit: () => Navigator.of(ctx).pop(controller.text.trim()),
-        ),
-        child: FTextField(
-          control: FTextFieldControl.managed(controller: controller),
-          autofocus: true,
-          maxLength: 60,
-          label: Text(l10n.aiChatSessionTitleLabel),
-        ),
-      ),
+      builder: (ctx, dirty) {
+        // Idempotent — bindTextControllers no-ops after the first call.
+        dirty.bindTextControllers([controller]);
+        return AppSheet(
+          title: l10n.aiChatSessionRenameTitle,
+          footer: AppSheetFooter(
+            submitLabel: l10n.commonSave,
+            cancelLabel: l10n.commonCancel,
+            onSubmit: () {
+              dirty.markPristine();
+              Navigator.of(ctx).pop(controller.text.trim());
+            },
+          ),
+          child: FTextField(
+            control: FTextFieldControl.managed(controller: controller),
+            autofocus: true,
+            maxLength: 60,
+            label: Text(l10n.aiChatSessionTitleLabel),
+          ),
+        );
+      },
     );
     if (result == null || result.isEmpty || result == session.title) return;
     final repo = await ref.read(chatRepositoryProvider.future);

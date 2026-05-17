@@ -45,7 +45,12 @@ final SyncMeta _previewSync = SyncMeta(
 );
 
 class _TransferFormPageState extends ConsumerState<TransferFormPage>
-    with OptimisticFormSubmit<TransferFormPage> {
+    with
+        OptimisticFormSubmit<TransferFormPage>,
+        FormDirtyGuard<TransferFormPage> {
+  @override
+  String get leaveFallback => AppRoutes.accounts;
+
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _toAmountController = TextEditingController();
@@ -68,6 +73,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   @override
   void initState() {
     super.initState();
+    // `_toAmountController` is auto-filled from the FX rate, so it must
+    // not be bound — only an explicit user edit (tracked by
+    // `_onToAmountTyped`) counts as dirty.
+    dirty.bindTextControllers([_amountController, _noteController]);
     _toAmountController.addListener(_onToAmountTyped);
   }
 
@@ -88,6 +97,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       // change with focus held = the user typed it. The flag stays
       // sticky for the rest of the form's lifecycle.
       setState(() => _toAmountUserTouched = true);
+      dirty.markDirty();
     }
   }
 
@@ -104,16 +114,18 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           context,
         ).routeInformationProvider.value.uri.queryParameters['convert'] ==
         '1';
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
-      childPad: false,
-      child: accountsAsync.when(
-        data: (accounts) => _buildForm(context, accounts, convertMode),
-        loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+    return guardedScope(
+      child: FScaffold(
+        header: FHeader.nested(
+          title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
+          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
+        ),
+        childPad: false,
+        child: accountsAsync.when(
+          data: (accounts) => _buildForm(context, accounts, convertMode),
+          loading: () => const Center(child: FCircularProgress()),
+          error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+        ),
       ),
     );
   }
@@ -242,6 +254,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                   // suppressor so the next paint takes the FX
                   // default.
                   _toAmountUserTouched = false;
+                  dirty.markDirty();
                 });
                 _refreshToAmountAutofill(accountsById);
               },
@@ -260,6 +273,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 setState(() {
                   _toAccountId = v;
                   _toAmountUserTouched = false;
+                  dirty.markDirty();
                 });
                 _refreshToAmountAutofill(accountsById);
               },
@@ -331,7 +345,12 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               initialValue: _date,
               required: true,
               onChanged: (d) {
-                if (d != null) setState(() => _date = d);
+                if (d != null) {
+                  setState(() {
+                    _date = d;
+                    dirty.markDirty();
+                  });
+                }
               },
             ),
             const SizedBox(height: 12),
@@ -524,8 +543,10 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       toCurrency: isCross ? toCcy : null,
       narration: note.isEmpty ? null : note,
     );
-    await submitOptimistic(
-      pop: () => context.go(AppRoutes.accountsList),
+    // The record is being persisted — the post-save pop must not prompt.
+    dirty.markPristine();
+    await submitOptimisticAndLeave(
+      leaveFallback: AppRoutes.accounts,
       write: () => repo.create(entry: build.entry, postings: build.postings),
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>

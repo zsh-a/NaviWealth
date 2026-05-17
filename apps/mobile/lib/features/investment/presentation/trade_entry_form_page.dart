@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
@@ -43,7 +44,12 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
 }
 
 class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
-    with OptimisticFormSubmit<TradeEntryFormPage> {
+    with
+        OptimisticFormSubmit<TradeEntryFormPage>,
+        FormDirtyGuard<TradeEntryFormPage> {
+  @override
+  String get leaveFallback => AppRoutes.activity;
+
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
@@ -99,6 +105,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     if (defaults.tradeCurrency != null && defaults.tradeCurrency!.isNotEmpty) {
       _currency = defaults.tradeCurrency;
     }
+    // `_feeController`/`_taxController` carry a "0" seed — bind here so
+    // that default is the baseline, not a user edit.
+    dirty.bindTextControllers([
+      _quantityController,
+      _priceController,
+      _feeController,
+      _taxController,
+      _noteController,
+    ]);
   }
 
   @override
@@ -205,6 +220,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       }
     }
 
+    // The record is being persisted — the post-save pop must not prompt.
+    dirty.markPristine();
     await submitOptimistic(
       // Use the underlying Navigator (rather than `context.pop()`) so the
       // form is portable to test surfaces that mount it without a router.
@@ -377,18 +394,20 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.tradeEntryAppBarTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
-      childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-          data: (accounts) => _buildForm(accounts),
+    return guardedScope(
+      child: FScaffold(
+        header: FHeader.nested(
+          title: Text(l10n.tradeEntryAppBarTitle),
+          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
+        ),
+        childPad: false,
+        child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
+            loading: () => const Center(child: FCircularProgress()),
+            error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+            data: (accounts) => _buildForm(accounts),
+          ),
         ),
       ),
     );
@@ -433,7 +452,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           AccountPicker(
             accounts: eligible.isEmpty ? accounts : eligible,
             value: _accountId,
-            onChanged: (v) => setState(() => _accountId = v),
+            onChanged: (v) => setState(() {
+              _accountId = v;
+              dirty.markDirty();
+            }),
           ),
           if (_type == TradeType.buy || _type == TradeType.sell) ...[
             const SizedBox(height: 12),
@@ -448,7 +470,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                   )
                   .toList(growable: false),
               value: _cashAccountId,
-              onChanged: (v) => setState(() => _cashAccountId = v),
+              onChanged: (v) => setState(() {
+                _cashAccountId = v;
+                dirty.markDirty();
+              }),
             ),
           ],
           const SizedBox(height: 12),
@@ -480,14 +505,22 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             initialValue: _tradeDate,
             required: true,
             onChanged: (d) {
-              if (d != null) setState(() => _tradeDate = d);
+              if (d != null) {
+                setState(() {
+                  _tradeDate = d;
+                  dirty.markDirty();
+                });
+              }
             },
           ),
           const SizedBox(height: 12),
 
           CurrencyPicker(
             value: _currency,
-            onChanged: (v) => setState(() => _currency = v),
+            onChanged: (v) => setState(() {
+              _currency = v;
+              dirty.markDirty();
+            }),
           ),
           const SizedBox(height: 12),
 
@@ -543,6 +576,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         onSelected: (choice) {
           setState(() {
             _selected = choice;
+            dirty.markDirty();
             if (choice != null) {
               _currency = choice.currency;
               // Hand focus to the first amount field as soon as an asset
@@ -567,7 +601,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             variant: (_type == t)
                 ? FButtonVariant.primary
                 : FButtonVariant.outline,
-            onPress: () => setState(() => _type = t),
+            onPress: () => setState(() {
+              _type = t;
+              dirty.markDirty();
+            }),
             child: Text(_typeLabel(l10n, t)),
           ),
       ],

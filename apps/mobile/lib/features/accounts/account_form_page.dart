@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../app/nav.dart';
 import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
@@ -36,7 +36,12 @@ class AccountFormPage extends ConsumerStatefulWidget {
 }
 
 class _AccountFormPageState extends ConsumerState<AccountFormPage>
-    with OptimisticFormSubmit<AccountFormPage> {
+    with
+        OptimisticFormSubmit<AccountFormPage>,
+        FormDirtyGuard<AccountFormPage> {
+  @override
+  String get leaveFallback => AppRoutes.accountsList;
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _institutionController = TextEditingController();
@@ -75,6 +80,12 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
   @override
   void initState() {
     super.initState();
+    dirty.bindTextControllers([
+      _nameController,
+      _institutionController,
+      _accountNumberController,
+      _noteController,
+    ]);
     if (widget.isEdit) {
       _loadInitial();
     } else {
@@ -103,6 +114,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       _icon = existing.icon;
       _color = existing.color;
     });
+    // Hydrating an existing record is not a user edit.
+    dirty.snapshotBaseline();
   }
 
   Future<void> _save() async {
@@ -125,11 +138,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     final icon = _icon;
     final color = _color;
 
-    await submitOptimistic(
-      pop: () {
-        Haptics.success();
-        context.go(AppRoutes.accountsList);
-      },
+    // The record is being persisted — the post-save pop must not prompt.
+    dirty.markPristine();
+    await submitOptimisticAndLeave(
+      leaveFallback: AppRoutes.accountsList,
+      onBeforeLeave: Haptics.success,
       tag: 'account',
       failureMessage: (_) => l10n.commonSaveFailed,
       retryLabel: l10n.commonRetry,
@@ -189,7 +202,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       final repo = await ref.read(accountRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.accountsList);
+      dirty.markPristine();
+      popOrGo(context, fallback: AppRoutes.accountsList);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -226,147 +240,168 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                 )
               : Text(l10n.accountFormEditTitle))
         : Text(l10n.accountFormCreateTitle);
-    return FScaffold(
-      header: FHeader.nested(
-        title: title,
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          if (widget.isEdit)
-            FHeaderAction(
-              icon: const Icon(Icons.delete_outline),
-              onPress: _busy ? null : _delete,
-            ),
-        ],
-      ),
-      childPad: false,
-      child: loadingExisting
-          ? const Center(child: FCircularProgress())
-          : Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  // Wave 40 — surface AI provenance when this
-                  // account was last touched by an AI proposal
-                  // (`propose_account_create`). The widget is
-                  // self-gating: renders nothing when the entity
-                  // has no recent touch.
-                  if (widget.isEdit && widget.accountId != null) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AiTouchMark(
-                        entityType: 'accounts',
-                        entityId: widget.accountId!,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  // Wealth-container category picker — semantic
-                  // icon-grid, not a dropdown. The accounting side
-                  // (`_category`) auto-derives via
-                  // [accountSideForCategory] on every selection and
-                  // is never user-editable.
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 8),
-                    child: Text(
-                      l10n.accountFormTypeLabel,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                  AccountCategoryPicker(
-                    value: _type,
-                    onChanged: (v) {
-                      setState(() {
-                        _type = v;
-                        _category = accountSideForCategory(v);
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  FTextFormField(
-                    control: FTextFieldControl.managed(
-                      controller: _nameController,
-                    ),
-                    label: Text(l10n.accountFormNameLabel),
-                    focusNode: _nameFocus,
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? l10n.accountFormNameRequired
-                        : null,
-                    onSubmit: (_) => _institutionFocus.requestFocus(),
-                  ),
-                  const SizedBox(height: 12),
-                  _ParentAccountPickerSection(
-                    currentAccountId: _initial?.id,
-                    category: _category,
-                    parentId: _parentId,
-                    onChanged: (v) => setState(() => _parentId = v),
-                  ),
-                  const SizedBox(height: 12),
-                  _IconPickerSection(
-                    selected: _icon,
-                    color: _color,
-                    onChanged: (v) => setState(() => _icon = v),
-                  ),
-                  const SizedBox(height: 12),
-                  _ColorPickerSection(
-                    selected: _color,
-                    onChanged: (v) => setState(() => _color = v),
-                  ),
-                  const SizedBox(height: 12),
-                  CurrencyPicker(
-                    value: _currency,
-                    onChanged: (v) => setState(() => _currency = v),
-                  ),
-                  const SizedBox(height: 12),
-                  FTextFormField(
-                    control: FTextFieldControl.managed(
-                      controller: _institutionController,
-                    ),
-                    label: Text(l10n.accountFormInstitutionLabel),
-                    description: Text(l10n.accountFormInstitutionHelper),
-                    focusNode: _institutionFocus,
-                    textInputAction: TextInputAction.next,
-                    onSubmit: (_) => _accountNumberFocus.requestFocus(),
-                  ),
-                  const SizedBox(height: 12),
-                  FTextFormField(
-                    control: FTextFieldControl.managed(
-                      controller: _accountNumberController,
-                    ),
-                    label: Text(l10n.accountFormAccountNumberLabel),
-                    focusNode: _accountNumberFocus,
-                    textInputAction: TextInputAction.next,
-                    onSubmit: (_) => _noteFocus.requestFocus(),
-                  ),
-                  const SizedBox(height: 12),
-                  NoteField(controller: _noteController, focusNode: _noteFocus),
-                  if (widget.isEdit) ...[
-                    const SizedBox(height: 12),
-                    FSwitch(
-                      label: Text(l10n.accountFormArchivedTitle),
-                      description: Text(l10n.accountFormArchivedSubtitle),
-                      value: _archived,
-                      onChange: (v) => setState(() => _archived = v),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  FButton(
-                    variant: FButtonVariant.primary,
-                    onPress: _busy ? null : _save,
-                    child: Text(
-                      _busy ? l10n.accountFormSaving : l10n.accountFormSave,
-                    ),
-                  ),
-                ],
+    return guardedScope(
+      child: FScaffold(
+        header: FHeader.nested(
+          title: title,
+          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
+          suffixes: [
+            if (widget.isEdit)
+              FHeaderAction(
+                icon: const Icon(Icons.delete_outline),
+                onPress: _busy ? null : _delete,
               ),
-            ),
+          ],
+        ),
+        childPad: false,
+        child: loadingExisting
+            ? const Center(child: FCircularProgress())
+            : Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    // Wave 40 — surface AI provenance when this
+                    // account was last touched by an AI proposal
+                    // (`propose_account_create`). The widget is
+                    // self-gating: renders nothing when the entity
+                    // has no recent touch.
+                    if (widget.isEdit && widget.accountId != null) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: AiTouchMark(
+                          entityType: 'accounts',
+                          entityId: widget.accountId!,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    // Wealth-container category picker — semantic
+                    // icon-grid, not a dropdown. The accounting side
+                    // (`_category`) auto-derives via
+                    // [accountSideForCategory] on every selection and
+                    // is never user-editable.
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text(
+                        l10n.accountFormTypeLabel,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                      ),
+                    ),
+                    AccountCategoryPicker(
+                      value: _type,
+                      onChanged: (v) {
+                        setState(() {
+                          _type = v;
+                          _category = accountSideForCategory(v);
+                          dirty.markDirty();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _nameController,
+                      ),
+                      label: Text(l10n.accountFormNameLabel),
+                      focusNode: _nameFocus,
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? l10n.accountFormNameRequired
+                          : null,
+                      onSubmit: (_) => _institutionFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: 12),
+                    _ParentAccountPickerSection(
+                      currentAccountId: _initial?.id,
+                      category: _category,
+                      parentId: _parentId,
+                      onChanged: (v) => setState(() {
+                        _parentId = v;
+                        dirty.markDirty();
+                      }),
+                    ),
+                    const SizedBox(height: 12),
+                    _IconPickerSection(
+                      selected: _icon,
+                      color: _color,
+                      onChanged: (v) => setState(() {
+                        _icon = v;
+                        dirty.markDirty();
+                      }),
+                    ),
+                    const SizedBox(height: 12),
+                    _ColorPickerSection(
+                      selected: _color,
+                      onChanged: (v) => setState(() {
+                        _color = v;
+                        dirty.markDirty();
+                      }),
+                    ),
+                    const SizedBox(height: 12),
+                    CurrencyPicker(
+                      value: _currency,
+                      onChanged: (v) => setState(() {
+                        _currency = v;
+                        dirty.markDirty();
+                      }),
+                    ),
+                    const SizedBox(height: 12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _institutionController,
+                      ),
+                      label: Text(l10n.accountFormInstitutionLabel),
+                      description: Text(l10n.accountFormInstitutionHelper),
+                      focusNode: _institutionFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmit: (_) => _accountNumberFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: 12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(
+                        controller: _accountNumberController,
+                      ),
+                      label: Text(l10n.accountFormAccountNumberLabel),
+                      focusNode: _accountNumberFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmit: (_) => _noteFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: 12),
+                    NoteField(
+                      controller: _noteController,
+                      focusNode: _noteFocus,
+                    ),
+                    if (widget.isEdit) ...[
+                      const SizedBox(height: 12),
+                      FSwitch(
+                        label: Text(l10n.accountFormArchivedTitle),
+                        description: Text(l10n.accountFormArchivedSubtitle),
+                        value: _archived,
+                        onChange: (v) => setState(() {
+                          _archived = v;
+                          dirty.markDirty();
+                        }),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      onPress: _busy ? null : _save,
+                      child: Text(
+                        _busy ? l10n.accountFormSaving : l10n.accountFormSave,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
     );
   }
 }

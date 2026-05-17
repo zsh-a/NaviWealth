@@ -24,8 +24,13 @@ import 'local_securities_picker.dart';
 /// path is best-effort, falls back to manual entry on any failure, and
 /// never blocks the form from saving.
 class ManualSecuritySheet extends ConsumerStatefulWidget {
-  const ManualSecuritySheet({super.key, this.prefillSymbol});
+  const ManualSecuritySheet({
+    super.key,
+    required this.dirty,
+    this.prefillSymbol,
+  });
 
+  final FormDirtyController dirty;
   final String? prefillSymbol;
 
   @override
@@ -86,6 +91,8 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
         _type = AssetType.crypto;
       }
     }
+    // Bind after the prefill so a passed-in symbol is the baseline.
+    widget.dirty.bindTextControllers([_symbolCtl, _nameCtl, _isinCtl]);
   }
 
   @override
@@ -263,6 +270,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       name: name.isEmpty ? null : name,
       isin: isin.isEmpty ? null : isin,
     );
+    widget.dirty.markPristine();
     Haptics.success();
     Navigator.of(context).pop(choice);
   }
@@ -345,6 +353,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                       } else if (_type == AssetType.crypto) {
                         _type = AssetType.stock;
                       }
+                      widget.dirty.markDirty();
                     });
                   },
                 ),
@@ -360,7 +369,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   initial: _type,
                   onChange: (t) {
                     if (t == null) return;
-                    setState(() => _type = t);
+                    setState(() {
+                      _type = t;
+                      widget.dirty.markDirty();
+                    });
                   },
                 ),
                 label: Text(l10n.manualSecurityTypeLabel),
@@ -369,7 +381,12 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               CurrencyPicker(
                 value: _currency,
                 onChanged: (v) {
-                  if (v != null) setState(() => _currency = v);
+                  if (v != null) {
+                    setState(() {
+                      _currency = v;
+                      widget.dirty.markDirty();
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -385,7 +402,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   Expanded(
                     child: FButton(
                       variant: FButtonVariant.outline,
-                      onPress: () => Navigator.of(context).pop(),
+                      onPress: () => Navigator.of(context).maybePop(),
                       child: Text(l10n.commonCancel),
                     ),
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/nav.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
@@ -90,6 +91,36 @@ mixin OptimisticFormSubmit<W extends ConsumerStatefulWidget>
       failureMessage: failureMessage,
       logger: logger,
       context: ctx,
+      retryLabel: retryLabel,
+      tag: tag,
+    );
+  }
+
+  /// Convenience over [submitOptimistic]: pops to the previous route, or
+  /// to [leaveFallback] when the form was deep-linked with no back stack
+  /// (via [popOrGo]).
+  ///
+  /// Prefer this over hand-writing `pop: () => context.go(...)` so every
+  /// form leaves the same way and the deep-link fallback stays a real
+  /// destination (the owning list/hub) instead of `/`. [onBeforeLeave]
+  /// runs synchronously just before the pop — use it for the success
+  /// haptic the old `pop:` closures fired inline.
+  Future<void> submitOptimisticAndLeave({
+    required String leaveFallback,
+    required Future<void> Function() write,
+    required OptimisticFailureMessageBuilder failureMessage,
+    VoidCallback? onBeforeLeave,
+    String? retryLabel,
+    String tag = 'form',
+  }) {
+    final ctx = context;
+    return submitOptimistic(
+      pop: () {
+        onBeforeLeave?.call();
+        popOrGo(ctx, fallback: leaveFallback);
+      },
+      write: write,
+      failureMessage: failureMessage,
       retryLabel: retryLabel,
       tag: tag,
     );

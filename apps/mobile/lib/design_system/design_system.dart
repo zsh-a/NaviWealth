@@ -25,6 +25,7 @@ export 'widgets/app_toast.dart';
 export 'widgets/back_header_action.dart';
 export 'widgets/delta_chip.dart';
 export 'widgets/delta_text.dart';
+export 'widgets/form_dirty_controller.dart';
 export 'widgets/forui_dialogs.dart';
 export 'widgets/money_text.dart';
 export 'widgets/optional_hero.dart';

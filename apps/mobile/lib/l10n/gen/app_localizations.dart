@@ -8337,6 +8337,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last 90 days'**
   String get expenseFormAiTimeframeRecent90Days;
+
+  /// Title of the confirm dialog shown when leaving a form with unsaved input
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get unsavedChangesTitle;
+
+  /// Body of the unsaved-changes confirm dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Your edits will be lost if you leave now.'**
+  String get unsavedChangesBody;
+
+  /// Destructive confirm action — leave and lose the edits
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get unsavedChangesDiscard;
+
+  /// Cancel action of the unsaved-changes dialog — stay on the form
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get unsavedChangesKeepEditing;
+
+  /// Transient hint shown on the first back press at the Home tab root
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit'**
+  String get pressBackAgainToExit;
+
+  /// Desktop master/detail affordance that clears the selected detail
+  ///
+  /// In en, this message translates to:
+  /// **'Back to list'**
+  String get masterDetailBackToList;
 }
 
 class _AppLocalizationsDelegate

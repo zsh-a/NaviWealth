@@ -4542,4 +4542,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseFormAiTimeframeRecent90Days => '最近 90 天';
+
+  @override
+  String get unsavedChangesTitle => '放弃更改？';
+
+  @override
+  String get unsavedChangesBody => '如果现在离开，您的修改将不会保存。';
+
+  @override
+  String get unsavedChangesDiscard => '放弃';
+
+  @override
+  String get unsavedChangesKeepEditing => '继续编辑';
+
+  @override
+  String get pressBackAgainToExit => '再按一次返回退出';
+
+  @override
+  String get masterDetailBackToList => '返回列表';
 }

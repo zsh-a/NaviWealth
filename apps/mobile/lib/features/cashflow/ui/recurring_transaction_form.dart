@@ -31,15 +31,17 @@ Future<void> showRecurringTransactionForm(
   WidgetRef ref, {
   RecurringTransaction? existing,
 }) {
-  return showAppFormSheet<void>(
+  return showGuardedFormSheet<void>(
     context: context,
-    builder: (_) => _RecurringTransactionSheet(existing: existing),
+    builder: (_, dirty) =>
+        _RecurringTransactionSheet(existing: existing, dirty: dirty),
   );
 }
 
 class _RecurringTransactionSheet extends ConsumerStatefulWidget {
-  const _RecurringTransactionSheet({this.existing});
+  const _RecurringTransactionSheet({required this.dirty, this.existing});
 
+  final FormDirtyController dirty;
   final RecurringTransaction? existing;
 
   @override
@@ -72,13 +74,21 @@ class _RecurringTransactionSheetState
     final existing = widget.existing;
     if (existing == null) {
       _currency = ref.read(baseCurrencyProvider);
+      widget.dirty.bindTextControllers([
+        _amountCtrl,
+        _noteCtrl,
+        _intervalCtrl,
+        _byMonthDayCtrl,
+      ]);
       return;
     }
     try {
       final template = JournalBuildTemplateCodec.decode(
         existing.templateJournalBuildJson,
       );
-      final cash = template.postings.isNotEmpty ? template.postings.first : null;
+      final cash = template.postings.isNotEmpty
+          ? template.postings.first
+          : null;
       final counter = template.postings.length > 1
           ? template.postings[1]
           : null;
@@ -105,6 +115,14 @@ class _RecurringTransactionSheetState
       _currency = ref.read(baseCurrencyProvider);
     }
     _start = existing.nextDueAt;
+    // Bind after the hydrate so loading an existing recurrence is not a
+    // user edit.
+    widget.dirty.bindTextControllers([
+      _amountCtrl,
+      _noteCtrl,
+      _intervalCtrl,
+      _byMonthDayCtrl,
+    ]);
   }
 
   @override
@@ -119,7 +137,8 @@ class _RecurringTransactionSheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final accounts = ref.watch(accountsStreamProvider).value ?? const <Account>[];
+    final accounts =
+        ref.watch(accountsStreamProvider).value ?? const <Account>[];
     final isMonthly =
         _freq == RecurrenceFrequency.monthly ||
         _freq == RecurrenceFrequency.yearly;
@@ -147,7 +166,10 @@ class _RecurringTransactionSheetState
                 _RecurringKind.income: l10n.recurringKindIncome,
                 _RecurringKind.expense: l10n.recurringKindExpense,
               },
-              onChanged: (v) => setState(() => _kind = v),
+              onChanged: (v) => setState(() {
+                _kind = v;
+                widget.dirty.markDirty();
+              }),
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
@@ -172,34 +194,45 @@ class _RecurringTransactionSheetState
             const SizedBox(height: AppSpacing.s12),
             CurrencyPicker(
               value: _currency,
-              onChanged: (v) => setState(() => _currency = v),
+              onChanged: (v) => setState(() {
+                _currency = v;
+                widget.dirty.markDirty();
+              }),
             ),
             const SizedBox(height: AppSpacing.s12),
             AccountPicker(
               accounts: accounts,
               value: _cashAccountId,
               label: l10n.recurringFieldCashAccount,
-              onChanged: (v) => setState(() => _cashAccountId = v),
+              onChanged: (v) => setState(() {
+                _cashAccountId = v;
+                widget.dirty.markDirty();
+              }),
             ),
             const SizedBox(height: AppSpacing.s12),
             AccountPicker(
               accounts: accounts,
               value: _counterAccountId,
               label: l10n.recurringFieldCategoryAccount,
-              onChanged: (v) => setState(() => _counterAccountId = v),
+              onChanged: (v) => setState(() {
+                _counterAccountId = v;
+                widget.dirty.markDirty();
+              }),
             ),
             const SizedBox(height: AppSpacing.s12),
-            NoteField(
-              controller: _noteCtrl,
-              label: l10n.recurringFieldNote,
-            ),
+            NoteField(controller: _noteCtrl, label: l10n.recurringFieldNote),
             const SizedBox(height: AppSpacing.s12),
             DateField(
               label: l10n.recurringFieldStart,
               initialValue: _start,
               required: true,
               onChanged: (v) {
-                if (v != null) setState(() => _start = v.toUtc());
+                if (v != null) {
+                  setState(() {
+                    _start = v.toUtc();
+                    widget.dirty.markDirty();
+                  });
+                }
               },
             ),
             const SizedBox(height: AppSpacing.s12),
@@ -212,7 +245,10 @@ class _RecurringTransactionSheetState
                 RecurrenceFrequency.monthly: l10n.recurringFreqMonthly,
                 RecurrenceFrequency.yearly: l10n.recurringFreqYearly,
               },
-              onChanged: (v) => setState(() => _freq = v),
+              onChanged: (v) => setState(() {
+                _freq = v;
+                widget.dirty.markDirty();
+              }),
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
@@ -231,9 +267,7 @@ class _RecurringTransactionSheetState
             if (isMonthly) ...[
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
-                control: FTextFieldControl.managed(
-                  controller: _byMonthDayCtrl,
-                ),
+                control: FTextFieldControl.managed(controller: _byMonthDayCtrl),
                 label: Text(l10n.recurringFieldByMonthDay),
                 description: Text(l10n.recurringFieldByMonthDayHelper),
                 keyboardType: TextInputType.number,
@@ -254,7 +288,10 @@ class _RecurringTransactionSheetState
               label: l10n.recurringFieldUntil,
               initialValue: _until,
               helperText: l10n.recurringFieldUntilHelper,
-              onChanged: (v) => setState(() => _until = v?.toUtc()),
+              onChanged: (v) => setState(() {
+                _until = v?.toUtc();
+                widget.dirty.markDirty();
+              }),
             ),
           ],
         ),
@@ -293,7 +330,11 @@ class _RecurringTransactionSheetState
     final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     if (_cashAccountId == null || _counterAccountId == null) {
-      AppMessenger.show(context, ToastKind.error, l10n.recurringValidationAccounts);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.recurringValidationAccounts,
+      );
       return;
     }
     if (_cashAccountId == _counterAccountId) {
@@ -306,10 +347,15 @@ class _RecurringTransactionSheetState
     }
     final currency = _currency;
     if (currency == null || currency.isEmpty) {
-      AppMessenger.show(context, ToastKind.error, l10n.recurringValidationCurrency);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.recurringValidationCurrency,
+      );
       return;
     }
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final amount = Decimal.parse(_amountCtrl.text.trim());
       final cashUnits = _kind == _RecurringKind.income ? amount : -amount;
@@ -354,6 +400,7 @@ class _RecurringTransactionSheetState
         );
       }
       if (!mounted) return;
+      widget.dirty.markPristine();
       Haptics.success();
       Navigator.of(context).pop();
     } on RecurrenceParseException catch (_) {
@@ -365,6 +412,7 @@ class _RecurringTransactionSheetState
         AppMessenger.show(context, ToastKind.error, l10n.recurringSaveFailed);
       }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }

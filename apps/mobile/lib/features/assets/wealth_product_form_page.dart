@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/nav.dart';
 import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
@@ -32,7 +33,11 @@ class WealthProductFormPage extends ConsumerStatefulWidget {
       _WealthProductFormPageState();
 }
 
-class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
+class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
+    with FormDirtyGuard<WealthProductFormPage> {
+  @override
+  String get leaveFallback => AppRoutes.accounts;
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _principalController = TextEditingController();
@@ -66,6 +71,14 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   @override
   void initState() {
     super.initState();
+    dirty.bindTextControllers([
+      _nameController,
+      _principalController,
+      _expectedReturnPctController,
+      _valuationController,
+      _issuerController,
+      _productCodeController,
+    ]);
     if (widget.isEdit) {
       _loadInitial();
     } else {
@@ -98,11 +111,14 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
       _issuerController.text = meta.issuer ?? '';
       _productCodeController.text = meta.productCode ?? '';
     });
+    // Hydrating an existing record is not a user edit.
+    dirty.snapshotBaseline();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
+    dirty.busy = true;
     try {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       final principal = Decimal.parse(_principalController.text.trim());
@@ -156,9 +172,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
             .rememberAsset(accountId: _accountId, currency: _currency),
       );
       if (!mounted) return;
+      dirty.markPristine();
       Haptics.success();
-      context.go(AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.accounts);
     } finally {
+      dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -176,12 +194,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
     );
     if (ok != true) return;
     setState(() => _busy = true);
+    dirty.busy = true;
     try {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.accounts);
+      dirty.markPristine();
+      popOrGo(context, fallback: AppRoutes.accounts);
     } finally {
+      dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -212,29 +233,31 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(
-          widget.isEdit
-              ? l10n.wealthProductEditTitle
-              : l10n.wealthProductCreateTitle,
+    return guardedScope(
+      child: FScaffold(
+        header: FHeader.nested(
+          title: Text(
+            widget.isEdit
+                ? l10n.wealthProductEditTitle
+                : l10n.wealthProductCreateTitle,
+          ),
+          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
+          suffixes: [
+            if (widget.isEdit)
+              FHeaderAction(
+                icon: const Icon(Icons.delete_outline),
+                onPress: _busy ? null : _delete,
+              ),
+          ],
         ),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          if (widget.isEdit)
-            FHeaderAction(
-              icon: const Icon(Icons.delete_outline),
-              onPress: _busy ? null : _delete,
-            ),
-        ],
-      ),
-      childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-          data: (accounts) => _buildForm(accounts),
+        childPad: false,
+        child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
+            loading: () => const Center(child: FCircularProgress()),
+            error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+            data: (accounts) => _buildForm(accounts),
+          ),
         ),
       ),
     );
@@ -297,7 +320,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           AccountPicker(
             accounts: eligible,
             value: _accountId,
-            onChanged: (v) => setState(() => _accountId = v),
+            onChanged: (v) => setState(() {
+              _accountId = v;
+              dirty.markDirty();
+            }),
           ),
           const SizedBox(height: 12),
           FTextFormField(
@@ -331,7 +357,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           const SizedBox(height: 12),
           CurrencyPicker(
             value: _currency,
-            onChanged: (v) => setState(() => _currency = v),
+            onChanged: (v) => setState(() {
+              _currency = v;
+              dirty.markDirty();
+            }),
           ),
           const SizedBox(height: 12),
           AmountField(
@@ -366,13 +395,19 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage> {
           DateField(
             label: l10n.wealthProductValueDateLabel,
             initialValue: _startDate,
-            onChanged: (d) => setState(() => _startDate = d),
+            onChanged: (d) => setState(() {
+              _startDate = d;
+              dirty.markDirty();
+            }),
           ),
           const SizedBox(height: 12),
           DateField(
             label: l10n.wealthProductMaturityDateLabel,
             initialValue: _maturityDate,
-            onChanged: (d) => setState(() => _maturityDate = d),
+            onChanged: (d) => setState(() {
+              _maturityDate = d;
+              dirty.markDirty();
+            }),
           ),
           const SizedBox(height: 12),
           AmountField(

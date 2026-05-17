@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'form_dirty_controller.dart';
 
 /// Unified bottom-sheet shell — every modal sheet in the app should
 /// reach the screen through [showAppSheet] / [showAppFormSheet] so the
@@ -32,19 +33,36 @@ Future<T?> showAppSheet<T>({
   Widget? footer,
   bool scrollable = true,
   double? maxHeightFactor,
+  FormDirtyController? dirtyGuard,
+  Future<bool> Function()? confirmDismiss,
 }) {
+  final guarded = dirtyGuard != null;
   return showFSheet<T>(
     context: context,
     side: FLayout.btt,
     mainAxisMaxRatio: maxHeightFactor,
-    builder: (sheetContext) => AppSheet(
-      title: title,
-      subtitle: subtitle,
-      actions: actions,
-      footer: footer,
-      scrollable: scrollable,
-      child: Builder(builder: builder),
-    ),
+    // When the sheet is guarding unsaved input the barrier-tap and
+    // swipe-down vectors must be closed: forui dismisses both with a
+    // direct `Navigator.pop`, which bypasses [PopScope]. The footer
+    // Cancel and system back (both guarded) remain the only way out.
+    barrierDismissible: !guarded,
+    draggable: !guarded,
+    builder: (sheetContext) {
+      final sheet = AppSheet(
+        title: title,
+        subtitle: subtitle,
+        actions: actions,
+        footer: footer,
+        scrollable: scrollable,
+        child: Builder(builder: builder),
+      );
+      if (!guarded) return sheet;
+      return _GuardedSheet(
+        controller: dirtyGuard,
+        confirmDismiss: confirmDismiss,
+        child: sheet,
+      );
+    },
   );
 }
 
@@ -59,12 +77,25 @@ Future<T?> showAppFormSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   double maxHeightFactor = 0.94,
+  FormDirtyController? dirtyGuard,
+  Future<bool> Function()? confirmDismiss,
 }) {
+  final guarded = dirtyGuard != null;
   return showFSheet<T>(
     context: context,
     side: FLayout.btt,
     mainAxisMaxRatio: maxHeightFactor,
-    builder: builder,
+    // See [showAppSheet]: barrier-tap / swipe-down bypass PopScope, so
+    // they are disabled while the form holds unsaved input.
+    barrierDismissible: !guarded,
+    draggable: !guarded,
+    builder: guarded
+        ? (sheetContext) => _GuardedSheet(
+            controller: dirtyGuard,
+            confirmDismiss: confirmDismiss,
+            child: Builder(builder: builder),
+          )
+        : builder,
   );
 }
 
@@ -314,6 +345,42 @@ class AppSheetFooter extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Wraps a guarded sheet body in a [PopScope] so system / predictive
+/// back and the footer Cancel funnel through [confirmDismiss]. Barrier
+/// tap and swipe-down are disabled by the caller (they bypass PopScope),
+/// so this plus the footer Cancel are the only exits. While
+/// [FormDirtyController.busy] every dismissal is swallowed so a
+/// half-written record can't be abandoned mid-submit.
+class _GuardedSheet extends StatelessWidget {
+  const _GuardedSheet({
+    required this.controller,
+    required this.confirmDismiss,
+    required this.child,
+  });
+
+  final FormDirtyController controller;
+  final Future<bool> Function()? confirmDismiss;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return PopScope(
+          canPop: !controller.isDirty && !controller.busy,
+          onPopInvokedWithResult: (didPop, _) async {
+            if (didPop || controller.busy) return;
+            final ok = confirmDismiss == null ? true : await confirmDismiss!();
+            if (ok && context.mounted) Navigator.of(context).pop();
+          },
+          child: child,
+        );
+      },
     );
   }
 }

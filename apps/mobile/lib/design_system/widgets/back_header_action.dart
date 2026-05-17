@@ -16,10 +16,23 @@ import 'package:go_router/go_router.dart';
 /// (form pages, detail pages, settings sub-pages). Top-level tab pages
 /// must NOT include this — they have nothing to go back to and the
 /// bottom navigation already handles tab switching.
-FHeaderAction backHeaderAction(BuildContext context) {
+///
+/// Pass [confirmLeave] on forms that hold unsaved input: it runs before
+/// the pop and, when it resolves `false`, the back is cancelled (the
+/// user chose to keep editing). See `FormDirtyGuard`.
+FHeaderAction backHeaderAction(
+  BuildContext context, {
+  Future<bool> Function()? confirmLeave,
+}) {
   return FHeaderAction(
     icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-    onPress: () => _smartPop(context),
+    onPress: () async {
+      if (confirmLeave != null) {
+        final mayLeave = await confirmLeave();
+        if (!mayLeave) return;
+      }
+      if (context.mounted) _smartPop(context);
+    },
   );
 }
 
@@ -33,7 +46,23 @@ void _smartPop(BuildContext context) {
     Navigator.of(context).pop();
     return;
   }
-  // Deep-linked into a sub-page with nothing on the stack — drop to
-  // home so the user has somewhere to go.
-  context.go('/');
+  // Deep-linked into a sub-page with nothing on the stack — drop to the
+  // logical parent (the owning list/hub) rather than bouncing the user
+  // all the way to the dashboard. Mirrors `logicalParentOf` in
+  // `lib/app/nav.dart`; kept local so the design-system layer stays
+  // free of app-layer route imports.
+  context.go(_logicalParentLocation(context));
+}
+
+/// Parent of the current location: drop the last path segment, falling
+/// back to Home (`/`) for top-level pages.
+String _logicalParentLocation(BuildContext context) {
+  final router = GoRouter.maybeOf(context);
+  final path = router == null
+      ? '/'
+      : router.routeInformationProvider.value.uri.path;
+  final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+  if (segments.length <= 1) return '/';
+  segments.removeLast();
+  return '/${segments.join('/')}';
 }

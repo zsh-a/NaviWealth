@@ -19,9 +19,14 @@ import '../data/providers.dart';
 /// Returns the created [PhysicalAsset] via `Navigator.pop` so the caller
 /// can navigate to its detail page; returns `null` if the user cancels.
 class PhysicalAssetCreateSheet extends ConsumerStatefulWidget {
-  const PhysicalAssetCreateSheet({super.key, required this.type});
+  const PhysicalAssetCreateSheet({
+    super.key,
+    required this.type,
+    required this.dirty,
+  });
 
   final AssetType type;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<PhysicalAssetCreateSheet> createState() =>
@@ -31,9 +36,9 @@ class PhysicalAssetCreateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required AssetType type,
   }) {
-    return showAppFormSheet<PhysicalAsset>(
+    return showGuardedFormSheet<PhysicalAsset>(
       context: context,
-      builder: (_) => PhysicalAssetCreateSheet(type: type),
+      builder: (_, dirty) => PhysicalAssetCreateSheet(type: type, dirty: dirty),
     );
   }
 }
@@ -74,6 +79,17 @@ class _PhysicalAssetCreateSheetState
     if (defaults.assetCurrency != null && defaults.assetCurrency!.isNotEmpty) {
       _currencyCtrl.text = defaults.assetCurrency!;
     }
+    // Bind after the currency/residual-rate seeds so they are the
+    // baseline, not a user edit.
+    widget.dirty.bindTextControllers([
+      _nameCtrl,
+      _addressCtrl,
+      _purchasePriceCtrl,
+      _currentValuationCtrl,
+      _residualRateCtrl,
+      _linkedLiabilityCtrl,
+      _currencyCtrl,
+    ]);
   }
 
   @override
@@ -234,7 +250,10 @@ class _PhysicalAssetCreateSheetState
                 value: _autoDepreciation,
                 onChanged: _saving
                     ? null
-                    : (v) => setState(() => _autoDepreciation = v),
+                    : (v) => setState(() {
+                        _autoDepreciation = v;
+                        widget.dirty.markDirty();
+                      }),
                 contentPadding: EdgeInsets.zero,
               ),
             ],
@@ -263,12 +282,18 @@ class _PhysicalAssetCreateSheetState
       firstDate: DateTime(1970),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
-    if (picked != null) setState(() => _purchaseDate = picked);
+    if (picked != null) {
+      setState(() {
+        _purchaseDate = picked;
+        widget.dirty.markDirty();
+      });
+    }
   }
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final repo = await ref.read(physicalAssetRepositoryProvider.future);
       final purchasePrice = Decimal.parse(_purchasePriceCtrl.text.trim());
@@ -304,9 +329,11 @@ class _PhysicalAssetCreateSheetState
             .rememberAsset(currency: _currencyCtrl.text.trim().toUpperCase()),
       );
       if (!mounted) return;
+      widget.dirty.markPristine();
       Haptics.success();
       Navigator.of(context).pop(created);
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/nav.dart';
 import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
@@ -31,7 +32,11 @@ class CashFormPage extends ConsumerStatefulWidget {
   ConsumerState<CashFormPage> createState() => _CashFormPageState();
 }
 
-class _CashFormPageState extends ConsumerState<CashFormPage> {
+class _CashFormPageState extends ConsumerState<CashFormPage>
+    with FormDirtyGuard<CashFormPage> {
+  @override
+  String get leaveFallback => AppRoutes.accounts;
+
   final _formKey = GlobalKey<FormState>();
   final _balanceController = TextEditingController();
   final _nicknameController = TextEditingController();
@@ -56,6 +61,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
   @override
   void initState() {
     super.initState();
+    dirty.bindTextControllers([_balanceController, _nicknameController]);
     if (widget.isEdit) {
       _loadInitial();
     } else {
@@ -83,11 +89,14 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
       _currency = existing.currency;
       _accountId = accountId;
     });
+    // Hydrating an existing record is not a user edit.
+    dirty.snapshotBaseline();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
+    dirty.busy = true;
     try {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       final balance = Decimal.parse(_balanceController.text.trim());
@@ -136,9 +145,11 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
             .rememberAsset(accountId: _accountId, currency: _currency),
       );
       if (!mounted) return;
+      dirty.markPristine();
       Haptics.success();
-      context.go(AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.accounts);
     } finally {
+      dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -148,12 +159,15 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
     final ok = await confirmManualAssetDelete(context);
     if (ok != true) return;
     setState(() => _busy = true);
+    dirty.busy = true;
     try {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
-      context.go(AppRoutes.accounts);
+      dirty.markPristine();
+      popOrGo(context, fallback: AppRoutes.accounts);
     } finally {
+      dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -171,27 +185,29 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(
-          widget.isEdit ? l10n.cashFormEditTitle : l10n.cashFormCreateTitle,
+    return guardedScope(
+      child: FScaffold(
+        header: FHeader.nested(
+          title: Text(
+            widget.isEdit ? l10n.cashFormEditTitle : l10n.cashFormCreateTitle,
+          ),
+          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
+          suffixes: [
+            if (widget.isEdit)
+              FHeaderAction(
+                icon: const Icon(Icons.delete_outline),
+                onPress: _busy ? null : _delete,
+              ),
+          ],
         ),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          if (widget.isEdit)
-            FHeaderAction(
-              icon: const Icon(Icons.delete_outline),
-              onPress: _busy ? null : _delete,
-            ),
-        ],
-      ),
-      childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
-          data: (accounts) => _buildForm(l10n, accounts),
+        childPad: false,
+        child: Material(
+          color: Colors.transparent,
+          child: accountsAsync.when(
+            loading: () => const Center(child: FCircularProgress()),
+            error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
+            data: (accounts) => _buildForm(l10n, accounts),
+          ),
         ),
       ),
     );
@@ -261,6 +277,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage> {
               // bookkeeping requires each account to hold a single currency.
               final account = eligible.where((a) => a.id == v).firstOrNull;
               if (account != null) _currency = account.currency;
+              dirty.markDirty();
             }),
           ),
           const SizedBox(height: 12),
