@@ -123,10 +123,27 @@ class DeviceAgentLoop {
     var lastStop = LlmStopReason.endTurn;
 
     for (var round = 0; round < budget.maxRounds; round++) {
-      if (aborted()) return;
+      if (aborted() || (cancelToken?.isCancelled ?? false)) return;
       session.roundsUsed = round + 1;
       final roundId = 'r${round + 1}';
       final roundStart = DateTime.now().toUtc();
+
+      // Per-round child token. `AnthropicClient.streamMessages` cancels
+      // whatever token it's given when *its* SSE listener goes away —
+      // which happens on every normal round end. Handing it the shared
+      // turn token therefore poisons the *next* round (round-2 then
+      // fails with `DioException [request cancelled]`). Isolate that
+      // side-effect to a disposable per-round token; propagate genuine
+      // turn-level cancellation (user / listener / timeout) downward.
+      final roundToken = CancelToken();
+      final turnToken = cancelToken;
+      if (turnToken != null) {
+        unawaited(
+          turnToken.whenCancel.then((err) {
+            if (!roundToken.isCancelled) roundToken.cancel(err);
+          }),
+        );
+      }
 
       final request = AnthropicRequest(
         model: model,
@@ -170,7 +187,7 @@ class DeviceAgentLoop {
       final _ModelRound mr;
       try {
         mr = await _collectModelRound(
-          _streamFn(request, cancelToken: cancelToken),
+          _streamFn(request, cancelToken: roundToken),
           emit,
           aborted,
         );
