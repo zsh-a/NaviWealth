@@ -165,7 +165,9 @@ void main() {
 
       // Σ folded to USD with rate 1 USD = 7 CNY (so 1 CNY = 1/7 USD).
       final fx = _MapFxRateSource({
-        'CNY:USD': (Decimal.one / Decimal.parse('7')).toDecimal(scaleOnInfinitePrecision: 12),
+        'CNY:USD': (Decimal.one / Decimal.parse('7')).toDecimal(
+          scaleOnInfinitePrecision: 12,
+        ),
       });
       final report = _checkBalance(build, fx: fx);
       expect(
@@ -323,10 +325,7 @@ void main() {
       expect(destPrice!.currency, 'USD');
       // 1000 / 7100 = 0.140845070... — kept at 12 decimals to
       // preserve the user's rate without infinite-precision loss.
-      expect(
-        destPrice.perUnit,
-        Decimal.parse('0.140845070422'),
-      );
+      expect(destPrice.perUnit, Decimal.parse('0.140845070422'));
     });
 
     test('cross-currency transfer balances under identity FX because the '
@@ -459,6 +458,35 @@ void main() {
       expect(build.postings[0].units, Decimal.parse('170'));
       expect(build.postings[1].units, Decimal.parse('-200'));
       expect(build.postings[2].units, Decimal.parse('30'));
+    });
+  });
+
+  group('JournalEntryBuilders.drip', () {
+    test('reinvested asset + income + withholding + fee balances', () {
+      final build = JournalEntryBuilders.drip(
+        date: DateTime.utc(2026, 3, 1),
+        accountId: 'a-broker',
+        incomeAccountId: 'a-dividend',
+        assetUnit: 'NASDAQ:AAPL',
+        grossAmount: Decimal.parse('200'),
+        reinvestedQuantity: Decimal.parse('0.33'),
+        pricePerUnit: Decimal.parse('500'),
+        currency: 'USD',
+        withholdingAmount: Decimal.parse('30'),
+        withholdingAccountId: 'a-withholding',
+        feeAmount: Decimal.parse('5'),
+        feeAccountId: 'a-fee',
+        lotId: 'lot-drip',
+      );
+      expect(_checkBalance(build).isBalanced, isTrue);
+      expect(build.postings, hasLength(4));
+      expect(build.postings[0].units, Decimal.parse('0.33'));
+      expect(build.postings[0].cost!.perUnit, Decimal.parse('500'));
+      expect(build.postings[0].cost!.lotId, 'lot-drip');
+      expect(build.postings[1].units, Decimal.parse('-200'));
+      expect(build.postings[2].units, Decimal.parse('30'));
+      expect(build.postings[3].units, Decimal.parse('5'));
+      expect(build.entry.tagIds, contains('asset:NASDAQ:AAPL'));
     });
   });
 
