@@ -21,9 +21,7 @@ Future<void> showAccountsActionPanel(BuildContext context) {
   return showAppSheet<void>(
     context: context,
     title: l10n.accountsActionsTitle,
-    builder: (sheetContext) => Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    builder: (sheetContext) => AppActionSheetList(
       children: [
         AppActionSheetTile(
           icon: Icons.account_balance_outlined,
