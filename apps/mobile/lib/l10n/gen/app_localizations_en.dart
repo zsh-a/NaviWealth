@@ -36,7 +36,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFlowCommandOpen => 'Open cash flow';
 
   @override
-  String get cashFlowCommandNewIncome => 'New income';
+  String get cashFlowCommandViewIncome => 'View income';
 
   @override
   String get cashFlowPeriodMonth => 'Month';
@@ -66,7 +66,217 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFlowCategoryTitle => 'Category mix';
 
   @override
-  String get cashFlowDividendActivity => 'View dividend activity';
+  String get cashFlowViewDividendCenter => 'View dividend center';
+
+  @override
+  String get cashFlowEmptyTitle => 'No cash flow yet';
+
+  @override
+  String get cashFlowEmptyBody =>
+      'Income and expenses appear here once you record transactions.';
+
+  @override
+  String cashFlowLoadError(String error) {
+    return 'Cash flow failed to load: $error';
+  }
+
+  @override
+  String get recurringListTitle => 'Recurring';
+
+  @override
+  String get recurringCommandOpen => 'Recurring transactions';
+
+  @override
+  String get commandKeywordRecurringCn => '周期';
+
+  @override
+  String recurringLoadError(String error) {
+    return 'Recurring rules failed to load: $error';
+  }
+
+  @override
+  String get recurringEmptyTitle => 'No recurring rules';
+
+  @override
+  String get recurringEmptyBody =>
+      'Set up rules for salary, subscriptions or other repeating cash flow.';
+
+  @override
+  String get recurringEmptyCta => 'Add recurring rule';
+
+  @override
+  String recurringNextDue(String date) {
+    return 'Next: $date';
+  }
+
+  @override
+  String get recurringTemplateCorrupt => 'Template unreadable';
+
+  @override
+  String get recurringRowActionsTitle => 'Recurring rule';
+
+  @override
+  String get recurringActionEdit => 'Edit';
+
+  @override
+  String get recurringActionEditHint => 'Change amount or schedule';
+
+  @override
+  String get recurringActionDisable => 'Disable';
+
+  @override
+  String get recurringActionDisableHint => 'Stop generating new entries';
+
+  @override
+  String get recurringActionDeleteHint => 'Remove this rule permanently';
+
+  @override
+  String get recurringDisableTitle => 'Disable rule?';
+
+  @override
+  String get recurringDisableBody =>
+      'It will stop creating new entries. You can recreate it later.';
+
+  @override
+  String get recurringDeleteTitle => 'Delete rule?';
+
+  @override
+  String get recurringDeleteBody =>
+      'This recurring rule will be removed. This cannot be undone.';
+
+  @override
+  String get recurringDisabled => 'Rule disabled';
+
+  @override
+  String get recurringDeleted => 'Rule deleted';
+
+  @override
+  String get recurringActionFailed => 'Action failed';
+
+  @override
+  String recurringEveryDay(int n) {
+    return 'Every $n day(s)';
+  }
+
+  @override
+  String recurringEveryWeek(int n) {
+    return 'Every $n week(s)';
+  }
+
+  @override
+  String recurringEveryMonth(int n) {
+    return 'Every $n month(s)';
+  }
+
+  @override
+  String recurringEveryYear(int n) {
+    return 'Every $n year(s)';
+  }
+
+  @override
+  String recurringByMonthDay(int day) {
+    return 'on day $day';
+  }
+
+  @override
+  String recurringUntil(String date) {
+    return 'until $date';
+  }
+
+  @override
+  String get recurringFormNewTitle => 'New recurring rule';
+
+  @override
+  String get recurringFormEditTitle => 'Edit recurring rule';
+
+  @override
+  String get recurringFormSubtitle =>
+      'Generates a journal entry on each occurrence';
+
+  @override
+  String get recurringFormSave => 'Save';
+
+  @override
+  String get recurringFieldKind => 'Type';
+
+  @override
+  String get recurringKindIncome => 'Income';
+
+  @override
+  String get recurringKindExpense => 'Expense';
+
+  @override
+  String get recurringFieldAmount => 'Amount';
+
+  @override
+  String get recurringFieldCashAccount => 'Cash account';
+
+  @override
+  String get recurringFieldCategoryAccount => 'Category account';
+
+  @override
+  String get recurringFieldNote => 'Note';
+
+  @override
+  String get recurringFieldStart => 'Starts on';
+
+  @override
+  String get recurringFieldFrequency => 'Frequency';
+
+  @override
+  String get recurringFreqDaily => 'Daily';
+
+  @override
+  String get recurringFreqWeekly => 'Weekly';
+
+  @override
+  String get recurringFreqMonthly => 'Monthly';
+
+  @override
+  String get recurringFreqYearly => 'Yearly';
+
+  @override
+  String get recurringFieldInterval => 'Every N periods';
+
+  @override
+  String get recurringFieldByMonthDay => 'Day of month';
+
+  @override
+  String get recurringFieldByMonthDayHelper => 'Optional, 1–31';
+
+  @override
+  String get recurringFieldUntil => 'End date';
+
+  @override
+  String get recurringFieldUntilHelper => 'Optional';
+
+  @override
+  String get recurringValidationRequired => 'Required';
+
+  @override
+  String get recurringValidationPositive => 'Enter an amount greater than 0';
+
+  @override
+  String get recurringValidationInterval => 'Enter a positive whole number';
+
+  @override
+  String get recurringValidationByMonthDay => 'Day must be 1–31';
+
+  @override
+  String get recurringValidationAccounts => 'Pick both accounts';
+
+  @override
+  String get recurringValidationSameAccount =>
+      'Cash and category accounts must differ';
+
+  @override
+  String get recurringValidationCurrency => 'Pick a currency';
+
+  @override
+  String get recurringDefaultNarration => 'Recurring transaction';
+
+  @override
+  String get recurringSaveFailed => 'Could not save the rule';
 
   @override
   String get cashFlowKindSalary => 'Salary';
@@ -142,6 +352,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String dividendCenterLoadError(String error) {
     return 'Dividend center failed to load: $error';
   }
+
+  @override
+  String get dividendEventActionsTitle => 'Dividend entry';
+
+  @override
+  String get dividendEventViewInActivity => 'View in activity';
+
+  @override
+  String get dividendEventViewInActivityHint =>
+      'Open the underlying journal entry';
+
+  @override
+  String get dividendEventEdit => 'Edit (re-record)';
+
+  @override
+  String get dividendEventEditHint => 'Record a corrected corporate action';
+
+  @override
+  String get dividendEventDeleteHint => 'Remove this dividend entry';
+
+  @override
+  String get dividendEventDeleteTitle => 'Delete dividend?';
+
+  @override
+  String dividendEventDeleteBody(String asset) {
+    return 'Delete the dividend for $asset? This cannot be undone.';
+  }
+
+  @override
+  String get dividendEventDeleted => 'Dividend deleted';
+
+  @override
+  String get dividendEventDeleteFailed => 'Could not delete the dividend';
+
+  @override
+  String get dividendEventOpenFailed => 'Could not open this entry';
 
   @override
   String get dividendForecastStrategyDeclared => 'Declared';

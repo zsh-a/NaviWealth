@@ -64,9 +64,8 @@ class _PassiveIncomeContent extends ConsumerWidget {
         : colors.destructive;
 
     return SoftCard(
-      onPress: () => context.go(kDividendCenterPath),
-      padding: const EdgeInsets.all(18),
-      borderRadius: 18,
+      onPress: () => context.push(kDividendCenterPath),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,
         child: Column(
@@ -91,7 +90,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             Text(
               hasData
                   ? nextMonthAmount > Decimal.zero && projection != null
@@ -109,7 +108,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.s12),
             Row(
               children: [
                 Expanded(
@@ -123,7 +122,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 _DeltaPill(
                   label: changeRatio == null
                       ? l10n.homePassiveIncomeDeltaNew
@@ -151,8 +150,7 @@ class _PassiveIncomeSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SoftCard(
-      padding: EdgeInsets.all(18),
-      borderRadius: 18,
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,
         child: Column(
@@ -161,9 +159,9 @@ class _PassiveIncomeSkeleton extends StatelessWidget {
             SkeletonBox(width: 132, height: 18, radius: 5),
             Spacer(),
             SkeletonBox(width: 116, height: 28, radius: 6),
-            SizedBox(height: 8),
+            SizedBox(height: AppSpacing.s8),
             SkeletonBox(width: 180, height: 14, radius: 5),
-            SizedBox(height: 14),
+            SizedBox(height: AppSpacing.s12),
             SkeletonBox(width: double.infinity, height: 34, radius: 8),
           ],
         ),
@@ -181,8 +179,7 @@ class _PassiveIncomeError extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return SoftCard(
-      padding: const EdgeInsets.all(18),
-      borderRadius: 18,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,
         child: Text(
@@ -216,12 +213,12 @@ class _CardHeader extends StatelessWidget {
           height: 32,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Icon(icon, size: 18, color: color),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             title,
@@ -253,10 +250,13 @@ class _DeltaPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(minWidth: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       alignment: Alignment.center,
       child: Text(

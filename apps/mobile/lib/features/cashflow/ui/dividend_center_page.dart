@@ -12,6 +12,7 @@ import '../../investment/domain/dividend_forecast.dart';
 import '../data/dividend_center_providers.dart';
 import '../data/dividend_forecast_providers.dart';
 import '../domain/dividend_center.dart';
+import 'dividend_event_actions.dart';
 
 class DividendCenterPage extends ConsumerWidget {
   const DividendCenterPage({super.key});
@@ -32,10 +33,20 @@ class DividendCenterPage extends ConsumerWidget {
         ],
       ),
       childPad: false,
-      child: snapshot.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => _ErrorState(error: error),
-        data: (data) => _DividendCenterBody(snapshot: data),
+      child: Material(
+        color: Colors.transparent,
+        child: PageSkeletonShell<DividendCenterSnapshot>(
+          skeleton: const DividendCenterSkeleton(),
+          isLoading: snapshot.isLoading,
+          child: snapshot.when(
+            loading: () => const DividendCenterSkeleton(),
+            error: (error, _) => _ErrorState(
+              message: l10n.dividendCenterLoadError('$error'),
+              onRetry: () => ref.invalidate(dividendCenterSnapshotProvider),
+            ),
+            data: (data) => _DividendCenterBody(snapshot: data),
+          ),
+        ),
       ),
     );
   }
@@ -48,34 +59,33 @@ class _DividendCenterBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final padding = Breakpoints.isMobile(width)
-            ? const EdgeInsets.all(16)
-            : const EdgeInsets.symmetric(horizontal: 24, vertical: 24);
-        return ListView(
-          padding: EdgeInsets.only(
-            left: padding.left,
-            right: padding.right,
-            top: padding.top,
-            bottom: padding.bottom + MediaQuery.paddingOf(context).bottom + 16,
-          ),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s16,
+        AppSpacing.s16,
+        AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
+      ),
+      child: AdaptiveContentFrame(
+        maxWidth: AdaptiveMaxWidth.dashboard,
+        padding: EdgeInsets.zero,
+        primary: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (snapshot.isEmpty)
               const _EmptyDividendState()
             else ...[
               _KpiGrid(snapshot: snapshot),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               _RankingSection(snapshot: snapshot),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               const _ForecastCard(),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               _TimelineSection(snapshot: snapshot),
             ],
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -89,44 +99,57 @@ class _KpiGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
+    final cards = <Widget>[
+      _MetricCard(
+        label: l10n.dividendCenterMetricYtd,
+        value: formatters.currency(
+          snapshot.yearToDateGross,
+          code: snapshot.baseCurrency,
+        ),
+      ),
+      _MetricCard(
+        label: l10n.dividendCenterMetricTtm,
+        value: formatters.currency(
+          snapshot.ttmGross,
+          code: snapshot.baseCurrency,
+        ),
+      ),
+      _MetricCard(
+        label: l10n.dividendCenterMetricYoy,
+        value: snapshot.yearOverYearRatio == null
+            ? l10n.commonNotAvailable
+            : formatters.signedPercent(snapshot.yearOverYearRatio!),
+      ),
+      _MetricCard(
+        label: l10n.dividendCenterMetricWithholding,
+        value: formatters.currency(
+          snapshot.ttmWithholding,
+          code: snapshot.baseCurrency,
+        ),
+      ),
+    ];
+    Widget rowOf(List<Widget> children) => IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i != 0) const SizedBox(width: AppSpacing.s12),
+            Expanded(child: children[i]),
+          ],
+        ],
+      ),
+    );
+    // Intrinsic-height metric cards: never overflow a fixed aspect ratio
+    // under large text-scale. Four across on wide, 2x2 below 760dp.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 760 ? 4 : 2;
-        return GridView.count(
-          crossAxisCount: columns,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: columns == 4 ? 1.9 : 1.55,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        if (constraints.maxWidth >= 760) return rowOf(cards);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _MetricCard(
-              label: l10n.dividendCenterMetricYtd,
-              value: formatters.currency(
-                snapshot.yearToDateGross,
-                code: snapshot.baseCurrency,
-              ),
-            ),
-            _MetricCard(
-              label: l10n.dividendCenterMetricTtm,
-              value: formatters.currency(
-                snapshot.ttmGross,
-                code: snapshot.baseCurrency,
-              ),
-            ),
-            _MetricCard(
-              label: l10n.dividendCenterMetricYoy,
-              value: snapshot.yearOverYearRatio == null
-                  ? l10n.commonNotAvailable
-                  : formatters.signedPercent(snapshot.yearOverYearRatio!),
-            ),
-            _MetricCard(
-              label: l10n.dividendCenterMetricWithholding,
-              value: formatters.currency(
-                snapshot.ttmWithholding,
-                code: snapshot.baseCurrency,
-              ),
-            ),
+            rowOf(cards.sublist(0, 2)),
+            const SizedBox(height: AppSpacing.s12),
+            rowOf(cards.sublist(2, 4)),
           ],
         );
       },
@@ -143,8 +166,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 8,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -156,7 +178,7 @@ class _MetricCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
@@ -179,8 +201,7 @@ class _RankingSection extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final rows = snapshot.ranking.take(8).toList();
     return SoftCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 8,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -188,25 +209,39 @@ class _RankingSection extends ConsumerWidget {
             title: l10n.dividendCenterHoldingRanking,
             trailing: l10n.dividendForecastStrategyTtm,
           ),
-          const SizedBox(height: 12),
-          for (final row in rows) ...[
-            _RankRow(
-              name: row.assetLabel,
-              amount: formatters.currency(
-                row.ttmGrossInBase,
-                code: snapshot.baseCurrency,
-              ),
-              share: formatters.percent(row.portfolioShare),
-              yieldOnCost: row.yieldOnCost == null
-                  ? l10n.commonNotAvailable
-                  : formatters.percent(row.yieldOnCost!),
-              withholding: formatters.currency(
-                row.withholdingInBase,
-                code: snapshot.baseCurrency,
-              ),
-            ),
-            if (row != rows.last) const Divider(height: 16),
-          ],
+          const SizedBox(height: AppSpacing.s12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Five numeric columns need room; below ~520dp fall back to
+              // a two-line row instead of crushing every column.
+              final compact = constraints.maxWidth < 520;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final row in rows) ...[
+                    _RankRow(
+                      compact: compact,
+                      name: row.assetLabel,
+                      amount: formatters.currency(
+                        row.ttmGrossInBase,
+                        code: snapshot.baseCurrency,
+                      ),
+                      share: formatters.percent(row.portfolioShare),
+                      yieldOnCost: row.yieldOnCost == null
+                          ? l10n.commonNotAvailable
+                          : formatters.percent(row.yieldOnCost!),
+                      withholding: formatters.currency(
+                        row.withholdingInBase,
+                        code: snapshot.baseCurrency,
+                      ),
+                    ),
+                    if (row != rows.last)
+                      const Divider(height: AppSpacing.s16),
+                  ],
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -215,6 +250,7 @@ class _RankingSection extends ConsumerWidget {
 
 class _RankRow extends StatelessWidget {
   const _RankRow({
+    required this.compact,
     required this.name,
     required this.amount,
     required this.share,
@@ -222,6 +258,7 @@ class _RankRow extends StatelessWidget {
     required this.withholding,
   });
 
+  final bool compact;
   final String name;
   final String amount;
   final String share;
@@ -231,24 +268,72 @@ class _RankRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = context.theme.colors.mutedForeground;
-    return Row(
-      children: [
-        Expanded(
-          flex: 3,
-          child: Text(name, style: context.theme.typography.sm),
+    if (compact) {
+      final detail = '$share · $yieldOnCost · $withholding';
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: context.theme.typography.sm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Text(
+                  amount,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              detail,
+              style: context.theme.typography.xs.copyWith(color: muted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
-        Expanded(flex: 3, child: Text(amount, textAlign: TextAlign.end)),
-        Expanded(flex: 2, child: Text(share, textAlign: TextAlign.end)),
-        Expanded(flex: 2, child: Text(yieldOnCost, textAlign: TextAlign.end)),
-        Expanded(
-          flex: 3,
-          child: Text(
-            withholding,
-            textAlign: TextAlign.end,
-            style: TextStyle(color: muted),
+      );
+    }
+    Widget cell(String text, int flex, {Color? color}) => Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        textAlign: TextAlign.end,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: color == null ? null : TextStyle(color: color),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              name,
+              style: context.theme.typography.sm,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
+          cell(amount, 3),
+          cell(share, 2),
+          cell(yieldOnCost, 2),
+          cell(withholding, 3, color: muted),
+        ],
+      ),
     );
   }
 }
@@ -263,13 +348,12 @@ class _TimelineSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     return SoftCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 8,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SectionHeading(title: l10n.dividendCenterHistoryTimeline),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           for (final month in snapshot.months) ...[
             Text(
               formatters.monthYear(month.month),
@@ -277,10 +361,10 @@ class _TimelineSection extends ConsumerWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             for (final event in month.events)
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
                 child: _TimelineRow(
                   date: formatters.date(event.event.date),
                   asset: event.assetLabel,
@@ -292,9 +376,10 @@ class _TimelineSection extends ConsumerWidget {
                     event.withholdingInBase,
                     code: snapshot.baseCurrency,
                   ),
+                  onTap: () => showDividendEventActions(context, ref, event),
                 ),
               ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
           ],
         ],
       ),
@@ -308,27 +393,55 @@ class _TimelineRow extends StatelessWidget {
     required this.asset,
     required this.gross,
     required this.withholding,
+    required this.onTap,
   });
 
   final String date;
   final String asset;
   final String gross;
   final String withholding;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final muted = context.theme.colors.mutedForeground;
-    return Row(
-      children: [
-        SizedBox(
-          width: 96,
-          child: Text(date, style: TextStyle(color: muted)),
+    return FTappable(
+      onPress: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Row(
+          children: [
+            Text(date, style: TextStyle(color: muted)),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Text(
+                asset,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Flexible(
+              child: Text(
+                gross,
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Flexible(
+              child: Text(
+                withholding,
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: muted),
+              ),
+            ),
+          ],
         ),
-        Expanded(child: Text(asset)),
-        Text(gross),
-        const SizedBox(width: 12),
-        Text(withholding, style: TextStyle(color: muted)),
-      ],
+      ),
     );
   }
 }
@@ -342,12 +455,11 @@ class _ForecastCard extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final forecast = ref.watch(dividendForecast12mProvider);
     return SoftCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 8,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
           Icon(Icons.auto_graph_outlined, color: context.theme.colors.primary),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: forecast.when(
               loading: () => const SkeletonBox(width: 180, height: 42),
@@ -399,7 +511,7 @@ class _ForecastText extends StatelessWidget {
       children: [
         Text(title, style: context.theme.typography.sm),
         if (value != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             value!,
             style: context.theme.typography.lg.copyWith(
@@ -407,7 +519,7 @@ class _ForecastText extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Text(
           subtitle,
           style: context.theme.typography.xs.copyWith(
@@ -426,25 +538,29 @@ class _EmptyDividendState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
-      padding: const EdgeInsets.all(24),
-      borderRadius: 8,
+      padding: const EdgeInsets.all(AppSpacing.s24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.payments_outlined, color: context.theme.colors.primary),
-          const SizedBox(height: 12),
+          Icon(
+            Icons.payments_outlined,
+            size: 56,
+            color: context.theme.colors.primary,
+          ),
+          const SizedBox(height: AppSpacing.s16),
           Text(
             l10n.dividendCenterEmptyTitle,
             style: context.theme.typography.lg,
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             l10n.dividendCenterEmptyBody,
             style: context.theme.typography.sm.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           FButton(
             key: const Key('dividend-center-record-cta'),
             onPress: () => context.push(AppRoutes.accountCorporateAction),
@@ -504,17 +620,33 @@ class _SectionHeading extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.error});
+  const _ErrorState({required this.message, required this.onRetry});
 
-  final Object error;
+  final String message;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(l10n.dividendCenterLoadError(error.toString())),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: context.theme.colors.destructive,
+            size: 32,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onRetry,
+            child: Text(l10n.commonRetry),
+          ),
+        ],
       ),
     );
   }

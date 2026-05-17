@@ -54,9 +54,8 @@ class _CashflowCalendarContent extends ConsumerWidget {
         : Colors.amber;
 
     return SoftCard(
-      onPress: () => context.go(kCashflowPath),
-      padding: const EdgeInsets.all(18),
-      borderRadius: 18,
+      onPress: () => context.push(kCashflowPath),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,
         child: Column(
@@ -84,7 +83,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             Text(
               hasData
                   ? l10n.homeMonthlyCashFlowSubtitle(
@@ -104,12 +103,12 @@ class _CashflowCalendarContent extends ConsumerWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.s12),
             _CashflowBalanceBar(
               ratio: hasData ? metrics.progressRatio : 0,
               color: accent,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             Text(
               hasData
                   ? l10n.homeMonthlyCashFlowBaseline(
@@ -138,8 +137,7 @@ class _CashflowCalendarSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SoftCard(
-      padding: EdgeInsets.all(18),
-      borderRadius: 18,
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,
         child: Column(
@@ -148,9 +146,9 @@ class _CashflowCalendarSkeleton extends StatelessWidget {
             SkeletonBox(width: 148, height: 18, radius: 5),
             Spacer(),
             SkeletonBox(width: 128, height: 28, radius: 6),
-            SizedBox(height: 8),
+            SizedBox(height: AppSpacing.s8),
             SkeletonBox(width: 182, height: 14, radius: 5),
-            SizedBox(height: 14),
+            SizedBox(height: AppSpacing.s12),
             SkeletonBox(width: double.infinity, height: 12, radius: 6),
           ],
         ),
@@ -165,8 +163,7 @@ class _CashflowCalendarError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard(
-      padding: const EdgeInsets.all(18),
-      borderRadius: 18,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,
         child: Text(
@@ -200,12 +197,12 @@ class _CardHeader extends StatelessWidget {
           height: 32,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Icon(icon, size: 18, color: color),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             title,
@@ -236,7 +233,7 @@ class _CashflowBalanceBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 12,
+      height: AppSpacing.s12,
       child: CustomPaint(
         painter: _CashflowBalancePainter(
           ratio: ratio,
