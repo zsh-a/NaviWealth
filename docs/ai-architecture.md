@@ -445,7 +445,7 @@ Confirmation gate 对 source 不敏感 — 任何高风险 proposal 都走同一
 #### 4.6.1 五条决策
 
 1. **用户自带 key**: 用户在设置里手动填 LLM API key。复用 `core/security/SecureKeyStore`（`flutter_secure_key_store.dart` 已有，Keychain/Keystore 后端）。key **绝不**进 OpLog / 云同步 / 明文备份；与 SQLCipher key 同等对待。
-2. **`DeviceLlmRuntime` 直连 provider**: 端侧 Dart Anthropic adapter（port 自 `apps/backend/src/ai/adapters/anthropic/`，Messages API + SSE streaming + `tool_use`）。agent loop / tool dispatch / prompt 组装 / proposal 全在端侧。
+2. **`DeviceLlmRuntime` 直连 provider**: 端侧 Dart 多 provider 客户端 —— `AnthropicClient`（Messages API + SSE，port 自 `apps/backend/src/ai/adapters/anthropic/`）与 `OpenAiClient`（Chat Completions + SSE，Wave 46 新增），均 `implements DeviceLlmClient`、统一翻译为 provider-neutral `LlmStreamEvent` 流（含 `tool_use`）。provider 由 active `LlmProfile.provider` 决定（用户在设置里切换；见 §8 Wave 46）。agent loop / tool dispatch / prompt 组装 / proposal 全在端侧，对 provider 无感。
 3. **工具读 Drift 本地真源**: 不再读 D1 read models。**§4.2 freshness gate 与 ScopedDisclosure 兜底通道在 device runtime 路径上整体消失** —— 端侧本就是 local-first 真值源，不存在 read model stale，也不存在「原始 ledger 出设备」需要脱敏的问题。
 4. **Vision 端侧直发**: 图像 base64 → content block，用用户 key 直发 provider。比 §5.10.10 的 Worker 中转**更私密**（原图根本不出设备到我方服务器）。AiTrace 文案改为「端侧直连 provider · 原图未经我方服务器」。
 5. **平台边界 = 全部原生平台（iOS / Android / macOS / Windows / Linux），仅排除 Web**（决策已修订，原为「仅 iOS/Android」）: 所有原生平台都有系统级安全存储（iOS/macOS Keychain、Android Keystore、Windows 凭据库、Linux libsecret，均经 `flutter_secure_storage` ^10）且用原生 HTTP（无浏览器 CORS / 无 JS key 暴露）——桌面与移动的安全前提**完全相同**，故端侧 agent 同样支持桌面。**只有 Web 继续走 `CloudAnthropicRuntime`**（IndexedDB-only key + 浏览器直连 CORS）。门控就是 `!kIsWeb`，由 registry 按 `platform × keyPresent × optIn` 选择。
@@ -466,7 +466,7 @@ else                              → AI 禁用，提示「设置中填入 API k
 
 #### 4.6.3 工具端侧化清单（D1 read model → Drift）
 
-device runtime 路径上 27 个工具的数据源迁移，**复用既有端侧资产，不重造**：
+device runtime 路径上 22 个工具（`kDeviceTools`，Wave 45 落地）的数据源迁移，**复用既有端侧资产，不重造**：
 
 | 层 | 端侧来源 | 备注 |
 |----|---------|------|
