@@ -179,7 +179,7 @@ HLC state is persisted in D1 (`sync_state` table, single row).
 | Field | Type | Notes |
 |-------|------|-------|
 | `op_id` | UUIDv4 string | Globally unique. Idempotency key. |
-| `table` | enum string | One of: `accounts`, `assets`, `liabilities`, `tags`, `tag_links`, `categories`, `amortization_entries`, `goals`, `devices`, `users`, `settings`, `journal_entries`, `postings`, `prices`. Other tables (e.g. `fx_rates`, `app_meta`, the local market-data caches and `domain_event_log`) are **not** synced — `fx_rates` is global market data each device pulls independently. The `journal_entries` / `postings` / `prices` triple is the Beancount-style ledger foundation; they sync independently so a posting-level edit ships as a single op rather than a JE-wide rewrite. |
+| `table` | enum string | One of: `accounts`, `assets`, `liabilities`, `tags`, `tag_links`, `categories`, `amortization_entries`, `goals`, `devices`, `users`, `settings`, `journal_entries`, `postings`, `prices`, `recurring_transactions`. Other tables (e.g. `fx_rates`, `app_meta`, the local market-data caches and `domain_event_log`) are **not** synced — `fx_rates` is global market data each device pulls independently. The `journal_entries` / `postings` / `prices` triple is the Beancount-style ledger foundation; they sync independently so a posting-level edit ships as a single op rather than a JE-wide rewrite. `recurring_transactions` stores future planned-transaction templates only; expanded forecast occurrences are pure derived values and never enter OpLog until materialised as real journal entries. |
 | `row_id` | string | Primary key of the row. For composite keys (e.g. `fx_rates`) the canonical form is `<base>:<quote>:<as_of_iso>`. |
 | `op_type` | enum | `insert` \| `update` \| `delete`. |
 | `fields_diff` | object \| null | See §4.2. |
@@ -704,6 +704,24 @@ Both devices, after pulling, see the row alive with B's new note.
 - The `tables` enum (§4.1) is closed. Adding a new syncable table is a
   data-model change (separate ticket); add it to the enum and to the
   materialiser, no protocol bump needed.
+
+### 10.1 Additive sync table SOP
+
+For a new syncable table under v1:
+
+1. Add the wire table name to §4.1.
+2. Add the local Drift table with the standard sync metadata columns.
+3. Register the table in the client OpApplier registry, using the generic LWW
+   applier unless the table needs typed validation.
+4. Add a D1 migration with the standard materialised-row shape:
+   `(user_id, id, payload, hlc_text, updated_by_device, deleted_at)`.
+5. Register the wire-to-D1 table mapping in the backend materialiser.
+6. Add/extend backfill coverage so pre-existing local rows enqueue insert ops.
+7. Document rollback: remove the feature writer first, then tombstone or ignore
+   the materialised rows; keep OpLog rows durable for cursor consistency.
+
+`recurring_transactions` follows this SOP in mobile schema v9 and backend
+migration `0018_recurring_transactions.sql`.
 
 ---
 

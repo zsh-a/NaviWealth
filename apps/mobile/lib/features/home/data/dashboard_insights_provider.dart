@@ -1,8 +1,12 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
+import '../../cashflow/data/cash_flow_providers.dart';
+import '../../cashflow/domain/cash_flow_aggregator.dart';
+import '../../cashflow/domain/home_cash_flow_metrics.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../ingest/data/ingest_queue_insight_provider.dart';
@@ -120,6 +124,31 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     );
   }
 
+  final cashFlowSummary = ref.watch(
+    cashFlowSummaryProvider(
+      const CashFlowSummaryRequest(period: CashFlowPeriod.month),
+    ),
+  );
+  cashFlowSummary.whenData((summary) {
+    final metrics = monthlyCashFlowHomeMetrics(
+      summary,
+      now: ref.watch(cashFlowNowProvider),
+    );
+    if (metrics.hasData && metrics.net.isNegative) {
+      insights.add(
+        InsightItem(
+          icon: Icons.account_balance_wallet_outlined,
+          kind: InsightKind.cashFlowDeficit,
+          iconColor: Colors.redAccent,
+          cashFlowMonthKey: metrics.monthKey,
+          cashFlowNetMinor: _moneyToMinor(metrics.net.amount),
+          cashFlowCurrency: metrics.net.currency,
+          route: kCashflowPath,
+        ),
+      );
+    }
+  });
+
   // §5.10.10 / S5a.1 — Layer 4 queue surfaces as a calm ambient card;
   // row tap deep-links to the review page (AppRoutes.activityIngest).
   final ingest = ref.watch(ingestQueueInsightProvider);
@@ -135,7 +164,8 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     );
   }
 
-  final dismissed = ref.watch(dismissedInsightKeysProvider).value ??
+  final dismissed =
+      ref.watch(dismissedInsightKeysProvider).value ??
       const <DismissedInsightKey>{};
   if (dismissed.isEmpty) return insights;
   return insights
@@ -177,5 +207,12 @@ String insightScopeHash(InsightItem item) {
       return '${item.summaryYear ?? 0}-${item.summaryMonth ?? 0}';
     case InsightKind.ingestQueue:
       return '${item.ingestPendingCount ?? 0}:${item.ingestFreshCount ?? 0}';
+    case InsightKind.cashFlowDeficit:
+      return '${item.cashFlowMonthKey ?? ''}:'
+          '${item.cashFlowNetMinor ?? 0}:'
+          '${item.cashFlowCurrency ?? ''}';
   }
 }
+
+int _moneyToMinor(Decimal amount) =>
+    (amount * Decimal.fromInt(100)).round().toBigInt().toInt();

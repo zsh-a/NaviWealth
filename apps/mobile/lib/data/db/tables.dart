@@ -208,6 +208,29 @@ class Prices extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('RecurringTransactionRow')
+class RecurringTransactions extends Table with SyncableTable {
+  TextColumn get id => text()();
+
+  /// JSON-encoded posting template. Forecast expansion reads this value
+  /// purely in memory; generated forecast instances are never persisted.
+  TextColumn get templateJournalBuildJson => text()();
+
+  /// RFC 5545 subset: FREQ, INTERVAL, BYMONTHDAY, UNTIL.
+  TextColumn get rrule => text()();
+
+  /// Next occurrence eligible for materialisation.
+  DateTimeColumn get nextDueAt => dateTime()();
+
+  /// Last occurrence successfully turned into a journal entry.
+  DateTimeColumn get lastMaterialisedAt => dateTime().nullable()();
+
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('AssetRow')
 class Assets extends Table with SyncableTable {
   TextColumn get id => text()();

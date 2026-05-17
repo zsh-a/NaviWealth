@@ -61,16 +61,13 @@ void main() {
         holdingServiceProvider.overrideWith(
           (_) async => _EmptyHoldingService(),
         ),
+        holdingsSnapshotProvider.overrideWith((_) async => const {}),
         analyticsBaseCurrencyProvider.overrideWithValue('USD'),
         manualAssetsStreamProvider.overrideWith(
           (_) => Stream.value(const <Asset>[]),
         ),
-        physicalAssetsListProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
-        liabilitiesStreamProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
+        physicalAssetsListProvider.overrideWith((_) => Stream.value(const [])),
+        liabilitiesStreamProvider.overrideWith((_) => Stream.value(const [])),
         // BenchmarkComparisonCard pulls the dashboard currency converter,
         // which transitively watches `fxRatesStreamProvider`. Without an
         // override that one reaches the real Drift database and leaves a

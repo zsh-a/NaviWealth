@@ -9,7 +9,10 @@ import 'package:naviwealth/data/domain/liability.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
@@ -65,6 +68,14 @@ void main() {
           ),
           dashboardPriceRowsProvider.overrideWith(
             (ref) => Stream.value(const []),
+          ),
+          cashFlowSummaryProvider.overrideWith(
+            (ref, request) async => CashFlowSummary(
+              period: request.period,
+              baseCurrency: 'CNY',
+              buckets: const [],
+              totalInBase: Money.zero('CNY'),
+            ),
           ),
         ],
         child: const NaviWealthApp(),

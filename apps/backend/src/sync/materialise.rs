@@ -35,6 +35,7 @@ pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
         "journal_entries" => Ok("journal_entries"),
         "postings" => Ok("postings"),
         "prices" => Ok("prices"),
+        "recurring_transactions" => Ok("recurring_transactions"),
         "liabilities" => Ok("liabilities"),
         "amortization_entries" => Ok("amortization_entries"),
         "fx_rates" => Ok("fx_rates"),
@@ -301,6 +302,10 @@ mod tests {
         );
         assert_eq!(sql_table_name("postings").unwrap(), "postings");
         assert_eq!(sql_table_name("prices").unwrap(), "prices");
+        assert_eq!(
+            sql_table_name("recurring_transactions").unwrap(),
+            "recurring_transactions"
+        );
         assert_eq!(
             sql_table_name("amortization_entries").unwrap(),
             "amortization_entries"

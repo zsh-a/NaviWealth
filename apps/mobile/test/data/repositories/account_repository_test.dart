@@ -173,10 +173,7 @@ void main() {
       );
       await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
 
-      final updated = await repo.update(
-        acc.id,
-        category: AccountSide.equity,
-      );
+      final updated = await repo.update(acc.id, category: AccountSide.equity);
       expect(updated.category, AccountSide.equity);
 
       final batch = await outbox.peekBatch();
@@ -190,9 +187,9 @@ void main() {
     test('seedSystemAccounts inserts the full tree once', () async {
       final inserted = await repo.seedSystemAccounts();
       // 3 roots (income / expense / equity) + expense subtree leaves.
-      // 27 total today — the count is asserted concretely so a future
+      // 29 total today — the count is asserted concretely so a future
       // seed change has to update the contract.
-      expect(inserted, 27);
+      expect(inserted, 29);
 
       // Re-running is a free no-op — same primary keys, no duplicates.
       final reseeded = await repo.seedSystemAccounts();
@@ -200,7 +197,7 @@ void main() {
 
       final ops = await outbox.peekBatch();
       // Inserts on the first call only; the no-op doesn't queue.
-      expect(ops, hasLength(27));
+      expect(ops, hasLength(29));
       // The tree's three top-level buckets are present.
       final categories = ops.map((o) => o.fieldsDiff!['category']).toSet();
       expect(categories, {'income', 'expense', 'equity'});
@@ -356,14 +353,11 @@ void main() {
       await repo.seedSystemAccounts();
       final roots = await repo.accountsByParent(null);
       // Three roots — Income / Expenses / Equity.
-      expect(
-        roots.map((a) => a.id).toSet(),
-        {
-          'system-account:u-test:income',
-          'system-account:u-test:expense',
-          'system-account:u-test:equity',
-        },
-      );
+      expect(roots.map((a) => a.id).toSet(), {
+        'system-account:u-test:income',
+        'system-account:u-test:expense',
+        'system-account:u-test:equity',
+      });
     });
 
     test('accountsByParent lists direct children only', () async {
@@ -390,13 +384,11 @@ void main() {
 
     test('walkSubtree returns root then all descendants', () async {
       await repo.seedSystemAccounts();
-      final subtree = await repo.walkSubtree(
-        'system-account:u-test:expense',
-      );
-      // Expenses subtree: 1 root + 12 direct children (one per
-      // expense slug) + 1 trading branch + 3 trading grand-children
-      // = 17 nodes.
-      expect(subtree, hasLength(17));
+      final subtree = await repo.walkSubtree('system-account:u-test:expense');
+      // Expenses subtree: 1 root + 13 direct children (one per
+      // expense slug/branch) + 1 trading branch + 3 trading
+      // grand-children + 1 tax grand-child = 19 nodes.
+      expect(subtree, hasLength(19));
       expect(subtree.first.id, 'system-account:u-test:expense');
       expect(
         subtree.map((a) => a.id),
@@ -405,6 +397,8 @@ void main() {
           'system-account:u-test:expense:trading:fee',
           'system-account:u-test:expense:trading:tax',
           'system-account:u-test:expense:trading:interest',
+          'system-account:u-test:expense:tax',
+          'system-account:u-test:expense:tax:withholding',
           'system-account:u-test:expense:transport',
           'system-account:u-test:expense:education',
           'system-account:u-test:expense:gift',
@@ -415,9 +409,7 @@ void main() {
     test('walkSubtree returns empty list for a deleted root', () async {
       await repo.seedSystemAccounts();
       await repo.softDelete('system-account:u-test:expense');
-      final subtree = await repo.walkSubtree(
-        'system-account:u-test:expense',
-      );
+      final subtree = await repo.walkSubtree('system-account:u-test:expense');
       expect(subtree, isEmpty);
     });
 
@@ -426,14 +418,11 @@ void main() {
       final path = await repo.pathOf(
         'system-account:u-test:expense:trading:fee',
       );
-      expect(
-        path.map((a) => a.id),
-        [
-          'system-account:u-test:expense',
-          'system-account:u-test:expense:trading',
-          'system-account:u-test:expense:trading:fee',
-        ],
-      );
+      expect(path.map((a) => a.id), [
+        'system-account:u-test:expense',
+        'system-account:u-test:expense:trading',
+        'system-account:u-test:expense:trading:fee',
+      ]);
     });
 
     test('pathOf returns empty list for an unknown account', () async {

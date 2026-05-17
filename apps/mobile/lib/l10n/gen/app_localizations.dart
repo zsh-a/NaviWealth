@@ -140,6 +140,330 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get navSearch;
 
+  /// Cash-flow overview page title
+  ///
+  /// In en, this message translates to:
+  /// **'Cash flow'**
+  String get cashFlowTitle;
+
+  /// Command palette action that opens the cash-flow overview
+  ///
+  /// In en, this message translates to:
+  /// **'Open cash flow'**
+  String get cashFlowCommandOpen;
+
+  /// Command palette action for recording or reviewing income flow
+  ///
+  /// In en, this message translates to:
+  /// **'New income'**
+  String get cashFlowCommandNewIncome;
+
+  /// Cash-flow period selector: monthly
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get cashFlowPeriodMonth;
+
+  /// Cash-flow period selector: quarterly
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter'**
+  String get cashFlowPeriodQuarter;
+
+  /// Cash-flow period selector: yearly
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get cashFlowPeriodYear;
+
+  /// Cash-flow KPI: incoming cash
+  ///
+  /// In en, this message translates to:
+  /// **'Inflow'**
+  String get cashFlowKpiInflow;
+
+  /// Cash-flow KPI: outgoing cash
+  ///
+  /// In en, this message translates to:
+  /// **'Outflow'**
+  String get cashFlowKpiOutflow;
+
+  /// Cash-flow KPI: net cash flow
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get cashFlowKpiNet;
+
+  /// Cash-flow bar chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Income vs expense'**
+  String get cashFlowIncomeExpenseTitle;
+
+  /// Cash-flow trend chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash-flow trend'**
+  String get cashFlowNetTrendTitle;
+
+  /// Cash-flow category pie chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Category mix'**
+  String get cashFlowCategoryTitle;
+
+  /// Cash-flow shortcut into Activity filtered to income/dividend-like entries
+  ///
+  /// In en, this message translates to:
+  /// **'View dividend activity'**
+  String get cashFlowDividendActivity;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Salary'**
+  String get cashFlowKindSalary;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend'**
+  String get cashFlowKindDividend;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get cashFlowKindInterest;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Capital gains'**
+  String get cashFlowKindCapitalGains;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Other income'**
+  String get cashFlowKindOtherIncome;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get cashFlowKindExpense;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get cashFlowKindTransfer;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Opening'**
+  String get cashFlowKindOpening;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get cashFlowKindOther;
+
+  /// Dividend center page and command palette title
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend Center'**
+  String get dividendCenterTitle;
+
+  /// Dividend center KPI label: current year-to-date gross dividends
+  ///
+  /// In en, this message translates to:
+  /// **'Year to date'**
+  String get dividendCenterMetricYtd;
+
+  /// Dividend center KPI label: trailing twelve month gross dividends
+  ///
+  /// In en, this message translates to:
+  /// **'Trailing 12 months'**
+  String get dividendCenterMetricTtm;
+
+  /// Dividend center KPI label: year-over-year comparison for the same period
+  ///
+  /// In en, this message translates to:
+  /// **'YoY same period'**
+  String get dividendCenterMetricYoy;
+
+  /// Dividend center KPI label: withholding tax total
+  ///
+  /// In en, this message translates to:
+  /// **'Withholding tax'**
+  String get dividendCenterMetricWithholding;
+
+  /// Dividend center section title for ranked holdings
+  ///
+  /// In en, this message translates to:
+  /// **'Holding ranking'**
+  String get dividendCenterHoldingRanking;
+
+  /// Dividend center section title for dividend history
+  ///
+  /// In en, this message translates to:
+  /// **'History timeline'**
+  String get dividendCenterHistoryTimeline;
+
+  /// Dividend center forecast placeholder title
+  ///
+  /// In en, this message translates to:
+  /// **'Next 12 months'**
+  String get dividendCenterForecastTitle;
+
+  /// Dividend center forecast placeholder body
+  ///
+  /// In en, this message translates to:
+  /// **'Forecasting is not enabled yet.'**
+  String get dividendCenterForecastUnavailable;
+
+  /// Dividend center forecast source label
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {source}'**
+  String dividendCenterForecastSource(String source);
+
+  /// Dividend center empty-state title
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend records yet'**
+  String get dividendCenterEmptyTitle;
+
+  /// Dividend center empty-state body
+  ///
+  /// In en, this message translates to:
+  /// **'Record a cash dividend or corporate action to start the timeline.'**
+  String get dividendCenterEmptyBody;
+
+  /// Dividend center empty-state CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Record dividend'**
+  String get dividendCenterRecordAction;
+
+  /// Dividend center error state
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend center failed to load: {error}'**
+  String dividendCenterLoadError(String error);
+
+  /// Dividend forecast strategy label: declared corporate actions
+  ///
+  /// In en, this message translates to:
+  /// **'Declared'**
+  String get dividendForecastStrategyDeclared;
+
+  /// Dividend forecast strategy label: annualized dividend per share extrapolation
+  ///
+  /// In en, this message translates to:
+  /// **'DPS'**
+  String get dividendForecastStrategyDps;
+
+  /// Dividend forecast strategy label: trailing twelve months
+  ///
+  /// In en, this message translates to:
+  /// **'TTM'**
+  String get dividendForecastStrategyTtm;
+
+  /// Dividend forecast strategy label: multiple strategies combined
+  ///
+  /// In en, this message translates to:
+  /// **'Composite'**
+  String get dividendForecastStrategyComposite;
+
+  /// Fallback dividend forecast strategy label
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast'**
+  String get dividendForecastStrategyUnknown;
+
+  /// Short fallback label when a metric is not available
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get commonNotAvailable;
+
+  /// Chinese command-palette search keyword for cash flow; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'现金流'**
+  String get commandKeywordCashFlowCn;
+
+  /// Chinese command-palette search keyword for income; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'收入'**
+  String get commandKeywordIncomeCn;
+
+  /// Chinese command-palette search keyword for dividends; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'股息'**
+  String get commandKeywordDividendCn;
+
+  /// Chinese command-palette search keyword for salary; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'工资'**
+  String get commandKeywordSalaryCn;
+
+  /// Chinese command-palette search keyword for the dividend center; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'股息中心'**
+  String get commandKeywordDividendCenterCn;
+
+  /// Chinese command-palette search keyword for a user's dividends; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'我的股息'**
+  String get commandKeywordMyDividendsCn;
+
+  /// Chinese command-palette search keyword for passive income; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'被动收入'**
+  String get commandKeywordPassiveIncomeCn;
+
+  /// Chinese command-palette search keyword for dividend distributions; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'分红'**
+  String get commandKeywordBonusDividendCn;
+
+  /// Chinese command-palette search keyword for withholding tax; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'代扣税'**
+  String get commandKeywordWithholdingTaxCn;
+
+  /// Chinese command-palette search keyword for corporate actions; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'公司行动'**
+  String get commandKeywordCorporateActionCn;
+
+  /// Chinese command-palette search keyword for stock splits; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'拆股'**
+  String get commandKeywordSplitCn;
+
+  /// Chinese command-palette search keyword for rights issues; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'配股'**
+  String get commandKeywordRightsIssueCn;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:
@@ -523,6 +847,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Base currency {currency} · shown once data is connected'**
   String homeNetWorthSubtitle(String currency);
+
+  /// Home cashflow card title: trailing twelve month passive income
+  ///
+  /// In en, this message translates to:
+  /// **'Passive income'**
+  String get homePassiveIncomeTitle;
+
+  /// Home passive income card subtitle when data exists
+  ///
+  /// In en, this message translates to:
+  /// **'TTM dividends, interest, and other passive income'**
+  String get homePassiveIncomeSubtitle;
+
+  /// Home passive income card subtitle when the next-month forecast is available
+  ///
+  /// In en, this message translates to:
+  /// **'TTM passive income · next month est. {amount}'**
+  String homePassiveIncomeSubtitleWithNextMonth(String amount);
+
+  /// Home passive income card empty-state guidance
+  ///
+  /// In en, this message translates to:
+  /// **'Record dividends or interest to start TTM tracking'**
+  String get homePassiveIncomeEmpty;
+
+  /// Home passive income card badge when no prior TTM window exists
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get homePassiveIncomeDeltaNew;
+
+  /// Home monthly cashflow card title
+  ///
+  /// In en, this message translates to:
+  /// **'This month cashflow'**
+  String get homeMonthlyCashFlowTitle;
+
+  /// Home monthly cashflow card inflow and outflow line
+  ///
+  /// In en, this message translates to:
+  /// **'In {inflow} · Out {outflow}'**
+  String homeMonthlyCashFlowSubtitle(String inflow, String outflow);
+
+  /// Home monthly cashflow card empty-state guidance
+  ///
+  /// In en, this message translates to:
+  /// **'Add income or spending entries to see this month'**
+  String get homeMonthlyCashFlowEmpty;
+
+  /// Home monthly cashflow card trailing baseline label
+  ///
+  /// In en, this message translates to:
+  /// **'vs 3-month average {average}'**
+  String homeMonthlyCashFlowBaseline(String average);
+
+  /// Home monthly cashflow card baseline empty text
+  ///
+  /// In en, this message translates to:
+  /// **'3-month average appears after entries post'**
+  String get homeMonthlyCashFlowBaselineEmpty;
+
+  /// Home cashflow cards empty amount text
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get homeCashFlowEmptyValue;
+
+  /// Home cashflow card error message
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow summary is unavailable'**
+  String get homeCashFlowCardError;
 
   /// No description provided for @assetsAppBarTitle.
   ///
@@ -7029,6 +7425,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} parsed · {fresh} ready to add'**
   String dashboardInsightIngestQueueValue(int count, int fresh);
+
+  /// Dashboard insight label shown when this month cashflow is negative
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow gap'**
+  String get dashboardInsightCashFlowDeficitLabel;
+
+  /// Dashboard insight detail for current-month negative cashflow
+  ///
+  /// In en, this message translates to:
+  /// **'This month is short {amount}'**
+  String dashboardInsightCashFlowDeficitValue(String amount);
 
   /// Layer 4 ingest review page title
   ///
