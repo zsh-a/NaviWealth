@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/features/settings/ui/ai_trace_waterfall.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 AiTrace _trace() => const AiTrace(
   requestId: 'req-1',
   startedAtIso: '2026-05-17T10:00:00.000Z',
-  intent: IntentHint(
-    capability: Capability.analyze,
-    risk: RiskLevel.suggest,
-  ),
+  intent: IntentHint(capability: Capability.analyze, risk: RiskLevel.suggest),
   backend: Backend.device,
   budgetTier: BudgetTier.standard,
   routingReason: 'device_llm_direct',
@@ -53,6 +51,8 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -93,10 +93,13 @@ void main() {
       tester,
     ) async {
       await _pump(tester, AiTraceWaterfall(trace: _trace()));
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(AiTraceWaterfall)),
+      );
 
       // Rollup strip.
-      expect(find.text('1 rounds'), findsOneWidget);
-      expect(find.text('1 tools'), findsOneWidget);
+      expect(find.text(l10n.aiTraceRoundsCount(1)), findsOneWidget);
+      expect(find.text(l10n.aiTransparencyToolsCount(1)), findsOneWidget);
       // Span labels (short form).
       expect(find.text('get_holdings'), findsOneWidget);
 
