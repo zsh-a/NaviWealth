@@ -9,6 +9,7 @@ import '../data/rebalance_providers.dart';
 import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';
+import 'target_allocation_editor_sheet.dart';
 
 /// Rebalance page — shows target vs actual allocation, deviation bars,
 /// and suggested trades.
@@ -135,17 +136,32 @@ class _SchemeSelector extends ConsumerWidget {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final preset in AllocationSchemePreset.values)
-                  FButton(
-                    variant: (current == preset)
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () => ref
-                        .read(selectedSchemeProvider.notifier)
-                        .select(preset),
-                    child: Text(_schemeLabel(l10n, preset)),
+                  if (preset != AllocationSchemePreset.custom)
+                    FButton(
+                      variant: (current == preset)
+                          ? FButtonVariant.primary
+                          : FButtonVariant.outline,
+                      onPress: () => _selectPreset(ref, preset),
+                      child: Text(_schemeLabel(l10n, preset)),
+                    ),
+                FButton(
+                  variant: (current == AllocationSchemePreset.custom)
+                      ? FButtonVariant.primary
+                      : FButtonVariant.outline,
+                  onPress: () =>
+                      showTargetAllocationEditorSheet(context: context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Text(l10n.targetAllocationEditorEditAction),
+                    ],
                   ),
+                ),
               ],
             ),
           ],
@@ -165,6 +181,16 @@ class _SchemeSelector extends ConsumerWidget {
       case AllocationSchemePreset.custom:
         return l10n.rebalanceSchemeCustom;
     }
+  }
+
+  Future<void> _selectPreset(
+    WidgetRef ref,
+    AllocationSchemePreset preset,
+  ) async {
+    await ref.read(selectedSchemeProvider.notifier).select(preset);
+    await ref
+        .read(targetAllocationProvider.notifier)
+        .update(allocationScheme(preset));
   }
 }
 

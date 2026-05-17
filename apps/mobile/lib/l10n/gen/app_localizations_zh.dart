@@ -2276,6 +2276,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalanceNavLink => '再平衡';
 
   @override
+  String get targetAllocationEditorTitle => '自定义目标';
+
+  @override
+  String get targetAllocationEditorSubtitle => '调整各类别权重，合计必须等于 100%。';
+
+  @override
+  String get targetAllocationEditorEditAction => '自定义目标';
+
+  @override
+  String get targetAllocationEditorTotalLabel => '合计配置';
+
+  @override
+  String targetAllocationEditorTotalHint(String value) {
+    return '合计必须为 100%。当前合计：$value%。';
+  }
+
+  @override
+  String get targetAllocationEditorPercentLabel => '权重';
+
+  @override
+  String get targetAllocationEditorRequiredError => '必填';
+
+  @override
+  String get targetAllocationEditorRangeError => '请输入 0–100';
+
+  @override
+  String get targetAllocationEditorPreviewTitle => '目标结构';
+
+  @override
   String get riskAlertTitle => '集中度预警';
 
   @override

@@ -2367,6 +2367,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rebalanceNavLink => 'Rebalance';
 
   @override
+  String get targetAllocationEditorTitle => 'Custom target';
+
+  @override
+  String get targetAllocationEditorSubtitle =>
+      'Tune category weights; the total must equal 100%.';
+
+  @override
+  String get targetAllocationEditorEditAction => 'Custom target';
+
+  @override
+  String get targetAllocationEditorTotalLabel => 'Total allocation';
+
+  @override
+  String targetAllocationEditorTotalHint(String value) {
+    return 'Total must be 100%. Current total: $value%.';
+  }
+
+  @override
+  String get targetAllocationEditorPercentLabel => 'Weight';
+
+  @override
+  String get targetAllocationEditorRequiredError => 'Required';
+
+  @override
+  String get targetAllocationEditorRangeError => 'Use 0-100';
+
+  @override
+  String get targetAllocationEditorPreviewTitle => 'Target mix';
+
+  @override
   String get riskAlertTitle => 'Concentration Alerts';
 
   @override

@@ -4164,6 +4164,60 @@ abstract class AppLocalizations {
   /// **'Rebalance'**
   String get rebalanceNavLink;
 
+  /// No description provided for @targetAllocationEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom target'**
+  String get targetAllocationEditorTitle;
+
+  /// No description provided for @targetAllocationEditorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tune category weights; the total must equal 100%.'**
+  String get targetAllocationEditorSubtitle;
+
+  /// No description provided for @targetAllocationEditorEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom target'**
+  String get targetAllocationEditorEditAction;
+
+  /// No description provided for @targetAllocationEditorTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total allocation'**
+  String get targetAllocationEditorTotalLabel;
+
+  /// No description provided for @targetAllocationEditorTotalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Total must be 100%. Current total: {value}%.'**
+  String targetAllocationEditorTotalHint(String value);
+
+  /// No description provided for @targetAllocationEditorPercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get targetAllocationEditorPercentLabel;
+
+  /// No description provided for @targetAllocationEditorRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get targetAllocationEditorRequiredError;
+
+  /// No description provided for @targetAllocationEditorRangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 0-100'**
+  String get targetAllocationEditorRangeError;
+
+  /// No description provided for @targetAllocationEditorPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Target mix'**
+  String get targetAllocationEditorPreviewTitle;
+
   /// Header for the risk concentration alert panel on the analytics page.
   ///
   /// In en, this message translates to:
