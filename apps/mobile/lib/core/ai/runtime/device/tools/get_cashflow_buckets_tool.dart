@@ -26,11 +26,10 @@
 /// and is not advertised after W-D7.
 library;
 
-import 'package:decimal/decimal.dart';
-
 import '../../../../../data/domain/asset.dart';
 import '../../../../../data/repositories/journal_entry_providers.dart';
 import '../../../../../data/repositories/journal_entry_repository.dart';
+import '../../../../../features/cashflow/domain/cash_flow_aggregator.dart';
 import '../../../../../features/investment/data/providers.dart';
 import 'device_tool.dart';
 
@@ -95,10 +94,6 @@ class GetCashflowBucketsTool implements DeviceTool {
     );
   }
 
-  static String _ym(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
-      '${d.month.toString().padLeft(2, '0')}';
-
   /// Pure port of `cashflow_buckets::aggregate` + the
   /// `impls::get_cashflow_buckets` window/shape. `currency` is the
   /// already-trimmed-uppercased filter (or null = all). `now` defaults
@@ -110,110 +105,11 @@ class GetCashflowBucketsTool implements DeviceTool {
     required int monthsBack,
     String? currency,
     DateTime? now,
-  }) {
-    final assetIds = {for (final a in assets) a.id};
-
-    // (year_month, currency) → [inflow, outflow, inCount, outCount].
-    // Device JEs are pre-joined to their postings, so the backend's
-    // entry_id→ym map collapses into a single pass; asset legs
-    // (unit ∈ asset_ids) and zero-units legs are skipped exactly like
-    // `aggregate` (the zero check is on units, not the rounded minor).
-    final acc = <String, Map<String, List<BigInt>>>{}; // ym → cur → buckets
-    for (final ewp in entries) {
-      final ym = _ym(ewp.entry.date.toUtc());
-      for (final p in ewp.postings) {
-        if (assetIds.contains(p.unit)) continue; // skip asset leg
-        if (p.units == Decimal.zero) continue; // skip zero-units leg
-        final minor = (p.units * Decimal.fromInt(100)).round().toBigInt();
-        final byCur = acc.putIfAbsent(ym, () => <String, List<BigInt>>{});
-        final b = byCur.putIfAbsent(
-          p.unit,
-          () => [BigInt.zero, BigInt.zero, BigInt.zero, BigInt.zero],
-        );
-        if (minor > BigInt.zero) {
-          b[0] += minor;
-          b[2] += BigInt.one;
-        } else {
-          b[1] += -minor;
-          b[3] += BigInt.one;
-        }
-      }
-    }
-
-    // Rows sorted by (year_month, currency) — matches `aggregate` +
-    // the read query's `ORDER BY year_month, currency`.
-    final rows =
-        <
-          ({
-            String ym,
-            String currency,
-            BigInt inflow,
-            BigInt outflow,
-            BigInt inCount,
-            BigInt outCount,
-          })
-        >[];
-    for (final ymEntry in acc.entries) {
-      for (final curEntry in ymEntry.value.entries) {
-        final b = curEntry.value;
-        rows.add((
-          ym: ymEntry.key,
-          currency: curEntry.key,
-          inflow: b[0],
-          outflow: b[1],
-          inCount: b[2],
-          outCount: b[3],
-        ));
-      }
-    }
-    rows.sort((a, b) {
-      final c = a.ym.compareTo(b.ym);
-      return c != 0 ? c : a.currency.compareTo(b.currency);
-    });
-
-    // Window: inclusive [from_ym, to_ym] ending at the current month,
-    // verbatim from `impls::get_cashflow_buckets`.
-    final nowUtc = (now ?? DateTime.now()).toUtc();
-    final toYm = _ym(nowUtc);
-    var fromY = nowUtc.year;
-    var fromM = nowUtc.month - (monthsBack - 1);
-    while (fromM < 1) {
-      fromM += 12;
-      fromY -= 1;
-    }
-    final fromYm =
-        '${fromY.toString().padLeft(4, '0')}-'
-        '${fromM.toString().padLeft(2, '0')}';
-
-    // query_range: year_month in [from_ym, to_ym] (lexicographic ==
-    // chronological for zero-padded YYYY-MM) + optional exact currency.
-    final series = <Map<String, Object?>>[];
-    for (final r in rows) {
-      if (r.ym.compareTo(fromYm) < 0 || r.ym.compareTo(toYm) > 0) continue;
-      if (currency != null && r.currency != currency) continue;
-      final net = r.inflow - r.outflow;
-      series.add(<String, Object?>{
-        'year_month': r.ym,
-        'currency': r.currency,
-        'inflow_minor': r.inflow.toString(),
-        'outflow_minor': r.outflow.toString(),
-        'net_minor': net.toString(),
-        'inflow_count': r.inCount.toInt(),
-        'outflow_count': r.outCount.toInt(),
-      });
-    }
-
-    return <String, Object?>{
-      'from': fromYm,
-      'to': toYm,
-      'currency': currency,
-      'series': series,
-      // §4.6.1: ledger-direct, no D1 read model → no `freshness`;
-      // `source` reflects device provenance, not a read model.
-      'source': 'device_ledger',
-      'note':
-          '月粒度 inflow / outflow 分桶；net_minor = inflow - outflow'
-          '（与 net_worth_snapshot.net_flow 同源但形态不同，本工具拆分桶不累计）。',
-    };
-  }
+  }) => aggregateLegacyCashflowBuckets(
+    entries: entries,
+    assets: assets,
+    monthsBack: monthsBack,
+    currency: currency,
+    now: now,
+  );
 }
