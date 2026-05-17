@@ -264,151 +264,213 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
             : Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
                   children: [
-                    if (widget.isEdit && widget.expenseId != null) ...[
-                      Row(
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.s16,
+                          AppSpacing.s16,
+                          AppSpacing.s16,
+                          AppSpacing.s16,
+                        ),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
                         children: [
-                          AiObjectCapsule(
-                            source: 'expense_detail',
-                            intent: 'explain_change',
-                            object: AiObjectRef(
-                              type: 'expense',
-                              id: widget.expenseId!,
+                          if (widget.isEdit && widget.expenseId != null) ...[
+                            Row(
+                              children: [
+                                AiObjectCapsule(
+                                  source: 'expense_detail',
+                                  intent: 'explain_change',
+                                  object: AiObjectRef(
+                                    type: 'expense',
+                                    id: widget.expenseId!,
+                                  ),
+                                  objectLabel: _objectLabelForCapsule(l10n),
+                                  context: <String, Object?>{
+                                    'timeframe':
+                                        l10n.expenseFormAiTimeframeRecent90Days,
+                                  },
+                                ),
+                                const SizedBox(width: AppSpacing.s8),
+                                // Wave 39 / 40 — AiTouchMark when this
+                                // expense was last touched by an AI proposal
+                                // apply. The widget is self-gating: nothing
+                                // renders when there's no recent touch.
+                                AiTouchMark(
+                                  entityType: 'journal_entries',
+                                  entityId: widget.expenseId!,
+                                ),
+                              ],
                             ),
-                            objectLabel: _objectLabelForCapsule(l10n),
-                            context: <String, Object?>{
-                              'timeframe':
-                                  l10n.expenseFormAiTimeframeRecent90Days,
+                            const SizedBox(height: AppSpacing.s8),
+                          ],
+                          AmountField(
+                            label: l10n.expenseFormAmountLabel,
+                            controller: _amountController,
+                            currencyCode: _currency,
+                            focusNode: _amountFocus,
+                            onFieldSubmitted: (_) => _noteFocus.requestFocus(),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          CurrencyPicker(
+                            value: _currency,
+                            onChanged: (v) => setState(() {
+                              _currency = v;
+                              dirty.markDirty();
+                            }),
+                          ),
+                          const SizedBox(height: AppSpacing.s8),
+                          allAccountsAsync.when(
+                            data: (allAccounts) {
+                              final expenseAccounts = allAccounts
+                                  .where(
+                                    (a) => a.category == AccountSide.expense,
+                                  )
+                                  .toList(growable: false);
+                              if (expenseAccounts.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: AppSpacing.s12,
+                                  ),
+                                  child: Text(
+                                    l10n.expenseFormCategoriesLoading,
+                                  ),
+                                );
+                              }
+                              // Resolve default: explicit pick > first account
+                              if (_expenseAccountId == null ||
+                                  !expenseAccounts.any(
+                                    (a) => a.id == _expenseAccountId,
+                                  )) {
+                                _expenseAccountId = expenseAccounts.first.id;
+                              }
+                              return CategoryGridPicker(
+                                accounts: expenseAccounts,
+                                selectedId: _expenseAccountId,
+                                onSelect: (id) => setState(() {
+                                  _expenseAccountId = id;
+                                  dirty.markDirty();
+                                }),
+                              );
+                            },
+                            loading: () => const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.s12,
+                              ),
+                              child: FProgress(),
+                            ),
+                            error: (e, _) =>
+                                Text(l10n.expenseFormCategoriesLoadError('$e')),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          accountsAsync.when(
+                            data: (accounts) {
+                              final fromAccounts = accounts
+                                  .where(
+                                    (a) =>
+                                        a.category == AccountSide.asset &&
+                                        a.type != AccountCategory.asset,
+                                  )
+                                  .toList(growable: false);
+                              if (fromAccounts.isEmpty) {
+                                return _NoAccountsHint();
+                              }
+                              final hasCurrent =
+                                  _fromAccountId != null &&
+                                  fromAccounts.any(
+                                    (a) => a.id == _fromAccountId,
+                                  );
+                              if (!hasCurrent) {
+                                _fromAccountId = fromAccounts.first.id;
+                              }
+                              return AccountPicker(
+                                accounts: fromAccounts,
+                                value: _fromAccountId,
+                                onChanged: (v) => setState(() {
+                                  _fromAccountId = v;
+                                  dirty.markDirty();
+                                }),
+                                label: l10n.expenseFormAccountLabel,
+                              );
+                            },
+                            loading: () => const FProgress(),
+                            error: (e, _) =>
+                                Text(l10n.expenseFormAccountsLoadError('$e')),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          DateField(
+                            label: l10n.expenseFormDateLabel,
+                            initialValue: _date,
+                            required: true,
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() {
+                                  _date = v;
+                                  dirty.markDirty();
+                                });
+                              }
                             },
                           ),
-                          const SizedBox(width: 8),
-                          // Wave 39 / 40 — AiTouchMark when this
-                          // expense was last touched by an AI proposal
-                          // apply. The widget is self-gating: nothing
-                          // renders when there's no recent touch.
-                          AiTouchMark(
-                            entityType: 'journal_entries',
-                            entityId: widget.expenseId!,
+                          const SizedBox(height: AppSpacing.s12),
+                          NoteField(
+                            controller: _noteController,
+                            focusNode: _noteFocus,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                    AmountField(
-                      label: l10n.expenseFormAmountLabel,
-                      controller: _amountController,
-                      currencyCode: _currency,
-                      focusNode: _amountFocus,
-                      onFieldSubmitted: (_) => _noteFocus.requestFocus(),
                     ),
-                    const SizedBox(height: 12),
-                    CurrencyPicker(
-                      value: _currency,
-                      onChanged: (v) => setState(() {
-                        _currency = v;
-                        dirty.markDirty();
-                      }),
-                    ),
-                    const SizedBox(height: 8),
-                    allAccountsAsync.when(
-                      data: (allAccounts) {
-                        final expenseAccounts = allAccounts
-                            .where((a) => a.category == AccountSide.expense)
-                            .toList(growable: false);
-                        if (expenseAccounts.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Text(l10n.expenseFormCategoriesLoading),
-                          );
-                        }
-                        // Resolve default: explicit pick > first account
-                        if (_expenseAccountId == null ||
-                            !expenseAccounts.any(
-                              (a) => a.id == _expenseAccountId,
-                            )) {
-                          _expenseAccountId = expenseAccounts.first.id;
-                        }
-                        return CategoryGridPicker(
-                          accounts: expenseAccounts,
-                          selectedId: _expenseAccountId,
-                          onSelect: (id) => setState(() {
-                            _expenseAccountId = id;
-                            dirty.markDirty();
-                          }),
-                        );
-                      },
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: FProgress(),
-                      ),
-                      error: (e, _) =>
-                          Text(l10n.expenseFormCategoriesLoadError('$e')),
-                    ),
-                    const SizedBox(height: 12),
-                    accountsAsync.when(
-                      data: (accounts) {
-                        final fromAccounts = accounts
-                            .where(
-                              (a) =>
-                                  a.category == AccountSide.asset &&
-                                  a.type != AccountCategory.asset,
-                            )
-                            .toList(growable: false);
-                        if (fromAccounts.isEmpty) {
-                          return _NoAccountsHint();
-                        }
-                        final hasCurrent =
-                            _fromAccountId != null &&
-                            fromAccounts.any((a) => a.id == _fromAccountId);
-                        if (!hasCurrent) {
-                          _fromAccountId = fromAccounts.first.id;
-                        }
-                        return AccountPicker(
-                          accounts: fromAccounts,
-                          value: _fromAccountId,
-                          onChanged: (v) => setState(() {
-                            _fromAccountId = v;
-                            dirty.markDirty();
-                          }),
-                          label: l10n.expenseFormAccountLabel,
-                        );
-                      },
-                      loading: () => const FProgress(),
-                      error: (e, _) =>
-                          Text(l10n.expenseFormAccountsLoadError('$e')),
-                    ),
-                    const SizedBox(height: 12),
-                    DateField(
-                      label: l10n.expenseFormDateLabel,
-                      initialValue: _date,
-                      required: true,
-                      onChanged: (v) {
-                        if (v != null) {
-                          setState(() {
-                            _date = v;
-                            dirty.markDirty();
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    NoteField(
-                      controller: _noteController,
-                      focusNode: _noteFocus,
-                    ),
-                    const SizedBox(height: 24),
-                    FButton(
-                      variant: FButtonVariant.primary,
-                      onPress: _busy ? null : _save,
-                      child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
+                    _ExpenseFormActionBar(
+                      busy: _busy,
+                      onSave: _save,
+                      saveLabel: _busy ? l10n.commonSaving : l10n.commonSave,
                     ),
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _ExpenseFormActionBar extends StatelessWidget {
+  const _ExpenseFormActionBar({
+    required this.busy,
+    required this.onSave,
+    required this.saveLabel,
+  });
+
+  final bool busy;
+  final VoidCallback onSave;
+  final String saveLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final hairline = colors.foreground.withValues(
+      alpha: colors.brightness == Brightness.dark ? 0.12 : 0.10,
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: hairline)),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s12,
+          AppSpacing.s16,
+          AppSpacing.s12,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: FButtonVariant.primary,
+            onPress: busy ? null : onSave,
+            child: Text(saveLabel),
+          ),
+        ),
       ),
     );
   }

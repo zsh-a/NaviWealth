@@ -40,9 +40,17 @@ Future<Widget> _wrap({
   required List<Account> accounts,
   required List<Account> allAccounts,
   required Map<String, Object> preferences,
+  double keyboardInset = 0,
 }) async {
   SharedPreferences.setMockInitialValues(preferences);
   final prefs = await SharedPreferences.getInstance();
+  Widget page = const ExpenseFormPage();
+  if (keyboardInset > 0) {
+    page = MediaQuery(
+      data: MediaQueryData(viewInsets: EdgeInsets.only(bottom: keyboardInset)),
+      child: page,
+    );
+  }
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
@@ -53,10 +61,7 @@ Future<Widget> _wrap({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
-      home: FTheme(
-        data: FThemes.slate.light.desktop,
-        child: const ExpenseFormPage(),
-      ),
+      home: FTheme(data: FThemes.slate.light.desktop, child: page),
     ),
   );
 }
@@ -89,5 +94,35 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(ExpenseFormPage), findsOneWidget);
     expect(find.text('CHF · CHF'), findsOneWidget);
+  });
+
+  testWidgets('expense creation keeps save action visible above keyboard', (
+    tester,
+  ) async {
+    const size = Size(390, 844);
+    const keyboardInset = 320.0;
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      await _wrap(
+        keyboardInset: keyboardInset,
+        preferences: const {},
+        accounts: [
+          _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+        ],
+        allAccounts: [
+          _account(id: 'food', name: 'Food', category: AccountSide.expense),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final save = find.text('Save');
+    expect(save, findsOneWidget);
+    expect(
+      tester.getBottomLeft(save).dy,
+      lessThan(size.height - keyboardInset),
+    );
   });
 }
