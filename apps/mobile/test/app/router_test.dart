@@ -149,9 +149,9 @@ Future<ProviderContainer> _pumpAt(
       cashFlowSummaryProvider.overrideWith(
         (ref, request) async => CashFlowSummary(
           period: request.period,
-          baseCurrency: 'USD',
+          baseCurrency: 'CNY',
           buckets: const [],
-          totalInBase: Money(Decimal.zero, 'USD'),
+          totalInBase: Money.zero('CNY'),
         ),
       ),
       dividendCenterSnapshotProvider.overrideWith(

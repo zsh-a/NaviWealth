@@ -89,9 +89,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
     final tappable = item.onTap != null || route != null;
     final iconTint = item.iconColor ?? colors.primary;
     return SoftCard(
-      onPress: !tappable
-          ? null
-          : (item.onTap ?? () => context.push(route!)),
+      onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,9 +211,7 @@ class _ExpandedDetail extends StatelessWidget {
       ),
       child: Text(
         _expandedDetailFor(item),
-        style: context.theme.typography.xs.copyWith(
-          color: colors.foreground,
-        ),
+        style: context.theme.typography.xs.copyWith(color: colors.foreground),
       ),
     );
   }
@@ -245,6 +241,9 @@ class _ExpandedDetail extends StatelessWidget {
       case InsightKind.ingestQueue:
         return 'Parsed transactions awaiting confirmation. Tap to '
             'review, confirm, or skip duplicates before they post.';
+      case InsightKind.cashFlowDeficit:
+        return 'Current-month inflow minus outflow is below zero, computed '
+            'from the shared cashflow summary used by the Home cards.';
     }
   }
 }

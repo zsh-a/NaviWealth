@@ -656,6 +656,72 @@ abstract class AppLocalizations {
   /// **'Base currency {currency} · shown once data is connected'**
   String homeNetWorthSubtitle(String currency);
 
+  /// Home cashflow card title: trailing twelve month passive income
+  ///
+  /// In en, this message translates to:
+  /// **'Passive income'**
+  String get homePassiveIncomeTitle;
+
+  /// Home passive income card subtitle when data exists
+  ///
+  /// In en, this message translates to:
+  /// **'TTM dividends, interest, and other passive income'**
+  String get homePassiveIncomeSubtitle;
+
+  /// Home passive income card empty-state guidance
+  ///
+  /// In en, this message translates to:
+  /// **'Record dividends or interest to start TTM tracking'**
+  String get homePassiveIncomeEmpty;
+
+  /// Home passive income card badge when no prior TTM window exists
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get homePassiveIncomeDeltaNew;
+
+  /// Home monthly cashflow card title
+  ///
+  /// In en, this message translates to:
+  /// **'This month cashflow'**
+  String get homeMonthlyCashFlowTitle;
+
+  /// Home monthly cashflow card inflow and outflow line
+  ///
+  /// In en, this message translates to:
+  /// **'In {inflow} · Out {outflow}'**
+  String homeMonthlyCashFlowSubtitle(String inflow, String outflow);
+
+  /// Home monthly cashflow card empty-state guidance
+  ///
+  /// In en, this message translates to:
+  /// **'Add income or spending entries to see this month'**
+  String get homeMonthlyCashFlowEmpty;
+
+  /// Home monthly cashflow card trailing baseline label
+  ///
+  /// In en, this message translates to:
+  /// **'vs 3-month average {average}'**
+  String homeMonthlyCashFlowBaseline(String average);
+
+  /// Home monthly cashflow card baseline empty text
+  ///
+  /// In en, this message translates to:
+  /// **'3-month average appears after entries post'**
+  String get homeMonthlyCashFlowBaselineEmpty;
+
+  /// Home cashflow cards empty amount text
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get homeCashFlowEmptyValue;
+
+  /// Home cashflow card error message
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow summary is unavailable'**
+  String get homeCashFlowCardError;
+
   /// No description provided for @assetsAppBarTitle.
   ///
   /// In en, this message translates to:
@@ -7161,6 +7227,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} parsed · {fresh} ready to add'**
   String dashboardInsightIngestQueueValue(int count, int fresh);
+
+  /// Dashboard insight label shown when this month cashflow is negative
+  ///
+  /// In en, this message translates to:
+  /// **'Cashflow gap'**
+  String get dashboardInsightCashFlowDeficitLabel;
+
+  /// Dashboard insight detail for current-month negative cashflow
+  ///
+  /// In en, this message translates to:
+  /// **'This month is short {amount}'**
+  String dashboardInsightCashFlowDeficitValue(String amount);
 
   /// Layer 4 ingest review page title
   ///

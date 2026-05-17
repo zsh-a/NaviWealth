@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -8,10 +7,11 @@ import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
+import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
-import 'package:naviwealth/features/cashflow/data/dividend_center_providers.dart';
-import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
+import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/home_page.dart';
@@ -74,22 +74,16 @@ void main() {
         holdingsSnapshotProvider.overrideWith(
           (_) async => const <String, HoldingSnapshot>{},
         ),
-        dividendCenterSnapshotProvider.overrideWith(
-          (_) async => _emptyDividendSnapshot(),
+        cashFlowSummaryProvider.overrideWith(
+          (ref, request) async => CashFlowSummary(
+            period: request.period,
+            baseCurrency: 'CNY',
+            buckets: const [],
+            totalInBase: Money.zero('CNY'),
+          ),
         ),
       ],
       child: const HomePage(),
     );
   });
 }
-
-DividendCenterSnapshot _emptyDividendSnapshot() => DividendCenterSnapshot(
-  baseCurrency: 'CNY',
-  yearToDateGross: Decimal.zero,
-  ttmGross: Decimal.zero,
-  priorYearToDateGross: Decimal.zero,
-  ttmWithholding: Decimal.zero,
-  events: const [],
-  ranking: const [],
-  months: const [],
-);

@@ -324,6 +324,47 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get homePassiveIncomeTitle => 'Passive income';
+
+  @override
+  String get homePassiveIncomeSubtitle =>
+      'TTM dividends, interest, and other passive income';
+
+  @override
+  String get homePassiveIncomeEmpty =>
+      'Record dividends or interest to start TTM tracking';
+
+  @override
+  String get homePassiveIncomeDeltaNew => 'New';
+
+  @override
+  String get homeMonthlyCashFlowTitle => 'This month cashflow';
+
+  @override
+  String homeMonthlyCashFlowSubtitle(String inflow, String outflow) {
+    return 'In $inflow · Out $outflow';
+  }
+
+  @override
+  String get homeMonthlyCashFlowEmpty =>
+      'Add income or spending entries to see this month';
+
+  @override
+  String homeMonthlyCashFlowBaseline(String average) {
+    return 'vs 3-month average $average';
+  }
+
+  @override
+  String get homeMonthlyCashFlowBaselineEmpty =>
+      '3-month average appears after entries post';
+
+  @override
+  String get homeCashFlowEmptyValue => 'No data yet';
+
+  @override
+  String get homeCashFlowCardError => 'Cashflow summary is unavailable';
+
+  @override
   String get assetsAppBarTitle => 'Assets';
 
   @override
@@ -4047,6 +4088,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String dashboardInsightIngestQueueValue(int count, int fresh) {
     return '$count parsed · $fresh ready to add';
+  }
+
+  @override
+  String get dashboardInsightCashFlowDeficitLabel => 'Cashflow gap';
+
+  @override
+  String dashboardInsightCashFlowDeficitValue(String amount) {
+    return 'This month is short $amount';
   }
 
   @override

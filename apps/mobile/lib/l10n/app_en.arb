@@ -205,6 +205,37 @@
       "currency": { "type": "String", "example": "CNY" }
     }
   },
+  "homePassiveIncomeTitle": "Passive income",
+  "@homePassiveIncomeTitle": { "description": "Home cashflow card title: trailing twelve month passive income" },
+  "homePassiveIncomeSubtitle": "TTM dividends, interest, and other passive income",
+  "@homePassiveIncomeSubtitle": { "description": "Home passive income card subtitle when data exists" },
+  "homePassiveIncomeEmpty": "Record dividends or interest to start TTM tracking",
+  "@homePassiveIncomeEmpty": { "description": "Home passive income card empty-state guidance" },
+  "homePassiveIncomeDeltaNew": "New",
+  "@homePassiveIncomeDeltaNew": { "description": "Home passive income card badge when no prior TTM window exists" },
+  "homeMonthlyCashFlowTitle": "This month cashflow",
+  "@homeMonthlyCashFlowTitle": { "description": "Home monthly cashflow card title" },
+  "homeMonthlyCashFlowSubtitle": "In {inflow} · Out {outflow}",
+  "@homeMonthlyCashFlowSubtitle": {
+    "description": "Home monthly cashflow card inflow and outflow line",
+    "placeholders": {
+      "inflow": { "type": "String", "example": "$5.2K" },
+      "outflow": { "type": "String", "example": "$3.1K" }
+    }
+  },
+  "homeMonthlyCashFlowEmpty": "Add income or spending entries to see this month",
+  "@homeMonthlyCashFlowEmpty": { "description": "Home monthly cashflow card empty-state guidance" },
+  "homeMonthlyCashFlowBaseline": "vs 3-month average {average}",
+  "@homeMonthlyCashFlowBaseline": {
+    "description": "Home monthly cashflow card trailing baseline label",
+    "placeholders": { "average": { "type": "String", "example": "$1.2K" } }
+  },
+  "homeMonthlyCashFlowBaselineEmpty": "3-month average appears after entries post",
+  "@homeMonthlyCashFlowBaselineEmpty": { "description": "Home monthly cashflow card baseline empty text" },
+  "homeCashFlowEmptyValue": "No data yet",
+  "@homeCashFlowEmptyValue": { "description": "Home cashflow cards empty amount text" },
+  "homeCashFlowCardError": "Cashflow summary is unavailable",
+  "@homeCashFlowCardError": { "description": "Home cashflow card error message" },
   "assetsAppBarTitle": "Assets",
   "assetsDetailEmpty": "Select an asset on the left to see its details.",
   "@assetsDetailEmpty": { "description": "Master-detail empty state for portfolio at desktop width" },
@@ -2335,6 +2366,13 @@
   "@dashboardInsightIngestQueueValue": {
     "description": "Dashboard ingest-queue insight value",
     "placeholders": { "count": { "type": "int" }, "fresh": { "type": "int" } }
+  },
+  "dashboardInsightCashFlowDeficitLabel": "Cashflow gap",
+  "@dashboardInsightCashFlowDeficitLabel": { "description": "Dashboard insight label shown when this month cashflow is negative" },
+  "dashboardInsightCashFlowDeficitValue": "This month is short {amount}",
+  "@dashboardInsightCashFlowDeficitValue": {
+    "description": "Dashboard insight detail for current-month negative cashflow",
+    "placeholders": { "amount": { "type": "String", "example": "$420.00" } }
   },
   "ingestReviewTitle": "Review entries",
   "@ingestReviewTitle": { "description": "Layer 4 ingest review page title" },
