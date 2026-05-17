@@ -19,9 +19,7 @@ Future<void> showActivityActionPanel(BuildContext context) {
   return showAppSheet<void>(
     context: context,
     title: l10n.activityActionsTitle,
-    builder: (sheetContext) => Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    builder: (sheetContext) => AppActionSheetList(
       children: [
         AppActionSheetTile(
           icon: Icons.add_card_outlined,
