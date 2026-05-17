@@ -24,6 +24,7 @@ abstract final class AppRoutes {
   static const activityExpenses = '/activity/expenses';
   static const expenseNew = '/activity/expenses/new';
   static const expenseReport = '/activity/expenses/report';
+  static const cashflow = '/activity/cashflow';
   static const tradeEntry = '/activity/trade';
   static const transfer = '/activity/transfer';
   static const journalEntries = '/activity/journal';
@@ -140,3 +141,5 @@ const List<String> kPrimaryTabPaths = <String>[
   AppRoutes.accounts,
   AppRoutes.settings,
 ];
+
+const String kCashflowPath = AppRoutes.cashflow;
