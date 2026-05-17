@@ -2829,5 +2829,17 @@
   "aiChatDeviceUnavailable": "AI requires your own API key in Settings before it can run. The model connection is made directly from this device, and requests/data do not pass through our servers. On-device AI is not supported on web yet.",
   "@aiChatDeviceUnavailable": { "description": "Chat error shown when no usable on-device AI runtime is available" },
   "expenseFormAiTimeframeRecent90Days": "Last 90 days",
-  "@expenseFormAiTimeframeRecent90Days": { "description": "AI context timeframe passed from the expense form" }
+  "@expenseFormAiTimeframeRecent90Days": { "description": "AI context timeframe passed from the expense form" },
+  "unsavedChangesTitle": "Discard changes?",
+  "@unsavedChangesTitle": { "description": "Title of the confirm dialog shown when leaving a form with unsaved input" },
+  "unsavedChangesBody": "Your edits will be lost if you leave now.",
+  "@unsavedChangesBody": { "description": "Body of the unsaved-changes confirm dialog" },
+  "unsavedChangesDiscard": "Discard",
+  "@unsavedChangesDiscard": { "description": "Destructive confirm action — leave and lose the edits" },
+  "unsavedChangesKeepEditing": "Keep editing",
+  "@unsavedChangesKeepEditing": { "description": "Cancel action of the unsaved-changes dialog — stay on the form" },
+  "pressBackAgainToExit": "Press back again to exit",
+  "@pressBackAgainToExit": { "description": "Transient hint shown on the first back press at the Home tab root" },
+  "masterDetailBackToList": "Back to list",
+  "@masterDetailBackToList": { "description": "Desktop master/detail affordance that clears the selected detail" }
 }

@@ -97,8 +97,10 @@ Future<LocalSecurityChoice?> _openSheet(
                     captured = await showModalBottomSheet<LocalSecurityChoice>(
                       context: ctx,
                       isScrollControlled: true,
-                      builder: (_) =>
-                          ManualSecuritySheet(prefillSymbol: prefillSymbol),
+                      builder: (_) => ManualSecuritySheet(
+                        prefillSymbol: prefillSymbol,
+                        dirty: FormDirtyController(),
+                      ),
                     );
                   },
                   child: const Text('open'),
@@ -246,8 +248,9 @@ void main() {
                             await showModalBottomSheet<LocalSecurityChoice>(
                               context: ctx,
                               isScrollControlled: true,
-                              builder: (_) => const ManualSecuritySheet(
+                              builder: (_) => ManualSecuritySheet(
                                 prefillSymbol: 'AAPL',
+                                dirty: FormDirtyController(),
                               ),
                             );
                       },

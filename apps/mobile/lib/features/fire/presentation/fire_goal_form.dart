@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/forms.dart';
 import '../data/fire_goal_preferences.dart';
 import '../domain/fire_goal.dart';
 
@@ -16,14 +17,16 @@ import '../domain/fire_goal.dart';
 /// [fireGoalProvider], lets the user edit it, and persists via
 /// [FireGoalController.save] on submit. Cancellation discards changes.
 Future<void> showFireGoalSheet(BuildContext context) {
-  return showAppFormSheet<void>(
+  return showGuardedFormSheet<void>(
     context: context,
-    builder: (_) => const _FireGoalSheet(),
+    builder: (_, dirty) => _FireGoalSheet(dirty: dirty),
   );
 }
 
 class _FireGoalSheet extends ConsumerStatefulWidget {
-  const _FireGoalSheet();
+  const _FireGoalSheet({required this.dirty});
+
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_FireGoalSheet> createState() => _FireGoalSheetState();
@@ -51,6 +54,13 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
       text: _decimalToText(goal.monthlySurplus),
     );
     _inflation = goal.inflationRate;
+    // Controllers were just seeded from the saved goal — that baseline
+    // is not a user edit.
+    widget.dirty.bindTextControllers([
+      _targetCtrl,
+      _expensesCtrl,
+      _surplusCtrl,
+    ]);
   }
 
   @override
@@ -107,7 +117,10 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
             FSlider(
               control: FSliderControl.managedContinuous(
                 initial: FSliderValue(max: _inflation / 0.10),
-                onChange: (v) => setState(() => _inflation = v.max * 0.10),
+                onChange: (v) => setState(() {
+                  _inflation = v.max * 0.10;
+                  widget.dirty.markDirty();
+                }),
               ),
             ),
           ],
@@ -119,6 +132,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    widget.dirty.busy = true;
     try {
       final goal = FireGoal(
         targetAmount: _parseDecimal(_targetCtrl.text),
@@ -128,9 +142,11 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
       );
       await ref.read(fireGoalProvider.notifier).save(goal);
       if (!mounted) return;
+      widget.dirty.markPristine();
       Haptics.success();
       Navigator.of(context).pop();
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +13,7 @@ import '../features/ai_chat/state/route_context_provider.dart';
 import '../features/ingest/data/share_intent_service.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
+import 'route_paths.dart';
 
 /// Root shell that hosts the 4-tab IndexedStack:
 ///   Home / Activity / Accounts / Settings.
@@ -41,6 +45,12 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
   late final Animation<double> _fade;
   late final ShareIntentService _shareIntentService;
 
+  /// `true` once the user has pressed system back at the Home root; a
+  /// second press within [_exitWindow] actually exits the app.
+  bool _exitArmed = false;
+  Timer? _exitResetTimer;
+  static const Duration _exitWindow = Duration(seconds: 2);
+
   @override
   void initState() {
     super.initState();
@@ -59,9 +69,46 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
 
   @override
   void dispose() {
+    _exitResetTimer?.cancel();
     _shareIntentService.stop();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Root back-button strategy. With go_router's `StatefulShellRoute`
+  /// there is no app-level handler by default, so back at a tab root
+  /// would drop straight out of a financial app. Precedence:
+  ///  1. an inner pushed page exists → normal `GoRouter.pop` (only this
+  ///     branch reports a real predictive-back animation);
+  ///  2. a non-Home tab root → jump to Home (Android's "up toward root");
+  ///  3. Home root → double-back-to-exit with a transient hint.
+  void _onSystemBack(bool didPop) {
+    if (didPop) return;
+    final goRouter = GoRouter.of(context);
+    if (goRouter.canPop()) {
+      goRouter.pop();
+      return;
+    }
+    final loc = goRouter.routeInformationProvider.value.uri.path;
+    if (loc != AppRoutes.home && kPrimaryTabPaths.contains(loc)) {
+      widget.shell.goBranch(0);
+      return;
+    }
+    if (_exitArmed) {
+      _exitResetTimer?.cancel();
+      SystemNavigator.pop();
+      return;
+    }
+    _exitArmed = true;
+    AppMessenger.show(
+      context,
+      ToastKind.info,
+      AppLocalizations.of(context).pressBackAgainToExit,
+    );
+    _exitResetTimer?.cancel();
+    _exitResetTimer = Timer(_exitWindow, () {
+      if (mounted) _exitArmed = false;
+    });
   }
 
   @override
@@ -95,34 +142,38 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
       shell.goBranch(i, initialLocation: i == shell.currentIndex);
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final animatedChild = FadeTransition(opacity: _fade, child: shell);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) => _onSystemBack(didPop),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final animatedChild = FadeTransition(opacity: _fade, child: shell);
 
-        if (width >= AppRootShell._desktopBreakpoint) {
-          return _DesktopShell(
+          if (width >= AppRootShell._desktopBreakpoint) {
+            return _DesktopShell(
+              destinations: destinations,
+              selectedIndex: index,
+              onDestinationSelected: onSelected,
+              child: animatedChild,
+            );
+          }
+          if (width >= AppRootShell._tabletBreakpoint) {
+            return _TabletShell(
+              destinations: destinations,
+              selectedIndex: index,
+              onDestinationSelected: onSelected,
+              child: animatedChild,
+            );
+          }
+          return _MobileShell(
             destinations: destinations,
             selectedIndex: index,
             onDestinationSelected: onSelected,
             child: animatedChild,
           );
-        }
-        if (width >= AppRootShell._tabletBreakpoint) {
-          return _TabletShell(
-            destinations: destinations,
-            selectedIndex: index,
-            onDestinationSelected: onSelected,
-            child: animatedChild,
-          );
-        }
-        return _MobileShell(
-          destinations: destinations,
-          selectedIndex: index,
-          onDestinationSelected: onSelected,
-          child: animatedChild,
-        );
-      },
+        },
+      ),
     );
   }
 }

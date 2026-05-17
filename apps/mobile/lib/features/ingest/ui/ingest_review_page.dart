@@ -19,6 +19,7 @@ import '../../../data/domain/enums.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/forms.dart';
 import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
 import '../data/providers.dart';
@@ -261,9 +262,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   }
 
   Future<void> _openPasteDialog() async {
-    final text = await showAppFormSheet<String>(
+    final text = await showGuardedFormSheet<String>(
       context: context,
-      builder: (_) => const _PasteSheet(),
+      builder: (_, dirty) => _PasteSheet(dirty: dirty),
     );
     if (text == null || text.trim().isEmpty) return;
     await _runIngest(
@@ -511,7 +512,9 @@ class _EmptyState extends StatelessWidget {
 /// Multiline paste form, presented as a unified app sheet (replaces the
 /// old Material `AlertDialog`). Returns the pasted text or null.
 class _PasteSheet extends StatefulWidget {
-  const _PasteSheet();
+  const _PasteSheet({required this.dirty});
+
+  final FormDirtyController dirty;
 
   @override
   State<_PasteSheet> createState() => _PasteSheetState();
@@ -519,6 +522,12 @@ class _PasteSheet extends StatefulWidget {
 
 class _PasteSheetState extends State<_PasteSheet> {
   final _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.dirty.bindTextControllers([_controller]);
+  }
 
   @override
   void dispose() {
@@ -534,7 +543,10 @@ class _PasteSheetState extends State<_PasteSheet> {
       footer: AppSheetFooter(
         submitLabel: l10n.ingestParseAction,
         cancelLabel: l10n.commonCancel,
-        onSubmit: () => Navigator.of(context).pop(_controller.text),
+        onSubmit: () {
+          widget.dirty.markPristine();
+          Navigator.of(context).pop(_controller.text);
+        },
       ),
       child: FTextField(
         control: FTextFieldControl.managed(controller: _controller),

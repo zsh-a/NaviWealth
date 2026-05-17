@@ -12,9 +12,14 @@ import '../data/physical_asset.dart';
 import '../data/providers.dart';
 
 class ValuationUpdateSheet extends ConsumerStatefulWidget {
-  const ValuationUpdateSheet({super.key, required this.asset});
+  const ValuationUpdateSheet({
+    super.key,
+    required this.asset,
+    required this.dirty,
+  });
 
   final PhysicalAsset asset;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<ValuationUpdateSheet> createState() =>
@@ -24,9 +29,9 @@ class ValuationUpdateSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required PhysicalAsset asset,
   }) {
-    return showAppFormSheet<bool>(
+    return showGuardedFormSheet<bool>(
       context: context,
-      builder: (_) => ValuationUpdateSheet(asset: asset),
+      builder: (_, dirty) => ValuationUpdateSheet(asset: asset, dirty: dirty),
     );
   }
 }
@@ -46,6 +51,9 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
       text: widget.asset.currentValuation.toString(),
     );
     _asOf = DateTime.now();
+    // `_amountCtrl` is seeded from the current valuation — that baseline
+    // is not a user edit.
+    widget.dirty.bindTextControllers([_amountCtrl, _noteCtrl]);
   }
 
   @override
@@ -122,7 +130,12 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
       firstDate: DateTime(1970),
       lastDate: DateTime.now().add(const Duration(days: 1)),
     );
-    if (picked != null) setState(() => _asOf = picked);
+    if (picked != null) {
+      setState(() {
+        _asOf = picked;
+        widget.dirty.markDirty();
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -137,6 +150,8 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
     final asOf = _asOf;
     final note = _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim();
 
+    // The record is being persisted — the post-save pop must not prompt.
+    widget.dirty.markPristine();
     await submitOptimistic(
       pop: () {
         Haptics.success();

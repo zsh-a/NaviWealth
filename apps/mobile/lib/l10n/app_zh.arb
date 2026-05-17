@@ -1471,5 +1471,11 @@
   "aiTraceRoundsCount": "{count} 轮",
   "aiTraceNoPayloadCaptured": "未采集 input/output（精简模式）。在「AI 透明度」页打开“详细采集”后，新的调用会记录每步的传参与返回，便于调试。",
   "aiChatDeviceUnavailable": "AI 需要在设置中配置自带 API Key 后启用（本机直连模型，请求与数据不经我方服务器）。Web 端暂不支持设备侧 AI。",
-  "expenseFormAiTimeframeRecent90Days": "最近 90 天"
+  "expenseFormAiTimeframeRecent90Days": "最近 90 天",
+  "unsavedChangesTitle": "放弃更改？",
+  "unsavedChangesBody": "如果现在离开，您的修改将不会保存。",
+  "unsavedChangesDiscard": "放弃",
+  "unsavedChangesKeepEditing": "继续编辑",
+  "pressBackAgainToExit": "再按一次返回退出",
+  "masterDetailBackToList": "返回列表"
 }

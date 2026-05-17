@@ -4728,4 +4728,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseFormAiTimeframeRecent90Days => 'Last 90 days';
+
+  @override
+  String get unsavedChangesTitle => 'Discard changes?';
+
+  @override
+  String get unsavedChangesBody => 'Your edits will be lost if you leave now.';
+
+  @override
+  String get unsavedChangesDiscard => 'Discard';
+
+  @override
+  String get unsavedChangesKeepEditing => 'Keep editing';
+
+  @override
+  String get pressBackAgainToExit => 'Press back again to exit';
+
+  @override
+  String get masterDetailBackToList => 'Back to list';
 }

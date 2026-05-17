@@ -6,6 +6,7 @@ export 'amount_field.dart';
 export 'currency_picker.dart';
 export 'data/form_defaults_preferences.dart';
 export 'date_field.dart';
+export 'form_dirty_guard.dart';
 export 'local_securities_picker.dart';
 export 'manual_security_sheet.dart';
 export 'note_field.dart';
