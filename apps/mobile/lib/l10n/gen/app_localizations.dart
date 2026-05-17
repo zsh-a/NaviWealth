@@ -932,6 +932,174 @@ abstract class AppLocalizations {
   /// **'Manage bank accounts'**
   String get accountsHubManageBankAccounts;
 
+  /// Investment portfolio hub page title
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get portfolioHubTitle;
+
+  /// Accounts hub link subtitle for the investment portfolio hub
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings, returns, and allocation views'**
+  String get portfolioHubAccountsEntrySubtitle;
+
+  /// Portfolio hub KPI label: current portfolio market value
+  ///
+  /// In en, this message translates to:
+  /// **'Market value'**
+  String get portfolioHubMarketValueLabel;
+
+  /// Portfolio hub KPI label: year-to-date money-weighted return
+  ///
+  /// In en, this message translates to:
+  /// **'YTD XIRR'**
+  String get portfolioHubYtdXirrLabel;
+
+  /// Portfolio hub KPI label: absolute unrealized return
+  ///
+  /// In en, this message translates to:
+  /// **'Absolute return'**
+  String get portfolioHubAbsoluteReturnLabel;
+
+  /// Portfolio hub grouping view: account
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get portfolioHubViewAccount;
+
+  /// Portfolio hub grouping view: currency
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get portfolioHubViewCurrency;
+
+  /// Portfolio hub grouping view: asset class
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get portfolioHubViewAssetClass;
+
+  /// Portfolio hub grouped holdings section title
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get portfolioHubHoldingsTitle;
+
+  /// Portfolio hub individual holdings section title
+  ///
+  /// In en, this message translates to:
+  /// **'Positions'**
+  String get portfolioHubPositionsTitle;
+
+  /// Portfolio hub group row holding count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 holding} other{{count} holdings}}'**
+  String portfolioHubHoldingCount(int count);
+
+  /// Portfolio hub account group fallback title
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown account'**
+  String get portfolioHubUnknownAccount;
+
+  /// Portfolio hub account group default subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Brokerage account'**
+  String get portfolioHubAccountGroupSubtitle;
+
+  /// Portfolio hub currency group subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement currency'**
+  String get portfolioHubCurrencyGroupSubtitle;
+
+  /// Portfolio hub asset class group subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Asset class'**
+  String get portfolioHubAssetClassGroupSubtitle;
+
+  /// Portfolio hub empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No investment holdings yet.'**
+  String get portfolioHubEmpty;
+
+  /// Portfolio hub load error state
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio failed to load: {error}'**
+  String portfolioHubLoadError(String error);
+
+  /// Portfolio hub asset type label: stock
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get portfolioHubAssetTypeStock;
+
+  /// Portfolio hub asset type label: ETF
+  ///
+  /// In en, this message translates to:
+  /// **'ETF'**
+  String get portfolioHubAssetTypeEtf;
+
+  /// Portfolio hub asset type label: mutual fund
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual fund'**
+  String get portfolioHubAssetTypeMutualFund;
+
+  /// Portfolio hub asset type label: bond
+  ///
+  /// In en, this message translates to:
+  /// **'Bond'**
+  String get portfolioHubAssetTypeBond;
+
+  /// Portfolio hub asset type label: crypto
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get portfolioHubAssetTypeCrypto;
+
+  /// Portfolio hub asset type label: cash
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get portfolioHubAssetTypeCash;
+
+  /// Portfolio hub asset type label: commodity
+  ///
+  /// In en, this message translates to:
+  /// **'Commodity'**
+  String get portfolioHubAssetTypeCommodity;
+
+  /// Portfolio hub asset type label: custom asset
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get portfolioHubAssetTypeCustom;
+
+  /// Portfolio hub asset type label: term deposit
+  ///
+  /// In en, this message translates to:
+  /// **'Term deposit'**
+  String get portfolioHubAssetTypeBankDepositTerm;
+
+  /// Portfolio hub asset type label: demand deposit
+  ///
+  /// In en, this message translates to:
+  /// **'Demand deposit'**
+  String get portfolioHubAssetTypeBankDepositDemand;
+
+  /// Portfolio hub asset type label: wealth product
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth product'**
+  String get portfolioHubAssetTypeWealthProduct;
+
   /// Section header above the home AI Insight Feed
   ///
   /// In en, this message translates to:
