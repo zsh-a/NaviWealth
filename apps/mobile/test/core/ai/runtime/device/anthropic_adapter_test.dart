@@ -169,9 +169,11 @@ void main() {
       );
     });
 
-    test('fromCredentials carries key + custom base url', () {
-      final c = LlmConfig.fromCredentials(
-        const LlmCredentials(
+    test('fromProfile carries key + custom base url, default model', () {
+      final c = LlmConfig.fromProfile(
+        const LlmProfile(
+          id: 'p1',
+          name: 'gw',
           provider: LlmProvider.anthropic,
           apiKey: 'sk-ant',
           baseUrl: 'https://gw.test/v1',
@@ -180,6 +182,19 @@ void main() {
       expect(c.apiKey, 'sk-ant');
       expect(c.messagesUrl(), 'https://gw.test/v1/messages');
       expect(c.model, kDefaultDeviceModel);
+    });
+
+    test('fromProfile honours an explicit model override', () {
+      final c = LlmConfig.fromProfile(
+        const LlmProfile(
+          id: 'p1',
+          name: 'gw',
+          provider: LlmProvider.anthropic,
+          apiKey: 'sk-ant',
+          model: 'claude-opus-4-7',
+        ),
+      );
+      expect(c.model, 'claude-opus-4-7');
     });
   });
 

@@ -31,10 +31,15 @@ class LlmConfig {
           ? _kDefaultBaseUrl
           : baseUrl.trim();
 
-  factory LlmConfig.fromCredentials(
-    LlmCredentials creds, {
-    String model = kDefaultDeviceModel,
-  }) => LlmConfig(apiKey: creds.apiKey, baseUrl: creds.baseUrl, model: model);
+  /// Resolve from the active [LlmProfile]. The profile's optional
+  /// model override wins; otherwise the adapter default.
+  factory LlmConfig.fromProfile(LlmProfile profile) => LlmConfig(
+    apiKey: profile.apiKey,
+    baseUrl: profile.baseUrl,
+    model: (profile.model != null && profile.model!.trim().isNotEmpty)
+        ? profile.model!.trim()
+        : kDefaultDeviceModel,
+  );
 
   final String apiKey;
   final String baseUrl;

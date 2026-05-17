@@ -38,14 +38,14 @@ import 'proposal_applier.dart';
 import 'runtime_routing_api_client.dart';
 
 /// §4.6 W-D3 — the on-device runtime, or `null` when unavailable (web /
-/// no key / opted out). Rebuilt automatically when credentials or the
-/// opt-in switch change, since [deviceLlmAvailableProvider] /
-/// [llmCredentialsProvider] are watched. Each instance gets its own
-/// [Dio] because the base URL is the user's (possibly custom) endpoint.
+/// no active profile). Rebuilt automatically when the active profile
+/// changes, since [deviceLlmAvailableProvider] / [llmCredentialsProvider]
+/// are watched. Each instance gets its own [Dio] because the base URL
+/// is the user's (possibly custom) endpoint.
 final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   if (!ref.watch(deviceLlmAvailableProvider)) return null;
-  final creds = ref.watch(llmCredentialsProvider).asData?.value;
-  if (creds == null || !creds.isUsable) return null;
+  final profile = ref.watch(llmCredentialsProvider).asData?.value?.active;
+  if (profile == null || !profile.hasKey) return null;
   final dio = Dio()
     ..interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
   // §4.6.3 — registry membership is the device allow-list. The
@@ -54,7 +54,7 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   // ported simply aren't advertised, so the model never calls them.
   final registry = defaultDeviceToolRegistry();
   return DeviceLlmRuntime(
-    client: AnthropicClient(dio: dio, config: LlmConfig.fromCredentials(creds)),
+    client: AnthropicClient(dio: dio, config: LlmConfig.fromProfile(profile)),
     dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),
     toolSchemas: registry.schemas(),
   );

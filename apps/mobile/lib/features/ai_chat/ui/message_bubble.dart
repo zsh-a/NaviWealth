@@ -144,9 +144,12 @@ class _AssistantBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final textColor = _isError
-        ? colors.destructiveForeground
-        : colors.foreground;
+    // Calm error treatment (§5.6): the body — reasoning panel, tool
+    // cards, model text — must stay readable. The error is signalled by
+    // a soft destructive border + the destructive `errorMessage` line,
+    // never by drowning the whole bubble in a saturated red fill (which
+    // also tanked contrast on the muted-foreground reasoning text).
+    final textColor = colors.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
     final showTruncation =
@@ -203,29 +206,24 @@ class _AssistantBubble extends StatelessWidget {
       ],
     );
 
-    final bubble = _isError
-        ? Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: colors.destructive,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(8),
-                bottomLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
-              ),
-            ),
-            child: body,
-          )
-        : Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: colors.muted,
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              border: Border.all(color: colors.border, width: 1),
-            ),
-            child: body,
-          );
+    // One calm surface for every state. An abnormal end is marked by a
+    // soft destructive hairline (accent, not fill) so the content stays
+    // legible — matches the SoftCard / AiTone "error is an accent"
+    // discipline used across the AI surfaces.
+    final bubble = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        border: Border.all(
+          color: _isError
+              ? colors.destructive.withValues(alpha: 0.55)
+              : colors.border,
+          width: _isError ? 1.5 : 1,
+        ),
+      ),
+      child: body,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

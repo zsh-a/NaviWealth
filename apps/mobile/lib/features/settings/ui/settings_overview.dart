@@ -95,7 +95,7 @@ class SettingsOverview extends ConsumerWidget {
               InlineLinkRow(
                 icon: Icons.key_outlined,
                 label: '端侧 AI · 自带 Key',
-                subtitle: '用自己的 API Key 让 AI 在本机直连运行',
+                subtitle: '管理多个 Provider Key，一键切换本机直连',
                 onTap: () => context.goNamed(AppRouteNames.aiLlm),
               ),
             ],
