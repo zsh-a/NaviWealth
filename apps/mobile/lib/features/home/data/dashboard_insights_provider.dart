@@ -130,7 +130,10 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     ),
   );
   cashFlowSummary.whenData((summary) {
-    final metrics = monthlyCashFlowHomeMetrics(summary);
+    final metrics = monthlyCashFlowHomeMetrics(
+      summary,
+      now: ref.watch(cashFlowNowProvider),
+    );
     if (metrics.hasData && metrics.net.isNegative) {
       insights.add(
         InsightItem(
