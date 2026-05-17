@@ -277,9 +277,15 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: AppFormScaffoldBody(
+        action: SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _save,
+            child: Text(_busy ? l10n.formSaving : l10n.formSave),
+          ),
+        ),
         children: [
           // Wave 40 — surface AI provenance for assets touched by
           // `propose_asset_valuation`. Self-gating.
@@ -428,12 +434,6 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                 dirty.markDirty();
               }),
             ),
-          const SizedBox(height: 24),
-          FButton(
-            variant: FButtonVariant.primary,
-            onPress: _busy ? null : _save,
-            child: Text(_busy ? l10n.formSaving : l10n.formSave),
-          ),
         ],
       ),
     );

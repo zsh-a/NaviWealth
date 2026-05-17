@@ -251,9 +251,15 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: AppFormScaffoldBody(
+        action: SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _save,
+            child: Text(_busy ? l10n.cashFormSaving : l10n.cashFormSave),
+          ),
+        ),
         children: [
           // Wave 40 — AI provenance hint for assets touched by
           // `propose_asset_valuation`. Self-gating: hidden when no
@@ -303,12 +309,6 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
             focusNode: _nicknameFocus,
             textInputAction: TextInputAction.done,
             onSubmit: (_) => _busy ? null : _save(),
-          ),
-          const SizedBox(height: 24),
-          FButton(
-            variant: FButtonVariant.primary,
-            onPress: _busy ? null : _save,
-            child: Text(_busy ? l10n.cashFormSaving : l10n.cashFormSave),
           ),
         ],
       ),

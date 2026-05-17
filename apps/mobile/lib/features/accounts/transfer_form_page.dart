@@ -206,172 +206,170 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         amount > Decimal.zero &&
         (!isCrossCurrency || (toAmount != null && toAmount > Decimal.zero));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (convertMode)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.theme.colors.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.currency_exchange,
-                        size: 16,
-                        color: context.theme.colors.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.transferConvertModeBanner,
-                          style: context.theme.typography.xs.copyWith(
-                            color: context.theme.colors.foreground,
-                            height: 1.4,
-                          ),
+    return Form(
+      key: _formKey,
+      child: AppFormScaffoldBody(
+        action: SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: FButtonVariant.primary,
+            onPress: canSubmit ? _save : null,
+            child: Text(l10n.transferSubmitAction),
+          ),
+        ),
+        children: [
+          if (convertMode)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.theme.colors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.currency_exchange,
+                      size: 16,
+                      color: context.theme.colors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.transferConvertModeBanner,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.foreground,
+                          height: 1.4,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            AccountTreePicker(
-              accounts: transferable,
-              value: _fromAccountId,
-              onChanged: (v) {
-                setState(() {
-                  _fromAccountId = v;
-                  // Picking a new account potentially flips the
-                  // currency relationship; reset the autofill
-                  // suppressor so the next paint takes the FX
-                  // default.
-                  _toAmountUserTouched = false;
-                  dirty.markDirty();
-                });
-                _refreshToAmountAutofill(accountsById);
-              },
-              category: null,
-              label: l10n.transferFromLabel,
-              allowSystemAccounts: false,
-              validator: (v) => (v == null || v.isEmpty)
-                  ? l10n.transferValidationRequired
-                  : null,
             ),
-            const SizedBox(height: 12),
-            AccountTreePicker(
-              accounts: transferable,
-              value: _toAccountId,
-              onChanged: (v) {
-                setState(() {
-                  _toAccountId = v;
-                  _toAmountUserTouched = false;
-                  dirty.markDirty();
-                });
-                _refreshToAmountAutofill(accountsById);
-              },
-              category: null,
-              label: l10n.transferToLabel,
-              allowSystemAccounts: false,
-              validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return l10n.transferValidationRequired;
-                }
-                if (v == _fromAccountId) {
-                  return l10n.transferValidationDifferentAccount;
-                }
-                return null;
-              },
-            ),
+          AccountTreePicker(
+            accounts: transferable,
+            value: _fromAccountId,
+            onChanged: (v) {
+              setState(() {
+                _fromAccountId = v;
+                // Picking a new account potentially flips the
+                // currency relationship; reset the autofill
+                // suppressor so the next paint takes the FX
+                // default.
+                _toAmountUserTouched = false;
+                dirty.markDirty();
+              });
+              _refreshToAmountAutofill(accountsById);
+            },
+            category: null,
+            label: l10n.transferFromLabel,
+            allowSystemAccounts: false,
+            validator: (v) => (v == null || v.isEmpty)
+                ? l10n.transferValidationRequired
+                : null,
+          ),
+          const SizedBox(height: 12),
+          AccountTreePicker(
+            accounts: transferable,
+            value: _toAccountId,
+            onChanged: (v) {
+              setState(() {
+                _toAccountId = v;
+                _toAmountUserTouched = false;
+                dirty.markDirty();
+              });
+              _refreshToAmountAutofill(accountsById);
+            },
+            category: null,
+            label: l10n.transferToLabel,
+            allowSystemAccounts: false,
+            validator: (v) {
+              if (v == null || v.isEmpty) {
+                return l10n.transferValidationRequired;
+              }
+              if (v == _fromAccountId) {
+                return l10n.transferValidationDifferentAccount;
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          AmountField(
+            label: fromCurrency == null
+                ? l10n.transferAmountLabel
+                : l10n.transferAmountWithCurrencyLabel(fromCurrency),
+            controller: _amountController,
+            currencyCode: fromCurrency,
+            focusNode: _amountFocus,
+            onChanged: (_) {
+              setState(() {});
+              _refreshToAmountAutofill(accountsById);
+            },
+            onFieldSubmitted: (_) {
+              if (isCrossCurrency) {
+                _toAmountFocus.requestFocus();
+              } else {
+                _noteFocus.requestFocus();
+              }
+            },
+          ),
+          if (isCrossCurrency) ...[
             const SizedBox(height: 12),
             AmountField(
-              label: fromCurrency == null
-                  ? l10n.transferAmountLabel
-                  : l10n.transferAmountWithCurrencyLabel(fromCurrency),
-              controller: _amountController,
-              currencyCode: fromCurrency,
-              focusNode: _amountFocus,
-              onChanged: (_) {
-                setState(() {});
-                _refreshToAmountAutofill(accountsById);
-              },
-              onFieldSubmitted: (_) {
-                if (isCrossCurrency) {
-                  _toAmountFocus.requestFocus();
-                } else {
-                  _noteFocus.requestFocus();
-                }
-              },
+              label: l10n.transferToAmountLabel(toCurrency),
+              controller: _toAmountController,
+              currencyCode: toCurrency,
+              focusNode: _toAmountFocus,
+              helperText: defaultToAmount == null
+                  ? l10n.transferFxRateHelper
+                  : l10n.transferFxRateEditHelper,
+              onChanged: (_) => setState(() {}),
+              onFieldSubmitted: (_) => _noteFocus.requestFocus(),
             ),
-            if (isCrossCurrency) ...[
-              const SizedBox(height: 12),
-              AmountField(
-                label: l10n.transferToAmountLabel(toCurrency),
-                controller: _toAmountController,
-                currencyCode: toCurrency,
-                focusNode: _toAmountFocus,
-                helperText: defaultToAmount == null
-                    ? l10n.transferFxRateHelper
-                    : l10n.transferFxRateEditHelper,
-                onChanged: (_) => setState(() {}),
-                onFieldSubmitted: (_) => _noteFocus.requestFocus(),
-              ),
-              if (amount != null && toAmount != null && amount > Decimal.zero)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    _rateLabel(
-                      amount: amount,
-                      toAmount: toAmount,
-                      fromCcy: fromCurrency,
-                      toCcy: toCurrency,
-                    ),
-                    style: context.theme.typography.xs2.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+            if (amount != null && toAmount != null && amount > Decimal.zero)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _rateLabel(
+                    amount: amount,
+                    toAmount: toAmount,
+                    fromCcy: fromCurrency,
+                    toCcy: toCurrency,
+                  ),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
-            ],
-            const SizedBox(height: 12),
-            DateField(
-              label: l10n.transferDateLabel,
-              initialValue: _date,
-              required: true,
-              onChanged: (d) {
-                if (d != null) {
-                  setState(() {
-                    _date = d;
-                    dirty.markDirty();
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            NoteField(controller: _noteController, focusNode: _noteFocus),
-            const SizedBox(height: 16),
-            if (preview != null)
-              PostingsPreview(
-                postings: preview,
-                accounts: accountsById,
-                title: _noteController.text.isEmpty
-                    ? l10n.transferPreviewTitle
-                    : _noteController.text,
               ),
-            const SizedBox(height: 16),
-            FButton(
-              variant: FButtonVariant.primary,
-              onPress: canSubmit ? _save : null,
-              child: Text(l10n.transferSubmitAction),
-            ),
           ],
-        ),
+          const SizedBox(height: 12),
+          DateField(
+            label: l10n.transferDateLabel,
+            initialValue: _date,
+            required: true,
+            onChanged: (d) {
+              if (d != null) {
+                setState(() {
+                  _date = d;
+                  dirty.markDirty();
+                });
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          NoteField(controller: _noteController, focusNode: _noteFocus),
+          const SizedBox(height: 16),
+          if (preview != null)
+            PostingsPreview(
+              postings: preview,
+              accounts: accountsById,
+              title: _noteController.text.isEmpty
+                  ? l10n.transferPreviewTitle
+                  : _noteController.text,
+            ),
+        ],
       ),
     );
   }

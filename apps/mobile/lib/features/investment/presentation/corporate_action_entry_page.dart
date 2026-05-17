@@ -274,93 +274,91 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: AppFormScaffoldBody(
+            action: Row(
               children: [
-                // Asset picker.
-                FSelect<CorporateActionAsset>(
-                  key: const Key('corp-action-asset'),
-                  items: {for (final a in widget.assets) a.displayName: a},
-                  control: FSelectControl<CorporateActionAsset>.managed(
-                    initial: asset,
-                    onChange: _onAssetChanged,
-                  ),
-                  label: Text(l10n.corpActionSelectAsset),
-                  description: Text(l10n.corpActionSelectAssetHint),
-                ),
-                const SizedBox(height: 16),
-                // Effective date row.
-                FTile(
-                  key: const Key('corp-action-date'),
-                  title: Text(l10n.corpActionEffectiveDate),
-                  prefix: const Icon(Icons.event),
-                  subtitle: Text(dateFmt.format(_effectiveDate)),
-                  suffix: FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: _pickEffectiveDate,
-                    child: const Icon(Icons.edit_calendar, size: 20),
+                Expanded(
+                  child: FButton(
+                    key: const Key('corp-action-preview'),
+                    variant: FButtonVariant.outline,
+                    onPress: asset == null ? null : _runPreview,
+                    child: Text(l10n.corpActionPreviewAction),
                   ),
                 ),
-                const FDivider(),
-                // Event type selector.
-                Text(
-                  l10n.corpActionEventTypeTitle,
-                  style: context.theme.typography.md,
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: FButton(
+                    key: const Key('corp-action-submit'),
+                    variant: FButtonVariant.primary,
+                    onPress: _preview == null ? null : _submit,
+                    child: Text(l10n.corpActionSubmitAction),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                _TypeSelector(
-                  selected: _type,
-                  onChanged: _onTypeChanged,
-                  l10n: l10n,
+              ],
+            ),
+            children: [
+              // Asset picker.
+              FSelect<CorporateActionAsset>(
+                key: const Key('corp-action-asset'),
+                items: {for (final a in widget.assets) a.displayName: a},
+                control: FSelectControl<CorporateActionAsset>.managed(
+                  initial: asset,
+                  onChange: _onAssetChanged,
                 ),
+                label: Text(l10n.corpActionSelectAsset),
+                description: Text(l10n.corpActionSelectAssetHint),
+              ),
+              const SizedBox(height: 16),
+              // Effective date row.
+              FTile(
+                key: const Key('corp-action-date'),
+                title: Text(l10n.corpActionEffectiveDate),
+                prefix: const Icon(Icons.event),
+                subtitle: Text(dateFmt.format(_effectiveDate)),
+                suffix: FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: _pickEffectiveDate,
+                  child: const Icon(Icons.edit_calendar, size: 20),
+                ),
+              ),
+              const FDivider(),
+              // Event type selector.
+              Text(
+                l10n.corpActionEventTypeTitle,
+                style: context.theme.typography.md,
+              ),
+              const SizedBox(height: 8),
+              _TypeSelector(
+                selected: _type,
+                onChanged: _onTypeChanged,
+                l10n: l10n,
+              ),
+              const SizedBox(height: 16),
+              // Type-specific fields.
+              ..._fieldsForType(l10n),
+              if (_previewError != null) ...[
                 const SizedBox(height: 16),
-                // Type-specific fields.
-                ..._fieldsForType(l10n),
-                const SizedBox(height: 24),
-                // Action buttons.
-                Row(
-                  children: [
-                    FButton(
-                      key: const Key('corp-action-preview'),
-                      variant: FButtonVariant.outline,
-                      onPress: asset == null ? null : _runPreview,
-                      child: Text(l10n.corpActionPreviewAction),
-                    ),
-                    const SizedBox(width: 12),
-                    FButton(
-                      key: const Key('corp-action-submit'),
-                      variant: FButtonVariant.primary,
-                      onPress: _preview == null ? null : _submit,
-                      child: Text(l10n.corpActionSubmitAction),
-                    ),
-                  ],
-                ),
-                if (_previewError != null) ...[
-                  const SizedBox(height: 16),
-                  FCard.raw(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        _previewError!,
-                        style: TextStyle(
-                          color: theme.colorScheme.onErrorContainer,
-                        ),
+                FCard.raw(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      _previewError!,
+                      style: TextStyle(
+                        color: theme.colorScheme.onErrorContainer,
                       ),
                     ),
                   ),
-                ],
-                if (_preview != null) ...[
-                  const SizedBox(height: 16),
-                  _PreviewCard(
-                    key: const Key('corp-action-preview-card'),
-                    preview: _preview!,
-                    l10n: l10n,
-                  ),
-                ],
+                ),
               ],
-            ),
+              if (_preview != null) ...[
+                const SizedBox(height: 16),
+                _PreviewCard(
+                  key: const Key('corp-action-preview-card'),
+                  preview: _preview!,
+                  l10n: l10n,
+                ),
+              ],
+            ],
           ),
         ),
       ),

@@ -302,9 +302,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: AppFormScaffoldBody(
+        action: SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _save,
+            child: Text(_busy ? l10n.formSaving : l10n.formSave),
+          ),
+        ),
         children: [
           // Wave 40.1 — AI provenance for `propose_asset_valuation`.
           if (widget.isEdit && widget.assetId != null) ...[
@@ -419,12 +425,6 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             focusNode: _valuationFocus,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
-          ),
-          const SizedBox(height: 24),
-          FButton(
-            variant: FButtonVariant.primary,
-            onPress: _busy ? null : _save,
-            child: Text(_busy ? l10n.formSaving : l10n.formSave),
           ),
         ],
       ),

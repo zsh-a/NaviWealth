@@ -439,9 +439,16 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: AppFormScaffoldBody(
+        action: SizedBox(
+          width: double.infinity,
+          child: FButton(
+            key: const Key('trade-entry-submit'),
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _submit,
+            child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
+          ),
+        ),
         children: [
           _buildAssetSearch(),
           const SizedBox(height: 12),
@@ -552,14 +559,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           const SizedBox(height: 12),
 
           NoteField(controller: _noteController, focusNode: _noteFocus),
-          const SizedBox(height: 24),
-
-          FButton(
-            key: const Key('trade-entry-submit'),
-            variant: FButtonVariant.primary,
-            onPress: _busy ? null : _submit,
-            child: Text(_busy ? l10n.commonSaving : l10n.commonSave),
-          ),
         ],
       ),
     );
