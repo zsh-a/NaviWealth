@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/db/providers.dart' show secureKeyStoreProvider;
 import '../../async/async_notifier_convention.dart';
+import 'llm_connectivity.dart';
 import 'llm_credential_store.dart';
 import 'llm_credentials.dart';
 
@@ -20,6 +21,12 @@ import 'llm_credentials.dart';
 /// provider (rule 5: override the data layer, not the notifier).
 final llmCredentialStoreProvider = Provider<LlmCredentialStore>((ref) {
   return LlmCredentialStore(ref.watch(secureKeyStoreProvider));
+});
+
+/// One-tap connectivity probe (Wave 46). Stateless; the settings page
+/// passes the (possibly unsaved) profile being edited.
+final llmConnectivityProbeProvider = Provider<LlmConnectivityProbe>((ref) {
+  return LlmConnectivityProbe();
 });
 
 /// Whether this build can host the device LLM runtime at all.
@@ -35,9 +42,9 @@ final deviceLlmPlatformSupportedProvider = Provider<bool>((ref) {
   return !kIsWeb;
 });
 
-/// The user's stored credentials (or `null` if none / opted out /
-/// corrupt). `build()` reads the Keychain once; `save` / `clear` /
-/// `setEnabled` mutate through [AsyncValue.guard] per the convention.
+/// The user's stored credential set (or `null` if none / corrupt).
+/// `build()` reads the Keychain once; the mutators persist the whole
+/// container through [AsyncValue.guard] per the convention.
 final llmCredentialsProvider =
     AsyncNotifierProvider<LlmCredentialsNotifier, LlmCredentials?>(
   LlmCredentialsNotifier.new,
@@ -48,30 +55,42 @@ class LlmCredentialsNotifier extends ConventionalAsyncNotifier<LlmCredentials?> 
   Future<LlmCredentials?> fetch() =>
       ref.read(llmCredentialStoreProvider).read();
 
-  /// Persist a full credential set (Settings "Save"). Writing an empty
-  /// key is treated as a clear so the UI has one obvious path.
-  Future<void> save(LlmCredentials credentials) async {
+  LlmCredentials get _current =>
+      state.asData?.value ?? const LlmCredentials();
+
+  Future<void> _persist(LlmCredentials next) async {
     state = await AsyncValue.guard(() async {
       final store = ref.read(llmCredentialStoreProvider);
-      if (!credentials.hasKey) {
+      if (next.isEmpty) {
         await store.clear();
         return null;
       }
-      await store.write(credentials);
-      return credentials;
+      await store.write(next);
+      return next;
     });
   }
 
-  /// Flip only the opt-in switch, keeping the stored key. No key ⇒
-  /// no-op (nothing to enable).
-  Future<void> setEnabled(bool enabled) async {
-    final current = state.asData?.value;
-    if (current == null || !current.hasKey) return;
-    await save(current.copyWith(enabled: enabled));
+  /// Add a new profile or replace an existing one by id. A keyless
+  /// profile is ignored (the UI blocks this; defensive here too).
+  Future<void> upsertProfile(LlmProfile profile) async {
+    if (!profile.hasKey) return;
+    await _persist(_current.upsert(profile));
   }
 
-  /// Wipe the key from the Keychain entirely.
-  Future<void> clear() async {
+  /// Switch which profile the device runtime uses. No-op for an
+  /// unknown id.
+  Future<void> setActive(String id) async {
+    await _persist(_current.withActive(id));
+  }
+
+  /// Remove one profile. The active selection rolls to the first
+  /// remaining profile (or none).
+  Future<void> removeProfile(String id) async {
+    await _persist(_current.remove(id));
+  }
+
+  /// Wipe every profile from the Keychain.
+  Future<void> clearAll() async {
     state = await AsyncValue.guard(() async {
       await ref.read(llmCredentialStoreProvider).clear();
       return null;
@@ -80,9 +99,9 @@ class LlmCredentialsNotifier extends ConventionalAsyncNotifier<LlmCredentials?> 
 }
 
 /// The single boolean W-D3's `RuntimeRegistry.pickFor` consumes:
-/// native platform **and** opted-in credentials with a non-empty key.
-/// Resolves to `false` while credentials are still loading or errored
-/// (fail closed → cloud relay).
+/// native platform **and** an active profile carrying a non-empty
+/// key. Resolves to `false` while credentials are still loading or
+/// errored (fail closed → the turn surfaces `device_unavailable`).
 final deviceLlmAvailableProvider = Provider<bool>((ref) {
   if (!ref.watch(deviceLlmPlatformSupportedProvider)) return false;
   final creds = ref.watch(llmCredentialsProvider).asData?.value;
