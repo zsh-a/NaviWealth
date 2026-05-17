@@ -30,6 +30,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSearch => 'Search';
 
   @override
+  String get cashFlowTitle => 'Cash flow';
+
+  @override
+  String get cashFlowCommandOpen => 'Open cash flow';
+
+  @override
+  String get cashFlowCommandNewIncome => 'New income';
+
+  @override
+  String get cashFlowPeriodMonth => 'Month';
+
+  @override
+  String get cashFlowPeriodQuarter => 'Quarter';
+
+  @override
+  String get cashFlowPeriodYear => 'Year';
+
+  @override
+  String get cashFlowKpiInflow => 'Inflow';
+
+  @override
+  String get cashFlowKpiOutflow => 'Outflow';
+
+  @override
+  String get cashFlowKpiNet => 'Net';
+
+  @override
+  String get cashFlowIncomeExpenseTitle => 'Income vs expense';
+
+  @override
+  String get cashFlowNetTrendTitle => 'Net cash-flow trend';
+
+  @override
+  String get cashFlowCategoryTitle => 'Category mix';
+
+  @override
+  String get cashFlowDividendActivity => 'View dividend activity';
+
+  @override
+  String get cashFlowKindSalary => 'Salary';
+
+  @override
+  String get cashFlowKindDividend => 'Dividend';
+
+  @override
+  String get cashFlowKindInterest => 'Interest';
+
+  @override
+  String get cashFlowKindCapitalGains => 'Capital gains';
+
+  @override
+  String get cashFlowKindOtherIncome => 'Other income';
+
+  @override
+  String get cashFlowKindExpense => 'Expense';
+
+  @override
+  String get cashFlowKindTransfer => 'Transfer';
+
+  @override
+  String get cashFlowKindOpening => 'Opening';
+
+  @override
+  String get cashFlowKindOther => 'Other';
+
+  @override
   String get accountsHubSectionCashDeposits => 'Cash & Deposits';
 
   @override

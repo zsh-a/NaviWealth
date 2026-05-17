@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../features/cashflow/command_palette_contributions.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shortcuts/shortcut_help_dialog.dart';
 import 'command_palette_entry.dart';
@@ -65,6 +66,21 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       icon: Icons.receipt_long_outlined,
       keywords: const <String>[AppRoutes.activityExpenses, 'expenses', '支出'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.activityExpenses),
+    ),
+    ...cashFlowCommandPaletteEntries(l10n),
+    CommandPaletteEntry(
+      id: 'nav.dividends',
+      label: 'Dividend Center',
+      icon: Icons.payments_outlined,
+      keywords: const <String>[
+        AppRoutes.cashflowDividends,
+        'dividends',
+        'passive income',
+        '股息中心',
+        '我的股息',
+        '被动收入',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowDividends),
     ),
     CommandPaletteEntry(
       id: 'nav.analytics',

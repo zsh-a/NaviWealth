@@ -62,13 +62,10 @@ bool _fontsLoaded = false;
 
 /// Load every font declared in `pubspec.yaml` (Inter, Outfit, AppCnSans).
 ///
-/// On CI and on a fresh dev checkout the .woff2 files are gitignored
-/// build artifacts that are stubbed empty by the build system. Loading
-/// them is harmless — the FontLoader call succeeds even when the bytes
-/// don't decode as a real font, and Flutter falls through to its
-/// built-in "Roboto" stub for actual glyph rasterisation. That stub is
-/// the same on Linux CI and developer machines, which is what makes the
-/// baseline reproducible.
+/// On CI these .woff2 files are regenerated before the golden job starts.
+/// Fresh local checkouts may still use gitignored stubs; Flutter then falls
+/// through to its built-in test font, which is acceptable for non-Linux runs
+/// where golden comparison is skipped by `flutter_test_config.dart`.
 Future<void> loadGoldenFonts() async {
   if (_fontsLoaded) return;
   await loadAppFonts();
