@@ -5,7 +5,7 @@ import 'ai_chat_api_client.dart';
 class ContextWindow {
   const ContextWindow({required this.wire, required this.droppedTurns});
 
-  /// Messages that should be sent to `POST /ai/chat`.
+  /// Messages that should be sent to the chat runtime.
   final List<WireMessage> wire;
 
   /// Number of older turns dropped to stay under the budget. The UI
@@ -14,12 +14,12 @@ class ContextWindow {
   final int droppedTurns;
 }
 
-/// Conservative budget: backend caps a single request body at 32 KB
-/// (`MAX_REQUEST_BODY_BYTES`). We keep the wire payload comfortably under
-/// that to leave room for tool-result blocks the worker injects mid-loop
-/// on subsequent rounds. Char count is a coarse proxy for tokens, but
-/// safe for Chinese (≈ 1 char ≈ 1.5 tokens for Anthropic's tokenizer)
-/// because we underbudget; a precise tiktoken port is overkill for v1.
+/// Conservative budget for the device runtime prompt. We keep the wire
+/// payload comfortably below the retired backend's 32 KB body cap so
+/// the same chat history shape remains safe if a relay is reintroduced.
+/// Char count is a coarse proxy for tokens, but safe for Chinese
+/// (≈ 1 char ≈ 1.5 tokens for Anthropic's tokenizer) because we
+/// underbudget.
 const int kDefaultContextCharBudget = 18000;
 
 /// Always keep the most recent N turns regardless of budget so the user
@@ -27,7 +27,7 @@ const int kDefaultContextCharBudget = 18000;
 /// older drops first.
 const int kMinKeptTurns = 4;
 
-/// Build the wire payload for `/ai/chat` from the persisted [history]
+/// Build the wire payload for the chat runtime from persisted [history]
 /// plus a freshly-typed [pending] user message.
 ///
 /// Local-only roles (`system`, `error`) and partially-streamed assistant

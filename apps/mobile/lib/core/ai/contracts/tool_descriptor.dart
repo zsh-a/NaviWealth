@@ -1,10 +1,11 @@
 /// Code-level metadata for an AI tool.
 ///
-/// Mirrors the Rust ToolDescriptor 1:1. The cloud uses this metadata
-/// to enforce risk_policy at the orchestrator (not at the prompt). The
-/// mobile mirror exists so the device router can inspect an upcoming
-/// tool call and decide whether the current ContextPack tier and
-/// consent state allow it.
+/// Metadata for the active device-dispatchable AI tools.
+///
+/// W-D7 removed the cloud AI backend, so this catalog no longer mirrors
+/// a Rust registry. Keep it aligned with `kDeviceTools`: a descriptor
+/// here means the tool can be advertised and dispatched by the device
+/// runtime.
 library;
 
 import 'intent.dart' show RiskLevel, RiskLevelWire;
@@ -81,7 +82,7 @@ extension SideEffectWire on SideEffect {
 }
 
 /// Which Read Model layer this tool reads (docs/ai-architecture.md §4.3).
-/// `null` = not a Read Model consumer (e.g., proposals, inline compute_xirr).
+/// `null` = not a Read Model consumer (for example proposal tools).
 enum ReadModelLayer { snapshot, analytical, scopedDetail }
 
 extension ReadModelLayerWire on ReadModelLayer {
@@ -179,21 +180,6 @@ class ToolDescriptor {
 
 const allToolDescriptors = <ToolDescriptor>[
   ToolDescriptor(
-    name: 'compute_net_worth',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
-  ),
-  ToolDescriptor(
-    name: 'compute_xirr',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
     name: 'get_anomaly_flags',
     access: Access.read,
     risk: RiskLevel.suggest,
@@ -250,26 +236,11 @@ const allToolDescriptors = <ToolDescriptor>[
     readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
-    name: 'get_journal_entries',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
     name: 'get_market_cap_breakdown',
     access: Access.read,
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.snapshot,
-  ),
-  ToolDescriptor(
-    name: 'get_monthly_spend_by_category',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
     readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
@@ -297,14 +268,6 @@ const allToolDescriptors = <ToolDescriptor>[
     readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
-    name: 'get_risk_alerts',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.snapshot,
-  ),
-  ToolDescriptor(
     name: 'get_subscription_changes',
     access: Access.read,
     risk: RiskLevel.suggest,
@@ -314,14 +277,6 @@ const allToolDescriptors = <ToolDescriptor>[
   ),
   ToolDescriptor(
     name: 'get_transfer_links',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
-  ),
-  ToolDescriptor(
-    name: 'get_xirr_summary',
     access: Access.read,
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,

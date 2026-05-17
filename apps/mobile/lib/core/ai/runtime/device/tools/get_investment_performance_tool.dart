@@ -30,7 +30,7 @@ class GetInvestmentPerformanceTool implements DeviceTool {
       '每行: asset_id / asset_currency / base_currency / market_value_base / '
       'cost_basis_base / unrealized_pnl_base / weight / holding_days? / as_of。'
       '典型问题：「我现在赚最多的是哪个标的」「AAPL 持仓现值」「未实现盈亏总计」。'
-      '需要全时间窗口 XIRR 走 get_xirr_summary；自定义时间窗 XIRR 走 compute_xirr。';
+      '端侧运行时当前不广告 XIRR 工具；需要收益解释时使用本工具的 per-asset return 字段。';
 
   @override
   Map<String, Object?> get inputSchema => {
@@ -38,8 +38,7 @@ class GetInvestmentPerformanceTool implements DeviceTool {
     'properties': {
       'base_currency': {
         'type': 'string',
-        'description':
-            '可选；只看某一 base currency（一般用户的整个 portfolio 都是同一个）。',
+        'description': '可选；只看某一 base currency（一般用户的整个 portfolio 都是同一个）。',
       },
     },
   };
@@ -98,7 +97,7 @@ class GetInvestmentPerformanceTool implements DeviceTool {
       'source': 'device_analytical_read_model',
       'note':
           'device-sourced：端侧 holdingsSnapshotProvider 算出 per-asset 持仓快照后上报。'
-          'decimal 字段为字符串避免精度丢失。XIRR 不在此 read model，走 get_xirr_summary。',
+          'decimal 字段为字符串避免精度丢失。端侧运行时当前不广告 XIRR 工具。',
     };
   }
 }

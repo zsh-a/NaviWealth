@@ -4,7 +4,8 @@
 /// [RuntimeRoutingAiChatApiClient] over the [DeviceChatRunner]. This
 /// file keeps the shared contract types: the [AiChatApiClient]
 /// interface `ChatRepository` injects, the [WireMessage] turn shape,
-/// and the error sentinels `ChatRepository` still classifies.
+/// and the request-level error sentinel `ChatRepository` still
+/// classifies.
 library;
 
 import 'package:dio/dio.dart';
@@ -56,17 +57,3 @@ class AiChatRequestException implements Exception {
   @override
   String toString() => 'AiChatRequestException($statusCode): $message';
 }
-
-/// Sentinel for a stalled stream. `ChatRepository` still catches this
-/// type to render the idle-timeout message; retained as part of the
-/// stable error contract.
-class SseIdleTimeout implements Exception {
-  const SseIdleTimeout();
-
-  @override
-  String toString() => 'SseIdleTimeout';
-}
-
-/// Maximum gap before a stream is considered stalled. Part of the
-/// retained error contract.
-const Duration kSseIdleTimeout = Duration(seconds: 30);

@@ -3,7 +3,7 @@
 > 状态: Phase 1–4 已落地（contracts + router + trace + skills + query plan + semantic memory），**Read Models 三层全部贯通**（Snapshot 5 张 / Analytical 7 个 / Scoped Detail 三表），**P1 全部完成**（Runtime 抽象 / Trace 持久化 / Undo 持久化 / Tool descriptor 扩展 / Policy enforce / tools 拆分起步），**P2 全部完成**（AI 透明度审计页 / ContextPack→system prompt / Drift QueryPlanExecutor + NetWorthTrendPlan / AiTrace terminal reason 细分 / ProposalEnvelope.source / ContextPack 收缩）。Phase 5（端侧 LLM）未实现。
 > **Wave 进度**: Wave 1–44 完成（Wave 41–44 = 测试准出 P0：Red CI cleanup + Schema-as-contract gates + AI surface 视觉回归 + AI 回归 corpus）— 详见 §8 实现状态表与 Wave 落地清单。**§5 Interaction Grammar + 测试准出 P0 全部完成；CI 现已有可信赖的 baseline（known-failing-tests pinned）+ 双侧 enum/l10n 漂移自动检测 + AI 视觉 token 回归保护 + 回归 corpus 静态契约**。剩余主线: 测试准出 P1（A11y baseline / 性能预算 / Prompt injection corpus / backend HTTP 集成测试）；Phase 5 端侧 LLM；long-window `subscription_changes`；Analytical 层 P2 四模型；可选 swipe-to-apply 真实手势。
 > **§5 是 UI/UX 契约**: 任何新 AI 入口 / 渲染 / 确认面必须满足 §5.8 硬约束。
-> 适用范围: `lib/core/ai/` (Flutter) 与 `apps/backend/src/ai/` (Rust Worker)。
+> 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/` (Flutter)。W-D7 已删除 `apps/backend/src/ai/`；backend 仅保留 auth / sync / D1 迁移。
 
 ---
 
@@ -111,7 +111,7 @@ Router    = 在二者之间按能力 / 风险 / 隐私 / 在线性 / 延迟选�
 
 | 契约 | Dart 路径 | Rust 路径 | 用途 |
 |------|-----------|-----------|------|
-| `ContextPack` | `lib/core/ai/contracts/context_pack.dart` | `apps/backend/src/ai/context/context_pack.rs` | 辅助通道；端侧派生信号 + 偏好 + 路由 + freshness hint |
+| `ContextPack` | `lib/core/ai/contracts/context_pack.dart` | — | 辅助通道；端侧派生信号 + 偏好 + 路由 + retained freshness hint |
 | `BaseContext` / `TaskContext` | 同上 | 同上 | 拆分稳定层 + 任务层 |
 | `PrivacyBudget` (small/standard/large) | `privacy_budget.dart` | `context_pack.rs` | 4KB / 16KB / 64KB 字节硬上限 |
 | `DisclosureRequest/Response` | `scoped_disclosure.dart` | `disclosure.rs` | 兜底通道；freshness/privacy/draft gate 触发的最小补丁协议 |
@@ -1011,32 +1011,24 @@ Chat → Router(search, info, no sideEffect)
   云端零调用，零外泄
 ```
 
-### 场景 C — "帮我看下今年 FIRE 进度并建议调整"（含主通道与 freshness gate）
+### 场景 C — "帮我看下今年 FIRE 进度并建议调整"（W-D7 device runtime）
 
 ```
 Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
-  → ContextCompressor.compress() 编 ContextPack（端侧派生信号 + 偏好 + freshness hint）
-  → AiRouter.decide() → CloudAnthropicRuntime
-  → AiRouter.seedTrace() 生成 AiTrace seed (requestId == assistantMessageId)
+  → ContextCompressor.compress() 编 ContextPack（端侧派生信号 + 偏好 + retained freshness hint）
+  → AiRouter.decide() 生成历史 routing seed
+  → 若 deviceLlmAvailableProvider=true：trace 改写为 device_llm_direct
   → AiChatApiClient.chat({contextPack, messages})
-  → POST /ai/chat
-     Backend:
-       - ChatRequest 反序列化
-       - pack.assert_version(CURRENT_CONTEXT_PACK_VERSION) → 4xx 若不兼容
-       - pack.assert_budget()                              → 4xx 若超 tier
-       - ToolCtx.context_tier = pack.budget.tier
-       - run_tool_loop:
-           per tool_call get_holdings →
-             read_models::holdings_snapshot::get(user_id)  ★ 主通道
-             → tool_result 附带 freshness.read_model_hlc
-           客户端检查: device.lastLocalHlc > read_model_hlc?
-             命中 → request_freshness_refresh 触发 ScopedDisclosure（兜底通道）
-       - per tool_call → risk_policy::check_tool_call() → 当前仅日志
-  → SSE 回流，端侧渲染
-  → AiTraceBuilder per tool_use/tool_result 累加 duration
+  → RuntimeRoutingAiChatApiClient → DeviceLlmRuntime
+     - AnthropicClient 直连用户 provider
+     - DriftDeviceToolDispatcher 仅广告 kDeviceTools
+     - per tool_call get_holdings / get_net_worth_summary →
+       直接读本机 Drift / provider，数据不经我方服务器
+  → Dart stream events 回流，端侧渲染
+  → AiTraceBuilder 记录 turn / llm / tool spans
   → finally: AiTraceStore.append(trace.finalize())
   → AiTransparencyBadge(messageId)：
-     "本地数据 + 云端推理 · 未上传原始交易明细 · 2 个工具 · 1.4s"
+     "端侧直连模型 · 未经我方服务器 · 2 个工具 · 1.4s"
 ```
 
 ## 8. 实现状态
@@ -1052,17 +1044,17 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | **★ Read Models — Snapshot 层** | `holdings_snapshot` / `net_worth_snapshot` / `monthly_spend_by_category` / `cashflow_buckets` / `net_worth_daily` / `asset_allocation_snapshot` | ✅ 全部贯通（cloud-projected via `Projection` trait + lazy refresh）|
 | **★ Read Models — Analytical 层 P1** | `recurring_patterns` / `anomaly_flags` / `refund_links` / `transfer_links` / `investment_performance` / `subscription_changes` | ✅ 六个 device-sourced 模型全部贯通；`subscription_changes` 当前仅检测**本次 chat 窗口内**的变化（长历史需 OpLog 持久化 `recurring_patterns`） |
 | **★ Read Models — Analytical 层 P2** | `xirr_snapshot` | ✅ cloud-projected (Newton-Raphson 确定性算法) |
-| **★ Read Models — Scoped Detail 层** | `read_account_window` / `read_asset_window` / `read_category_window` | ✅ 含 purpose 必填 + 硬限额 + sanitised 字段 + HMAC-SHA256(user_id, merchant) 哈希；`get_journal_entries` 仍在表中（schema 隐藏，dispatch 保留兼容），待去除 |
+| **★ Read Models — Scoped Detail 层** | `read_account_window` / `read_asset_window` / `read_category_window` | ✅ 含 purpose 必填 + 硬限额 + sanitised 字段；W-D7 后端侧推理直接读 Drift，`get_journal_entries` 已从 active descriptor / registry 中移除 |
 | **★ Schema 公约 + Freshness gate** | `source_hlc_watermark` / `refreshed_at` / `schema_version` / `calculation_version`；SSE tool_result.freshness + 端侧比对 + Phase 2 `force_refresh_read_models` 提示 | ✅ Phase 1 (logging) + Phase 2 (hint) 落地，下一次 chat 自动带 `freshnessHint` |
 | **★ ToolDescriptor 扩展** | `allowed_runtimes` (cloud/device bitset) + `side_effect` (None/DeviceLocalWrite/ExternalCall) + `read_model_layer` (Snapshot/Analytical/ScopedDetail) | ✅ 27 个描述符全部填充；mobile 镜像（`tool_descriptor.dart`）字段对齐 |
 | **★ risk_policy enforced** | dispatch denied 分支返回合成 `tool_result {error: "policy_denied", policy, tool, message}` | ✅ Wave 21 落地；LLM 看到标准 error 形态可继续工作 |
 | **★ AiRuntime + RuntimeRegistry** | `AiRuntime` trait / `RuntimeId` / `CloudAnthropicRuntime` (wraps existing `AiChatApiClient`) / `RulesDeviceRuntime` stub / registry provider | ✅ 抽象层就位；ChatRepository 暂未改走 registry（Phase 5 接入端侧 runtime 时再切） |
 | **★ AiTraceStore 持久化** | Drift 表 `ai_traces` (request_id PK + owner partition) + `DriftAiTraceStore`；provider 自动从 in-memory 切换到 Drift | ✅ Wave 23 落地；30 天清理由 caller 调度 |
 | **★ Undo stack 持久化** | Drift 表 `ai_undo_stack` (token PK + expires_at) + `DriftUndoStack` (put/take 原子 / pruneExpiredBefore) | ✅ Wave 24 落地；closure-based `LocalImmediateWriteExecutor` 保留作为内存路径，需持久化的 caller 直接用 `DriftUndoStack` |
-| **★ `tools.rs` 拆分** | `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法提到 `tools/xirr.rs` | ✅ Wave 25 起步；剩余 read/propose 二级拆分待后续增量 |
+| **★ 旧 cloud tools.rs 拆分** | `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法提到 `tools/xirr.rs` | ✅ Wave 25 历史项；W-D7 已删除后端 AI 目录，active tool catalog 改为端侧 `kDeviceTools` |
 | **Phase 5** | 端侧 LLM runtime（§4.6：用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · cloud 先并存后删） | 🚧 W-D1–4/4.2/4.2b/6 + 桌面支持已落；W-D5/4.3/4.4/4.5/4.2c/7 待续 |
 
-**ToolDescriptor 总数**: 27（Read 20 + Propose 5 + 兼容保留 2）— 见 `apps/backend/src/ai/policy/tool_policy.rs`。每条描述符含七个轴：`name` / `access` / `risk` / `requires_confirmation` / `allowed_context_tier` / `allowed_runtimes` / `side_effect` / `read_model_layer`。`risk_policy.rs::every_dispatch_target_has_a_descriptor` 与 `tools.rs::schemas_advertise_all_dispatch_targets` 双向同步。
+**ToolDescriptor 总数**: 22（Read 17 + Propose 5，全部为 active device tools）— 见 `apps/mobile/lib/core/ai/contracts/tool_descriptor.dart` 与 `apps/mobile/lib/core/ai/runtime/device/tools/device_tool_registry.dart`。每条描述符含七个轴：`name` / `access` / `risk` / `requires_confirmation` / `allowed_context_tier` / `allowed_runtimes` / `side_effect` / `read_model_layer`。`test/core/ai/runtime/device/device_degradation_test.dart` 双向保证 descriptor 与 `kDeviceTools` 对齐。
 
 **测试覆盖**: backend **140 tests** (`cargo test --lib`，P1 增量 +10：asset_allocation aggregate × 4 / tool_policy invariant × 4 / policy_denied shape × 2；P2 增量 +9：system_prompt_extension formatter × 9) + mobile **158 core/ai tests**（含 P1 的 analytical_uploads × 8 / ai_runtime × 5 / drift_ai_trace_store × 5 / drift_undo_stack × 6 / chat_repository × 23 + freshness gate；P2 的 AiTrace terminal_reason round-trip × 2）。`flutter analyze --fatal-infos lib` 与 `cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings` 均干净。剩余 9 个 widget 渲染器失败为 Wave 18 之前的预存遗留（`tool_invocation_renderers_test.dart::_expandCard` 找不到目标 widget），与本次 P1/P2 无关。
 
@@ -1092,7 +1084,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 22 | `AiRuntime` + `RuntimeRegistry` | `lib/core/ai/runtime/ai_runtime.dart`，`CloudAnthropicRuntime` + `RulesDeviceRuntime` + 5 个 registry 测试 |
 | 23 | `AiTraceStore` Drift 持久化 | Drift 表 `ai_traces` + `DriftAiTraceStore` + provider 自动切换 + 5 个 round-trip 测试 |
 | 24 | `LocalImmediateWriteExecutor` Drift 持久化 | Drift 表 `ai_undo_stack` + `DriftUndoStack` (原子 take) + 6 个测试 |
-| 25 | `tools.rs` 拆分起步 | `apps/backend/src/ai/tools/` 目录化；XIRR 核心抽离到 `tools/xirr.rs` |
+| 25 | `tools.rs` 拆分起步（历史） | `apps/backend/src/ai/tools/` 目录化；XIRR 核心抽离到 `tools/xirr.rs`。W-D7 后该后端目录已删除 |
 | 26 | AI 透明度审计页 | `settings/ui/ai_transparency_page.dart` 列表 + 详情；Settings 入口；`/settings/ai-transparency` + `/:requestId` 子路由 |
 | 27 | ContextPack → system prompt | `ai/context/system_prompt_extension.rs`：route/base/signals/freshness hint/uploads-by-kind 概要追加在 SYSTEM_PROMPT 之后（不替代）；9 个 formatter 测试 |
 | 28 | Drift-backed QueryPlanExecutor | `core/ai/local/skills/drift_query_plan_executor.dart` — `journalExpensesStreamProvider.future` → TransactionInput → 委托给 `InMemoryQueryPlanExecutor` |
@@ -1117,6 +1109,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 | 45 | **Opik 风格 span 可观测性（取代旧 flat trace 格式）** | 新 `lib/core/ai/contracts/ai_span.dart`（`AiSpan` 层级 span：`turn/llm/tool` × `parentId` × `startOffsetMs`/`durationMs` × `SpanTokens`/`model`/`stop`/`status`/`input`/`output`，自包含不依赖 features 层）成为**唯一执行记录**。**移除旧格式（不向后兼容）**：删 `TraceToolCall` / `AiTrace.toolCalls` / `AiTraceBuilder.addToolCall` / `ai_trace_timeline.dart`（`buildTimeline`/`AiTraceTimeline`/`TraceEvent` 全删）+ 其 golden（`ai_trace_timeline.png`）+ 其测试；`ChatRepository` 删 `toolStarts`/`_isToolError`；`ingest` 改发 tool span；早于 span 模型的旧 trace 行无链路（详情页提示，30 天 prune 自然清理）。`AiTrace` 保留 `disclosures`/`stale`/`terminal`/`invocation` + 新 rollup（`tokenTotals`/`llmRoundCount`/`errorSpanCount`/`toolSpans`），徽章/列表改用 `toolSpans`。埋点：新增 `SpanEvent` AiChatEvent 变体，`DeviceAgentLoop` 每个 LLM round / tool dispatch 发射（token/model/stop/IO/错误码精确捕获），`ChatRepository` 喂 `AiTraceBuilder.addSpan`（按 trace start 锚定偏移）。隐私/体积：`capturePayloads`（默认 metadata-only，verbose `aiTraceVerboseProvider` 经 SharedPreferences 持久化，逐 turn 快照），30 天 prune 兜底。UI：新 `ai_trace_waterfall.dart`（`buildSpanTree` + 瀑布树 + span 详情面板 + 聚合头 p50/p95/token/¥估算 + 仅错误筛选）+ `core/ai/visual/ai_json_view.dart`（可折叠 JSON 树 + 复制）；详情页统一走 waterfall。`flutter analyze --fatal-infos lib test` 全绿 + 456 测试零回归（旧 timeline 测试随文件删除） |
 | 46 | **多 Provider Key + 切换（移除 opt-in 开关）** | `LlmCredentials` 由单 key 改为容器 `{ profiles: List<LlmProfile>, activeId }`：新 `LlmProfile{id,name,provider,apiKey,baseUrl?,model?}`，`active`/`isUsable`/`upsert`/`withActive`/`remove` + `v2` JSON（`decode` 一次性迁移旧 `v1` 单 key blob → 单 active profile）。**删除 `enabled` opt-in 开关**——W-D7 删 cloud 后无回落，active profile 即意图（`isUsable = active?.hasKey`）。Notifier 改 `upsertProfile`/`setActive`/`removeProfile`/`clearAll`（删 `save`/`setEnabled`）；`LlmConfig.fromCredentials`→`fromProfile`（profile.model 覆盖优先）；`deviceLlmRuntimeProvider` 用 `creds.active`。设置页重写为 profile 卡片列表（点按切换 + 编辑/删除 + 内联编辑器：名称/Key/Base URL/模型）+ 状态行，无开关。**连通性测试**：新 `llm_connectivity.dart`（`LlmConnectivityProbe` 走 `LlmConfig.fromProfile`→`AnthropicClient.complete` 同一真实路径发 1-token ping；`classifyLlmProbeException` 纯函数把 HTTP 结果分类为 ok/鉴权失败/端点不存在/限流/请求被拒/网络不可达）+ `llmConnectivityProbeProvider`；编辑器内「测试连通性」按钮（测试当前输入，未保存亦可；编辑时留空 Key 用已存 Key）+ 内联结果行 + 分级 toast。`deviceLlmAvailableProvider` 语义不变（平台 && active 有 key）。测试重写（model/迁移/容器 ops/notifier/可用性）+ `fromProfile` + 新 `llm_connectivity_test`（分类映射 6 例 + keyless 短路无网络）；`flutter analyze --fatal-infos lib test` 全绿 + core/ai + settings/ai_chat 套件零回归 |
 | 47 | **修复多轮 CancelToken 中毒（round-2 provider_error）** | Bug：`AnthropicClient.streamMessages` 的 `controller.onCancel` 在**每次 SSE listener 结束**（即每轮正常收尾）时 `cancelToken.cancel('listener cancelled')`；`DeviceAgentLoop._runInner` 把**同一 turn 级 token** 跨轮复用并直接交给 `_streamFn` → round-1 正常结束即取消该 token → round-2 拿到已取消 token，Dio 立即抛 `DioException [request cancelled]` → loop `catch`（`aborted()==false`）记 `round-2 provider_error` + `ErrorEvent` + `DoneEvent('error')`。**故凡含 ≥1 工具调用的轮次（如 `propose_account_create`）round-2 必挂**；单轮无 tool_use 不受影响；Wave 45 span 仪表只是让它从被吞没变为**可见**（也是红气泡 issue 的同源——proposal 成功但 turn 被判 errored）。修复：`_runInner` 每轮新建 disposable 子 `CancelToken`，turn 级 token 经 `whenCancel` 向当前轮 token 单向传播（用户/listener/timeout 取消仍即时中断在飞请求），并在轮顶加 `cancelToken?.isCancelled` 守卫；`AnthropicClient.onCancel` 的副作用从此只触及一次性子 token，turn token 跨轮保持干净。新回归测试 `_TokenPoisoningAdapter`（精确复刻真实 client 的 onCancel 中毒 + 已取消 token 拒绝）断言 round-2 仍执行、无 `provider_error`、`DoneEvent` 为 `end_turn`/rounds=2（旧代码下必失败）。`flutter analyze --fatal-infos lib test` 全绿 + core/ai 456 + ai_chat 套件零回归 |
+| 48 | **历史兼容清理 / active catalog 对齐** | 移除 active ToolDescriptor 中未注册工具：`get_journal_entries`、`compute_xirr`、`compute_net_worth`、`get_monthly_spend_by_category`、`get_risk_alerts`、`get_xirr_summary`；descriptor 总数 28→22，并新增双向测试保证 descriptor 与 `kDeviceTools` 一一对应。Regression corpus / intent preferredReadModels 只引用当前设备运行时会广告的工具；工具 prompt 文案不再建议调用已删除 cloud-only 工具。`docs/ai-protocol.md` 从 `/ai/chat` v1/v2 SSE 兼容文档改为 W-D7 设备运行时事件契约；`tool/check-tool-descriptors.sh` 与 `tool/check-enum-mirror.sh` 不再调用已删除 backend dump / Rust mirror，改跑 Dart contract tests。 |
 
 ## 9. TODO
 
@@ -1128,7 +1121,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [x] ~~**Read Model schema 公约**~~ — 五字段公约 + `Freshness` / `Projection` 抽象 (`apps/backend/src/ai/read_models/freshness.rs`, `projection.rs`)
 - [x] ~~**`tools.rs` facade 改造**~~ — `get_holdings` / `compute_net_worth` / `get_industry_breakdown` / `get_geo_breakdown` / `get_market_cap_breakdown` / `get_monthly_spend_by_category` / `get_net_worth_summary` / `get_cashflow_buckets` 全部从 read model 读，带 `freshness` 元数据
 - [x] ~~**Freshness gate 协议**~~ — SSE `tool_result.freshness` (Phase 1 logging + Phase 2 `pendingFreshnessHintProvider` → 下次 chat 携带 `forceRefreshReadModels` 提示) — 见 `apps/mobile/lib/features/ai_chat/data/providers.dart`、`apps/mobile/lib/features/ai_chat/state/chat_sync_gate.dart`
-- [x] ~~**废弃 `get_journal_entries` → Scoped Detail 工具族**~~ — `read_account_window` / `read_asset_window` / `read_category_window` 落地：必填 `purpose` + 硬限额 ≤ 50 + HMAC-SHA256(user_id, merchant) 哈希 + sanitised 字段 + 共享 `scoped_detail/common.rs` 帮手；`get_journal_entries` schema 已从 LLM 视野隐藏（dispatch 保留以防回归）
+- [x] ~~**废弃 `get_journal_entries` → Scoped Detail 工具族**~~ — `read_account_window` / `read_asset_window` / `read_category_window` 落地：必填 `purpose` + 硬限额 ≤ 50 + sanitised 字段；W-D7 端侧推理后原始字段不出设备，`get_journal_entries` 已从 active descriptor / registry 中移除
 
 ### P1 — 现有路径稳定 + 启用生产（✅ 全部完成 Wave 18–25）
 
@@ -1139,8 +1132,8 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 - [x] ~~**AiTraceStore 持久化**~~ — `DriftAiTraceStore` + `ai_traces` 表 (request_id PK + owner partition + started_at index)。Provider 自动从 in-memory 切换到 Drift。30 天清理由 caller 触发 `pruneOlderThan(...)`
 - [x] ~~**LocalImmediateWriteExecutor 持久化**~~ — `DriftUndoStack` + `ai_undo_stack` 表 (token PK + expires_at)。原子 `take(token)` 通过事务保证两次 undo 不并发执行
 - [x] ~~**risk_policy advisory → enforced**~~ — `tools::dispatch` denied 分支直接 return `policy_denied_result(name, reason)` 合成 `{error: {code: "policy_denied", policy, tool, message}, policy_denied: true}`，LLM 看到的就是标准 tool error
-- [x] ~~**`tools.rs` 文件拆分**~~ — `apps/backend/src/ai/tools/` 目录化 + `xirr` 核心算法迁到 `tools/xirr.rs`（Wave 25）。剩余 read/propose 二级拆分作为后续增量
-- [x] ~~**`ToolDescriptor` 加 `allowed_runtimes` + `side_effect` + `read_model_layer`**~~ — Wave 20：27 描述符全部填充，mobile `tool_descriptor.dart` 镜像对齐，含 invariant tests（proposals 必有 DeviceLocalWrite side effect / reads 必无 side effect / ScopedDetail 必至少 Standard tier / 每条都允许 cloud）
+- [x] ~~**`tools.rs` 文件拆分**~~ — Wave 25 历史项；W-D7 删除后端 AI 目录后，active tool catalog 归端侧 `kDeviceTools` 所有
+- [x] ~~**`ToolDescriptor` 加 `allowed_runtimes` + `side_effect` + `read_model_layer`**~~ — Wave 20 建表，Wave 48 对齐 W-D7：22 个 active device descriptors 全部填充，mobile `tool_descriptor.dart` 与 `kDeviceTools` 双向 invariant tests（proposals 必有 DeviceLocalWrite side effect / reads 必无 side effect / ScopedDetail 必至少 Standard tier / 每条都允许 device）
 
 ### P2 — 增强（✅ 全部完成 Wave 26–32）
 
@@ -1189,7 +1182,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
   - [~] **W-D4.5 propose_*（框架 + proof tool 完成）** — 解锁端侧**写**路径。`runtime/device/tools/propose/proposal_plan.dart` 逐字 port `proposals.rs` 的信封（`readyPlan`/`needsClarification`/`proposalBadRequest`）+ 引用解析（`resolveAccount` over 端侧 typed `Account` + `nameMatches` 语义）+ 类目模糊匹配（`matchExpenseCategory`/`kExpenseCategories` 闭集 + top-3 fallback）+ `isRfc3339` 严格。`propose_expense_tool.dart` schema/desc/逻辑逐字 port，返回与 cloud **逐字一致**的 `ready_plan`/`needs_clarification` JSON → W-D3 loop 的 propose 拦截 + 现有 `ProposalEnvelope`/`proposal_applier` 确认流原样消费（§4.5，端侧绝不自动写）。registry 现 **10 工具**。W-D6 静态契约改为「device 工具可为 deviceLocalWrite proposal，但绝不可 externalCall」（§4.5 真不变式）。剩余 propose_* 同 scaffolding 增量（W-D4.5b）。437 ai/ai_chat/ingest 测试零回归
   - [~] **W-D4.5b（2/4 完成）** — `propose_account_create`（纯，无 provider；`type` 闭集校验→needs_clarification）+ `propose_asset_valuation`（`resolveAsset` over `allAssetsStreamProvider`，manual-valuation 闭集 gate）。scaffolding 加 `resolveAsset`/`proposalNewId`/共享 input helpers（`proposalOptionalStr`/`proposalRequireNum`/`proposalRequireStr`/`formatProposalAmount`，propose_expense 改用）。**§10 关键取舍**：device propose_asset_valuation 用 backend `MANUAL_VALUATION_ASSET_TYPES`（含 realEstate/vehicle，命名 `kProposalManualValuationTypes`）——**故意区别于** feature 侧更严的 `kManualValuationAssetTypes`（enums.dart，不含 realEstate/vehicle），保证 device 与 cloud plan 一致而非与某 feature 一致。registry 现 **12 工具**。剩余 propose_trade + propose_liability_payment → W-D4.5c。441 ai/ai_chat/ingest 测试零回归
   - [~] **W-D4.5c（1/2 完成）** — `propose_liability_payment`：scaffolding 加 `resolveLiability`（over `liabilitiesStreamProvider`，narrow_rows 语义同 resolveAccount）；逐字 port（liability 必解析→None/Many 走 needs_clarification、from_account 可选→warn、currency=explicit??liability.currency、RFC3339 date、payload `type:liabilityPayment`）。registry 现 **13 工具**（10 读 + 4 写）。`propose_trade` 完成（逐字 port：type 闭集 / qty>0 / asset+account 必解析 → None·Many 走 needs_clarification / `currency=explicit??account.currency` / RFC3339 trade_date / `format_args_qty` 整数→「N 股」/ price·fee 省略 warn / payload 13 字段 / summary buy·sell·transferIn·transferOut·valuationAdjust 动作映射）。**W-D4.5 系列全部完成 = 5 个 propose_* 写工具全端侧化**，复用 `proposal_plan.dart` 单一 scaffolding。registry 现 **14 工具（10 读 + 4… 实为 5 写）**。446 ai/ai_chat/ingest 测试零回归
-  - [x] ~~**W-D7** 删除 cloud AI 后端，端侧成为唯一 runtime~~ — **按用户明确决策提前执行（早于 W-D4.2c 4/4）**。Backend：`git rm` 整个 `apps/backend/src/ai/`（79 文件，含全部 inline 测试）+ `routes/ai.rs`/`routes/ai/`（chat）+ `routes/ingest.rs`（cloud Vision `/ingest/parse`——唯一外部 `crate::ai` 依赖，被 `ai/` 删除强制连带，符合「device-only / web 失去 AI」的既定后果）+ `src/bin/tool_descriptor_dump.rs`（其唯一用途是 dump 已删的 `ai::tools` registry 给 §10 镜像）；改 `lib.rs`（去 `pub mod ai;` + `/ai/chat` + `/ingest/parse` 路由）、`routes/mod.rs`（去 `pub mod ai;`/`pub mod ingest;`）。migrations 全保留为历史（纯 SQL，无 Rust 耦合）。`cargo check --target wasm32` + `fmt --check` + `clippy -D warnings` 全绿，**19 backend 测试通过**（ai/ inline 测试随模块移除）。Mobile：`RuntimeRoutingAiChatApiClient` 去 cloud 参数 → 设备唯一，无 device 时产 `device_unavailable` `ErrorEvent`+`DoneEvent`（§4.6.4 修订：无 cloud relay，无 key 即禁用 AI 并引导填 key）；删 `DioAiChatApiClient`（保留 `AiChatApiClient`/`WireMessage`/`AiChatRequestException`/`SseIdleTimeout` 契约，`ChatRepository` 零改）；cloud ingest `DioCloudIngestClient` → `UnavailableCloudIngestClient` 桩（抛 `CloudIngestException`，controller 转为 rejectedReason，无死端点）；providers 删 `aiChatDioProvider`/`cloudAiChatApiClientProvider`，registry 去 `cloud_anthropic` 项；**`allowed_runtimes` 对账**：默认 + fromJson fallback 由 `{cloud}` flip 到 `{device}`（无描述符 override，默认即对账；registry 成员仍是真 gate，§10/本节）。`flutter analyze --fatal-infos`（lib+test）全绿，**472 ai/ai_chat/ingest 测试通过**（§4.6.4 cloud-failover 组与 `_SpyCloud` 删除，替以 device-only 行为组）。**接受的回归**：`compute_xirr`/`get_xirr_summary`/`compute_net_worth`（W-D4.2c 4/4，未端侧化）失去唯一实现；web 失去全部 AI；§4.6.4 cloud 失效转移移除——均为用户知情后明确选择「Do W-D7 now anyway」的代价
+  - [x] ~~**W-D7** 删除 cloud AI 后端，端侧成为唯一 runtime~~ — **按用户明确决策提前执行（早于 W-D4.2c 4/4）**。Backend：`git rm` 整个 `apps/backend/src/ai/`（79 文件，含全部 inline 测试）+ `routes/ai.rs`/`routes/ai/`（chat）+ `routes/ingest.rs`（cloud Vision `/ingest/parse`——唯一外部 `crate::ai` 依赖，被 `ai/` 删除强制连带，符合「device-only / web 失去 AI」的既定后果）+ `src/bin/tool_descriptor_dump.rs`（其唯一用途是 dump 已删的 `ai::tools` registry 给 §10 镜像）；改 `lib.rs`（去 `pub mod ai;` + `/ai/chat` + `/ingest/parse` 路由）、`routes/mod.rs`（去 `pub mod ai;`/`pub mod ingest;`）。migrations 全保留为历史（纯 SQL，无 Rust 耦合）。`cargo check --target wasm32` + `fmt --check` + `clippy -D warnings` 全绿，**19 backend 测试通过**（ai/ inline 测试随模块移除）。Mobile：`RuntimeRoutingAiChatApiClient` 去 cloud 参数 → 设备唯一，无 device 时产 `device_unavailable` `ErrorEvent`+`DoneEvent`（§4.6.4 修订：无 cloud relay，无 key 即禁用 AI 并引导填 key）；删 `DioAiChatApiClient`（保留 `AiChatApiClient`/`WireMessage`/`AiChatRequestException` 契约，`ChatRepository` 零改；`SseIdleTimeout` 在 Wave 48 随旧 SSE parser 清理）；cloud ingest `DioCloudIngestClient` → `UnavailableCloudIngestClient` 桩（抛 `CloudIngestException`，controller 转为 rejectedReason，无死端点）；providers 删 `aiChatDioProvider`/`cloudAiChatApiClientProvider`，registry 去 `cloud_anthropic` 项；**`allowed_runtimes` 对账**：默认 + fromJson fallback 由 `{cloud}` flip 到 `{device}`（无描述符 override，默认即对账；registry 成员仍是真 gate，§10/本节）。`flutter analyze --fatal-infos`（lib+test）全绿，**472 ai/ai_chat/ingest 测试通过**（§4.6.4 cloud-failover 组与 `_SpyCloud` 删除，替以 device-only 行为组）。**接受的回归**：`compute_xirr`/`get_xirr_summary`/`compute_net_worth`（W-D4.2c 4/4，未端侧化）失去唯一实现；web 失去全部 AI；§4.6.4 cloud 失效转移移除——均为用户知情后明确选择「Do W-D7 now anyway」的代价
 - [ ] **Phase 5 — 真实 Embedder** — 替换 `StubEmbedder` 为 MiniLM (~30MB ONNX)。`Embedder` 接口已稳定，仅换实现类。
 - [ ] **VectorStore: sqlite-vec 后端** — `InMemoryVectorStore` 在 ≥5k 文档时变慢。
 - [ ] **「不上云账户」feature + PrivacyGate UI** — 配合此 feature 上线时再做 disclosure consent UI；否则 ScopedDisclosure 仅做 freshness gate 即可。
@@ -1203,7 +1196,7 @@ Chat → providers.dart 中 _prepareChatTrace(ref, requestId)
 
 ## 10. Contract Drift Prevention
 
-NaviWealth 当前的 wire 契约（`lib/core/ai/contracts/` 与 `apps/backend/src/ai/context/`）是**双侧手写 + roundtrip test 锁死**的，约 9 个 Dart 文件 + 3 个 Rust 文件、~1500 LOC，规模可控。
+NaviWealth 当前的 active AI wire 契约在 `lib/core/ai/contracts/`，由 Dart roundtrip / static contract tests 锁死。W-D7 删除 Rust AI mirror 后，Schema-as-source 的收益下降；若未来重新引入 relay，再恢复跨语言 schema 生成。
 
 **当前阶段（Phase 1–4 已稳定，未到 Phase 5）的纪律**：
 
@@ -1275,12 +1268,12 @@ packages/ai_contracts/
 | 编码 ContextPack | `lib/core/ai/local/skills/context_compressor.dart` |
 | 添加新 plan 类型 | `lib/core/ai/local/skills/finance_query_plan.dart` (sealed) + parser + executor |
 | 添加新 rules skill | `lib/core/ai/local/skills/` 新建文件 + 加入 `skills.dart` barrel |
-| 新增工具元数据 | `apps/backend/src/ai/policy/tool_policy.rs::DESCRIPTORS` |
+| 新增工具元数据 | `lib/core/ai/contracts/tool_descriptor.dart` + `lib/core/ai/runtime/device/tools/device_tool_registry.dart` |
 | 改 router 决策 | `lib/core/ai/router/routing_policy.dart` (纯函数) |
 | 修改 wire 契约 | `lib/core/ai/contracts/` + 对应 Rust mirror，需要双侧改动 + roundtrip test |
 | 看 AI 透明度徽章 | `lib/features/ai_chat/ui/ai_transparency_badge.dart` |
-| 跑测试 | `flutter test test/core/ai/` + `cargo test --lib` |
-| **新增 Snapshot Read Model**（★ 待建） | `apps/backend/src/ai/read_models/` + `tools.rs` facade 改造 + `read_models/projection.rs` 选 sync/async/nightly 档 |
-| **新增 Analytical Read Model**（★ 待建） | 同上，但订阅端侧 ContextPack 上报，写入带 `source_device_id` |
-| **新增 Scoped Detail 工具**（★ 待建，替代 `get_journal_entries`） | `tools.rs` 中加 `read_transaction_slice` 等；必填 filter + purpose + 硬限额 |
+| 跑测试 | `flutter test test/core/ai/` + `cargo test --lib`（backend 仅 auth/sync，不含 AI） |
+| **新增 Snapshot Read Tool** | `lib/core/ai/runtime/device/tools/` 新增 `DeviceTool` + 加入 `kDeviceTools` + `tool_descriptor.dart` |
+| **新增 Analytical Read Tool** | 同上；若为端侧 detector 输出，优先复用 `lib/core/ai/local/skills/` |
+| **新增 Scoped Detail 工具** | `lib/core/ai/runtime/device/tools/read_*_window_tool.dart` 模式；必填 filter + purpose + 硬限额 |
 | **新增 AiRuntime**（★ 待建） | `lib/core/ai/runtime/` 实现 `AiRuntime` + 在 `RuntimeRegistry.register()` |

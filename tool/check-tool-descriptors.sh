@@ -2,23 +2,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKEND_JSON="$(mktemp)"
-MOBILE_JSON="$(mktemp)"
-trap 'rm -f "$BACKEND_JSON" "$MOBILE_JSON"' EXIT
 
-(cd "$ROOT/apps/backend" && cargo run --quiet --bin tool_descriptor_dump) \
-  > "$BACKEND_JSON"
-(cd "$ROOT/apps/mobile" && dart run tool/dump_tool_descriptors.dart) \
-  | awk 'BEGIN { found = 0 } {
-      if (!found) {
-        start = index($0, "[")
-        if (start > 0) {
-          print substr($0, start)
-          found = 1
-        }
-      } else {
-        print
-      }
-    }' > "$MOBILE_JSON"
-
-diff -u "$BACKEND_JSON" "$MOBILE_JSON"
+# W-D7 removed the backend AI registry and its `tool_descriptor_dump`
+# binary. The active contract is now mobile-local: every descriptor in
+# `tool_descriptor.dart` must correspond to a registered device tool,
+# and every registered device tool must have descriptor metadata.
+cd "$ROOT/apps/mobile"
+flutter test \
+  test/core/ai/contracts/contracts_roundtrip_test.dart \
+  test/core/ai/runtime/device/device_degradation_test.dart

@@ -47,10 +47,6 @@ const _userCancelledReason = 'user cancelled';
 /// UI can flip from "streaming" back to "idle" deterministically.
 enum SendOutcome { completed, errored, cancelled }
 
-/// Sentinel error message used when [SseIdleTimeout] fires. The UI layer
-/// should resolve to a localized string when displaying.
-const kIdleTimeoutError = '连接已中断 (无新数据)';
-
 /// Combines the chat HTTP client with persistence. Owns the message
 /// timeline for one session: writes the user turn synchronously, then
 /// drives the SSE stream into the assistant turn row, updating it
@@ -257,9 +253,6 @@ class ChatRepository {
     var sawDone = false;
 
     try {
-      // The idle watchdog lives in the runtime layer; [SseIdleTimeout]
-      // is its sentinel (the cloud SSE transport that originally owned
-      // it was removed in W-D7). We only surface that sentinel here.
       final stream = _api.chat(
         session: session,
         messages: wireMessages,
@@ -442,16 +435,7 @@ class ChatRepository {
         await _store.updateMessage(assistant);
       }
     } catch (e) {
-      if (e is SseIdleTimeout) {
-        outcome = SendOutcome.errored;
-        terminalReason = TerminalReason.streamError;
-        assistant = assistant.copyWith(
-          status: ChatMessageStatus.errored,
-          errorMessage: kIdleTimeoutError,
-          stopReason: ChatStopReason.error,
-        );
-        await _store.updateMessage(assistant);
-      } else if (_isUserCancelled(localCancel)) {
+      if (_isUserCancelled(localCancel)) {
         outcome = SendOutcome.cancelled;
         terminalReason = TerminalReason.userCancel;
         assistant = assistant.copyWith(

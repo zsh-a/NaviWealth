@@ -19,9 +19,9 @@ enum ChatGateOutcome {
   degraded,
 }
 
-/// Gate that runs immediately before every `/ai/chat` send: if there are
-/// any unsynced local writes, kick the SyncEngine so the AI backend's D1
-/// view catches up before the model's tools run against it.
+/// Gate that runs immediately before every chat send: if there are any
+/// unsynced local writes, kick the SyncEngine so cross-device state
+/// has the best chance to settle before the model reads local Drift.
 ///
 /// The gate is best-effort. We bound the wait to [timeout] (default 5 s)
 /// so a flaky network can never block the chat input — the spec's

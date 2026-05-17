@@ -3,10 +3,8 @@
 /// Faithful Dart port of
 /// `apps/backend/src/ai/adapters/anthropic/event_map.rs`. The backend
 /// buffers the whole body then maps; on device we stream incrementally
-/// (the project values progressive rendering — see
-/// `features/ai_chat/data/sse_parser.dart`), so the framing reuses that
-/// proven approach while [mapAnthropicFrame] mirrors `map_sse_frame`
-/// 1:1 for frame-level parity tests.
+/// for progressive rendering. [mapAnthropicFrame] mirrors
+/// `map_sse_frame` 1:1 for frame-level parity tests.
 ///
 /// **Deliberate divergence**: a malformed/non-JSON frame is skipped
 /// (yields no events) rather than failing the whole stream. The Rust
@@ -103,9 +101,7 @@ List<LlmStreamEvent> _mapContentBlockStart(
       if (text is String && text.isNotEmpty) return [LlmThinkingDelta(text)];
       return const [];
     case 'tool_use':
-      return [
-        LlmToolCallStart(id: id ?? '', name: name ?? ''),
-      ];
+      return [LlmToolCallStart(id: id ?? '', name: name ?? '')];
     default:
       return const [];
   }
@@ -129,12 +125,7 @@ List<LlmStreamEvent> _mapContentBlockDelta(
       final partial = delta['partial_json'] as String? ?? '';
       final block = state._blocks.putIfAbsent(index, _BlockState.new);
       block.inputJson.write(partial);
-      return [
-        LlmToolCallDelta(
-          id: block.id ?? '',
-          partialInputJson: partial,
-        ),
-      ];
+      return [LlmToolCallDelta(id: block.id ?? '', partialInputJson: partial)];
     default:
       return const [];
   }
@@ -209,9 +200,8 @@ int _eventIndex(Map<String, Object?> event) {
   return v is int ? v : (v is num ? v.toInt() : 0);
 }
 
-Map<String, Object?> _asMap(Object? v) => v is Map
-    ? v.map((k, val) => MapEntry(k.toString(), val))
-    : const {};
+Map<String, Object?> _asMap(Object? v) =>
+    v is Map ? v.map((k, val) => MapEntry(k.toString(), val)) : const {};
 
 Object? _pointer(Map<String, Object?> root, List<String> path) {
   Object? cur = root;
@@ -224,11 +214,11 @@ Object? _pointer(Map<String, Object?> root, List<String> path) {
 
 /// Stream the raw SSE byte stream into [LlmStreamEvent]s.
 ///
-/// Framing mirrors `sse_parser.dart`: UTF-8 decode across chunk
-/// boundaries, blank line ends a frame, `data:` lines accumulate
-/// (joined with `\n`), `:` comment / keepalive lines are skipped. The
-/// `event:` line is ignored — the JSON payload's own `type` drives
-/// [mapAnthropicFrame], exactly like the backend `sse_data_frames`.
+/// Framing: UTF-8 decode across chunk boundaries, blank line ends a
+/// frame, `data:` lines accumulate (joined with `\n`), `:` comment /
+/// keepalive lines are skipped. The `event:` line is ignored — the JSON
+/// payload's own `type` drives [mapAnthropicFrame], exactly like the
+/// historical backend `sse_data_frames`.
 Stream<LlmStreamEvent> decodeAnthropicSse(Stream<List<int>> bytes) async* {
   final state = AnthropicStreamState();
   final lines = bytes

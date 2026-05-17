@@ -107,9 +107,9 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
     tracePrep: ({required requestId}) => _prepareChatTrace(ref, requestId),
     traceStore: traceStore,
     onTraceFinalized: (trace) {
-      // Phase 2 freshness gate bridge: collect read_model names that
-      // were stale during this turn so the next chat send tells the
-      // cloud to force-refresh them before dispatching.
+      // Retained freshness bridge for old trace/tool-result shapes.
+      // Device tools read local Drift directly, so this normally stays
+      // empty after W-D7.
       if (trace.staleReadModelNames.isEmpty) return;
       final pending = ref.read(pendingFreshnessHintProvider);
       ref.read(pendingFreshnessHintProvider.notifier).state = <String>{
@@ -121,9 +121,9 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
 });
 
 /// Read model names whose `source_hlc_watermark` lagged the device's
-/// local HLC on the last completed chat turn. Consumed (and cleared)
-/// by `_prepareChatTrace` on the next request, injected into the
-/// outgoing `ContextPack.task.freshnessHint.forceRefreshReadModels`.
+/// local HLC on an older cloud-backed chat turn. Consumed (and cleared)
+/// by `_prepareChatTrace` on the next request. Device tools read local
+/// Drift directly, so new turns should not populate this.
 ///
 /// docs/ai-architecture.md §4.2 (freshness gate Phase 2).
 final pendingFreshnessHintProvider = StateProvider<Set<String>>(
@@ -172,10 +172,9 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     final localHlc = await ref.read(syncLocalHlcProvider.future);
     final localHlcText = localHlc?.toString();
 
-    // Wave 32: FreshnessHint now also carries lastLocalHlc so the
-    // freshness protocol is self-contained. Always emit when either
-    // the force-refresh list is non-empty OR we know the local HLC,
-    // so the cloud has a freshness watermark even on no-op turns.
+    // Wave 32: FreshnessHint carries lastLocalHlc so trace/context
+    // capture remains self-contained. The force-refresh list is a
+    // retained cloud-era field and is usually empty after W-D7.
     final freshnessHint = (pendingNames.isEmpty && localHlcText == null)
         ? null
         : FreshnessHint(
@@ -210,9 +209,9 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       deviceHlc: analyticalUploads.isEmpty ? null : localHlcText,
     );
 
-    // The chat surface is by definition online here (we are about to
-    // POST to /ai/chat) so the router decides cloud-bound. We capture
-    // the decision regardless so AiTrace records why.
+    // The historical router still classifies online chat as cloud-bound.
+    // Capture that decision, then override the effective trace below
+    // when a device runtime is available.
     final decision = router.decide(
       const RoutingInputs(intent: intent, online: true),
     );
