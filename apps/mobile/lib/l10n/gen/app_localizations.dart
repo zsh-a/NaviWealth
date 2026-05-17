@@ -140,6 +140,138 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get navSearch;
 
+  /// Cash-flow overview page title
+  ///
+  /// In en, this message translates to:
+  /// **'Cash flow'**
+  String get cashFlowTitle;
+
+  /// Command palette action that opens the cash-flow overview
+  ///
+  /// In en, this message translates to:
+  /// **'Open cash flow'**
+  String get cashFlowCommandOpen;
+
+  /// Command palette action for recording or reviewing income flow
+  ///
+  /// In en, this message translates to:
+  /// **'New income'**
+  String get cashFlowCommandNewIncome;
+
+  /// Cash-flow period selector: monthly
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get cashFlowPeriodMonth;
+
+  /// Cash-flow period selector: quarterly
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter'**
+  String get cashFlowPeriodQuarter;
+
+  /// Cash-flow period selector: yearly
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get cashFlowPeriodYear;
+
+  /// Cash-flow KPI: incoming cash
+  ///
+  /// In en, this message translates to:
+  /// **'Inflow'**
+  String get cashFlowKpiInflow;
+
+  /// Cash-flow KPI: outgoing cash
+  ///
+  /// In en, this message translates to:
+  /// **'Outflow'**
+  String get cashFlowKpiOutflow;
+
+  /// Cash-flow KPI: net cash flow
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get cashFlowKpiNet;
+
+  /// Cash-flow bar chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Income vs expense'**
+  String get cashFlowIncomeExpenseTitle;
+
+  /// Cash-flow trend chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash-flow trend'**
+  String get cashFlowNetTrendTitle;
+
+  /// Cash-flow category pie chart title
+  ///
+  /// In en, this message translates to:
+  /// **'Category mix'**
+  String get cashFlowCategoryTitle;
+
+  /// Cash-flow shortcut into Activity filtered to income/dividend-like entries
+  ///
+  /// In en, this message translates to:
+  /// **'View dividend activity'**
+  String get cashFlowDividendActivity;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Salary'**
+  String get cashFlowKindSalary;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend'**
+  String get cashFlowKindDividend;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get cashFlowKindInterest;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Capital gains'**
+  String get cashFlowKindCapitalGains;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Other income'**
+  String get cashFlowKindOtherIncome;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get cashFlowKindExpense;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get cashFlowKindTransfer;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Opening'**
+  String get cashFlowKindOpening;
+
+  /// Cash-flow category label
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get cashFlowKindOther;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:

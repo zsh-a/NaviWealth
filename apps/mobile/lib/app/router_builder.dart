@@ -26,6 +26,7 @@ import '../features/assets/wealth_product_form_page.dart';
 import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
+import '../features/cashflow/ui/cashflow_page.dart';
 import '../features/cashflow/ui/dividend_center_page.dart';
 import '../features/expense/ui/expense_form_page.dart';
 import '../features/expense/ui/expense_list_page.dart';
@@ -199,6 +200,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     builder: (context, state) => const IngestReviewPage(),
                   ),
                 ],
+              ),
+              GoRoute(
+                path: AppRoutes.cashflow,
+                name: AppRouteNames.cashflow,
+                builder: (context, state) => const CashFlowPage(),
               ),
             ],
           ),

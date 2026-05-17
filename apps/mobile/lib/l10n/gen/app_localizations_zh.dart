@@ -30,6 +30,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSearch => '搜索';
 
   @override
+  String get cashFlowTitle => '现金流';
+
+  @override
+  String get cashFlowCommandOpen => '打开现金流';
+
+  @override
+  String get cashFlowCommandNewIncome => '新增收入';
+
+  @override
+  String get cashFlowPeriodMonth => '月';
+
+  @override
+  String get cashFlowPeriodQuarter => '季';
+
+  @override
+  String get cashFlowPeriodYear => '年';
+
+  @override
+  String get cashFlowKpiInflow => '流入';
+
+  @override
+  String get cashFlowKpiOutflow => '流出';
+
+  @override
+  String get cashFlowKpiNet => '净额';
+
+  @override
+  String get cashFlowIncomeExpenseTitle => '收入 vs 支出';
+
+  @override
+  String get cashFlowNetTrendTitle => '净现金流趋势';
+
+  @override
+  String get cashFlowCategoryTitle => '类目分布';
+
+  @override
+  String get cashFlowDividendActivity => '查看股息流水';
+
+  @override
+  String get cashFlowKindSalary => '工资';
+
+  @override
+  String get cashFlowKindDividend => '股息';
+
+  @override
+  String get cashFlowKindInterest => '利息';
+
+  @override
+  String get cashFlowKindCapitalGains => '资本利得';
+
+  @override
+  String get cashFlowKindOtherIncome => '其他收入';
+
+  @override
+  String get cashFlowKindExpense => '支出';
+
+  @override
+  String get cashFlowKindTransfer => '转账';
+
+  @override
+  String get cashFlowKindOpening => '期初';
+
+  @override
+  String get cashFlowKindOther => '其他';
+
+  @override
   String get accountsHubSectionCashDeposits => '现金与存款';
 
   @override
