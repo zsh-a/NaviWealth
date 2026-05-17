@@ -27,6 +27,7 @@ const String defaultDbFileName = 'naviwealth.db';
     JournalEntries,
     Postings,
     Prices,
+    RecurringTransactions,
     Liabilities,
     AmortizationEntries,
     Currencies,
@@ -51,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -109,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
         );
         await customStatement(
           "UPDATE accounts SET type = 'asset' "
-              "WHERE type IN ('realEstate', 'vehicle', 'other')",
+          "WHERE type IN ('realEstate', 'vehicle', 'other')",
         );
         // Other legacy values (cash, bank, liability) keep the same
         // enum string under the new AccountCategory and need no
@@ -153,6 +154,13 @@ class AppDatabase extends _$AppDatabase {
       // cloud Vision path actually has a blob to stage.
       if (from < 8) {
         await _createIngestTables(this);
+      }
+      // v8 -> v9: synced recurring transaction templates. Forecasted
+      // occurrences stay ephemeral; only the user-authored recurrence
+      // definition joins the sync protocol.
+      if (from < 9) {
+        await m.createTable(recurringTransactions);
+        await _createRecurringTransactionIndexes(this);
       }
     },
     beforeOpen: (details) async {
@@ -269,6 +277,7 @@ const List<String> _journalEntryIndexStmts = [
       'ON prices(unit, quote_currency, observed_on)',
   'CREATE INDEX IF NOT EXISTS idx_prices_owner_hlc '
       'ON prices(owner_user_id, hlc)',
+  ..._recurringTransactionIndexStmts,
 ];
 
 const List<String> _securitiesAssetIndexStmts = [
@@ -278,6 +287,20 @@ const List<String> _securitiesAssetIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_assets_market_symbol '
       'ON assets(market, symbol) WHERE market IS NOT NULL',
 ];
+
+const List<String> _recurringTransactionIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_recurring_transactions_owner_hlc '
+      'ON recurring_transactions(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_recurring_transactions_due '
+      'ON recurring_transactions(owner_user_id, enabled, next_due_at) '
+      'WHERE deleted_at IS NULL',
+];
+
+Future<void> _createRecurringTransactionIndexes(AppDatabase db) async {
+  for (final stmt in _recurringTransactionIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
 
 const List<String> _securitiesCatalogFtsStmts = [
   '''
@@ -377,8 +400,8 @@ Future<void> _createAiTouchedEntitiesTable(AppDatabase db) async {
     '  entity_type   TEXT NOT NULL,'
     '  entity_id     TEXT NOT NULL,'
     '  touched_at    TEXT NOT NULL,'
-    '  kind_label    TEXT,'           // 'expense' / 'trade' / 'memo_edit' / ...
-    '  trace_id      TEXT,'           // AiTrace.requestId for jump-to-trace
+    '  kind_label    TEXT,' // 'expense' / 'trade' / 'memo_edit' / ...
+    '  trace_id      TEXT,' // AiTrace.requestId for jump-to-trace
     '  PRIMARY KEY (owner_user_id, entity_type, entity_id)'
     ')',
   );
