@@ -20,29 +20,31 @@ library;
 
 import 'dart:convert';
 
-/// Which provider wire dialect the device adapter speaks. Only the
-/// Anthropic Messages dialect is implemented (W-D2). Most "providers"
-/// users actually want (official Anthropic, OpenRouter, DeepSeek's
-/// anthropic-compatible endpoint, a self-hosted relay, a regional
-/// gateway) are reachable through this one dialect via a custom
-/// base URL + the dual `x-api-key`/`Bearer` auth headers. The enum
-/// stays so an OpenAI-style adapter is a wire-additive change later.
+/// Which provider wire dialect the device adapter speaks. Most
+/// "providers" users actually want (official Anthropic, OpenAI,
+/// OpenRouter, DeepSeek-compatible endpoints, a self-hosted relay, a
+/// regional gateway) are reachable via a custom base URL and the chosen
+/// wire dialect.
 /// Unknown values soft-fall to [LlmProvider.anthropic] on decode.
 enum LlmProvider {
-  anthropic;
+  anthropic,
+  openai;
 
   String get wire => switch (this) {
     LlmProvider.anthropic => 'anthropic',
+    LlmProvider.openai => 'openai',
   };
 
   static LlmProvider parse(String? s) => switch (s) {
     'anthropic' => LlmProvider.anthropic,
+    'openai' => LlmProvider.openai,
     _ => LlmProvider.anthropic,
   };
 
   /// Human label for the settings UI.
   String get label => switch (this) {
     LlmProvider.anthropic => 'Anthropic 兼容',
+    LlmProvider.openai => 'OpenAI 兼容',
   };
 }
 
@@ -171,9 +173,7 @@ class LlmCredentials {
   LlmCredentials copyWith({List<LlmProfile>? profiles, Object? activeId}) =>
       LlmCredentials(
         profiles: profiles ?? this.profiles,
-        activeId: activeId == _unset
-            ? this.activeId
-            : activeId as String?,
+        activeId: activeId == _unset ? this.activeId : activeId as String?,
       );
 
   static const Object _unset = Object();

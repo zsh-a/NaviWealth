@@ -24,8 +24,26 @@ const String _kAnthropicVersion = '2023-06-01';
 /// like the cloud client's watchdog.
 const Duration kLlmIdleTimeout = Duration(seconds: 30);
 
+abstract class DeviceLlmConfig {
+  String get model;
+}
+
+abstract class DeviceLlmClient {
+  DeviceLlmConfig get config;
+
+  Stream<LlmStreamEvent> streamMessages(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  });
+
+  Future<AnthropicCompletion> complete(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  });
+}
+
 /// Resolved endpoint + auth for one provider call.
-class LlmConfig {
+class LlmConfig implements DeviceLlmConfig {
   LlmConfig({required this.apiKey, String? baseUrl, required this.model})
     : baseUrl = (baseUrl == null || baseUrl.trim().isEmpty)
           ? _kDefaultBaseUrl
@@ -43,6 +61,7 @@ class LlmConfig {
 
   final String apiKey;
   final String baseUrl;
+  @override
   final String model;
 
   /// Endpoint resolution ported verbatim from the Rust `messages_url`
@@ -86,14 +105,16 @@ class LlmRequestException implements Exception {
   String toString() => 'LlmRequestException($statusCode): $message';
 }
 
-class AnthropicClient {
+class AnthropicClient implements DeviceLlmClient {
   AnthropicClient({required Dio dio, required this.config}) : _dio = dio;
 
   final Dio _dio;
+  @override
   final LlmConfig config;
 
   /// Streaming Messages call → low-level provider events. One HTTP
   /// request per turn; the W-D3 loop calls this once per round.
+  @override
   Stream<LlmStreamEvent> streamMessages(
     AnthropicRequest request, {
     CancelToken? cancelToken,
@@ -153,10 +174,12 @@ class AnthropicClient {
           if (cancelToken != null && !cancelToken.isCancelled) {
             cancelToken.cancel('idle timeout');
           }
-          sink.addError(const LlmRequestException(
-            statusCode: 0,
-            message: 'provider stream idle timeout',
-          ));
+          sink.addError(
+            const LlmRequestException(
+              statusCode: 0,
+              message: 'provider stream idle timeout',
+            ),
+          );
         },
       );
       sub = decodeAnthropicSse(guarded).listen(
@@ -181,6 +204,7 @@ class AnthropicClient {
   /// Non-streaming single-shot call. Returns the raw `content` block
   /// list and `stop_reason` so the Vision ingest path (W-D5) can pull
   /// the forced `tool_use` block. Mirrors the backend `complete`.
+  @override
   Future<AnthropicCompletion> complete(
     AnthropicRequest request, {
     CancelToken? cancelToken,

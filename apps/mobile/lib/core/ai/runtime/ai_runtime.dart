@@ -162,7 +162,7 @@ class RulesDeviceRuntime implements AiRuntime {
 
 /// The slice of the device runtime the routing client (W-D3/W-D6
 /// failover) depends on. An interface so tests can inject a scripted
-/// device without a network-bound [AnthropicClient].
+/// device without a network-bound provider client.
 abstract class DeviceChatRunner {
   Stream<AiChatEvent> run({
     required List<WireMessage> messages,
@@ -176,7 +176,7 @@ abstract class DeviceChatRunner {
 /// §4.6 Phase 5 — on-device LLM runtime.
 ///
 /// Owns the full agent loop client-side: builds a [DeviceSession] from
-/// the inbound turn, runs [DeviceAgentLoop] over an [AnthropicClient]
+/// the inbound turn, runs [DeviceAgentLoop] over a device LLM client
 /// that talks straight to the user's provider with their key (W-D1/2),
 /// and emits the same [AiChatEvent] stream as [CloudAnthropicRuntime].
 class DeviceLlmRuntime implements AiRuntime, DeviceChatRunner {
@@ -187,7 +187,7 @@ class DeviceLlmRuntime implements AiRuntime, DeviceChatRunner {
     this.budget = const TurnBudget(),
   });
 
-  final AnthropicClient client;
+  final DeviceLlmClient client;
   final DeviceToolDispatcher dispatcher;
   final List<AnthropicToolSchema> toolSchemas;
   final TurnBudget budget;

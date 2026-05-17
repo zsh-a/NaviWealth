@@ -14,10 +14,11 @@ LlmProfile _p(
   String key = 'k',
   String? baseUrl,
   String? model,
+  LlmProvider provider = LlmProvider.anthropic,
 }) => LlmProfile(
   id: id,
   name: name,
-  provider: LlmProvider.anthropic,
+  provider: provider,
   apiKey: key,
   baseUrl: baseUrl,
   model: model,
@@ -41,14 +42,20 @@ void main() {
       final c = LlmCredentials(
         profiles: [
           _p('a', name: 'Official', baseUrl: 'https://api.anthropic.com'),
-          _p('b', name: 'Gateway', model: 'claude-opus-4-7'),
+          _p(
+            'b',
+            name: 'Gateway',
+            model: 'gpt-4o-mini',
+            provider: LlmProvider.openai,
+          ),
         ],
         activeId: 'b',
       );
       final back = LlmCredentials.decode(c.encode());
       expect(back, c);
       expect(back.active!.id, 'b');
-      expect(back.active!.model, 'claude-opus-4-7');
+      expect(back.active!.provider, LlmProvider.openai);
+      expect(back.active!.model, 'gpt-4o-mini');
     });
 
     test('base_url / model omitted from wire when null', () {
@@ -60,7 +67,10 @@ void main() {
     test('isUsable iff the active profile has a key', () {
       expect(const LlmCredentials().isUsable, isFalse);
       expect(
-        LlmCredentials(profiles: [_p('a', key: '  ')], activeId: 'a').isUsable,
+        LlmCredentials(
+          profiles: [_p('a', key: '  ')],
+          activeId: 'a',
+        ).isUsable,
         isFalse,
       );
       expect(
@@ -195,16 +205,19 @@ void main() {
   });
 
   group('deviceLlmAvailableProvider', () {
-    test('false when platform unsupported even with a usable profile', () async {
-      final c = LlmCredentials(profiles: [_p('a')], activeId: 'a');
-      final container = _container(
-        InMemoryKeyStore({LlmCredentialStore.storageKey: c.encode()}),
-        platformSupported: false,
-      );
-      addTearDown(container.dispose);
-      await container.read(llmCredentialsProvider.future);
-      expect(container.read(deviceLlmAvailableProvider), isFalse);
-    });
+    test(
+      'false when platform unsupported even with a usable profile',
+      () async {
+        final c = LlmCredentials(profiles: [_p('a')], activeId: 'a');
+        final container = _container(
+          InMemoryKeyStore({LlmCredentialStore.storageKey: c.encode()}),
+          platformSupported: false,
+        );
+        addTearDown(container.dispose);
+        await container.read(llmCredentialsProvider.future);
+        expect(container.read(deviceLlmAvailableProvider), isFalse);
+      },
+    );
 
     test('false when no profiles configured', () async {
       final container = _container(InMemoryKeyStore());

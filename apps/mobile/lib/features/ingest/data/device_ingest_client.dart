@@ -3,7 +3,7 @@
 ///
 /// Implements the [CloudIngestClient] surface (the cloud Worker relay
 /// was removed in W-D7), so the ingest pipeline is unchanged. It runs
-/// the one-shot forced-tool parse locally via [AnthropicClient.complete]
+/// the one-shot forced-tool parse locally via [DeviceLlmClient.complete]
 /// using the verbatim-ported schema/prompt/extraction
 /// (`device_vision_parse.dart`), then maps rows through the *shared*
 /// `parsedTransactionFromWire` — so device and cloud yield identical
@@ -26,10 +26,10 @@ import 'cloud_ingest_client.dart';
 const int _kVisionMaxTokens = 4096;
 
 class DeviceVisionIngestClient implements CloudIngestClient {
-  const DeviceVisionIngestClient({required AnthropicClient client})
+  const DeviceVisionIngestClient({required DeviceLlmClient client})
     : _client = client;
 
-  final AnthropicClient _client;
+  final DeviceLlmClient _client;
 
   @override
   Future<List<ParsedTransaction>> parse({
