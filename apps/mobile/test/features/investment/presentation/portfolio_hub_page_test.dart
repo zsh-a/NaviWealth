@@ -1,0 +1,151 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/data/domain/account.dart';
+import 'package:naviwealth/data/domain/enums.dart';
+import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/investment/domain/returns/portfolio_return.dart';
+import 'package:naviwealth/features/investment/domain/returns/xirr_engine.dart';
+import 'package:naviwealth/features/investment/presentation/portfolio_hub_page.dart';
+import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
+
+Decimal _d(String value) => Decimal.parse(value);
+
+SyncMeta _meta() => SyncMeta(
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 5, 17),
+  updatedByDevice: 'test',
+  hlc: Hlc.zero('test'),
+);
+
+PortfolioHoldingRow _holding({
+  required String assetId,
+  required AssetType type,
+  required String currency,
+  required String marketValue,
+  required String costBasis,
+}) {
+  final value = _d(marketValue);
+  final cost = _d(costBasis);
+  return PortfolioHoldingRow(
+    assetId: assetId,
+    title: assetId,
+    subtitle: assetId,
+    assetType: type,
+    assetCurrency: currency,
+    quantity: _d('10'),
+    marketValueInBase: value,
+    costBasisInBase: cost,
+    unrealizedPnlInBase: value - cost,
+    weight: Decimal.zero,
+    baseCurrency: 'USD',
+  );
+}
+
+Lot _lot({
+  required String id,
+  required String accountId,
+  required String assetId,
+  required String quantity,
+  required String costPerUnit,
+}) {
+  return Lot(
+    id: id,
+    openingTransactionId: 'tx-$id',
+    accountId: accountId,
+    assetId: assetId,
+    currency: 'USD',
+    originalQuantity: _d(quantity),
+    remainingQuantity: _d(quantity),
+    costPerUnit: _d(costPerUnit),
+    openedAt: DateTime.utc(2025, 1, 1),
+  );
+}
+
+void main() {
+  test('aggregates holdings by account, currency, and asset class', () {
+    final l10n = AppLocalizationsEn();
+    final state = PortfolioHubState(
+      holdings: [
+        _holding(
+          assetId: 'us:AAPL',
+          type: AssetType.stock,
+          currency: 'USD',
+          marketValue: '100',
+          costBasis: '80',
+        ),
+        _holding(
+          assetId: 'hk:2800',
+          type: AssetType.etf,
+          currency: 'HKD',
+          marketValue: '300',
+          costBasis: '240',
+        ),
+      ],
+      lots: [
+        _lot(
+          id: 'aapl-1',
+          accountId: 'broker-a',
+          assetId: 'us:AAPL',
+          quantity: '5',
+          costPerUnit: '8',
+        ),
+        _lot(
+          id: 'aapl-2',
+          accountId: 'broker-b',
+          assetId: 'us:AAPL',
+          quantity: '5',
+          costPerUnit: '8',
+        ),
+        _lot(
+          id: '2800-1',
+          accountId: 'broker-b',
+          assetId: 'hk:2800',
+          quantity: '10',
+          costPerUnit: '24',
+        ),
+      ],
+      accountById: {
+        'broker-a': Account(
+          id: 'broker-a',
+          type: AccountCategory.broker,
+          name: 'Broker A',
+          currency: 'USD',
+          sync: _meta(),
+        ),
+        'broker-b': Account(
+          id: 'broker-b',
+          type: AccountCategory.broker,
+          name: 'Broker B',
+          currency: 'USD',
+          sync: _meta(),
+        ),
+      },
+      baseCurrency: 'USD',
+      marketValueInBase: _d('400'),
+      costBasisInBase: _d('320'),
+      unrealizedPnlInBase: _d('80'),
+      ytdReturn: PortfolioReturnResult(
+        from: DateTime.utc(2026),
+        to: DateTime.utc(2026, 5, 17),
+        baseCurrency: 'USD',
+        cashFlows: const [],
+        solution: const XirrConverged(rate: 0.12, iterations: 3),
+      ),
+    );
+
+    final accountGroups = state.groupsFor(PortfolioHubView.account, l10n);
+    expect(accountGroups.map((group) => group.title), ['Broker B', 'Broker A']);
+    expect(accountGroups.first.marketValueInBase, _d('350.000000000000'));
+    expect(accountGroups.first.holdingsCount, 2);
+
+    final currencyGroups = state.groupsFor(PortfolioHubView.currency, l10n);
+    expect(currencyGroups.map((group) => group.title), ['HKD', 'USD']);
+    expect(currencyGroups.first.marketValueInBase, _d('300'));
+
+    final assetClassGroups = state.groupsFor(PortfolioHubView.assetClass, l10n);
+    expect(assetClassGroups.map((group) => group.title), ['ETF', 'Stock']);
+    expect(assetClassGroups.first.unrealizedPnlInBase, _d('60'));
+  });
+}

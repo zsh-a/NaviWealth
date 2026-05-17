@@ -117,6 +117,8 @@ class _AccountsHubBody extends StatelessWidget {
           totalAssets: totalAssets,
           totalLiabilities: totalLiabilities,
         ),
+        const SizedBox(height: 14),
+        _PortfolioHubLink(),
         const SizedBox(height: 18),
         AccountsGroupedSections(
           accounts: accounts,
@@ -225,6 +227,36 @@ class _BankAccountsLink extends StatelessWidget {
           ),
         ),
         suffix: Icon(Icons.chevron_right, color: colors.mutedForeground),
+      ),
+    );
+  }
+}
+
+class _PortfolioHubLink extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return FCard.raw(
+      child: FTile(
+        onPress: () => context.push(AppRoutes.accountsPortfolioHub),
+        prefix: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: colors.foreground.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.stacked_line_chart,
+            size: 18,
+            color: colors.mutedForeground,
+          ),
+        ),
+        title: Text(l10n.portfolioHubTitle),
+        subtitle: Text(l10n.portfolioHubAccountsEntrySubtitle),
+        suffix: const Icon(Icons.chevron_right, size: 18),
       ),
     );
   }

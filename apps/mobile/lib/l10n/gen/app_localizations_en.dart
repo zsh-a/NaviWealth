@@ -459,6 +459,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsHubManageBankAccounts => 'Manage bank accounts';
 
   @override
+  String get portfolioHubTitle => 'Portfolio';
+
+  @override
+  String get portfolioHubAccountsEntrySubtitle =>
+      'Holdings, returns, and allocation views';
+
+  @override
+  String get portfolioHubMarketValueLabel => 'Market value';
+
+  @override
+  String get portfolioHubYtdXirrLabel => 'YTD XIRR';
+
+  @override
+  String get portfolioHubAbsoluteReturnLabel => 'Absolute return';
+
+  @override
+  String get portfolioHubViewAccount => 'Account';
+
+  @override
+  String get portfolioHubViewCurrency => 'Currency';
+
+  @override
+  String get portfolioHubViewAssetClass => 'Class';
+
+  @override
+  String get portfolioHubHoldingsTitle => 'Allocation';
+
+  @override
+  String get portfolioHubPositionsTitle => 'Positions';
+
+  @override
+  String portfolioHubHoldingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubUnknownAccount => 'Unknown account';
+
+  @override
+  String get portfolioHubAccountGroupSubtitle => 'Brokerage account';
+
+  @override
+  String get portfolioHubCurrencyGroupSubtitle => 'Settlement currency';
+
+  @override
+  String get portfolioHubAssetClassGroupSubtitle => 'Asset class';
+
+  @override
+  String get portfolioHubEmpty => 'No investment holdings yet.';
+
+  @override
+  String portfolioHubLoadError(String error) {
+    return 'Portfolio failed to load: $error';
+  }
+
+  @override
+  String get portfolioHubAssetTypeStock => 'Stock';
+
+  @override
+  String get portfolioHubAssetTypeEtf => 'ETF';
+
+  @override
+  String get portfolioHubAssetTypeMutualFund => 'Mutual fund';
+
+  @override
+  String get portfolioHubAssetTypeBond => 'Bond';
+
+  @override
+  String get portfolioHubAssetTypeCrypto => 'Crypto';
+
+  @override
+  String get portfolioHubAssetTypeCash => 'Cash';
+
+  @override
+  String get portfolioHubAssetTypeCommodity => 'Commodity';
+
+  @override
+  String get portfolioHubAssetTypeCustom => 'Custom';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositTerm => 'Term deposit';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositDemand => 'Demand deposit';
+
+  @override
+  String get portfolioHubAssetTypeWealthProduct => 'Wealth product';
+
+  @override
   String get dashboardAiInsightsTitle => 'Insights for you';
 
   @override

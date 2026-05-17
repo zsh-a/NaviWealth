@@ -450,6 +450,100 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsHubManageBankAccounts => '管理银行账户';
 
   @override
+  String get portfolioHubTitle => '投资组合';
+
+  @override
+  String get portfolioHubAccountsEntrySubtitle => '持仓、收益与分布视角';
+
+  @override
+  String get portfolioHubMarketValueLabel => '市值';
+
+  @override
+  String get portfolioHubYtdXirrLabel => '年初至今 XIRR';
+
+  @override
+  String get portfolioHubAbsoluteReturnLabel => '绝对收益';
+
+  @override
+  String get portfolioHubViewAccount => '账户';
+
+  @override
+  String get portfolioHubViewCurrency => '币种';
+
+  @override
+  String get portfolioHubViewAssetClass => '类别';
+
+  @override
+  String get portfolioHubHoldingsTitle => '分布';
+
+  @override
+  String get portfolioHubPositionsTitle => '持仓';
+
+  @override
+  String portfolioHubHoldingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个持仓',
+      one: '1 个持仓',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubUnknownAccount => '未知账户';
+
+  @override
+  String get portfolioHubAccountGroupSubtitle => '券商账户';
+
+  @override
+  String get portfolioHubCurrencyGroupSubtitle => '结算币种';
+
+  @override
+  String get portfolioHubAssetClassGroupSubtitle => '资产类别';
+
+  @override
+  String get portfolioHubEmpty => '暂无投资持仓。';
+
+  @override
+  String portfolioHubLoadError(String error) {
+    return '投资组合加载失败：$error';
+  }
+
+  @override
+  String get portfolioHubAssetTypeStock => '股票';
+
+  @override
+  String get portfolioHubAssetTypeEtf => 'ETF';
+
+  @override
+  String get portfolioHubAssetTypeMutualFund => '基金';
+
+  @override
+  String get portfolioHubAssetTypeBond => '债券';
+
+  @override
+  String get portfolioHubAssetTypeCrypto => '加密资产';
+
+  @override
+  String get portfolioHubAssetTypeCash => '现金';
+
+  @override
+  String get portfolioHubAssetTypeCommodity => '商品';
+
+  @override
+  String get portfolioHubAssetTypeCustom => '其他';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositTerm => '定期存款';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositDemand => '活期存款';
+
+  @override
+  String get portfolioHubAssetTypeWealthProduct => '理财产品';
+
+  @override
   String get dashboardAiInsightsTitle => 'AI 洞察';
 
   @override
