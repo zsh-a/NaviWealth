@@ -40,67 +40,67 @@ class TrendCard extends ConsumerWidget {
         ),
       ],
       child: SoftCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: 18,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.dashboardTrendTitle,
-                  style: context.theme.typography.md,
-                ),
-              ),
-              // Layer 2 trailing capsule — opens the AI bottom sheet
-              // pre-loaded with chart context (read from the
-              // surrounding AiContextChipScope).
-              trendAsync.maybeWhen(
-                data: (trend) => trend.isEmpty
-                    ? const SizedBox.shrink()
-                    : Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: AiObjectCapsule(
-                          source: 'home_trend_card',
-                          intent: 'explain_chart',
-                          object: const AiObjectRef(
-                            type: 'chart',
-                            id: 'net_worth_trend',
-                          ),
-                          objectLabel: l10n.dashboardTrendTitle,
-                        ),
-                      ),
-                orElse: () => const SizedBox.shrink(),
-              ),
-              trendAsync.maybeWhen(
-                data: (trend) => FTooltip(
-                  tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
-                  child: FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: trend.isEmpty
-                        ? null
-                        : () => showDashboardChartFullscreen(
-                            context: context,
-                            title: l10n.dashboardTrendTitle,
-                            child: const _TrendFullscreenContent(),
-                          ),
-                    child: const Icon(Icons.fullscreen, size: 20),
+        padding: const EdgeInsets.all(20),
+        borderRadius: 18,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.dashboardTrendTitle,
+                    style: context.theme.typography.md,
                   ),
                 ),
-                orElse: () => const SizedBox(width: 48, height: 48),
-              ),
-            ],
-          ),
-          const _RangeChips(),
-          const SizedBox(height: 12),
-          trendAsync.when(
-            loading: () => const _TrendSkeleton(),
-            error: (e, st) => _TrendError(error: e),
-            data: (trend) => _TrendChart(trend: trend),
-          ),
-        ],
-      ),
+                // Layer 2 trailing capsule — opens the AI bottom sheet
+                // pre-loaded with chart context (read from the
+                // surrounding AiContextChipScope).
+                trendAsync.maybeWhen(
+                  data: (trend) => trend.isEmpty
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: AiObjectCapsule(
+                            source: 'home_trend_card',
+                            intent: 'explain_chart',
+                            object: const AiObjectRef(
+                              type: 'chart',
+                              id: 'net_worth_trend',
+                            ),
+                            objectLabel: l10n.dashboardTrendTitle,
+                          ),
+                        ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+                trendAsync.maybeWhen(
+                  data: (trend) => FTooltip(
+                    tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: trend.isEmpty
+                          ? null
+                          : () => showDashboardChartFullscreen(
+                              context: context,
+                              title: l10n.dashboardTrendTitle,
+                              child: const _TrendFullscreenContent(),
+                            ),
+                      child: const Icon(Icons.fullscreen, size: 20),
+                    ),
+                  ),
+                  orElse: () => const SizedBox(width: 48, height: 48),
+                ),
+              ],
+            ),
+            const _RangeChips(),
+            const SizedBox(height: 12),
+            trendAsync.when(
+              loading: () => const _TrendSkeleton(),
+              error: (e, st) => _TrendError(error: e),
+              data: (trend) => _TrendChart(trend: trend),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -279,6 +279,56 @@ class _TrendChart extends StatelessWidget {
         final allFlat = trend.points.every(
           (p) => p.netWorth.amount == trend.points.first.netWorth.amount,
         );
+
+        // Flat series (e.g. brand-new account, no history yet) carries no
+        // analytical signal. Drawing a full chart for it produced a
+        // misleading ±¥1 axis, a dotted line and a heavy gradient block
+        // that collided with the caption. Instead show a calm, centered
+        // baseline: endpoints only, no axis numbers, no fill — it reads
+        // as "steady / awaiting data" and morphs into the real chart the
+        // moment values start moving.
+        if (allFlat) {
+          final flat = trend.points;
+          final flatSeries = ChartSeries(
+            name: 'netWorth',
+            points: [
+              ChartPoint(
+                x: flat.first.asOf.millisecondsSinceEpoch.toDouble(),
+                y: flat.first.netWorth.amount.toDouble(),
+                meta: flat.first,
+              ),
+              ChartPoint(
+                x: flat.last.asOf.millisecondsSinceEpoch.toDouble(),
+                y: flat.last.netWorth.amount.toDouble(),
+                meta: flat.last,
+              ),
+            ],
+          );
+          final flatChart = NwLineChart(
+            series: [flatSeries],
+            minimal: true,
+            interpolation: ChartInterpolation.linear,
+            semanticLabel: AppLocalizations.of(context).dashboardTrendTitle,
+          );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (fillAvailableHeight)
+                Expanded(child: flatChart)
+              else
+                SizedBox(height: 132, child: flatChart),
+              const SizedBox(height: 12),
+              Text(
+                AppLocalizations.of(context).dashboardTrendFlatHint,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          );
+        }
+
         final points = [
           for (final p in trend.points)
             ChartPoint(
@@ -305,16 +355,6 @@ class _TrendChart extends StatelessWidget {
               Expanded(child: chart)
             else
               SizedBox(height: 220, child: chart),
-            if (allFlat)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  AppLocalizations.of(context).dashboardTrendFlatHint,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
-              ),
           ],
         );
       },
