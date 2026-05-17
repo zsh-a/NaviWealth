@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/data/domain/asset.dart';
@@ -11,11 +12,15 @@ import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/data/dividend_forecast_providers.dart';
+import 'package:naviwealth/features/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
+import 'package:naviwealth/features/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
+import 'package:naviwealth/features/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +42,71 @@ Asset _cash(String id) => Asset(
   sync: _meta(),
 );
 
+final _goldenNow = DateTime.utc(2026, 5, 17);
+
+Decimal _d(String value) => Decimal.parse(value);
+
+String _monthKey(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}';
+
+DateTime _addMonths(DateTime date, int delta) {
+  final monthIndex = date.year * 12 + date.month - 1 + delta;
+  final year = monthIndex ~/ 12;
+  final month = monthIndex % 12 + 1;
+  return DateTime.utc(year, month, 1);
+}
+
+CashFlowBucket _bucket({
+  required String key,
+  required CashFlowKind kind,
+  required String amount,
+}) {
+  final parsed = _d(amount);
+  return CashFlowBucket(
+    key: key,
+    kind: kind,
+    currency: 'CNY',
+    totalInBase: Money(parsed, 'CNY'),
+    originalTotal: Money(parsed, 'CNY'),
+    count: 1,
+  );
+}
+
+CashFlowSummary _homeCashFlowSummary(CashFlowPeriod period) {
+  final current = _monthKey(_goldenNow);
+  final previous = _monthKey(_addMonths(_goldenNow, -1));
+  final twoBack = _monthKey(_addMonths(_goldenNow, -2));
+  return CashFlowSummary(
+    period: period,
+    baseCurrency: 'CNY',
+    buckets: [
+      _bucket(key: twoBack, kind: CashFlowKind.salary, amount: '31000'),
+      _bucket(key: twoBack, kind: CashFlowKind.expense, amount: '-17800'),
+      _bucket(key: twoBack, kind: CashFlowKind.dividend, amount: '880'),
+      _bucket(key: previous, kind: CashFlowKind.salary, amount: '32000'),
+      _bucket(key: previous, kind: CashFlowKind.expense, amount: '-18600'),
+      _bucket(key: previous, kind: CashFlowKind.interest, amount: '210'),
+      _bucket(key: current, kind: CashFlowKind.salary, amount: '32000'),
+      _bucket(key: current, kind: CashFlowKind.expense, amount: '-19200'),
+      _bucket(key: current, kind: CashFlowKind.dividend, amount: '1260'),
+      _bucket(key: current, kind: CashFlowKind.interest, amount: '220'),
+    ],
+    totalInBase: Money(_d('48010'), 'CNY'),
+  );
+}
+
+ProjectedDividend _homeDividendForecast() {
+  return ProjectedDividend(
+    assetId: 'portfolio',
+    perAsset: {DateTime.utc(2026, 6, 15): _d('1280')},
+    total: _d('8400'),
+    currency: 'CNY',
+    strategy: 'ttm',
+    confidence: DividendForecastConfidence.medium,
+  );
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -55,6 +125,8 @@ void main() {
       variant: variant,
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        cashFlowNowProvider.overrideWithValue(_goldenNow),
+        recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
         manualAssetsStreamProvider.overrideWith(
           (_) => Stream.value([_cash('cash-1'), _cash('cash-2')]),
         ),
@@ -75,12 +147,10 @@ void main() {
           (_) async => const <String, HoldingSnapshot>{},
         ),
         cashFlowSummaryProvider.overrideWith(
-          (ref, request) async => CashFlowSummary(
-            period: request.period,
-            baseCurrency: 'CNY',
-            buckets: const [],
-            totalInBase: Money.zero('CNY'),
-          ),
+          (ref, request) async => _homeCashFlowSummary(request.period),
+        ),
+        dividendForecast12mProvider.overrideWith(
+          (ref) async => _homeDividendForecast(),
         ),
       ],
       child: const HomePage(),

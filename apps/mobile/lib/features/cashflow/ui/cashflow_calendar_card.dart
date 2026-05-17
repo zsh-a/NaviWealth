@@ -25,8 +25,12 @@ class CashflowCalendarCard extends ConsumerWidget {
     return summary.when(
       loading: () => const _CashflowCalendarSkeleton(),
       error: (error, stackTrace) => const _CashflowCalendarError(),
-      data: (value) =>
-          _CashflowCalendarContent(metrics: monthlyCashFlowHomeMetrics(value)),
+      data: (value) => _CashflowCalendarContent(
+        metrics: monthlyCashFlowHomeMetrics(
+          value,
+          now: ref.watch(cashFlowNowProvider),
+        ),
+      ),
     );
   }
 }

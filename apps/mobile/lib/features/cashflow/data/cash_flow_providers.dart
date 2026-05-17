@@ -71,6 +71,8 @@ final cashFlowBaseCurrencyProvider = Provider<String>(
   (ref) => ref.watch(baseCurrencyProvider),
 );
 
+final cashFlowNowProvider = Provider<DateTime>((ref) => DateTime.now().toUtc());
+
 final cashFlowCurrencyConverterProvider = Provider<CurrencyConverter>((ref) {
   final rates = ref.watch(fxRatesStreamProvider).value ?? const [];
   return FxRateCurrencyConverter(InMemoryFxRateLookup(rates));

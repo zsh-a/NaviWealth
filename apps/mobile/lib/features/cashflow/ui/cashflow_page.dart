@@ -71,6 +71,7 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
           period: _period,
           summary: summary,
           formatter: formatter,
+          now: ref.watch(cashFlowNowProvider),
           onPeriodChanged: _changePeriod,
         ),
       ),
@@ -89,18 +90,19 @@ class _CashFlowContent extends StatelessWidget {
     required this.period,
     required this.summary,
     required this.formatter,
+    required this.now,
     required this.onPeriodChanged,
   });
 
   final CashFlowPeriod period;
   final CashFlowSummary summary;
   final AppFormatters formatter;
+  final DateTime now;
   final ValueChanged<CashFlowPeriod> onPeriodChanged;
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now().toUtc();
-    final keys = _visibleKeys(period, now);
+    final keys = _visibleKeys(period, now.toUtc());
     final currentKey = keys.last;
     final model = _CashFlowViewModel.fromSummary(
       summary,
@@ -227,7 +229,7 @@ class _KpiGrid extends StatelessWidget {
           crossAxisCount: columns,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: columns == 1 ? 4 : 2.2,
+          childAspectRatio: columns == 1 ? 3.4 : 2.2,
           children: [
             _KpiTile(
               label: l10n.cashFlowKpiInflow,

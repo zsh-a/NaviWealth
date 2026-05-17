@@ -28,8 +28,12 @@ class PassiveIncomeCard extends ConsumerWidget {
     return summary.when(
       loading: () => const _PassiveIncomeSkeleton(),
       error: (error, stackTrace) => _PassiveIncomeError(error: error),
-      data: (value) =>
-          _PassiveIncomeContent(metrics: passiveIncomeHomeMetrics(value)),
+      data: (value) => _PassiveIncomeContent(
+        metrics: passiveIncomeHomeMetrics(
+          value,
+          now: ref.watch(cashFlowNowProvider),
+        ),
+      ),
     );
   }
 }
@@ -47,7 +51,9 @@ class _PassiveIncomeContent extends ConsumerWidget {
     final forecast = ref.watch(dividendForecast12mProvider);
     final projection = forecast.hasValue ? forecast.value : null;
     final nextMonthAmount =
-        projection?.amountInMonth(_nextMonthStart(DateTime.now().toUtc())) ??
+        projection?.amountInMonth(
+          _nextMonthStart(ref.watch(cashFlowNowProvider)),
+        ) ??
         Decimal.zero;
     final hasData = metrics.hasData;
     final changeRatio = metrics.changeRatio;
