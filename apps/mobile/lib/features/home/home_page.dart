@@ -9,6 +9,7 @@ import '../../data/market/sync/price_sync_coordinator.dart';
 import '../../data/market/sync/price_sync_providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../cashflow/data/recurring_transaction_providers.dart';
 import '../cashflow/ui/cashflow_calendar_card.dart';
 import '../cashflow/ui/passive_income_card.dart';
 import '../settings/ui/ai_privacy_onboarding.dart';
@@ -44,6 +45,12 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final today = DateTime.now().toUtc();
+    ref.watch(
+      recurringMaterialiseDueProvider(
+        DateTime.utc(today.year, today.month, today.day),
+      ),
+    );
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
     return FScaffold(
       // The home cockpit owns its hero greeting; we drop the static

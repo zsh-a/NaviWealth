@@ -10,6 +10,7 @@ import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/cash_flow_providers.dart';
+import '../data/recurring_transaction_providers.dart';
 import '../domain/cash_flow_aggregator.dart';
 import '../domain/cash_flow_kind.dart';
 
@@ -23,6 +24,16 @@ class CashFlowPage extends ConsumerStatefulWidget {
 class _CashFlowPageState extends ConsumerState<CashFlowPage> {
   CashFlowPeriod _period = CashFlowPeriod.month;
   bool _hydratedFromUrl = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(
+        recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
+      ),
+    );
+  }
 
   @override
   void didChangeDependencies() {
