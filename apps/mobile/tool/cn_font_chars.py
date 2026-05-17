@@ -102,6 +102,7 @@ def _strip_dart_comments(text: str) -> str:
 def scan_codebase(root: pathlib.Path) -> set[int]:
     """Return every renderable non-ASCII code point that appears in source."""
     found: set[int] = set()
+    cn_literal_allowlist = _load_cn_literal_allowlist(root.parent)
     for path in root.rglob("*"):
         if not path.is_file():
             continue
@@ -110,6 +111,12 @@ def scan_codebase(root: pathlib.Path) -> set[int]:
         rel = path.relative_to(root).as_posix()
         # Skip generated files — they're derived from the .arb scan anyway.
         if "/gen/" in rel or rel.endswith(".g.dart") or rel.endswith(".freezed.dart"):
+            continue
+        # FIR-99 allowlisted Dart files are either migration debt or semantic
+        # corpora (AI prompts, match keywords, persisted proposal text). They
+        # should not inflate the first-paint CN subset; the ext tier covers
+        # those glyphs lazily if such text is rendered later.
+        if path.suffix == ".dart" and f"lib/{rel}" in cn_literal_allowlist:
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -120,6 +127,18 @@ def scan_codebase(root: pathlib.Path) -> set[int]:
         for ch in NON_ASCII_RE.findall(text):
             found.add(ord(ch))
     return found
+
+
+def _load_cn_literal_allowlist(mobile_root: pathlib.Path) -> set[str]:
+    allowlist = mobile_root / "tool" / "cn_literal_allowlist.txt"
+    if not allowlist.exists():
+        return set()
+    entries: set[str] = set()
+    for line in allowlist.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            entries.add(stripped)
+    return entries
 
 
 def write_unicodes(path: pathlib.Path, codepoints: set[int]) -> None:
