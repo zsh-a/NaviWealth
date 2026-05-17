@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../features/cashflow/command_palette_contributions.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shortcuts/shortcut_help_dialog.dart';
 import 'command_palette_entry.dart';
@@ -66,6 +67,21 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       keywords: const <String>[AppRoutes.activityExpenses, 'expenses', '支出'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.activityExpenses),
     ),
+    ...cashFlowCommandPaletteEntries(l10n),
+    CommandPaletteEntry(
+      id: 'nav.dividends',
+      label: l10n.dividendCenterTitle,
+      icon: Icons.payments_outlined,
+      keywords: <String>[
+        AppRoutes.cashflowDividends,
+        'dividends',
+        'passive income',
+        l10n.commandKeywordDividendCenterCn,
+        l10n.commandKeywordMyDividendsCn,
+        l10n.commandKeywordPassiveIncomeCn,
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowDividends),
+    ),
     CommandPaletteEntry(
       id: 'nav.analytics',
       label: l10n.planAnalyticsTitle,
@@ -101,6 +117,37 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         '交易',
       ],
       run: (BuildContext ctx) => ctx.push(AppRoutes.tradeEntry),
+    ),
+    CommandPaletteEntry(
+      id: 'action.newDividend',
+      label: l10n.corpActionTypeCashDividend,
+      icon: Icons.payments_outlined,
+      keywords: <String>[
+        AppRoutes.accountCorporateAction,
+        'dividend',
+        'income',
+        'withholding',
+        l10n.commandKeywordDividendCn,
+        l10n.commandKeywordBonusDividendCn,
+        l10n.commandKeywordWithholdingTaxCn,
+      ],
+      run: (BuildContext ctx) => ctx.push(AppRoutes.accountCorporateAction),
+    ),
+    CommandPaletteEntry(
+      id: 'action.corporateAction',
+      label: l10n.corpActionTitle,
+      icon: Icons.account_tree_outlined,
+      keywords: <String>[
+        AppRoutes.accountCorporateAction,
+        'corporate action',
+        'split',
+        'drip',
+        'rights issue',
+        l10n.commandKeywordCorporateActionCn,
+        l10n.commandKeywordSplitCn,
+        l10n.commandKeywordRightsIssueCn,
+      ],
+      run: (BuildContext ctx) => ctx.push(AppRoutes.accountCorporateAction),
     ),
     CommandPaletteEntry(
       id: 'action.newExpense',

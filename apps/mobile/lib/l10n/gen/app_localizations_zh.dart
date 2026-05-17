@@ -30,6 +30,172 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSearch => '搜索';
 
   @override
+  String get cashFlowTitle => '现金流';
+
+  @override
+  String get cashFlowCommandOpen => '打开现金流';
+
+  @override
+  String get cashFlowCommandNewIncome => '新增收入';
+
+  @override
+  String get cashFlowPeriodMonth => '月';
+
+  @override
+  String get cashFlowPeriodQuarter => '季';
+
+  @override
+  String get cashFlowPeriodYear => '年';
+
+  @override
+  String get cashFlowKpiInflow => '流入';
+
+  @override
+  String get cashFlowKpiOutflow => '流出';
+
+  @override
+  String get cashFlowKpiNet => '净额';
+
+  @override
+  String get cashFlowIncomeExpenseTitle => '收入 vs 支出';
+
+  @override
+  String get cashFlowNetTrendTitle => '净现金流趋势';
+
+  @override
+  String get cashFlowCategoryTitle => '类目分布';
+
+  @override
+  String get cashFlowDividendActivity => '查看股息流水';
+
+  @override
+  String get cashFlowKindSalary => '工资';
+
+  @override
+  String get cashFlowKindDividend => '股息';
+
+  @override
+  String get cashFlowKindInterest => '利息';
+
+  @override
+  String get cashFlowKindCapitalGains => '资本利得';
+
+  @override
+  String get cashFlowKindOtherIncome => '其他收入';
+
+  @override
+  String get cashFlowKindExpense => '支出';
+
+  @override
+  String get cashFlowKindTransfer => '转账';
+
+  @override
+  String get cashFlowKindOpening => '期初';
+
+  @override
+  String get cashFlowKindOther => '其他';
+
+  @override
+  String get dividendCenterTitle => '股息中心';
+
+  @override
+  String get dividendCenterMetricYtd => '年初至今';
+
+  @override
+  String get dividendCenterMetricTtm => '近 12 个月';
+
+  @override
+  String get dividendCenterMetricYoy => '同比同期';
+
+  @override
+  String get dividendCenterMetricWithholding => '预扣税';
+
+  @override
+  String get dividendCenterHoldingRanking => '持仓排行';
+
+  @override
+  String get dividendCenterHistoryTimeline => '历史时间线';
+
+  @override
+  String get dividendCenterForecastTitle => '未来 12 个月';
+
+  @override
+  String get dividendCenterForecastUnavailable => '预测尚未启用。';
+
+  @override
+  String dividendCenterForecastSource(String source) {
+    return '来源：$source';
+  }
+
+  @override
+  String get dividendCenterEmptyTitle => '暂无股息记录';
+
+  @override
+  String get dividendCenterEmptyBody => '记录现金分红或公司行动后开始生成时间线。';
+
+  @override
+  String get dividendCenterRecordAction => '记录股息';
+
+  @override
+  String dividendCenterLoadError(String error) {
+    return '股息中心加载失败：$error';
+  }
+
+  @override
+  String get dividendForecastStrategyDeclared => '已声明';
+
+  @override
+  String get dividendForecastStrategyDps => 'DPS';
+
+  @override
+  String get dividendForecastStrategyTtm => 'TTM';
+
+  @override
+  String get dividendForecastStrategyComposite => '组合';
+
+  @override
+  String get dividendForecastStrategyUnknown => '预测';
+
+  @override
+  String get commonNotAvailable => '暂无';
+
+  @override
+  String get commandKeywordCashFlowCn => '现金流';
+
+  @override
+  String get commandKeywordIncomeCn => '收入';
+
+  @override
+  String get commandKeywordDividendCn => '股息';
+
+  @override
+  String get commandKeywordSalaryCn => '工资';
+
+  @override
+  String get commandKeywordDividendCenterCn => '股息中心';
+
+  @override
+  String get commandKeywordMyDividendsCn => '我的股息';
+
+  @override
+  String get commandKeywordPassiveIncomeCn => '被动收入';
+
+  @override
+  String get commandKeywordBonusDividendCn => '分红';
+
+  @override
+  String get commandKeywordWithholdingTaxCn => '代扣税';
+
+  @override
+  String get commandKeywordCorporateActionCn => '公司行动';
+
+  @override
+  String get commandKeywordSplitCn => '拆股';
+
+  @override
+  String get commandKeywordRightsIssueCn => '配股';
+
+  @override
   String get accountsHubSectionCashDeposits => '现金与存款';
 
   @override
@@ -248,6 +414,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String homeNetWorthSubtitle(String currency) {
     return '基础货币 $currency · 等数据接入后展示';
   }
+
+  @override
+  String get homePassiveIncomeTitle => '被动收入';
+
+  @override
+  String get homePassiveIncomeSubtitle => 'TTM 股息、利息与其他被动收入';
+
+  @override
+  String homePassiveIncomeSubtitleWithNextMonth(String amount) {
+    return 'TTM 被动收入 · 预计下月 $amount';
+  }
+
+  @override
+  String get homePassiveIncomeEmpty => '记录股息或利息后开始跟踪 TTM';
+
+  @override
+  String get homePassiveIncomeDeltaNew => '新增';
+
+  @override
+  String get homeMonthlyCashFlowTitle => '本月现金流';
+
+  @override
+  String homeMonthlyCashFlowSubtitle(String inflow, String outflow) {
+    return '流入 $inflow · 流出 $outflow';
+  }
+
+  @override
+  String get homeMonthlyCashFlowEmpty => '添加收入或支出后显示本月现金流';
+
+  @override
+  String homeMonthlyCashFlowBaseline(String average) {
+    return '对比近 3 月均值 $average';
+  }
+
+  @override
+  String get homeMonthlyCashFlowBaselineEmpty => '入账后显示近 3 月均值';
+
+  @override
+  String get homeCashFlowEmptyValue => '暂无数据';
+
+  @override
+  String get homeCashFlowCardError => '现金流汇总暂不可用';
 
   @override
   String get assetsAppBarTitle => '资产';
@@ -3819,6 +4027,14 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String dashboardInsightIngestQueueValue(int count, int fresh) {
     return '解析 $count 条 · $fresh 条可入账';
+  }
+
+  @override
+  String get dashboardInsightCashFlowDeficitLabel => '现金流缺口';
+
+  @override
+  String dashboardInsightCashFlowDeficitValue(String amount) {
+    return '本月缺口 $amount';
   }
 
   @override

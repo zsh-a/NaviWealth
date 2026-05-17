@@ -18,6 +18,7 @@ import '../data/market/sync/price_sync_providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
+import '../features/cashflow/data/recurring_transaction_providers.dart';
 import 'route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
@@ -140,6 +141,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // warming and FX refresh so dashboard valuations have one startup path.
   container.read(syncSchedulerBootstrapProvider);
   container.read(priceSyncCoordinatorBootstrapProvider);
+  if (container.read(core_auth.authSessionProvider) != null) {
+    unawaited(
+      container.read(
+        recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
+      ),
+    );
+  }
 
   return container;
 }

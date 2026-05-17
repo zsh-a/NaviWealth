@@ -32,7 +32,7 @@ class SyncBackfill {
   final AuthSession _session;
   final Uuid _uuid;
 
-  static const version = '2';
+  static const version = '3';
 
   Future<int> enqueueMissingLocalRows() async {
     final key =
@@ -49,6 +49,7 @@ class SyncBackfill {
     queued += await _backfillAccounts();
     queued += await _backfillAssets();
     queued += await _backfillPrices();
+    queued += await _backfillRecurringTransactions();
     queued += await _backfillJournalEntries();
     queued += await _backfillPostings();
     queued += await _backfillLiabilities();
@@ -140,6 +141,28 @@ class SyncBackfill {
           'observed_on': _iso(r.observedOn),
           'per_unit': r.perUnit.toString(),
           'source': r.source,
+          ...sync,
+        };
+      });
+      count++;
+    }
+    return count;
+  }
+
+  Future<int> _backfillRecurringTransactions() async {
+    final rows = (await _db.select(_db.recurringTransactions).get())
+        .where((r) => r.ownerUserId == _session.userId && r.deletedAt == null)
+        .toList(growable: false);
+    var count = 0;
+    for (final r in rows) {
+      await _enqueue('recurring_transactions', r.id, (sync) {
+        return {
+          'id': r.id,
+          'template_journal_build_json': r.templateJournalBuildJson,
+          'rrule': r.rrule,
+          'next_due_at': _iso(r.nextDueAt),
+          'last_materialised_at': _isoOrNull(r.lastMaterialisedAt),
+          'enabled': r.enabled,
           ...sync,
         };
       });

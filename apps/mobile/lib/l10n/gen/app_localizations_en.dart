@@ -30,6 +30,174 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSearch => 'Search';
 
   @override
+  String get cashFlowTitle => 'Cash flow';
+
+  @override
+  String get cashFlowCommandOpen => 'Open cash flow';
+
+  @override
+  String get cashFlowCommandNewIncome => 'New income';
+
+  @override
+  String get cashFlowPeriodMonth => 'Month';
+
+  @override
+  String get cashFlowPeriodQuarter => 'Quarter';
+
+  @override
+  String get cashFlowPeriodYear => 'Year';
+
+  @override
+  String get cashFlowKpiInflow => 'Inflow';
+
+  @override
+  String get cashFlowKpiOutflow => 'Outflow';
+
+  @override
+  String get cashFlowKpiNet => 'Net';
+
+  @override
+  String get cashFlowIncomeExpenseTitle => 'Income vs expense';
+
+  @override
+  String get cashFlowNetTrendTitle => 'Net cash-flow trend';
+
+  @override
+  String get cashFlowCategoryTitle => 'Category mix';
+
+  @override
+  String get cashFlowDividendActivity => 'View dividend activity';
+
+  @override
+  String get cashFlowKindSalary => 'Salary';
+
+  @override
+  String get cashFlowKindDividend => 'Dividend';
+
+  @override
+  String get cashFlowKindInterest => 'Interest';
+
+  @override
+  String get cashFlowKindCapitalGains => 'Capital gains';
+
+  @override
+  String get cashFlowKindOtherIncome => 'Other income';
+
+  @override
+  String get cashFlowKindExpense => 'Expense';
+
+  @override
+  String get cashFlowKindTransfer => 'Transfer';
+
+  @override
+  String get cashFlowKindOpening => 'Opening';
+
+  @override
+  String get cashFlowKindOther => 'Other';
+
+  @override
+  String get dividendCenterTitle => 'Dividend Center';
+
+  @override
+  String get dividendCenterMetricYtd => 'Year to date';
+
+  @override
+  String get dividendCenterMetricTtm => 'Trailing 12 months';
+
+  @override
+  String get dividendCenterMetricYoy => 'YoY same period';
+
+  @override
+  String get dividendCenterMetricWithholding => 'Withholding tax';
+
+  @override
+  String get dividendCenterHoldingRanking => 'Holding ranking';
+
+  @override
+  String get dividendCenterHistoryTimeline => 'History timeline';
+
+  @override
+  String get dividendCenterForecastTitle => 'Next 12 months';
+
+  @override
+  String get dividendCenterForecastUnavailable =>
+      'Forecasting is not enabled yet.';
+
+  @override
+  String dividendCenterForecastSource(String source) {
+    return 'Source: $source';
+  }
+
+  @override
+  String get dividendCenterEmptyTitle => 'No dividend records yet';
+
+  @override
+  String get dividendCenterEmptyBody =>
+      'Record a cash dividend or corporate action to start the timeline.';
+
+  @override
+  String get dividendCenterRecordAction => 'Record dividend';
+
+  @override
+  String dividendCenterLoadError(String error) {
+    return 'Dividend center failed to load: $error';
+  }
+
+  @override
+  String get dividendForecastStrategyDeclared => 'Declared';
+
+  @override
+  String get dividendForecastStrategyDps => 'DPS';
+
+  @override
+  String get dividendForecastStrategyTtm => 'TTM';
+
+  @override
+  String get dividendForecastStrategyComposite => 'Composite';
+
+  @override
+  String get dividendForecastStrategyUnknown => 'Forecast';
+
+  @override
+  String get commonNotAvailable => 'N/A';
+
+  @override
+  String get commandKeywordCashFlowCn => '现金流';
+
+  @override
+  String get commandKeywordIncomeCn => '收入';
+
+  @override
+  String get commandKeywordDividendCn => '股息';
+
+  @override
+  String get commandKeywordSalaryCn => '工资';
+
+  @override
+  String get commandKeywordDividendCenterCn => '股息中心';
+
+  @override
+  String get commandKeywordMyDividendsCn => '我的股息';
+
+  @override
+  String get commandKeywordPassiveIncomeCn => '被动收入';
+
+  @override
+  String get commandKeywordBonusDividendCn => '分红';
+
+  @override
+  String get commandKeywordWithholdingTaxCn => '代扣税';
+
+  @override
+  String get commandKeywordCorporateActionCn => '公司行动';
+
+  @override
+  String get commandKeywordSplitCn => '拆股';
+
+  @override
+  String get commandKeywordRightsIssueCn => '配股';
+
+  @override
   String get accountsHubSectionCashDeposits => 'Cash & Deposits';
 
   @override
@@ -256,6 +424,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String homeNetWorthSubtitle(String currency) {
     return 'Base currency $currency · shown once data is connected';
   }
+
+  @override
+  String get homePassiveIncomeTitle => 'Passive income';
+
+  @override
+  String get homePassiveIncomeSubtitle =>
+      'TTM dividends, interest, and other passive income';
+
+  @override
+  String homePassiveIncomeSubtitleWithNextMonth(String amount) {
+    return 'TTM passive income · next month est. $amount';
+  }
+
+  @override
+  String get homePassiveIncomeEmpty =>
+      'Record dividends or interest to start TTM tracking';
+
+  @override
+  String get homePassiveIncomeDeltaNew => 'New';
+
+  @override
+  String get homeMonthlyCashFlowTitle => 'This month cashflow';
+
+  @override
+  String homeMonthlyCashFlowSubtitle(String inflow, String outflow) {
+    return 'In $inflow · Out $outflow';
+  }
+
+  @override
+  String get homeMonthlyCashFlowEmpty =>
+      'Add income or spending entries to see this month';
+
+  @override
+  String homeMonthlyCashFlowBaseline(String average) {
+    return 'vs 3-month average $average';
+  }
+
+  @override
+  String get homeMonthlyCashFlowBaselineEmpty =>
+      '3-month average appears after entries post';
+
+  @override
+  String get homeCashFlowEmptyValue => 'No data yet';
+
+  @override
+  String get homeCashFlowCardError => 'Cashflow summary is unavailable';
 
   @override
   String get assetsAppBarTitle => 'Assets';
@@ -3981,6 +4195,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String dashboardInsightIngestQueueValue(int count, int fresh) {
     return '$count parsed · $fresh ready to add';
+  }
+
+  @override
+  String get dashboardInsightCashFlowDeficitLabel => 'Cashflow gap';
+
+  @override
+  String dashboardInsightCashFlowDeficitValue(String amount) {
+    return 'This month is short $amount';
   }
 
   @override
