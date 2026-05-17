@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app/route_paths.dart';
 import '../../core/format/providers.dart';
 import '../../core/sync/providers.dart';
 import '../../core/sync/sync_status.dart';
@@ -9,6 +11,7 @@ import '../../data/market/sync/price_sync_coordinator.dart';
 import '../../data/market/sync/price_sync_providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../cashflow/data/dividend_center_providers.dart';
 import '../settings/ui/ai_privacy_onboarding.dart';
 import 'data/dashboard_insights_provider.dart';
 import 'data/dashboard_providers.dart';
@@ -110,6 +113,8 @@ class _DashboardBody extends ConsumerWidget {
                   children: [
                     const HomeGreetingHeader(),
                     _NetWorthHeader(snapshot: snapshot),
+                    const SizedBox(height: 20),
+                    const _PassiveIncomeCard(),
                   ],
                 ),
                 primary: Column(
@@ -140,6 +145,8 @@ class _DashboardBody extends ConsumerWidget {
                   children: [
                     const HomeGreetingHeader(),
                     _NetWorthHeader(snapshot: snapshot),
+                    const SizedBox(height: 20),
+                    const _PassiveIncomeCard(),
                     if (insights.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       AiInsightFeed(insights: insights),
@@ -156,6 +163,57 @@ class _DashboardBody extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _PassiveIncomeCard extends ConsumerWidget {
+  const _PassiveIncomeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formatters = context.formatters(ref);
+    final snapshot = ref.watch(dividendCenterSnapshotProvider);
+    final value = snapshot.value;
+    final amount = value == null
+        ? null
+        : formatters.compactCurrency(value.ttmGross, code: value.baseCurrency);
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: () => context.push(AppRoutes.cashflowDividends),
+      child: SoftCard(
+        padding: const EdgeInsets.all(16),
+        borderRadius: 8,
+        child: Row(
+          children: [
+            Icon(Icons.payments_outlined, color: colors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Passive income', style: context.theme.typography.sm),
+                  const SizedBox(height: 4),
+                  Text(
+                    'TTM dividends',
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              amount ?? 'N/A',
+              style: TypographyTokens.numericTitle.copyWith(
+                color: amount == null
+                    ? colors.mutedForeground
+                    : colors.foreground,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

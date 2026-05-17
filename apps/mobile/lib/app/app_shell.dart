@@ -39,6 +39,7 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fade;
+  late final ShareIntentService _shareIntentService;
 
   @override
   void initState() {
@@ -52,12 +53,13 @@ class _AppRootShellState extends ConsumerState<AppRootShell>
     // §5.10.10 / S5c-native — app-wide share receiver. Self-guarded:
     // a no-op wherever the share channel is absent (tests / web /
     // desktop), so this is safe to start unconditionally here.
-    ref.read(shareIntentServiceProvider).start();
+    _shareIntentService = ref.read(shareIntentServiceProvider);
+    _shareIntentService.start();
   }
 
   @override
   void dispose() {
-    ref.read(shareIntentServiceProvider).stop();
+    _shareIntentService.stop();
     _controller.dispose();
     super.dispose();
   }

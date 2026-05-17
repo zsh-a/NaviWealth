@@ -13,6 +13,7 @@
 // on: a given URL deterministically maps to a given page, and the bottom nav
 // keeps the URL up to date.
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,6 +37,9 @@ import 'package:naviwealth/features/analytics/data/providers.dart'
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/cashflow/data/dividend_center_providers.dart';
+import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
+import 'package:naviwealth/features/cashflow/ui/dividend_center_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
@@ -138,6 +142,9 @@ Future<ProviderContainer> _pumpAt(
       holdingServiceProvider.overrideWith(
         (ref) async => _EmptyHoldingService(),
       ),
+      dividendCenterSnapshotProvider.overrideWith(
+        (ref) async => _emptyDividendSnapshot(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -229,6 +236,13 @@ void main() {
     testWidgets('/accounts/analytics renders Analytics', (tester) async {
       await _pumpAt(tester, initialLocation: AppRoutes.accountsAnalytics);
       expect(find.byType(AnalyticsPage), findsOneWidget);
+    });
+
+    testWidgets('/activity/cashflow/dividends renders Dividend Center', (
+      tester,
+    ) async {
+      await _pumpAt(tester, initialLocation: AppRoutes.cashflowDividends);
+      expect(find.byType(DividendCenterPage), findsOneWidget);
     });
 
     testWidgets('/settings renders Settings', (tester) async {
@@ -534,3 +548,14 @@ void main() {
     });
   });
 }
+
+DividendCenterSnapshot _emptyDividendSnapshot() => DividendCenterSnapshot(
+  baseCurrency: 'CNY',
+  yearToDateGross: Decimal.zero,
+  ttmGross: Decimal.zero,
+  priorYearToDateGross: Decimal.zero,
+  ttmWithholding: Decimal.zero,
+  events: const [],
+  ranking: const [],
+  months: const [],
+);
