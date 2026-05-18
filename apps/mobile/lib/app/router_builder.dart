@@ -37,6 +37,8 @@ import '../features/home/home_page.dart';
 import '../features/ingest/ui/ingest_review_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
     deferred as corp_action_lib;
+import '../features/investment/presentation/dca_simulator_page.dart'
+    deferred as dca_simulator_lib;
 import '../features/investment/presentation/portfolio_hub_page.dart'
     deferred as portfolio_hub_lib;
 import '../features/investment/presentation/trade_entry_form_page.dart';
@@ -79,6 +81,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),
     corp_action_lib.loadLibrary(),
+    dca_simulator_lib.loadLibrary(),
     portfolio_hub_lib.loadLibrary(),
     watchlist_lib.loadLibrary(),
     devices_lib.loadLibrary(),
@@ -302,6 +305,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     builder: (context, state) => DeferredRoute(
                       load: portfolio_hub_lib.loadLibrary,
                       builder: (_) => portfolio_hub_lib.PortfolioHubPage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'dca',
+                    name: AppRouteNames.accountsDcaSimulator,
+                    builder: (context, state) => DeferredRoute(
+                      load: dca_simulator_lib.loadLibrary,
+                      builder: (_) => dca_simulator_lib.DcaSimulatorPage(),
                     ),
                   ),
                   GoRoute(

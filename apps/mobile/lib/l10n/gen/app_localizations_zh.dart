@@ -638,6 +638,126 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubEventTimelineEmpty => '暂无分红或公司行动事件。';
 
   @override
+  String get dcaSimulatorTitle => '定投模拟器';
+
+  @override
+  String get dcaSimulatorAccountsEntrySubtitle => '用月度缓存价格回测定期买入';
+
+  @override
+  String get dcaSimulatorSymbolField => '标的或篮子';
+
+  @override
+  String get dcaSimulatorSymbolHint => 'VOO 或 VOO, QQQ';
+
+  @override
+  String get dcaSimulatorAmountField => '金额';
+
+  @override
+  String get dcaSimulatorCurrencyField => '币种';
+
+  @override
+  String get dcaSimulatorMarketField => '市场';
+
+  @override
+  String get dcaSimulatorMarketUs => '美股';
+
+  @override
+  String get dcaSimulatorMarketHk => '港股';
+
+  @override
+  String get dcaSimulatorMarketCn => 'A 股';
+
+  @override
+  String get dcaSimulatorMarketCrypto => '加密资产';
+
+  @override
+  String get dcaSimulatorFrequencyField => '频率';
+
+  @override
+  String get dcaSimulatorFrequencyMonthly => '每月';
+
+  @override
+  String get dcaSimulatorFrequencyQuarterly => '每季度';
+
+  @override
+  String get dcaSimulatorWindowField => '窗口';
+
+  @override
+  String get dcaSimulatorWindow1y => '1 年';
+
+  @override
+  String get dcaSimulatorWindow3y => '3 年';
+
+  @override
+  String get dcaSimulatorWindow5y => '5 年';
+
+  @override
+  String get dcaSimulatorRunAction => '运行模拟';
+
+  @override
+  String get dcaSimulatorDraftAction => '生成下一笔买入草稿';
+
+  @override
+  String get dcaSimulatorFreshnessLive => '实时';
+
+  @override
+  String get dcaSimulatorFreshnessCache => '缓存';
+
+  @override
+  String get dcaSimulatorFreshnessStale => '延迟';
+
+  @override
+  String get dcaSimulatorResultTitle => '回测结果';
+
+  @override
+  String get dcaSimulatorTotalInvested => '投入';
+
+  @override
+  String get dcaSimulatorEndingValue => '期末价值';
+
+  @override
+  String get dcaSimulatorCumulativeReturn => '累计收益';
+
+  @override
+  String get dcaSimulatorAverageCost => '平均成本';
+
+  @override
+  String get dcaSimulatorMaxDrawdown => '最大回撤';
+
+  @override
+  String get dcaSimulatorChartTitle => '组合价值';
+
+  @override
+  String get dcaSimulatorChartSeries => '定投价值';
+
+  @override
+  String get dcaSimulatorEmpty => '该窗口内没有匹配的月度市场数据。';
+
+  @override
+  String get dcaSimulatorInvalidSymbols => '至少输入一个标的。';
+
+  @override
+  String get dcaSimulatorInvalidAmount => '请输入正数金额。';
+
+  @override
+  String get dcaSimulatorInvalidCurrency => '请输入币种代码。';
+
+  @override
+  String dcaSimulatorLoadError(String error) {
+    return '定投模拟失败：$error';
+  }
+
+  @override
+  String dcaSimulatorDraftNote(String symbol, String amount, String currency) {
+    return '定投计划：买入 $symbol，金额 $amount $currency';
+  }
+
+  @override
+  String dcaSimulatorPositionAverageCost(String currency, String averageCost) {
+    return '$currency $averageCost 平均成本';
+  }
+
+  @override
   String get assetDetailFxPnlTitle => '价格 vs 汇率贡献';
 
   @override

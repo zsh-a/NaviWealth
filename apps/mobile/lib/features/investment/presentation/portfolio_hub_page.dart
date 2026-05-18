@@ -415,6 +415,8 @@ class _PortfolioHubBody extends StatelessWidget {
       children: [
         _PortfolioSummary(data: data),
         const SizedBox(height: 20),
+        const _DcaSimulatorEntry(),
+        const SizedBox(height: 20),
         _EngineExposureSection(data: data),
         const SizedBox(height: 20),
         PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
@@ -500,6 +502,27 @@ class _PortfolioSummary extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _DcaSimulatorEntry extends StatelessWidget {
+  const _DcaSimulatorEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FCard.raw(
+      child: FTile(
+        onPress: () => context.push(AppRoutes.accountsDcaSimulator),
+        prefix: Icon(
+          Icons.event_repeat_outlined,
+          color: context.theme.colors.mutedForeground,
+        ),
+        title: Text(l10n.dcaSimulatorTitle),
+        subtitle: Text(l10n.dcaSimulatorAccountsEntrySubtitle),
+        suffix: const Icon(Icons.chevron_right, size: 18),
+      ),
     );
   }
 }

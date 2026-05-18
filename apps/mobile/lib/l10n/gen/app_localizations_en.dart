@@ -654,6 +654,127 @@ class AppLocalizationsEn extends AppLocalizations {
       'No dividend or corporate-action events yet.';
 
   @override
+  String get dcaSimulatorTitle => 'DCA simulator';
+
+  @override
+  String get dcaSimulatorAccountsEntrySubtitle =>
+      'Backtest recurring buys with cached monthly prices';
+
+  @override
+  String get dcaSimulatorSymbolField => 'Symbol or basket';
+
+  @override
+  String get dcaSimulatorSymbolHint => 'VOO or VOO, QQQ';
+
+  @override
+  String get dcaSimulatorAmountField => 'Amount';
+
+  @override
+  String get dcaSimulatorCurrencyField => 'Currency';
+
+  @override
+  String get dcaSimulatorMarketField => 'Market';
+
+  @override
+  String get dcaSimulatorMarketUs => 'US';
+
+  @override
+  String get dcaSimulatorMarketHk => 'Hong Kong';
+
+  @override
+  String get dcaSimulatorMarketCn => 'China A';
+
+  @override
+  String get dcaSimulatorMarketCrypto => 'Crypto';
+
+  @override
+  String get dcaSimulatorFrequencyField => 'Frequency';
+
+  @override
+  String get dcaSimulatorFrequencyMonthly => 'Monthly';
+
+  @override
+  String get dcaSimulatorFrequencyQuarterly => 'Quarterly';
+
+  @override
+  String get dcaSimulatorWindowField => 'Window';
+
+  @override
+  String get dcaSimulatorWindow1y => '1 year';
+
+  @override
+  String get dcaSimulatorWindow3y => '3 years';
+
+  @override
+  String get dcaSimulatorWindow5y => '5 years';
+
+  @override
+  String get dcaSimulatorRunAction => 'Run simulation';
+
+  @override
+  String get dcaSimulatorDraftAction => 'Draft next buys';
+
+  @override
+  String get dcaSimulatorFreshnessLive => 'Live';
+
+  @override
+  String get dcaSimulatorFreshnessCache => 'Cache';
+
+  @override
+  String get dcaSimulatorFreshnessStale => 'Stale';
+
+  @override
+  String get dcaSimulatorResultTitle => 'Backtest result';
+
+  @override
+  String get dcaSimulatorTotalInvested => 'Invested';
+
+  @override
+  String get dcaSimulatorEndingValue => 'Ending value';
+
+  @override
+  String get dcaSimulatorCumulativeReturn => 'Total return';
+
+  @override
+  String get dcaSimulatorAverageCost => 'Avg cost';
+
+  @override
+  String get dcaSimulatorMaxDrawdown => 'Max drawdown';
+
+  @override
+  String get dcaSimulatorChartTitle => 'Portfolio value';
+
+  @override
+  String get dcaSimulatorChartSeries => 'DCA value';
+
+  @override
+  String get dcaSimulatorEmpty => 'No monthly market data matched this window.';
+
+  @override
+  String get dcaSimulatorInvalidSymbols => 'Enter at least one symbol.';
+
+  @override
+  String get dcaSimulatorInvalidAmount => 'Enter a positive amount.';
+
+  @override
+  String get dcaSimulatorInvalidCurrency => 'Use a currency code.';
+
+  @override
+  String dcaSimulatorLoadError(String error) {
+    return 'DCA simulation failed: $error';
+  }
+
+  @override
+  String dcaSimulatorDraftNote(String symbol, String amount, String currency) {
+    return 'DCA plan: buy $symbol for $amount $currency';
+  }
+
+  @override
+  String dcaSimulatorPositionAverageCost(String currency, String averageCost) {
+    return '$currency $averageCost avg cost';
+  }
+
+  @override
   String get assetDetailFxPnlTitle => 'Price vs FX contribution';
 
   @override
