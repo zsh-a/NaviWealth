@@ -208,6 +208,23 @@ class Prices extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('WatchlistItemRow')
+class WatchlistItems extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get symbol => text()();
+  TextColumn get market => text()();
+  DateTimeColumn get addedAt => dateTime()();
+  TextColumn get alertRulesJson => text().withDefault(const Constant('{}'))();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, market, symbol)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('RecurringTransactionRow')
 class RecurringTransactions extends Table with SyncableTable {
   TextColumn get id => text()();

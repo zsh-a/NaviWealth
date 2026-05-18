@@ -1,0 +1,583 @@
+import 'dart:async';
+
+import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
+import 'package:intl/intl.dart';
+
+import '../../../design_system/design_system.dart';
+import '../../../domain/services/market_data_service.dart';
+import '../../../domain/values/asset_market.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/form_dirty_guard.dart';
+import '../data/watchlist_providers.dart';
+import '../data/watchlist_repository.dart';
+
+const _pollInterval = Duration(minutes: 5);
+
+class WatchlistPage extends ConsumerStatefulWidget {
+  const WatchlistPage({super.key});
+
+  @override
+  ConsumerState<WatchlistPage> createState() => _WatchlistPageState();
+}
+
+class _WatchlistPageState extends ConsumerState<WatchlistPage> {
+  Timer? _pollTimer;
+  final Set<String> _alertSignatures = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      if (mounted) ref.invalidate(watchlistQuoteSnapshotsProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = ref.watch(watchlistItemsProvider);
+    final quotes = ref.watch(watchlistQuoteSnapshotsProvider);
+
+    ref.listen(watchlistQuoteSnapshotsProvider, (_, next) {
+      next.whenData((snapshots) => _notifyAlerts(context, snapshots));
+    });
+
+    return FScaffold(
+      header: FHeader.nested(
+        title: Text(l10n.watchlistTitle),
+        prefixes: [backHeaderAction(context)],
+        suffixes: [
+          FHeaderAction(
+            icon: const Icon(Icons.add_outlined),
+            semanticsLabel: l10n.watchlistAddAction,
+            onPress: () => showWatchlistItemSheet(context: context),
+          ),
+        ],
+      ),
+      childPad: false,
+      child: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(watchlistQuoteSnapshotsProvider),
+        child: items.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (error, _) => Center(child: Text('$error')),
+          data: (items) => _WatchlistBody(
+            items: items,
+            snapshots: quotes.value ?? const [],
+            loadingQuotes: quotes.isLoading,
+            onAdd: () => showWatchlistItemSheet(context: context),
+            onEdit: (item) =>
+                showWatchlistItemSheet(context: context, item: item),
+            onRemove: (item) => _removeItem(item),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _notifyAlerts(
+    BuildContext context,
+    List<WatchlistQuoteSnapshot> snapshots,
+  ) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    for (final snapshot in snapshots) {
+      final quote = snapshot.quote;
+      final rules = snapshot.item.alertRules;
+      if (quote == null || !rules.enabled || !rules.hasRule) continue;
+      final price = quote.price;
+      final above = rules.above;
+      if (above != null && price >= above) {
+        _showOnce(
+          context,
+          '${snapshot.item.id}:above:${above.toString()}',
+          l10n.watchlistAlertTriggeredAbove(
+            snapshot.item.displaySymbol,
+            price.toString(),
+          ),
+        );
+      }
+      final below = rules.below;
+      if (below != null && price <= below) {
+        _showOnce(
+          context,
+          '${snapshot.item.id}:below:${below.toString()}',
+          l10n.watchlistAlertTriggeredBelow(
+            snapshot.item.displaySymbol,
+            price.toString(),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showOnce(BuildContext context, String signature, String message) {
+    if (!_alertSignatures.add(signature)) return;
+    AppMessenger.show(context, ToastKind.warning, message);
+  }
+
+  Future<void> _removeItem(WatchlistItem item) async {
+    final repo = await ref.read(watchlistRepositoryProvider.future);
+    await repo.remove(item);
+    ref.invalidate(watchlistQuoteSnapshotsProvider);
+  }
+}
+
+class _WatchlistBody extends StatelessWidget {
+  const _WatchlistBody({
+    required this.items,
+    required this.snapshots,
+    required this.loadingQuotes,
+    required this.onAdd,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final List<WatchlistItem> items;
+  final List<WatchlistQuoteSnapshot> snapshots;
+  final bool loadingQuotes;
+  final VoidCallback onAdd;
+  final ValueChanged<WatchlistItem> onEdit;
+  final ValueChanged<WatchlistItem> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
+    final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        hPad,
+        8,
+        hPad,
+        80 + MediaQuery.paddingOf(context).bottom,
+      ),
+      children: [
+        if (items.isEmpty)
+          _WatchlistEmpty(onAdd: onAdd)
+        else ...[
+          for (final item in items) ...[
+            _WatchlistRow(
+              item: item,
+              snapshot: byId[item.id],
+              loadingQuote: loadingQuotes && byId[item.id] == null,
+              onEdit: () => onEdit(item),
+              onRemove: () => onRemove(item),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _WatchlistEmpty extends StatelessWidget {
+  const _WatchlistEmpty({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 96),
+      child: Column(
+        children: [
+          Icon(
+            Icons.notifications_active_outlined,
+            size: 42,
+            color: context.theme.colors.mutedForeground,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.watchlistEmptyTitle,
+            style: context.theme.typography.lg.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.watchlistEmptyBody,
+            textAlign: TextAlign.center,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: 18),
+          FButton(onPress: onAdd, child: Text(l10n.watchlistAddAction)),
+        ],
+      ),
+    );
+  }
+}
+
+class _WatchlistRow extends StatelessWidget {
+  const _WatchlistRow({
+    required this.item,
+    required this.snapshot,
+    required this.loadingQuote,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final WatchlistItem item;
+  final WatchlistQuoteSnapshot? snapshot;
+  final bool loadingQuote;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final quote = snapshot?.quote;
+    final price = quote == null
+        ? l10n.watchlistPriceUnavailable
+        : NumberFormat.simpleCurrency(
+            name: quote.currency,
+          ).format(quote.price.toDouble());
+    return FCard.raw(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.foreground.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    _marketIcon(item.market),
+                    size: 19,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.displaySymbol,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        _marketLabel(l10n, item.market),
+                        style: context.theme.typography.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (loadingQuote)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: FCircularProgress(),
+                  )
+                else
+                  Text(
+                    price,
+                    style: context.theme.typography.lg.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _FreshnessChip(snapshot: snapshot),
+                if (item.alertRules.above != null)
+                  _RuleChip(
+                    label: l10n.watchlistAlertAboveChip(
+                      item.alertRules.above.toString(),
+                    ),
+                  ),
+                if (item.alertRules.below != null)
+                  _RuleChip(
+                    label: l10n.watchlistAlertBelowChip(
+                      item.alertRules.below.toString(),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: onEdit,
+                  child: Text(l10n.watchlistEditAlertsAction),
+                ),
+                const SizedBox(width: 8),
+                FButton(
+                  variant: FButtonVariant.destructive,
+                  onPress: onRemove,
+                  child: Text(l10n.watchlistRemoveAction),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FreshnessChip extends StatelessWidget {
+  const _FreshnessChip({required this.snapshot});
+
+  final WatchlistQuoteSnapshot? snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final label = switch (snapshot?.response?.freshness) {
+      DataFreshness.live => l10n.watchlistFreshnessLive,
+      DataFreshness.cachedFresh => l10n.watchlistFreshnessCache,
+      DataFreshness.stale => l10n.watchlistFreshnessStale,
+      null => l10n.watchlistFreshnessStale,
+    };
+    return _RuleChip(label: label);
+  }
+}
+
+class _RuleChip extends StatelessWidget {
+  const _RuleChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.theme.colors.foreground.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        child: Text(label, style: context.theme.typography.xs),
+      ),
+    );
+  }
+}
+
+Future<void> showWatchlistItemSheet({
+  required BuildContext context,
+  WatchlistItem? item,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final dirty = FormDirtyController();
+  try {
+    await showAppSheet<void>(
+      context: context,
+      title: item == null
+          ? l10n.watchlistAddTitle
+          : l10n.watchlistEditAlertTitle(item.displaySymbol),
+      maxHeightFactor: 0.9,
+      dirtyGuard: dirty,
+      confirmDismiss: () => confirmDiscardIfDirty(context, dirty),
+      builder: (_) => _WatchlistItemSheet(dirty: dirty, item: item),
+    );
+  } finally {
+    dirty.dispose();
+  }
+}
+
+class _WatchlistItemSheet extends ConsumerStatefulWidget {
+  const _WatchlistItemSheet({required this.dirty, this.item});
+
+  final FormDirtyController dirty;
+  final WatchlistItem? item;
+
+  @override
+  ConsumerState<_WatchlistItemSheet> createState() =>
+      _WatchlistItemSheetState();
+}
+
+class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _symbol;
+  late final TextEditingController _above;
+  late final TextEditingController _below;
+  late AssetMarket _market;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.item;
+    _symbol = TextEditingController(text: item?.symbol ?? '');
+    _above = TextEditingController(text: item?.alertRules.above?.toString());
+    _below = TextEditingController(text: item?.alertRules.below?.toString());
+    _market = item?.market ?? AssetMarket.usStock;
+    widget.dirty.bindTextControllers([_symbol, _above, _below]);
+    widget.dirty.snapshotBaseline();
+  }
+
+  @override
+  void dispose() {
+    _symbol.dispose();
+    _above.dispose();
+    _below.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.item == null) ...[
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _symbol),
+              label: Text(l10n.watchlistSymbolField),
+              textCapitalization: TextCapitalization.characters,
+              textInputAction: TextInputAction.next,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? l10n.watchlistSymbolRequired
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            FSelect<AssetMarket>(
+              items: {
+                for (final market in _editableMarkets)
+                  _marketLabel(l10n, market): market,
+              },
+              control: FSelectControl<AssetMarket>.managed(
+                initial: _market,
+                onChange: (value) {
+                  setState(() => _market = value ?? _market);
+                  widget.dirty.markDirty();
+                },
+              ),
+              label: Text(l10n.watchlistMarketField),
+            ),
+            const SizedBox(height: 12),
+          ],
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _above),
+            label: Text(l10n.watchlistAlertAboveField),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            ],
+            validator: _validateDecimal,
+          ),
+          const SizedBox(height: 12),
+          FTextFormField(
+            control: FTextFieldControl.managed(controller: _below),
+            label: Text(l10n.watchlistAlertBelowField),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            ],
+            validator: _validateDecimal,
+          ),
+          const SizedBox(height: 18),
+          AppSheetFooter(
+            cancelLabel: l10n.commonCancel,
+            submitLabel: widget.item == null
+                ? l10n.watchlistAddAction
+                : l10n.watchlistSaveAlertsAction,
+            busy: _saving,
+            onSubmit: _save,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String? _validateDecimal(String? value) {
+    final raw = value?.trim() ?? '';
+    if (raw.isEmpty) return null;
+    final parsed = Decimal.tryParse(raw);
+    if (parsed == null || parsed <= Decimal.zero) {
+      return AppLocalizations.of(context).watchlistInvalidNumber;
+    }
+    return null;
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    widget.dirty.busy = true;
+    try {
+      final repo = await ref.read(watchlistRepositoryProvider.future);
+      final rules = PriceAlertRules(
+        above: Decimal.tryParse(_above.text.trim()),
+        below: Decimal.tryParse(_below.text.trim()),
+      );
+      final item = widget.item;
+      if (item == null) {
+        await repo.add(symbol: _symbol.text, market: _market, rules: rules);
+      } else {
+        await repo.updateAlertRules(item: item, rules: rules);
+      }
+      ref.invalidate(watchlistQuoteSnapshotsProvider);
+      widget.dirty.markPristine();
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+      widget.dirty.busy = false;
+    }
+  }
+}
+
+const _editableMarkets = <AssetMarket>[
+  AssetMarket.usStock,
+  AssetMarket.hkStock,
+  AssetMarket.cnA,
+  AssetMarket.crypto,
+  AssetMarket.fx,
+];
+
+String _marketLabel(AppLocalizations l10n, AssetMarket market) {
+  return switch (market) {
+    AssetMarket.cnA => l10n.watchlistMarketCnA,
+    AssetMarket.hkStock => l10n.watchlistMarketHkStock,
+    AssetMarket.usStock => l10n.watchlistMarketUsStock,
+    AssetMarket.crypto => l10n.watchlistMarketCrypto,
+    AssetMarket.fx => l10n.watchlistMarketFx,
+    AssetMarket.unknown => l10n.watchlistMarketUnknown,
+  };
+}
+
+IconData _marketIcon(AssetMarket market) {
+  return switch (market) {
+    AssetMarket.crypto => Icons.currency_bitcoin_outlined,
+    AssetMarket.fx => Icons.currency_exchange_outlined,
+    AssetMarket.cnA ||
+    AssetMarket.hkStock ||
+    AssetMarket.usStock => Icons.show_chart_outlined,
+    AssetMarket.unknown => Icons.trending_up_outlined,
+  };
+}

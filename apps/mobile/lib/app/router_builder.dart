@@ -40,6 +40,8 @@ import '../features/investment/presentation/corporate_action_entry_route.dart'
 import '../features/investment/presentation/portfolio_hub_page.dart'
     deferred as portfolio_hub_lib;
 import '../features/investment/presentation/trade_entry_form_page.dart';
+import '../features/investment/presentation/watchlist_page.dart'
+    deferred as watchlist_lib;
 import '../features/liabilities/ui/liabilities_page.dart'
     deferred as liabilities_lib;
 import '../features/liabilities/ui/liability_detail_page.dart'
@@ -78,6 +80,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     physical_detail_lib.loadLibrary(),
     corp_action_lib.loadLibrary(),
     portfolio_hub_lib.loadLibrary(),
+    watchlist_lib.loadLibrary(),
     devices_lib.loadLibrary(),
     rebalance_lib.loadLibrary(),
     ai_chat_lib.loadLibrary(),
@@ -299,6 +302,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     builder: (context, state) => DeferredRoute(
                       load: portfolio_hub_lib.loadLibrary,
                       builder: (_) => portfolio_hub_lib.PortfolioHubPage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'watchlist',
+                    name: AppRouteNames.accountsWatchlist,
+                    builder: (context, state) => DeferredRoute(
+                      load: watchlist_lib.loadLibrary,
+                      builder: (_) => watchlist_lib.WatchlistPage(),
                     ),
                   ),
                   GoRoute(

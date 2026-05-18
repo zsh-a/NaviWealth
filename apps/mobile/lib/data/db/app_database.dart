@@ -27,6 +27,7 @@ const String defaultDbFileName = 'naviwealth.db';
     JournalEntries,
     Postings,
     Prices,
+    WatchlistItems,
     RecurringTransactions,
     Liabilities,
     AmortizationEntries,
@@ -52,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -161,6 +162,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 9) {
         await m.createTable(recurringTransactions);
         await _createRecurringTransactionIndexes(this);
+      }
+      // v9 -> v10: synced investment watchlist with local price alerts.
+      if (from < 10) {
+        await m.createTable(watchlistItems);
+        await _createWatchlistIndexes(this);
       }
     },
     beforeOpen: (details) async {
@@ -277,6 +283,7 @@ const List<String> _journalEntryIndexStmts = [
       'ON prices(unit, quote_currency, observed_on)',
   'CREATE INDEX IF NOT EXISTS idx_prices_owner_hlc '
       'ON prices(owner_user_id, hlc)',
+  ..._watchlistIndexStmts,
   ..._recurringTransactionIndexStmts,
 ];
 
@@ -296,8 +303,22 @@ const List<String> _recurringTransactionIndexStmts = [
       'WHERE deleted_at IS NULL',
 ];
 
+const List<String> _watchlistIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_items_owner_hlc '
+      'ON watchlist_items(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_items_owner_added '
+      'ON watchlist_items(owner_user_id, added_at) '
+      'WHERE deleted_at IS NULL',
+];
+
 Future<void> _createRecurringTransactionIndexes(AppDatabase db) async {
   for (final stmt in _recurringTransactionIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createWatchlistIndexes(AppDatabase db) async {
+  for (final stmt in _watchlistIndexStmts) {
     await db.customStatement(stmt);
   }
 }
