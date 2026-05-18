@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +26,41 @@ class _ScriptedAdapter {
   }) async* {
     final round = _rounds[calls++];
     for (final e in round) {
+      yield e;
+    }
+  }
+}
+
+/// Replays scripted rounds while deep-snapshotting each request — the
+/// loop mutates one shared message list in place across rounds, so a
+/// post-run assertion needs the state as each round actually saw it.
+class _RequestCapturingAdapter {
+  _RequestCapturingAdapter(this._rounds);
+  final List<List<LlmStreamEvent>> _rounds;
+  final List<AnthropicRequest> requests = [];
+  int calls = 0;
+
+  Stream<LlmStreamEvent> stream(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) async* {
+    final snapshot = [
+      for (final m in request.messages)
+        AnthropicChatMessage.fromJson(
+          jsonDecode(jsonEncode(m.toJson())) as Map<String, Object?>,
+        ),
+    ];
+    requests.add(
+      AnthropicRequest(
+        model: request.model,
+        maxTokens: request.maxTokens,
+        system: request.system,
+        messages: snapshot,
+        tools: request.tools,
+        stream: request.stream,
+      ),
+    );
+    for (final e in _rounds[calls++]) {
       yield e;
     }
   }
@@ -106,6 +142,91 @@ void main() {
       // assistant(tool_use) + user(tool_result) pushed onto the seed turn.
       expect(session.messages.length, 3);
     });
+
+    test(
+      'reasoning + signature survive into the next tool round',
+      () async {
+        // Round 1: the model reasons (thinking + signature), then calls
+        // a tool. Round 2: plain answer. The round-1 assistant turn must
+        // be replayed to round 2 *with* its thinking block first —
+        // dropping it makes reasoning providers (native Anthropic
+        // extended thinking, MiMo thinking mode) reject round 2.
+        final adapter = _RequestCapturingAdapter([
+          [
+            const LlmThinkingDelta('weighing '),
+            const LlmThinkingDelta('the options'),
+            const LlmThinkingSignatureDelta('sig-'),
+            const LlmThinkingSignatureDelta('xyz'),
+            const LlmTextDelta('on it'),
+            const LlmToolCallStart(id: 't1', name: 'get_holdings'),
+            const LlmToolCallEnd(id: 't1', name: 'get_holdings', input: {}),
+            const LlmMessageStop(LlmStopReason.toolUse),
+          ],
+          [
+            const LlmTextDelta('done'),
+            const LlmMessageStop(LlmStopReason.endTurn),
+          ],
+        ]);
+        final loop = DeviceAgentLoop(
+          streamFn: adapter.stream,
+          model: 'm',
+          dispatcher: _RecordingDispatcher(),
+        );
+        final session = _session([_user('hi')]);
+        await loop.run(session).toList();
+
+        // The persisted assistant turn leads with the reconstructed
+        // thinking block (reasoning text + concatenated signature),
+        // ahead of the text and tool_use blocks.
+        final assistant = session.messages[1];
+        expect(assistant.role, 'assistant');
+        final blocks = assistant.content! as List;
+        expect(blocks.first, {
+          'type': 'thinking',
+          'thinking': 'weighing the options',
+          'signature': 'sig-xyz',
+        });
+        expect(
+          blocks.map((b) => (b as Map)['type']),
+          ['thinking', 'text', 'tool_use'],
+        );
+
+        // And round 2 actually received it (the 400-prevention).
+        final round2 = adapter.requests[1].messages;
+        final replayed = round2[1].content! as List;
+        expect((replayed.first as Map)['type'], 'thinking');
+        expect((replayed.first as Map)['signature'], 'sig-xyz');
+      },
+    );
+
+    test(
+      'reasoning with no signature still re-sent (MiMo-style provider)',
+      () async {
+        final adapter = _RequestCapturingAdapter([
+          [
+            const LlmThinkingDelta('quietly thinking'),
+            const LlmToolCallStart(id: 't1', name: 'get_holdings'),
+            const LlmToolCallEnd(id: 't1', name: 'get_holdings', input: {}),
+            const LlmMessageStop(LlmStopReason.toolUse),
+          ],
+          [const LlmMessageStop(LlmStopReason.endTurn)],
+        ]);
+        final loop = DeviceAgentLoop(
+          streamFn: adapter.stream,
+          model: 'm',
+          dispatcher: _RecordingDispatcher(),
+        );
+        final session = _session([_user('hi')]);
+        await loop.run(session).toList();
+
+        final blocks = session.messages[1].content! as List;
+        // Signature key omitted entirely when the provider gave none.
+        expect(blocks.first, {
+          'type': 'thinking',
+          'thinking': 'quietly thinking',
+        });
+      },
+    );
 
     test('propose_* cap skips dispatch and returns the cap error', () async {
       final seeded = <AnthropicChatMessage>[];

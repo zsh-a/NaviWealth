@@ -137,6 +137,59 @@ void main() {
       expect(payload['tools'], hasLength(1));
       expect(payload['stream_options'], {'include_usage': true});
     });
+
+    test('assistant thinking block re-serialises as reasoning_content', () {
+      final req = AnthropicRequest(
+        model: 'mimo',
+        maxTokens: 128,
+        system: '',
+        messages: [
+          AnthropicChatMessage.text('user', 'hi'),
+          AnthropicChatMessage(
+            role: 'assistant',
+            content: [
+              AnthropicBlocks.thinking(thinking: 'reasoned through it'),
+              AnthropicBlocks.text('working'),
+              {
+                'type': 'tool_use',
+                'id': 'call_1',
+                'name': 'get_net_worth',
+                'input': const <String, Object?>{},
+              },
+            ],
+          ),
+        ],
+        tools: const [],
+        stream: true,
+      );
+
+      final payload = openAiChatCompletionsPayload(req, stream: true);
+      final assistant = (payload['messages']! as List)[1] as Map;
+      expect(assistant['role'], 'assistant');
+      expect(assistant['content'], 'working');
+      expect(assistant['reasoning_content'], 'reasoned through it');
+      expect(assistant['tool_calls'], hasLength(1));
+    });
+
+    test('no thinking block ⇒ no reasoning_content key', () {
+      final req = AnthropicRequest(
+        model: 'gpt-x',
+        maxTokens: 64,
+        system: '',
+        messages: [
+          AnthropicChatMessage(
+            role: 'assistant',
+            content: [AnthropicBlocks.text('plain')],
+          ),
+        ],
+        tools: const [],
+        stream: false,
+      );
+      final assistant =
+          (openAiChatCompletionsPayload(req, stream: false)['messages']!
+              as List)[0] as Map;
+      expect(assistant.containsKey('reasoning_content'), isFalse);
+    });
   });
 
   group('mapOpenAiFrame', () {

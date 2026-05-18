@@ -303,13 +303,38 @@ class DeviceAgentLoop {
     // Full assistant text for the round span's output digest — kept
     // separate from `textBuf` (which `flushText` clears per block).
     final fullText = StringBuffer();
+    // Streamed reasoning + its opaque signature for the current
+    // `thinking` block. Dropping these from the assistant turn makes
+    // every subsequent tool round fail on providers that emit reasoning
+    // (native Anthropic extended thinking, MiMo thinking mode, …), so
+    // they are reconstructed into the content the loop re-sends.
+    final thinkingBuf = StringBuffer();
+    final thinkingSig = StringBuffer();
     final toolNames = <String, String>{};
     final assistantContent = <Map<String, Object?>>[];
     final toolUses = <_ToolUse>[];
     var stopReason = LlmStopReason.endTurn;
     SpanTokens? tokens;
 
+    // A `thinking` block must precede the text / tool_use blocks it
+    // reasoned about, so flush it ahead of any of them. Driven through
+    // `flushText`, which already runs at every block boundary (tool
+    // start + final), this also keeps interleaved-thinking order
+    // (think → tool → think → tool) intact.
+    void flushThinking() {
+      if (thinkingBuf.isEmpty) return;
+      assistantContent.add(
+        AnthropicBlocks.thinking(
+          thinking: thinkingBuf.toString(),
+          signature: thinkingSig.isEmpty ? null : thinkingSig.toString(),
+        ),
+      );
+      thinkingBuf.clear();
+      thinkingSig.clear();
+    }
+
     void flushText() {
+      flushThinking();
       if (textBuf.isNotEmpty) {
         assistantContent.add(AnthropicBlocks.text(textBuf.toString()));
         textBuf.clear();
@@ -324,7 +349,12 @@ class DeviceAgentLoop {
           fullText.write(text);
           emit(TextEvent(text));
         case LlmThinkingDelta(:final text):
+          thinkingBuf.write(text);
           emit(ThinkingDeltaEvent(text));
+        case LlmThinkingSignatureDelta(:final signature):
+          // Not surfaced to the UI — accumulated only so the assistant
+          // turn can be replayed verbatim on the next tool round.
+          thinkingSig.write(signature);
         case LlmToolCallStart(:final id, :final name):
           flushText();
           toolNames[id] = name;
