@@ -1214,6 +1214,234 @@ abstract class AppLocalizations {
   /// **'No dividend or corporate-action events yet.'**
   String get portfolioHubEventTimelineEmpty;
 
+  /// No description provided for @dcaSimulatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA simulator'**
+  String get dcaSimulatorTitle;
+
+  /// No description provided for @dcaSimulatorAccountsEntrySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backtest recurring buys with cached monthly prices'**
+  String get dcaSimulatorAccountsEntrySubtitle;
+
+  /// No description provided for @dcaSimulatorSymbolField.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol or basket'**
+  String get dcaSimulatorSymbolField;
+
+  /// No description provided for @dcaSimulatorSymbolHint.
+  ///
+  /// In en, this message translates to:
+  /// **'VOO or VOO, QQQ'**
+  String get dcaSimulatorSymbolHint;
+
+  /// No description provided for @dcaSimulatorAmountField.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get dcaSimulatorAmountField;
+
+  /// No description provided for @dcaSimulatorCurrencyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get dcaSimulatorCurrencyField;
+
+  /// No description provided for @dcaSimulatorMarketField.
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get dcaSimulatorMarketField;
+
+  /// No description provided for @dcaSimulatorMarketUs.
+  ///
+  /// In en, this message translates to:
+  /// **'US'**
+  String get dcaSimulatorMarketUs;
+
+  /// No description provided for @dcaSimulatorMarketHk.
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong'**
+  String get dcaSimulatorMarketHk;
+
+  /// No description provided for @dcaSimulatorMarketCn.
+  ///
+  /// In en, this message translates to:
+  /// **'China A'**
+  String get dcaSimulatorMarketCn;
+
+  /// No description provided for @dcaSimulatorMarketCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get dcaSimulatorMarketCrypto;
+
+  /// No description provided for @dcaSimulatorFrequencyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get dcaSimulatorFrequencyField;
+
+  /// No description provided for @dcaSimulatorFrequencyMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get dcaSimulatorFrequencyMonthly;
+
+  /// No description provided for @dcaSimulatorFrequencyQuarterly.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarterly'**
+  String get dcaSimulatorFrequencyQuarterly;
+
+  /// No description provided for @dcaSimulatorWindowField.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get dcaSimulatorWindowField;
+
+  /// No description provided for @dcaSimulatorWindow1y.
+  ///
+  /// In en, this message translates to:
+  /// **'1 year'**
+  String get dcaSimulatorWindow1y;
+
+  /// No description provided for @dcaSimulatorWindow3y.
+  ///
+  /// In en, this message translates to:
+  /// **'3 years'**
+  String get dcaSimulatorWindow3y;
+
+  /// No description provided for @dcaSimulatorWindow5y.
+  ///
+  /// In en, this message translates to:
+  /// **'5 years'**
+  String get dcaSimulatorWindow5y;
+
+  /// No description provided for @dcaSimulatorRunAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Run simulation'**
+  String get dcaSimulatorRunAction;
+
+  /// No description provided for @dcaSimulatorDraftAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft next buys'**
+  String get dcaSimulatorDraftAction;
+
+  /// No description provided for @dcaSimulatorFreshnessLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get dcaSimulatorFreshnessLive;
+
+  /// No description provided for @dcaSimulatorFreshnessCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache'**
+  String get dcaSimulatorFreshnessCache;
+
+  /// No description provided for @dcaSimulatorFreshnessStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale'**
+  String get dcaSimulatorFreshnessStale;
+
+  /// No description provided for @dcaSimulatorResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backtest result'**
+  String get dcaSimulatorResultTitle;
+
+  /// No description provided for @dcaSimulatorTotalInvested.
+  ///
+  /// In en, this message translates to:
+  /// **'Invested'**
+  String get dcaSimulatorTotalInvested;
+
+  /// No description provided for @dcaSimulatorEndingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Ending value'**
+  String get dcaSimulatorEndingValue;
+
+  /// No description provided for @dcaSimulatorCumulativeReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Total return'**
+  String get dcaSimulatorCumulativeReturn;
+
+  /// No description provided for @dcaSimulatorAverageCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg cost'**
+  String get dcaSimulatorAverageCost;
+
+  /// No description provided for @dcaSimulatorMaxDrawdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Max drawdown'**
+  String get dcaSimulatorMaxDrawdown;
+
+  /// No description provided for @dcaSimulatorChartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio value'**
+  String get dcaSimulatorChartTitle;
+
+  /// No description provided for @dcaSimulatorChartSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA value'**
+  String get dcaSimulatorChartSeries;
+
+  /// No description provided for @dcaSimulatorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No monthly market data matched this window.'**
+  String get dcaSimulatorEmpty;
+
+  /// No description provided for @dcaSimulatorInvalidSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter at least one symbol.'**
+  String get dcaSimulatorInvalidSymbols;
+
+  /// No description provided for @dcaSimulatorInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount.'**
+  String get dcaSimulatorInvalidAmount;
+
+  /// No description provided for @dcaSimulatorInvalidCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a currency code.'**
+  String get dcaSimulatorInvalidCurrency;
+
+  /// No description provided for @dcaSimulatorLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA simulation failed: {error}'**
+  String dcaSimulatorLoadError(String error);
+
+  /// No description provided for @dcaSimulatorDraftNote.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA plan: buy {symbol} for {amount} {currency}'**
+  String dcaSimulatorDraftNote(String symbol, String amount, String currency);
+
+  /// No description provided for @dcaSimulatorPositionAverageCost.
+  ///
+  /// In en, this message translates to:
+  /// **'{currency} {averageCost} avg cost'**
+  String dcaSimulatorPositionAverageCost(String currency, String averageCost);
+
   /// No description provided for @assetDetailFxPnlTitle.
   ///
   /// In en, this message translates to:
