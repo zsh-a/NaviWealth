@@ -174,6 +174,8 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
                 const SizedBox(height: 12),
                 AssetPnLCard(asset: asset),
                 const SizedBox(height: 12),
+                AssetFxPnlCard(assetId: asset.id),
+                const SizedBox(height: 12),
                 AssetTrendMiniChartCard(asset: asset),
                 const SizedBox(height: 16),
                 FButton(

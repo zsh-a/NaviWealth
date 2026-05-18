@@ -5,10 +5,14 @@ import 'package:forui/forui.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../home/ui/asset_category_visuals.dart';
+import '../../investment/presentation/trade_entry_form_page.dart';
+import '../application/rebalance_trade_entry_prefills.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';
+import 'rebalance_execution_sheet.dart';
+import 'target_allocation_editor_sheet.dart';
 
 /// Rebalance page — shows target vs actual allocation, deviation bars,
 /// and suggested trades.
@@ -135,17 +139,32 @@ class _SchemeSelector extends ConsumerWidget {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final preset in AllocationSchemePreset.values)
-                  FButton(
-                    variant: (current == preset)
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () => ref
-                        .read(selectedSchemeProvider.notifier)
-                        .select(preset),
-                    child: Text(_schemeLabel(l10n, preset)),
+                  if (preset != AllocationSchemePreset.custom)
+                    FButton(
+                      variant: (current == preset)
+                          ? FButtonVariant.primary
+                          : FButtonVariant.outline,
+                      onPress: () => _selectPreset(ref, preset),
+                      child: Text(_schemeLabel(l10n, preset)),
+                    ),
+                FButton(
+                  variant: (current == AllocationSchemePreset.custom)
+                      ? FButtonVariant.primary
+                      : FButtonVariant.outline,
+                  onPress: () =>
+                      showTargetAllocationEditorSheet(context: context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Text(l10n.targetAllocationEditorEditAction),
+                    ],
                   ),
+                ),
               ],
             ),
           ],
@@ -165,6 +184,16 @@ class _SchemeSelector extends ConsumerWidget {
       case AllocationSchemePreset.custom:
         return l10n.rebalanceSchemeCustom;
     }
+  }
+
+  Future<void> _selectPreset(
+    WidgetRef ref,
+    AllocationSchemePreset preset,
+  ) async {
+    await ref.read(selectedSchemeProvider.notifier).select(preset);
+    await ref
+        .read(targetAllocationProvider.notifier)
+        .update(allocationScheme(preset));
   }
 }
 
@@ -285,7 +314,7 @@ class _TradeList extends StatelessWidget {
                     ),
                   ),
                 ),
-                MoneyText(
+                AnimatedMoneyText(
                   amount: plan.estimatedFees.amount.toDouble(),
                   currencyCode: plan.estimatedFees.currency,
                   compact: true,
@@ -304,7 +333,7 @@ class _TradeList extends StatelessWidget {
                     ),
                   ),
                 ),
-                MoneyText(
+                AnimatedMoneyText(
                   amount: plan.estimatedTaxes.amount.toDouble(),
                   currencyCode: plan.estimatedTaxes.currency,
                   compact: true,
@@ -331,10 +360,53 @@ class _TradeList extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FButton(
+                variant: FButtonVariant.primary,
+                onPress: () => _startExecution(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.playlist_add_check, size: 18),
+                    const SizedBox(width: 6),
+                    Text(l10n.rebalanceExecuteAction),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _startExecution(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showRebalanceExecutionSheet(
+      context: context,
+      plan: plan,
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final drafts = buildRebalanceTradeEntryPrefills(
+      plan: plan,
+      tradeDate: DateTime.now(),
+      noteBuilder: (trade) => l10n.rebalanceExecutionDraftNote(
+        trade.isBuy ? l10n.rebalanceBuy : l10n.rebalanceSell,
+        AssetCategoryVisuals.label(l10n, trade.category),
+        trade.amount.amount.toString(),
+        trade.amount.currency,
+      ),
+    );
+    for (final draft in drafts) {
+      final recorded = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => TradeEntryFormPage(prefill: draft)),
+      );
+      if (!context.mounted || recorded != true) return;
+    }
   }
 }
 
@@ -387,7 +459,7 @@ class _TradeRow extends StatelessWidget {
               ],
             ),
           ),
-          MoneyText(
+          AnimatedMoneyText(
             amount: trade.amount.amount.toDouble(),
             currencyCode: trade.amount.currency,
             compact: true,

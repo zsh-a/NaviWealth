@@ -435,6 +435,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandKeywordRightsIssueCn => '配股';
 
   @override
+  String get commandKeywordRebalanceCn => '再平衡';
+
+  @override
+  String get commandKeywordTargetAllocationCn => '目标配置';
+
+  @override
   String get accountsHubSectionCashDeposits => '现金与存款';
 
   @override
@@ -448,6 +454,325 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountsHubManageBankAccounts => '管理银行账户';
+
+  @override
+  String get portfolioHubTitle => '投资组合';
+
+  @override
+  String get portfolioHubAccountsEntrySubtitle => '持仓、收益与分布视角';
+
+  @override
+  String get portfolioHubMarketValueLabel => '市值';
+
+  @override
+  String get portfolioHubYtdXirrLabel => '年初至今 XIRR';
+
+  @override
+  String get portfolioHubAbsoluteReturnLabel => '绝对收益';
+
+  @override
+  String get portfolioHubViewAccount => '账户';
+
+  @override
+  String get portfolioHubViewCurrency => '币种';
+
+  @override
+  String get portfolioHubViewAssetClass => '类别';
+
+  @override
+  String get portfolioHubHoldingsTitle => '分布';
+
+  @override
+  String get portfolioHubPositionsTitle => '持仓';
+
+  @override
+  String portfolioHubHoldingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个持仓',
+      one: '1 个持仓',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubUnknownAccount => '未知账户';
+
+  @override
+  String get portfolioHubAccountGroupSubtitle => '券商账户';
+
+  @override
+  String get portfolioHubCurrencyGroupSubtitle => '结算币种';
+
+  @override
+  String get portfolioHubAssetClassGroupSubtitle => '资产类别';
+
+  @override
+  String get portfolioHubEmpty => '暂无投资持仓。';
+
+  @override
+  String portfolioHubLoadError(String error) {
+    return '投资组合加载失败：$error';
+  }
+
+  @override
+  String get portfolioHubAssetTypeStock => '股票';
+
+  @override
+  String get portfolioHubAssetTypeEtf => 'ETF';
+
+  @override
+  String get portfolioHubAssetTypeMutualFund => '基金';
+
+  @override
+  String get portfolioHubAssetTypeBond => '债券';
+
+  @override
+  String get portfolioHubAssetTypeCrypto => '加密资产';
+
+  @override
+  String get portfolioHubAssetTypeCash => '现金';
+
+  @override
+  String get portfolioHubAssetTypeCommodity => '商品';
+
+  @override
+  String get portfolioHubAssetTypeCustom => '其他';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositTerm => '定期存款';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositDemand => '活期存款';
+
+  @override
+  String get portfolioHubAssetTypeWealthProduct => '理财产品';
+
+  @override
+  String get portfolioHubEnginesTitle => '引擎视图';
+
+  @override
+  String get portfolioHubRealizedPnlTitle => '已实现盈亏';
+
+  @override
+  String portfolioHubRealizedPnlCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个批次',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubRealizedPnlEmpty => '暂无已平仓批次。';
+
+  @override
+  String portfolioHubHoldingPeriod(String period) {
+    return '持有 $period';
+  }
+
+  @override
+  String portfolioHubHoldingYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 年',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 天',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubDividendForecastTitle => '股息预测';
+
+  @override
+  String get portfolioHubDividendForecastEmpty => '暂无预测股息。';
+
+  @override
+  String get portfolioHubDividendForecastEvent => '预计派息';
+
+  @override
+  String get portfolioHubForecastConfidenceHigh => '高置信度';
+
+  @override
+  String get portfolioHubForecastConfidenceMedium => '中置信度';
+
+  @override
+  String get portfolioHubForecastConfidenceLow => '低置信度';
+
+  @override
+  String get portfolioHubEventTimelineTitle => '事件时间线';
+
+  @override
+  String portfolioHubEventTimelineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个事件',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubEventTimelineEmpty => '暂无分红或公司行动事件。';
+
+  @override
+  String get dcaSimulatorTitle => '定投模拟器';
+
+  @override
+  String get dcaSimulatorAccountsEntrySubtitle => '用月度缓存价格回测定期买入';
+
+  @override
+  String get dcaSimulatorSymbolField => '标的或篮子';
+
+  @override
+  String get dcaSimulatorSymbolHint => 'VOO 或 VOO, QQQ';
+
+  @override
+  String get dcaSimulatorAmountField => '金额';
+
+  @override
+  String get dcaSimulatorCurrencyField => '币种';
+
+  @override
+  String get dcaSimulatorMarketField => '市场';
+
+  @override
+  String get dcaSimulatorMarketUs => '美股';
+
+  @override
+  String get dcaSimulatorMarketHk => '港股';
+
+  @override
+  String get dcaSimulatorMarketCn => 'A 股';
+
+  @override
+  String get dcaSimulatorMarketCrypto => '加密资产';
+
+  @override
+  String get dcaSimulatorFrequencyField => '频率';
+
+  @override
+  String get dcaSimulatorFrequencyMonthly => '每月';
+
+  @override
+  String get dcaSimulatorFrequencyQuarterly => '每季度';
+
+  @override
+  String get dcaSimulatorWindowField => '窗口';
+
+  @override
+  String get dcaSimulatorWindow1y => '1 年';
+
+  @override
+  String get dcaSimulatorWindow3y => '3 年';
+
+  @override
+  String get dcaSimulatorWindow5y => '5 年';
+
+  @override
+  String get dcaSimulatorRunAction => '运行模拟';
+
+  @override
+  String get dcaSimulatorDraftAction => '生成下一笔买入草稿';
+
+  @override
+  String get dcaSimulatorFreshnessLive => '实时';
+
+  @override
+  String get dcaSimulatorFreshnessCache => '缓存';
+
+  @override
+  String get dcaSimulatorFreshnessStale => '延迟';
+
+  @override
+  String get dcaSimulatorResultTitle => '回测结果';
+
+  @override
+  String get dcaSimulatorTotalInvested => '投入';
+
+  @override
+  String get dcaSimulatorEndingValue => '期末价值';
+
+  @override
+  String get dcaSimulatorCumulativeReturn => '累计收益';
+
+  @override
+  String get dcaSimulatorAverageCost => '平均成本';
+
+  @override
+  String get dcaSimulatorMaxDrawdown => '最大回撤';
+
+  @override
+  String get dcaSimulatorChartTitle => '组合价值';
+
+  @override
+  String get dcaSimulatorChartSeries => '定投价值';
+
+  @override
+  String get dcaSimulatorEmpty => '该窗口内没有匹配的月度市场数据。';
+
+  @override
+  String get dcaSimulatorInvalidSymbols => '至少输入一个标的。';
+
+  @override
+  String get dcaSimulatorInvalidAmount => '请输入正数金额。';
+
+  @override
+  String get dcaSimulatorInvalidCurrency => '请输入币种代码。';
+
+  @override
+  String dcaSimulatorLoadError(String error) {
+    return '定投模拟失败：$error';
+  }
+
+  @override
+  String dcaSimulatorDraftNote(String symbol, String amount, String currency) {
+    return '定投计划：买入 $symbol，金额 $amount $currency';
+  }
+
+  @override
+  String dcaSimulatorPositionAverageCost(String currency, String averageCost) {
+    return '$currency $averageCost 平均成本';
+  }
+
+  @override
+  String get assetDetailFxPnlTitle => '价格 vs 汇率贡献';
+
+  @override
+  String get assetDetailFxPnlMarketLeg => '价格贡献';
+
+  @override
+  String get assetDetailFxPnlCurrencyLeg => '汇率贡献';
+
+  @override
+  String get assetDetailFxPnlTotal => '本位币总盈亏';
+
+  @override
+  String assetDetailFxPnlLoadError(String error) {
+    return 'FX 盈亏加载失败：$error';
+  }
 
   @override
   String get dashboardAiInsightsTitle => 'AI 洞察';
@@ -2056,6 +2381,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalanceDriftAfter => '再平衡后偏离';
 
   @override
+  String get rebalanceExecuteAction => '按此调仓';
+
+  @override
+  String get rebalanceExecutionSheetTitle => '确认调仓';
+
+  @override
+  String rebalanceExecutionSheetSubtitle(int count) {
+    return '继续前请核对 $count 笔交易草稿。';
+  }
+
+  @override
+  String get rebalanceExecutionCreateDrafts => '生成草稿';
+
+  @override
+  String get rebalanceExecutionTradeValue => '建议金额';
+
+  @override
+  String rebalanceExecutionDraftNote(
+    Object direction,
+    Object category,
+    Object amount,
+    Object currency,
+  ) {
+    return '再平衡建议：$direction$category，金额 $amount $currency';
+  }
+
+  @override
   String get rebalanceEmptyTitle => '暂无数据';
 
   @override
@@ -2075,6 +2427,41 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rebalanceNavLink => '再平衡';
+
+  @override
+  String get rebalanceCommandOpen => '前往再平衡';
+
+  @override
+  String get rebalanceCommandAdjustTarget => '调整目标配置';
+
+  @override
+  String get targetAllocationEditorTitle => '自定义目标';
+
+  @override
+  String get targetAllocationEditorSubtitle => '调整各类别权重，合计必须等于 100%。';
+
+  @override
+  String get targetAllocationEditorEditAction => '自定义目标';
+
+  @override
+  String get targetAllocationEditorTotalLabel => '合计配置';
+
+  @override
+  String targetAllocationEditorTotalHint(String value) {
+    return '合计必须为 100%。当前合计：$value%。';
+  }
+
+  @override
+  String get targetAllocationEditorPercentLabel => '权重';
+
+  @override
+  String get targetAllocationEditorRequiredError => '必填';
+
+  @override
+  String get targetAllocationEditorRangeError => '请输入 0–100';
+
+  @override
+  String get targetAllocationEditorPreviewTitle => '目标结构';
 
   @override
   String get riskAlertTitle => '集中度预警';
@@ -4557,6 +4944,106 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pressBackAgainToExit => '再按一次返回退出';
+
+  @override
+  String get watchlistTitle => '自选清单';
+
+  @override
+  String get watchlistAccountsEntrySubtitle => '跟踪标的并设置本地价格告警';
+
+  @override
+  String get watchlistAddAction => '添加标的';
+
+  @override
+  String get watchlistAddTitle => '添加到自选';
+
+  @override
+  String watchlistEditAlertTitle(String symbol) {
+    return '$symbol 告警';
+  }
+
+  @override
+  String get watchlistEmptyTitle => '暂无自选标的';
+
+  @override
+  String get watchlistEmptyBody => '添加代码后会优先读取缓存价格，并在当前页打开时轮询触发阈值告警。';
+
+  @override
+  String get watchlistSymbolField => '代码';
+
+  @override
+  String get watchlistMarketField => '市场';
+
+  @override
+  String get watchlistAlertAboveField => '高于此价告警';
+
+  @override
+  String get watchlistAlertBelowField => '低于此价告警';
+
+  @override
+  String get watchlistSaveAlertsAction => '保存告警';
+
+  @override
+  String get watchlistEditAlertsAction => '告警';
+
+  @override
+  String get watchlistRemoveAction => '移除';
+
+  @override
+  String get watchlistPriceUnavailable => '暂无价格';
+
+  @override
+  String get watchlistFreshnessLive => '实时';
+
+  @override
+  String get watchlistFreshnessCache => '缓存';
+
+  @override
+  String get watchlistFreshnessStale => '旧缓存';
+
+  @override
+  String watchlistAlertAboveChip(String price) {
+    return '高于 $price';
+  }
+
+  @override
+  String watchlistAlertBelowChip(String price) {
+    return '低于 $price';
+  }
+
+  @override
+  String watchlistAlertTriggeredAbove(String symbol, String price) {
+    return '$symbol 当前 $price，已高于告警价';
+  }
+
+  @override
+  String watchlistAlertTriggeredBelow(String symbol, String price) {
+    return '$symbol 当前 $price，已低于告警价';
+  }
+
+  @override
+  String get watchlistSymbolRequired => '请输入代码';
+
+  @override
+  String get watchlistInvalidNumber => '请输入大于 0 的价格';
+
+  @override
+  String get watchlistMarketCnA => 'A 股';
+
+  @override
+  String get watchlistMarketHkStock => '港股';
+
+  @override
+  String get watchlistMarketUsStock => '美股';
+
+  @override
+  String get watchlistMarketCrypto => '加密货币';
+
+  @override
+  String get watchlistMarketFx => '外汇';
+
+  @override
+  String get watchlistMarketUnknown => '未知';
 
   @override
   String get masterDetailBackToList => '返回列表';
