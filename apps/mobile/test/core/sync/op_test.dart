@@ -165,6 +165,7 @@ void main() {
         'journal_entries',
         'postings',
         'prices',
+        'watchlist_items',
       };
       expect(kSyncableTables, expected);
     });

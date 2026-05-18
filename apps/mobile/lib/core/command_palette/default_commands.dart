@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
 import '../../features/cashflow/command_palette_contributions.dart';
+import '../../features/rebalance/command_palette_contributions.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shortcuts/shortcut_help_dialog.dart';
 import 'command_palette_entry.dart';
@@ -96,6 +97,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       keywords: const <String>[AppRoutes.accountsFire, 'fire'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.accountsFire),
     ),
+    ...rebalanceCommandPaletteEntries(l10n),
     CommandPaletteEntry(
       id: 'nav.settings',
       label: l10n.commandPaletteGoSettings,

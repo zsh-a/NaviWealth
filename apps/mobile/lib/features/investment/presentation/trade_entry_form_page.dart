@@ -22,6 +22,7 @@ import '../data/providers.dart';
 import '../domain/models/lot.dart';
 import '../domain/trade_entry/trade_draft.dart' show TradeDraft, TradeType;
 import '../domain/trade_entry/trade_entry_errors.dart';
+import '../domain/trade_entry/trade_entry_prefill.dart';
 
 /// Create / edit form for a security trade (stock / ETF / crypto).
 ///
@@ -31,13 +32,21 @@ import '../domain/trade_entry/trade_entry_errors.dart';
 /// at submit-time so the resulting postings always point at a real
 /// `assets` row, satisfying the FIR-75 foreign-key contract.
 class TradeEntryFormPage extends ConsumerStatefulWidget {
-  const TradeEntryFormPage({super.key, this.assetId, this.accountId});
+  const TradeEntryFormPage({
+    super.key,
+    this.assetId,
+    this.accountId,
+    this.prefill,
+  });
 
   /// Pre-selected asset id. When null the user picks via [LocalSecuritiesPicker].
   final String? assetId;
 
   /// Pre-selected account id.
   final String? accountId;
+
+  /// Optional values supplied by an upstream workflow, such as rebalance.
+  final TradeEntryPrefill? prefill;
 
   @override
   ConsumerState<TradeEntryFormPage> createState() => _TradeEntryFormPageState();
@@ -104,6 +113,17 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     _cashAccountId = defaults.tradeCashAccountId;
     if (defaults.tradeCurrency != null && defaults.tradeCurrency!.isNotEmpty) {
       _currency = defaults.tradeCurrency;
+    }
+    final prefill = widget.prefill;
+    if (prefill != null) {
+      _type = prefill.type;
+      _currency = prefill.currency;
+      _tradeDate = prefill.tradeDate ?? _tradeDate;
+      _quantityController.text = prefill.quantity.toString();
+      _priceController.text = prefill.price?.toString() ?? '';
+      _feeController.text = prefill.fee?.toString() ?? '0';
+      _taxController.text = prefill.tax?.toString() ?? '0';
+      _noteController.text = prefill.note ?? '';
     }
     // `_feeController`/`_taxController` carry a "0" seed — bind here so
     // that default is the baseline, not a user edit.
@@ -229,7 +249,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       // a no-op difference in production.
       pop: () {
         Haptics.success();
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       },
       tag: 'trade-entry',
       // `TradeEntryException` carries a user-facing message; pass it

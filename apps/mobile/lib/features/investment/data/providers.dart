@@ -16,10 +16,16 @@ import '../../../domain/entities/fx_rate.dart' as dom;
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../settings/data/base_currency_preference.dart';
+import '../domain/cost_basis/fifo_strategy.dart';
+import '../domain/cost_basis_engine.dart';
+import '../domain/fx_pnl/fx_pnl_breakdown.dart';
 import '../domain/holding_price_source.dart';
 import '../domain/holding_service.dart';
 import '../domain/models/holding_snapshot.dart';
 import '../domain/models/lot.dart';
+import '../domain/models/realized_pnl.dart';
+import '../domain/models/trade_events.dart';
+import '../domain/reporting/holding_report.dart';
 import '../domain/returns/portfolio_return.dart';
 import '../domain/trade_entry/default_trade_entry_service.dart';
 import '../domain/trade_entry/trade_entry_service.dart';
@@ -166,6 +172,48 @@ final holdingsSnapshotProvider =
       final service = await ref.watch(holdingServiceProvider.future);
       return service.computeAt(DateTime.now().toUtc());
     });
+
+final portfolioHoldingReportProvider =
+    FutureProvider.autoDispose<PortfolioHoldingReport>((ref) async {
+      ref.watch(_ledgerRevisionProvider);
+      final now = DateTime.now().toUtc();
+      final service = await ref.watch(holdingServiceProvider.future);
+      final prices = await ref.watch(holdingPriceSourceProvider.future);
+      final converter = ref.watch(returnsCurrencyConverterProvider);
+      final base = ref.watch(holdingBaseCurrencyProvider);
+      final lots = await service.lotsAt(now);
+      return HoldingReportService(
+        converter: converter,
+        baseCurrency: base,
+        prices: prices,
+      ).build(lots: lots, asOf: now);
+    });
+
+final assetHoldingReportProvider = FutureProvider.autoDispose
+    .family<AssetHoldingReport?, String>((ref, assetId) async {
+      final report = await ref.watch(portfolioHoldingReportProvider.future);
+      return report.assets[assetId];
+    });
+
+final portfolioFxPnlProvider = Provider.autoDispose<FxPnLBreakdown>((ref) {
+  final report = ref.watch(portfolioHoldingReportProvider).value;
+  return report?.totalPnlBreakdown ??
+      FxPnLBreakdown.zero(ref.watch(holdingBaseCurrencyProvider));
+});
+
+final realizedPnlProvider = FutureProvider.autoDispose<List<RealizedPnL>>((
+  ref,
+) async {
+  ref.watch(_ledgerRevisionProvider);
+  final db = await ref.watch(appDatabaseProvider.future);
+  final ownerUserId = await ref.watch(_currentOwnerUserIdProvider.future);
+  final rows = await _postingRowsThrough(
+    db,
+    ownerUserId,
+    DateTime.now().toUtc(),
+  );
+  return _realizedPnlFromRows(rows);
+});
 
 final portfolioReturnServiceProvider = FutureProvider<PortfolioReturnService>((
   ref,
@@ -413,6 +461,98 @@ class _LedgerHoldingService implements HoldingService {
         .add(const Duration(days: 1))
         .subtract(const Duration(microseconds: 1));
   }
+}
+
+Future<List<_LedgerPostingRow>> _postingRowsThrough(
+  AppDatabase db,
+  String ownerUserId,
+  DateTime asOf,
+) async {
+  final query =
+      db.select(db.postings).join([
+          innerJoin(
+            db.journalEntries,
+            db.journalEntries.id.equalsExp(db.postings.journalEntryId),
+          ),
+          innerJoin(db.assets, db.assets.id.equalsExp(db.postings.unit)),
+        ])
+        ..where(db.postings.ownerUserId.equals(ownerUserId))
+        ..where(db.postings.deletedAt.isNull())
+        ..where(db.journalEntries.deletedAt.isNull())
+        ..where(db.journalEntries.date.isSmallerOrEqualValue(asOf))
+        ..orderBy([
+          OrderingTerm.asc(db.journalEntries.date),
+          OrderingTerm.asc(db.postings.position),
+          OrderingTerm.asc(db.postings.id),
+        ]);
+  final rows = await query.get();
+  return [
+    for (final row in rows)
+      _LedgerPostingRow(
+        posting: row.readTable(db.postings),
+        date: row.readTable(db.journalEntries).date,
+      ),
+  ];
+}
+
+List<RealizedPnL> _realizedPnlFromRows(List<_LedgerPostingRow> rows) {
+  var id = 0;
+  final engine = CostBasisEngine(
+    strategy: const FifoStrategy(),
+    idGenerator: () => 'realized-${++id}',
+  );
+  var lots = <Lot>[];
+  final realized = <RealizedPnL>[];
+
+  for (final row in rows) {
+    final posting = row.posting;
+    final cost = posting.costPerUnit;
+    final costCurrency = posting.costCurrency;
+    if (cost == null || costCurrency == null) continue;
+
+    if (posting.units > Decimal.zero) {
+      lots = [
+        ...lots,
+        Lot(
+          id: posting.costLotId ?? posting.id,
+          openingTransactionId: posting.journalEntryId,
+          accountId: posting.accountId,
+          assetId: posting.unit,
+          currency: costCurrency,
+          originalQuantity: posting.units,
+          remainingQuantity: posting.units,
+          costPerUnit: cost,
+          openedAt: posting.costAcquiredOn ?? row.date,
+        ),
+      ];
+      continue;
+    }
+
+    final price = posting.pricePerUnit;
+    final priceCurrency = posting.priceCurrency;
+    if (posting.units < Decimal.zero &&
+        price != null &&
+        priceCurrency != null) {
+      final result = engine.applySell(
+        SellEvent(
+          transactionId: posting.journalEntryId,
+          accountId: posting.accountId,
+          assetId: posting.unit,
+          currency: priceCurrency,
+          quantity: -posting.units,
+          pricePerUnit: price,
+          fee: Decimal.zero,
+          tradeDate: row.date,
+        ),
+        lots,
+      );
+      lots = result.updatedLots;
+      realized.addAll(result.realizedPnL);
+    }
+  }
+
+  realized.sort((a, b) => b.realizedAt.compareTo(a.realizedAt));
+  return List.unmodifiable(realized);
 }
 
 class _LedgerPostingRow {
