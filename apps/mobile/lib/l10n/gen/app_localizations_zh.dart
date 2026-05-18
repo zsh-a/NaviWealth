@@ -435,6 +435,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandKeywordRightsIssueCn => '配股';
 
   @override
+  String get commandKeywordRebalanceCn => '再平衡';
+
+  @override
+  String get commandKeywordTargetAllocationCn => '目标配置';
+
+  @override
   String get accountsHubSectionCashDeposits => '现金与存款';
 
   @override
@@ -2301,6 +2307,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rebalanceNavLink => '再平衡';
+
+  @override
+  String get rebalanceCommandOpen => '前往再平衡';
+
+  @override
+  String get rebalanceCommandAdjustTarget => '调整目标配置';
 
   @override
   String get targetAllocationEditorTitle => '自定义目标';

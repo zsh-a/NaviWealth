@@ -902,6 +902,18 @@ abstract class AppLocalizations {
   /// **'配股'**
   String get commandKeywordRightsIssueCn;
 
+  /// Chinese command-palette search keyword for rebalance; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'再平衡'**
+  String get commandKeywordRebalanceCn;
+
+  /// Chinese command-palette search keyword for target allocation; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'目标配置'**
+  String get commandKeywordTargetAllocationCn;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:
@@ -4204,6 +4216,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rebalance'**
   String get rebalanceNavLink;
+
+  /// Command palette entry that opens the rebalance page.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Rebalance'**
+  String get rebalanceCommandOpen;
+
+  /// Command palette entry that opens the custom target allocation editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust target allocation'**
+  String get rebalanceCommandAdjustTarget;
 
   /// No description provided for @targetAllocationEditorTitle.
   ///
