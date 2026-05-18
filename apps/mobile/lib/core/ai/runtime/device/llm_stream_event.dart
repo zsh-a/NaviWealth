@@ -59,6 +59,19 @@ class LlmThinkingDelta extends LlmStreamEvent {
   final String text;
 }
 
+/// Opaque per-thinking-block signature the provider attaches to its
+/// reasoning (Anthropic `signature_delta`). Carried separately from the
+/// human-readable [LlmThinkingDelta] because it is not user-visible but
+/// **must** be echoed back verbatim with the assistant turn on every
+/// subsequent tool round — providers (native Anthropic extended
+/// thinking, MiMo thinking mode, …) reject a follow-up request whose
+/// tool-calling assistant message dropped the reasoning. May arrive in
+/// fragments; the loop concatenates.
+class LlmThinkingSignatureDelta extends LlmStreamEvent {
+  const LlmThinkingSignatureDelta(this.signature);
+  final String signature;
+}
+
 /// Model began a `tool_use` block. `name` is known up-front from the
 /// `content_block_start` frame.
 class LlmToolCallStart extends LlmStreamEvent {

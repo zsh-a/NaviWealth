@@ -268,6 +268,7 @@ List<Map<String, Object?>> _openAiMessagesFor(AnthropicChatMessage message) {
 
   if (message.role == 'assistant') {
     final text = StringBuffer();
+    final reasoning = StringBuffer();
     final toolCalls = <Map<String, Object?>>[];
     for (final block in content) {
       if (block is! Map) continue;
@@ -275,6 +276,9 @@ List<Map<String, Object?>> _openAiMessagesFor(AnthropicChatMessage message) {
         case 'text':
           final t = block['text'];
           if (t is String) text.write(t);
+        case 'thinking':
+          final r = block['thinking'];
+          if (r is String) reasoning.write(r);
         case 'tool_use':
           toolCalls.add(<String, Object?>{
             'id': block['id'] as String? ?? '',
@@ -290,6 +294,10 @@ List<Map<String, Object?>> _openAiMessagesFor(AnthropicChatMessage message) {
       <String, Object?>{
         'role': 'assistant',
         'content': text.isEmpty ? null : text.toString(),
+        // Reasoning models reject a follow-up tool round whose
+        // assistant turn dropped its reasoning; echo it back on the
+        // field the streaming decoder reads (`reasoning_content`).
+        if (reasoning.isNotEmpty) 'reasoning_content': reasoning.toString(),
         if (toolCalls.isNotEmpty) 'tool_calls': toolCalls,
       },
     ];

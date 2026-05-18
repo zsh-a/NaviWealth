@@ -103,6 +103,22 @@ abstract final class AnthropicBlocks {
     'text': value,
   };
 
+  /// Assistant `thinking` block, re-sent verbatim on every subsequent
+  /// tool round. Providers that emit reasoning (native Anthropic
+  /// extended thinking, MiMo thinking mode, …) **reject** a follow-up
+  /// request whose tool-calling assistant turn dropped this block, so
+  /// the device loop reconstructs it from the streamed reasoning. The
+  /// `signature` is included only when the provider supplied one
+  /// (native Anthropic requires it; reasoning-only providers omit it).
+  static Map<String, Object?> thinking({
+    required String thinking,
+    String? signature,
+  }) => {
+    'type': 'thinking',
+    'thinking': thinking,
+    if (signature != null && signature.isNotEmpty) 'signature': signature,
+  };
+
   /// `tool_result` block fed back into the next user turn. `content` is
   /// the tool's JSON-encoded output string (Anthropic accepts a string
   /// or a block list; the loop sends a string).
