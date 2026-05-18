@@ -5026,5 +5026,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pressBackAgainToExit => 'Press back again to exit';
 
   @override
+  String get watchlistTitle => 'Watchlist';
+
+  @override
+  String get watchlistAccountsEntrySubtitle =>
+      'Track symbols and local price alerts';
+
+  @override
+  String get watchlistAddAction => 'Add symbol';
+
+  @override
+  String get watchlistAddTitle => 'Add to watchlist';
+
+  @override
+  String watchlistEditAlertTitle(String symbol) {
+    return 'Alerts for $symbol';
+  }
+
+  @override
+  String get watchlistEmptyTitle => 'No watchlist symbols';
+
+  @override
+  String get watchlistEmptyBody =>
+      'Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.';
+
+  @override
+  String get watchlistSymbolField => 'Symbol';
+
+  @override
+  String get watchlistMarketField => 'Market';
+
+  @override
+  String get watchlistAlertAboveField => 'Alert above';
+
+  @override
+  String get watchlistAlertBelowField => 'Alert below';
+
+  @override
+  String get watchlistSaveAlertsAction => 'Save alerts';
+
+  @override
+  String get watchlistEditAlertsAction => 'Alerts';
+
+  @override
+  String get watchlistRemoveAction => 'Remove';
+
+  @override
+  String get watchlistPriceUnavailable => 'No price';
+
+  @override
+  String get watchlistFreshnessLive => 'Live';
+
+  @override
+  String get watchlistFreshnessCache => 'Cached';
+
+  @override
+  String get watchlistFreshnessStale => 'Stale cache';
+
+  @override
+  String watchlistAlertAboveChip(String price) {
+    return 'Above $price';
+  }
+
+  @override
+  String watchlistAlertBelowChip(String price) {
+    return 'Below $price';
+  }
+
+  @override
+  String watchlistAlertTriggeredAbove(String symbol, String price) {
+    return '$symbol is at $price, above your alert';
+  }
+
+  @override
+  String watchlistAlertTriggeredBelow(String symbol, String price) {
+    return '$symbol is at $price, below your alert';
+  }
+
+  @override
+  String get watchlistSymbolRequired => 'Enter a symbol';
+
+  @override
+  String get watchlistInvalidNumber => 'Enter a positive price';
+
+  @override
+  String get watchlistMarketCnA => 'A-share';
+
+  @override
+  String get watchlistMarketHkStock => 'Hong Kong';
+
+  @override
+  String get watchlistMarketUsStock => 'US';
+
+  @override
+  String get watchlistMarketCrypto => 'Crypto';
+
+  @override
+  String get watchlistMarketFx => 'FX';
+
+  @override
+  String get watchlistMarketUnknown => 'Unknown';
+
+  @override
   String get masterDetailBackToList => 'Back to list';
 }

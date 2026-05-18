@@ -119,6 +119,8 @@ class _AccountsHubBody extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _PortfolioHubLink(),
+        const SizedBox(height: 10),
+        _WatchlistLink(),
         const SizedBox(height: 18),
         AccountsGroupedSections(
           accounts: accounts,
@@ -256,6 +258,36 @@ class _PortfolioHubLink extends StatelessWidget {
         ),
         title: Text(l10n.portfolioHubTitle),
         subtitle: Text(l10n.portfolioHubAccountsEntrySubtitle),
+        suffix: const Icon(Icons.chevron_right, size: 18),
+      ),
+    );
+  }
+}
+
+class _WatchlistLink extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return FCard.raw(
+      child: FTile(
+        onPress: () => context.push(AppRoutes.accountsWatchlist),
+        prefix: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: colors.foreground.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.notifications_active_outlined,
+            size: 18,
+            color: colors.mutedForeground,
+          ),
+        ),
+        title: Text(l10n.watchlistTitle),
+        subtitle: Text(l10n.watchlistAccountsEntrySubtitle),
         suffix: const Icon(Icons.chevron_right, size: 18),
       ),
     );

@@ -26,6 +26,7 @@ const Set<String> kSyncableTables = {
   'journal_entries',
   'postings',
   'prices',
+  'watchlist_items',
 };
 
 enum OpType { insert, update, delete }

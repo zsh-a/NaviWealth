@@ -4826,5 +4826,105 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pressBackAgainToExit => '再按一次返回退出';
 
   @override
+  String get watchlistTitle => '自选清单';
+
+  @override
+  String get watchlistAccountsEntrySubtitle => '跟踪标的并设置本地价格告警';
+
+  @override
+  String get watchlistAddAction => '添加标的';
+
+  @override
+  String get watchlistAddTitle => '添加到自选';
+
+  @override
+  String watchlistEditAlertTitle(String symbol) {
+    return '$symbol 告警';
+  }
+
+  @override
+  String get watchlistEmptyTitle => '暂无自选标的';
+
+  @override
+  String get watchlistEmptyBody => '添加代码后会优先读取缓存价格，并在当前页打开时轮询触发阈值告警。';
+
+  @override
+  String get watchlistSymbolField => '代码';
+
+  @override
+  String get watchlistMarketField => '市场';
+
+  @override
+  String get watchlistAlertAboveField => '高于此价告警';
+
+  @override
+  String get watchlistAlertBelowField => '低于此价告警';
+
+  @override
+  String get watchlistSaveAlertsAction => '保存告警';
+
+  @override
+  String get watchlistEditAlertsAction => '告警';
+
+  @override
+  String get watchlistRemoveAction => '移除';
+
+  @override
+  String get watchlistPriceUnavailable => '暂无价格';
+
+  @override
+  String get watchlistFreshnessLive => '实时';
+
+  @override
+  String get watchlistFreshnessCache => '缓存';
+
+  @override
+  String get watchlistFreshnessStale => '旧缓存';
+
+  @override
+  String watchlistAlertAboveChip(String price) {
+    return '高于 $price';
+  }
+
+  @override
+  String watchlistAlertBelowChip(String price) {
+    return '低于 $price';
+  }
+
+  @override
+  String watchlistAlertTriggeredAbove(String symbol, String price) {
+    return '$symbol 当前 $price，已高于告警价';
+  }
+
+  @override
+  String watchlistAlertTriggeredBelow(String symbol, String price) {
+    return '$symbol 当前 $price，已低于告警价';
+  }
+
+  @override
+  String get watchlistSymbolRequired => '请输入代码';
+
+  @override
+  String get watchlistInvalidNumber => '请输入大于 0 的价格';
+
+  @override
+  String get watchlistMarketCnA => 'A 股';
+
+  @override
+  String get watchlistMarketHkStock => '港股';
+
+  @override
+  String get watchlistMarketUsStock => '美股';
+
+  @override
+  String get watchlistMarketCrypto => '加密货币';
+
+  @override
+  String get watchlistMarketFx => '外汇';
+
+  @override
+  String get watchlistMarketUnknown => '未知';
+
+  @override
   String get masterDetailBackToList => '返回列表';
 }

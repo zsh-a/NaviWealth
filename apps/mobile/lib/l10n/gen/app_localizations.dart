@@ -8787,6 +8787,186 @@ abstract class AppLocalizations {
   /// **'Press back again to exit'**
   String get pressBackAgainToExit;
 
+  /// Investment watchlist page title
+  ///
+  /// In en, this message translates to:
+  /// **'Watchlist'**
+  String get watchlistTitle;
+
+  /// Accounts hub entry subtitle for watchlist
+  ///
+  /// In en, this message translates to:
+  /// **'Track symbols and local price alerts'**
+  String get watchlistAccountsEntrySubtitle;
+
+  /// Add a symbol to the watchlist
+  ///
+  /// In en, this message translates to:
+  /// **'Add symbol'**
+  String get watchlistAddAction;
+
+  /// Watchlist add sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Add to watchlist'**
+  String get watchlistAddTitle;
+
+  /// Watchlist alert edit sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts for {symbol}'**
+  String watchlistEditAlertTitle(String symbol);
+
+  /// Watchlist empty state title
+  ///
+  /// In en, this message translates to:
+  /// **'No watchlist symbols'**
+  String get watchlistEmptyTitle;
+
+  /// Watchlist empty state body
+  ///
+  /// In en, this message translates to:
+  /// **'Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.'**
+  String get watchlistEmptyBody;
+
+  /// Watchlist symbol input label
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol'**
+  String get watchlistSymbolField;
+
+  /// Watchlist market picker label
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get watchlistMarketField;
+
+  /// Watchlist upper price alert input
+  ///
+  /// In en, this message translates to:
+  /// **'Alert above'**
+  String get watchlistAlertAboveField;
+
+  /// Watchlist lower price alert input
+  ///
+  /// In en, this message translates to:
+  /// **'Alert below'**
+  String get watchlistAlertBelowField;
+
+  /// Save watchlist alert rules
+  ///
+  /// In en, this message translates to:
+  /// **'Save alerts'**
+  String get watchlistSaveAlertsAction;
+
+  /// Edit watchlist alert rules action
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get watchlistEditAlertsAction;
+
+  /// Remove watchlist item action
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get watchlistRemoveAction;
+
+  /// Watchlist price unavailable placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'No price'**
+  String get watchlistPriceUnavailable;
+
+  /// Market data freshness live label
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get watchlistFreshnessLive;
+
+  /// Market data freshness cached label
+  ///
+  /// In en, this message translates to:
+  /// **'Cached'**
+  String get watchlistFreshnessCache;
+
+  /// Market data freshness stale label
+  ///
+  /// In en, this message translates to:
+  /// **'Stale cache'**
+  String get watchlistFreshnessStale;
+
+  /// Watchlist upper alert chip
+  ///
+  /// In en, this message translates to:
+  /// **'Above {price}'**
+  String watchlistAlertAboveChip(String price);
+
+  /// Watchlist lower alert chip
+  ///
+  /// In en, this message translates to:
+  /// **'Below {price}'**
+  String watchlistAlertBelowChip(String price);
+
+  /// Watchlist upper alert notification
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} is at {price}, above your alert'**
+  String watchlistAlertTriggeredAbove(String symbol, String price);
+
+  /// Watchlist lower alert notification
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} is at {price}, below your alert'**
+  String watchlistAlertTriggeredBelow(String symbol, String price);
+
+  /// Watchlist symbol required validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a symbol'**
+  String get watchlistSymbolRequired;
+
+  /// Watchlist alert price validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive price'**
+  String get watchlistInvalidNumber;
+
+  /// CN A market label
+  ///
+  /// In en, this message translates to:
+  /// **'A-share'**
+  String get watchlistMarketCnA;
+
+  /// Hong Kong stock market label
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong'**
+  String get watchlistMarketHkStock;
+
+  /// US stock market label
+  ///
+  /// In en, this message translates to:
+  /// **'US'**
+  String get watchlistMarketUsStock;
+
+  /// Crypto market label
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get watchlistMarketCrypto;
+
+  /// FX market label
+  ///
+  /// In en, this message translates to:
+  /// **'FX'**
+  String get watchlistMarketFx;
+
+  /// Unknown market label
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get watchlistMarketUnknown;
+
   /// Desktop master/detail affordance that clears the selected detail
   ///
   /// In en, this message translates to:

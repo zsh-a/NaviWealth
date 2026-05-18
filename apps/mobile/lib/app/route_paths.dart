@@ -49,6 +49,7 @@ abstract final class AppRoutes {
   static const accountsRebalance = '/accounts/rebalance';
   static const accountsAnalytics = '/accounts/analytics';
   static const accountsPortfolioHub = '/accounts/portfolio';
+  static const accountsWatchlist = '/accounts/watchlist';
   static const accountsDividends = '/accounts/dividends';
 
   // ── Settings sub-flows ─────────────────────────────────────────────────
@@ -125,6 +126,7 @@ abstract final class AppRouteNames {
   static const accountsRebalance = 'accounts-rebalance';
   static const accountsAnalytics = 'accounts-analytics';
   static const accountsPortfolioHub = 'accounts-portfolio-hub';
+  static const accountsWatchlist = 'accounts-watchlist';
 
   static const activity = 'activity';
   static const activityEntryDetail = 'activity-entry-detail';
