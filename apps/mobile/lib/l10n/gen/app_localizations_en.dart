@@ -2345,6 +2345,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rebalanceDriftAfter => 'Drift after rebalance';
 
   @override
+  String get rebalanceExecuteAction => 'Rebalance now';
+
+  @override
+  String get rebalanceExecutionSheetTitle => 'Confirm rebalance';
+
+  @override
+  String rebalanceExecutionSheetSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Review $count draft trades before continuing.',
+      one: 'Review 1 draft trade before continuing.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rebalanceExecutionCreateDrafts => 'Create drafts';
+
+  @override
+  String get rebalanceExecutionTradeValue => 'Suggested value';
+
+  @override
+  String rebalanceExecutionDraftNote(
+    Object direction,
+    Object category,
+    Object amount,
+    Object currency,
+  ) {
+    return 'Rebalance suggestion: $direction $category for $amount $currency';
+  }
+
+  @override
   String get rebalanceEmptyTitle => 'No data yet';
 
   @override

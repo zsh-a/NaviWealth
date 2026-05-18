@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,8 @@ import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/data/securities_catalog/providers.dart';
 import 'package:naviwealth/data/securities_catalog/securities_search_service.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/investment/domain/trade_entry/trade_draft.dart';
+import 'package:naviwealth/features/investment/domain/trade_entry/trade_entry_prefill.dart';
 import 'package:naviwealth/features/investment/presentation/trade_entry_form_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -86,5 +89,66 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('CHF · CHF'), findsOneWidget);
+  });
+
+  testWidgets('applies upstream trade-entry prefill as pristine defaults', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          appDatabaseProvider.overrideWith((_) async => db),
+          accountsStreamProvider.overrideWith(
+            (_) => Stream.value([
+              _account(
+                id: 'broker',
+                name: 'Broker',
+                type: AccountCategory.broker,
+                currency: 'CNY',
+              ),
+              _account(
+                id: 'cash',
+                name: 'Cash',
+                type: AccountCategory.cash,
+                currency: 'CNY',
+              ),
+            ]),
+          ),
+          securitiesSearchServiceProvider.overrideWith(
+            (_) async => SecuritiesSearchService(db: db),
+          ),
+        ],
+        child: _wrap(
+          TradeEntryFormPage(
+            prefill: TradeEntryPrefill(
+              type: TradeType.sell,
+              quantity: Decimal.one,
+              price: Decimal.parse('1250.75'),
+              currency: 'CNY',
+              fee: Decimal.parse('1.25'),
+              tax: Decimal.parse('2.50'),
+              note: 'Rebalance suggestion',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Sell'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1250.75'), findsOneWidget);
+    expect(find.text('1.25'), findsOneWidget);
+    expect(find.text('2.5'), findsOneWidget);
+    expect(find.text('Rebalance suggestion'), findsOneWidget);
   });
 }
