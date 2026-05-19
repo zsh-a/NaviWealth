@@ -17,22 +17,26 @@ Repeat on each browser in the FIR-40 matrix (Chrome, Safari, Edge, Firefox; macO
 
 ## Routes in scope
 
-Five primary tabs in display order (see `apps/mobile/lib/app/route_paths.dart::kPrimaryTabPaths`):
+Four primary tabs in display order (see `apps/mobile/lib/app/route_paths.dart::kPrimaryTabPaths`):
 
 | Path | Tab | Notes |
 |------|-----|-------|
 | `/` | Home | Default landing; index 0 |
 | `/activity` | Activity | Index 1 |
-| `/ai` | AI | Index 2, centered accent |
-| `/accounts` | Accounts | Index 3 |
-| `/settings` | Settings | Index 4 |
+| `/accounts` | Accounts | Index 2 |
+| `/settings` | Settings | Index 3 |
+
+There is **no `/ai` tab**. AI is not a destination: it lives in the command-palette
+overlay and inline capsules; chat history is read-only under `/settings/ai-history`.
+The former `/ai/insights/*` dashboards (FIRE / Rebalance / Analytics) are
+deterministic and now live under `/accounts/*`.
 
 Common deep links (sample — `route_paths.dart` is the full list):
 
 - `/accounts/asset/<id>`, `/accounts/physical/<id>`, `/accounts/liabilities/<id>` — detail pages
+- `/accounts/{fire,rebalance,analytics}` — plan dashboards (formerly `/ai/insights/*`)
 - `/activity/expenses`, `/activity/expenses/<id>`, `/activity/trade`, `/activity/transfer`
-- `/ai/insights/{fire,rebalance,analytics}` — AI insight subroutes
-- `/settings/{devices,fx-rates,backup,logs,sync}`
+- `/settings/{devices,fx-rates,backup,logs,sync,ai-history}`
 - `/login` (with optional `?redirect=`)
 
 ## Checklist
@@ -54,17 +58,17 @@ Expected: every tab tap creates exactly one new history entry. Back/Forward neve
 For each URL: paste into a fresh tab, press Enter, confirm the listed page renders without flashing through `/` first. Bottom-nav highlight must match the URL on the first frame.
 
 - [ ] `/activity`
-- [ ] `/ai`
 - [ ] `/accounts`
 - [ ] `/settings`
 - [ ] `/accounts/asset/<known-id>` — asset detail
 - [ ] `/activity/expenses` — expense list
-- [ ] `/ai/insights/fire` — FIRE insight under AI
+- [ ] `/accounts/fire` — FIRE plan dashboard
+- [ ] `/settings/ai-history` — read-only chat history
 - [ ] `/settings/devices`
 
 ### C. Hard refresh (F5 / ⌘R)
 
-1. Navigate to `/ai/insights/analytics` via tabs/links.
+1. Navigate to `/accounts/analytics` via tabs/links.
 2. Hard-refresh.
 
 Expected:

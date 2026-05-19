@@ -93,6 +93,8 @@ No workspace-level build tool. Each app is self-contained. CI uses path filters.
 lib/
   app/            MaterialApp, go_router, bootstrap, route guards, master/detail layout
   core/           Cross-cutting:
+                    ai/               Device-only AI runtime, tools, contracts,
+                                      trace (see docs/ai-architecture.md)
                     async/            ConventionalAsyncNotifier base, isolate runner
                     auth/             Auth controller, providers
                     backup/           Encrypted local backup
@@ -119,8 +121,8 @@ lib/
                     values/    Money, asset_market
   features/       Feature modules (each: ui/, data/, domain/):
                     accounts, activity, ai_chat, analytics, assets, auth,
-                    expense, fire, home, investment, liabilities, rebalance,
-                    settings, shared
+                    cashflow, expense, fire, home, ingest, investment,
+                    liabilities, rebalance, settings, shared
   design_system/  W3C Design Tokens (color / typography / motion / dimension),
                   themes, charts, reusable widgets. UI is built on Forui
                   (FCard / FButton / FTheme(zinc)); spacing & radius via
@@ -149,7 +151,7 @@ migrations/       D1 SQL migrations (AI read-model tables kept as history; W-D7)
 - **Database**: Drift ORM; SQLCipher (native), sqlite3 WASM (web).
 - **Auth**: single-user JWT (HS256), no registration endpoint; `BYPASS_AUTH` for dev.
 - **Routing**: go_router with Path URL strategy; deferred imports for web code-splitting.
-- **AI**: device-only — on-device agent runtime calls the user's chosen LLM provider (Anthropic- **or** OpenAI-compatible endpoint) directly with the user's own key; provider + key managed as switchable `LlmProfile`s in Settings, no opt-in toggle (W-D7 deleted the cloud AI backend; no `/ai/chat` relay, no cloud fallback; web has no AI). See `docs/ai-architecture.md` §4.6 + §8 Wave 46.
+- **AI**: device-only — on-device agent runtime calls the user's chosen LLM provider (Anthropic- **or** OpenAI-compatible endpoint) directly with the user's own key; provider + key managed as switchable `LlmProfile`s in Settings, no opt-in toggle (W-D7 deleted the cloud AI backend; no `/ai/chat` relay, no cloud fallback; web has no AI). See `docs/ai-architecture.md` (design) + `docs/ai-protocol.md` (runtime event contract).
 
 ---
 
@@ -208,7 +210,7 @@ test/
 
 - **No `.env` files committed.** Compile-time config via `--dart-define` (see `apps/mobile/lib/core/config/app_config.dart`):
   - `API_BASE_URL` (default `http://127.0.0.1:8787`)
-  - `BYPASS_AUTH` (default `true` in dev)
+  - `BYPASS_AUTH` (default `false`; opt in with `--dart-define=BYPASS_AUTH=true` for dev)
 - **Wrangler secrets**: `JWT_SECRET` (`wrangler secret put`). `ANTHROPIC_API_KEY` is no longer a backend secret — W-D7 removed the cloud AI proxy; the model key is the user's, held on-device.
 - **GitHub secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CODECOV_TOKEN`, `KEYSTORE_BASE64` + signing keys.
 
@@ -222,13 +224,15 @@ test/
 | `docs/sync-protocol-tests.md` | 50+ protocol test cases |
 | `docs/sync-e2e-manual.md` | Manual E2E checklist for multi-device sync |
 | `docs/sync-monitoring.md` | Latency targets, alert tiers, D1 sampling |
+| `docs/ai-architecture.md` | AI design source of truth: device-only runtime, tools, contracts, UI grammar (read before touching `lib/core/ai/`) |
+| `docs/ai-protocol.md` | Device AI runtime event contract (stream events, stop reasons, tool catalog) |
 | `docs/local-development.md` | Local dev setup walkthrough |
 | `docs/market-data-providers.md` | Market-data provider matrix and limits |
 | `docs/web-compat-matrix.md` | Cross-browser compatibility and known issues |
 | `docs/web-routing.md` | Web routing verification checklist |
 | `docs/visual-baseline/README.md` | Golden suite + Figma sync contract |
 | `docs/branch-protection.md` | Branch protection rules for `main` |
-| `docs/roadmap.md` (+ `roadmap-phase1.md`, `roadmap-midterm-execution.md`) | Product roadmap |
+| `docs/roadmap.md` (+ `roadmap-phase1.md`, `roadmap-midterm-execution.md`, `roadmap-fire-os.md`) | Product roadmap |
 | `apps/mobile/README.md` | Mobile engineering baseline |
 | `apps/mobile/design_tokens/README.md` | W3C Design Token system |
 | `apps/mobile/web_smoke/README.md` | Playwright smoke tests |

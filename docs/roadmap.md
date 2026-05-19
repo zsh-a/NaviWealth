@@ -4,6 +4,12 @@
 > 本次更新：扩展 §2 中期规划为 6 个工作流 × 3 个里程碑（M1/M2/M3）的可执行计划。
 > 分析基础：仓库现状全量扫描（feature 模块、backend 路由、同步协议、测试覆盖、git 历史 FIR-1 ~ FIR-134）。
 > 本路线图是**方向性参考**，不是承诺；优先级会随用户反馈与开发节奏调整。
+>
+> ⚠️ **W-D7 后已过时提示**：本文部分章节（§0 后端速览、§1.3、§2.5、§5）写于云端 AI 时代。
+> W-D7 已删除整个 `apps/backend/src/ai/`，AI 改为 **device-only**——所有
+> `apps/backend/src/ai/*` 引用与「后端 AI 工具/SSE/proposals」计划均已被取代，
+> 以 [`docs/ai-architecture.md`](./ai-architecture.md) 为准。
+> FIRE OS 演进计划见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)。
 
 ---
 
@@ -14,7 +20,7 @@
 | 平台覆盖 | iOS / Android / Web（PWA 完成，桌面端 Shell 在做：FIR-106） |
 | 核心域 | 资产 / 账户 / 投资 / 负债 / 支出 / FIRE / 再平衡 / 分析 / AI 助手 已上线 |
 | 同步 | Sync Protocol v1.0 已冻结（轮询 30s，HLC + OpLog + 行级 LWW） |
-| 后端 | Cloudflare Workers + D1，路由极简（health/auth/me/sync/ai） |
+| 后端 | Cloudflare Workers + D1，路由极简（health/auth/me/sync；AI 路由 W-D7 已删除） |
 | 测试 | 62 个 `*_test.dart`，分布不均；E2E sync 框架存在但未落地 |
 | 国际化 | en + zh；设计稿提及 ja 尚未支持 |
 | 安全 | 原生端 SQLCipher；Web 端为 sqlite3 WASM（弱于原生）；JWT HS256 单用户 |
@@ -105,6 +111,7 @@
 - **M3（月 6）— 现金流瀑布 + FIRE 联动**
   - 现金流瀑布图（季度/年度）：起始余额 → 收入 → 各分类支出 → 终值，使用 `design_system/charts`。
   - FIRE 模块从计划交易池拉取定期收支，作为蒙特卡洛输入的确定性骨架。
+  - FIRE 侧演进与桶/状态/AI 工具设计见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)（Phase 2 对齐本里程碑）。
 
 **验收**：
 - 一个家庭月度预算（≥ 12 个分类）从录入到 dashboard 显示进度全程 < 60s 操作。
@@ -362,5 +369,7 @@
 ## 附：与现有文档的关系
 
 - 本文档是**方向**；具体实现细节看 `docs/sync-protocol.md`、`docs/web-routing.md`、`docs/visual-baseline/`、`apps/mobile/README.md`。
+- 子路线图：`docs/roadmap-phase1.md`（短期）、`docs/roadmap-midterm-execution.md`（中期任务级）、`docs/roadmap-fire-os.md`（FIRE OS 演进）。
+- AI 架构与运行时以 `docs/ai-architecture.md` + `docs/ai-protocol.md` 为准（device-only，W-D7 后）。
 - 任务级别跟踪走 FIR-XXX 编号（见 CLAUDE.md 中的引用方式）。
 - 路线图调整请提交 PR 同时更新本文件顶部的"文档版本"。
