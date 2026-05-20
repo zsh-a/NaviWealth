@@ -1297,6 +1297,252 @@
   "fireSensitivityBaseline": "Current surplus",
   "fireSensitivityLowerSurplus": "-20% surplus",
 
+  "fireOsHeroTitle": "Freedom status",
+  "fireOsHeroSubtitle": "Whether today's portfolio still supports the lifestyle you planned for.",
+  "fireOsHeroNetWorthLabel": "Net worth",
+  "fireOsHeroInvestableLabel": "Investable",
+  "fireOsHeroLiquidLabel": "Liquid",
+  "fireOsHeroWithdrawalRateLabel": "Withdrawal rate",
+  "fireOsHeroWithdrawalRateValue": "{rate}% / SWR {swr}%",
+  "@fireOsHeroWithdrawalRateValue": {
+    "placeholders": {
+      "rate": { "type": "String", "example": "4.20" },
+      "swr": { "type": "String", "example": "4.0" }
+    }
+  },
+  "fireOsHeroWithdrawalRateInfinite": "Spend without investable assets",
+  "fireOsHeroCashBucketLabel": "Cash bucket",
+  "fireOsHeroCashBucketValue": "{months} mo / target {target} mo",
+  "@fireOsHeroCashBucketValue": {
+    "placeholders": {
+      "months": { "type": "String", "example": "6" },
+      "target": { "type": "int", "example": "12" }
+    }
+  },
+  "fireOsHeroCashBucketInfinite": "No recorded monthly expense",
+  "fireOsHeroEtaLabel": "FIRE ETA",
+  "fireOsHeroEtaReached": "Already reached",
+  "fireOsHeroEtaUnreachable": "Not within 100 years",
+  "fireOsHeroAnnualSpendLabel": "Annual spend",
+  "fireOsAnnualSpendSourceTrailing": "Trailing 12 months",
+  "fireOsAnnualSpendSourcePlan": "Plan input",
+  "fireOsSafetySafe": "Safe",
+  "fireOsSafetyCautious": "Cautious",
+  "fireOsSafetyDanger": "Danger",
+  "fireOsSafetyUnconfigured": "Plan not set",
+  "fireOsSuggestedActionsTitle": "Suggested next steps",
+  "fireOsSuggestedActionsEmpty": "No actions right now — the plan is steady.",
+  "fireOsActionConfigurePlanTitle": "Set up your FIRE plan",
+  "fireOsActionConfigurePlanDetail": "Tell NaviWealth your target, expenses, and savings so it can judge safety.",
+  "fireOsActionHoldSteadyTitle": "On track — keep it steady",
+  "fireOsActionHoldSteadyDetail": "Withdrawal rate is below SWR and the cash bucket is healthy.",
+  "fireOsActionTopUpCashBucketTitle": "Top up the cash bucket",
+  "fireOsActionTopUpCashBucketDetail": "Add {amount} to reach {months} months of runway.",
+  "@fireOsActionTopUpCashBucketDetail": {
+    "placeholders": {
+      "amount": { "type": "String", "example": "¥120,000" },
+      "months": { "type": "int", "example": "12" }
+    }
+  },
+  "fireOsActionReduceSpendingTitle": "Reduce spending",
+  "fireOsActionReduceSpendingDetailPct": "Withdrawal rate is {pct} percentage points above your SWR.",
+  "@fireOsActionReduceSpendingDetailPct": {
+    "placeholders": {
+      "pct": { "type": "String", "example": "1.6" }
+    }
+  },
+  "fireOsActionReduceSpendingDetailGeneric": "Spending has outrun the investable base — review the monthly burn.",
+  "fireOsActionDelayDiscretionaryTitle": "Delay discretionary spend",
+  "fireOsActionDelayDiscretionaryDetail": "Push travel, upgrades, or big purchases out until the withdrawal rate cools down.",
+  "fireOsActionRebalanceTitle": "Rebalance toward target",
+  "fireOsActionRebalanceDetail": "Allocation has drifted — bring sleeves back in line.",
+  "fireOsActionBuildRiskReserveTitle": "Build a risk reserve",
+  "fireOsActionBuildRiskReserveDetail": "Net worth is negative or thin — set aside emergency / medical reserves.",
+  "fireOsActionRunReviewTitle": "Open the latest review",
+  "fireOsActionRunReviewDetail": "Check the monthly or quarterly review for context.",
+  "fireOsActionFixCurrencyGapTitle": "Fix missing FX rates",
+  "fireOsActionFixCurrencyGapDetail": "{count} holdings are missing a rate into your base currency.",
+  "@fireOsActionFixCurrencyGapDetail": {
+    "placeholders": {
+      "count": { "type": "int", "example": "2" }
+    }
+  },
+  "fireOsPlanFormAdvancedTitle": "Advanced",
+  "fireOsPlanFormSwrLabel": "Safe withdrawal rate",
+  "fireOsPlanFormSwrValue": "{rate}%",
+  "@fireOsPlanFormSwrValue": {
+    "placeholders": {
+      "rate": { "type": "String", "example": "4.0" }
+    }
+  },
+  "fireOsPlanFormSwrHelper": "Trinity-study default is 4%. Lean FIRE typically aims lower; Fat FIRE leaves more buffer.",
+  "fireOsPlanFormCashBucketLabel": "Cash bucket target (months)",
+  "fireOsPlanFormCashBucketHelper": "How many months of expenses to keep in liquid cash.",
+  "fireOsPlanFormLifestyleLabel": "Lifestyle mode",
+  "fireOsPlanFormLifestyleLean": "Lean",
+  "fireOsPlanFormLifestyleStandard": "Standard",
+  "fireOsPlanFormLifestyleFat": "Fat",
+  "fireOsPlanFormLifestyleCoast": "Coast",
+  "fireOsPlanFormLifestyleBarista": "Barista",
+  "fireOsBucketsTitle": "Buckets",
+  "fireOsBucketsSubtitle": "Each holding is interpreted as one of cash, defensive, growth, risk reserve, or dream.",
+  "fireOsBucketRoleCash": "Cash",
+  "fireOsBucketRoleDefensive": "Defensive",
+  "fireOsBucketRoleGrowth": "Growth",
+  "fireOsBucketRoleRiskReserve": "Risk reserve",
+  "fireOsBucketRoleDream": "Dream",
+  "fireOsBucketStatusOnTrack": "On track",
+  "fireOsBucketStatusUnder": "Below target",
+  "fireOsBucketStatusOver": "Over target",
+  "fireOsBucketStatusEmpty": "Empty",
+  "fireOsBucketNoTarget": "No formal target",
+  "fireOsBucketCoverage": "{current} / {target}",
+  "@fireOsBucketCoverage": {
+    "placeholders": {
+      "current": { "type": "String", "example": "¥48,000" },
+      "target": { "type": "String", "example": "¥48,000" }
+    }
+  },
+  "fireOsBucketAssets": "{count, plural, =1{1 holding} other{{count} holdings}}",
+  "@fireOsBucketAssets": {
+    "placeholders": { "count": { "type": "int", "example": "3" } }
+  },
+  "fireOsBucketsManageCta": "Manage bucket rules",
+  "fireOsBucketsMappingTitle": "Bucket rules",
+  "fireOsBucketsMappingSubtitle": "Pick the bucket each holding belongs to. Defaults are applied to anything you leave unset.",
+  "fireOsBucketsMappingSave": "Save",
+  "fireOsBucketsMappingCancel": "Cancel",
+  "fireOsBucketsMappingDefault": "Default",
+  "fireOsBucketsMappingEmpty": "No holdings to map yet. Add accounts or assets first.",
+  "fireOsUnmappedTitle": "Unmapped holdings",
+  "fireOsUnmappedSubtitle": "These assets aren't part of any bucket. Map them if they should fund the plan.",
+  "fireOsInsightBucketDeviation": "Bucket below target",
+  "fireOsInsightBucketDeviationValue": "{role}: {current} / {target}",
+  "@fireOsInsightBucketDeviationValue": {
+    "placeholders": {
+      "role": { "type": "String", "example": "Cash" },
+      "current": { "type": "String", "example": "¥30,000" },
+      "target": { "type": "String", "example": "¥48,000" }
+    }
+  },
+  "fireOsInsightUnmappedHoldings": "Unmapped holdings",
+  "fireOsInsightUnmappedHoldingsValue": "{count, plural, =1{1 holding} other{{count} holdings}} not assigned to any bucket",
+  "@fireOsInsightUnmappedHoldingsValue": {
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "fireOsStressTitle": "Stress tests",
+  "fireOsStressSubtitle": "How the plan holds up under bear markets, expense surges, one-off shocks, FX swings, and cash depletion.",
+  "fireOsStressEmpty": "Configure a FIRE plan to run stress tests.",
+  "fireOsStressScenarioMarketDrawdown": "Market drawdown −{pct}%",
+  "@fireOsStressScenarioMarketDrawdown": {
+    "placeholders": { "pct": { "type": "String", "example": "35" } }
+  },
+  "fireOsStressScenarioExpenseSurge": "Expenses +{pct}%",
+  "@fireOsStressScenarioExpenseSurge": {
+    "placeholders": { "pct": { "type": "String", "example": "20" } }
+  },
+  "fireOsStressScenarioOneOffShock": "One-off shock {amount}",
+  "@fireOsStressScenarioOneOffShock": {
+    "placeholders": { "amount": { "type": "String", "example": "¥50,000" } }
+  },
+  "fireOsStressScenarioFxShock": "FX shock ±{pct}%",
+  "@fireOsStressScenarioFxShock": {
+    "placeholders": { "pct": { "type": "String", "example": "10" } }
+  },
+  "fireOsStressScenarioCashDepletion": "Cash drawdown over {months} months",
+  "@fireOsStressScenarioCashDepletion": {
+    "placeholders": { "months": { "type": "int", "example": "12" } }
+  },
+  "fireOsStressVerdictSafe": "Safe",
+  "fireOsStressVerdictCautious": "Cautious",
+  "fireOsStressVerdictDanger": "Danger",
+  "fireOsStressMetricWr": "WR {rate}%",
+  "@fireOsStressMetricWr": {
+    "placeholders": { "rate": { "type": "String", "example": "5.4" } }
+  },
+  "fireOsStressMetricWrInfinite": "WR ∞",
+  "fireOsStressMetricCash": "Cash {months} mo",
+  "@fireOsStressMetricCash": {
+    "placeholders": { "months": { "type": "String", "example": "8" } }
+  },
+  "fireOsStressMetricNetWorth": "NW {amount}",
+  "@fireOsStressMetricNetWorth": {
+    "placeholders": { "amount": { "type": "String", "example": "¥1,200,000" } }
+  },
+  "fireOsReviewTitle": "Periodic review",
+  "fireOsReviewSubtitle": "Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.",
+  "fireOsReviewKindMonthly": "Monthly",
+  "fireOsReviewKindQuarterly": "Quarterly",
+  "fireOsReviewKindAnnual": "Annual",
+  "fireOsReviewGeneratedAt": "Generated {date}",
+  "@fireOsReviewGeneratedAt": {
+    "placeholders": { "date": { "type": "String", "example": "2026-05-20" } }
+  },
+  "fireOsReviewSaveSnapshot": "Save snapshot",
+  "fireOsReviewSaved": "Saved · {key}",
+  "@fireOsReviewSaved": {
+    "placeholders": { "key": { "type": "String", "example": "2026-05" } }
+  },
+  "fireOsReviewFindingsTitle": "Findings",
+  "fireOsReviewFindingNetWorthHealthy": "Net worth is positive.",
+  "fireOsReviewFindingNetWorthBroken": "Net worth is at or below zero.",
+  "fireOsReviewFindingWithdrawalRateBelowSwr": "Withdrawal rate is below SWR by {pct} pp.",
+  "@fireOsReviewFindingWithdrawalRateBelowSwr": {
+    "placeholders": { "pct": { "type": "String", "example": "1.0" } }
+  },
+  "fireOsReviewFindingWithdrawalRateAboveSwr": "Withdrawal rate is above SWR by {pct} pp.",
+  "@fireOsReviewFindingWithdrawalRateAboveSwr": {
+    "placeholders": { "pct": { "type": "String", "example": "1.6" } }
+  },
+  "fireOsReviewFindingWithdrawalRateInfinite": "Spend exists with no investable assets.",
+  "fireOsReviewFindingWithinTargetCashBucket": "Cash bucket covers {months} months — at target.",
+  "@fireOsReviewFindingWithinTargetCashBucket": {
+    "placeholders": { "months": { "type": "int", "example": "12" } }
+  },
+  "fireOsReviewFindingBelowTargetCashBucket": "Cash bucket below the {months}-month target.",
+  "@fireOsReviewFindingBelowTargetCashBucket": {
+    "placeholders": { "months": { "type": "int", "example": "12" } }
+  },
+  "fireOsReviewFindingFireEtaReached": "FIRE target already reached.",
+  "fireOsReviewFindingFireEtaUnreachable": "FIRE target not reached within 100 years.",
+  "fireOsReviewFindingFireEtaProgressing": "FIRE ETA at {months} months.",
+  "@fireOsReviewFindingFireEtaProgressing": {
+    "placeholders": { "months": { "type": "int", "example": "60" } }
+  },
+  "fireOsReviewFindingCurrencyGap": "{count} holdings without an FX rate to base currency.",
+  "@fireOsReviewFindingCurrencyGap": {
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "fireOsReviewFindingUnmappedHoldings": "{count} holdings not assigned to a bucket.",
+  "@fireOsReviewFindingUnmappedHoldings": {
+    "placeholders": { "count": { "type": "int", "example": "1" } }
+  },
+  "fireOsReviewFindingStressDanger": "Stress test \"{scenario}\" lands at danger.",
+  "@fireOsReviewFindingStressDanger": {
+    "placeholders": { "scenario": { "type": "String", "example": "market_drawdown" } }
+  },
+  "fireOsReviewFindingStressCautious": "Stress test \"{scenario}\" lands at cautious.",
+  "@fireOsReviewFindingStressCautious": {
+    "placeholders": { "scenario": { "type": "String", "example": "expense_surge" } }
+  },
+  "fireOsReviewFindingStressSafe": "All stress tests are safe under current assumptions.",
+  "fireOsInsightHighWithdrawalRate": "Withdrawal rate above SWR",
+  "fireOsInsightHighWithdrawalRateValue": "{rate}% / SWR {swr}%",
+  "@fireOsInsightHighWithdrawalRateValue": {
+    "placeholders": {
+      "rate": { "type": "String", "example": "4.6" },
+      "swr": { "type": "String", "example": "4.0" }
+    }
+  },
+  "fireOsInsightLowCashBucket": "Cash bucket below target",
+  "fireOsInsightLowCashBucketValue": "{months} of {target} months",
+  "@fireOsInsightLowCashBucketValue": {
+    "placeholders": {
+      "months": { "type": "String", "example": "6" },
+      "target": { "type": "int", "example": "12" }
+    }
+  },
+
   "benchmarkComparisonTitle": "Benchmark comparison",
   "benchmarkComparisonSubtitle": "Pin major indices against your net worth and read off the excess return.",
   "benchmarkComparisonError": "Couldn't load the benchmark comparison: {error}",
@@ -1589,6 +1835,8 @@
   "aiChatProposalKindLiabilityPayment": "Repayment",
   "aiChatProposalKindAccountCreate": "New account",
   "aiChatProposalKindAssetValuation": "Valuation update",
+  "aiChatProposalKindFirePlanUpdate": "FIRE plan update",
+  "aiChatProposalKindFireBucketRule": "FIRE bucket rule",
   "aiChatProposalKindUnknown": "Unknown",
 
   "aiChatProposalPendingHeader": "Awaiting confirmation · {kind}",

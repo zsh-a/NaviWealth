@@ -250,7 +250,8 @@ void main() {
     });
 
     test('mobile descriptor catalog carries active device tools', () {
-      expect(allToolDescriptors, hasLength(22));
+      // 22 baseline + 8 FIRE OS Phase 5 (docs/roadmap-fire-os.md §5.2).
+      expect(allToolDescriptors, hasLength(30));
       expect(
         lookupToolDescriptor('get_holdings')?.readModelLayer,
         ReadModelLayer.snapshot,

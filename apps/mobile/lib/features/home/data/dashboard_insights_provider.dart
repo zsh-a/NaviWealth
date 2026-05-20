@@ -53,6 +53,51 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     }
   });
 
+  // FIRE OS Phase 1: high withdrawal rate / low cash bucket signals. The
+  // hero card on the FIRE page shows the same data in detail; the home
+  // surface is the calm prompt before the user opens the dashboard.
+  final fireStateAsync = ref.watch(fireStateProvider);
+  fireStateAsync.whenData((state) {
+    if (!state.isConfigured) return;
+    if (state.withdrawalRate.isFinite &&
+        state.withdrawalRate > state.plan.safeWithdrawalRate) {
+      insights.add(
+        InsightItem(
+          icon: Icons.trending_up_outlined,
+          kind: InsightKind.fireOsHighWithdrawalRate,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsWithdrawalRate: state.withdrawalRate,
+          fireOsSafeWithdrawalRate: state.plan.safeWithdrawalRate,
+        ),
+      );
+    }
+    if (state.cashBucketMonths.isFinite &&
+        state.cashBucketMonths < state.plan.targetCashBucketMonths) {
+      insights.add(
+        InsightItem(
+          icon: Icons.account_balance_outlined,
+          kind: InsightKind.fireOsLowCashBucket,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsCashBucketMonths: state.cashBucketMonths,
+          fireOsTargetCashBucketMonths: state.plan.targetCashBucketMonths,
+        ),
+      );
+    }
+    if (state.unmappedHoldings.isNotEmpty) {
+      insights.add(
+        InsightItem(
+          icon: Icons.help_outline,
+          kind: InsightKind.fireOsUnmappedHoldings,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsUnmappedCount: state.unmappedHoldings.length,
+        ),
+      );
+    }
+  });
+
   final drift = ref.watch(rebalanceDriftInsightProvider);
   if (drift != null) {
     insights.add(
@@ -190,6 +235,9 @@ String insightScopeHash(InsightItem item) {
     case InsightKind.portfolioDrift:
     case InsightKind.maturity:
     case InsightKind.anomaly:
+    case InsightKind.fireOsHighWithdrawalRate:
+    case InsightKind.fireOsLowCashBucket:
+    case InsightKind.fireOsUnmappedHoldings:
       // Single-instance kinds — one hash is enough to dismiss them.
       return '';
     case InsightKind.duplicateCharge:

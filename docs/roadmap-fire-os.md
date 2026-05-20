@@ -3,6 +3,8 @@
 > 文档版本：2026-05-20
 > 关联：[`docs/roadmap.md`](./roadmap.md)、[`docs/ai-architecture.md`](./ai-architecture.md)、[`apps/mobile/docs/design/07-fire.md`](../apps/mobile/docs/design/07-fire.md)
 > 定位：把 NaviWealth 从“资产/账本工具”升级为“财务自由状态操作系统”。
+>
+> 状态（2026-05-20）：Phase 0–5 全部落地；Phase 6（同步）按 §7.1 + 风险表的约束**主动延后**，见 §8 末尾的 FIRE-OS-6.1 决策注。
 
 ---
 
@@ -405,7 +407,7 @@ fire_bucket_rules (
 
 ## 8. 阶段路线
 
-### Phase 0：设计冻结与现状对齐
+### Phase 0：设计冻结与现状对齐  ✅ Shipped
 
 目标：不写复杂代码前，先冻结边界。
 
@@ -413,9 +415,9 @@ fire_bucket_rules (
 |----|------|-----|
 | FIRE-OS-0.1 | 确认 FIRE OS 产品边界 | 本文档合入并在 roadmap 引用。 |
 | FIRE-OS-0.2 | 审视现有 FIRE 页面与 provider | 标出可复用 provider 与需替换的模型。 |
-| FIRE-OS-0.3 | 定义 `FireState` schema | domain 模型草案 + 单元测试输入样例。 |
+| FIRE-OS-0.3 | 定义 `FireState` schema | `features/fire/domain/fire_state.dart` + `fire_state_service_test.dart`。 |
 
-### Phase 1：FIRE State MVP
+### Phase 1：FIRE State MVP  ✅ Shipped
 
 目标：先让系统能回答“现在是否安全”。
 
@@ -433,7 +435,7 @@ fire_bucket_rules (
 - 无 FIRE 计划时有清晰 onboarding。
 - 只依赖本地数据，无网络和后端改动。
 
-### Phase 2：桶模型
+### Phase 2：桶模型  ✅ Shipped
 
 目标：把“钱在哪里”升级为“钱承担什么角色”。
 
@@ -451,7 +453,7 @@ fire_bucket_rules (
 - 现金桶覆盖计算可信。
 - 未分配资产被明确标注，不静默忽略。
 
-### Phase 3：压力测试
+### Phase 3：压力测试  ✅ Shipped
 
 目标：从“目标进度”升级到“韧性规划”。
 
@@ -470,7 +472,7 @@ fire_bucket_rules (
 - 压力测试不调用 LLM。
 - 单测覆盖极端输入：零资产、负债高于资产、无现金桶、多币种缺 FX。
 
-### Phase 4：Review System
+### Phase 4：Review System  ✅ Shipped
 
 目标：形成周期性自由状态报告。
 
@@ -488,7 +490,7 @@ fire_bucket_rules (
 - AI 只负责解释已计算出的 review，不直接编造指标。
 - Review 中每条建议都有数据来源。
 
-### Phase 5：AI Copilot
+### Phase 5：AI Copilot  ✅ Shipped
 
 目标：把 FIRE OS 变成可解释、可模拟、可确认修改的 AI-native 体验。
 
@@ -509,7 +511,7 @@ fire_bucket_rules (
 - AI 写入 FIRE 计划或桶规则必须显示 diff 并由用户确认。
 - Web 无 AI 时正常降级。
 
-### Phase 6：同步与多设备
+### Phase 6：同步与多设备  ⏸ Deferred (see FIRE-OS-6.1 decision note)
 
 目标：让 FIRE OS 配置可在多设备一致。
 
@@ -526,6 +528,37 @@ fire_bucket_rules (
 - 两台设备修改 FIRE plan 后按 HLC LWW 一致。
 - 桶规则删除使用 tombstone，不硬删。
 - 本地旧偏好可一次性迁移到同步表。
+
+#### FIRE-OS-6.1 决策注（2026-05-20）：MVP 阶段不开 Phase 6
+
+**结论：** 新增独立的 `fire_plans` 与 `fire_bucket_rules` 同步表 —— 但**不**在 MVP 阶段落地。
+
+**为什么不复用 `goals(type=fire)`：** `goals` 表为单字段 KV 设计，FIRE 计划已演化为含
+`safe_withdrawal_rate / target_cash_bucket_months / lifestyle_mode / reserves[] /
+risk_settings{}` 的多字段聚合体。挤进 KV 会把 schema 演化挪到 JSON 解码层，丢失 D1
+端 schema-aware 索引和 materialise 检查的好处。
+
+**为什么 MVP 阶段不落地（即使决策已定）：**
+
+- **§7.1 明确：MVP 不改 Sync Protocol v1.0。** Phase 1–5 已完全跑在本地偏好之上，
+  无任何协议变更；Phase 0–5 的所有承接点（fire_goal_preferences /
+  fire_plan_preferences / fire_bucket_rules_preferences /
+  fire_review_cache）都使用 SharedPreferences，没有任何同步路径上的 dirty。
+- **§10 风险表第六行：** 「同步协议过早复杂化｜MVP 不改协议，等本地模型稳定后再
+  进入 Phase 6」。在多设备实际触发不一致体验前推送协议变更，会无谓抬升 v1.1 的
+  设计代价并冒着 backend op-applier 漂移的风险。
+- **§3 / §7.2 已草拟的表结构** （`fire_plans`、`fire_bucket_rules`）保留为未来一次性
+  迁移的目标 schema —— MVP 没有写入与之冲突的状态。
+- **触发条件**：当用户开始在多设备使用 FIRE OS 并报告“计划在另一台设备上是旧版”时，
+  按 FIRE-OS-6.2 → 6.5 的顺序执行：先冻结 v1.1 草案，再加 Drift 表 + backend
+  migration，再加 op-applier 与双设备 LWW 测试，最后一次性把本地 prefs 迁移过去。
+
+**今天可以做的事**（已完成，不阻塞延后）：
+
+- 所有 Phase 5 `propose_fire_plan_update` / `propose_fire_bucket_rule` 走 device
+  applier（`features/ai_chat/data/proposal_applier.dart`），写入路径已抽象成
+  注入式 writer —— 切换到同步表只需替换 provider 实现，AI 工具与 ProposeCard
+  无需改动。
 
 ---
 

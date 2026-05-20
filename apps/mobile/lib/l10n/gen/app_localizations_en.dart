@@ -2390,6 +2390,479 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fireSensitivityLowerSurplus => '-20% surplus';
 
   @override
+  String get fireOsHeroTitle => 'Freedom status';
+
+  @override
+  String get fireOsHeroSubtitle =>
+      'Whether today\'s portfolio still supports the lifestyle you planned for.';
+
+  @override
+  String get fireOsHeroNetWorthLabel => 'Net worth';
+
+  @override
+  String get fireOsHeroInvestableLabel => 'Investable';
+
+  @override
+  String get fireOsHeroLiquidLabel => 'Liquid';
+
+  @override
+  String get fireOsHeroWithdrawalRateLabel => 'Withdrawal rate';
+
+  @override
+  String fireOsHeroWithdrawalRateValue(String rate, String swr) {
+    return '$rate% / SWR $swr%';
+  }
+
+  @override
+  String get fireOsHeroWithdrawalRateInfinite =>
+      'Spend without investable assets';
+
+  @override
+  String get fireOsHeroCashBucketLabel => 'Cash bucket';
+
+  @override
+  String fireOsHeroCashBucketValue(String months, int target) {
+    return '$months mo / target $target mo';
+  }
+
+  @override
+  String get fireOsHeroCashBucketInfinite => 'No recorded monthly expense';
+
+  @override
+  String get fireOsHeroEtaLabel => 'FIRE ETA';
+
+  @override
+  String get fireOsHeroEtaReached => 'Already reached';
+
+  @override
+  String get fireOsHeroEtaUnreachable => 'Not within 100 years';
+
+  @override
+  String get fireOsHeroAnnualSpendLabel => 'Annual spend';
+
+  @override
+  String get fireOsAnnualSpendSourceTrailing => 'Trailing 12 months';
+
+  @override
+  String get fireOsAnnualSpendSourcePlan => 'Plan input';
+
+  @override
+  String get fireOsSafetySafe => 'Safe';
+
+  @override
+  String get fireOsSafetyCautious => 'Cautious';
+
+  @override
+  String get fireOsSafetyDanger => 'Danger';
+
+  @override
+  String get fireOsSafetyUnconfigured => 'Plan not set';
+
+  @override
+  String get fireOsSuggestedActionsTitle => 'Suggested next steps';
+
+  @override
+  String get fireOsSuggestedActionsEmpty =>
+      'No actions right now — the plan is steady.';
+
+  @override
+  String get fireOsActionConfigurePlanTitle => 'Set up your FIRE plan';
+
+  @override
+  String get fireOsActionConfigurePlanDetail =>
+      'Tell NaviWealth your target, expenses, and savings so it can judge safety.';
+
+  @override
+  String get fireOsActionHoldSteadyTitle => 'On track — keep it steady';
+
+  @override
+  String get fireOsActionHoldSteadyDetail =>
+      'Withdrawal rate is below SWR and the cash bucket is healthy.';
+
+  @override
+  String get fireOsActionTopUpCashBucketTitle => 'Top up the cash bucket';
+
+  @override
+  String fireOsActionTopUpCashBucketDetail(String amount, int months) {
+    return 'Add $amount to reach $months months of runway.';
+  }
+
+  @override
+  String get fireOsActionReduceSpendingTitle => 'Reduce spending';
+
+  @override
+  String fireOsActionReduceSpendingDetailPct(String pct) {
+    return 'Withdrawal rate is $pct percentage points above your SWR.';
+  }
+
+  @override
+  String get fireOsActionReduceSpendingDetailGeneric =>
+      'Spending has outrun the investable base — review the monthly burn.';
+
+  @override
+  String get fireOsActionDelayDiscretionaryTitle => 'Delay discretionary spend';
+
+  @override
+  String get fireOsActionDelayDiscretionaryDetail =>
+      'Push travel, upgrades, or big purchases out until the withdrawal rate cools down.';
+
+  @override
+  String get fireOsActionRebalanceTitle => 'Rebalance toward target';
+
+  @override
+  String get fireOsActionRebalanceDetail =>
+      'Allocation has drifted — bring sleeves back in line.';
+
+  @override
+  String get fireOsActionBuildRiskReserveTitle => 'Build a risk reserve';
+
+  @override
+  String get fireOsActionBuildRiskReserveDetail =>
+      'Net worth is negative or thin — set aside emergency / medical reserves.';
+
+  @override
+  String get fireOsActionRunReviewTitle => 'Open the latest review';
+
+  @override
+  String get fireOsActionRunReviewDetail =>
+      'Check the monthly or quarterly review for context.';
+
+  @override
+  String get fireOsActionFixCurrencyGapTitle => 'Fix missing FX rates';
+
+  @override
+  String fireOsActionFixCurrencyGapDetail(int count) {
+    return '$count holdings are missing a rate into your base currency.';
+  }
+
+  @override
+  String get fireOsPlanFormAdvancedTitle => 'Advanced';
+
+  @override
+  String get fireOsPlanFormSwrLabel => 'Safe withdrawal rate';
+
+  @override
+  String fireOsPlanFormSwrValue(String rate) {
+    return '$rate%';
+  }
+
+  @override
+  String get fireOsPlanFormSwrHelper =>
+      'Trinity-study default is 4%. Lean FIRE typically aims lower; Fat FIRE leaves more buffer.';
+
+  @override
+  String get fireOsPlanFormCashBucketLabel => 'Cash bucket target (months)';
+
+  @override
+  String get fireOsPlanFormCashBucketHelper =>
+      'How many months of expenses to keep in liquid cash.';
+
+  @override
+  String get fireOsPlanFormLifestyleLabel => 'Lifestyle mode';
+
+  @override
+  String get fireOsPlanFormLifestyleLean => 'Lean';
+
+  @override
+  String get fireOsPlanFormLifestyleStandard => 'Standard';
+
+  @override
+  String get fireOsPlanFormLifestyleFat => 'Fat';
+
+  @override
+  String get fireOsPlanFormLifestyleCoast => 'Coast';
+
+  @override
+  String get fireOsPlanFormLifestyleBarista => 'Barista';
+
+  @override
+  String get fireOsBucketsTitle => 'Buckets';
+
+  @override
+  String get fireOsBucketsSubtitle =>
+      'Each holding is interpreted as one of cash, defensive, growth, risk reserve, or dream.';
+
+  @override
+  String get fireOsBucketRoleCash => 'Cash';
+
+  @override
+  String get fireOsBucketRoleDefensive => 'Defensive';
+
+  @override
+  String get fireOsBucketRoleGrowth => 'Growth';
+
+  @override
+  String get fireOsBucketRoleRiskReserve => 'Risk reserve';
+
+  @override
+  String get fireOsBucketRoleDream => 'Dream';
+
+  @override
+  String get fireOsBucketStatusOnTrack => 'On track';
+
+  @override
+  String get fireOsBucketStatusUnder => 'Below target';
+
+  @override
+  String get fireOsBucketStatusOver => 'Over target';
+
+  @override
+  String get fireOsBucketStatusEmpty => 'Empty';
+
+  @override
+  String get fireOsBucketNoTarget => 'No formal target';
+
+  @override
+  String fireOsBucketCoverage(String current, String target) {
+    return '$current / $target';
+  }
+
+  @override
+  String fireOsBucketAssets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fireOsBucketsManageCta => 'Manage bucket rules';
+
+  @override
+  String get fireOsBucketsMappingTitle => 'Bucket rules';
+
+  @override
+  String get fireOsBucketsMappingSubtitle =>
+      'Pick the bucket each holding belongs to. Defaults are applied to anything you leave unset.';
+
+  @override
+  String get fireOsBucketsMappingSave => 'Save';
+
+  @override
+  String get fireOsBucketsMappingCancel => 'Cancel';
+
+  @override
+  String get fireOsBucketsMappingDefault => 'Default';
+
+  @override
+  String get fireOsBucketsMappingEmpty =>
+      'No holdings to map yet. Add accounts or assets first.';
+
+  @override
+  String get fireOsUnmappedTitle => 'Unmapped holdings';
+
+  @override
+  String get fireOsUnmappedSubtitle =>
+      'These assets aren\'t part of any bucket. Map them if they should fund the plan.';
+
+  @override
+  String get fireOsInsightBucketDeviation => 'Bucket below target';
+
+  @override
+  String fireOsInsightBucketDeviationValue(
+    String role,
+    String current,
+    String target,
+  ) {
+    return '$role: $current / $target';
+  }
+
+  @override
+  String get fireOsInsightUnmappedHoldings => 'Unmapped holdings';
+
+  @override
+  String fireOsInsightUnmappedHoldingsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0 not assigned to any bucket';
+  }
+
+  @override
+  String get fireOsStressTitle => 'Stress tests';
+
+  @override
+  String get fireOsStressSubtitle =>
+      'How the plan holds up under bear markets, expense surges, one-off shocks, FX swings, and cash depletion.';
+
+  @override
+  String get fireOsStressEmpty => 'Configure a FIRE plan to run stress tests.';
+
+  @override
+  String fireOsStressScenarioMarketDrawdown(String pct) {
+    return 'Market drawdown −$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioExpenseSurge(String pct) {
+    return 'Expenses +$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioOneOffShock(String amount) {
+    return 'One-off shock $amount';
+  }
+
+  @override
+  String fireOsStressScenarioFxShock(String pct) {
+    return 'FX shock ±$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioCashDepletion(int months) {
+    return 'Cash drawdown over $months months';
+  }
+
+  @override
+  String get fireOsStressVerdictSafe => 'Safe';
+
+  @override
+  String get fireOsStressVerdictCautious => 'Cautious';
+
+  @override
+  String get fireOsStressVerdictDanger => 'Danger';
+
+  @override
+  String fireOsStressMetricWr(String rate) {
+    return 'WR $rate%';
+  }
+
+  @override
+  String get fireOsStressMetricWrInfinite => 'WR ∞';
+
+  @override
+  String fireOsStressMetricCash(String months) {
+    return 'Cash $months mo';
+  }
+
+  @override
+  String fireOsStressMetricNetWorth(String amount) {
+    return 'NW $amount';
+  }
+
+  @override
+  String get fireOsReviewTitle => 'Periodic review';
+
+  @override
+  String get fireOsReviewSubtitle =>
+      'Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.';
+
+  @override
+  String get fireOsReviewKindMonthly => 'Monthly';
+
+  @override
+  String get fireOsReviewKindQuarterly => 'Quarterly';
+
+  @override
+  String get fireOsReviewKindAnnual => 'Annual';
+
+  @override
+  String fireOsReviewGeneratedAt(String date) {
+    return 'Generated $date';
+  }
+
+  @override
+  String get fireOsReviewSaveSnapshot => 'Save snapshot';
+
+  @override
+  String fireOsReviewSaved(String key) {
+    return 'Saved · $key';
+  }
+
+  @override
+  String get fireOsReviewFindingsTitle => 'Findings';
+
+  @override
+  String get fireOsReviewFindingNetWorthHealthy => 'Net worth is positive.';
+
+  @override
+  String get fireOsReviewFindingNetWorthBroken =>
+      'Net worth is at or below zero.';
+
+  @override
+  String fireOsReviewFindingWithdrawalRateBelowSwr(String pct) {
+    return 'Withdrawal rate is below SWR by $pct pp.';
+  }
+
+  @override
+  String fireOsReviewFindingWithdrawalRateAboveSwr(String pct) {
+    return 'Withdrawal rate is above SWR by $pct pp.';
+  }
+
+  @override
+  String get fireOsReviewFindingWithdrawalRateInfinite =>
+      'Spend exists with no investable assets.';
+
+  @override
+  String fireOsReviewFindingWithinTargetCashBucket(int months) {
+    return 'Cash bucket covers $months months — at target.';
+  }
+
+  @override
+  String fireOsReviewFindingBelowTargetCashBucket(int months) {
+    return 'Cash bucket below the $months-month target.';
+  }
+
+  @override
+  String get fireOsReviewFindingFireEtaReached =>
+      'FIRE target already reached.';
+
+  @override
+  String get fireOsReviewFindingFireEtaUnreachable =>
+      'FIRE target not reached within 100 years.';
+
+  @override
+  String fireOsReviewFindingFireEtaProgressing(int months) {
+    return 'FIRE ETA at $months months.';
+  }
+
+  @override
+  String fireOsReviewFindingCurrencyGap(int count) {
+    return '$count holdings without an FX rate to base currency.';
+  }
+
+  @override
+  String fireOsReviewFindingUnmappedHoldings(int count) {
+    return '$count holdings not assigned to a bucket.';
+  }
+
+  @override
+  String fireOsReviewFindingStressDanger(String scenario) {
+    return 'Stress test \"$scenario\" lands at danger.';
+  }
+
+  @override
+  String fireOsReviewFindingStressCautious(String scenario) {
+    return 'Stress test \"$scenario\" lands at cautious.';
+  }
+
+  @override
+  String get fireOsReviewFindingStressSafe =>
+      'All stress tests are safe under current assumptions.';
+
+  @override
+  String get fireOsInsightHighWithdrawalRate => 'Withdrawal rate above SWR';
+
+  @override
+  String fireOsInsightHighWithdrawalRateValue(String rate, String swr) {
+    return '$rate% / SWR $swr%';
+  }
+
+  @override
+  String get fireOsInsightLowCashBucket => 'Cash bucket below target';
+
+  @override
+  String fireOsInsightLowCashBucketValue(String months, int target) {
+    return '$months of $target months';
+  }
+
+  @override
   String get benchmarkComparisonTitle => 'Benchmark comparison';
 
   @override
@@ -3000,6 +3473,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatProposalKindAssetValuation => 'Valuation update';
+
+  @override
+  String get aiChatProposalKindFirePlanUpdate => 'FIRE plan update';
+
+  @override
+  String get aiChatProposalKindFireBucketRule => 'FIRE bucket rule';
 
   @override
   String get aiChatProposalKindUnknown => 'Unknown';

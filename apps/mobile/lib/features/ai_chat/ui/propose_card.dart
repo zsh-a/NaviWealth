@@ -24,6 +24,8 @@ String _kindLabel(ProposalKind kind) => switch (kind) {
   ProposalKind.liabilityPayment => 'liability_payment',
   ProposalKind.accountCreate => 'account_create',
   ProposalKind.assetValuation => 'asset_valuation',
+  ProposalKind.firePlanUpdate => 'fire_plan_update',
+  ProposalKind.fireBucketRule => 'fire_bucket_rule',
   ProposalKind.unknown => '',
 };
 
@@ -34,6 +36,8 @@ String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
       ProposalKind.liabilityPayment => l10n.aiChatProposalKindLiabilityPayment,
       ProposalKind.accountCreate => l10n.aiChatProposalKindAccountCreate,
       ProposalKind.assetValuation => l10n.aiChatProposalKindAssetValuation,
+      ProposalKind.firePlanUpdate => l10n.aiChatProposalKindFirePlanUpdate,
+      ProposalKind.fireBucketRule => l10n.aiChatProposalKindFireBucketRule,
       ProposalKind.unknown => l10n.aiChatProposalKindUnknown,
     };
 
@@ -1015,6 +1019,12 @@ List<_EditableField> _editableFieldsFor(
         ),
         _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
       ];
+    case ProposalKind.firePlanUpdate:
+    case ProposalKind.fireBucketRule:
+      // FIRE OS proposals don't expose payload fields for inline edit;
+      // the diff is rendered via the existing `payload.before` /
+      // `payload.after` shape and applied verbatim on confirm.
+      return const [];
     case ProposalKind.unknown:
       return const [];
   }
@@ -1117,6 +1127,16 @@ List<_Row> _rowsFor(
         if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
         if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
       ];
+    case ProposalKind.firePlanUpdate:
+      // The applier reads `payload.after`; surface it as a single row
+      // so the confirm card still shows what's about to change.
+      return [
+        _Row(l10n.aiChatRowNote, plan.summaryZh),
+      ];
+    case ProposalKind.fireBucketRule:
+      return [
+        if (read('role') != null) _Row(l10n.aiChatRowNote, plan.summaryZh),
+      ];
     case ProposalKind.unknown:
       return const [];
   }
@@ -1128,6 +1148,8 @@ IconData _iconFor(ProposalKind kind) => switch (kind) {
   ProposalKind.liabilityPayment => Icons.payments_outlined,
   ProposalKind.accountCreate => Icons.account_balance_outlined,
   ProposalKind.assetValuation => Icons.update,
+  ProposalKind.firePlanUpdate => Icons.flag_outlined,
+  ProposalKind.fireBucketRule => Icons.tune_outlined,
   ProposalKind.unknown => Icons.help_outline,
 };
 

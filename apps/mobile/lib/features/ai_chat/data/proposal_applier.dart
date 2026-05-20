@@ -47,6 +47,8 @@ class ProposalApplier {
     required this.liabilityRepo,
     required this.currentUserId,
     this.aiTouchedStore,
+    this.firePlanWriter,
+    this.fireBucketRuleWriter,
   });
 
   final TradeEntryService tradeEntryService;
@@ -70,6 +72,18 @@ class ProposalApplier {
   /// to that lookup so the applier never disagrees with the repo
   /// about the active user.
   final Future<String> Function() currentUserId;
+
+  /// FIRE OS Phase 5 — apply a `fire_plan_update` payload by updating
+  /// the FIRE plan storage. Production wiring delegates to
+  /// `saveFirePlanWithRef`; tests can pass a fake. Null = unsupported
+  /// (the apply branch returns a typed error).
+  final Future<void> Function(Map<String, Object?> after)? firePlanWriter;
+
+  /// FIRE OS Phase 5 — apply a `fire_bucket_rule` payload by
+  /// upserting into the bucket-rules store. Returns the resulting
+  /// rule id (= payload `target_id`, since rules are keyed by it).
+  final Future<String> Function(Map<String, Object?> payload)?
+      fireBucketRuleWriter;
 
   /// Run the compensating write encoded in [state]. No-op if [state] isn't
   /// in the `applied` status.
@@ -104,6 +118,9 @@ class ProposalApplier {
           await _applyLiabilityPayment(plan, at),
         ProposalKind.accountCreate => await _applyAccountCreate(plan, at),
         ProposalKind.assetValuation => await _applyAssetValuation(plan, at),
+        ProposalKind.firePlanUpdate => await _applyFirePlanUpdate(plan, at),
+        ProposalKind.fireBucketRule =>
+          await _applyFireBucketRule(plan, at),
         ProposalKind.unknown =>
           throw ProposalApplyException('unknown proposal kind'),
       };
@@ -550,4 +567,62 @@ class ProposalApplier {
     updatedByDevice: '',
     hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),
   );
+
+  /// FIRE OS Phase 5 — apply a `fire_plan_update` proposal. Delegates
+  /// to the injected [firePlanWriter]; throws if production wiring
+  /// didn't supply one.
+  Future<ProposalApplyState> _applyFirePlanUpdate(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
+    final writer = firePlanWriter;
+    if (writer == null) {
+      throw ProposalApplyException(
+        'fire_plan_update apply path not configured',
+      );
+    }
+    final after = plan.payload['after'];
+    if (after is! Map) {
+      throw ProposalApplyException(
+        'fire_plan_update payload missing `after` field',
+      );
+    }
+    await writer(Map<String, Object?>.from(after));
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: 'default',
+      appliedTable: 'fire_plans',
+      appliedAt: at,
+      shortLabel: '已更新${plan.summaryZh}',
+    );
+  }
+
+  /// FIRE OS Phase 5 — apply a `fire_bucket_rule` proposal. Delegates
+  /// to the injected [fireBucketRuleWriter].
+  Future<ProposalApplyState> _applyFireBucketRule(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
+    final writer = fireBucketRuleWriter;
+    if (writer == null) {
+      throw ProposalApplyException(
+        'fire_bucket_rule apply path not configured',
+      );
+    }
+    final payload = <String, Object?>{
+      'role': plan.payload['role'],
+      'target_table': plan.payload['target_table'],
+      'target_id': plan.payload['target_id'],
+      'allocation_pct': plan.payload['allocation_pct'],
+      'note': plan.payload['note'],
+    };
+    final id = await writer(payload);
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: id,
+      appliedTable: 'fire_bucket_rules',
+      appliedAt: at,
+      shortLabel: '已绑定${plan.summaryZh}',
+    );
+  }
 }

@@ -18,6 +18,10 @@ String insightHeadline(AppLocalizations l10n, InsightItem item) {
     InsightKind.monthlySummary => l10n.dashboardInsightMonthlySummaryLabel,
     InsightKind.ingestQueue => l10n.dashboardInsightIngestQueueLabel,
     InsightKind.cashFlowDeficit => l10n.dashboardInsightCashFlowDeficitLabel,
+    InsightKind.fireOsHighWithdrawalRate =>
+      l10n.fireOsInsightHighWithdrawalRate,
+    InsightKind.fireOsLowCashBucket => l10n.fireOsInsightLowCashBucket,
+    InsightKind.fireOsUnmappedHoldings => l10n.fireOsInsightUnmappedHoldings,
   };
 }
 
@@ -40,6 +44,20 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
       item.ingestFreshCount ?? 0,
     ),
     InsightKind.cashFlowDeficit => _cashFlowDeficit(l10n, item),
+    InsightKind.fireOsHighWithdrawalRate =>
+      l10n.fireOsInsightHighWithdrawalRateValue(
+        ((item.fireOsWithdrawalRate ?? 0) * 100).toStringAsFixed(1),
+        ((item.fireOsSafeWithdrawalRate ?? 0) * 100).toStringAsFixed(1),
+      ),
+    InsightKind.fireOsLowCashBucket =>
+      l10n.fireOsInsightLowCashBucketValue(
+        (item.fireOsCashBucketMonths ?? 0).toStringAsFixed(1),
+        item.fireOsTargetCashBucketMonths ?? 0,
+      ),
+    InsightKind.fireOsUnmappedHoldings =>
+      l10n.fireOsInsightUnmappedHoldingsValue(
+        item.fireOsUnmappedCount ?? 0,
+      ),
   };
 }
 

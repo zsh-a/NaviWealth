@@ -184,6 +184,81 @@ const intentDescriptors = <IntentDescriptor>[
       'refund_links',
     ],
   ),
+  // FIRE OS Phase 5 intents — explain / suggest / simulate / propose.
+  IntentDescriptor(
+    name: 'explain_fire_state',
+    labelZh: '解读 FIRE 状态',
+    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.visualization,
+    },
+    promptTemplate:
+        '请基于 get_fire_state 的结果，向我解释当前 {{object_label}} 的安全等级、提取率、现金桶覆盖和 FIRE ETA，并指出最值得关注的一两条 suggested_actions。',
+    preferredReadModels: <String>[
+      'fire_state',
+      'net_worth_snapshot',
+      'cashflow_buckets',
+    ],
+  ),
+  IntentDescriptor(
+    name: 'review_cash_bucket',
+    labelZh: '检查现金桶',
+    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.proposal,
+    },
+    promptTemplate:
+        '请用 get_fire_buckets 检查当前现金桶覆盖月数,如低于目标 {{object_label}} 请给出补足金额，并准备好 propose_fire_plan_update 或 propose_fire_bucket_rule 的建议。',
+    preferredReadModels: <String>['fire_state', 'fire_buckets'],
+  ),
+  IntentDescriptor(
+    name: 'simulate_fire_change',
+    labelZh: '模拟一下',
+    allowedObjectTypes: <String>{'fire_plan', 'fire_state'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.visualization,
+    },
+    promptTemplate:
+        '请用 simulate_fire_plan 模拟 {{object_label}} 的变化(支出、结余、SWR、现金桶月数等)对 FIRE 状态的影响。明确告诉我这只是模拟，没有写入计划。',
+    // `simulate_fire_plan` does not start with `get_` so the corpus
+    // normaliser does not strip it; list it verbatim.
+    preferredReadModels: <String>[
+      'fire_state',
+      'fire_plan',
+      'simulate_fire_plan',
+    ],
+  ),
+  IntentDescriptor(
+    name: 'explain_stress_test',
+    labelZh: '解释压力测试',
+    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.visualization,
+    },
+    promptTemplate:
+        '请基于 get_fire_stress_tests 的结果逐条解释市场回撤 / 支出上升 / 一次性冲击 / 汇率冲击 / 现金桶耗尽对 {{object_label}} 的影响。强调这是韧性检验，不是预测。',
+    preferredReadModels: <String>['fire_state', 'fire_stress_tests'],
+  ),
+  IntentDescriptor(
+    name: 'suggest_fire_actions',
+    labelZh: '下一步怎么办',
+    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
+    preferredCapabilities: <AiCapability>{
+      AiCapability.chat,
+      AiCapability.proposal,
+    },
+    promptTemplate:
+        '请基于 get_fire_state 的 suggested_actions 给出三件最值得做的事；若涉及计划改动，请用 propose_fire_plan_update 让我确认。',
+    preferredReadModels: <String>[
+      'fire_state',
+      'fire_buckets',
+      'fire_stress_tests',
+    ],
+  ),
 ];
 
 /// Lookup by intent name. Returns `null` for off-registry strings —
