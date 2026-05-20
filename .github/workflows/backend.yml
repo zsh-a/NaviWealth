@@ -67,7 +67,7 @@ jobs:
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
       - name: Apply D1 migrations
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -75,7 +75,7 @@ jobs:
           command: d1 migrations apply naviwealth
       - name: Deploy to Cloudflare Workers
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -109,7 +109,7 @@ jobs:
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
       - id: upload
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
