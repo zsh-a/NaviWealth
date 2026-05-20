@@ -188,8 +188,6 @@ jobs:
     needs: [meta, backend-build]
     if: always() && needs.backend-build.result == 'success'
     runs-on: ubuntu-latest
-    env:
-      HAS_LLM_API_KEY: ${{ secrets.LLM_API_KEY != '' }}
     concurrency:
       group: backend-deploy-prod
       cancel-in-progress: false
@@ -209,34 +207,19 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping deploy."
           fi
-      - name: Skip LLM API key sync
-        if: steps.deploy-gate.outputs.enabled == 'true' && env.HAS_LLM_API_KEY != 'true'
-        run: echo "::notice::LLM_API_KEY not set in GitHub Secrets — keeping existing Cloudflare Worker secret."
       - name: Apply D1 migrations
         if: steps.deploy-gate.outputs.enabled == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
           command: d1 migrations apply naviwealth --remote
       - name: Deploy to Cloudflare Workers
-        if: steps.deploy-gate.outputs.enabled == 'true' && env.HAS_LLM_API_KEY != 'true'
-        uses: cloudflare/wrangler-action@v3
+        if: steps.deploy-gate.outputs.enabled == 'true'
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/backend
           command: deploy
-      - name: Deploy to Cloudflare Workers with LLM secret
-        if: steps.deploy-gate.outputs.enabled == 'true' && env.HAS_LLM_API_KEY == 'true'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/backend
-          command: deploy
-          secrets: |
-            LLM_API_KEY
-        env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}

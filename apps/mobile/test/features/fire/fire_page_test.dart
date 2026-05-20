@@ -7,6 +7,8 @@ import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
+import 'package:naviwealth/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
@@ -71,6 +73,12 @@ Future<Widget> _wrap({
         (ref) => Stream<List<FxRate>>.value(const []),
       ),
       allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+      allAccountsStreamProvider.overrideWith(
+        (ref) => Stream.value(const []),
+      ),
+      journalEntriesWithPostingsStreamProvider.overrideWith(
+        (ref) => Stream.value(const <JournalEntryWithPostings>[]),
+      ),
       holdingsSnapshotProvider.overrideWith(
         (ref) async => const <String, HoldingSnapshot>{},
       ),
@@ -171,6 +179,12 @@ void main() {
             (ref) => Stream<List<FxRate>>.value(const []),
           ),
           allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
+          allAccountsStreamProvider.overrideWith(
+            (ref) => Stream.value(const []),
+          ),
+          journalEntriesWithPostingsStreamProvider.overrideWith(
+            (ref) => Stream.value(const <JournalEntryWithPostings>[]),
+          ),
           holdingsSnapshotProvider.overrideWith(
             (ref) async => const <String, HoldingSnapshot>{},
           ),

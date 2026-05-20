@@ -59,7 +59,7 @@ Run against a release build (`flutter build web --release` then `apps/mobile/too
 - [ ] After install: opening offline shows the cached shell, not the browser's offline page.
 
 ### 3.5 go_router URL behaviour (PathUrlStrategy)
-- [ ] Direct hit on `/accounts`, `/activity`, `/ai`, `/settings` from a fresh tab loads the right tab (no `#/`).
+- [ ] Direct hit on `/accounts`, `/activity`, `/settings` (the four-tab set; there is no `/ai` tab) from a fresh tab loads the right tab (no `#/`).
 - [ ] Browser **Back** from `/settings` returns to the previously active tab, then home; never `about:blank`.
 - [ ] Browser **Forward** restores the same destination.
 - [ ] Hard refresh on a deep link (e.g. `/accounts/asset/<id>`) re-renders the same page.

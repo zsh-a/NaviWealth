@@ -20,7 +20,7 @@ cd apps/backend
 cargo check --target wasm32-unknown-unknown          # build check
 echo "JWT_SECRET=$(openssl rand -hex 32)" > .dev.vars # local secret (gitignored)
 wrangler d1 migrations apply naviwealth --local      # init local SQLite
-tool/register-user/register.sh --email you@example.com --execute --local
+../../tool/register-user/register.sh --email you@example.com --execute --local
 wrangler dev                                         # serves http://127.0.0.1:8787
 ```
 
@@ -91,7 +91,7 @@ Entitlement changes require a full rebuild (`flutter clean && flutter run`); hot
 | Physical device | `flutter run --dart-define=API_BASE_URL=http://<LAN-IP>:8787` |
 | Web (Chrome) | `flutter run -d chrome` |
 
-`API_BASE_URL` defaults to `http://127.0.0.1:8787` (see `apps/mobile/lib/core/config/app_config.dart`). `BYPASS_AUTH` defaults to `true` in dev.
+`API_BASE_URL` defaults to `http://127.0.0.1:8787` (see `apps/mobile/lib/core/config/app_config.dart`). `BYPASS_AUTH` defaults to `false`; for an auth-free dev loop pass `--dart-define=BYPASS_AUTH=true`.
 
 After login, the debug console should show `Backend health check: 200 OK` and `NaviWealth bootstrap complete (dev)`.
 

@@ -9,7 +9,9 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/fire_goal_preferences.dart';
+import '../data/fire_plan_preferences.dart';
 import '../domain/fire_goal.dart';
+import '../domain/fire_plan.dart';
 
 /// Bottom-sheet form for the FIRE goal inputs.
 ///
@@ -37,13 +39,17 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
   late final TextEditingController _targetCtrl;
   late final TextEditingController _expensesCtrl;
   late final TextEditingController _surplusCtrl;
+  late final TextEditingController _cashBucketCtrl;
   late double _inflation;
+  late double _swr;
+  late FireLifestyleMode _lifestyleMode;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     final goal = ref.read(fireGoalProvider);
+    final extras = ref.read(firePlanExtrasProvider);
     _targetCtrl = TextEditingController(
       text: _decimalToText(goal.targetAmount),
     );
@@ -53,13 +59,19 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
     _surplusCtrl = TextEditingController(
       text: _decimalToText(goal.monthlySurplus),
     );
+    _cashBucketCtrl = TextEditingController(
+      text: extras.targetCashBucketMonths.toString(),
+    );
     _inflation = goal.inflationRate;
+    _swr = extras.safeWithdrawalRate;
+    _lifestyleMode = extras.lifestyleMode;
     // Controllers were just seeded from the saved goal — that baseline
     // is not a user edit.
     widget.dirty.bindTextControllers([
       _targetCtrl,
       _expensesCtrl,
       _surplusCtrl,
+      _cashBucketCtrl,
     ]);
   }
 
@@ -68,6 +80,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
     _targetCtrl.dispose();
     _expensesCtrl.dispose();
     _surplusCtrl.dispose();
+    _cashBucketCtrl.dispose();
     super.dispose();
   }
 
@@ -123,10 +136,97 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 }),
               ),
             ),
+            const SizedBox(height: 24),
+            // FIRE OS extras: advanced planning knobs. Stay folded into
+            // the same sheet so saving stays a single confirm.
+            Text(
+              l10n.fireOsPlanFormAdvancedTitle,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${l10n.fireOsPlanFormSwrLabel} · '
+              '${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',
+              style: context.theme.typography.sm,
+            ),
+            FSlider(
+              control: FSliderControl.managedContinuous(
+                initial: FSliderValue(max: _swr / 0.10),
+                onChange: (v) => setState(() {
+                  _swr = v.max * 0.10;
+                  widget.dirty.markDirty();
+                }),
+              ),
+            ),
+            Text(
+              l10n.fireOsPlanFormSwrHelper,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: _cashBucketCtrl),
+              label: Text(l10n.fireOsPlanFormCashBucketLabel),
+              description: Text(l10n.fireOsPlanFormCashBucketHelper),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+              ],
+              validator: (value) {
+                final raw = (value ?? '').trim();
+                if (raw.isEmpty) return null;
+                final parsed = int.tryParse(raw);
+                if (parsed == null || parsed < 0 || parsed > 60) {
+                  return l10n.fireGoalValidationInvalidNumber;
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.fireOsPlanFormLifestyleLabel,
+              style: context.theme.typography.sm,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in FireLifestyleMode.values)
+                  FButton(
+                    variant: _lifestyleMode == mode
+                        ? FButtonVariant.primary
+                        : FButtonVariant.outline,
+                    onPress: () => setState(() {
+                      _lifestyleMode = mode;
+                      widget.dirty.markDirty();
+                    }),
+                    child: Text(_lifestyleLabel(l10n, mode)),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  static String _lifestyleLabel(AppLocalizations l10n, FireLifestyleMode m) {
+    switch (m) {
+      case FireLifestyleMode.lean:
+        return l10n.fireOsPlanFormLifestyleLean;
+      case FireLifestyleMode.standard:
+        return l10n.fireOsPlanFormLifestyleStandard;
+      case FireLifestyleMode.fat:
+        return l10n.fireOsPlanFormLifestyleFat;
+      case FireLifestyleMode.coast:
+        return l10n.fireOsPlanFormLifestyleCoast;
+      case FireLifestyleMode.barista:
+        return l10n.fireOsPlanFormLifestyleBarista;
+    }
   }
 
   Future<void> _submit() async {
@@ -140,7 +240,17 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
         monthlySurplus: _parseDecimal(_surplusCtrl.text),
         inflationRate: _inflation,
       );
+      final extras = ref.read(firePlanExtrasProvider);
+      final cashMonths =
+          int.tryParse(_cashBucketCtrl.text.trim()) ??
+          FirePlan.defaultCashBucketMonths;
+      final updatedExtras = extras.copyWith(
+        safeWithdrawalRate: _swr,
+        targetCashBucketMonths: cashMonths,
+        lifestyleMode: _lifestyleMode,
+      );
       await ref.read(fireGoalProvider.notifier).save(goal);
+      await ref.read(firePlanExtrasProvider.notifier).save(updatedExtras);
       if (!mounted) return;
       widget.dirty.markPristine();
       Haptics.success();

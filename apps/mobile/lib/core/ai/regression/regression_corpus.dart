@@ -77,6 +77,15 @@ const Set<String> jsonOnlyRenderTools = <String>{
   'get_net_worth_summary',
   'get_anomaly_flags',
   'get_investment_performance',
+  // FIRE OS Phase 5 — the hero / buckets / stress / review surfaces
+  // render the numbers natively on the FIRE page; the chat sheet
+  // falls back to JSON until a Wave-34-style custom renderer lands.
+  'get_fire_state',
+  'get_fire_plan',
+  'get_fire_buckets',
+  'get_fire_stress_tests',
+  'get_fire_review',
+  'simulate_fire_plan',
 };
 
 const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
@@ -174,5 +183,47 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     expectedTools: <String>{'get_cashflow_buckets', 'get_subscription_changes'},
     objectType: 'transactions',
     objectId: 'sel_coffee_3',
+  ),
+
+  // ── FIRE OS Phase 5 intents (docs/roadmap-fire-os.md §5.3) ─────
+  RegressionPrompt(
+    id: 'explain_fire_state.headline',
+    intent: 'explain_fire_state',
+    userPrompt: '我现在的 FIRE 状态怎么样？提取率有没有问题？',
+    expectedTools: <String>{'get_fire_state'},
+    objectType: 'fire_state',
+    objectId: 'default',
+  ),
+  RegressionPrompt(
+    id: 'review_cash_bucket.shortfall',
+    intent: 'review_cash_bucket',
+    userPrompt: '我的现金桶够用吗？要不要补？',
+    expectedTools: <String>{'get_fire_buckets', 'get_fire_state'},
+    objectType: 'fire_state',
+    objectId: 'default',
+  ),
+  RegressionPrompt(
+    id: 'simulate_fire_change.expense_up',
+    intent: 'simulate_fire_change',
+    userPrompt: '如果月度支出上调 20%，我的 FIRE 状态会怎么样？',
+    expectedTools: <String>{'simulate_fire_plan'},
+    objectType: 'fire_plan',
+    objectId: 'default',
+  ),
+  RegressionPrompt(
+    id: 'explain_stress_test.market_drawdown',
+    intent: 'explain_stress_test',
+    userPrompt: '如果市场再跌 35%，我的计划撑得住吗？',
+    expectedTools: <String>{'get_fire_stress_tests'},
+    objectType: 'fire_state',
+    objectId: 'default',
+  ),
+  RegressionPrompt(
+    id: 'suggest_fire_actions.next_steps',
+    intent: 'suggest_fire_actions',
+    userPrompt: '基于当前 FIRE 状态，给我三件最值得做的事。',
+    expectedTools: <String>{'get_fire_state'},
+    objectType: 'fire_state',
+    objectId: 'default',
   ),
 ];

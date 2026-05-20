@@ -24,6 +24,20 @@ enum InsightKind {
   ingestQueue,
   // FIR-142 — current-month operating cashflow is below zero.
   cashFlowDeficit,
+  // FIRE OS Phase 1 — trailing-12-month withdrawal rate is above the
+  // plan's safe withdrawal rate.
+  fireOsHighWithdrawalRate,
+  // FIRE OS Phase 1 — cash bucket coverage has slipped below the plan's
+  // target.
+  fireOsLowCashBucket,
+  // FIRE OS Phase 2 — assets exist that no bucket rule covers and the
+  // default classifier can't claim (real estate, vehicles).
+  fireOsUnmappedHoldings,
+  // FIRE OS Phase 4 follow-up — a non-cash bucket (defensive / growth /
+  // risk reserve / dream) is materially under- or over-target. Cash
+  // has its own insight (`fireOsLowCashBucket`); this is the catch-all
+  // for the rest.
+  fireOsBucketDeviation,
 }
 
 /// One actionable insight surfaced on the dashboard. The view layer
@@ -55,6 +69,14 @@ class InsightItem {
     this.cashFlowMonthKey,
     this.cashFlowNetMinor,
     this.cashFlowCurrency,
+    this.fireOsWithdrawalRate,
+    this.fireOsSafeWithdrawalRate,
+    this.fireOsCashBucketMonths,
+    this.fireOsTargetCashBucketMonths,
+    this.fireOsUnmappedCount,
+    this.fireOsBucketRoleLabel,
+    this.fireOsBucketCurrentLabel,
+    this.fireOsBucketTargetLabel,
   });
 
   final IconData icon;
@@ -101,4 +123,32 @@ class InsightItem {
   final String? cashFlowMonthKey;
   final int? cashFlowNetMinor;
   final String? cashFlowCurrency;
+
+  // ── FIRE OS fields ──────────────────────────────────────────────
+  /// Current withdrawal rate as a decimal (`0.046` = 4.6%). Used by
+  /// the high-WR insight; null on other kinds.
+  final double? fireOsWithdrawalRate;
+
+  /// The plan's safe-withdrawal-rate baseline the WR was compared to.
+  final double? fireOsSafeWithdrawalRate;
+
+  /// Months of expenses currently covered by the cash bucket.
+  final double? fireOsCashBucketMonths;
+
+  /// Plan's target cash-bucket month count.
+  final int? fireOsTargetCashBucketMonths;
+
+  /// Number of holdings the bucket allocator could not classify.
+  final int? fireOsUnmappedCount;
+
+  /// Pre-localised bucket role label (e.g. "Growth") for the bucket
+  /// deviation insight. Localisation happens upstream because the
+  /// insight producer reads `FireBucketRole` directly.
+  final String? fireOsBucketRoleLabel;
+
+  /// Pre-formatted current/target currency strings for the same
+  /// insight. The producer formats them so the strings resolver
+  /// stays free of localised currency code lookup.
+  final String? fireOsBucketCurrentLabel;
+  final String? fireOsBucketTargetLabel;
 }

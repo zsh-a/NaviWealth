@@ -48,6 +48,9 @@ abstract final class AppRoutes {
   static const accountsFire = '/accounts/fire';
   static const accountsRebalance = '/accounts/rebalance';
   static const accountsAnalytics = '/accounts/analytics';
+  static const accountsPortfolioHub = '/accounts/portfolio';
+  static const accountsWatchlist = '/accounts/watchlist';
+  static const accountsDcaSimulator = '/accounts/dca';
   static const accountsDividends = '/accounts/dividends';
 
   // ── Settings sub-flows ─────────────────────────────────────────────────
@@ -123,6 +126,9 @@ abstract final class AppRouteNames {
   static const accountsFire = 'accounts-fire';
   static const accountsRebalance = 'accounts-rebalance';
   static const accountsAnalytics = 'accounts-analytics';
+  static const accountsPortfolioHub = 'accounts-portfolio-hub';
+  static const accountsWatchlist = 'accounts-watchlist';
+  static const accountsDcaSimulator = 'accounts-dca-simulator';
 
   static const activity = 'activity';
   static const activityEntryDetail = 'activity-entry-detail';

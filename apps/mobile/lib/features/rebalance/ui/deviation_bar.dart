@@ -56,42 +56,52 @@ class DeviationBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Stack(
-            children: [
-              // Background bar.
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: SizedBox(
-                  height: 8,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(child: ColoredBox(color: bgBarColor)),
-                      FractionallySizedBox(
-                        widthFactor: actualWeight.clamp(0.0, 1.0).toDouble(),
-                        child: ColoredBox(color: barColor),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.hasBoundedWidth
+                  ? constraints.maxWidth
+                  : MediaQuery.sizeOf(context).width;
+              final actualWidth =
+                  width * actualWeight.clamp(0.0, 1.0).toDouble();
+              final targetLeft =
+                  width * targetWeight.clamp(0.0, 1.0).toDouble();
+              return SizedBox(
+                width: width,
+                height: 8,
+                child: Stack(
+                  children: [
+                    // Background bar.
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: SizedBox(
+                        height: 8,
+                        child: ColoredBox(
+                          color: bgBarColor,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: SizedBox(
+                              width: actualWidth,
+                              height: 8,
+                              child: ColoredBox(color: barColor),
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              // Target line.
-              Positioned(
-                left: null,
-                right: null,
-                top: 0,
-                bottom: 0,
-                child: FractionallySizedBox(
-                  widthFactor: targetWeight.clamp(0, 1),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      width: 2,
-                      color: colorScheme.onSurfaceVariant,
                     ),
-                  ),
+                    // Target line.
+                    Positioned(
+                      left: targetLeft.clamp(0.0, width - 2),
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 2,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ],
       ),

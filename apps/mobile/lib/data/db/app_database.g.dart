@@ -5610,6 +5610,641 @@ class PricesCompanion extends UpdateCompanion<PriceRow> {
   }
 }
 
+class $WatchlistItemsTable extends WatchlistItems
+    with TableInfo<$WatchlistItemsTable, WatchlistItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($WatchlistItemsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _alertRulesJsonMeta = const VerificationMeta(
+    'alertRulesJson',
+  );
+  @override
+  late final GeneratedColumn<String> alertRulesJson = GeneratedColumn<String>(
+    'alert_rules_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    symbol,
+    market,
+    addedAt,
+    alertRulesJson,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    if (data.containsKey('alert_rules_json')) {
+      context.handle(
+        _alertRulesJsonMeta,
+        alertRulesJson.isAcceptableOrUnknown(
+          data['alert_rules_json']!,
+          _alertRulesJsonMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistItemRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistItemsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+      alertRulesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}alert_rules_json'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistItemsTable createAlias(String alias) {
+    return $WatchlistItemsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class WatchlistItemRow extends DataClass
+    implements Insertable<WatchlistItemRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String symbol;
+  final String market;
+  final DateTime addedAt;
+  final String alertRulesJson;
+  const WatchlistItemRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.symbol,
+    required this.market,
+    required this.addedAt,
+    required this.alertRulesJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistItemsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['symbol'] = Variable<String>(symbol);
+    map['market'] = Variable<String>(market);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    map['alert_rules_json'] = Variable<String>(alertRulesJson);
+    return map;
+  }
+
+  WatchlistItemsCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistItemsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      symbol: Value(symbol),
+      market: Value(market),
+      addedAt: Value(addedAt),
+      alertRulesJson: Value(alertRulesJson),
+    );
+  }
+
+  factory WatchlistItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistItemRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      market: serializer.fromJson<String>(json['market']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+      alertRulesJson: serializer.fromJson<String>(json['alertRulesJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'symbol': serializer.toJson<String>(symbol),
+      'market': serializer.toJson<String>(market),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+      'alertRulesJson': serializer.toJson<String>(alertRulesJson),
+    };
+  }
+
+  WatchlistItemRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? symbol,
+    String? market,
+    DateTime? addedAt,
+    String? alertRulesJson,
+  }) => WatchlistItemRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    symbol: symbol ?? this.symbol,
+    market: market ?? this.market,
+    addedAt: addedAt ?? this.addedAt,
+    alertRulesJson: alertRulesJson ?? this.alertRulesJson,
+  );
+  WatchlistItemRow copyWithCompanion(WatchlistItemsCompanion data) {
+    return WatchlistItemRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      market: data.market.present ? data.market.value : this.market,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      alertRulesJson: data.alertRulesJson.present
+          ? data.alertRulesJson.value
+          : this.alertRulesJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistItemRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('alertRulesJson: $alertRulesJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    symbol,
+    market,
+    addedAt,
+    alertRulesJson,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistItemRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.symbol == this.symbol &&
+          other.market == this.market &&
+          other.addedAt == this.addedAt &&
+          other.alertRulesJson == this.alertRulesJson);
+}
+
+class WatchlistItemsCompanion extends UpdateCompanion<WatchlistItemRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> symbol;
+  final Value<String> market;
+  final Value<DateTime> addedAt;
+  final Value<String> alertRulesJson;
+  final Value<int> rowid;
+  const WatchlistItemsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.market = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.alertRulesJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistItemsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String symbol,
+    required String market,
+    required DateTime addedAt,
+    this.alertRulesJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       symbol = Value(symbol),
+       market = Value(market),
+       addedAt = Value(addedAt);
+  static Insertable<WatchlistItemRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? symbol,
+    Expression<String>? market,
+    Expression<DateTime>? addedAt,
+    Expression<String>? alertRulesJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (symbol != null) 'symbol': symbol,
+      if (market != null) 'market': market,
+      if (addedAt != null) 'added_at': addedAt,
+      if (alertRulesJson != null) 'alert_rules_json': alertRulesJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistItemsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? symbol,
+    Value<String>? market,
+    Value<DateTime>? addedAt,
+    Value<String>? alertRulesJson,
+    Value<int>? rowid,
+  }) {
+    return WatchlistItemsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      symbol: symbol ?? this.symbol,
+      market: market ?? this.market,
+      addedAt: addedAt ?? this.addedAt,
+      alertRulesJson: alertRulesJson ?? this.alertRulesJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistItemsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (alertRulesJson.present) {
+      map['alert_rules_json'] = Variable<String>(alertRulesJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistItemsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('alertRulesJson: $alertRulesJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $RecurringTransactionsTable extends RecurringTransactions
     with TableInfo<$RecurringTransactionsTable, RecurringTransactionRow> {
   @override
@@ -15570,6 +16205,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $JournalEntriesTable journalEntries = $JournalEntriesTable(this);
   late final $PostingsTable postings = $PostingsTable(this);
   late final $PricesTable prices = $PricesTable(this);
+  late final $WatchlistItemsTable watchlistItems = $WatchlistItemsTable(this);
   late final $RecurringTransactionsTable recurringTransactions =
       $RecurringTransactionsTable(this);
   late final $LiabilitiesTable liabilities = $LiabilitiesTable(this);
@@ -15604,6 +16240,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     journalEntries,
     postings,
     prices,
+    watchlistItems,
     recurringTransactions,
     liabilities,
     amortizationEntries,
@@ -18165,6 +18802,314 @@ typedef $$PricesTableProcessedTableManager =
       $$PricesTableUpdateCompanionBuilder,
       (PriceRow, BaseReferences<_$AppDatabase, $PricesTable, PriceRow>),
       PriceRow,
+      PrefetchHooks Function()
+    >;
+typedef $$WatchlistItemsTableCreateCompanionBuilder =
+    WatchlistItemsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String symbol,
+      required String market,
+      required DateTime addedAt,
+      Value<String> alertRulesJson,
+      Value<int> rowid,
+    });
+typedef $$WatchlistItemsTableUpdateCompanionBuilder =
+    WatchlistItemsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> symbol,
+      Value<String> market,
+      Value<DateTime> addedAt,
+      Value<String> alertRulesJson,
+      Value<int> rowid,
+    });
+
+class $$WatchlistItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistItemsTable> {
+  $$WatchlistItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get alertRulesJson => $composableBuilder(
+    column: $table.alertRulesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistItemsTable> {
+  $$WatchlistItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get alertRulesJson => $composableBuilder(
+    column: $table.alertRulesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistItemsTable> {
+  $$WatchlistItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get alertRulesJson => $composableBuilder(
+    column: $table.alertRulesJson,
+    builder: (column) => column,
+  );
+}
+
+class $$WatchlistItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistItemsTable,
+          WatchlistItemRow,
+          $$WatchlistItemsTableFilterComposer,
+          $$WatchlistItemsTableOrderingComposer,
+          $$WatchlistItemsTableAnnotationComposer,
+          $$WatchlistItemsTableCreateCompanionBuilder,
+          $$WatchlistItemsTableUpdateCompanionBuilder,
+          (
+            WatchlistItemRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistItemsTable,
+              WatchlistItemRow
+            >,
+          ),
+          WatchlistItemRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistItemsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WatchlistItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WatchlistItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<String> alertRulesJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistItemsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                symbol: symbol,
+                market: market,
+                addedAt: addedAt,
+                alertRulesJson: alertRulesJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String symbol,
+                required String market,
+                required DateTime addedAt,
+                Value<String> alertRulesJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistItemsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                symbol: symbol,
+                market: market,
+                addedAt: addedAt,
+                alertRulesJson: alertRulesJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistItemsTable,
+      WatchlistItemRow,
+      $$WatchlistItemsTableFilterComposer,
+      $$WatchlistItemsTableOrderingComposer,
+      $$WatchlistItemsTableAnnotationComposer,
+      $$WatchlistItemsTableCreateCompanionBuilder,
+      $$WatchlistItemsTableUpdateCompanionBuilder,
+      (
+        WatchlistItemRow,
+        BaseReferences<_$AppDatabase, $WatchlistItemsTable, WatchlistItemRow>,
+      ),
+      WatchlistItemRow,
       PrefetchHooks Function()
     >;
 typedef $$RecurringTransactionsTableCreateCompanionBuilder =
@@ -23021,6 +23966,8 @@ class $AppDatabaseManager {
       $$PostingsTableTableManager(_db, _db.postings);
   $$PricesTableTableManager get prices =>
       $$PricesTableTableManager(_db, _db.prices);
+  $$WatchlistItemsTableTableManager get watchlistItems =>
+      $$WatchlistItemsTableTableManager(_db, _db.watchlistItems);
   $$RecurringTransactionsTableTableManager get recurringTransactions =>
       $$RecurringTransactionsTableTableManager(_db, _db.recurringTransactions);
   $$LiabilitiesTableTableManager get liabilities =>

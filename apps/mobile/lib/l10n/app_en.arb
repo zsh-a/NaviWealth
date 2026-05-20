@@ -307,6 +307,10 @@
   "@commandKeywordSplitCn": { "description": "Chinese command-palette search keyword for stock splits; intentionally present in every locale" },
   "commandKeywordRightsIssueCn": "配股",
   "@commandKeywordRightsIssueCn": { "description": "Chinese command-palette search keyword for rights issues; intentionally present in every locale" },
+  "commandKeywordRebalanceCn": "再平衡",
+  "@commandKeywordRebalanceCn": { "description": "Chinese command-palette search keyword for rebalance; intentionally present in every locale" },
+  "commandKeywordTargetAllocationCn": "目标配置",
+  "@commandKeywordTargetAllocationCn": { "description": "Chinese command-palette search keyword for target allocation; intentionally present in every locale" },
   "accountsHubSectionCashDeposits": "Cash & Deposits",
   "@accountsHubSectionCashDeposits": { "description": "Accounts hub section header for cash + deposit + bonds & funds" },
   "accountsHubSectionInvestments": "Investments",
@@ -317,6 +321,138 @@
   "@accountsHubSectionLiabilities": { "description": "Accounts hub section header for debts / mortgages / loans" },
   "accountsHubManageBankAccounts": "Manage bank accounts",
   "@accountsHubManageBankAccounts": { "description": "Accounts hub link row that opens the bank-accounts list" },
+  "portfolioHubTitle": "Portfolio",
+  "@portfolioHubTitle": { "description": "Investment portfolio hub page title" },
+  "portfolioHubAccountsEntrySubtitle": "Holdings, returns, and allocation views",
+  "@portfolioHubAccountsEntrySubtitle": { "description": "Accounts hub link subtitle for the investment portfolio hub" },
+  "portfolioHubMarketValueLabel": "Market value",
+  "@portfolioHubMarketValueLabel": { "description": "Portfolio hub KPI label: current portfolio market value" },
+  "portfolioHubYtdXirrLabel": "YTD XIRR",
+  "@portfolioHubYtdXirrLabel": { "description": "Portfolio hub KPI label: year-to-date money-weighted return" },
+  "portfolioHubAbsoluteReturnLabel": "Absolute return",
+  "@portfolioHubAbsoluteReturnLabel": { "description": "Portfolio hub KPI label: absolute unrealized return" },
+  "portfolioHubViewAccount": "Account",
+  "@portfolioHubViewAccount": { "description": "Portfolio hub grouping view: account" },
+  "portfolioHubViewCurrency": "Currency",
+  "@portfolioHubViewCurrency": { "description": "Portfolio hub grouping view: currency" },
+  "portfolioHubViewAssetClass": "Class",
+  "@portfolioHubViewAssetClass": { "description": "Portfolio hub grouping view: asset class" },
+  "portfolioHubHoldingsTitle": "Allocation",
+  "@portfolioHubHoldingsTitle": { "description": "Portfolio hub grouped holdings section title" },
+  "portfolioHubPositionsTitle": "Positions",
+  "@portfolioHubPositionsTitle": { "description": "Portfolio hub individual holdings section title" },
+  "portfolioHubHoldingCount": "{count, plural, =1{1 holding} other{{count} holdings}}",
+  "@portfolioHubHoldingCount": {
+    "description": "Portfolio hub group row holding count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "portfolioHubUnknownAccount": "Unknown account",
+  "@portfolioHubUnknownAccount": { "description": "Portfolio hub account group fallback title" },
+  "portfolioHubAccountGroupSubtitle": "Brokerage account",
+  "@portfolioHubAccountGroupSubtitle": { "description": "Portfolio hub account group default subtitle" },
+  "portfolioHubCurrencyGroupSubtitle": "Settlement currency",
+  "@portfolioHubCurrencyGroupSubtitle": { "description": "Portfolio hub currency group subtitle" },
+  "portfolioHubAssetClassGroupSubtitle": "Asset class",
+  "@portfolioHubAssetClassGroupSubtitle": { "description": "Portfolio hub asset class group subtitle" },
+  "portfolioHubEmpty": "No investment holdings yet.",
+  "@portfolioHubEmpty": { "description": "Portfolio hub empty state" },
+  "portfolioHubLoadError": "Portfolio failed to load: {error}",
+  "@portfolioHubLoadError": {
+    "description": "Portfolio hub load error state",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "portfolioHubAssetTypeStock": "Stock",
+  "@portfolioHubAssetTypeStock": { "description": "Portfolio hub asset type label: stock" },
+  "portfolioHubAssetTypeEtf": "ETF",
+  "@portfolioHubAssetTypeEtf": { "description": "Portfolio hub asset type label: ETF" },
+  "portfolioHubAssetTypeMutualFund": "Mutual fund",
+  "@portfolioHubAssetTypeMutualFund": { "description": "Portfolio hub asset type label: mutual fund" },
+  "portfolioHubAssetTypeBond": "Bond",
+  "@portfolioHubAssetTypeBond": { "description": "Portfolio hub asset type label: bond" },
+  "portfolioHubAssetTypeCrypto": "Crypto",
+  "@portfolioHubAssetTypeCrypto": { "description": "Portfolio hub asset type label: crypto" },
+  "portfolioHubAssetTypeCash": "Cash",
+  "@portfolioHubAssetTypeCash": { "description": "Portfolio hub asset type label: cash" },
+  "portfolioHubAssetTypeCommodity": "Commodity",
+  "@portfolioHubAssetTypeCommodity": { "description": "Portfolio hub asset type label: commodity" },
+  "portfolioHubAssetTypeCustom": "Custom",
+  "@portfolioHubAssetTypeCustom": { "description": "Portfolio hub asset type label: custom asset" },
+  "portfolioHubAssetTypeBankDepositTerm": "Term deposit",
+  "@portfolioHubAssetTypeBankDepositTerm": { "description": "Portfolio hub asset type label: term deposit" },
+  "portfolioHubAssetTypeBankDepositDemand": "Demand deposit",
+  "@portfolioHubAssetTypeBankDepositDemand": { "description": "Portfolio hub asset type label: demand deposit" },
+  "portfolioHubAssetTypeWealthProduct": "Wealth product",
+  "@portfolioHubAssetTypeWealthProduct": { "description": "Portfolio hub asset type label: wealth product" },
+  "portfolioHubEnginesTitle": "Engine views",
+  "portfolioHubRealizedPnlTitle": "Realized P/L",
+  "portfolioHubRealizedPnlCount": "{count, plural, =1{1 lot} other{{count} lots}}",
+  "@portfolioHubRealizedPnlCount": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubRealizedPnlEmpty": "No closed lots yet.",
+  "portfolioHubHoldingPeriod": "Held {period}",
+  "@portfolioHubHoldingPeriod": { "placeholders": { "period": { "type": "String" } } },
+  "portfolioHubHoldingYears": "{count, plural, =1{1 year} other{{count} years}}",
+  "@portfolioHubHoldingYears": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubHoldingMonths": "{count, plural, =1{1 month} other{{count} months}}",
+  "@portfolioHubHoldingMonths": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubHoldingDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@portfolioHubHoldingDays": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubDividendForecastTitle": "Dividend forecast",
+  "portfolioHubDividendForecastEmpty": "No projected dividends yet.",
+  "portfolioHubDividendForecastEvent": "Projected payout",
+  "portfolioHubForecastConfidenceHigh": "High confidence",
+  "portfolioHubForecastConfidenceMedium": "Medium confidence",
+  "portfolioHubForecastConfidenceLow": "Low confidence",
+  "portfolioHubEventTimelineTitle": "Event timeline",
+  "portfolioHubEventTimelineCount": "{count, plural, =1{1 event} other{{count} events}}",
+  "@portfolioHubEventTimelineCount": { "placeholders": { "count": { "type": "int" } } },
+  "portfolioHubEventTimelineEmpty": "No dividend or corporate-action events yet.",
+  "dcaSimulatorTitle": "DCA simulator",
+  "dcaSimulatorAccountsEntrySubtitle": "Backtest recurring buys with cached monthly prices",
+  "dcaSimulatorSymbolField": "Symbol or basket",
+  "dcaSimulatorSymbolHint": "VOO or VOO, QQQ",
+  "dcaSimulatorAmountField": "Amount",
+  "dcaSimulatorCurrencyField": "Currency",
+  "dcaSimulatorMarketField": "Market",
+  "dcaSimulatorMarketUs": "US",
+  "dcaSimulatorMarketHk": "Hong Kong",
+  "dcaSimulatorMarketCn": "China A",
+  "dcaSimulatorMarketCrypto": "Crypto",
+  "dcaSimulatorFrequencyField": "Frequency",
+  "dcaSimulatorFrequencyMonthly": "Monthly",
+  "dcaSimulatorFrequencyQuarterly": "Quarterly",
+  "dcaSimulatorWindowField": "Window",
+  "dcaSimulatorWindow1y": "1 year",
+  "dcaSimulatorWindow3y": "3 years",
+  "dcaSimulatorWindow5y": "5 years",
+  "dcaSimulatorRunAction": "Run simulation",
+  "dcaSimulatorDraftAction": "Draft next buys",
+  "dcaSimulatorFreshnessLive": "Live",
+  "dcaSimulatorFreshnessCache": "Cache",
+  "dcaSimulatorFreshnessStale": "Stale",
+  "dcaSimulatorResultTitle": "Backtest result",
+  "dcaSimulatorTotalInvested": "Invested",
+  "dcaSimulatorEndingValue": "Ending value",
+  "dcaSimulatorCumulativeReturn": "Total return",
+  "dcaSimulatorAverageCost": "Avg cost",
+  "dcaSimulatorMaxDrawdown": "Max drawdown",
+  "dcaSimulatorChartTitle": "Portfolio value",
+  "dcaSimulatorChartSeries": "DCA value",
+  "dcaSimulatorEmpty": "No monthly market data matched this window.",
+  "dcaSimulatorInvalidSymbols": "Enter at least one symbol.",
+  "dcaSimulatorInvalidAmount": "Enter a positive amount.",
+  "dcaSimulatorInvalidCurrency": "Use a currency code.",
+  "dcaSimulatorLoadError": "DCA simulation failed: {error}",
+  "@dcaSimulatorLoadError": { "placeholders": { "error": { "type": "String" } } },
+  "dcaSimulatorDraftNote": "DCA plan: buy {symbol} for {amount} {currency}",
+  "@dcaSimulatorDraftNote": { "placeholders": { "symbol": { "type": "String" }, "amount": { "type": "String" }, "currency": { "type": "String" } } },
+  "dcaSimulatorPositionAverageCost": "{currency} {averageCost} avg cost",
+  "@dcaSimulatorPositionAverageCost": { "placeholders": { "currency": { "type": "String" }, "averageCost": { "type": "String" } } },
+  "assetDetailFxPnlTitle": "Price vs FX contribution",
+  "assetDetailFxPnlMarketLeg": "Price movement",
+  "assetDetailFxPnlCurrencyLeg": "FX movement",
+  "assetDetailFxPnlTotal": "Total base P/L",
+  "assetDetailFxPnlLoadError": "FX P/L failed to load: {error}",
+  "@assetDetailFxPnlLoadError": { "placeholders": { "error": { "type": "String" } } },
   "dashboardAiInsightsTitle": "Insights for you",
   "@dashboardAiInsightsTitle": { "description": "Section header above the home AI Insight Feed" },
   "dashboardActivityPreviewTitle": "Recent activity",
@@ -1161,6 +1297,310 @@
   "fireSensitivityBaseline": "Current surplus",
   "fireSensitivityLowerSurplus": "-20% surplus",
 
+  "fireOsHeroTitle": "Freedom status",
+  "fireOsHeroSubtitle": "Whether today's portfolio still supports the lifestyle you planned for.",
+  "fireOsHeroNetWorthLabel": "Net worth",
+  "fireOsHeroInvestableLabel": "Investable",
+  "fireOsHeroLiquidLabel": "Liquid",
+  "fireOsHeroWithdrawalRateLabel": "Withdrawal rate",
+  "fireOsHeroWithdrawalRateValue": "{rate}% / SWR {swr}%",
+  "@fireOsHeroWithdrawalRateValue": {
+    "placeholders": {
+      "rate": { "type": "String", "example": "4.20" },
+      "swr": { "type": "String", "example": "4.0" }
+    }
+  },
+  "fireOsHeroWithdrawalRateInfinite": "Spend without investable assets",
+  "fireOsHeroCashBucketLabel": "Cash bucket",
+  "fireOsHeroCashBucketValue": "{months} mo / target {target} mo",
+  "@fireOsHeroCashBucketValue": {
+    "placeholders": {
+      "months": { "type": "String", "example": "6" },
+      "target": { "type": "int", "example": "12" }
+    }
+  },
+  "fireOsHeroCashBucketInfinite": "No recorded monthly expense",
+  "fireOsHeroEtaLabel": "FIRE ETA",
+  "fireOsHeroEtaReached": "Already reached",
+  "fireOsHeroEtaUnreachable": "Not within 100 years",
+  "fireOsHeroAnnualSpendLabel": "Annual spend",
+  "fireOsAnnualSpendSourceTrailing": "Trailing 12 months",
+  "fireOsAnnualSpendSourcePlan": "Plan input",
+  "fireOsSafetySafe": "Safe",
+  "fireOsSafetyCautious": "Cautious",
+  "fireOsSafetyDanger": "Danger",
+  "fireOsSafetyUnconfigured": "Plan not set",
+  "fireOsSuggestedActionsTitle": "Suggested next steps",
+  "fireOsSuggestedActionsEmpty": "No actions right now — the plan is steady.",
+  "fireOsActionConfigurePlanTitle": "Set up your FIRE plan",
+  "fireOsActionConfigurePlanDetail": "Tell NaviWealth your target, expenses, and savings so it can judge safety.",
+  "fireOsActionHoldSteadyTitle": "On track — keep it steady",
+  "fireOsActionHoldSteadyDetail": "Withdrawal rate is below SWR and the cash bucket is healthy.",
+  "fireOsActionTopUpCashBucketTitle": "Top up the cash bucket",
+  "fireOsActionTopUpCashBucketDetail": "Add {amount} to reach {months} months of runway.",
+  "@fireOsActionTopUpCashBucketDetail": {
+    "placeholders": {
+      "amount": { "type": "String", "example": "¥120,000" },
+      "months": { "type": "int", "example": "12" }
+    }
+  },
+  "fireOsActionReduceSpendingTitle": "Reduce spending",
+  "fireOsActionReduceSpendingDetailPct": "Withdrawal rate is {pct} percentage points above your SWR.",
+  "@fireOsActionReduceSpendingDetailPct": {
+    "placeholders": {
+      "pct": { "type": "String", "example": "1.6" }
+    }
+  },
+  "fireOsActionReduceSpendingDetailGeneric": "Spending has outrun the investable base — review the monthly burn.",
+  "fireOsActionDelayDiscretionaryTitle": "Delay discretionary spend",
+  "fireOsActionDelayDiscretionaryDetail": "Push travel, upgrades, or big purchases out until the withdrawal rate cools down.",
+  "fireOsActionRebalanceTitle": "Rebalance toward target",
+  "fireOsActionRebalanceDetail": "Allocation has drifted — bring sleeves back in line.",
+  "fireOsActionBuildRiskReserveTitle": "Build a risk reserve",
+  "fireOsActionBuildRiskReserveDetail": "Net worth is negative or thin — set aside emergency / medical reserves.",
+  "fireOsActionRunReviewTitle": "Open the latest review",
+  "fireOsActionRunReviewDetail": "Check the monthly or quarterly review for context.",
+  "fireOsActionFixCurrencyGapTitle": "Fix missing FX rates",
+  "fireOsActionFixCurrencyGapDetail": "{count} holdings are missing a rate into your base currency.",
+  "@fireOsActionFixCurrencyGapDetail": {
+    "placeholders": {
+      "count": { "type": "int", "example": "2" }
+    }
+  },
+  "fireOsPlanFormAdvancedTitle": "Advanced",
+  "fireOsPlanFormSwrLabel": "Safe withdrawal rate",
+  "fireOsPlanFormSwrValue": "{rate}%",
+  "@fireOsPlanFormSwrValue": {
+    "placeholders": {
+      "rate": { "type": "String", "example": "4.0" }
+    }
+  },
+  "fireOsPlanFormSwrHelper": "Trinity-study default is 4%. Lean FIRE typically aims lower; Fat FIRE leaves more buffer.",
+  "fireOsPlanFormCashBucketLabel": "Cash bucket target (months)",
+  "fireOsPlanFormCashBucketHelper": "How many months of expenses to keep in liquid cash.",
+  "fireOsPlanFormLifestyleLabel": "Lifestyle mode",
+  "fireOsPlanFormLifestyleLean": "Lean",
+  "fireOsPlanFormLifestyleStandard": "Standard",
+  "fireOsPlanFormLifestyleFat": "Fat",
+  "fireOsPlanFormLifestyleCoast": "Coast",
+  "fireOsPlanFormLifestyleBarista": "Barista",
+  "fireOsBucketsTitle": "Buckets",
+  "fireOsBucketsSubtitle": "Each holding is interpreted as one of cash, defensive, growth, risk reserve, or dream.",
+  "fireOsBucketRoleCash": "Cash",
+  "fireOsBucketRoleDefensive": "Defensive",
+  "fireOsBucketRoleGrowth": "Growth",
+  "fireOsBucketRoleRiskReserve": "Risk reserve",
+  "fireOsBucketRoleDream": "Dream",
+  "fireOsBucketStatusOnTrack": "On track",
+  "fireOsBucketStatusUnder": "Below target",
+  "fireOsBucketStatusOver": "Over target",
+  "fireOsBucketStatusEmpty": "Empty",
+  "fireOsBucketNoTarget": "No formal target",
+  "fireOsBucketCoverage": "{current} / {target}",
+  "@fireOsBucketCoverage": {
+    "placeholders": {
+      "current": { "type": "String", "example": "¥48,000" },
+      "target": { "type": "String", "example": "¥48,000" }
+    }
+  },
+  "fireOsBucketAssets": "{count, plural, =1{1 holding} other{{count} holdings}}",
+  "@fireOsBucketAssets": {
+    "placeholders": { "count": { "type": "int", "example": "3" } }
+  },
+  "fireOsBucketsManageCta": "Manage bucket rules",
+  "fireOsBucketsMappingTitle": "Bucket rules",
+  "fireOsBucketsMappingSubtitle": "Pick the bucket each holding belongs to. Defaults are applied to anything you leave unset.",
+  "fireOsBucketsMappingSave": "Save",
+  "fireOsBucketsMappingCancel": "Cancel",
+  "fireOsBucketsMappingDefault": "Default",
+  "fireOsBucketsMappingEmpty": "No holdings to map yet. Add accounts or assets first.",
+  "fireOsUnmappedTitle": "Unmapped holdings",
+  "fireOsUnmappedSubtitle": "These assets aren't part of any bucket. Map them if they should fund the plan.",
+  "fireOsInsightBucketDeviation": "Bucket below target",
+  "fireOsInsightBucketDeviationValue": "{role}: {current} / {target}",
+  "@fireOsInsightBucketDeviationValue": {
+    "placeholders": {
+      "role": { "type": "String", "example": "Cash" },
+      "current": { "type": "String", "example": "¥30,000" },
+      "target": { "type": "String", "example": "¥48,000" }
+    }
+  },
+  "fireOsInsightUnmappedHoldings": "Unmapped holdings",
+  "fireOsInsightUnmappedHoldingsValue": "{count, plural, =1{1 holding} other{{count} holdings}} not assigned to any bucket",
+  "@fireOsInsightUnmappedHoldingsValue": {
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "fireOsSimulationsTitle": "Simulations",
+  "fireOsSimulationsSubtitle": "Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.",
+  "fireOsSimulationsBaselineLabel": "Baseline",
+  "fireOsSimulationsPresetExpenseUp20": "Spending +20%",
+  "fireOsSimulationsPresetExpenseDown10": "Spending −10%",
+  "fireOsSimulationsPresetSurplusUp30": "Surplus +30%",
+  "fireOsSimulationsPresetHalfRetireIncome": "Half-retire +¥5k/mo",
+  "fireOsSimulationsPresetInflationUp1pp": "Inflation +1 pp",
+  "fireOsSimulationsPresetSwrTight": "SWR 3.5%",
+  "fireOsSimulationsPresetCashBucketUp24": "Cash bucket 24 mo",
+  "fireOsSimulationsDeltaWrPp": "WR {sign}{pp} pp",
+  "@fireOsSimulationsDeltaWrPp": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "+" },
+      "pp": { "type": "String", "example": "0.8" }
+    }
+  },
+  "fireOsSimulationsDeltaWrUnavailable": "WR —",
+  "fireOsSimulationsDeltaCash": "Cash {sign}{months} mo",
+  "@fireOsSimulationsDeltaCash": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "−" },
+      "months": { "type": "String", "example": "1.2" }
+    }
+  },
+  "fireOsSimulationsDeltaCashUnavailable": "Cash —",
+  "fireOsStressTitle": "Stress tests",
+  "fireOsStressSubtitle": "How the plan holds up under bear markets, expense surges, one-off shocks, FX swings, and cash depletion.",
+  "fireOsStressEmpty": "Configure a FIRE plan to run stress tests.",
+  "fireOsStressScenarioMarketDrawdown": "Market drawdown −{pct}%",
+  "@fireOsStressScenarioMarketDrawdown": {
+    "placeholders": { "pct": { "type": "String", "example": "35" } }
+  },
+  "fireOsStressScenarioExpenseSurge": "Expenses +{pct}%",
+  "@fireOsStressScenarioExpenseSurge": {
+    "placeholders": { "pct": { "type": "String", "example": "20" } }
+  },
+  "fireOsStressScenarioOneOffShock": "One-off shock {amount}",
+  "@fireOsStressScenarioOneOffShock": {
+    "placeholders": { "amount": { "type": "String", "example": "¥50,000" } }
+  },
+  "fireOsStressScenarioFxShock": "FX shock ±{pct}%",
+  "@fireOsStressScenarioFxShock": {
+    "placeholders": { "pct": { "type": "String", "example": "10" } }
+  },
+  "fireOsStressScenarioCashDepletion": "Cash drawdown over {months} months",
+  "@fireOsStressScenarioCashDepletion": {
+    "placeholders": { "months": { "type": "int", "example": "12" } }
+  },
+  "fireOsStressVerdictSafe": "Safe",
+  "fireOsStressVerdictCautious": "Cautious",
+  "fireOsStressVerdictDanger": "Danger",
+  "fireOsStressMetricWr": "WR {rate}%",
+  "@fireOsStressMetricWr": {
+    "placeholders": { "rate": { "type": "String", "example": "5.4" } }
+  },
+  "fireOsStressMetricWrInfinite": "WR ∞",
+  "fireOsStressMetricCash": "Cash {months} mo",
+  "@fireOsStressMetricCash": {
+    "placeholders": { "months": { "type": "String", "example": "8" } }
+  },
+  "fireOsStressMetricNetWorth": "NW {amount}",
+  "@fireOsStressMetricNetWorth": {
+    "placeholders": { "amount": { "type": "String", "example": "¥1,200,000" } }
+  },
+  "fireOsReviewTitle": "Periodic review",
+  "fireOsReviewSubtitle": "Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.",
+  "fireOsReviewKindMonthly": "Monthly",
+  "fireOsReviewKindQuarterly": "Quarterly",
+  "fireOsReviewKindAnnual": "Annual",
+  "fireOsReviewGeneratedAt": "Generated {date}",
+  "@fireOsReviewGeneratedAt": {
+    "placeholders": { "date": { "type": "String", "example": "2026-05-20" } }
+  },
+  "fireOsReviewDiffTitle": "Compared to {key}",
+  "@fireOsReviewDiffTitle": {
+    "placeholders": { "key": { "type": "String", "example": "2026-04" } }
+  },
+  "fireOsReviewDiffNoBaseline": "No prior snapshot to diff against — save one to see month-over-month deltas.",
+  "fireOsReviewDiffWr": "WR {sign}{pp} pp",
+  "@fireOsReviewDiffWr": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "+" },
+      "pp": { "type": "String", "example": "0.4" }
+    }
+  },
+  "fireOsReviewDiffWrUnavailable": "WR delta unavailable (infinite either side)",
+  "fireOsReviewDiffNetWorth": "Net worth {sign}{amount}",
+  "@fireOsReviewDiffNetWorth": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "+" },
+      "amount": { "type": "String", "example": "¥30,000" }
+    }
+  },
+  "fireOsReviewDiffNetWorthCurrencyChanged": "Net worth currency changed — delta skipped.",
+  "fireOsReviewDiffSafetyChanged": "Safety {from} → {to}",
+  "@fireOsReviewDiffSafetyChanged": {
+    "placeholders": {
+      "from": { "type": "String", "example": "cautious" },
+      "to": { "type": "String", "example": "safe" }
+    }
+  },
+  "fireOsReviewDiffSafetyHeld": "Safety held at {level}",
+  "@fireOsReviewDiffSafetyHeld": {
+    "placeholders": { "level": { "type": "String", "example": "safe" } }
+  },
+  "fireOsReviewSaveSnapshot": "Save snapshot",
+  "fireOsReviewSaved": "Saved · {key}",
+  "@fireOsReviewSaved": {
+    "placeholders": { "key": { "type": "String", "example": "2026-05" } }
+  },
+  "fireOsReviewFindingsTitle": "Findings",
+  "fireOsReviewFindingNetWorthHealthy": "Net worth is positive.",
+  "fireOsReviewFindingNetWorthBroken": "Net worth is at or below zero.",
+  "fireOsReviewFindingWithdrawalRateBelowSwr": "Withdrawal rate is below SWR by {pct} pp.",
+  "@fireOsReviewFindingWithdrawalRateBelowSwr": {
+    "placeholders": { "pct": { "type": "String", "example": "1.0" } }
+  },
+  "fireOsReviewFindingWithdrawalRateAboveSwr": "Withdrawal rate is above SWR by {pct} pp.",
+  "@fireOsReviewFindingWithdrawalRateAboveSwr": {
+    "placeholders": { "pct": { "type": "String", "example": "1.6" } }
+  },
+  "fireOsReviewFindingWithdrawalRateInfinite": "Spend exists with no investable assets.",
+  "fireOsReviewFindingWithinTargetCashBucket": "Cash bucket covers {months} months — at target.",
+  "@fireOsReviewFindingWithinTargetCashBucket": {
+    "placeholders": { "months": { "type": "int", "example": "12" } }
+  },
+  "fireOsReviewFindingBelowTargetCashBucket": "Cash bucket below the {months}-month target.",
+  "@fireOsReviewFindingBelowTargetCashBucket": {
+    "placeholders": { "months": { "type": "int", "example": "12" } }
+  },
+  "fireOsReviewFindingFireEtaReached": "FIRE target already reached.",
+  "fireOsReviewFindingFireEtaUnreachable": "FIRE target not reached within 100 years.",
+  "fireOsReviewFindingFireEtaProgressing": "FIRE ETA at {months} months.",
+  "@fireOsReviewFindingFireEtaProgressing": {
+    "placeholders": { "months": { "type": "int", "example": "60" } }
+  },
+  "fireOsReviewFindingCurrencyGap": "{count} holdings without an FX rate to base currency.",
+  "@fireOsReviewFindingCurrencyGap": {
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "fireOsReviewFindingUnmappedHoldings": "{count} holdings not assigned to a bucket.",
+  "@fireOsReviewFindingUnmappedHoldings": {
+    "placeholders": { "count": { "type": "int", "example": "1" } }
+  },
+  "fireOsReviewFindingStressDanger": "Stress test \"{scenario}\" lands at danger.",
+  "@fireOsReviewFindingStressDanger": {
+    "placeholders": { "scenario": { "type": "String", "example": "market_drawdown" } }
+  },
+  "fireOsReviewFindingStressCautious": "Stress test \"{scenario}\" lands at cautious.",
+  "@fireOsReviewFindingStressCautious": {
+    "placeholders": { "scenario": { "type": "String", "example": "expense_surge" } }
+  },
+  "fireOsReviewFindingStressSafe": "All stress tests are safe under current assumptions.",
+  "fireOsInsightHighWithdrawalRate": "Withdrawal rate above SWR",
+  "fireOsInsightHighWithdrawalRateValue": "{rate}% / SWR {swr}%",
+  "@fireOsInsightHighWithdrawalRateValue": {
+    "placeholders": {
+      "rate": { "type": "String", "example": "4.6" },
+      "swr": { "type": "String", "example": "4.0" }
+    }
+  },
+  "fireOsInsightLowCashBucket": "Cash bucket below target",
+  "fireOsInsightLowCashBucketValue": "{months} of {target} months",
+  "@fireOsInsightLowCashBucketValue": {
+    "placeholders": {
+      "months": { "type": "String", "example": "6" },
+      "target": { "type": "int", "example": "12" }
+    }
+  },
+
   "benchmarkComparisonTitle": "Benchmark comparison",
   "benchmarkComparisonSubtitle": "Pin major indices against your net worth and read off the excess return.",
   "benchmarkComparisonError": "Couldn't load the benchmark comparison: {error}",
@@ -1201,6 +1641,25 @@
   "rebalanceEstimatedFees": "Estimated fees",
   "rebalanceEstimatedTaxes": "Estimated taxes",
   "rebalanceDriftAfter": "Drift after rebalance",
+  "rebalanceExecuteAction": "Rebalance now",
+  "rebalanceExecutionSheetTitle": "Confirm rebalance",
+  "rebalanceExecutionSheetSubtitle": "{count, plural, =1{Review 1 draft trade before continuing.} other{Review {count} draft trades before continuing.}}",
+  "@rebalanceExecutionSheetSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "rebalanceExecutionCreateDrafts": "Create drafts",
+  "rebalanceExecutionTradeValue": "Suggested value",
+  "rebalanceExecutionDraftNote": "Rebalance suggestion: {direction} {category} for {amount} {currency}",
+  "@rebalanceExecutionDraftNote": {
+    "placeholders": {
+      "direction": {},
+      "category": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
   "rebalanceEmptyTitle": "No data yet",
   "rebalanceEmptyHint": "Add assets to see your allocation drift and rebalance suggestions.",
   "rebalanceSettingsTooltip": "Rebalance settings",
@@ -1208,6 +1667,22 @@
   "rebalanceWarningThreshold": "Warning threshold",
   "rebalanceCriticalThreshold": "Critical threshold",
   "rebalanceNavLink": "Rebalance",
+  "rebalanceCommandOpen": "Go to Rebalance",
+  "@rebalanceCommandOpen": { "description": "Command palette entry that opens the rebalance page." },
+  "rebalanceCommandAdjustTarget": "Adjust target allocation",
+  "@rebalanceCommandAdjustTarget": { "description": "Command palette entry that opens the custom target allocation editor." },
+  "targetAllocationEditorTitle": "Custom target",
+  "targetAllocationEditorSubtitle": "Tune category weights; the total must equal 100%.",
+  "targetAllocationEditorEditAction": "Custom target",
+  "targetAllocationEditorTotalLabel": "Total allocation",
+  "targetAllocationEditorTotalHint": "Total must be 100%. Current total: {value}%.",
+  "@targetAllocationEditorTotalHint": {
+    "placeholders": { "value": { "type": "String", "example": "98.5" } }
+  },
+  "targetAllocationEditorPercentLabel": "Weight",
+  "targetAllocationEditorRequiredError": "Required",
+  "targetAllocationEditorRangeError": "Use 0-100",
+  "targetAllocationEditorPreviewTitle": "Target mix",
   "riskAlertTitle": "Concentration Alerts",
   "@riskAlertTitle": { "description": "Header for the risk concentration alert panel on the analytics page." },
 
@@ -1418,6 +1893,8 @@
   "aiChatProposalKindLiabilityPayment": "Repayment",
   "aiChatProposalKindAccountCreate": "New account",
   "aiChatProposalKindAssetValuation": "Valuation update",
+  "aiChatProposalKindFirePlanUpdate": "FIRE plan update",
+  "aiChatProposalKindFireBucketRule": "FIRE bucket rule",
   "aiChatProposalKindUnknown": "Unknown",
 
   "aiChatProposalPendingHeader": "Awaiting confirmation · {kind}",
@@ -2840,6 +3317,81 @@
   "@unsavedChangesKeepEditing": { "description": "Cancel action of the unsaved-changes dialog — stay on the form" },
   "pressBackAgainToExit": "Press back again to exit",
   "@pressBackAgainToExit": { "description": "Transient hint shown on the first back press at the Home tab root" },
+  "watchlistTitle": "Watchlist",
+  "@watchlistTitle": { "description": "Investment watchlist page title" },
+  "watchlistAccountsEntrySubtitle": "Track symbols and local price alerts",
+  "@watchlistAccountsEntrySubtitle": { "description": "Accounts hub entry subtitle for watchlist" },
+  "watchlistAddAction": "Add symbol",
+  "@watchlistAddAction": { "description": "Add a symbol to the watchlist" },
+  "watchlistAddTitle": "Add to watchlist",
+  "@watchlistAddTitle": { "description": "Watchlist add sheet title" },
+  "watchlistEditAlertTitle": "Alerts for {symbol}",
+  "@watchlistEditAlertTitle": {
+    "description": "Watchlist alert edit sheet title",
+    "placeholders": { "symbol": { "type": "String" } }
+  },
+  "watchlistEmptyTitle": "No watchlist symbols",
+  "@watchlistEmptyTitle": { "description": "Watchlist empty state title" },
+  "watchlistEmptyBody": "Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.",
+  "@watchlistEmptyBody": { "description": "Watchlist empty state body" },
+  "watchlistSymbolField": "Symbol",
+  "@watchlistSymbolField": { "description": "Watchlist symbol input label" },
+  "watchlistMarketField": "Market",
+  "@watchlistMarketField": { "description": "Watchlist market picker label" },
+  "watchlistAlertAboveField": "Alert above",
+  "@watchlistAlertAboveField": { "description": "Watchlist upper price alert input" },
+  "watchlistAlertBelowField": "Alert below",
+  "@watchlistAlertBelowField": { "description": "Watchlist lower price alert input" },
+  "watchlistSaveAlertsAction": "Save alerts",
+  "@watchlistSaveAlertsAction": { "description": "Save watchlist alert rules" },
+  "watchlistEditAlertsAction": "Alerts",
+  "@watchlistEditAlertsAction": { "description": "Edit watchlist alert rules action" },
+  "watchlistRemoveAction": "Remove",
+  "@watchlistRemoveAction": { "description": "Remove watchlist item action" },
+  "watchlistPriceUnavailable": "No price",
+  "@watchlistPriceUnavailable": { "description": "Watchlist price unavailable placeholder" },
+  "watchlistFreshnessLive": "Live",
+  "@watchlistFreshnessLive": { "description": "Market data freshness live label" },
+  "watchlistFreshnessCache": "Cached",
+  "@watchlistFreshnessCache": { "description": "Market data freshness cached label" },
+  "watchlistFreshnessStale": "Stale cache",
+  "@watchlistFreshnessStale": { "description": "Market data freshness stale label" },
+  "watchlistAlertAboveChip": "Above {price}",
+  "@watchlistAlertAboveChip": {
+    "description": "Watchlist upper alert chip",
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "watchlistAlertBelowChip": "Below {price}",
+  "@watchlistAlertBelowChip": {
+    "description": "Watchlist lower alert chip",
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "watchlistAlertTriggeredAbove": "{symbol} is at {price}, above your alert",
+  "@watchlistAlertTriggeredAbove": {
+    "description": "Watchlist upper alert notification",
+    "placeholders": { "symbol": { "type": "String" }, "price": { "type": "String" } }
+  },
+  "watchlistAlertTriggeredBelow": "{symbol} is at {price}, below your alert",
+  "@watchlistAlertTriggeredBelow": {
+    "description": "Watchlist lower alert notification",
+    "placeholders": { "symbol": { "type": "String" }, "price": { "type": "String" } }
+  },
+  "watchlistSymbolRequired": "Enter a symbol",
+  "@watchlistSymbolRequired": { "description": "Watchlist symbol required validation" },
+  "watchlistInvalidNumber": "Enter a positive price",
+  "@watchlistInvalidNumber": { "description": "Watchlist alert price validation" },
+  "watchlistMarketCnA": "A-share",
+  "@watchlistMarketCnA": { "description": "CN A market label" },
+  "watchlistMarketHkStock": "Hong Kong",
+  "@watchlistMarketHkStock": { "description": "Hong Kong stock market label" },
+  "watchlistMarketUsStock": "US",
+  "@watchlistMarketUsStock": { "description": "US stock market label" },
+  "watchlistMarketCrypto": "Crypto",
+  "@watchlistMarketCrypto": { "description": "Crypto market label" },
+  "watchlistMarketFx": "FX",
+  "@watchlistMarketFx": { "description": "FX market label" },
+  "watchlistMarketUnknown": "Unknown",
+  "@watchlistMarketUnknown": { "description": "Unknown market label" },
   "masterDetailBackToList": "Back to list",
   "@masterDetailBackToList": { "description": "Desktop master/detail affordance that clears the selected detail" }
 }

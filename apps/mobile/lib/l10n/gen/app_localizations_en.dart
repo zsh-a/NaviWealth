@@ -444,6 +444,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandKeywordRightsIssueCn => '配股';
 
   @override
+  String get commandKeywordRebalanceCn => '再平衡';
+
+  @override
+  String get commandKeywordTargetAllocationCn => '目标配置';
+
+  @override
   String get accountsHubSectionCashDeposits => 'Cash & Deposits';
 
   @override
@@ -457,6 +463,333 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsHubManageBankAccounts => 'Manage bank accounts';
+
+  @override
+  String get portfolioHubTitle => 'Portfolio';
+
+  @override
+  String get portfolioHubAccountsEntrySubtitle =>
+      'Holdings, returns, and allocation views';
+
+  @override
+  String get portfolioHubMarketValueLabel => 'Market value';
+
+  @override
+  String get portfolioHubYtdXirrLabel => 'YTD XIRR';
+
+  @override
+  String get portfolioHubAbsoluteReturnLabel => 'Absolute return';
+
+  @override
+  String get portfolioHubViewAccount => 'Account';
+
+  @override
+  String get portfolioHubViewCurrency => 'Currency';
+
+  @override
+  String get portfolioHubViewAssetClass => 'Class';
+
+  @override
+  String get portfolioHubHoldingsTitle => 'Allocation';
+
+  @override
+  String get portfolioHubPositionsTitle => 'Positions';
+
+  @override
+  String portfolioHubHoldingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubUnknownAccount => 'Unknown account';
+
+  @override
+  String get portfolioHubAccountGroupSubtitle => 'Brokerage account';
+
+  @override
+  String get portfolioHubCurrencyGroupSubtitle => 'Settlement currency';
+
+  @override
+  String get portfolioHubAssetClassGroupSubtitle => 'Asset class';
+
+  @override
+  String get portfolioHubEmpty => 'No investment holdings yet.';
+
+  @override
+  String portfolioHubLoadError(String error) {
+    return 'Portfolio failed to load: $error';
+  }
+
+  @override
+  String get portfolioHubAssetTypeStock => 'Stock';
+
+  @override
+  String get portfolioHubAssetTypeEtf => 'ETF';
+
+  @override
+  String get portfolioHubAssetTypeMutualFund => 'Mutual fund';
+
+  @override
+  String get portfolioHubAssetTypeBond => 'Bond';
+
+  @override
+  String get portfolioHubAssetTypeCrypto => 'Crypto';
+
+  @override
+  String get portfolioHubAssetTypeCash => 'Cash';
+
+  @override
+  String get portfolioHubAssetTypeCommodity => 'Commodity';
+
+  @override
+  String get portfolioHubAssetTypeCustom => 'Custom';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositTerm => 'Term deposit';
+
+  @override
+  String get portfolioHubAssetTypeBankDepositDemand => 'Demand deposit';
+
+  @override
+  String get portfolioHubAssetTypeWealthProduct => 'Wealth product';
+
+  @override
+  String get portfolioHubEnginesTitle => 'Engine views';
+
+  @override
+  String get portfolioHubRealizedPnlTitle => 'Realized P/L';
+
+  @override
+  String portfolioHubRealizedPnlCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lots',
+      one: '1 lot',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubRealizedPnlEmpty => 'No closed lots yet.';
+
+  @override
+  String portfolioHubHoldingPeriod(String period) {
+    return 'Held $period';
+  }
+
+  @override
+  String portfolioHubHoldingYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count years',
+      one: '1 year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String portfolioHubHoldingDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubDividendForecastTitle => 'Dividend forecast';
+
+  @override
+  String get portfolioHubDividendForecastEmpty => 'No projected dividends yet.';
+
+  @override
+  String get portfolioHubDividendForecastEvent => 'Projected payout';
+
+  @override
+  String get portfolioHubForecastConfidenceHigh => 'High confidence';
+
+  @override
+  String get portfolioHubForecastConfidenceMedium => 'Medium confidence';
+
+  @override
+  String get portfolioHubForecastConfidenceLow => 'Low confidence';
+
+  @override
+  String get portfolioHubEventTimelineTitle => 'Event timeline';
+
+  @override
+  String portfolioHubEventTimelineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count events',
+      one: '1 event',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get portfolioHubEventTimelineEmpty =>
+      'No dividend or corporate-action events yet.';
+
+  @override
+  String get dcaSimulatorTitle => 'DCA simulator';
+
+  @override
+  String get dcaSimulatorAccountsEntrySubtitle =>
+      'Backtest recurring buys with cached monthly prices';
+
+  @override
+  String get dcaSimulatorSymbolField => 'Symbol or basket';
+
+  @override
+  String get dcaSimulatorSymbolHint => 'VOO or VOO, QQQ';
+
+  @override
+  String get dcaSimulatorAmountField => 'Amount';
+
+  @override
+  String get dcaSimulatorCurrencyField => 'Currency';
+
+  @override
+  String get dcaSimulatorMarketField => 'Market';
+
+  @override
+  String get dcaSimulatorMarketUs => 'US';
+
+  @override
+  String get dcaSimulatorMarketHk => 'Hong Kong';
+
+  @override
+  String get dcaSimulatorMarketCn => 'China A';
+
+  @override
+  String get dcaSimulatorMarketCrypto => 'Crypto';
+
+  @override
+  String get dcaSimulatorFrequencyField => 'Frequency';
+
+  @override
+  String get dcaSimulatorFrequencyMonthly => 'Monthly';
+
+  @override
+  String get dcaSimulatorFrequencyQuarterly => 'Quarterly';
+
+  @override
+  String get dcaSimulatorWindowField => 'Window';
+
+  @override
+  String get dcaSimulatorWindow1y => '1 year';
+
+  @override
+  String get dcaSimulatorWindow3y => '3 years';
+
+  @override
+  String get dcaSimulatorWindow5y => '5 years';
+
+  @override
+  String get dcaSimulatorRunAction => 'Run simulation';
+
+  @override
+  String get dcaSimulatorDraftAction => 'Draft next buys';
+
+  @override
+  String get dcaSimulatorFreshnessLive => 'Live';
+
+  @override
+  String get dcaSimulatorFreshnessCache => 'Cache';
+
+  @override
+  String get dcaSimulatorFreshnessStale => 'Stale';
+
+  @override
+  String get dcaSimulatorResultTitle => 'Backtest result';
+
+  @override
+  String get dcaSimulatorTotalInvested => 'Invested';
+
+  @override
+  String get dcaSimulatorEndingValue => 'Ending value';
+
+  @override
+  String get dcaSimulatorCumulativeReturn => 'Total return';
+
+  @override
+  String get dcaSimulatorAverageCost => 'Avg cost';
+
+  @override
+  String get dcaSimulatorMaxDrawdown => 'Max drawdown';
+
+  @override
+  String get dcaSimulatorChartTitle => 'Portfolio value';
+
+  @override
+  String get dcaSimulatorChartSeries => 'DCA value';
+
+  @override
+  String get dcaSimulatorEmpty => 'No monthly market data matched this window.';
+
+  @override
+  String get dcaSimulatorInvalidSymbols => 'Enter at least one symbol.';
+
+  @override
+  String get dcaSimulatorInvalidAmount => 'Enter a positive amount.';
+
+  @override
+  String get dcaSimulatorInvalidCurrency => 'Use a currency code.';
+
+  @override
+  String dcaSimulatorLoadError(String error) {
+    return 'DCA simulation failed: $error';
+  }
+
+  @override
+  String dcaSimulatorDraftNote(String symbol, String amount, String currency) {
+    return 'DCA plan: buy $symbol for $amount $currency';
+  }
+
+  @override
+  String dcaSimulatorPositionAverageCost(String currency, String averageCost) {
+    return '$currency $averageCost avg cost';
+  }
+
+  @override
+  String get assetDetailFxPnlTitle => 'Price vs FX contribution';
+
+  @override
+  String get assetDetailFxPnlMarketLeg => 'Price movement';
+
+  @override
+  String get assetDetailFxPnlCurrencyLeg => 'FX movement';
+
+  @override
+  String get assetDetailFxPnlTotal => 'Total base P/L';
+
+  @override
+  String assetDetailFxPnlLoadError(String error) {
+    return 'FX P/L failed to load: $error';
+  }
 
   @override
   String get dashboardAiInsightsTitle => 'Insights for you';
@@ -2057,6 +2390,563 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fireSensitivityLowerSurplus => '-20% surplus';
 
   @override
+  String get fireOsHeroTitle => 'Freedom status';
+
+  @override
+  String get fireOsHeroSubtitle =>
+      'Whether today\'s portfolio still supports the lifestyle you planned for.';
+
+  @override
+  String get fireOsHeroNetWorthLabel => 'Net worth';
+
+  @override
+  String get fireOsHeroInvestableLabel => 'Investable';
+
+  @override
+  String get fireOsHeroLiquidLabel => 'Liquid';
+
+  @override
+  String get fireOsHeroWithdrawalRateLabel => 'Withdrawal rate';
+
+  @override
+  String fireOsHeroWithdrawalRateValue(String rate, String swr) {
+    return '$rate% / SWR $swr%';
+  }
+
+  @override
+  String get fireOsHeroWithdrawalRateInfinite =>
+      'Spend without investable assets';
+
+  @override
+  String get fireOsHeroCashBucketLabel => 'Cash bucket';
+
+  @override
+  String fireOsHeroCashBucketValue(String months, int target) {
+    return '$months mo / target $target mo';
+  }
+
+  @override
+  String get fireOsHeroCashBucketInfinite => 'No recorded monthly expense';
+
+  @override
+  String get fireOsHeroEtaLabel => 'FIRE ETA';
+
+  @override
+  String get fireOsHeroEtaReached => 'Already reached';
+
+  @override
+  String get fireOsHeroEtaUnreachable => 'Not within 100 years';
+
+  @override
+  String get fireOsHeroAnnualSpendLabel => 'Annual spend';
+
+  @override
+  String get fireOsAnnualSpendSourceTrailing => 'Trailing 12 months';
+
+  @override
+  String get fireOsAnnualSpendSourcePlan => 'Plan input';
+
+  @override
+  String get fireOsSafetySafe => 'Safe';
+
+  @override
+  String get fireOsSafetyCautious => 'Cautious';
+
+  @override
+  String get fireOsSafetyDanger => 'Danger';
+
+  @override
+  String get fireOsSafetyUnconfigured => 'Plan not set';
+
+  @override
+  String get fireOsSuggestedActionsTitle => 'Suggested next steps';
+
+  @override
+  String get fireOsSuggestedActionsEmpty =>
+      'No actions right now — the plan is steady.';
+
+  @override
+  String get fireOsActionConfigurePlanTitle => 'Set up your FIRE plan';
+
+  @override
+  String get fireOsActionConfigurePlanDetail =>
+      'Tell NaviWealth your target, expenses, and savings so it can judge safety.';
+
+  @override
+  String get fireOsActionHoldSteadyTitle => 'On track — keep it steady';
+
+  @override
+  String get fireOsActionHoldSteadyDetail =>
+      'Withdrawal rate is below SWR and the cash bucket is healthy.';
+
+  @override
+  String get fireOsActionTopUpCashBucketTitle => 'Top up the cash bucket';
+
+  @override
+  String fireOsActionTopUpCashBucketDetail(String amount, int months) {
+    return 'Add $amount to reach $months months of runway.';
+  }
+
+  @override
+  String get fireOsActionReduceSpendingTitle => 'Reduce spending';
+
+  @override
+  String fireOsActionReduceSpendingDetailPct(String pct) {
+    return 'Withdrawal rate is $pct percentage points above your SWR.';
+  }
+
+  @override
+  String get fireOsActionReduceSpendingDetailGeneric =>
+      'Spending has outrun the investable base — review the monthly burn.';
+
+  @override
+  String get fireOsActionDelayDiscretionaryTitle => 'Delay discretionary spend';
+
+  @override
+  String get fireOsActionDelayDiscretionaryDetail =>
+      'Push travel, upgrades, or big purchases out until the withdrawal rate cools down.';
+
+  @override
+  String get fireOsActionRebalanceTitle => 'Rebalance toward target';
+
+  @override
+  String get fireOsActionRebalanceDetail =>
+      'Allocation has drifted — bring sleeves back in line.';
+
+  @override
+  String get fireOsActionBuildRiskReserveTitle => 'Build a risk reserve';
+
+  @override
+  String get fireOsActionBuildRiskReserveDetail =>
+      'Net worth is negative or thin — set aside emergency / medical reserves.';
+
+  @override
+  String get fireOsActionRunReviewTitle => 'Open the latest review';
+
+  @override
+  String get fireOsActionRunReviewDetail =>
+      'Check the monthly or quarterly review for context.';
+
+  @override
+  String get fireOsActionFixCurrencyGapTitle => 'Fix missing FX rates';
+
+  @override
+  String fireOsActionFixCurrencyGapDetail(int count) {
+    return '$count holdings are missing a rate into your base currency.';
+  }
+
+  @override
+  String get fireOsPlanFormAdvancedTitle => 'Advanced';
+
+  @override
+  String get fireOsPlanFormSwrLabel => 'Safe withdrawal rate';
+
+  @override
+  String fireOsPlanFormSwrValue(String rate) {
+    return '$rate%';
+  }
+
+  @override
+  String get fireOsPlanFormSwrHelper =>
+      'Trinity-study default is 4%. Lean FIRE typically aims lower; Fat FIRE leaves more buffer.';
+
+  @override
+  String get fireOsPlanFormCashBucketLabel => 'Cash bucket target (months)';
+
+  @override
+  String get fireOsPlanFormCashBucketHelper =>
+      'How many months of expenses to keep in liquid cash.';
+
+  @override
+  String get fireOsPlanFormLifestyleLabel => 'Lifestyle mode';
+
+  @override
+  String get fireOsPlanFormLifestyleLean => 'Lean';
+
+  @override
+  String get fireOsPlanFormLifestyleStandard => 'Standard';
+
+  @override
+  String get fireOsPlanFormLifestyleFat => 'Fat';
+
+  @override
+  String get fireOsPlanFormLifestyleCoast => 'Coast';
+
+  @override
+  String get fireOsPlanFormLifestyleBarista => 'Barista';
+
+  @override
+  String get fireOsBucketsTitle => 'Buckets';
+
+  @override
+  String get fireOsBucketsSubtitle =>
+      'Each holding is interpreted as one of cash, defensive, growth, risk reserve, or dream.';
+
+  @override
+  String get fireOsBucketRoleCash => 'Cash';
+
+  @override
+  String get fireOsBucketRoleDefensive => 'Defensive';
+
+  @override
+  String get fireOsBucketRoleGrowth => 'Growth';
+
+  @override
+  String get fireOsBucketRoleRiskReserve => 'Risk reserve';
+
+  @override
+  String get fireOsBucketRoleDream => 'Dream';
+
+  @override
+  String get fireOsBucketStatusOnTrack => 'On track';
+
+  @override
+  String get fireOsBucketStatusUnder => 'Below target';
+
+  @override
+  String get fireOsBucketStatusOver => 'Over target';
+
+  @override
+  String get fireOsBucketStatusEmpty => 'Empty';
+
+  @override
+  String get fireOsBucketNoTarget => 'No formal target';
+
+  @override
+  String fireOsBucketCoverage(String current, String target) {
+    return '$current / $target';
+  }
+
+  @override
+  String fireOsBucketAssets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fireOsBucketsManageCta => 'Manage bucket rules';
+
+  @override
+  String get fireOsBucketsMappingTitle => 'Bucket rules';
+
+  @override
+  String get fireOsBucketsMappingSubtitle =>
+      'Pick the bucket each holding belongs to. Defaults are applied to anything you leave unset.';
+
+  @override
+  String get fireOsBucketsMappingSave => 'Save';
+
+  @override
+  String get fireOsBucketsMappingCancel => 'Cancel';
+
+  @override
+  String get fireOsBucketsMappingDefault => 'Default';
+
+  @override
+  String get fireOsBucketsMappingEmpty =>
+      'No holdings to map yet. Add accounts or assets first.';
+
+  @override
+  String get fireOsUnmappedTitle => 'Unmapped holdings';
+
+  @override
+  String get fireOsUnmappedSubtitle =>
+      'These assets aren\'t part of any bucket. Map them if they should fund the plan.';
+
+  @override
+  String get fireOsInsightBucketDeviation => 'Bucket below target';
+
+  @override
+  String fireOsInsightBucketDeviationValue(
+    String role,
+    String current,
+    String target,
+  ) {
+    return '$role: $current / $target';
+  }
+
+  @override
+  String get fireOsInsightUnmappedHoldings => 'Unmapped holdings';
+
+  @override
+  String fireOsInsightUnmappedHoldingsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0 not assigned to any bucket';
+  }
+
+  @override
+  String get fireOsSimulationsTitle => 'Simulations';
+
+  @override
+  String get fireOsSimulationsSubtitle =>
+      'Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.';
+
+  @override
+  String get fireOsSimulationsBaselineLabel => 'Baseline';
+
+  @override
+  String get fireOsSimulationsPresetExpenseUp20 => 'Spending +20%';
+
+  @override
+  String get fireOsSimulationsPresetExpenseDown10 => 'Spending −10%';
+
+  @override
+  String get fireOsSimulationsPresetSurplusUp30 => 'Surplus +30%';
+
+  @override
+  String get fireOsSimulationsPresetHalfRetireIncome => 'Half-retire +¥5k/mo';
+
+  @override
+  String get fireOsSimulationsPresetInflationUp1pp => 'Inflation +1 pp';
+
+  @override
+  String get fireOsSimulationsPresetSwrTight => 'SWR 3.5%';
+
+  @override
+  String get fireOsSimulationsPresetCashBucketUp24 => 'Cash bucket 24 mo';
+
+  @override
+  String fireOsSimulationsDeltaWrPp(String sign, String pp) {
+    return 'WR $sign$pp pp';
+  }
+
+  @override
+  String get fireOsSimulationsDeltaWrUnavailable => 'WR —';
+
+  @override
+  String fireOsSimulationsDeltaCash(String sign, String months) {
+    return 'Cash $sign$months mo';
+  }
+
+  @override
+  String get fireOsSimulationsDeltaCashUnavailable => 'Cash —';
+
+  @override
+  String get fireOsStressTitle => 'Stress tests';
+
+  @override
+  String get fireOsStressSubtitle =>
+      'How the plan holds up under bear markets, expense surges, one-off shocks, FX swings, and cash depletion.';
+
+  @override
+  String get fireOsStressEmpty => 'Configure a FIRE plan to run stress tests.';
+
+  @override
+  String fireOsStressScenarioMarketDrawdown(String pct) {
+    return 'Market drawdown −$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioExpenseSurge(String pct) {
+    return 'Expenses +$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioOneOffShock(String amount) {
+    return 'One-off shock $amount';
+  }
+
+  @override
+  String fireOsStressScenarioFxShock(String pct) {
+    return 'FX shock ±$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioCashDepletion(int months) {
+    return 'Cash drawdown over $months months';
+  }
+
+  @override
+  String get fireOsStressVerdictSafe => 'Safe';
+
+  @override
+  String get fireOsStressVerdictCautious => 'Cautious';
+
+  @override
+  String get fireOsStressVerdictDanger => 'Danger';
+
+  @override
+  String fireOsStressMetricWr(String rate) {
+    return 'WR $rate%';
+  }
+
+  @override
+  String get fireOsStressMetricWrInfinite => 'WR ∞';
+
+  @override
+  String fireOsStressMetricCash(String months) {
+    return 'Cash $months mo';
+  }
+
+  @override
+  String fireOsStressMetricNetWorth(String amount) {
+    return 'NW $amount';
+  }
+
+  @override
+  String get fireOsReviewTitle => 'Periodic review';
+
+  @override
+  String get fireOsReviewSubtitle =>
+      'Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.';
+
+  @override
+  String get fireOsReviewKindMonthly => 'Monthly';
+
+  @override
+  String get fireOsReviewKindQuarterly => 'Quarterly';
+
+  @override
+  String get fireOsReviewKindAnnual => 'Annual';
+
+  @override
+  String fireOsReviewGeneratedAt(String date) {
+    return 'Generated $date';
+  }
+
+  @override
+  String fireOsReviewDiffTitle(String key) {
+    return 'Compared to $key';
+  }
+
+  @override
+  String get fireOsReviewDiffNoBaseline =>
+      'No prior snapshot to diff against — save one to see month-over-month deltas.';
+
+  @override
+  String fireOsReviewDiffWr(String sign, String pp) {
+    return 'WR $sign$pp pp';
+  }
+
+  @override
+  String get fireOsReviewDiffWrUnavailable =>
+      'WR delta unavailable (infinite either side)';
+
+  @override
+  String fireOsReviewDiffNetWorth(String sign, String amount) {
+    return 'Net worth $sign$amount';
+  }
+
+  @override
+  String get fireOsReviewDiffNetWorthCurrencyChanged =>
+      'Net worth currency changed — delta skipped.';
+
+  @override
+  String fireOsReviewDiffSafetyChanged(String from, String to) {
+    return 'Safety $from → $to';
+  }
+
+  @override
+  String fireOsReviewDiffSafetyHeld(String level) {
+    return 'Safety held at $level';
+  }
+
+  @override
+  String get fireOsReviewSaveSnapshot => 'Save snapshot';
+
+  @override
+  String fireOsReviewSaved(String key) {
+    return 'Saved · $key';
+  }
+
+  @override
+  String get fireOsReviewFindingsTitle => 'Findings';
+
+  @override
+  String get fireOsReviewFindingNetWorthHealthy => 'Net worth is positive.';
+
+  @override
+  String get fireOsReviewFindingNetWorthBroken =>
+      'Net worth is at or below zero.';
+
+  @override
+  String fireOsReviewFindingWithdrawalRateBelowSwr(String pct) {
+    return 'Withdrawal rate is below SWR by $pct pp.';
+  }
+
+  @override
+  String fireOsReviewFindingWithdrawalRateAboveSwr(String pct) {
+    return 'Withdrawal rate is above SWR by $pct pp.';
+  }
+
+  @override
+  String get fireOsReviewFindingWithdrawalRateInfinite =>
+      'Spend exists with no investable assets.';
+
+  @override
+  String fireOsReviewFindingWithinTargetCashBucket(int months) {
+    return 'Cash bucket covers $months months — at target.';
+  }
+
+  @override
+  String fireOsReviewFindingBelowTargetCashBucket(int months) {
+    return 'Cash bucket below the $months-month target.';
+  }
+
+  @override
+  String get fireOsReviewFindingFireEtaReached =>
+      'FIRE target already reached.';
+
+  @override
+  String get fireOsReviewFindingFireEtaUnreachable =>
+      'FIRE target not reached within 100 years.';
+
+  @override
+  String fireOsReviewFindingFireEtaProgressing(int months) {
+    return 'FIRE ETA at $months months.';
+  }
+
+  @override
+  String fireOsReviewFindingCurrencyGap(int count) {
+    return '$count holdings without an FX rate to base currency.';
+  }
+
+  @override
+  String fireOsReviewFindingUnmappedHoldings(int count) {
+    return '$count holdings not assigned to a bucket.';
+  }
+
+  @override
+  String fireOsReviewFindingStressDanger(String scenario) {
+    return 'Stress test \"$scenario\" lands at danger.';
+  }
+
+  @override
+  String fireOsReviewFindingStressCautious(String scenario) {
+    return 'Stress test \"$scenario\" lands at cautious.';
+  }
+
+  @override
+  String get fireOsReviewFindingStressSafe =>
+      'All stress tests are safe under current assumptions.';
+
+  @override
+  String get fireOsInsightHighWithdrawalRate => 'Withdrawal rate above SWR';
+
+  @override
+  String fireOsInsightHighWithdrawalRateValue(String rate, String swr) {
+    return '$rate% / SWR $swr%';
+  }
+
+  @override
+  String get fireOsInsightLowCashBucket => 'Cash bucket below target';
+
+  @override
+  String fireOsInsightLowCashBucketValue(String months, int target) {
+    return '$months of $target months';
+  }
+
+  @override
   String get benchmarkComparisonTitle => 'Benchmark comparison';
 
   @override
@@ -2139,6 +3029,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rebalanceDriftAfter => 'Drift after rebalance';
 
   @override
+  String get rebalanceExecuteAction => 'Rebalance now';
+
+  @override
+  String get rebalanceExecutionSheetTitle => 'Confirm rebalance';
+
+  @override
+  String rebalanceExecutionSheetSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Review $count draft trades before continuing.',
+      one: 'Review 1 draft trade before continuing.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rebalanceExecutionCreateDrafts => 'Create drafts';
+
+  @override
+  String get rebalanceExecutionTradeValue => 'Suggested value';
+
+  @override
+  String rebalanceExecutionDraftNote(
+    Object direction,
+    Object category,
+    Object amount,
+    Object currency,
+  ) {
+    return 'Rebalance suggestion: $direction $category for $amount $currency';
+  }
+
+  @override
   String get rebalanceEmptyTitle => 'No data yet';
 
   @override
@@ -2159,6 +3082,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rebalanceNavLink => 'Rebalance';
+
+  @override
+  String get rebalanceCommandOpen => 'Go to Rebalance';
+
+  @override
+  String get rebalanceCommandAdjustTarget => 'Adjust target allocation';
+
+  @override
+  String get targetAllocationEditorTitle => 'Custom target';
+
+  @override
+  String get targetAllocationEditorSubtitle =>
+      'Tune category weights; the total must equal 100%.';
+
+  @override
+  String get targetAllocationEditorEditAction => 'Custom target';
+
+  @override
+  String get targetAllocationEditorTotalLabel => 'Total allocation';
+
+  @override
+  String targetAllocationEditorTotalHint(String value) {
+    return 'Total must be 100%. Current total: $value%.';
+  }
+
+  @override
+  String get targetAllocationEditorPercentLabel => 'Weight';
+
+  @override
+  String get targetAllocationEditorRequiredError => 'Required';
+
+  @override
+  String get targetAllocationEditorRangeError => 'Use 0-100';
+
+  @override
+  String get targetAllocationEditorPreviewTitle => 'Target mix';
 
   @override
   String get riskAlertTitle => 'Concentration Alerts';
@@ -2598,6 +3557,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatProposalKindAssetValuation => 'Valuation update';
+
+  @override
+  String get aiChatProposalKindFirePlanUpdate => 'FIRE plan update';
+
+  @override
+  String get aiChatProposalKindFireBucketRule => 'FIRE bucket rule';
 
   @override
   String get aiChatProposalKindUnknown => 'Unknown';
@@ -4743,6 +5708,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pressBackAgainToExit => 'Press back again to exit';
+
+  @override
+  String get watchlistTitle => 'Watchlist';
+
+  @override
+  String get watchlistAccountsEntrySubtitle =>
+      'Track symbols and local price alerts';
+
+  @override
+  String get watchlistAddAction => 'Add symbol';
+
+  @override
+  String get watchlistAddTitle => 'Add to watchlist';
+
+  @override
+  String watchlistEditAlertTitle(String symbol) {
+    return 'Alerts for $symbol';
+  }
+
+  @override
+  String get watchlistEmptyTitle => 'No watchlist symbols';
+
+  @override
+  String get watchlistEmptyBody =>
+      'Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.';
+
+  @override
+  String get watchlistSymbolField => 'Symbol';
+
+  @override
+  String get watchlistMarketField => 'Market';
+
+  @override
+  String get watchlistAlertAboveField => 'Alert above';
+
+  @override
+  String get watchlistAlertBelowField => 'Alert below';
+
+  @override
+  String get watchlistSaveAlertsAction => 'Save alerts';
+
+  @override
+  String get watchlistEditAlertsAction => 'Alerts';
+
+  @override
+  String get watchlistRemoveAction => 'Remove';
+
+  @override
+  String get watchlistPriceUnavailable => 'No price';
+
+  @override
+  String get watchlistFreshnessLive => 'Live';
+
+  @override
+  String get watchlistFreshnessCache => 'Cached';
+
+  @override
+  String get watchlistFreshnessStale => 'Stale cache';
+
+  @override
+  String watchlistAlertAboveChip(String price) {
+    return 'Above $price';
+  }
+
+  @override
+  String watchlistAlertBelowChip(String price) {
+    return 'Below $price';
+  }
+
+  @override
+  String watchlistAlertTriggeredAbove(String symbol, String price) {
+    return '$symbol is at $price, above your alert';
+  }
+
+  @override
+  String watchlistAlertTriggeredBelow(String symbol, String price) {
+    return '$symbol is at $price, below your alert';
+  }
+
+  @override
+  String get watchlistSymbolRequired => 'Enter a symbol';
+
+  @override
+  String get watchlistInvalidNumber => 'Enter a positive price';
+
+  @override
+  String get watchlistMarketCnA => 'A-share';
+
+  @override
+  String get watchlistMarketHkStock => 'Hong Kong';
+
+  @override
+  String get watchlistMarketUsStock => 'US';
+
+  @override
+  String get watchlistMarketCrypto => 'Crypto';
+
+  @override
+  String get watchlistMarketFx => 'FX';
+
+  @override
+  String get watchlistMarketUnknown => 'Unknown';
 
   @override
   String get masterDetailBackToList => 'Back to list';

@@ -65,6 +65,7 @@ final syncOpApplierProvider = Provider<OpApplier>((ref) {
     'journal_entries',
     'postings',
     'prices',
+    'watchlist_items',
     'recurring_transactions',
     'liabilities',
     'amortization_entries',
@@ -146,6 +147,7 @@ const List<String> kSyncLocalCountIds = [
   'postings',
   'assets',
   'prices',
+  'watchlist_items',
   'recurring_transactions',
   'liabilities',
   'tags',
@@ -158,6 +160,7 @@ const String _kLocalCountsSql = '''
   UNION ALL SELECT 'postings',         COUNT(*) FROM postings         WHERE deleted_at IS NULL
   UNION ALL SELECT 'assets',           COUNT(*) FROM assets           WHERE deleted_at IS NULL
   UNION ALL SELECT 'prices',           COUNT(*) FROM prices           WHERE deleted_at IS NULL
+  UNION ALL SELECT 'watchlist_items',  COUNT(*) FROM watchlist_items  WHERE deleted_at IS NULL
   UNION ALL SELECT 'recurring_transactions', COUNT(*) FROM recurring_transactions WHERE deleted_at IS NULL
   UNION ALL SELECT 'liabilities',      COUNT(*) FROM liabilities      WHERE deleted_at IS NULL
   UNION ALL SELECT 'tags',             COUNT(*) FROM tags             WHERE deleted_at IS NULL
@@ -211,7 +214,7 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
 });
 
 const _kSyncApplierVersionKey = 'sync.applier_version';
-const _kSyncApplierVersion = '3';
+const _kSyncApplierVersion = '4';
 
 Future<bool> _ensureSyncApplierVersion(AppDatabase db) async {
   final row = await db

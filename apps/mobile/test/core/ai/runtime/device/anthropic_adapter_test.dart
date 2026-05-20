@@ -63,6 +63,36 @@ void main() {
       expect(end.input, {'as_of': '2026-05-07'});
     });
 
+    test('maps thinking block: text delta then signature delta', () {
+      final events = _mapAll(
+        'data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}\n\n'
+        'data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"let me think"}}\n\n'
+        'data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig-abc"}}\n\n'
+        'data: {"type":"content_block_stop","index":0}\n\n',
+      );
+      expect(events, hasLength(2));
+      expect((events[0] as LlmThinkingDelta).text, 'let me think');
+      expect((events[1] as LlmThinkingSignatureDelta).signature, 'sig-abc');
+    });
+
+    test('thinking start frame may inline both text and signature', () {
+      final events = _mapAll(
+        'data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"hmm","signature":"sig-1"}}\n\n',
+      );
+      expect(events, hasLength(2));
+      expect((events[0] as LlmThinkingDelta).text, 'hmm');
+      expect((events[1] as LlmThinkingSignatureDelta).signature, 'sig-1');
+    });
+
+    test('empty signature delta yields no event', () {
+      expect(
+        _mapAll(
+          'data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":""}}\n\n',
+        ),
+        isEmpty,
+      );
+    });
+
     test('maps usage from message_start and message_delta', () {
       final events = _mapAll(
         'data: {"type":"message_start","message":{"usage":{"input_tokens":11,"output_tokens":1,"cache_read_input_tokens":2,"cache_creation_input_tokens":3}}}\n\n'
@@ -239,6 +269,16 @@ void main() {
 
     test('content-block builders match Anthropic shapes', () {
       expect(AnthropicBlocks.text('a'), {'type': 'text', 'text': 'a'});
+      expect(
+        AnthropicBlocks.thinking(thinking: 'reasoned', signature: 'sig'),
+        {'type': 'thinking', 'thinking': 'reasoned', 'signature': 'sig'},
+      );
+      // No signature (reasoning-only providers): the key is omitted, not
+      // serialised as null.
+      expect(AnthropicBlocks.thinking(thinking: 'r'), {
+        'type': 'thinking',
+        'thinking': 'r',
+      });
       expect(
         AnthropicBlocks.toolResult(toolUseId: 't', content: 'r', isError: true),
         {
