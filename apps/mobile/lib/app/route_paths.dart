@@ -48,6 +48,8 @@ abstract final class AppRoutes {
   static const accountsFire = '/accounts/fire';
   static const accountsRebalance = '/accounts/rebalance';
   static const accountsAnalytics = '/accounts/analytics';
+  // Options Income Planner (`docs/options-income.md`). Mobile-only.
+  static const accountsIncomePlanner = '/accounts/income';
   static const accountsPortfolioHub = '/accounts/portfolio';
   static const accountsWatchlist = '/accounts/watchlist';
   static const accountsDcaSimulator = '/accounts/dca';
@@ -126,6 +128,7 @@ abstract final class AppRouteNames {
   static const accountsFire = 'accounts-fire';
   static const accountsRebalance = 'accounts-rebalance';
   static const accountsAnalytics = 'accounts-analytics';
+  static const accountsIncomePlanner = 'accounts-income-planner';
   static const accountsPortfolioHub = 'accounts-portfolio-hub';
   static const accountsWatchlist = 'accounts-watchlist';
   static const accountsDcaSimulator = 'accounts-dca-simulator';

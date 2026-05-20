@@ -76,15 +76,22 @@ final syncOpApplierProvider = Provider<OpApplier>((ref) {
     'goals',
     'devices',
     'users',
+    // Options Income Planner P0.
+    'approved_underlyings',
   ];
   final handlers = <String, OpApplier>{
     'accounts': AccountOpApplier(db),
     for (final t in genericTables) t: GenericLwwApplier(db: db, tableName: t),
-    // `settings` uses `user_id` as its primary key on the local Drift
-    // schema (per-user singleton), unlike everything else that uses `id`.
+    // `settings` and `options_strategy_profile` are per-user singletons
+    // keyed by `user_id` rather than the default `id` PK.
     'settings': GenericLwwApplier(
       db: db,
       tableName: 'settings',
+      pkColumn: 'user_id',
+    ),
+    'options_strategy_profile': GenericLwwApplier(
+      db: db,
+      tableName: 'options_strategy_profile',
       pkColumn: 'user_id',
     ),
   };

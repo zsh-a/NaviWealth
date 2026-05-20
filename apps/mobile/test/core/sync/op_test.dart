@@ -166,6 +166,9 @@ void main() {
         'postings',
         'prices',
         'watchlist_items',
+        // Options Income Planner P0 (`docs/options-income.md`).
+        'options_strategy_profile',
+        'approved_underlyings',
       };
       expect(kSyncableTables, expected);
     });

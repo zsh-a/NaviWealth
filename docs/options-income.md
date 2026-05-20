@@ -618,14 +618,17 @@ if (kIsWeb) return const SizedBox.shrink();
 
 | Phase | 范围 | 行情源 | Backend 改动 |
 |---|---|---|---|
-| **P0** | Profile + Approved List + OCC 披露 + Drift 表 + OpLog op | — | ❌ 无（client 自定义 op 类型，server 透传） |
+| **P0** | Profile + Approved List + OCC 披露 + Drift 表 + 同步 wiring + Income Planner 入口 | — | ⚠️ 极小：新表 migration + `sql_table_name` 两行（透传，无业务逻辑） |
 | **P1** | Covered Call Scanner（yfinance）+ `OpportunityScorer`（call 路径）+ income_planner_page tab 1 + `get_options_income_opportunities` tool | yfinance | ❌ |
 | **P2** | Cash-secured Put Scanner + sell put 路径 + cash 暴露检查 | yfinance | ❌ |
-| **P3** | Trade Journal + `propose_options_journal_entry` tool + activity 接入 | — | ❌ |
+| **P3** | Trade Journal + `propose_options_journal_entry` tool + activity 接入 | — | ⚠️ 同 P0：journal 表 migration |
 | **P4** | Wheel / Income Cycle 状态机 + 复盘视图 | yfinance | ❌ |
 | **P5** | Tradier sandbox 接入 | Tradier (OAuth) | ✅ 新增 `routes/market/options.rs` 透传 |
 
-P0–P4 backend 不动一行代码。本设计文档的有效范围到 P4 结束。P5 接 OAuth 行情源时需另起一份 ADR 说明 backend 透传契约。
+P0/P3 的 backend 改动仅限"新增 D1 materialised 表 + `sql_table_name` 匹配条目"——服务端仍是不解析 payload 的透传层，与 [`sync-protocol.md`](./sync-protocol.md) v1.0 完全一致。
+**评分 / 候选生成 / opportunity cache 永远不上 server。** 这条线在 P5 接 OAuth 行情源时也不能松——P5 的 backend route 仅做凭证持有 + HTTP 透传，禁止 normalize / cache / score。
+
+> **2026-05-21 ADR 修订**：早期设计稿声称 "P0–P4 backend 不动一行代码" 不准确。NaviWealth 的同步协议要求每张同步表在 server 也有一份 materialised D1 表 + `materialise.rs::sql_table_name` 匹配条目（server 仍只透传 payload）。重要的是这部分代码量极小、零业务逻辑，所以原则上仍然是"客户端是事实源"。
 
 ---
 
@@ -657,14 +660,43 @@ P0–P4 backend 不动一行代码。本设计文档的有效范围到 P4 结束
 
 ---
 
-## 15. 相关代码路径（实施时填充）
+## 15. 相关代码路径
+
+P0 已落地（2026-05-21）：
 
 ```
-apps/mobile/lib/features/options_income/        # 新建 feature
-apps/mobile/lib/data/market/providers/options/  # OptionsChainProvider 实现
-apps/mobile/lib/data/db/tables.dart             # 三张同步表
-apps/mobile/lib/data/db/local_only_tables.dart  # cache 表（新建文件）
-apps/mobile/lib/core/ai/contracts/tool_descriptor.dart   # tool 描述符
-apps/mobile/lib/core/ai/runtime/device/tools/   # tool 实现
-apps/backend/src/routes/market/options.rs       # 仅 P5+，透传代理
+apps/mobile/lib/features/options_income/
+├── data/
+│   ├── approved_underlyings_repository.dart
+│   ├── options_strategy_profile_repository.dart
+│   └── providers.dart
+├── domain/
+│   ├── approved_underlying.dart
+│   └── options_strategy_profile.dart
+└── presentation/
+    ├── approved_underlying_form_sheet.dart
+    ├── income_planner_page.dart
+    ├── income_planner_strings.dart
+    ├── occ_disclosure_sheet.dart
+    └── strategy_profile_sheet.dart
+
+apps/mobile/lib/data/db/tables.dart                # OptionsStrategyProfileTable, ApprovedUnderlyings
+apps/mobile/lib/data/db/app_database.dart          # schemaVersion 11, migration v10→v11
+apps/mobile/lib/core/sync/op.dart                  # kSyncableTables += {options_strategy_profile, approved_underlyings}
+apps/mobile/lib/core/sync/providers.dart           # GenericLwwApplier wiring
+apps/mobile/lib/app/route_paths.dart               # accountsIncomePlanner
+apps/mobile/lib/app/router_builder.dart            # /accounts/income deferred route
+apps/backend/migrations/0019_options_income.sql    # D1 materialised tables
+apps/backend/src/sync/materialise.rs               # sql_table_name match arms
+```
+
+后续阶段会落地：
+
+```
+apps/mobile/lib/data/market/providers/options/  # OptionsChainProvider 实现（P1）
+apps/mobile/lib/data/db/local_only_tables.dart  # opportunity cache 表（P1）
+apps/mobile/lib/features/options_income/domain/services/opportunity_scorer.dart  # 评分引擎（P1/P2）
+apps/mobile/lib/core/ai/contracts/tool_descriptor.dart   # tool 描述符（P1）
+apps/mobile/lib/core/ai/runtime/device/tools/   # tool 实现（P1+）
+apps/backend/src/routes/market/options.rs       # OAuth 透传代理（P5+）
 ```
