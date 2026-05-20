@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -7,8 +8,11 @@ import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_providers.dart';
+import '../data/fire_review_cache.dart';
 import '../domain/fire_action.dart';
 import '../domain/fire_review.dart';
+import '../domain/fire_review_engine.dart';
+import '../domain/fire_state.dart';
 
 /// Periodic-review card.
 ///
@@ -129,7 +133,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
   }
 }
 
-class _ReviewBody extends StatelessWidget {
+class _ReviewBody extends ConsumerWidget {
   const _ReviewBody({
     required this.review,
     required this.formatters,
@@ -141,9 +145,11 @@ class _ReviewBody extends StatelessWidget {
   final AppLocalizations l10n;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final generated = review.generatedAt.toLocal().toIso8601String();
+    final cache = ref.watch(fireReviewCacheProvider);
+    final prior = _findPriorCached(cache, review.kind, review.periodKey);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,6 +160,12 @@ class _ReviewBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
+        _DiffPanel(
+          diff: FireReviewDiff(before: prior, after: review),
+          formatters: formatters,
+          l10n: l10n,
+        ),
+        const SizedBox(height: 12),
         Text(
           l10n.fireOsReviewFindingsTitle,
           style: context.theme.typography.sm.copyWith(
@@ -168,6 +180,142 @@ class _ReviewBody extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DiffPanel extends StatelessWidget {
+  const _DiffPanel({
+    required this.diff,
+    required this.formatters,
+    required this.l10n,
+  });
+
+  final FireReviewDiff diff;
+  final AppFormatters formatters;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final before = diff.before;
+    if (before == null) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: colors.muted.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          l10n.fireOsReviewDiffNoBaseline,
+          style: context.theme.typography.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+      );
+    }
+    final wrLine = _wrLine(l10n, diff);
+    final nwLine = _netWorthLine(l10n, formatters, diff);
+    final safetyLine = diff.safetyLevelChanged
+        ? l10n.fireOsReviewDiffSafetyChanged(
+            before.safetyLevel.name, diff.after.safetyLevel.name)
+        : l10n.fireOsReviewDiffSafetyHeld(diff.after.safetyLevel.name);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.fireOsReviewDiffTitle(before.periodKey),
+            style: context.theme.typography.xs.copyWith(
+              color: colors.mutedForeground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            safetyLine,
+            style: context.theme.typography.xs.copyWith(
+              color: diff.safetyLevelChanged
+                  ? _safetyColor(context, diff.after.safetyLevel)
+                  : colors.foreground,
+              fontWeight: diff.safetyLevelChanged
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+            ),
+          ),
+          Text(
+            wrLine,
+            style: context.theme.typography.xs,
+          ),
+          Text(
+            nwLine,
+            style: context.theme.typography.xs,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _wrLine(AppLocalizations l10n, FireReviewDiff diff) {
+    final delta = diff.withdrawalRateDelta;
+    if (delta == null) return l10n.fireOsReviewDiffWrUnavailable;
+    final pp = delta * 100;
+    final sign = pp == 0
+        ? ''
+        : pp > 0
+        ? '+'
+        : '−';
+    return l10n.fireOsReviewDiffWr(sign, pp.abs().toStringAsFixed(2));
+  }
+
+  static String _netWorthLine(
+    AppLocalizations l10n,
+    AppFormatters formatters,
+    FireReviewDiff diff,
+  ) {
+    final delta = diff.netWorthDelta;
+    if (delta == null) return l10n.fireOsReviewDiffNetWorthCurrencyChanged;
+    final sign = delta == Decimal.zero
+        ? ''
+        : delta > Decimal.zero
+        ? '+'
+        : '−';
+    final abs = delta < Decimal.zero ? -delta : delta;
+    return l10n.fireOsReviewDiffNetWorth(
+      sign,
+      formatters.currency(abs, code: diff.after.baseCurrency),
+    );
+  }
+
+  static Color _safetyColor(BuildContext context, FireSafetyLevel level) {
+    switch (level) {
+      case FireSafetyLevel.safe:
+        return Colors.green.shade600;
+      case FireSafetyLevel.cautious:
+        return Colors.amber.shade700;
+      case FireSafetyLevel.danger:
+        return context.theme.colors.destructive;
+      case FireSafetyLevel.unconfigured:
+        return context.theme.colors.mutedForeground;
+    }
+  }
+}
+
+/// Find the most recent cached review of the same [kind] that doesn't
+/// share [currentKey]. Returns null when the cache is empty or every
+/// cached entry is for the current period.
+FireReview? _findPriorCached(
+  List<FireReview> cache,
+  FireReviewKind kind,
+  String currentKey,
+) {
+  for (final r in cache) {
+    if (r.kind == kind && r.periodKey != currentKey) return r;
+  }
+  return null;
 }
 
 class _FindingRow extends StatelessWidget {

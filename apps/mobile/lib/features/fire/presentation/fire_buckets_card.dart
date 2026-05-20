@@ -5,26 +5,43 @@ import 'package:forui/forui.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../home/data/dashboard_providers.dart';
+import '../../home/domain/dashboard_models.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_bucket.dart';
 import '../domain/fire_bucket_allocator.dart';
+import 'fire_ai_capsule.dart';
 import 'fire_bucket_mapping_sheet.dart';
 
 /// Buckets card — the second piece of the FIRE OS page after the hero.
 ///
 /// One row per role (cash / defensive / growth / risk reserve / dream)
 /// with the current value, the target (if any) and a coverage bar.
-/// Tapping the "Manage" CTA opens the per-asset mapping sheet.
-class FireBucketsCard extends ConsumerWidget {
+/// Tapping a bucket row reveals the contributing assets pulled from
+/// the dashboard snapshot. Tapping the "Manage" CTA opens the
+/// per-asset mapping sheet.
+class FireBucketsCard extends ConsumerStatefulWidget {
   const FireBucketsCard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FireBucketsCard> createState() => _FireBucketsCardState();
+}
+
+class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
+  final Set<FireBucketRole> _expanded = <FireBucketRole>{};
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = ref.watch(
       appFormattersProvider(Localizations.localeOf(context)),
     );
     final allocationAsync = ref.watch(fireBucketAllocationProvider);
+    // Snapshot is async; an empty map is the safe fallback while it
+    // loads so the bucket row's "tap to expand" path doesn't lock up
+    // waiting on the network-y bits.
+    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
+    final itemsById = _itemsById(snapshotAsync.asData?.value);
     return allocationAsync.when(
       loading: () => const _BucketsSkeleton(),
       error: (e, _) => const SizedBox.shrink(),
@@ -34,7 +51,21 @@ class FireBucketsCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.fireOsBucketsTitle, style: context.theme.typography.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.fireOsBucketsTitle,
+                      style: context.theme.typography.md,
+                    ),
+                  ),
+                  FireAiCapsule(
+                    intent: 'review_cash_bucket',
+                    source: 'fire_buckets_card',
+                    objectLabel: l10n.fireOsBucketsTitle,
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text(
                 l10n.fireOsBucketsSubtitle,
@@ -48,6 +79,13 @@ class FireBucketsCard extends ConsumerWidget {
                   bucket: bucket,
                   formatters: formatters,
                   l10n: l10n,
+                  expanded: _expanded.contains(bucket.role),
+                  onTap: () => setState(() {
+                    if (!_expanded.add(bucket.role)) {
+                      _expanded.remove(bucket.role);
+                    }
+                  }),
+                  itemsById: itemsById,
                 ),
                 const SizedBox(height: 10),
               ],
@@ -74,6 +112,17 @@ class FireBucketsCard extends ConsumerWidget {
       ),
     );
   }
+
+  Map<String, CategoryItem> _itemsById(DashboardSnapshot? snapshot) {
+    if (snapshot == null) return const <String, CategoryItem>{};
+    final out = <String, CategoryItem>{};
+    for (final allocation in snapshot.allocations) {
+      for (final item in allocation.items) {
+        out[item.id] = item;
+      }
+    }
+    return out;
+  }
 }
 
 class _BucketRow extends StatelessWidget {
@@ -81,11 +130,17 @@ class _BucketRow extends StatelessWidget {
     required this.bucket,
     required this.formatters,
     required this.l10n,
+    required this.expanded,
+    required this.onTap,
+    required this.itemsById,
   });
 
   final FireBucketState bucket;
   final AppFormatters formatters;
   final AppLocalizations l10n;
+  final bool expanded;
+  final VoidCallback onTap;
+  final Map<String, CategoryItem> itemsById;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +148,7 @@ class _BucketRow extends StatelessWidget {
     final statusColor = _statusColor(colors, bucket.status);
     final coverage = bucket.coverageRatio?.clamp(0.0, 1.5) ?? 0.0;
     final hasTarget = bucket.targetValue.amount.toDouble() > 0;
+    final hasAssets = bucket.assetIds.isNotEmpty;
     final currentText = formatters.currency(
       bucket.currentValue.amount,
       code: bucket.currentValue.currency,
@@ -102,69 +158,148 @@ class _BucketRow extends StatelessWidget {
       code: bucket.targetValue.currency,
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _roleLabel(l10n, bucket.role),
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: hasAssets ? onTap : null,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _roleLabel(l10n, bucket.role),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 2,
-              ),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: statusColor.withValues(alpha: 0.4),
+              if (hasAssets)
+                Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 16,
+                  color: colors.mutedForeground,
+                ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  _statusLabel(l10n, bucket.status),
+                  style: context.theme.typography.xs.copyWith(
+                    color: statusColor,
+                  ),
                 ),
               ),
-              child: Text(
-                _statusLabel(l10n, bucket.status),
-                style: context.theme.typography.xs.copyWith(color: statusColor),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          hasTarget
-              ? l10n.fireOsBucketCoverage(currentText, targetText)
-              : '$currentText · ${l10n.fireOsBucketNoTarget}',
-          style: context.theme.typography.xs.copyWith(
-            color: colors.mutedForeground,
+            ],
           ),
-        ),
-        if (hasTarget) ...[
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: coverage > 1.5 ? 1.0 : coverage / 1.5,
-              minHeight: 6,
-              backgroundColor: colors.muted,
-              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-            ),
-          ),
-        ],
-        if (bucket.assetIds.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
-            l10n.fireOsBucketAssets(bucket.assetIds.length),
+            hasTarget
+                ? l10n.fireOsBucketCoverage(currentText, targetText)
+                : '$currentText · ${l10n.fireOsBucketNoTarget}',
             style: context.theme.typography.xs.copyWith(
               color: colors.mutedForeground,
             ),
           ),
+          if (hasTarget) ...[
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: coverage > 1.5 ? 1.0 : coverage / 1.5,
+                minHeight: 6,
+                backgroundColor: colors.muted,
+                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+              ),
+            ),
+          ],
+          if (hasAssets) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.fireOsBucketAssets(bucket.assetIds.length),
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+          ],
+          if (expanded && hasAssets) ...[
+            const SizedBox(height: 6),
+            _BucketAssetList(
+              assetIds: bucket.assetIds,
+              itemsById: itemsById,
+              formatters: formatters,
+            ),
+          ],
         ],
-      ],
+      ),
+    );
+  }
+}
+
+/// Drill-down list shown when a bucket row is expanded. Falls back to
+/// "id only" when the snapshot hasn't loaded yet — refusing to draw
+/// nothing would mask a real plumbing bug.
+class _BucketAssetList extends StatelessWidget {
+  const _BucketAssetList({
+    required this.assetIds,
+    required this.itemsById,
+    required this.formatters,
+  });
+
+  final List<String> assetIds;
+  final Map<String, CategoryItem> itemsById;
+  final AppFormatters formatters;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final id in assetIds)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      itemsById[id]?.name ?? id,
+                      style: context.theme.typography.xs,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (itemsById[id] != null)
+                    Text(
+                      formatters.currency(
+                        itemsById[id]!.valueInBase.amount,
+                        code: itemsById[id]!.valueInBase.currency,
+                      ),
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

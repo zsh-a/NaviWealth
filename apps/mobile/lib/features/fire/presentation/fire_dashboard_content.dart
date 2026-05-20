@@ -13,6 +13,7 @@ import 'fire_goal_form.dart';
 import 'fire_progress_gauge.dart';
 import 'fire_review_card.dart';
 import 'fire_scenarios_chart.dart';
+import 'fire_simulations_card.dart';
 import 'fire_state_hero_card.dart';
 import 'fire_stress_tests_card.dart';
 
@@ -88,6 +89,8 @@ class FireConfiguredBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const FireStressTestsCard(),
+        const SizedBox(height: 12),
+        const FireSimulationsCard(),
         const SizedBox(height: 12),
         _ProjectionCard(view: view),
         const SizedBox(height: 12),

@@ -22,6 +22,7 @@ String insightHeadline(AppLocalizations l10n, InsightItem item) {
       l10n.fireOsInsightHighWithdrawalRate,
     InsightKind.fireOsLowCashBucket => l10n.fireOsInsightLowCashBucket,
     InsightKind.fireOsUnmappedHoldings => l10n.fireOsInsightUnmappedHoldings,
+    InsightKind.fireOsBucketDeviation => l10n.fireOsInsightBucketDeviation,
   };
 }
 
@@ -57,6 +58,12 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
     InsightKind.fireOsUnmappedHoldings =>
       l10n.fireOsInsightUnmappedHoldingsValue(
         item.fireOsUnmappedCount ?? 0,
+      ),
+    InsightKind.fireOsBucketDeviation =>
+      l10n.fireOsInsightBucketDeviationValue(
+        item.fireOsBucketRoleLabel ?? '',
+        item.fireOsBucketCurrentLabel ?? '',
+        item.fireOsBucketTargetLabel ?? '',
       ),
   };
 }

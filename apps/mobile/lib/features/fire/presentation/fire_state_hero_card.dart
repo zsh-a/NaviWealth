@@ -11,6 +11,7 @@ import '../../ai_chat/ui/ai_sheet.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
 import '../domain/fire_state.dart';
+import 'fire_ai_capsule.dart';
 
 /// "自由状态" hero card — the headline of the FIRE OS page.
 ///
@@ -317,11 +318,22 @@ class _SuggestedActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.fireOsSuggestedActionsTitle,
-          style: context.theme.typography.sm.copyWith(
-            color: colors.mutedForeground,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.fireOsSuggestedActionsTitle,
+                style: context.theme.typography.sm.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ),
+            FireAiCapsule(
+              intent: 'suggest_fire_actions',
+              source: 'fire_os_hero_actions',
+              objectLabel: l10n.fireOsSuggestedActionsTitle,
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         for (final action in state.suggestedActions.take(3)) ...[
