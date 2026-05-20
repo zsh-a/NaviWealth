@@ -28,6 +28,8 @@ const String defaultDbFileName = 'naviwealth.db';
     Postings,
     Prices,
     WatchlistItems,
+    OptionsStrategyProfileTable,
+    ApprovedUnderlyings,
     RecurringTransactions,
     Liabilities,
     AmortizationEntries,
@@ -53,7 +55,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -167,6 +169,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 10) {
         await m.createTable(watchlistItems);
         await _createWatchlistIndexes(this);
+      }
+      // v10 -> v11: Options Income Planner P0 — synced user-stance tables.
+      // The opportunity cache stays local-only and is created on demand by
+      // the scanner; see docs/options-income.md §6.2.
+      if (from < 11) {
+        await m.createTable(optionsStrategyProfileTable);
+        await m.createTable(approvedUnderlyings);
+        await _createOptionsIncomeIndexes(this);
       }
     },
     beforeOpen: (details) async {
@@ -285,6 +295,7 @@ const List<String> _journalEntryIndexStmts = [
       'ON prices(owner_user_id, hlc)',
   ..._watchlistIndexStmts,
   ..._recurringTransactionIndexStmts,
+  ..._optionsIncomeIndexStmts,
 ];
 
 const List<String> _securitiesAssetIndexStmts = [
@@ -319,6 +330,22 @@ Future<void> _createRecurringTransactionIndexes(AppDatabase db) async {
 
 Future<void> _createWatchlistIndexes(AppDatabase db) async {
   for (final stmt in _watchlistIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+const List<String> _optionsIncomeIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_options_strategy_profile_owner_hlc '
+      'ON options_strategy_profile(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_approved_underlyings_owner_hlc '
+      'ON approved_underlyings(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_approved_underlyings_owner_symbol '
+      'ON approved_underlyings(owner_user_id, symbol) '
+      'WHERE deleted_at IS NULL',
+];
+
+Future<void> _createOptionsIncomeIndexes(AppDatabase db) async {
+  for (final stmt in _optionsIncomeIndexStmts) {
     await db.customStatement(stmt);
   }
 }

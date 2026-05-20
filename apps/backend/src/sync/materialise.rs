@@ -46,6 +46,9 @@ pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
         "goals" => Ok("goals"),
         "devices" => Ok("synced_devices"),
         "users" => Ok("synced_users"),
+        // Options Income Planner P0 (docs/options-income.md §6.2).
+        "options_strategy_profile" => Ok("options_strategy_profile"),
+        "approved_underlyings" => Ok("approved_underlyings"),
         other => Err(AppError::unknown_table(other)),
     }
 }
@@ -316,6 +319,15 @@ mod tests {
         // `devices` and `users` collide with auth tables; both get aliased.
         assert_eq!(sql_table_name("devices").unwrap(), "synced_devices");
         assert_eq!(sql_table_name("users").unwrap(), "synced_users");
+        // Options Income Planner tables (0019_options_income.sql).
+        assert_eq!(
+            sql_table_name("options_strategy_profile").unwrap(),
+            "options_strategy_profile"
+        );
+        assert_eq!(
+            sql_table_name("approved_underlyings").unwrap(),
+            "approved_underlyings"
+        );
     }
 
     #[test]

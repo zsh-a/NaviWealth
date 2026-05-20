@@ -27,6 +27,11 @@ const Set<String> kSyncableTables = {
   'postings',
   'prices',
   'watchlist_items',
+  // Options Income Planner P0 (`docs/options-income.md`). `profile` is a
+  // per-user singleton (PK = owner_user_id); `approved_underlyings` is a
+  // collection keyed by composite id `<market>:<symbol>`.
+  'options_strategy_profile',
+  'approved_underlyings',
 };
 
 enum OpType { insert, update, delete }

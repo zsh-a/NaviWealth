@@ -49,6 +49,8 @@ import '../features/liabilities/ui/liabilities_page.dart'
 import '../features/liabilities/ui/liability_detail_page.dart'
     deferred as liability_detail_lib;
 import '../features/liabilities/ui/liability_form_page.dart';
+import '../features/options_income/presentation/income_planner_page.dart'
+    deferred as income_planner_lib;
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
@@ -77,6 +79,7 @@ Future<void> preloadDeferredRoutesForTest() async {
     analytics_lib.loadLibrary(),
     settings_lib.loadLibrary(),
     fire_lib.loadLibrary(),
+    income_planner_lib.loadLibrary(),
     liabilities_lib.loadLibrary(),
     liability_detail_lib.loadLibrary(),
     physical_detail_lib.loadLibrary(),
@@ -297,6 +300,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     builder: (context, state) => DeferredRoute(
                       load: rebalance_lib.loadLibrary,
                       builder: (_) => rebalance_lib.RebalancePage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'income',
+                    name: AppRouteNames.accountsIncomePlanner,
+                    builder: (context, state) => DeferredRoute(
+                      load: income_planner_lib.loadLibrary,
+                      builder: (_) => income_planner_lib.IncomePlannerPage(),
                     ),
                   ),
                   GoRoute(

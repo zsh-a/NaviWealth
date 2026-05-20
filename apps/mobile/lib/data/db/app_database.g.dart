@@ -6245,6 +6245,2270 @@ class WatchlistItemsCompanion extends UpdateCompanion<WatchlistItemRow> {
   }
 }
 
+class $OptionsStrategyProfileTableTable extends OptionsStrategyProfileTable
+    with
+        TableInfo<
+          $OptionsStrategyProfileTableTable,
+          OptionsStrategyProfileRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OptionsStrategyProfileTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($OptionsStrategyProfileTableTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modeMeta = const VerificationMeta('mode');
+  @override
+  late final GeneratedColumn<String> mode = GeneratedColumn<String>(
+    'mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _allowedStrategiesJsonMeta =
+      const VerificationMeta('allowedStrategiesJson');
+  @override
+  late final GeneratedColumn<String> allowedStrategiesJson =
+      GeneratedColumn<String>(
+        'allowed_strategies_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
+  static const VerificationMeta _minDteMeta = const VerificationMeta('minDte');
+  @override
+  late final GeneratedColumn<int> minDte = GeneratedColumn<int>(
+    'min_dte',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _maxDteMeta = const VerificationMeta('maxDte');
+  @override
+  late final GeneratedColumn<int> maxDte = GeneratedColumn<int>(
+    'max_dte',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> deltaPutMin =
+      GeneratedColumn<String>(
+        'delta_put_min',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterdeltaPutMin,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> deltaPutMax =
+      GeneratedColumn<String>(
+        'delta_put_max',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterdeltaPutMax,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> deltaCallMin =
+      GeneratedColumn<String>(
+        'delta_call_min',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterdeltaCallMin,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> deltaCallMax =
+      GeneratedColumn<String>(
+        'delta_call_max',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterdeltaCallMax,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  maxCapitalPerTradePct =
+      GeneratedColumn<String>(
+        'max_capital_per_trade_pct',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$convertermaxCapitalPerTradePct,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  maxUnderlyingExposurePct =
+      GeneratedColumn<String>(
+        'max_underlying_exposure_pct',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$convertermaxUnderlyingExposurePct,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  minAnnualizedYield =
+      GeneratedColumn<String>(
+        'min_annualized_yield',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$converterminAnnualizedYield,
+      );
+  static const VerificationMeta _minOpenInterestMeta = const VerificationMeta(
+    'minOpenInterest',
+  );
+  @override
+  late final GeneratedColumn<int> minOpenInterest = GeneratedColumn<int>(
+    'min_open_interest',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minVolumeMeta = const VerificationMeta(
+    'minVolume',
+  );
+  @override
+  late final GeneratedColumn<int> minVolume = GeneratedColumn<int>(
+    'min_volume',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  maxBidAskSpreadPct =
+      GeneratedColumn<String>(
+        'max_bid_ask_spread_pct',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $OptionsStrategyProfileTableTable.$convertermaxBidAskSpreadPct,
+      );
+  static const VerificationMeta _avoidEarningsMeta = const VerificationMeta(
+    'avoidEarnings',
+  );
+  @override
+  late final GeneratedColumn<bool> avoidEarnings = GeneratedColumn<bool>(
+    'avoid_earnings',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("avoid_earnings" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _avoidMacroEventsMeta = const VerificationMeta(
+    'avoidMacroEvents',
+  );
+  @override
+  late final GeneratedColumn<bool> avoidMacroEvents = GeneratedColumn<bool>(
+    'avoid_macro_events',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("avoid_macro_events" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _onlyOnApprovedUnderlyingsMeta =
+      const VerificationMeta('onlyOnApprovedUnderlyings');
+  @override
+  late final GeneratedColumn<bool> onlyOnApprovedUnderlyings =
+      GeneratedColumn<bool>(
+        'only_on_approved_underlyings',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("only_on_approved_underlyings" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
+  static const VerificationMeta _riskDisclosureAckAtMeta =
+      const VerificationMeta('riskDisclosureAckAt');
+  @override
+  late final GeneratedColumn<DateTime> riskDisclosureAckAt =
+      GeneratedColumn<DateTime>(
+        'risk_disclosure_ack_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    userId,
+    mode,
+    allowedStrategiesJson,
+    minDte,
+    maxDte,
+    deltaPutMin,
+    deltaPutMax,
+    deltaCallMin,
+    deltaCallMax,
+    maxCapitalPerTradePct,
+    maxUnderlyingExposurePct,
+    minAnnualizedYield,
+    minOpenInterest,
+    minVolume,
+    maxBidAskSpreadPct,
+    avoidEarnings,
+    avoidMacroEvents,
+    onlyOnApprovedUnderlyings,
+    riskDisclosureAckAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'options_strategy_profile';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OptionsStrategyProfileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('mode')) {
+      context.handle(
+        _modeMeta,
+        mode.isAcceptableOrUnknown(data['mode']!, _modeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modeMeta);
+    }
+    if (data.containsKey('allowed_strategies_json')) {
+      context.handle(
+        _allowedStrategiesJsonMeta,
+        allowedStrategiesJson.isAcceptableOrUnknown(
+          data['allowed_strategies_json']!,
+          _allowedStrategiesJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('min_dte')) {
+      context.handle(
+        _minDteMeta,
+        minDte.isAcceptableOrUnknown(data['min_dte']!, _minDteMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_minDteMeta);
+    }
+    if (data.containsKey('max_dte')) {
+      context.handle(
+        _maxDteMeta,
+        maxDte.isAcceptableOrUnknown(data['max_dte']!, _maxDteMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_maxDteMeta);
+    }
+    if (data.containsKey('min_open_interest')) {
+      context.handle(
+        _minOpenInterestMeta,
+        minOpenInterest.isAcceptableOrUnknown(
+          data['min_open_interest']!,
+          _minOpenInterestMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_minOpenInterestMeta);
+    }
+    if (data.containsKey('min_volume')) {
+      context.handle(
+        _minVolumeMeta,
+        minVolume.isAcceptableOrUnknown(data['min_volume']!, _minVolumeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_minVolumeMeta);
+    }
+    if (data.containsKey('avoid_earnings')) {
+      context.handle(
+        _avoidEarningsMeta,
+        avoidEarnings.isAcceptableOrUnknown(
+          data['avoid_earnings']!,
+          _avoidEarningsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('avoid_macro_events')) {
+      context.handle(
+        _avoidMacroEventsMeta,
+        avoidMacroEvents.isAcceptableOrUnknown(
+          data['avoid_macro_events']!,
+          _avoidMacroEventsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('only_on_approved_underlyings')) {
+      context.handle(
+        _onlyOnApprovedUnderlyingsMeta,
+        onlyOnApprovedUnderlyings.isAcceptableOrUnknown(
+          data['only_on_approved_underlyings']!,
+          _onlyOnApprovedUnderlyingsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('risk_disclosure_ack_at')) {
+      context.handle(
+        _riskDisclosureAckAtMeta,
+        riskDisclosureAckAt.isAcceptableOrUnknown(
+          data['risk_disclosure_ack_at']!,
+          _riskDisclosureAckAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  OptionsStrategyProfileRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OptionsStrategyProfileRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $OptionsStrategyProfileTableTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      mode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mode'],
+      )!,
+      allowedStrategiesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allowed_strategies_json'],
+      )!,
+      minDte: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_dte'],
+      )!,
+      maxDte: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_dte'],
+      )!,
+      deltaPutMin: $OptionsStrategyProfileTableTable.$converterdeltaPutMin
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}delta_put_min'],
+            )!,
+          ),
+      deltaPutMax: $OptionsStrategyProfileTableTable.$converterdeltaPutMax
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}delta_put_max'],
+            )!,
+          ),
+      deltaCallMin: $OptionsStrategyProfileTableTable.$converterdeltaCallMin
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}delta_call_min'],
+            )!,
+          ),
+      deltaCallMax: $OptionsStrategyProfileTableTable.$converterdeltaCallMax
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}delta_call_max'],
+            )!,
+          ),
+      maxCapitalPerTradePct: $OptionsStrategyProfileTableTable
+          .$convertermaxCapitalPerTradePct
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}max_capital_per_trade_pct'],
+            )!,
+          ),
+      maxUnderlyingExposurePct: $OptionsStrategyProfileTableTable
+          .$convertermaxUnderlyingExposurePct
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}max_underlying_exposure_pct'],
+            )!,
+          ),
+      minAnnualizedYield: $OptionsStrategyProfileTableTable
+          .$converterminAnnualizedYield
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}min_annualized_yield'],
+            )!,
+          ),
+      minOpenInterest: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_open_interest'],
+      )!,
+      minVolume: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_volume'],
+      )!,
+      maxBidAskSpreadPct: $OptionsStrategyProfileTableTable
+          .$convertermaxBidAskSpreadPct
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}max_bid_ask_spread_pct'],
+            )!,
+          ),
+      avoidEarnings: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}avoid_earnings'],
+      )!,
+      avoidMacroEvents: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}avoid_macro_events'],
+      )!,
+      onlyOnApprovedUnderlyings: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}only_on_approved_underlyings'],
+      )!,
+      riskDisclosureAckAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}risk_disclosure_ack_at'],
+      ),
+    );
+  }
+
+  @override
+  $OptionsStrategyProfileTableTable createAlias(String alias) {
+    return $OptionsStrategyProfileTableTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterdeltaPutMin =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterdeltaPutMax =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterdeltaCallMin =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterdeltaCallMax =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertermaxCapitalPerTradePct =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertermaxUnderlyingExposurePct =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterminAnnualizedYield =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertermaxBidAskSpreadPct =
+      const DecimalConverter();
+}
+
+class OptionsStrategyProfileRow extends DataClass
+    implements Insertable<OptionsStrategyProfileRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String userId;
+  final String mode;
+  final String allowedStrategiesJson;
+  final int minDte;
+  final int maxDte;
+  final Decimal deltaPutMin;
+  final Decimal deltaPutMax;
+  final Decimal deltaCallMin;
+  final Decimal deltaCallMax;
+  final Decimal maxCapitalPerTradePct;
+  final Decimal maxUnderlyingExposurePct;
+  final Decimal minAnnualizedYield;
+  final int minOpenInterest;
+  final int minVolume;
+  final Decimal maxBidAskSpreadPct;
+  final bool avoidEarnings;
+  final bool avoidMacroEvents;
+  final bool onlyOnApprovedUnderlyings;
+  final DateTime? riskDisclosureAckAt;
+  const OptionsStrategyProfileRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.userId,
+    required this.mode,
+    required this.allowedStrategiesJson,
+    required this.minDte,
+    required this.maxDte,
+    required this.deltaPutMin,
+    required this.deltaPutMax,
+    required this.deltaCallMin,
+    required this.deltaCallMax,
+    required this.maxCapitalPerTradePct,
+    required this.maxUnderlyingExposurePct,
+    required this.minAnnualizedYield,
+    required this.minOpenInterest,
+    required this.minVolume,
+    required this.maxBidAskSpreadPct,
+    required this.avoidEarnings,
+    required this.avoidMacroEvents,
+    required this.onlyOnApprovedUnderlyings,
+    this.riskDisclosureAckAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['user_id'] = Variable<String>(userId);
+    map['mode'] = Variable<String>(mode);
+    map['allowed_strategies_json'] = Variable<String>(allowedStrategiesJson);
+    map['min_dte'] = Variable<int>(minDte);
+    map['max_dte'] = Variable<int>(maxDte);
+    {
+      map['delta_put_min'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaPutMin.toSql(
+          deltaPutMin,
+        ),
+      );
+    }
+    {
+      map['delta_put_max'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaPutMax.toSql(
+          deltaPutMax,
+        ),
+      );
+    }
+    {
+      map['delta_call_min'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaCallMin.toSql(
+          deltaCallMin,
+        ),
+      );
+    }
+    {
+      map['delta_call_max'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaCallMax.toSql(
+          deltaCallMax,
+        ),
+      );
+    }
+    {
+      map['max_capital_per_trade_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$convertermaxCapitalPerTradePct.toSql(
+          maxCapitalPerTradePct,
+        ),
+      );
+    }
+    {
+      map['max_underlying_exposure_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$convertermaxUnderlyingExposurePct
+            .toSql(maxUnderlyingExposurePct),
+      );
+    }
+    {
+      map['min_annualized_yield'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterminAnnualizedYield.toSql(
+          minAnnualizedYield,
+        ),
+      );
+    }
+    map['min_open_interest'] = Variable<int>(minOpenInterest);
+    map['min_volume'] = Variable<int>(minVolume);
+    {
+      map['max_bid_ask_spread_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$convertermaxBidAskSpreadPct.toSql(
+          maxBidAskSpreadPct,
+        ),
+      );
+    }
+    map['avoid_earnings'] = Variable<bool>(avoidEarnings);
+    map['avoid_macro_events'] = Variable<bool>(avoidMacroEvents);
+    map['only_on_approved_underlyings'] = Variable<bool>(
+      onlyOnApprovedUnderlyings,
+    );
+    if (!nullToAbsent || riskDisclosureAckAt != null) {
+      map['risk_disclosure_ack_at'] = Variable<DateTime>(riskDisclosureAckAt);
+    }
+    return map;
+  }
+
+  OptionsStrategyProfileTableCompanion toCompanion(bool nullToAbsent) {
+    return OptionsStrategyProfileTableCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      userId: Value(userId),
+      mode: Value(mode),
+      allowedStrategiesJson: Value(allowedStrategiesJson),
+      minDte: Value(minDte),
+      maxDte: Value(maxDte),
+      deltaPutMin: Value(deltaPutMin),
+      deltaPutMax: Value(deltaPutMax),
+      deltaCallMin: Value(deltaCallMin),
+      deltaCallMax: Value(deltaCallMax),
+      maxCapitalPerTradePct: Value(maxCapitalPerTradePct),
+      maxUnderlyingExposurePct: Value(maxUnderlyingExposurePct),
+      minAnnualizedYield: Value(minAnnualizedYield),
+      minOpenInterest: Value(minOpenInterest),
+      minVolume: Value(minVolume),
+      maxBidAskSpreadPct: Value(maxBidAskSpreadPct),
+      avoidEarnings: Value(avoidEarnings),
+      avoidMacroEvents: Value(avoidMacroEvents),
+      onlyOnApprovedUnderlyings: Value(onlyOnApprovedUnderlyings),
+      riskDisclosureAckAt: riskDisclosureAckAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(riskDisclosureAckAt),
+    );
+  }
+
+  factory OptionsStrategyProfileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OptionsStrategyProfileRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      userId: serializer.fromJson<String>(json['userId']),
+      mode: serializer.fromJson<String>(json['mode']),
+      allowedStrategiesJson: serializer.fromJson<String>(
+        json['allowedStrategiesJson'],
+      ),
+      minDte: serializer.fromJson<int>(json['minDte']),
+      maxDte: serializer.fromJson<int>(json['maxDte']),
+      deltaPutMin: serializer.fromJson<Decimal>(json['deltaPutMin']),
+      deltaPutMax: serializer.fromJson<Decimal>(json['deltaPutMax']),
+      deltaCallMin: serializer.fromJson<Decimal>(json['deltaCallMin']),
+      deltaCallMax: serializer.fromJson<Decimal>(json['deltaCallMax']),
+      maxCapitalPerTradePct: serializer.fromJson<Decimal>(
+        json['maxCapitalPerTradePct'],
+      ),
+      maxUnderlyingExposurePct: serializer.fromJson<Decimal>(
+        json['maxUnderlyingExposurePct'],
+      ),
+      minAnnualizedYield: serializer.fromJson<Decimal>(
+        json['minAnnualizedYield'],
+      ),
+      minOpenInterest: serializer.fromJson<int>(json['minOpenInterest']),
+      minVolume: serializer.fromJson<int>(json['minVolume']),
+      maxBidAskSpreadPct: serializer.fromJson<Decimal>(
+        json['maxBidAskSpreadPct'],
+      ),
+      avoidEarnings: serializer.fromJson<bool>(json['avoidEarnings']),
+      avoidMacroEvents: serializer.fromJson<bool>(json['avoidMacroEvents']),
+      onlyOnApprovedUnderlyings: serializer.fromJson<bool>(
+        json['onlyOnApprovedUnderlyings'],
+      ),
+      riskDisclosureAckAt: serializer.fromJson<DateTime?>(
+        json['riskDisclosureAckAt'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'userId': serializer.toJson<String>(userId),
+      'mode': serializer.toJson<String>(mode),
+      'allowedStrategiesJson': serializer.toJson<String>(allowedStrategiesJson),
+      'minDte': serializer.toJson<int>(minDte),
+      'maxDte': serializer.toJson<int>(maxDte),
+      'deltaPutMin': serializer.toJson<Decimal>(deltaPutMin),
+      'deltaPutMax': serializer.toJson<Decimal>(deltaPutMax),
+      'deltaCallMin': serializer.toJson<Decimal>(deltaCallMin),
+      'deltaCallMax': serializer.toJson<Decimal>(deltaCallMax),
+      'maxCapitalPerTradePct': serializer.toJson<Decimal>(
+        maxCapitalPerTradePct,
+      ),
+      'maxUnderlyingExposurePct': serializer.toJson<Decimal>(
+        maxUnderlyingExposurePct,
+      ),
+      'minAnnualizedYield': serializer.toJson<Decimal>(minAnnualizedYield),
+      'minOpenInterest': serializer.toJson<int>(minOpenInterest),
+      'minVolume': serializer.toJson<int>(minVolume),
+      'maxBidAskSpreadPct': serializer.toJson<Decimal>(maxBidAskSpreadPct),
+      'avoidEarnings': serializer.toJson<bool>(avoidEarnings),
+      'avoidMacroEvents': serializer.toJson<bool>(avoidMacroEvents),
+      'onlyOnApprovedUnderlyings': serializer.toJson<bool>(
+        onlyOnApprovedUnderlyings,
+      ),
+      'riskDisclosureAckAt': serializer.toJson<DateTime?>(riskDisclosureAckAt),
+    };
+  }
+
+  OptionsStrategyProfileRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? userId,
+    String? mode,
+    String? allowedStrategiesJson,
+    int? minDte,
+    int? maxDte,
+    Decimal? deltaPutMin,
+    Decimal? deltaPutMax,
+    Decimal? deltaCallMin,
+    Decimal? deltaCallMax,
+    Decimal? maxCapitalPerTradePct,
+    Decimal? maxUnderlyingExposurePct,
+    Decimal? minAnnualizedYield,
+    int? minOpenInterest,
+    int? minVolume,
+    Decimal? maxBidAskSpreadPct,
+    bool? avoidEarnings,
+    bool? avoidMacroEvents,
+    bool? onlyOnApprovedUnderlyings,
+    Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
+  }) => OptionsStrategyProfileRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    userId: userId ?? this.userId,
+    mode: mode ?? this.mode,
+    allowedStrategiesJson: allowedStrategiesJson ?? this.allowedStrategiesJson,
+    minDte: minDte ?? this.minDte,
+    maxDte: maxDte ?? this.maxDte,
+    deltaPutMin: deltaPutMin ?? this.deltaPutMin,
+    deltaPutMax: deltaPutMax ?? this.deltaPutMax,
+    deltaCallMin: deltaCallMin ?? this.deltaCallMin,
+    deltaCallMax: deltaCallMax ?? this.deltaCallMax,
+    maxCapitalPerTradePct: maxCapitalPerTradePct ?? this.maxCapitalPerTradePct,
+    maxUnderlyingExposurePct:
+        maxUnderlyingExposurePct ?? this.maxUnderlyingExposurePct,
+    minAnnualizedYield: minAnnualizedYield ?? this.minAnnualizedYield,
+    minOpenInterest: minOpenInterest ?? this.minOpenInterest,
+    minVolume: minVolume ?? this.minVolume,
+    maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
+    avoidEarnings: avoidEarnings ?? this.avoidEarnings,
+    avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
+    onlyOnApprovedUnderlyings:
+        onlyOnApprovedUnderlyings ?? this.onlyOnApprovedUnderlyings,
+    riskDisclosureAckAt: riskDisclosureAckAt.present
+        ? riskDisclosureAckAt.value
+        : this.riskDisclosureAckAt,
+  );
+  OptionsStrategyProfileRow copyWithCompanion(
+    OptionsStrategyProfileTableCompanion data,
+  ) {
+    return OptionsStrategyProfileRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      allowedStrategiesJson: data.allowedStrategiesJson.present
+          ? data.allowedStrategiesJson.value
+          : this.allowedStrategiesJson,
+      minDte: data.minDte.present ? data.minDte.value : this.minDte,
+      maxDte: data.maxDte.present ? data.maxDte.value : this.maxDte,
+      deltaPutMin: data.deltaPutMin.present
+          ? data.deltaPutMin.value
+          : this.deltaPutMin,
+      deltaPutMax: data.deltaPutMax.present
+          ? data.deltaPutMax.value
+          : this.deltaPutMax,
+      deltaCallMin: data.deltaCallMin.present
+          ? data.deltaCallMin.value
+          : this.deltaCallMin,
+      deltaCallMax: data.deltaCallMax.present
+          ? data.deltaCallMax.value
+          : this.deltaCallMax,
+      maxCapitalPerTradePct: data.maxCapitalPerTradePct.present
+          ? data.maxCapitalPerTradePct.value
+          : this.maxCapitalPerTradePct,
+      maxUnderlyingExposurePct: data.maxUnderlyingExposurePct.present
+          ? data.maxUnderlyingExposurePct.value
+          : this.maxUnderlyingExposurePct,
+      minAnnualizedYield: data.minAnnualizedYield.present
+          ? data.minAnnualizedYield.value
+          : this.minAnnualizedYield,
+      minOpenInterest: data.minOpenInterest.present
+          ? data.minOpenInterest.value
+          : this.minOpenInterest,
+      minVolume: data.minVolume.present ? data.minVolume.value : this.minVolume,
+      maxBidAskSpreadPct: data.maxBidAskSpreadPct.present
+          ? data.maxBidAskSpreadPct.value
+          : this.maxBidAskSpreadPct,
+      avoidEarnings: data.avoidEarnings.present
+          ? data.avoidEarnings.value
+          : this.avoidEarnings,
+      avoidMacroEvents: data.avoidMacroEvents.present
+          ? data.avoidMacroEvents.value
+          : this.avoidMacroEvents,
+      onlyOnApprovedUnderlyings: data.onlyOnApprovedUnderlyings.present
+          ? data.onlyOnApprovedUnderlyings.value
+          : this.onlyOnApprovedUnderlyings,
+      riskDisclosureAckAt: data.riskDisclosureAckAt.present
+          ? data.riskDisclosureAckAt.value
+          : this.riskDisclosureAckAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OptionsStrategyProfileRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('userId: $userId, ')
+          ..write('mode: $mode, ')
+          ..write('allowedStrategiesJson: $allowedStrategiesJson, ')
+          ..write('minDte: $minDte, ')
+          ..write('maxDte: $maxDte, ')
+          ..write('deltaPutMin: $deltaPutMin, ')
+          ..write('deltaPutMax: $deltaPutMax, ')
+          ..write('deltaCallMin: $deltaCallMin, ')
+          ..write('deltaCallMax: $deltaCallMax, ')
+          ..write('maxCapitalPerTradePct: $maxCapitalPerTradePct, ')
+          ..write('maxUnderlyingExposurePct: $maxUnderlyingExposurePct, ')
+          ..write('minAnnualizedYield: $minAnnualizedYield, ')
+          ..write('minOpenInterest: $minOpenInterest, ')
+          ..write('minVolume: $minVolume, ')
+          ..write('maxBidAskSpreadPct: $maxBidAskSpreadPct, ')
+          ..write('avoidEarnings: $avoidEarnings, ')
+          ..write('avoidMacroEvents: $avoidMacroEvents, ')
+          ..write('onlyOnApprovedUnderlyings: $onlyOnApprovedUnderlyings, ')
+          ..write('riskDisclosureAckAt: $riskDisclosureAckAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    userId,
+    mode,
+    allowedStrategiesJson,
+    minDte,
+    maxDte,
+    deltaPutMin,
+    deltaPutMax,
+    deltaCallMin,
+    deltaCallMax,
+    maxCapitalPerTradePct,
+    maxUnderlyingExposurePct,
+    minAnnualizedYield,
+    minOpenInterest,
+    minVolume,
+    maxBidAskSpreadPct,
+    avoidEarnings,
+    avoidMacroEvents,
+    onlyOnApprovedUnderlyings,
+    riskDisclosureAckAt,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OptionsStrategyProfileRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.userId == this.userId &&
+          other.mode == this.mode &&
+          other.allowedStrategiesJson == this.allowedStrategiesJson &&
+          other.minDte == this.minDte &&
+          other.maxDte == this.maxDte &&
+          other.deltaPutMin == this.deltaPutMin &&
+          other.deltaPutMax == this.deltaPutMax &&
+          other.deltaCallMin == this.deltaCallMin &&
+          other.deltaCallMax == this.deltaCallMax &&
+          other.maxCapitalPerTradePct == this.maxCapitalPerTradePct &&
+          other.maxUnderlyingExposurePct == this.maxUnderlyingExposurePct &&
+          other.minAnnualizedYield == this.minAnnualizedYield &&
+          other.minOpenInterest == this.minOpenInterest &&
+          other.minVolume == this.minVolume &&
+          other.maxBidAskSpreadPct == this.maxBidAskSpreadPct &&
+          other.avoidEarnings == this.avoidEarnings &&
+          other.avoidMacroEvents == this.avoidMacroEvents &&
+          other.onlyOnApprovedUnderlyings == this.onlyOnApprovedUnderlyings &&
+          other.riskDisclosureAckAt == this.riskDisclosureAckAt);
+}
+
+class OptionsStrategyProfileTableCompanion
+    extends UpdateCompanion<OptionsStrategyProfileRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> userId;
+  final Value<String> mode;
+  final Value<String> allowedStrategiesJson;
+  final Value<int> minDte;
+  final Value<int> maxDte;
+  final Value<Decimal> deltaPutMin;
+  final Value<Decimal> deltaPutMax;
+  final Value<Decimal> deltaCallMin;
+  final Value<Decimal> deltaCallMax;
+  final Value<Decimal> maxCapitalPerTradePct;
+  final Value<Decimal> maxUnderlyingExposurePct;
+  final Value<Decimal> minAnnualizedYield;
+  final Value<int> minOpenInterest;
+  final Value<int> minVolume;
+  final Value<Decimal> maxBidAskSpreadPct;
+  final Value<bool> avoidEarnings;
+  final Value<bool> avoidMacroEvents;
+  final Value<bool> onlyOnApprovedUnderlyings;
+  final Value<DateTime?> riskDisclosureAckAt;
+  final Value<int> rowid;
+  const OptionsStrategyProfileTableCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.allowedStrategiesJson = const Value.absent(),
+    this.minDte = const Value.absent(),
+    this.maxDte = const Value.absent(),
+    this.deltaPutMin = const Value.absent(),
+    this.deltaPutMax = const Value.absent(),
+    this.deltaCallMin = const Value.absent(),
+    this.deltaCallMax = const Value.absent(),
+    this.maxCapitalPerTradePct = const Value.absent(),
+    this.maxUnderlyingExposurePct = const Value.absent(),
+    this.minAnnualizedYield = const Value.absent(),
+    this.minOpenInterest = const Value.absent(),
+    this.minVolume = const Value.absent(),
+    this.maxBidAskSpreadPct = const Value.absent(),
+    this.avoidEarnings = const Value.absent(),
+    this.avoidMacroEvents = const Value.absent(),
+    this.onlyOnApprovedUnderlyings = const Value.absent(),
+    this.riskDisclosureAckAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OptionsStrategyProfileTableCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String userId,
+    required String mode,
+    this.allowedStrategiesJson = const Value.absent(),
+    required int minDte,
+    required int maxDte,
+    required Decimal deltaPutMin,
+    required Decimal deltaPutMax,
+    required Decimal deltaCallMin,
+    required Decimal deltaCallMax,
+    required Decimal maxCapitalPerTradePct,
+    required Decimal maxUnderlyingExposurePct,
+    required Decimal minAnnualizedYield,
+    required int minOpenInterest,
+    required int minVolume,
+    required Decimal maxBidAskSpreadPct,
+    this.avoidEarnings = const Value.absent(),
+    this.avoidMacroEvents = const Value.absent(),
+    this.onlyOnApprovedUnderlyings = const Value.absent(),
+    this.riskDisclosureAckAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       userId = Value(userId),
+       mode = Value(mode),
+       minDte = Value(minDte),
+       maxDte = Value(maxDte),
+       deltaPutMin = Value(deltaPutMin),
+       deltaPutMax = Value(deltaPutMax),
+       deltaCallMin = Value(deltaCallMin),
+       deltaCallMax = Value(deltaCallMax),
+       maxCapitalPerTradePct = Value(maxCapitalPerTradePct),
+       maxUnderlyingExposurePct = Value(maxUnderlyingExposurePct),
+       minAnnualizedYield = Value(minAnnualizedYield),
+       minOpenInterest = Value(minOpenInterest),
+       minVolume = Value(minVolume),
+       maxBidAskSpreadPct = Value(maxBidAskSpreadPct);
+  static Insertable<OptionsStrategyProfileRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? userId,
+    Expression<String>? mode,
+    Expression<String>? allowedStrategiesJson,
+    Expression<int>? minDte,
+    Expression<int>? maxDte,
+    Expression<String>? deltaPutMin,
+    Expression<String>? deltaPutMax,
+    Expression<String>? deltaCallMin,
+    Expression<String>? deltaCallMax,
+    Expression<String>? maxCapitalPerTradePct,
+    Expression<String>? maxUnderlyingExposurePct,
+    Expression<String>? minAnnualizedYield,
+    Expression<int>? minOpenInterest,
+    Expression<int>? minVolume,
+    Expression<String>? maxBidAskSpreadPct,
+    Expression<bool>? avoidEarnings,
+    Expression<bool>? avoidMacroEvents,
+    Expression<bool>? onlyOnApprovedUnderlyings,
+    Expression<DateTime>? riskDisclosureAckAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (userId != null) 'user_id': userId,
+      if (mode != null) 'mode': mode,
+      if (allowedStrategiesJson != null)
+        'allowed_strategies_json': allowedStrategiesJson,
+      if (minDte != null) 'min_dte': minDte,
+      if (maxDte != null) 'max_dte': maxDte,
+      if (deltaPutMin != null) 'delta_put_min': deltaPutMin,
+      if (deltaPutMax != null) 'delta_put_max': deltaPutMax,
+      if (deltaCallMin != null) 'delta_call_min': deltaCallMin,
+      if (deltaCallMax != null) 'delta_call_max': deltaCallMax,
+      if (maxCapitalPerTradePct != null)
+        'max_capital_per_trade_pct': maxCapitalPerTradePct,
+      if (maxUnderlyingExposurePct != null)
+        'max_underlying_exposure_pct': maxUnderlyingExposurePct,
+      if (minAnnualizedYield != null)
+        'min_annualized_yield': minAnnualizedYield,
+      if (minOpenInterest != null) 'min_open_interest': minOpenInterest,
+      if (minVolume != null) 'min_volume': minVolume,
+      if (maxBidAskSpreadPct != null)
+        'max_bid_ask_spread_pct': maxBidAskSpreadPct,
+      if (avoidEarnings != null) 'avoid_earnings': avoidEarnings,
+      if (avoidMacroEvents != null) 'avoid_macro_events': avoidMacroEvents,
+      if (onlyOnApprovedUnderlyings != null)
+        'only_on_approved_underlyings': onlyOnApprovedUnderlyings,
+      if (riskDisclosureAckAt != null)
+        'risk_disclosure_ack_at': riskDisclosureAckAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OptionsStrategyProfileTableCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? userId,
+    Value<String>? mode,
+    Value<String>? allowedStrategiesJson,
+    Value<int>? minDte,
+    Value<int>? maxDte,
+    Value<Decimal>? deltaPutMin,
+    Value<Decimal>? deltaPutMax,
+    Value<Decimal>? deltaCallMin,
+    Value<Decimal>? deltaCallMax,
+    Value<Decimal>? maxCapitalPerTradePct,
+    Value<Decimal>? maxUnderlyingExposurePct,
+    Value<Decimal>? minAnnualizedYield,
+    Value<int>? minOpenInterest,
+    Value<int>? minVolume,
+    Value<Decimal>? maxBidAskSpreadPct,
+    Value<bool>? avoidEarnings,
+    Value<bool>? avoidMacroEvents,
+    Value<bool>? onlyOnApprovedUnderlyings,
+    Value<DateTime?>? riskDisclosureAckAt,
+    Value<int>? rowid,
+  }) {
+    return OptionsStrategyProfileTableCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      userId: userId ?? this.userId,
+      mode: mode ?? this.mode,
+      allowedStrategiesJson:
+          allowedStrategiesJson ?? this.allowedStrategiesJson,
+      minDte: minDte ?? this.minDte,
+      maxDte: maxDte ?? this.maxDte,
+      deltaPutMin: deltaPutMin ?? this.deltaPutMin,
+      deltaPutMax: deltaPutMax ?? this.deltaPutMax,
+      deltaCallMin: deltaCallMin ?? this.deltaCallMin,
+      deltaCallMax: deltaCallMax ?? this.deltaCallMax,
+      maxCapitalPerTradePct:
+          maxCapitalPerTradePct ?? this.maxCapitalPerTradePct,
+      maxUnderlyingExposurePct:
+          maxUnderlyingExposurePct ?? this.maxUnderlyingExposurePct,
+      minAnnualizedYield: minAnnualizedYield ?? this.minAnnualizedYield,
+      minOpenInterest: minOpenInterest ?? this.minOpenInterest,
+      minVolume: minVolume ?? this.minVolume,
+      maxBidAskSpreadPct: maxBidAskSpreadPct ?? this.maxBidAskSpreadPct,
+      avoidEarnings: avoidEarnings ?? this.avoidEarnings,
+      avoidMacroEvents: avoidMacroEvents ?? this.avoidMacroEvents,
+      onlyOnApprovedUnderlyings:
+          onlyOnApprovedUnderlyings ?? this.onlyOnApprovedUnderlyings,
+      riskDisclosureAckAt: riskDisclosureAckAt ?? this.riskDisclosureAckAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(mode.value);
+    }
+    if (allowedStrategiesJson.present) {
+      map['allowed_strategies_json'] = Variable<String>(
+        allowedStrategiesJson.value,
+      );
+    }
+    if (minDte.present) {
+      map['min_dte'] = Variable<int>(minDte.value);
+    }
+    if (maxDte.present) {
+      map['max_dte'] = Variable<int>(maxDte.value);
+    }
+    if (deltaPutMin.present) {
+      map['delta_put_min'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaPutMin.toSql(
+          deltaPutMin.value,
+        ),
+      );
+    }
+    if (deltaPutMax.present) {
+      map['delta_put_max'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaPutMax.toSql(
+          deltaPutMax.value,
+        ),
+      );
+    }
+    if (deltaCallMin.present) {
+      map['delta_call_min'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaCallMin.toSql(
+          deltaCallMin.value,
+        ),
+      );
+    }
+    if (deltaCallMax.present) {
+      map['delta_call_max'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterdeltaCallMax.toSql(
+          deltaCallMax.value,
+        ),
+      );
+    }
+    if (maxCapitalPerTradePct.present) {
+      map['max_capital_per_trade_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$convertermaxCapitalPerTradePct.toSql(
+          maxCapitalPerTradePct.value,
+        ),
+      );
+    }
+    if (maxUnderlyingExposurePct.present) {
+      map['max_underlying_exposure_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$convertermaxUnderlyingExposurePct
+            .toSql(maxUnderlyingExposurePct.value),
+      );
+    }
+    if (minAnnualizedYield.present) {
+      map['min_annualized_yield'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$converterminAnnualizedYield.toSql(
+          minAnnualizedYield.value,
+        ),
+      );
+    }
+    if (minOpenInterest.present) {
+      map['min_open_interest'] = Variable<int>(minOpenInterest.value);
+    }
+    if (minVolume.present) {
+      map['min_volume'] = Variable<int>(minVolume.value);
+    }
+    if (maxBidAskSpreadPct.present) {
+      map['max_bid_ask_spread_pct'] = Variable<String>(
+        $OptionsStrategyProfileTableTable.$convertermaxBidAskSpreadPct.toSql(
+          maxBidAskSpreadPct.value,
+        ),
+      );
+    }
+    if (avoidEarnings.present) {
+      map['avoid_earnings'] = Variable<bool>(avoidEarnings.value);
+    }
+    if (avoidMacroEvents.present) {
+      map['avoid_macro_events'] = Variable<bool>(avoidMacroEvents.value);
+    }
+    if (onlyOnApprovedUnderlyings.present) {
+      map['only_on_approved_underlyings'] = Variable<bool>(
+        onlyOnApprovedUnderlyings.value,
+      );
+    }
+    if (riskDisclosureAckAt.present) {
+      map['risk_disclosure_ack_at'] = Variable<DateTime>(
+        riskDisclosureAckAt.value,
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OptionsStrategyProfileTableCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('userId: $userId, ')
+          ..write('mode: $mode, ')
+          ..write('allowedStrategiesJson: $allowedStrategiesJson, ')
+          ..write('minDte: $minDte, ')
+          ..write('maxDte: $maxDte, ')
+          ..write('deltaPutMin: $deltaPutMin, ')
+          ..write('deltaPutMax: $deltaPutMax, ')
+          ..write('deltaCallMin: $deltaCallMin, ')
+          ..write('deltaCallMax: $deltaCallMax, ')
+          ..write('maxCapitalPerTradePct: $maxCapitalPerTradePct, ')
+          ..write('maxUnderlyingExposurePct: $maxUnderlyingExposurePct, ')
+          ..write('minAnnualizedYield: $minAnnualizedYield, ')
+          ..write('minOpenInterest: $minOpenInterest, ')
+          ..write('minVolume: $minVolume, ')
+          ..write('maxBidAskSpreadPct: $maxBidAskSpreadPct, ')
+          ..write('avoidEarnings: $avoidEarnings, ')
+          ..write('avoidMacroEvents: $avoidMacroEvents, ')
+          ..write('onlyOnApprovedUnderlyings: $onlyOnApprovedUnderlyings, ')
+          ..write('riskDisclosureAckAt: $riskDisclosureAckAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ApprovedUnderlyingsTable extends ApprovedUnderlyings
+    with TableInfo<$ApprovedUnderlyingsTable, ApprovedUnderlyingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ApprovedUnderlyingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($ApprovedUnderlyingsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _allowPutMeta = const VerificationMeta(
+    'allowPut',
+  );
+  @override
+  late final GeneratedColumn<bool> allowPut = GeneratedColumn<bool>(
+    'allow_put',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("allow_put" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _allowCallMeta = const VerificationMeta(
+    'allowCall',
+  );
+  @override
+  late final GeneratedColumn<bool> allowCall = GeneratedColumn<bool>(
+    'allow_call',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("allow_call" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> maxBuyPrice =
+      GeneratedColumn<String>(
+        'max_buy_price',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $ApprovedUnderlyingsTable.$convertermaxBuyPricen,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> minSellPrice =
+      GeneratedColumn<String>(
+        'min_sell_price',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $ApprovedUnderlyingsTable.$converterminSellPricen,
+      );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    symbol,
+    market,
+    allowPut,
+    allowCall,
+    maxBuyPrice,
+    minSellPrice,
+    notes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'approved_underlyings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ApprovedUnderlyingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('allow_put')) {
+      context.handle(
+        _allowPutMeta,
+        allowPut.isAcceptableOrUnknown(data['allow_put']!, _allowPutMeta),
+      );
+    }
+    if (data.containsKey('allow_call')) {
+      context.handle(
+        _allowCallMeta,
+        allowCall.isAcceptableOrUnknown(data['allow_call']!, _allowCallMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ApprovedUnderlyingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ApprovedUnderlyingRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $ApprovedUnderlyingsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      allowPut: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}allow_put'],
+      )!,
+      allowCall: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}allow_call'],
+      )!,
+      maxBuyPrice: $ApprovedUnderlyingsTable.$convertermaxBuyPricen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}max_buy_price'],
+        ),
+      ),
+      minSellPrice: $ApprovedUnderlyingsTable.$converterminSellPricen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}min_sell_price'],
+        ),
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+    );
+  }
+
+  @override
+  $ApprovedUnderlyingsTable createAlias(String alias) {
+    return $ApprovedUnderlyingsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $convertermaxBuyPrice =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertermaxBuyPricen =
+      NullAwareTypeConverter.wrap($convertermaxBuyPrice);
+  static TypeConverter<Decimal, String> $converterminSellPrice =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterminSellPricen =
+      NullAwareTypeConverter.wrap($converterminSellPrice);
+}
+
+class ApprovedUnderlyingRow extends DataClass
+    implements Insertable<ApprovedUnderlyingRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String symbol;
+  final String market;
+  final bool allowPut;
+  final bool allowCall;
+  final Decimal? maxBuyPrice;
+  final Decimal? minSellPrice;
+  final String? notes;
+  const ApprovedUnderlyingRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.symbol,
+    required this.market,
+    required this.allowPut,
+    required this.allowCall,
+    this.maxBuyPrice,
+    this.minSellPrice,
+    this.notes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $ApprovedUnderlyingsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['symbol'] = Variable<String>(symbol);
+    map['market'] = Variable<String>(market);
+    map['allow_put'] = Variable<bool>(allowPut);
+    map['allow_call'] = Variable<bool>(allowCall);
+    if (!nullToAbsent || maxBuyPrice != null) {
+      map['max_buy_price'] = Variable<String>(
+        $ApprovedUnderlyingsTable.$convertermaxBuyPricen.toSql(maxBuyPrice),
+      );
+    }
+    if (!nullToAbsent || minSellPrice != null) {
+      map['min_sell_price'] = Variable<String>(
+        $ApprovedUnderlyingsTable.$converterminSellPricen.toSql(minSellPrice),
+      );
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    return map;
+  }
+
+  ApprovedUnderlyingsCompanion toCompanion(bool nullToAbsent) {
+    return ApprovedUnderlyingsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      symbol: Value(symbol),
+      market: Value(market),
+      allowPut: Value(allowPut),
+      allowCall: Value(allowCall),
+      maxBuyPrice: maxBuyPrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maxBuyPrice),
+      minSellPrice: minSellPrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minSellPrice),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+    );
+  }
+
+  factory ApprovedUnderlyingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ApprovedUnderlyingRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      market: serializer.fromJson<String>(json['market']),
+      allowPut: serializer.fromJson<bool>(json['allowPut']),
+      allowCall: serializer.fromJson<bool>(json['allowCall']),
+      maxBuyPrice: serializer.fromJson<Decimal?>(json['maxBuyPrice']),
+      minSellPrice: serializer.fromJson<Decimal?>(json['minSellPrice']),
+      notes: serializer.fromJson<String?>(json['notes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'symbol': serializer.toJson<String>(symbol),
+      'market': serializer.toJson<String>(market),
+      'allowPut': serializer.toJson<bool>(allowPut),
+      'allowCall': serializer.toJson<bool>(allowCall),
+      'maxBuyPrice': serializer.toJson<Decimal?>(maxBuyPrice),
+      'minSellPrice': serializer.toJson<Decimal?>(minSellPrice),
+      'notes': serializer.toJson<String?>(notes),
+    };
+  }
+
+  ApprovedUnderlyingRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? symbol,
+    String? market,
+    bool? allowPut,
+    bool? allowCall,
+    Value<Decimal?> maxBuyPrice = const Value.absent(),
+    Value<Decimal?> minSellPrice = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+  }) => ApprovedUnderlyingRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    symbol: symbol ?? this.symbol,
+    market: market ?? this.market,
+    allowPut: allowPut ?? this.allowPut,
+    allowCall: allowCall ?? this.allowCall,
+    maxBuyPrice: maxBuyPrice.present ? maxBuyPrice.value : this.maxBuyPrice,
+    minSellPrice: minSellPrice.present ? minSellPrice.value : this.minSellPrice,
+    notes: notes.present ? notes.value : this.notes,
+  );
+  ApprovedUnderlyingRow copyWithCompanion(ApprovedUnderlyingsCompanion data) {
+    return ApprovedUnderlyingRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      market: data.market.present ? data.market.value : this.market,
+      allowPut: data.allowPut.present ? data.allowPut.value : this.allowPut,
+      allowCall: data.allowCall.present ? data.allowCall.value : this.allowCall,
+      maxBuyPrice: data.maxBuyPrice.present
+          ? data.maxBuyPrice.value
+          : this.maxBuyPrice,
+      minSellPrice: data.minSellPrice.present
+          ? data.minSellPrice.value
+          : this.minSellPrice,
+      notes: data.notes.present ? data.notes.value : this.notes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ApprovedUnderlyingRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('allowPut: $allowPut, ')
+          ..write('allowCall: $allowCall, ')
+          ..write('maxBuyPrice: $maxBuyPrice, ')
+          ..write('minSellPrice: $minSellPrice, ')
+          ..write('notes: $notes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    symbol,
+    market,
+    allowPut,
+    allowCall,
+    maxBuyPrice,
+    minSellPrice,
+    notes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ApprovedUnderlyingRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.symbol == this.symbol &&
+          other.market == this.market &&
+          other.allowPut == this.allowPut &&
+          other.allowCall == this.allowCall &&
+          other.maxBuyPrice == this.maxBuyPrice &&
+          other.minSellPrice == this.minSellPrice &&
+          other.notes == this.notes);
+}
+
+class ApprovedUnderlyingsCompanion
+    extends UpdateCompanion<ApprovedUnderlyingRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> symbol;
+  final Value<String> market;
+  final Value<bool> allowPut;
+  final Value<bool> allowCall;
+  final Value<Decimal?> maxBuyPrice;
+  final Value<Decimal?> minSellPrice;
+  final Value<String?> notes;
+  final Value<int> rowid;
+  const ApprovedUnderlyingsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.market = const Value.absent(),
+    this.allowPut = const Value.absent(),
+    this.allowCall = const Value.absent(),
+    this.maxBuyPrice = const Value.absent(),
+    this.minSellPrice = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ApprovedUnderlyingsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String symbol,
+    required String market,
+    this.allowPut = const Value.absent(),
+    this.allowCall = const Value.absent(),
+    this.maxBuyPrice = const Value.absent(),
+    this.minSellPrice = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       symbol = Value(symbol),
+       market = Value(market);
+  static Insertable<ApprovedUnderlyingRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? symbol,
+    Expression<String>? market,
+    Expression<bool>? allowPut,
+    Expression<bool>? allowCall,
+    Expression<String>? maxBuyPrice,
+    Expression<String>? minSellPrice,
+    Expression<String>? notes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (symbol != null) 'symbol': symbol,
+      if (market != null) 'market': market,
+      if (allowPut != null) 'allow_put': allowPut,
+      if (allowCall != null) 'allow_call': allowCall,
+      if (maxBuyPrice != null) 'max_buy_price': maxBuyPrice,
+      if (minSellPrice != null) 'min_sell_price': minSellPrice,
+      if (notes != null) 'notes': notes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ApprovedUnderlyingsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? symbol,
+    Value<String>? market,
+    Value<bool>? allowPut,
+    Value<bool>? allowCall,
+    Value<Decimal?>? maxBuyPrice,
+    Value<Decimal?>? minSellPrice,
+    Value<String?>? notes,
+    Value<int>? rowid,
+  }) {
+    return ApprovedUnderlyingsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      symbol: symbol ?? this.symbol,
+      market: market ?? this.market,
+      allowPut: allowPut ?? this.allowPut,
+      allowCall: allowCall ?? this.allowCall,
+      maxBuyPrice: maxBuyPrice ?? this.maxBuyPrice,
+      minSellPrice: minSellPrice ?? this.minSellPrice,
+      notes: notes ?? this.notes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $ApprovedUnderlyingsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (allowPut.present) {
+      map['allow_put'] = Variable<bool>(allowPut.value);
+    }
+    if (allowCall.present) {
+      map['allow_call'] = Variable<bool>(allowCall.value);
+    }
+    if (maxBuyPrice.present) {
+      map['max_buy_price'] = Variable<String>(
+        $ApprovedUnderlyingsTable.$convertermaxBuyPricen.toSql(
+          maxBuyPrice.value,
+        ),
+      );
+    }
+    if (minSellPrice.present) {
+      map['min_sell_price'] = Variable<String>(
+        $ApprovedUnderlyingsTable.$converterminSellPricen.toSql(
+          minSellPrice.value,
+        ),
+      );
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ApprovedUnderlyingsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('allowPut: $allowPut, ')
+          ..write('allowCall: $allowCall, ')
+          ..write('maxBuyPrice: $maxBuyPrice, ')
+          ..write('minSellPrice: $minSellPrice, ')
+          ..write('notes: $notes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $RecurringTransactionsTable extends RecurringTransactions
     with TableInfo<$RecurringTransactionsTable, RecurringTransactionRow> {
   @override
@@ -16206,6 +18470,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PostingsTable postings = $PostingsTable(this);
   late final $PricesTable prices = $PricesTable(this);
   late final $WatchlistItemsTable watchlistItems = $WatchlistItemsTable(this);
+  late final $OptionsStrategyProfileTableTable optionsStrategyProfileTable =
+      $OptionsStrategyProfileTableTable(this);
+  late final $ApprovedUnderlyingsTable approvedUnderlyings =
+      $ApprovedUnderlyingsTable(this);
   late final $RecurringTransactionsTable recurringTransactions =
       $RecurringTransactionsTable(this);
   late final $LiabilitiesTable liabilities = $LiabilitiesTable(this);
@@ -16241,6 +18509,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     postings,
     prices,
     watchlistItems,
+    optionsStrategyProfileTable,
+    approvedUnderlyings,
     recurringTransactions,
     liabilities,
     amortizationEntries,
@@ -19110,6 +21380,1016 @@ typedef $$WatchlistItemsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $WatchlistItemsTable, WatchlistItemRow>,
       ),
       WatchlistItemRow,
+      PrefetchHooks Function()
+    >;
+typedef $$OptionsStrategyProfileTableTableCreateCompanionBuilder =
+    OptionsStrategyProfileTableCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String userId,
+      required String mode,
+      Value<String> allowedStrategiesJson,
+      required int minDte,
+      required int maxDte,
+      required Decimal deltaPutMin,
+      required Decimal deltaPutMax,
+      required Decimal deltaCallMin,
+      required Decimal deltaCallMax,
+      required Decimal maxCapitalPerTradePct,
+      required Decimal maxUnderlyingExposurePct,
+      required Decimal minAnnualizedYield,
+      required int minOpenInterest,
+      required int minVolume,
+      required Decimal maxBidAskSpreadPct,
+      Value<bool> avoidEarnings,
+      Value<bool> avoidMacroEvents,
+      Value<bool> onlyOnApprovedUnderlyings,
+      Value<DateTime?> riskDisclosureAckAt,
+      Value<int> rowid,
+    });
+typedef $$OptionsStrategyProfileTableTableUpdateCompanionBuilder =
+    OptionsStrategyProfileTableCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> userId,
+      Value<String> mode,
+      Value<String> allowedStrategiesJson,
+      Value<int> minDte,
+      Value<int> maxDte,
+      Value<Decimal> deltaPutMin,
+      Value<Decimal> deltaPutMax,
+      Value<Decimal> deltaCallMin,
+      Value<Decimal> deltaCallMax,
+      Value<Decimal> maxCapitalPerTradePct,
+      Value<Decimal> maxUnderlyingExposurePct,
+      Value<Decimal> minAnnualizedYield,
+      Value<int> minOpenInterest,
+      Value<int> minVolume,
+      Value<Decimal> maxBidAskSpreadPct,
+      Value<bool> avoidEarnings,
+      Value<bool> avoidMacroEvents,
+      Value<bool> onlyOnApprovedUnderlyings,
+      Value<DateTime?> riskDisclosureAckAt,
+      Value<int> rowid,
+    });
+
+class $$OptionsStrategyProfileTableTableFilterComposer
+    extends Composer<_$AppDatabase, $OptionsStrategyProfileTableTable> {
+  $$OptionsStrategyProfileTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allowedStrategiesJson => $composableBuilder(
+    column: $table.allowedStrategiesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minDte => $composableBuilder(
+    column: $table.minDte,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxDte => $composableBuilder(
+    column: $table.maxDte,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get deltaPutMin =>
+      $composableBuilder(
+        column: $table.deltaPutMin,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get deltaPutMax =>
+      $composableBuilder(
+        column: $table.deltaPutMax,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get deltaCallMin =>
+      $composableBuilder(
+        column: $table.deltaCallMin,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get deltaCallMax =>
+      $composableBuilder(
+        column: $table.deltaCallMax,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get maxCapitalPerTradePct => $composableBuilder(
+    column: $table.maxCapitalPerTradePct,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get maxUnderlyingExposurePct => $composableBuilder(
+    column: $table.maxUnderlyingExposurePct,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get minAnnualizedYield => $composableBuilder(
+    column: $table.minAnnualizedYield,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get minOpenInterest => $composableBuilder(
+    column: $table.minOpenInterest,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minVolume => $composableBuilder(
+    column: $table.minVolume,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get maxBidAskSpreadPct => $composableBuilder(
+    column: $table.maxBidAskSpreadPct,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<bool> get avoidEarnings => $composableBuilder(
+    column: $table.avoidEarnings,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get avoidMacroEvents => $composableBuilder(
+    column: $table.avoidMacroEvents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get onlyOnApprovedUnderlyings => $composableBuilder(
+    column: $table.onlyOnApprovedUnderlyings,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get riskDisclosureAckAt => $composableBuilder(
+    column: $table.riskDisclosureAckAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OptionsStrategyProfileTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $OptionsStrategyProfileTableTable> {
+  $$OptionsStrategyProfileTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allowedStrategiesJson => $composableBuilder(
+    column: $table.allowedStrategiesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minDte => $composableBuilder(
+    column: $table.minDte,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxDte => $composableBuilder(
+    column: $table.maxDte,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deltaPutMin => $composableBuilder(
+    column: $table.deltaPutMin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deltaPutMax => $composableBuilder(
+    column: $table.deltaPutMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deltaCallMin => $composableBuilder(
+    column: $table.deltaCallMin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deltaCallMax => $composableBuilder(
+    column: $table.deltaCallMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get maxCapitalPerTradePct => $composableBuilder(
+    column: $table.maxCapitalPerTradePct,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get maxUnderlyingExposurePct => $composableBuilder(
+    column: $table.maxUnderlyingExposurePct,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get minAnnualizedYield => $composableBuilder(
+    column: $table.minAnnualizedYield,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minOpenInterest => $composableBuilder(
+    column: $table.minOpenInterest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minVolume => $composableBuilder(
+    column: $table.minVolume,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get maxBidAskSpreadPct => $composableBuilder(
+    column: $table.maxBidAskSpreadPct,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get avoidEarnings => $composableBuilder(
+    column: $table.avoidEarnings,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get avoidMacroEvents => $composableBuilder(
+    column: $table.avoidMacroEvents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get onlyOnApprovedUnderlyings => $composableBuilder(
+    column: $table.onlyOnApprovedUnderlyings,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get riskDisclosureAckAt => $composableBuilder(
+    column: $table.riskDisclosureAckAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OptionsStrategyProfileTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OptionsStrategyProfileTableTable> {
+  $$OptionsStrategyProfileTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<String> get allowedStrategiesJson => $composableBuilder(
+    column: $table.allowedStrategiesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get minDte =>
+      $composableBuilder(column: $table.minDte, builder: (column) => column);
+
+  GeneratedColumn<int> get maxDte =>
+      $composableBuilder(column: $table.maxDte, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get deltaPutMin =>
+      $composableBuilder(
+        column: $table.deltaPutMin,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get deltaPutMax =>
+      $composableBuilder(
+        column: $table.deltaPutMax,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get deltaCallMin =>
+      $composableBuilder(
+        column: $table.deltaCallMin,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get deltaCallMax =>
+      $composableBuilder(
+        column: $table.deltaCallMax,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get maxCapitalPerTradePct =>
+      $composableBuilder(
+        column: $table.maxCapitalPerTradePct,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String>
+  get maxUnderlyingExposurePct => $composableBuilder(
+    column: $table.maxUnderlyingExposurePct,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get minAnnualizedYield =>
+      $composableBuilder(
+        column: $table.minAnnualizedYield,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get minOpenInterest => $composableBuilder(
+    column: $table.minOpenInterest,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get minVolume =>
+      $composableBuilder(column: $table.minVolume, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get maxBidAskSpreadPct =>
+      $composableBuilder(
+        column: $table.maxBidAskSpreadPct,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<bool> get avoidEarnings => $composableBuilder(
+    column: $table.avoidEarnings,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get avoidMacroEvents => $composableBuilder(
+    column: $table.avoidMacroEvents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get onlyOnApprovedUnderlyings => $composableBuilder(
+    column: $table.onlyOnApprovedUnderlyings,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get riskDisclosureAckAt => $composableBuilder(
+    column: $table.riskDisclosureAckAt,
+    builder: (column) => column,
+  );
+}
+
+class $$OptionsStrategyProfileTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OptionsStrategyProfileTableTable,
+          OptionsStrategyProfileRow,
+          $$OptionsStrategyProfileTableTableFilterComposer,
+          $$OptionsStrategyProfileTableTableOrderingComposer,
+          $$OptionsStrategyProfileTableTableAnnotationComposer,
+          $$OptionsStrategyProfileTableTableCreateCompanionBuilder,
+          $$OptionsStrategyProfileTableTableUpdateCompanionBuilder,
+          (
+            OptionsStrategyProfileRow,
+            BaseReferences<
+              _$AppDatabase,
+              $OptionsStrategyProfileTableTable,
+              OptionsStrategyProfileRow
+            >,
+          ),
+          OptionsStrategyProfileRow,
+          PrefetchHooks Function()
+        > {
+  $$OptionsStrategyProfileTableTableTableManager(
+    _$AppDatabase db,
+    $OptionsStrategyProfileTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OptionsStrategyProfileTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$OptionsStrategyProfileTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$OptionsStrategyProfileTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> mode = const Value.absent(),
+                Value<String> allowedStrategiesJson = const Value.absent(),
+                Value<int> minDte = const Value.absent(),
+                Value<int> maxDte = const Value.absent(),
+                Value<Decimal> deltaPutMin = const Value.absent(),
+                Value<Decimal> deltaPutMax = const Value.absent(),
+                Value<Decimal> deltaCallMin = const Value.absent(),
+                Value<Decimal> deltaCallMax = const Value.absent(),
+                Value<Decimal> maxCapitalPerTradePct = const Value.absent(),
+                Value<Decimal> maxUnderlyingExposurePct = const Value.absent(),
+                Value<Decimal> minAnnualizedYield = const Value.absent(),
+                Value<int> minOpenInterest = const Value.absent(),
+                Value<int> minVolume = const Value.absent(),
+                Value<Decimal> maxBidAskSpreadPct = const Value.absent(),
+                Value<bool> avoidEarnings = const Value.absent(),
+                Value<bool> avoidMacroEvents = const Value.absent(),
+                Value<bool> onlyOnApprovedUnderlyings = const Value.absent(),
+                Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OptionsStrategyProfileTableCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                userId: userId,
+                mode: mode,
+                allowedStrategiesJson: allowedStrategiesJson,
+                minDte: minDte,
+                maxDte: maxDte,
+                deltaPutMin: deltaPutMin,
+                deltaPutMax: deltaPutMax,
+                deltaCallMin: deltaCallMin,
+                deltaCallMax: deltaCallMax,
+                maxCapitalPerTradePct: maxCapitalPerTradePct,
+                maxUnderlyingExposurePct: maxUnderlyingExposurePct,
+                minAnnualizedYield: minAnnualizedYield,
+                minOpenInterest: minOpenInterest,
+                minVolume: minVolume,
+                maxBidAskSpreadPct: maxBidAskSpreadPct,
+                avoidEarnings: avoidEarnings,
+                avoidMacroEvents: avoidMacroEvents,
+                onlyOnApprovedUnderlyings: onlyOnApprovedUnderlyings,
+                riskDisclosureAckAt: riskDisclosureAckAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String userId,
+                required String mode,
+                Value<String> allowedStrategiesJson = const Value.absent(),
+                required int minDte,
+                required int maxDte,
+                required Decimal deltaPutMin,
+                required Decimal deltaPutMax,
+                required Decimal deltaCallMin,
+                required Decimal deltaCallMax,
+                required Decimal maxCapitalPerTradePct,
+                required Decimal maxUnderlyingExposurePct,
+                required Decimal minAnnualizedYield,
+                required int minOpenInterest,
+                required int minVolume,
+                required Decimal maxBidAskSpreadPct,
+                Value<bool> avoidEarnings = const Value.absent(),
+                Value<bool> avoidMacroEvents = const Value.absent(),
+                Value<bool> onlyOnApprovedUnderlyings = const Value.absent(),
+                Value<DateTime?> riskDisclosureAckAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OptionsStrategyProfileTableCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                userId: userId,
+                mode: mode,
+                allowedStrategiesJson: allowedStrategiesJson,
+                minDte: minDte,
+                maxDte: maxDte,
+                deltaPutMin: deltaPutMin,
+                deltaPutMax: deltaPutMax,
+                deltaCallMin: deltaCallMin,
+                deltaCallMax: deltaCallMax,
+                maxCapitalPerTradePct: maxCapitalPerTradePct,
+                maxUnderlyingExposurePct: maxUnderlyingExposurePct,
+                minAnnualizedYield: minAnnualizedYield,
+                minOpenInterest: minOpenInterest,
+                minVolume: minVolume,
+                maxBidAskSpreadPct: maxBidAskSpreadPct,
+                avoidEarnings: avoidEarnings,
+                avoidMacroEvents: avoidMacroEvents,
+                onlyOnApprovedUnderlyings: onlyOnApprovedUnderlyings,
+                riskDisclosureAckAt: riskDisclosureAckAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OptionsStrategyProfileTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OptionsStrategyProfileTableTable,
+      OptionsStrategyProfileRow,
+      $$OptionsStrategyProfileTableTableFilterComposer,
+      $$OptionsStrategyProfileTableTableOrderingComposer,
+      $$OptionsStrategyProfileTableTableAnnotationComposer,
+      $$OptionsStrategyProfileTableTableCreateCompanionBuilder,
+      $$OptionsStrategyProfileTableTableUpdateCompanionBuilder,
+      (
+        OptionsStrategyProfileRow,
+        BaseReferences<
+          _$AppDatabase,
+          $OptionsStrategyProfileTableTable,
+          OptionsStrategyProfileRow
+        >,
+      ),
+      OptionsStrategyProfileRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ApprovedUnderlyingsTableCreateCompanionBuilder =
+    ApprovedUnderlyingsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String symbol,
+      required String market,
+      Value<bool> allowPut,
+      Value<bool> allowCall,
+      Value<Decimal?> maxBuyPrice,
+      Value<Decimal?> minSellPrice,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+typedef $$ApprovedUnderlyingsTableUpdateCompanionBuilder =
+    ApprovedUnderlyingsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> symbol,
+      Value<String> market,
+      Value<bool> allowPut,
+      Value<bool> allowCall,
+      Value<Decimal?> maxBuyPrice,
+      Value<Decimal?> minSellPrice,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+
+class $$ApprovedUnderlyingsTableFilterComposer
+    extends Composer<_$AppDatabase, $ApprovedUnderlyingsTable> {
+  $$ApprovedUnderlyingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get allowPut => $composableBuilder(
+    column: $table.allowPut,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get allowCall => $composableBuilder(
+    column: $table.allowCall,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get maxBuyPrice =>
+      $composableBuilder(
+        column: $table.maxBuyPrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get minSellPrice =>
+      $composableBuilder(
+        column: $table.minSellPrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ApprovedUnderlyingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ApprovedUnderlyingsTable> {
+  $$ApprovedUnderlyingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get allowPut => $composableBuilder(
+    column: $table.allowPut,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get allowCall => $composableBuilder(
+    column: $table.allowCall,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get maxBuyPrice => $composableBuilder(
+    column: $table.maxBuyPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get minSellPrice => $composableBuilder(
+    column: $table.minSellPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ApprovedUnderlyingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ApprovedUnderlyingsTable> {
+  $$ApprovedUnderlyingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumn<bool> get allowPut =>
+      $composableBuilder(column: $table.allowPut, builder: (column) => column);
+
+  GeneratedColumn<bool> get allowCall =>
+      $composableBuilder(column: $table.allowCall, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get maxBuyPrice =>
+      $composableBuilder(
+        column: $table.maxBuyPrice,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get minSellPrice =>
+      $composableBuilder(
+        column: $table.minSellPrice,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+}
+
+class $$ApprovedUnderlyingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ApprovedUnderlyingsTable,
+          ApprovedUnderlyingRow,
+          $$ApprovedUnderlyingsTableFilterComposer,
+          $$ApprovedUnderlyingsTableOrderingComposer,
+          $$ApprovedUnderlyingsTableAnnotationComposer,
+          $$ApprovedUnderlyingsTableCreateCompanionBuilder,
+          $$ApprovedUnderlyingsTableUpdateCompanionBuilder,
+          (
+            ApprovedUnderlyingRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ApprovedUnderlyingsTable,
+              ApprovedUnderlyingRow
+            >,
+          ),
+          ApprovedUnderlyingRow,
+          PrefetchHooks Function()
+        > {
+  $$ApprovedUnderlyingsTableTableManager(
+    _$AppDatabase db,
+    $ApprovedUnderlyingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ApprovedUnderlyingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ApprovedUnderlyingsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ApprovedUnderlyingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<bool> allowPut = const Value.absent(),
+                Value<bool> allowCall = const Value.absent(),
+                Value<Decimal?> maxBuyPrice = const Value.absent(),
+                Value<Decimal?> minSellPrice = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ApprovedUnderlyingsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                symbol: symbol,
+                market: market,
+                allowPut: allowPut,
+                allowCall: allowCall,
+                maxBuyPrice: maxBuyPrice,
+                minSellPrice: minSellPrice,
+                notes: notes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String symbol,
+                required String market,
+                Value<bool> allowPut = const Value.absent(),
+                Value<bool> allowCall = const Value.absent(),
+                Value<Decimal?> maxBuyPrice = const Value.absent(),
+                Value<Decimal?> minSellPrice = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ApprovedUnderlyingsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                symbol: symbol,
+                market: market,
+                allowPut: allowPut,
+                allowCall: allowCall,
+                maxBuyPrice: maxBuyPrice,
+                minSellPrice: minSellPrice,
+                notes: notes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ApprovedUnderlyingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ApprovedUnderlyingsTable,
+      ApprovedUnderlyingRow,
+      $$ApprovedUnderlyingsTableFilterComposer,
+      $$ApprovedUnderlyingsTableOrderingComposer,
+      $$ApprovedUnderlyingsTableAnnotationComposer,
+      $$ApprovedUnderlyingsTableCreateCompanionBuilder,
+      $$ApprovedUnderlyingsTableUpdateCompanionBuilder,
+      (
+        ApprovedUnderlyingRow,
+        BaseReferences<
+          _$AppDatabase,
+          $ApprovedUnderlyingsTable,
+          ApprovedUnderlyingRow
+        >,
+      ),
+      ApprovedUnderlyingRow,
       PrefetchHooks Function()
     >;
 typedef $$RecurringTransactionsTableCreateCompanionBuilder =
@@ -23968,6 +27248,14 @@ class $AppDatabaseManager {
       $$PricesTableTableManager(_db, _db.prices);
   $$WatchlistItemsTableTableManager get watchlistItems =>
       $$WatchlistItemsTableTableManager(_db, _db.watchlistItems);
+  $$OptionsStrategyProfileTableTableTableManager
+  get optionsStrategyProfileTable =>
+      $$OptionsStrategyProfileTableTableTableManager(
+        _db,
+        _db.optionsStrategyProfileTable,
+      );
+  $$ApprovedUnderlyingsTableTableManager get approvedUnderlyings =>
+      $$ApprovedUnderlyingsTableTableManager(_db, _db.approvedUnderlyings);
   $$RecurringTransactionsTableTableManager get recurringTransactions =>
       $$RecurringTransactionsTableTableManager(_db, _db.recurringTransactions);
   $$LiabilitiesTableTableManager get liabilities =>

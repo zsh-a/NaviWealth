@@ -21,3 +21,5 @@ target/
 
 # Agent / platform
 .agent_context/
+
+.codegraph
