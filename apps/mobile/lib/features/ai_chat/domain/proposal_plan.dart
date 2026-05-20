@@ -130,6 +130,10 @@ enum ProposalKind {
   liabilityPayment,
   accountCreate,
   assetValuation,
+  // FIRE OS Phase 5 — update the planning inputs.
+  firePlanUpdate,
+  // FIRE OS Phase 5 — assign an asset/account to a bucket role.
+  fireBucketRule,
   unknown,
 }
 
@@ -146,6 +150,10 @@ extension ProposalKindX on ProposalKind {
         return ProposalKind.accountCreate;
       case 'asset_valuation':
         return ProposalKind.assetValuation;
+      case 'fire_plan_update':
+        return ProposalKind.firePlanUpdate;
+      case 'fire_bucket_rule':
+        return ProposalKind.fireBucketRule;
       default:
         return ProposalKind.unknown;
     }
@@ -157,6 +165,8 @@ extension ProposalKindX on ProposalKind {
     ProposalKind.liabilityPayment => '还款',
     ProposalKind.accountCreate => '新账户',
     ProposalKind.assetValuation => '估值更新',
+    ProposalKind.firePlanUpdate => 'FIRE 计划更新',
+    ProposalKind.fireBucketRule => 'FIRE 桶规则',
     ProposalKind.unknown => '未知',
   };
 
@@ -168,6 +178,8 @@ extension ProposalKindX on ProposalKind {
     ProposalKind.liabilityPayment => 'propose_liability_payment',
     ProposalKind.accountCreate => 'propose_account_create',
     ProposalKind.assetValuation => 'propose_asset_valuation',
+    ProposalKind.firePlanUpdate => 'propose_fire_plan_update',
+    ProposalKind.fireBucketRule => 'propose_fire_bucket_rule',
     ProposalKind.unknown => '',
   };
 }

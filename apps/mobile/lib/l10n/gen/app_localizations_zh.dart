@@ -2300,6 +2300,458 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fireSensitivityLowerSurplus => '结余 -20%';
 
   @override
+  String get fireOsHeroTitle => '自由状态';
+
+  @override
+  String get fireOsHeroSubtitle => '当前资产是否还能支撑你想要的生活方式。';
+
+  @override
+  String get fireOsHeroNetWorthLabel => '净资产';
+
+  @override
+  String get fireOsHeroInvestableLabel => '可投资资产';
+
+  @override
+  String get fireOsHeroLiquidLabel => '现金资产';
+
+  @override
+  String get fireOsHeroWithdrawalRateLabel => '提取率';
+
+  @override
+  String fireOsHeroWithdrawalRateValue(String rate, String swr) {
+    return '$rate% / 安全提取率 $swr%';
+  }
+
+  @override
+  String get fireOsHeroWithdrawalRateInfinite => '有支出但缺可投资资产';
+
+  @override
+  String get fireOsHeroCashBucketLabel => '现金桶';
+
+  @override
+  String fireOsHeroCashBucketValue(String months, int target) {
+    return '$months 个月 / 目标 $target 个月';
+  }
+
+  @override
+  String get fireOsHeroCashBucketInfinite => '暂无月度支出记录';
+
+  @override
+  String get fireOsHeroEtaLabel => 'FIRE 预计达成';
+
+  @override
+  String get fireOsHeroEtaReached => '已达成 FIRE';
+
+  @override
+  String get fireOsHeroEtaUnreachable => '100 年内不可达';
+
+  @override
+  String get fireOsHeroAnnualSpendLabel => '年度支出';
+
+  @override
+  String get fireOsAnnualSpendSourceTrailing => '最近 12 个月';
+
+  @override
+  String get fireOsAnnualSpendSourcePlan => '计划输入';
+
+  @override
+  String get fireOsSafetySafe => '安全';
+
+  @override
+  String get fireOsSafetyCautious => '谨慎';
+
+  @override
+  String get fireOsSafetyDanger => '危险';
+
+  @override
+  String get fireOsSafetyUnconfigured => '尚未配置';
+
+  @override
+  String get fireOsSuggestedActionsTitle => '下一步建议';
+
+  @override
+  String get fireOsSuggestedActionsEmpty => '暂无需要操作的事项——保持当前节奏。';
+
+  @override
+  String get fireOsActionConfigurePlanTitle => '配置你的 FIRE 计划';
+
+  @override
+  String get fireOsActionConfigurePlanDetail => '填写目标净值、月度支出与结余,系统才能判断安全度。';
+
+  @override
+  String get fireOsActionHoldSteadyTitle => '状态健康——继续保持';
+
+  @override
+  String get fireOsActionHoldSteadyDetail => '提取率低于 SWR,现金桶充足。';
+
+  @override
+  String get fireOsActionTopUpCashBucketTitle => '补足现金桶';
+
+  @override
+  String fireOsActionTopUpCashBucketDetail(String amount, int months) {
+    return '需再增加 $amount,达到 $months 个月覆盖。';
+  }
+
+  @override
+  String get fireOsActionReduceSpendingTitle => '降低支出';
+
+  @override
+  String fireOsActionReduceSpendingDetailPct(String pct) {
+    return '提取率比 SWR 高出 $pct 个百分点。';
+  }
+
+  @override
+  String get fireOsActionReduceSpendingDetailGeneric =>
+      '支出已超过可投资资产承受范围——请复盘月度开支。';
+
+  @override
+  String get fireOsActionDelayDiscretionaryTitle => '推迟非必要支出';
+
+  @override
+  String get fireOsActionDelayDiscretionaryDetail => '暂缓旅行、升级或大额采购,待提取率回落后再恢复。';
+
+  @override
+  String get fireOsActionRebalanceTitle => '再平衡至目标权重';
+
+  @override
+  String get fireOsActionRebalanceDetail => '配置已偏离目标——调整各桶比例。';
+
+  @override
+  String get fireOsActionBuildRiskReserveTitle => '建立风险储备';
+
+  @override
+  String get fireOsActionBuildRiskReserveDetail => '净资产为负或单薄——先备好应急 / 医疗资金。';
+
+  @override
+  String get fireOsActionRunReviewTitle => '打开最新复盘';
+
+  @override
+  String get fireOsActionRunReviewDetail => '查看月度或季度复盘了解背景。';
+
+  @override
+  String get fireOsActionFixCurrencyGapTitle => '补全汇率';
+
+  @override
+  String fireOsActionFixCurrencyGapDetail(int count) {
+    return '$count 项资产缺少到本币的汇率。';
+  }
+
+  @override
+  String get fireOsPlanFormAdvancedTitle => '高级设置';
+
+  @override
+  String get fireOsPlanFormSwrLabel => '安全提取率';
+
+  @override
+  String fireOsPlanFormSwrValue(String rate) {
+    return '$rate%';
+  }
+
+  @override
+  String get fireOsPlanFormSwrHelper =>
+      'Trinity 研究默认 4%。Lean FIRE 通常更低;Fat FIRE 留更多缓冲。';
+
+  @override
+  String get fireOsPlanFormCashBucketLabel => '现金桶覆盖月数';
+
+  @override
+  String get fireOsPlanFormCashBucketHelper => '现金桶要覆盖多少个月的支出。';
+
+  @override
+  String get fireOsPlanFormLifestyleLabel => '生活方式';
+
+  @override
+  String get fireOsPlanFormLifestyleLean => 'Lean';
+
+  @override
+  String get fireOsPlanFormLifestyleStandard => '标准';
+
+  @override
+  String get fireOsPlanFormLifestyleFat => 'Fat';
+
+  @override
+  String get fireOsPlanFormLifestyleCoast => 'Coast';
+
+  @override
+  String get fireOsPlanFormLifestyleBarista => 'Barista';
+
+  @override
+  String get fireOsBucketsTitle => '桶视图';
+
+  @override
+  String get fireOsBucketsSubtitle => '把每项资产解释为现金 / 防御 / 增长 / 风险储备 / 梦想之一。';
+
+  @override
+  String get fireOsBucketRoleCash => '现金桶';
+
+  @override
+  String get fireOsBucketRoleDefensive => '防御桶';
+
+  @override
+  String get fireOsBucketRoleGrowth => '增长桶';
+
+  @override
+  String get fireOsBucketRoleRiskReserve => '风险桶';
+
+  @override
+  String get fireOsBucketRoleDream => '梦想桶';
+
+  @override
+  String get fireOsBucketStatusOnTrack => '正常';
+
+  @override
+  String get fireOsBucketStatusUnder => '低于目标';
+
+  @override
+  String get fireOsBucketStatusOver => '超过目标';
+
+  @override
+  String get fireOsBucketStatusEmpty => '空';
+
+  @override
+  String get fireOsBucketNoTarget => '暂无明确目标';
+
+  @override
+  String fireOsBucketCoverage(String current, String target) {
+    return '$current / $target';
+  }
+
+  @override
+  String fireOsBucketAssets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项资产',
+      one: '1 项资产',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fireOsBucketsManageCta => '管理桶规则';
+
+  @override
+  String get fireOsBucketsMappingTitle => '桶规则';
+
+  @override
+  String get fireOsBucketsMappingSubtitle => '为每项资产指定所属桶。未设置的项目使用默认规则。';
+
+  @override
+  String get fireOsBucketsMappingSave => '保存';
+
+  @override
+  String get fireOsBucketsMappingCancel => '取消';
+
+  @override
+  String get fireOsBucketsMappingDefault => '默认';
+
+  @override
+  String get fireOsBucketsMappingEmpty => '暂无可分配的资产。请先添加账户或资产。';
+
+  @override
+  String get fireOsUnmappedTitle => '未分配资产';
+
+  @override
+  String get fireOsUnmappedSubtitle => '这些资产暂未归入任何桶。若需纳入计划,请配置桶规则。';
+
+  @override
+  String get fireOsInsightBucketDeviation => '桶低于目标';
+
+  @override
+  String fireOsInsightBucketDeviationValue(
+    String role,
+    String current,
+    String target,
+  ) {
+    return '$role: $current / $target';
+  }
+
+  @override
+  String get fireOsInsightUnmappedHoldings => '未分配资产';
+
+  @override
+  String fireOsInsightUnmappedHoldingsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项资产',
+      one: '1 项资产',
+    );
+    return '$_temp0 暂未分配桶';
+  }
+
+  @override
+  String get fireOsStressTitle => '压力测试';
+
+  @override
+  String get fireOsStressSubtitle => '在熊市、支出上升、一次性冲击、汇率波动和现金桶耗尽下验证韧性。';
+
+  @override
+  String get fireOsStressEmpty => '请先配置 FIRE 计划再运行压力测试。';
+
+  @override
+  String fireOsStressScenarioMarketDrawdown(String pct) {
+    return '市场回撤 −$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioExpenseSurge(String pct) {
+    return '支出 +$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioOneOffShock(String amount) {
+    return '一次性冲击 $amount';
+  }
+
+  @override
+  String fireOsStressScenarioFxShock(String pct) {
+    return '汇率冲击 ±$pct%';
+  }
+
+  @override
+  String fireOsStressScenarioCashDepletion(int months) {
+    return '$months 个月内现金桶被消耗';
+  }
+
+  @override
+  String get fireOsStressVerdictSafe => '安全';
+
+  @override
+  String get fireOsStressVerdictCautious => '谨慎';
+
+  @override
+  String get fireOsStressVerdictDanger => '危险';
+
+  @override
+  String fireOsStressMetricWr(String rate) {
+    return '提取率 $rate%';
+  }
+
+  @override
+  String get fireOsStressMetricWrInfinite => '提取率 ∞';
+
+  @override
+  String fireOsStressMetricCash(String months) {
+    return '现金 $months 个月';
+  }
+
+  @override
+  String fireOsStressMetricNetWorth(String amount) {
+    return '净资产 $amount';
+  }
+
+  @override
+  String get fireOsReviewTitle => '周期复盘';
+
+  @override
+  String get fireOsReviewSubtitle => '确定性的月度 / 季度 / 年度快照,AI 负责解读,不负责编造。';
+
+  @override
+  String get fireOsReviewKindMonthly => '月度';
+
+  @override
+  String get fireOsReviewKindQuarterly => '季度';
+
+  @override
+  String get fireOsReviewKindAnnual => '年度';
+
+  @override
+  String fireOsReviewGeneratedAt(String date) {
+    return '生成于 $date';
+  }
+
+  @override
+  String get fireOsReviewSaveSnapshot => '保存快照';
+
+  @override
+  String fireOsReviewSaved(String key) {
+    return '已保存 · $key';
+  }
+
+  @override
+  String get fireOsReviewFindingsTitle => '关键发现';
+
+  @override
+  String get fireOsReviewFindingNetWorthHealthy => '净资产为正。';
+
+  @override
+  String get fireOsReviewFindingNetWorthBroken => '净资产为零或负数。';
+
+  @override
+  String fireOsReviewFindingWithdrawalRateBelowSwr(String pct) {
+    return '提取率低于 SWR $pct 个百分点。';
+  }
+
+  @override
+  String fireOsReviewFindingWithdrawalRateAboveSwr(String pct) {
+    return '提取率高于 SWR $pct 个百分点。';
+  }
+
+  @override
+  String get fireOsReviewFindingWithdrawalRateInfinite => '有支出但无可投资资产。';
+
+  @override
+  String fireOsReviewFindingWithinTargetCashBucket(int months) {
+    return '现金桶覆盖 $months 个月 — 已达标。';
+  }
+
+  @override
+  String fireOsReviewFindingBelowTargetCashBucket(int months) {
+    return '现金桶未达 $months 个月目标。';
+  }
+
+  @override
+  String get fireOsReviewFindingFireEtaReached => 'FIRE 目标已达成。';
+
+  @override
+  String get fireOsReviewFindingFireEtaUnreachable => '100 年内难以达成 FIRE 目标。';
+
+  @override
+  String fireOsReviewFindingFireEtaProgressing(int months) {
+    return 'FIRE 预计 $months 个月。';
+  }
+
+  @override
+  String fireOsReviewFindingCurrencyGap(int count) {
+    return '$count 项资产缺少本币汇率。';
+  }
+
+  @override
+  String fireOsReviewFindingUnmappedHoldings(int count) {
+    return '$count 项资产暂未分配桶。';
+  }
+
+  @override
+  String fireOsReviewFindingStressDanger(String scenario) {
+    return '压力测试 \"$scenario\" 触发危险等级。';
+  }
+
+  @override
+  String fireOsReviewFindingStressCautious(String scenario) {
+    return '压力测试 \"$scenario\" 触发谨慎等级。';
+  }
+
+  @override
+  String get fireOsReviewFindingStressSafe => '所有压力测试在当前假设下均为安全。';
+
+  @override
+  String get fireOsInsightHighWithdrawalRate => '提取率高于安全线';
+
+  @override
+  String fireOsInsightHighWithdrawalRateValue(String rate, String swr) {
+    return '$rate% / 安全提取率 $swr%';
+  }
+
+  @override
+  String get fireOsInsightLowCashBucket => '现金桶低于目标';
+
+  @override
+  String fireOsInsightLowCashBucketValue(String months, int target) {
+    return '$months / 目标 $target 个月';
+  }
+
+  @override
   String get benchmarkComparisonTitle => '基准指数对比';
 
   @override
@@ -2883,6 +3335,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatProposalKindAssetValuation => '估值更新';
+
+  @override
+  String get aiChatProposalKindFirePlanUpdate => 'FIRE 计划更新';
+
+  @override
+  String get aiChatProposalKindFireBucketRule => 'FIRE 桶规则';
 
   @override
   String get aiChatProposalKindUnknown => '未知';

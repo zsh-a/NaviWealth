@@ -210,6 +210,11 @@ void main() {
         'get_anomaly_flags',
         'get_asset_allocation',
         'get_cashflow_buckets',
+        'get_fire_buckets',
+        'get_fire_plan',
+        'get_fire_review',
+        'get_fire_state',
+        'get_fire_stress_tests',
         'get_geo_breakdown',
         'get_holdings',
         'get_industry_breakdown',
@@ -224,11 +229,14 @@ void main() {
         'propose_account_create',
         'propose_asset_valuation',
         'propose_expense',
+        'propose_fire_bucket_rule',
+        'propose_fire_plan_update',
         'propose_liability_payment',
         'propose_trade',
         'read_account_window',
         'read_asset_window',
         'read_category_window',
+        'simulate_fire_plan',
       ]);
     });
   });

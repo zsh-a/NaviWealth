@@ -8,9 +8,13 @@ import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/fire_projection.dart';
+import 'fire_buckets_card.dart';
 import 'fire_goal_form.dart';
 import 'fire_progress_gauge.dart';
+import 'fire_review_card.dart';
 import 'fire_scenarios_chart.dart';
+import 'fire_state_hero_card.dart';
+import 'fire_stress_tests_card.dart';
 
 class FireUnconfiguredBody extends StatelessWidget {
   const FireUnconfiguredBody({super.key});
@@ -71,6 +75,10 @@ class FireConfiguredBody extends ConsumerWidget {
     final left = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const FireStateHeroCard(),
+        const SizedBox(height: 12),
+        const FireBucketsCard(),
+        const SizedBox(height: 12),
         _ProgressHeaderCard(view: view, formatters: formatters),
         const SizedBox(height: 12),
         _CountdownCard(view: view, formatters: formatters),
@@ -79,6 +87,8 @@ class FireConfiguredBody extends ConsumerWidget {
     final right = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const FireStressTestsCard(),
+        const SizedBox(height: 12),
         _ProjectionCard(view: view),
         const SizedBox(height: 12),
         _ScenariosTable(view: view),
@@ -86,6 +96,8 @@ class FireConfiguredBody extends ConsumerWidget {
         _SafeWithdrawalCard(view: view, formatters: formatters),
         const SizedBox(height: 12),
         _SensitivityCard(view: view),
+        const SizedBox(height: 12),
+        const FireReviewCard(),
       ],
     );
     return LayoutBuilder(
