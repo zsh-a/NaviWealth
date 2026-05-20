@@ -226,6 +226,7 @@ test/
 | `docs/sync-monitoring.md` | Latency targets, alert tiers, D1 sampling |
 | `docs/ai-architecture.md` | AI design source of truth: device-only runtime, tools, contracts, UI grammar (read before touching `lib/core/ai/`) |
 | `docs/ai-protocol.md` | Device AI runtime event contract (stream events, stop reasons, tool catalog) |
+| `docs/options-income.md` | Income Planner design: device-only options income engine (covered call / cash-secured put), yfinance MVP, AI reads cache only |
 | `docs/local-development.md` | Local dev setup walkthrough |
 | `docs/market-data-providers.md` | Market-data provider matrix and limits |
 | `docs/web-compat-matrix.md` | Cross-browser compatibility and known issues |
