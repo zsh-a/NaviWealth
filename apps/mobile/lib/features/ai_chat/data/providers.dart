@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
@@ -26,6 +27,10 @@ import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
+import '../../fire/data/fire_bucket_rules_preferences.dart';
+import '../../fire/data/fire_providers.dart';
+import '../../fire/domain/fire_bucket.dart';
+import '../../fire/domain/fire_plan.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../investment/data/providers.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
@@ -443,5 +448,99 @@ final proposalApplierProvider = FutureProvider<ProposalApplier>((ref) async {
     liabilityRepo: liabilityRepo,
     currentUserId: currentUserId,
     aiTouchedStore: touched,
+    // FIRE OS Phase 5 — confirm-and-apply for FIRE proposal kinds.
+    firePlanWriter: (after) =>
+        _applyFirePlanUpdateProposal(ref: ref, after: after),
+    fireBucketRuleWriter: (payload) =>
+        _applyFireBucketRuleProposal(ref: ref, payload: payload),
   );
 });
+
+Future<void> _applyFirePlanUpdateProposal({
+  required Ref ref,
+  required Map<String, Object?> after,
+}) async {
+  final plan = ref.read(firePlanProvider);
+  Decimal? d(String key) {
+    final raw = after[key];
+    if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));
+    if (raw is String) return Decimal.tryParse(raw);
+    return null;
+  }
+
+  final updated = plan.copyWith(
+    targetNetWorth: d('target_net_worth') ?? plan.targetNetWorth,
+    monthlyExpenses: d('monthly_expenses') ?? plan.monthlyExpenses,
+    monthlySurplus: d('monthly_surplus') ?? plan.monthlySurplus,
+    inflationRate:
+        (after['inflation_rate'] is num
+                ? (after['inflation_rate'] as num).toDouble()
+                : null) ??
+            plan.inflationRate,
+    safeWithdrawalRate:
+        (after['safe_withdrawal_rate'] is num
+                ? (after['safe_withdrawal_rate'] as num).toDouble()
+                : null) ??
+            plan.safeWithdrawalRate,
+    targetCashBucketMonths:
+        (after['target_cash_bucket_months'] is num
+                ? (after['target_cash_bucket_months'] as num).toInt()
+                : null) ??
+            plan.targetCashBucketMonths,
+    lifestyleMode: _parseLifestyle(after['lifestyle_mode']) ??
+        plan.lifestyleMode,
+  );
+  await saveFirePlanWithRef(ref, updated);
+}
+
+FireLifestyleMode? _parseLifestyle(Object? raw) {
+  if (raw is! String) return null;
+  for (final m in FireLifestyleMode.values) {
+    if (m.name == raw) return m;
+  }
+  return null;
+}
+
+Future<String> _applyFireBucketRuleProposal({
+  required Ref ref,
+  required Map<String, Object?> payload,
+}) async {
+  final roleRaw = payload['role'] as String? ?? '';
+  final role = FireBucketRole.values.firstWhere(
+    (r) => _wireForRole(r) == roleRaw,
+    orElse: () => FireBucketRole.cash,
+  );
+  final targetId = payload['target_id'] as String? ?? '';
+  if (targetId.isEmpty) {
+    throw StateError('fire_bucket_rule payload missing target_id');
+  }
+  final pct = (payload['allocation_pct'] is num)
+      ? (payload['allocation_pct'] as num).toDouble()
+      : null;
+  final note = payload['note'] as String?;
+  final rule = FireBucketRule(
+    id: targetId,
+    role: role,
+    targetTable: (payload['target_table'] as String?) ?? 'assets',
+    targetId: targetId,
+    allocationPct: pct,
+    note: note,
+  );
+  await ref.read(fireBucketRulesProvider.notifier).upsert(rule);
+  return targetId;
+}
+
+String _wireForRole(FireBucketRole role) {
+  switch (role) {
+    case FireBucketRole.cash:
+      return 'cash';
+    case FireBucketRole.defensive:
+      return 'defensive';
+    case FireBucketRole.growth:
+      return 'growth';
+    case FireBucketRole.riskReserve:
+      return 'risk_reserve';
+    case FireBucketRole.dream:
+      return 'dream';
+  }
+}

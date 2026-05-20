@@ -23,6 +23,11 @@ import 'device_tool.dart';
 import 'get_anomaly_flags_tool.dart';
 import 'get_asset_allocation_tool.dart';
 import 'get_cashflow_buckets_tool.dart';
+import 'get_fire_buckets_tool.dart';
+import 'get_fire_plan_tool.dart';
+import 'get_fire_review_tool.dart';
+import 'get_fire_state_tool.dart';
+import 'get_fire_stress_tests_tool.dart';
 import 'get_holdings_tool.dart';
 import 'get_investment_performance_tool.dart';
 import 'get_net_worth_summary_tool.dart';
@@ -34,11 +39,14 @@ import 'list_payment_accounts_tool.dart';
 import 'propose_account_create_tool.dart';
 import 'propose_asset_valuation_tool.dart';
 import 'propose_expense_tool.dart';
+import 'propose_fire_bucket_rule_tool.dart';
+import 'propose_fire_plan_update_tool.dart';
 import 'propose_liability_payment_tool.dart';
 import 'propose_trade_tool.dart';
 import 'read_account_window_tool.dart';
 import 'read_asset_window_tool.dart';
 import 'read_category_window_tool.dart';
+import 'simulate_fire_plan_tool.dart';
 
 /// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
 const Duration kPerToolTimeout = Duration(seconds: 15);
@@ -71,6 +79,15 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   GetIndustryBreakdownTool(),
   GetGeoBreakdownTool(),
   GetMarketCapBreakdownTool(),
+  // FIRE OS Phase 5 tools — explain / simulate / confirm-to-apply.
+  GetFireStateTool(),
+  GetFirePlanTool(),
+  GetFireBucketsTool(),
+  GetFireStressTestsTool(),
+  GetFireReviewTool(),
+  SimulateFirePlanTool(),
+  ProposeFirePlanUpdateTool(),
+  ProposeFireBucketRuleTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../app/route_paths.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
@@ -9,6 +10,7 @@ import '../../cashflow/domain/cash_flow_aggregator.dart';
 import '../../cashflow/domain/home_cash_flow_metrics.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
+import '../../fire/domain/fire_bucket.dart';
 import '../../ingest/data/ingest_queue_insight_provider.dart';
 import '../../rebalance/data/rebalance_drift_insight_provider.dart';
 import '../domain/insight_models.dart';
@@ -48,6 +50,77 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           kind: InsightKind.fireReached,
           iconColor: Colors.green,
           route: AppRoutes.accountsFire,
+        ),
+      );
+    }
+  });
+
+  // FIRE OS Phase 1: high withdrawal rate / low cash bucket signals. The
+  // hero card on the FIRE page shows the same data in detail; the home
+  // surface is the calm prompt before the user opens the dashboard.
+  final fireStateAsync = ref.watch(fireStateProvider);
+  fireStateAsync.whenData((state) {
+    if (!state.isConfigured) return;
+    if (state.withdrawalRate.isFinite &&
+        state.withdrawalRate > state.plan.safeWithdrawalRate) {
+      insights.add(
+        InsightItem(
+          icon: Icons.trending_up_outlined,
+          kind: InsightKind.fireOsHighWithdrawalRate,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsWithdrawalRate: state.withdrawalRate,
+          fireOsSafeWithdrawalRate: state.plan.safeWithdrawalRate,
+        ),
+      );
+    }
+    if (state.cashBucketMonths.isFinite &&
+        state.cashBucketMonths < state.plan.targetCashBucketMonths) {
+      insights.add(
+        InsightItem(
+          icon: Icons.account_balance_outlined,
+          kind: InsightKind.fireOsLowCashBucket,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsCashBucketMonths: state.cashBucketMonths,
+          fireOsTargetCashBucketMonths: state.plan.targetCashBucketMonths,
+        ),
+      );
+    }
+    if (state.unmappedHoldings.isNotEmpty) {
+      insights.add(
+        InsightItem(
+          icon: Icons.help_outline,
+          kind: InsightKind.fireOsUnmappedHoldings,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsUnmappedCount: state.unmappedHoldings.length,
+        ),
+      );
+    }
+
+    // Non-cash bucket deviation. Cash already has its own dedicated
+    // insight; pick the single worst other bucket so the home strip
+    // doesn't show 4 bucket cards at once.
+    final worst = _worstNonCashBucket(state.buckets);
+    if (worst != null) {
+      final fmt = NumberFormat.simpleCurrency(
+        name: worst.currentValue.currency,
+        decimalDigits: 0,
+      );
+      insights.add(
+        InsightItem(
+          icon: worst.status == FireBucketStatus.overTarget
+              ? Icons.unfold_less
+              : Icons.unfold_more,
+          kind: InsightKind.fireOsBucketDeviation,
+          iconColor: Colors.amber,
+          route: AppRoutes.accountsFire,
+          fireOsBucketRoleLabel: _bucketRoleWire(worst.role),
+          fireOsBucketCurrentLabel:
+              fmt.format(worst.currentValue.amount.toDouble()).trim(),
+          fireOsBucketTargetLabel:
+              fmt.format(worst.targetValue.amount.toDouble()).trim(),
         ),
       );
     }
@@ -190,8 +263,16 @@ String insightScopeHash(InsightItem item) {
     case InsightKind.portfolioDrift:
     case InsightKind.maturity:
     case InsightKind.anomaly:
+    case InsightKind.fireOsHighWithdrawalRate:
+    case InsightKind.fireOsLowCashBucket:
+    case InsightKind.fireOsUnmappedHoldings:
       // Single-instance kinds — one hash is enough to dismiss them.
       return '';
+    case InsightKind.fireOsBucketDeviation:
+      // Dismissable per role — if the user silences the "growth bucket
+      // off-target" prompt that shouldn't also silence "risk reserve
+      // off-target" the next month.
+      return item.fireOsBucketRoleLabel ?? '';
     case InsightKind.duplicateCharge:
       // The provider encodes the full match cluster into its
       // scopeHash; the InsightItem lost that detail when it was
@@ -216,3 +297,46 @@ String insightScopeHash(InsightItem item) {
 
 int _moneyToMinor(Decimal amount) =>
     (amount * Decimal.fromInt(100)).round().toBigInt().toInt();
+
+/// Pick the non-cash bucket that is furthest from its target (worst
+/// under-target wins; otherwise furthest over-target). Returns null
+/// when no non-cash bucket has a formal target or every such bucket
+/// is on-track.
+FireBucketState? _worstNonCashBucket(List<FireBucketState> buckets) {
+  FireBucketState? worst;
+  double? worstSeverity;
+  for (final b in buckets) {
+    if (b.role == FireBucketRole.cash) continue;
+    // Only buckets with a target can deviate.
+    if (b.targetValue.amount <= Decimal.zero) continue;
+    if (b.status == FireBucketStatus.onTrack) continue;
+    final coverage = b.coverageRatio ?? 1.0;
+    // Severity = distance from 1.0 (the on-track centre). Under-
+    // target rolls onto the same metric symmetrically — both are
+    // signals worth surfacing.
+    final severity = (coverage - 1.0).abs();
+    if (worstSeverity == null || severity > worstSeverity) {
+      worst = b;
+      worstSeverity = severity;
+    }
+  }
+  return worst;
+}
+
+/// Wire-name a bucket role for telemetry / dismissal keys. Matches the
+/// AI tool surface (snake_case) so dismissal records can survive a
+/// later UI label change.
+String _bucketRoleWire(FireBucketRole role) {
+  switch (role) {
+    case FireBucketRole.cash:
+      return 'cash';
+    case FireBucketRole.defensive:
+      return 'defensive';
+    case FireBucketRole.growth:
+      return 'growth';
+    case FireBucketRole.riskReserve:
+      return 'risk_reserve';
+    case FireBucketRole.dream:
+      return 'dream';
+  }
+}

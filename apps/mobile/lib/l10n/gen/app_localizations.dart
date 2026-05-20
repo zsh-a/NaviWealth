@@ -902,6 +902,18 @@ abstract class AppLocalizations {
   /// **'配股'**
   String get commandKeywordRightsIssueCn;
 
+  /// Chinese command-palette search keyword for rebalance; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'再平衡'**
+  String get commandKeywordRebalanceCn;
+
+  /// Chinese command-palette search keyword for target allocation; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'目标配置'**
+  String get commandKeywordTargetAllocationCn;
+
   /// Accounts hub section header for cash + deposit + bonds & funds
   ///
   /// In en, this message translates to:
@@ -931,6 +943,534 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage bank accounts'**
   String get accountsHubManageBankAccounts;
+
+  /// Investment portfolio hub page title
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get portfolioHubTitle;
+
+  /// Accounts hub link subtitle for the investment portfolio hub
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings, returns, and allocation views'**
+  String get portfolioHubAccountsEntrySubtitle;
+
+  /// Portfolio hub KPI label: current portfolio market value
+  ///
+  /// In en, this message translates to:
+  /// **'Market value'**
+  String get portfolioHubMarketValueLabel;
+
+  /// Portfolio hub KPI label: year-to-date money-weighted return
+  ///
+  /// In en, this message translates to:
+  /// **'YTD XIRR'**
+  String get portfolioHubYtdXirrLabel;
+
+  /// Portfolio hub KPI label: absolute unrealized return
+  ///
+  /// In en, this message translates to:
+  /// **'Absolute return'**
+  String get portfolioHubAbsoluteReturnLabel;
+
+  /// Portfolio hub grouping view: account
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get portfolioHubViewAccount;
+
+  /// Portfolio hub grouping view: currency
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get portfolioHubViewCurrency;
+
+  /// Portfolio hub grouping view: asset class
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get portfolioHubViewAssetClass;
+
+  /// Portfolio hub grouped holdings section title
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get portfolioHubHoldingsTitle;
+
+  /// Portfolio hub individual holdings section title
+  ///
+  /// In en, this message translates to:
+  /// **'Positions'**
+  String get portfolioHubPositionsTitle;
+
+  /// Portfolio hub group row holding count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 holding} other{{count} holdings}}'**
+  String portfolioHubHoldingCount(int count);
+
+  /// Portfolio hub account group fallback title
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown account'**
+  String get portfolioHubUnknownAccount;
+
+  /// Portfolio hub account group default subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Brokerage account'**
+  String get portfolioHubAccountGroupSubtitle;
+
+  /// Portfolio hub currency group subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement currency'**
+  String get portfolioHubCurrencyGroupSubtitle;
+
+  /// Portfolio hub asset class group subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Asset class'**
+  String get portfolioHubAssetClassGroupSubtitle;
+
+  /// Portfolio hub empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No investment holdings yet.'**
+  String get portfolioHubEmpty;
+
+  /// Portfolio hub load error state
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio failed to load: {error}'**
+  String portfolioHubLoadError(String error);
+
+  /// Portfolio hub asset type label: stock
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get portfolioHubAssetTypeStock;
+
+  /// Portfolio hub asset type label: ETF
+  ///
+  /// In en, this message translates to:
+  /// **'ETF'**
+  String get portfolioHubAssetTypeEtf;
+
+  /// Portfolio hub asset type label: mutual fund
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual fund'**
+  String get portfolioHubAssetTypeMutualFund;
+
+  /// Portfolio hub asset type label: bond
+  ///
+  /// In en, this message translates to:
+  /// **'Bond'**
+  String get portfolioHubAssetTypeBond;
+
+  /// Portfolio hub asset type label: crypto
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get portfolioHubAssetTypeCrypto;
+
+  /// Portfolio hub asset type label: cash
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get portfolioHubAssetTypeCash;
+
+  /// Portfolio hub asset type label: commodity
+  ///
+  /// In en, this message translates to:
+  /// **'Commodity'**
+  String get portfolioHubAssetTypeCommodity;
+
+  /// Portfolio hub asset type label: custom asset
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get portfolioHubAssetTypeCustom;
+
+  /// Portfolio hub asset type label: term deposit
+  ///
+  /// In en, this message translates to:
+  /// **'Term deposit'**
+  String get portfolioHubAssetTypeBankDepositTerm;
+
+  /// Portfolio hub asset type label: demand deposit
+  ///
+  /// In en, this message translates to:
+  /// **'Demand deposit'**
+  String get portfolioHubAssetTypeBankDepositDemand;
+
+  /// Portfolio hub asset type label: wealth product
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth product'**
+  String get portfolioHubAssetTypeWealthProduct;
+
+  /// No description provided for @portfolioHubEnginesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine views'**
+  String get portfolioHubEnginesTitle;
+
+  /// No description provided for @portfolioHubRealizedPnlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Realized P/L'**
+  String get portfolioHubRealizedPnlTitle;
+
+  /// No description provided for @portfolioHubRealizedPnlCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 lot} other{{count} lots}}'**
+  String portfolioHubRealizedPnlCount(int count);
+
+  /// No description provided for @portfolioHubRealizedPnlEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No closed lots yet.'**
+  String get portfolioHubRealizedPnlEmpty;
+
+  /// No description provided for @portfolioHubHoldingPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Held {period}'**
+  String portfolioHubHoldingPeriod(String period);
+
+  /// No description provided for @portfolioHubHoldingYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 year} other{{count} years}}'**
+  String portfolioHubHoldingYears(int count);
+
+  /// No description provided for @portfolioHubHoldingMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 month} other{{count} months}}'**
+  String portfolioHubHoldingMonths(int count);
+
+  /// No description provided for @portfolioHubHoldingDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String portfolioHubHoldingDays(int count);
+
+  /// No description provided for @portfolioHubDividendForecastTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend forecast'**
+  String get portfolioHubDividendForecastTitle;
+
+  /// No description provided for @portfolioHubDividendForecastEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No projected dividends yet.'**
+  String get portfolioHubDividendForecastEmpty;
+
+  /// No description provided for @portfolioHubDividendForecastEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Projected payout'**
+  String get portfolioHubDividendForecastEvent;
+
+  /// No description provided for @portfolioHubForecastConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High confidence'**
+  String get portfolioHubForecastConfidenceHigh;
+
+  /// No description provided for @portfolioHubForecastConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium confidence'**
+  String get portfolioHubForecastConfidenceMedium;
+
+  /// No description provided for @portfolioHubForecastConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low confidence'**
+  String get portfolioHubForecastConfidenceLow;
+
+  /// No description provided for @portfolioHubEventTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event timeline'**
+  String get portfolioHubEventTimelineTitle;
+
+  /// No description provided for @portfolioHubEventTimelineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 event} other{{count} events}}'**
+  String portfolioHubEventTimelineCount(int count);
+
+  /// No description provided for @portfolioHubEventTimelineEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend or corporate-action events yet.'**
+  String get portfolioHubEventTimelineEmpty;
+
+  /// No description provided for @dcaSimulatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA simulator'**
+  String get dcaSimulatorTitle;
+
+  /// No description provided for @dcaSimulatorAccountsEntrySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backtest recurring buys with cached monthly prices'**
+  String get dcaSimulatorAccountsEntrySubtitle;
+
+  /// No description provided for @dcaSimulatorSymbolField.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol or basket'**
+  String get dcaSimulatorSymbolField;
+
+  /// No description provided for @dcaSimulatorSymbolHint.
+  ///
+  /// In en, this message translates to:
+  /// **'VOO or VOO, QQQ'**
+  String get dcaSimulatorSymbolHint;
+
+  /// No description provided for @dcaSimulatorAmountField.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get dcaSimulatorAmountField;
+
+  /// No description provided for @dcaSimulatorCurrencyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get dcaSimulatorCurrencyField;
+
+  /// No description provided for @dcaSimulatorMarketField.
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get dcaSimulatorMarketField;
+
+  /// No description provided for @dcaSimulatorMarketUs.
+  ///
+  /// In en, this message translates to:
+  /// **'US'**
+  String get dcaSimulatorMarketUs;
+
+  /// No description provided for @dcaSimulatorMarketHk.
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong'**
+  String get dcaSimulatorMarketHk;
+
+  /// No description provided for @dcaSimulatorMarketCn.
+  ///
+  /// In en, this message translates to:
+  /// **'China A'**
+  String get dcaSimulatorMarketCn;
+
+  /// No description provided for @dcaSimulatorMarketCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get dcaSimulatorMarketCrypto;
+
+  /// No description provided for @dcaSimulatorFrequencyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get dcaSimulatorFrequencyField;
+
+  /// No description provided for @dcaSimulatorFrequencyMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get dcaSimulatorFrequencyMonthly;
+
+  /// No description provided for @dcaSimulatorFrequencyQuarterly.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarterly'**
+  String get dcaSimulatorFrequencyQuarterly;
+
+  /// No description provided for @dcaSimulatorWindowField.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get dcaSimulatorWindowField;
+
+  /// No description provided for @dcaSimulatorWindow1y.
+  ///
+  /// In en, this message translates to:
+  /// **'1 year'**
+  String get dcaSimulatorWindow1y;
+
+  /// No description provided for @dcaSimulatorWindow3y.
+  ///
+  /// In en, this message translates to:
+  /// **'3 years'**
+  String get dcaSimulatorWindow3y;
+
+  /// No description provided for @dcaSimulatorWindow5y.
+  ///
+  /// In en, this message translates to:
+  /// **'5 years'**
+  String get dcaSimulatorWindow5y;
+
+  /// No description provided for @dcaSimulatorRunAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Run simulation'**
+  String get dcaSimulatorRunAction;
+
+  /// No description provided for @dcaSimulatorDraftAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft next buys'**
+  String get dcaSimulatorDraftAction;
+
+  /// No description provided for @dcaSimulatorFreshnessLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get dcaSimulatorFreshnessLive;
+
+  /// No description provided for @dcaSimulatorFreshnessCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache'**
+  String get dcaSimulatorFreshnessCache;
+
+  /// No description provided for @dcaSimulatorFreshnessStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale'**
+  String get dcaSimulatorFreshnessStale;
+
+  /// No description provided for @dcaSimulatorResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backtest result'**
+  String get dcaSimulatorResultTitle;
+
+  /// No description provided for @dcaSimulatorTotalInvested.
+  ///
+  /// In en, this message translates to:
+  /// **'Invested'**
+  String get dcaSimulatorTotalInvested;
+
+  /// No description provided for @dcaSimulatorEndingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Ending value'**
+  String get dcaSimulatorEndingValue;
+
+  /// No description provided for @dcaSimulatorCumulativeReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Total return'**
+  String get dcaSimulatorCumulativeReturn;
+
+  /// No description provided for @dcaSimulatorAverageCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg cost'**
+  String get dcaSimulatorAverageCost;
+
+  /// No description provided for @dcaSimulatorMaxDrawdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Max drawdown'**
+  String get dcaSimulatorMaxDrawdown;
+
+  /// No description provided for @dcaSimulatorChartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio value'**
+  String get dcaSimulatorChartTitle;
+
+  /// No description provided for @dcaSimulatorChartSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA value'**
+  String get dcaSimulatorChartSeries;
+
+  /// No description provided for @dcaSimulatorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No monthly market data matched this window.'**
+  String get dcaSimulatorEmpty;
+
+  /// No description provided for @dcaSimulatorInvalidSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter at least one symbol.'**
+  String get dcaSimulatorInvalidSymbols;
+
+  /// No description provided for @dcaSimulatorInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount.'**
+  String get dcaSimulatorInvalidAmount;
+
+  /// No description provided for @dcaSimulatorInvalidCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a currency code.'**
+  String get dcaSimulatorInvalidCurrency;
+
+  /// No description provided for @dcaSimulatorLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA simulation failed: {error}'**
+  String dcaSimulatorLoadError(String error);
+
+  /// No description provided for @dcaSimulatorDraftNote.
+  ///
+  /// In en, this message translates to:
+  /// **'DCA plan: buy {symbol} for {amount} {currency}'**
+  String dcaSimulatorDraftNote(String symbol, String amount, String currency);
+
+  /// No description provided for @dcaSimulatorPositionAverageCost.
+  ///
+  /// In en, this message translates to:
+  /// **'{currency} {averageCost} avg cost'**
+  String dcaSimulatorPositionAverageCost(String currency, String averageCost);
+
+  /// No description provided for @assetDetailFxPnlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Price vs FX contribution'**
+  String get assetDetailFxPnlTitle;
+
+  /// No description provided for @assetDetailFxPnlMarketLeg.
+  ///
+  /// In en, this message translates to:
+  /// **'Price movement'**
+  String get assetDetailFxPnlMarketLeg;
+
+  /// No description provided for @assetDetailFxPnlCurrencyLeg.
+  ///
+  /// In en, this message translates to:
+  /// **'FX movement'**
+  String get assetDetailFxPnlCurrencyLeg;
+
+  /// No description provided for @assetDetailFxPnlTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total base P/L'**
+  String get assetDetailFxPnlTotal;
+
+  /// No description provided for @assetDetailFxPnlLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'FX P/L failed to load: {error}'**
+  String assetDetailFxPnlLoadError(String error);
 
   /// Section header above the home AI Insight Feed
   ///
@@ -3672,6 +4212,886 @@ abstract class AppLocalizations {
   /// **'-20% surplus'**
   String get fireSensitivityLowerSurplus;
 
+  /// No description provided for @fireOsHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Freedom status'**
+  String get fireOsHeroTitle;
+
+  /// No description provided for @fireOsHeroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether today\'s portfolio still supports the lifestyle you planned for.'**
+  String get fireOsHeroSubtitle;
+
+  /// No description provided for @fireOsHeroNetWorthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get fireOsHeroNetWorthLabel;
+
+  /// No description provided for @fireOsHeroInvestableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Investable'**
+  String get fireOsHeroInvestableLabel;
+
+  /// No description provided for @fireOsHeroLiquidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid'**
+  String get fireOsHeroLiquidLabel;
+
+  /// No description provided for @fireOsHeroWithdrawalRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate'**
+  String get fireOsHeroWithdrawalRateLabel;
+
+  /// No description provided for @fireOsHeroWithdrawalRateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}% / SWR {swr}%'**
+  String fireOsHeroWithdrawalRateValue(String rate, String swr);
+
+  /// No description provided for @fireOsHeroWithdrawalRateInfinite.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend without investable assets'**
+  String get fireOsHeroWithdrawalRateInfinite;
+
+  /// No description provided for @fireOsHeroCashBucketLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket'**
+  String get fireOsHeroCashBucketLabel;
+
+  /// No description provided for @fireOsHeroCashBucketValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{months} mo / target {target} mo'**
+  String fireOsHeroCashBucketValue(String months, int target);
+
+  /// No description provided for @fireOsHeroCashBucketInfinite.
+  ///
+  /// In en, this message translates to:
+  /// **'No recorded monthly expense'**
+  String get fireOsHeroCashBucketInfinite;
+
+  /// No description provided for @fireOsHeroEtaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE ETA'**
+  String get fireOsHeroEtaLabel;
+
+  /// No description provided for @fireOsHeroEtaReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Already reached'**
+  String get fireOsHeroEtaReached;
+
+  /// No description provided for @fireOsHeroEtaUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not within 100 years'**
+  String get fireOsHeroEtaUnreachable;
+
+  /// No description provided for @fireOsHeroAnnualSpendLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual spend'**
+  String get fireOsHeroAnnualSpendLabel;
+
+  /// No description provided for @fireOsAnnualSpendSourceTrailing.
+  ///
+  /// In en, this message translates to:
+  /// **'Trailing 12 months'**
+  String get fireOsAnnualSpendSourceTrailing;
+
+  /// No description provided for @fireOsAnnualSpendSourcePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan input'**
+  String get fireOsAnnualSpendSourcePlan;
+
+  /// No description provided for @fireOsSafetySafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe'**
+  String get fireOsSafetySafe;
+
+  /// No description provided for @fireOsSafetyCautious.
+  ///
+  /// In en, this message translates to:
+  /// **'Cautious'**
+  String get fireOsSafetyCautious;
+
+  /// No description provided for @fireOsSafetyDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger'**
+  String get fireOsSafetyDanger;
+
+  /// No description provided for @fireOsSafetyUnconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan not set'**
+  String get fireOsSafetyUnconfigured;
+
+  /// No description provided for @fireOsSuggestedActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested next steps'**
+  String get fireOsSuggestedActionsTitle;
+
+  /// No description provided for @fireOsSuggestedActionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No actions right now — the plan is steady.'**
+  String get fireOsSuggestedActionsEmpty;
+
+  /// No description provided for @fireOsActionConfigurePlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your FIRE plan'**
+  String get fireOsActionConfigurePlanTitle;
+
+  /// No description provided for @fireOsActionConfigurePlanDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell NaviWealth your target, expenses, and savings so it can judge safety.'**
+  String get fireOsActionConfigurePlanDetail;
+
+  /// No description provided for @fireOsActionHoldSteadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On track — keep it steady'**
+  String get fireOsActionHoldSteadyTitle;
+
+  /// No description provided for @fireOsActionHoldSteadyDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate is below SWR and the cash bucket is healthy.'**
+  String get fireOsActionHoldSteadyDetail;
+
+  /// No description provided for @fireOsActionTopUpCashBucketTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up the cash bucket'**
+  String get fireOsActionTopUpCashBucketTitle;
+
+  /// No description provided for @fireOsActionTopUpCashBucketDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {amount} to reach {months} months of runway.'**
+  String fireOsActionTopUpCashBucketDetail(String amount, int months);
+
+  /// No description provided for @fireOsActionReduceSpendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce spending'**
+  String get fireOsActionReduceSpendingTitle;
+
+  /// No description provided for @fireOsActionReduceSpendingDetailPct.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate is {pct} percentage points above your SWR.'**
+  String fireOsActionReduceSpendingDetailPct(String pct);
+
+  /// No description provided for @fireOsActionReduceSpendingDetailGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending has outrun the investable base — review the monthly burn.'**
+  String get fireOsActionReduceSpendingDetailGeneric;
+
+  /// No description provided for @fireOsActionDelayDiscretionaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delay discretionary spend'**
+  String get fireOsActionDelayDiscretionaryTitle;
+
+  /// No description provided for @fireOsActionDelayDiscretionaryDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Push travel, upgrades, or big purchases out until the withdrawal rate cools down.'**
+  String get fireOsActionDelayDiscretionaryDetail;
+
+  /// No description provided for @fireOsActionRebalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance toward target'**
+  String get fireOsActionRebalanceTitle;
+
+  /// No description provided for @fireOsActionRebalanceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation has drifted — bring sleeves back in line.'**
+  String get fireOsActionRebalanceDetail;
+
+  /// No description provided for @fireOsActionBuildRiskReserveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a risk reserve'**
+  String get fireOsActionBuildRiskReserveTitle;
+
+  /// No description provided for @fireOsActionBuildRiskReserveDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth is negative or thin — set aside emergency / medical reserves.'**
+  String get fireOsActionBuildRiskReserveDetail;
+
+  /// No description provided for @fireOsActionRunReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the latest review'**
+  String get fireOsActionRunReviewTitle;
+
+  /// No description provided for @fireOsActionRunReviewDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the monthly or quarterly review for context.'**
+  String get fireOsActionRunReviewDetail;
+
+  /// No description provided for @fireOsActionFixCurrencyGapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix missing FX rates'**
+  String get fireOsActionFixCurrencyGapTitle;
+
+  /// No description provided for @fireOsActionFixCurrencyGapDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings are missing a rate into your base currency.'**
+  String fireOsActionFixCurrencyGapDetail(int count);
+
+  /// No description provided for @fireOsPlanFormAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get fireOsPlanFormAdvancedTitle;
+
+  /// No description provided for @fireOsPlanFormSwrLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe withdrawal rate'**
+  String get fireOsPlanFormSwrLabel;
+
+  /// No description provided for @fireOsPlanFormSwrValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}%'**
+  String fireOsPlanFormSwrValue(String rate);
+
+  /// No description provided for @fireOsPlanFormSwrHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Trinity-study default is 4%. Lean FIRE typically aims lower; Fat FIRE leaves more buffer.'**
+  String get fireOsPlanFormSwrHelper;
+
+  /// No description provided for @fireOsPlanFormCashBucketLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket target (months)'**
+  String get fireOsPlanFormCashBucketLabel;
+
+  /// No description provided for @fireOsPlanFormCashBucketHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'How many months of expenses to keep in liquid cash.'**
+  String get fireOsPlanFormCashBucketHelper;
+
+  /// No description provided for @fireOsPlanFormLifestyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifestyle mode'**
+  String get fireOsPlanFormLifestyleLabel;
+
+  /// No description provided for @fireOsPlanFormLifestyleLean.
+  ///
+  /// In en, this message translates to:
+  /// **'Lean'**
+  String get fireOsPlanFormLifestyleLean;
+
+  /// No description provided for @fireOsPlanFormLifestyleStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get fireOsPlanFormLifestyleStandard;
+
+  /// No description provided for @fireOsPlanFormLifestyleFat.
+  ///
+  /// In en, this message translates to:
+  /// **'Fat'**
+  String get fireOsPlanFormLifestyleFat;
+
+  /// No description provided for @fireOsPlanFormLifestyleCoast.
+  ///
+  /// In en, this message translates to:
+  /// **'Coast'**
+  String get fireOsPlanFormLifestyleCoast;
+
+  /// No description provided for @fireOsPlanFormLifestyleBarista.
+  ///
+  /// In en, this message translates to:
+  /// **'Barista'**
+  String get fireOsPlanFormLifestyleBarista;
+
+  /// No description provided for @fireOsBucketsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buckets'**
+  String get fireOsBucketsTitle;
+
+  /// No description provided for @fireOsBucketsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Each holding is interpreted as one of cash, defensive, growth, risk reserve, or dream.'**
+  String get fireOsBucketsSubtitle;
+
+  /// No description provided for @fireOsBucketRoleCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get fireOsBucketRoleCash;
+
+  /// No description provided for @fireOsBucketRoleDefensive.
+  ///
+  /// In en, this message translates to:
+  /// **'Defensive'**
+  String get fireOsBucketRoleDefensive;
+
+  /// No description provided for @fireOsBucketRoleGrowth.
+  ///
+  /// In en, this message translates to:
+  /// **'Growth'**
+  String get fireOsBucketRoleGrowth;
+
+  /// No description provided for @fireOsBucketRoleRiskReserve.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk reserve'**
+  String get fireOsBucketRoleRiskReserve;
+
+  /// No description provided for @fireOsBucketRoleDream.
+  ///
+  /// In en, this message translates to:
+  /// **'Dream'**
+  String get fireOsBucketRoleDream;
+
+  /// No description provided for @fireOsBucketStatusOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get fireOsBucketStatusOnTrack;
+
+  /// No description provided for @fireOsBucketStatusUnder.
+  ///
+  /// In en, this message translates to:
+  /// **'Below target'**
+  String get fireOsBucketStatusUnder;
+
+  /// No description provided for @fireOsBucketStatusOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over target'**
+  String get fireOsBucketStatusOver;
+
+  /// No description provided for @fireOsBucketStatusEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get fireOsBucketStatusEmpty;
+
+  /// No description provided for @fireOsBucketNoTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'No formal target'**
+  String get fireOsBucketNoTarget;
+
+  /// No description provided for @fireOsBucketCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {target}'**
+  String fireOsBucketCoverage(String current, String target);
+
+  /// No description provided for @fireOsBucketAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 holding} other{{count} holdings}}'**
+  String fireOsBucketAssets(int count);
+
+  /// No description provided for @fireOsBucketsManageCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage bucket rules'**
+  String get fireOsBucketsManageCta;
+
+  /// No description provided for @fireOsBucketsMappingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bucket rules'**
+  String get fireOsBucketsMappingTitle;
+
+  /// No description provided for @fireOsBucketsMappingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the bucket each holding belongs to. Defaults are applied to anything you leave unset.'**
+  String get fireOsBucketsMappingSubtitle;
+
+  /// No description provided for @fireOsBucketsMappingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get fireOsBucketsMappingSave;
+
+  /// No description provided for @fireOsBucketsMappingCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get fireOsBucketsMappingCancel;
+
+  /// No description provided for @fireOsBucketsMappingDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get fireOsBucketsMappingDefault;
+
+  /// No description provided for @fireOsBucketsMappingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No holdings to map yet. Add accounts or assets first.'**
+  String get fireOsBucketsMappingEmpty;
+
+  /// No description provided for @fireOsUnmappedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmapped holdings'**
+  String get fireOsUnmappedTitle;
+
+  /// No description provided for @fireOsUnmappedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'These assets aren\'t part of any bucket. Map them if they should fund the plan.'**
+  String get fireOsUnmappedSubtitle;
+
+  /// No description provided for @fireOsInsightBucketDeviation.
+  ///
+  /// In en, this message translates to:
+  /// **'Bucket below target'**
+  String get fireOsInsightBucketDeviation;
+
+  /// No description provided for @fireOsInsightBucketDeviationValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{role}: {current} / {target}'**
+  String fireOsInsightBucketDeviationValue(
+    String role,
+    String current,
+    String target,
+  );
+
+  /// No description provided for @fireOsInsightUnmappedHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmapped holdings'**
+  String get fireOsInsightUnmappedHoldings;
+
+  /// No description provided for @fireOsInsightUnmappedHoldingsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 holding} other{{count} holdings}} not assigned to any bucket'**
+  String fireOsInsightUnmappedHoldingsValue(int count);
+
+  /// No description provided for @fireOsSimulationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulations'**
+  String get fireOsSimulationsTitle;
+
+  /// No description provided for @fireOsSimulationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.'**
+  String get fireOsSimulationsSubtitle;
+
+  /// No description provided for @fireOsSimulationsBaselineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline'**
+  String get fireOsSimulationsBaselineLabel;
+
+  /// No description provided for @fireOsSimulationsPresetExpenseUp20.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending +20%'**
+  String get fireOsSimulationsPresetExpenseUp20;
+
+  /// No description provided for @fireOsSimulationsPresetExpenseDown10.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending −10%'**
+  String get fireOsSimulationsPresetExpenseDown10;
+
+  /// No description provided for @fireOsSimulationsPresetSurplusUp30.
+  ///
+  /// In en, this message translates to:
+  /// **'Surplus +30%'**
+  String get fireOsSimulationsPresetSurplusUp30;
+
+  /// No description provided for @fireOsSimulationsPresetHalfRetireIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Half-retire +¥5k/mo'**
+  String get fireOsSimulationsPresetHalfRetireIncome;
+
+  /// No description provided for @fireOsSimulationsPresetInflationUp1pp.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflation +1 pp'**
+  String get fireOsSimulationsPresetInflationUp1pp;
+
+  /// No description provided for @fireOsSimulationsPresetSwrTight.
+  ///
+  /// In en, this message translates to:
+  /// **'SWR 3.5%'**
+  String get fireOsSimulationsPresetSwrTight;
+
+  /// No description provided for @fireOsSimulationsPresetCashBucketUp24.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket 24 mo'**
+  String get fireOsSimulationsPresetCashBucketUp24;
+
+  /// No description provided for @fireOsSimulationsDeltaWrPp.
+  ///
+  /// In en, this message translates to:
+  /// **'WR {sign}{pp} pp'**
+  String fireOsSimulationsDeltaWrPp(String sign, String pp);
+
+  /// No description provided for @fireOsSimulationsDeltaWrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'WR —'**
+  String get fireOsSimulationsDeltaWrUnavailable;
+
+  /// No description provided for @fireOsSimulationsDeltaCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash {sign}{months} mo'**
+  String fireOsSimulationsDeltaCash(String sign, String months);
+
+  /// No description provided for @fireOsSimulationsDeltaCashUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash —'**
+  String get fireOsSimulationsDeltaCashUnavailable;
+
+  /// No description provided for @fireOsStressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress tests'**
+  String get fireOsStressTitle;
+
+  /// No description provided for @fireOsStressSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How the plan holds up under bear markets, expense surges, one-off shocks, FX swings, and cash depletion.'**
+  String get fireOsStressSubtitle;
+
+  /// No description provided for @fireOsStressEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure a FIRE plan to run stress tests.'**
+  String get fireOsStressEmpty;
+
+  /// No description provided for @fireOsStressScenarioMarketDrawdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Market drawdown −{pct}%'**
+  String fireOsStressScenarioMarketDrawdown(String pct);
+
+  /// No description provided for @fireOsStressScenarioExpenseSurge.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses +{pct}%'**
+  String fireOsStressScenarioExpenseSurge(String pct);
+
+  /// No description provided for @fireOsStressScenarioOneOffShock.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off shock {amount}'**
+  String fireOsStressScenarioOneOffShock(String amount);
+
+  /// No description provided for @fireOsStressScenarioFxShock.
+  ///
+  /// In en, this message translates to:
+  /// **'FX shock ±{pct}%'**
+  String fireOsStressScenarioFxShock(String pct);
+
+  /// No description provided for @fireOsStressScenarioCashDepletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash drawdown over {months} months'**
+  String fireOsStressScenarioCashDepletion(int months);
+
+  /// No description provided for @fireOsStressVerdictSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe'**
+  String get fireOsStressVerdictSafe;
+
+  /// No description provided for @fireOsStressVerdictCautious.
+  ///
+  /// In en, this message translates to:
+  /// **'Cautious'**
+  String get fireOsStressVerdictCautious;
+
+  /// No description provided for @fireOsStressVerdictDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger'**
+  String get fireOsStressVerdictDanger;
+
+  /// No description provided for @fireOsStressMetricWr.
+  ///
+  /// In en, this message translates to:
+  /// **'WR {rate}%'**
+  String fireOsStressMetricWr(String rate);
+
+  /// No description provided for @fireOsStressMetricWrInfinite.
+  ///
+  /// In en, this message translates to:
+  /// **'WR ∞'**
+  String get fireOsStressMetricWrInfinite;
+
+  /// No description provided for @fireOsStressMetricCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash {months} mo'**
+  String fireOsStressMetricCash(String months);
+
+  /// No description provided for @fireOsStressMetricNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'NW {amount}'**
+  String fireOsStressMetricNetWorth(String amount);
+
+  /// No description provided for @fireOsReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Periodic review'**
+  String get fireOsReviewTitle;
+
+  /// No description provided for @fireOsReviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deterministic monthly / quarterly / annual snapshots; the AI explains them, never invents them.'**
+  String get fireOsReviewSubtitle;
+
+  /// No description provided for @fireOsReviewKindMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get fireOsReviewKindMonthly;
+
+  /// No description provided for @fireOsReviewKindQuarterly.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarterly'**
+  String get fireOsReviewKindQuarterly;
+
+  /// No description provided for @fireOsReviewKindAnnual.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual'**
+  String get fireOsReviewKindAnnual;
+
+  /// No description provided for @fireOsReviewGeneratedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {date}'**
+  String fireOsReviewGeneratedAt(String date);
+
+  /// No description provided for @fireOsReviewDiffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared to {key}'**
+  String fireOsReviewDiffTitle(String key);
+
+  /// No description provided for @fireOsReviewDiffNoBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'No prior snapshot to diff against — save one to see month-over-month deltas.'**
+  String get fireOsReviewDiffNoBaseline;
+
+  /// No description provided for @fireOsReviewDiffWr.
+  ///
+  /// In en, this message translates to:
+  /// **'WR {sign}{pp} pp'**
+  String fireOsReviewDiffWr(String sign, String pp);
+
+  /// No description provided for @fireOsReviewDiffWrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'WR delta unavailable (infinite either side)'**
+  String get fireOsReviewDiffWrUnavailable;
+
+  /// No description provided for @fireOsReviewDiffNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth {sign}{amount}'**
+  String fireOsReviewDiffNetWorth(String sign, String amount);
+
+  /// No description provided for @fireOsReviewDiffNetWorthCurrencyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth currency changed — delta skipped.'**
+  String get fireOsReviewDiffNetWorthCurrencyChanged;
+
+  /// No description provided for @fireOsReviewDiffSafetyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety {from} → {to}'**
+  String fireOsReviewDiffSafetyChanged(String from, String to);
+
+  /// No description provided for @fireOsReviewDiffSafetyHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety held at {level}'**
+  String fireOsReviewDiffSafetyHeld(String level);
+
+  /// No description provided for @fireOsReviewSaveSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Save snapshot'**
+  String get fireOsReviewSaveSnapshot;
+
+  /// No description provided for @fireOsReviewSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved · {key}'**
+  String fireOsReviewSaved(String key);
+
+  /// No description provided for @fireOsReviewFindingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Findings'**
+  String get fireOsReviewFindingsTitle;
+
+  /// No description provided for @fireOsReviewFindingNetWorthHealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth is positive.'**
+  String get fireOsReviewFindingNetWorthHealthy;
+
+  /// No description provided for @fireOsReviewFindingNetWorthBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth is at or below zero.'**
+  String get fireOsReviewFindingNetWorthBroken;
+
+  /// No description provided for @fireOsReviewFindingWithdrawalRateBelowSwr.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate is below SWR by {pct} pp.'**
+  String fireOsReviewFindingWithdrawalRateBelowSwr(String pct);
+
+  /// No description provided for @fireOsReviewFindingWithdrawalRateAboveSwr.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate is above SWR by {pct} pp.'**
+  String fireOsReviewFindingWithdrawalRateAboveSwr(String pct);
+
+  /// No description provided for @fireOsReviewFindingWithdrawalRateInfinite.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend exists with no investable assets.'**
+  String get fireOsReviewFindingWithdrawalRateInfinite;
+
+  /// No description provided for @fireOsReviewFindingWithinTargetCashBucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket covers {months} months — at target.'**
+  String fireOsReviewFindingWithinTargetCashBucket(int months);
+
+  /// No description provided for @fireOsReviewFindingBelowTargetCashBucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket below the {months}-month target.'**
+  String fireOsReviewFindingBelowTargetCashBucket(int months);
+
+  /// No description provided for @fireOsReviewFindingFireEtaReached.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE target already reached.'**
+  String get fireOsReviewFindingFireEtaReached;
+
+  /// No description provided for @fireOsReviewFindingFireEtaUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE target not reached within 100 years.'**
+  String get fireOsReviewFindingFireEtaUnreachable;
+
+  /// No description provided for @fireOsReviewFindingFireEtaProgressing.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE ETA at {months} months.'**
+  String fireOsReviewFindingFireEtaProgressing(int months);
+
+  /// No description provided for @fireOsReviewFindingCurrencyGap.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings without an FX rate to base currency.'**
+  String fireOsReviewFindingCurrencyGap(int count);
+
+  /// No description provided for @fireOsReviewFindingUnmappedHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings not assigned to a bucket.'**
+  String fireOsReviewFindingUnmappedHoldings(int count);
+
+  /// No description provided for @fireOsReviewFindingStressDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress test \"{scenario}\" lands at danger.'**
+  String fireOsReviewFindingStressDanger(String scenario);
+
+  /// No description provided for @fireOsReviewFindingStressCautious.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress test \"{scenario}\" lands at cautious.'**
+  String fireOsReviewFindingStressCautious(String scenario);
+
+  /// No description provided for @fireOsReviewFindingStressSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'All stress tests are safe under current assumptions.'**
+  String get fireOsReviewFindingStressSafe;
+
+  /// No description provided for @fireOsInsightHighWithdrawalRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal rate above SWR'**
+  String get fireOsInsightHighWithdrawalRate;
+
+  /// No description provided for @fireOsInsightHighWithdrawalRateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}% / SWR {swr}%'**
+  String fireOsInsightHighWithdrawalRateValue(String rate, String swr);
+
+  /// No description provided for @fireOsInsightLowCashBucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket below target'**
+  String get fireOsInsightLowCashBucket;
+
+  /// No description provided for @fireOsInsightLowCashBucketValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{months} of {target} months'**
+  String fireOsInsightLowCashBucketValue(String months, int target);
+
   /// No description provided for @benchmarkComparisonTitle.
   ///
   /// In en, this message translates to:
@@ -3822,6 +5242,47 @@ abstract class AppLocalizations {
   /// **'Drift after rebalance'**
   String get rebalanceDriftAfter;
 
+  /// No description provided for @rebalanceExecuteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance now'**
+  String get rebalanceExecuteAction;
+
+  /// No description provided for @rebalanceExecutionSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm rebalance'**
+  String get rebalanceExecutionSheetTitle;
+
+  /// No description provided for @rebalanceExecutionSheetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Review 1 draft trade before continuing.} other{Review {count} draft trades before continuing.}}'**
+  String rebalanceExecutionSheetSubtitle(int count);
+
+  /// No description provided for @rebalanceExecutionCreateDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Create drafts'**
+  String get rebalanceExecutionCreateDrafts;
+
+  /// No description provided for @rebalanceExecutionTradeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested value'**
+  String get rebalanceExecutionTradeValue;
+
+  /// No description provided for @rebalanceExecutionDraftNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance suggestion: {direction} {category} for {amount} {currency}'**
+  String rebalanceExecutionDraftNote(
+    Object direction,
+    Object category,
+    Object amount,
+    Object currency,
+  );
+
   /// No description provided for @rebalanceEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -3863,6 +5324,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rebalance'**
   String get rebalanceNavLink;
+
+  /// Command palette entry that opens the rebalance page.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Rebalance'**
+  String get rebalanceCommandOpen;
+
+  /// Command palette entry that opens the custom target allocation editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust target allocation'**
+  String get rebalanceCommandAdjustTarget;
+
+  /// No description provided for @targetAllocationEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom target'**
+  String get targetAllocationEditorTitle;
+
+  /// No description provided for @targetAllocationEditorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tune category weights; the total must equal 100%.'**
+  String get targetAllocationEditorSubtitle;
+
+  /// No description provided for @targetAllocationEditorEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom target'**
+  String get targetAllocationEditorEditAction;
+
+  /// No description provided for @targetAllocationEditorTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total allocation'**
+  String get targetAllocationEditorTotalLabel;
+
+  /// No description provided for @targetAllocationEditorTotalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Total must be 100%. Current total: {value}%.'**
+  String targetAllocationEditorTotalHint(String value);
+
+  /// No description provided for @targetAllocationEditorPercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get targetAllocationEditorPercentLabel;
+
+  /// No description provided for @targetAllocationEditorRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get targetAllocationEditorRequiredError;
+
+  /// No description provided for @targetAllocationEditorRangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 0-100'**
+  String get targetAllocationEditorRangeError;
+
+  /// No description provided for @targetAllocationEditorPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Target mix'**
+  String get targetAllocationEditorPreviewTitle;
 
   /// Header for the risk concentration alert panel on the analytics page.
   ///
@@ -4637,6 +6164,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Valuation update'**
   String get aiChatProposalKindAssetValuation;
+
+  /// No description provided for @aiChatProposalKindFirePlanUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE plan update'**
+  String get aiChatProposalKindFirePlanUpdate;
+
+  /// No description provided for @aiChatProposalKindFireBucketRule.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE bucket rule'**
+  String get aiChatProposalKindFireBucketRule;
 
   /// No description provided for @aiChatProposalKindUnknown.
   ///
@@ -8367,6 +9906,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press back again to exit'**
   String get pressBackAgainToExit;
+
+  /// Investment watchlist page title
+  ///
+  /// In en, this message translates to:
+  /// **'Watchlist'**
+  String get watchlistTitle;
+
+  /// Accounts hub entry subtitle for watchlist
+  ///
+  /// In en, this message translates to:
+  /// **'Track symbols and local price alerts'**
+  String get watchlistAccountsEntrySubtitle;
+
+  /// Add a symbol to the watchlist
+  ///
+  /// In en, this message translates to:
+  /// **'Add symbol'**
+  String get watchlistAddAction;
+
+  /// Watchlist add sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Add to watchlist'**
+  String get watchlistAddTitle;
+
+  /// Watchlist alert edit sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts for {symbol}'**
+  String watchlistEditAlertTitle(String symbol);
+
+  /// Watchlist empty state title
+  ///
+  /// In en, this message translates to:
+  /// **'No watchlist symbols'**
+  String get watchlistEmptyTitle;
+
+  /// Watchlist empty state body
+  ///
+  /// In en, this message translates to:
+  /// **'Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.'**
+  String get watchlistEmptyBody;
+
+  /// Watchlist symbol input label
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol'**
+  String get watchlistSymbolField;
+
+  /// Watchlist market picker label
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get watchlistMarketField;
+
+  /// Watchlist upper price alert input
+  ///
+  /// In en, this message translates to:
+  /// **'Alert above'**
+  String get watchlistAlertAboveField;
+
+  /// Watchlist lower price alert input
+  ///
+  /// In en, this message translates to:
+  /// **'Alert below'**
+  String get watchlistAlertBelowField;
+
+  /// Save watchlist alert rules
+  ///
+  /// In en, this message translates to:
+  /// **'Save alerts'**
+  String get watchlistSaveAlertsAction;
+
+  /// Edit watchlist alert rules action
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get watchlistEditAlertsAction;
+
+  /// Remove watchlist item action
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get watchlistRemoveAction;
+
+  /// Watchlist price unavailable placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'No price'**
+  String get watchlistPriceUnavailable;
+
+  /// Market data freshness live label
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get watchlistFreshnessLive;
+
+  /// Market data freshness cached label
+  ///
+  /// In en, this message translates to:
+  /// **'Cached'**
+  String get watchlistFreshnessCache;
+
+  /// Market data freshness stale label
+  ///
+  /// In en, this message translates to:
+  /// **'Stale cache'**
+  String get watchlistFreshnessStale;
+
+  /// Watchlist upper alert chip
+  ///
+  /// In en, this message translates to:
+  /// **'Above {price}'**
+  String watchlistAlertAboveChip(String price);
+
+  /// Watchlist lower alert chip
+  ///
+  /// In en, this message translates to:
+  /// **'Below {price}'**
+  String watchlistAlertBelowChip(String price);
+
+  /// Watchlist upper alert notification
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} is at {price}, above your alert'**
+  String watchlistAlertTriggeredAbove(String symbol, String price);
+
+  /// Watchlist lower alert notification
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} is at {price}, below your alert'**
+  String watchlistAlertTriggeredBelow(String symbol, String price);
+
+  /// Watchlist symbol required validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a symbol'**
+  String get watchlistSymbolRequired;
+
+  /// Watchlist alert price validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive price'**
+  String get watchlistInvalidNumber;
+
+  /// CN A market label
+  ///
+  /// In en, this message translates to:
+  /// **'A-share'**
+  String get watchlistMarketCnA;
+
+  /// Hong Kong stock market label
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong'**
+  String get watchlistMarketHkStock;
+
+  /// US stock market label
+  ///
+  /// In en, this message translates to:
+  /// **'US'**
+  String get watchlistMarketUsStock;
+
+  /// Crypto market label
+  ///
+  /// In en, this message translates to:
+  /// **'Crypto'**
+  String get watchlistMarketCrypto;
+
+  /// FX market label
+  ///
+  /// In en, this message translates to:
+  /// **'FX'**
+  String get watchlistMarketFx;
+
+  /// Unknown market label
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get watchlistMarketUnknown;
 
   /// Desktop master/detail affordance that clears the selected detail
   ///

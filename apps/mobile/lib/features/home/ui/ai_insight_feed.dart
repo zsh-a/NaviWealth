@@ -244,6 +244,22 @@ class _ExpandedDetail extends StatelessWidget {
       case InsightKind.cashFlowDeficit:
         return 'Current-month inflow minus outflow is below zero, computed '
             'from the shared cashflow summary used by the Home cards.';
+      case InsightKind.fireOsHighWithdrawalRate:
+        return 'Trailing 12-month annual spend / investable assets is '
+            "above the plan's safe-withdrawal rate. Open the FIRE OS "
+            'hero card for the breakdown.';
+      case InsightKind.fireOsLowCashBucket:
+        return 'Liquid cash divided by monthly expense is below the '
+            "plan's target cash-bucket months. Top-up suggested on the "
+            'FIRE OS hero card.';
+      case InsightKind.fireOsUnmappedHoldings:
+        return 'These holdings are real estate, vehicles, or other '
+            'assets the allocator left out by default. Map them on the '
+            'FIRE OS buckets card if they should fund the plan.';
+      case InsightKind.fireOsBucketDeviation:
+        return 'A non-cash bucket has drifted past 10% off its target. '
+            'Open the FIRE OS buckets card for the breakdown — or '
+            'rebalance / propose a rule change.';
     }
   }
 }

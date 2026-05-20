@@ -97,9 +97,16 @@ List<LlmStreamEvent> _mapContentBlockStart(
       if (text is String && text.isNotEmpty) return [LlmTextDelta(text)];
       return const [];
     case 'thinking':
+      final out = <LlmStreamEvent>[];
       final text = block['thinking'];
-      if (text is String && text.isNotEmpty) return [LlmThinkingDelta(text)];
-      return const [];
+      if (text is String && text.isNotEmpty) out.add(LlmThinkingDelta(text));
+      // Some Anthropic-compatible gateways inline the signature on the
+      // start frame rather than streaming a `signature_delta`.
+      final sig = block['signature'];
+      if (sig is String && sig.isNotEmpty) {
+        out.add(LlmThinkingSignatureDelta(sig));
+      }
+      return out;
     case 'tool_use':
       return [LlmToolCallStart(id: id ?? '', name: name ?? '')];
     default:
@@ -121,6 +128,14 @@ List<LlmStreamEvent> _mapContentBlockDelta(
     case 'thinking_delta':
       final text = delta['thinking'];
       return text is String ? [LlmThinkingDelta(text)] : const [];
+    case 'signature_delta':
+      // Opaque reasoning signature — not rendered, but must survive
+      // into the assistant turn so subsequent tool rounds don't get
+      // rejected for a dropped `thinking` block.
+      final sig = delta['signature'];
+      return sig is String && sig.isNotEmpty
+          ? [LlmThinkingSignatureDelta(sig)]
+          : const [];
     case 'input_json_delta':
       final partial = delta['partial_json'] as String? ?? '';
       final block = state._blocks.putIfAbsent(index, _BlockState.new);
