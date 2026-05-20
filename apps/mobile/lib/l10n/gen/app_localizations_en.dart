@@ -2685,6 +2685,53 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fireOsSimulationsTitle => 'Simulations';
+
+  @override
+  String get fireOsSimulationsSubtitle =>
+      'Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.';
+
+  @override
+  String get fireOsSimulationsBaselineLabel => 'Baseline';
+
+  @override
+  String get fireOsSimulationsPresetExpenseUp20 => 'Spending +20%';
+
+  @override
+  String get fireOsSimulationsPresetExpenseDown10 => 'Spending −10%';
+
+  @override
+  String get fireOsSimulationsPresetSurplusUp30 => 'Surplus +30%';
+
+  @override
+  String get fireOsSimulationsPresetHalfRetireIncome => 'Half-retire +¥5k/mo';
+
+  @override
+  String get fireOsSimulationsPresetInflationUp1pp => 'Inflation +1 pp';
+
+  @override
+  String get fireOsSimulationsPresetSwrTight => 'SWR 3.5%';
+
+  @override
+  String get fireOsSimulationsPresetCashBucketUp24 => 'Cash bucket 24 mo';
+
+  @override
+  String fireOsSimulationsDeltaWrPp(String sign, String pp) {
+    return 'WR $sign$pp pp';
+  }
+
+  @override
+  String get fireOsSimulationsDeltaWrUnavailable => 'WR —';
+
+  @override
+  String fireOsSimulationsDeltaCash(String sign, String months) {
+    return 'Cash $sign$months mo';
+  }
+
+  @override
+  String get fireOsSimulationsDeltaCashUnavailable => 'Cash —';
+
+  @override
   String get fireOsStressTitle => 'Stress tests';
 
   @override
@@ -2765,6 +2812,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String fireOsReviewGeneratedAt(String date) {
     return 'Generated $date';
+  }
+
+  @override
+  String fireOsReviewDiffTitle(String key) {
+    return 'Compared to $key';
+  }
+
+  @override
+  String get fireOsReviewDiffNoBaseline =>
+      'No prior snapshot to diff against — save one to see month-over-month deltas.';
+
+  @override
+  String fireOsReviewDiffWr(String sign, String pp) {
+    return 'WR $sign$pp pp';
+  }
+
+  @override
+  String get fireOsReviewDiffWrUnavailable =>
+      'WR delta unavailable (infinite either side)';
+
+  @override
+  String fireOsReviewDiffNetWorth(String sign, String amount) {
+    return 'Net worth $sign$amount';
+  }
+
+  @override
+  String get fireOsReviewDiffNetWorthCurrencyChanged =>
+      'Net worth currency changed — delta skipped.';
+
+  @override
+  String fireOsReviewDiffSafetyChanged(String from, String to) {
+    return 'Safety $from → $to';
+  }
+
+  @override
+  String fireOsReviewDiffSafetyHeld(String level) {
+    return 'Safety held at $level';
   }
 
   @override

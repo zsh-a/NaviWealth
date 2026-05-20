@@ -8,6 +8,7 @@ import '../../../core/format/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_stress_test.dart';
+import 'fire_ai_capsule.dart';
 
 /// Stress tests section — surfaces the deterministic resilience checks
 /// (`runStressTests`) per `docs/roadmap-fire-os.md` §4.3. One row per
@@ -28,7 +29,21 @@ class FireStressTestsCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.fireOsStressTitle,
+                    style: context.theme.typography.md,
+                  ),
+                ),
+                FireAiCapsule(
+                  intent: 'explain_stress_test',
+                  source: 'fire_stress_card',
+                  objectLabel: l10n.fireOsStressTitle,
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
             Text(
               l10n.fireOsStressSubtitle,

@@ -33,6 +33,11 @@ enum InsightKind {
   // FIRE OS Phase 2 — assets exist that no bucket rule covers and the
   // default classifier can't claim (real estate, vehicles).
   fireOsUnmappedHoldings,
+  // FIRE OS Phase 4 follow-up — a non-cash bucket (defensive / growth /
+  // risk reserve / dream) is materially under- or over-target. Cash
+  // has its own insight (`fireOsLowCashBucket`); this is the catch-all
+  // for the rest.
+  fireOsBucketDeviation,
 }
 
 /// One actionable insight surfaced on the dashboard. The view layer
@@ -69,6 +74,9 @@ class InsightItem {
     this.fireOsCashBucketMonths,
     this.fireOsTargetCashBucketMonths,
     this.fireOsUnmappedCount,
+    this.fireOsBucketRoleLabel,
+    this.fireOsBucketCurrentLabel,
+    this.fireOsBucketTargetLabel,
   });
 
   final IconData icon;
@@ -132,4 +140,15 @@ class InsightItem {
 
   /// Number of holdings the bucket allocator could not classify.
   final int? fireOsUnmappedCount;
+
+  /// Pre-localised bucket role label (e.g. "Growth") for the bucket
+  /// deviation insight. Localisation happens upstream because the
+  /// insight producer reads `FireBucketRole` directly.
+  final String? fireOsBucketRoleLabel;
+
+  /// Pre-formatted current/target currency strings for the same
+  /// insight. The producer formats them so the strings resolver
+  /// stays free of localised currency code lookup.
+  final String? fireOsBucketCurrentLabel;
+  final String? fireOsBucketTargetLabel;
 }

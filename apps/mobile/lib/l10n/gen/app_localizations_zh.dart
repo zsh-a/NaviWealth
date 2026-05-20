@@ -2581,6 +2581,53 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get fireOsSimulationsTitle => '情景模拟';
+
+  @override
+  String get fireOsSimulationsSubtitle =>
+      '点击一个预设,看计划变动后提取率 / 现金桶覆盖 / 安全等级如何移动;不会写入任何更改。';
+
+  @override
+  String get fireOsSimulationsBaselineLabel => '基线';
+
+  @override
+  String get fireOsSimulationsPresetExpenseUp20 => '支出 +20%';
+
+  @override
+  String get fireOsSimulationsPresetExpenseDown10 => '支出 −10%';
+
+  @override
+  String get fireOsSimulationsPresetSurplusUp30 => '结余 +30%';
+
+  @override
+  String get fireOsSimulationsPresetHalfRetireIncome => '半退休 +¥5k/月';
+
+  @override
+  String get fireOsSimulationsPresetInflationUp1pp => '通胀 +1 个百分点';
+
+  @override
+  String get fireOsSimulationsPresetSwrTight => '安全提取率收紧到 3.5%';
+
+  @override
+  String get fireOsSimulationsPresetCashBucketUp24 => '现金桶目标 24 个月';
+
+  @override
+  String fireOsSimulationsDeltaWrPp(String sign, String pp) {
+    return '提取率 $sign$pp pp';
+  }
+
+  @override
+  String get fireOsSimulationsDeltaWrUnavailable => '提取率 —';
+
+  @override
+  String fireOsSimulationsDeltaCash(String sign, String months) {
+    return '现金 $sign$months 个月';
+  }
+
+  @override
+  String get fireOsSimulationsDeltaCashUnavailable => '现金 —';
+
+  @override
   String get fireOsStressTitle => '压力测试';
 
   @override
@@ -2659,6 +2706,40 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String fireOsReviewGeneratedAt(String date) {
     return '生成于 $date';
+  }
+
+  @override
+  String fireOsReviewDiffTitle(String key) {
+    return '对比 $key';
+  }
+
+  @override
+  String get fireOsReviewDiffNoBaseline => '暂无上一期快照可对比 — 保存一次以解锁月度变化。';
+
+  @override
+  String fireOsReviewDiffWr(String sign, String pp) {
+    return '提取率 $sign$pp 个百分点';
+  }
+
+  @override
+  String get fireOsReviewDiffWrUnavailable => '提取率两端有无穷值,无法计算差值';
+
+  @override
+  String fireOsReviewDiffNetWorth(String sign, String amount) {
+    return '净资产 $sign$amount';
+  }
+
+  @override
+  String get fireOsReviewDiffNetWorthCurrencyChanged => '净资产币种已变,跳过差值。';
+
+  @override
+  String fireOsReviewDiffSafetyChanged(String from, String to) {
+    return '安全等级 $from → $to';
+  }
+
+  @override
+  String fireOsReviewDiffSafetyHeld(String level) {
+    return '安全等级保持 $level';
   }
 
   @override

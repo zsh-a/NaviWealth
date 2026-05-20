@@ -256,6 +256,10 @@ class _ExpandedDetail extends StatelessWidget {
         return 'These holdings are real estate, vehicles, or other '
             'assets the allocator left out by default. Map them on the '
             'FIRE OS buckets card if they should fund the plan.';
+      case InsightKind.fireOsBucketDeviation:
+        return 'A non-cash bucket has drifted past 10% off its target. '
+            'Open the FIRE OS buckets card for the breakdown — or '
+            'rebalance / propose a rule change.';
     }
   }
 }

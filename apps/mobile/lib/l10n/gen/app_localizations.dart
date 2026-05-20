@@ -4702,6 +4702,90 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 holding} other{{count} holdings}} not assigned to any bucket'**
   String fireOsInsightUnmappedHoldingsValue(int count);
 
+  /// No description provided for @fireOsSimulationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulations'**
+  String get fireOsSimulationsTitle;
+
+  /// No description provided for @fireOsSimulationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.'**
+  String get fireOsSimulationsSubtitle;
+
+  /// No description provided for @fireOsSimulationsBaselineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline'**
+  String get fireOsSimulationsBaselineLabel;
+
+  /// No description provided for @fireOsSimulationsPresetExpenseUp20.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending +20%'**
+  String get fireOsSimulationsPresetExpenseUp20;
+
+  /// No description provided for @fireOsSimulationsPresetExpenseDown10.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending −10%'**
+  String get fireOsSimulationsPresetExpenseDown10;
+
+  /// No description provided for @fireOsSimulationsPresetSurplusUp30.
+  ///
+  /// In en, this message translates to:
+  /// **'Surplus +30%'**
+  String get fireOsSimulationsPresetSurplusUp30;
+
+  /// No description provided for @fireOsSimulationsPresetHalfRetireIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Half-retire +¥5k/mo'**
+  String get fireOsSimulationsPresetHalfRetireIncome;
+
+  /// No description provided for @fireOsSimulationsPresetInflationUp1pp.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflation +1 pp'**
+  String get fireOsSimulationsPresetInflationUp1pp;
+
+  /// No description provided for @fireOsSimulationsPresetSwrTight.
+  ///
+  /// In en, this message translates to:
+  /// **'SWR 3.5%'**
+  String get fireOsSimulationsPresetSwrTight;
+
+  /// No description provided for @fireOsSimulationsPresetCashBucketUp24.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash bucket 24 mo'**
+  String get fireOsSimulationsPresetCashBucketUp24;
+
+  /// No description provided for @fireOsSimulationsDeltaWrPp.
+  ///
+  /// In en, this message translates to:
+  /// **'WR {sign}{pp} pp'**
+  String fireOsSimulationsDeltaWrPp(String sign, String pp);
+
+  /// No description provided for @fireOsSimulationsDeltaWrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'WR —'**
+  String get fireOsSimulationsDeltaWrUnavailable;
+
+  /// No description provided for @fireOsSimulationsDeltaCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash {sign}{months} mo'**
+  String fireOsSimulationsDeltaCash(String sign, String months);
+
+  /// No description provided for @fireOsSimulationsDeltaCashUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash —'**
+  String get fireOsSimulationsDeltaCashUnavailable;
+
   /// No description provided for @fireOsStressTitle.
   ///
   /// In en, this message translates to:
@@ -4827,6 +4911,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generated {date}'**
   String fireOsReviewGeneratedAt(String date);
+
+  /// No description provided for @fireOsReviewDiffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared to {key}'**
+  String fireOsReviewDiffTitle(String key);
+
+  /// No description provided for @fireOsReviewDiffNoBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'No prior snapshot to diff against — save one to see month-over-month deltas.'**
+  String get fireOsReviewDiffNoBaseline;
+
+  /// No description provided for @fireOsReviewDiffWr.
+  ///
+  /// In en, this message translates to:
+  /// **'WR {sign}{pp} pp'**
+  String fireOsReviewDiffWr(String sign, String pp);
+
+  /// No description provided for @fireOsReviewDiffWrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'WR delta unavailable (infinite either side)'**
+  String get fireOsReviewDiffWrUnavailable;
+
+  /// No description provided for @fireOsReviewDiffNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth {sign}{amount}'**
+  String fireOsReviewDiffNetWorth(String sign, String amount);
+
+  /// No description provided for @fireOsReviewDiffNetWorthCurrencyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth currency changed — delta skipped.'**
+  String get fireOsReviewDiffNetWorthCurrencyChanged;
+
+  /// No description provided for @fireOsReviewDiffSafetyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety {from} → {to}'**
+  String fireOsReviewDiffSafetyChanged(String from, String to);
+
+  /// No description provided for @fireOsReviewDiffSafetyHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety held at {level}'**
+  String fireOsReviewDiffSafetyHeld(String level);
 
   /// No description provided for @fireOsReviewSaveSnapshot.
   ///

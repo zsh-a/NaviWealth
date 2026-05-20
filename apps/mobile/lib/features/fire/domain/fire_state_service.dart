@@ -279,3 +279,55 @@ void _requireBase(String base, Money money, String label) {
     );
   }
 }
+
+/// Compute a what-if [FireState] off an existing baseline.
+///
+/// Re-runs [computeFireState] with the plan fields the caller overrode,
+/// preserving everything else (net worth, investable, liquid, mismatch
+/// count, etc.). When the baseline's spend was sourced from trailing
+/// actuals, the overrides scale the trailing total via
+/// [trailingScale] (default 1.0); otherwise the plan-driven
+/// `annualExpense` carries the change automatically.
+///
+/// Pure: no providers, no IO. The simulations card and the
+/// `simulate_fire_plan` AI tool both call through this helper so
+/// "what the user sees" and "what the LLM saw" are byte-identical.
+FireState simulateFireState({
+  required FireState baseline,
+  Decimal? monthlyExpenses,
+  Decimal? monthlySurplus,
+  double? inflationRate,
+  double? safeWithdrawalRate,
+  int? targetCashBucketMonths,
+  double trailingScale = 1.0,
+}) {
+  final plan = baseline.plan.copyWith(
+    monthlyExpenses: monthlyExpenses ?? baseline.plan.monthlyExpenses,
+    monthlySurplus: monthlySurplus ?? baseline.plan.monthlySurplus,
+    inflationRate: inflationRate ?? baseline.plan.inflationRate,
+    safeWithdrawalRate:
+        safeWithdrawalRate ?? baseline.plan.safeWithdrawalRate,
+    targetCashBucketMonths:
+        targetCashBucketMonths ?? baseline.plan.targetCashBucketMonths,
+  );
+  final useTrailing =
+      baseline.annualSpendSource == FireAnnualSpendSource.trailing12m;
+  Money? trailing;
+  if (useTrailing) {
+    final factor = Decimal.parse(trailingScale.toStringAsFixed(4));
+    trailing = Money(
+      baseline.annualSpend.amount * factor,
+      baseline.baseCurrency,
+    );
+  }
+  return computeFireState(
+    plan: plan,
+    netWorth: baseline.netWorth,
+    investableAssets: baseline.investableAssets,
+    liquidAssets: baseline.liquidAssets,
+    trailingAnnualSpend: trailing,
+    fireEtaMonths: baseline.fireEtaMonths,
+    currencyMismatchCount: baseline.currencyMismatchCount,
+    computedAt: baseline.computedAt,
+  );
+}

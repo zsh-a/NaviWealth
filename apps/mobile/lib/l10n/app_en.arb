@@ -1430,6 +1430,32 @@
   "@fireOsInsightUnmappedHoldingsValue": {
     "placeholders": { "count": { "type": "int", "example": "2" } }
   },
+  "fireOsSimulationsTitle": "Simulations",
+  "fireOsSimulationsSubtitle": "Press a preset to see how a change to the plan moves WR / cash bucket coverage / safety level. Nothing is saved.",
+  "fireOsSimulationsBaselineLabel": "Baseline",
+  "fireOsSimulationsPresetExpenseUp20": "Spending +20%",
+  "fireOsSimulationsPresetExpenseDown10": "Spending −10%",
+  "fireOsSimulationsPresetSurplusUp30": "Surplus +30%",
+  "fireOsSimulationsPresetHalfRetireIncome": "Half-retire +¥5k/mo",
+  "fireOsSimulationsPresetInflationUp1pp": "Inflation +1 pp",
+  "fireOsSimulationsPresetSwrTight": "SWR 3.5%",
+  "fireOsSimulationsPresetCashBucketUp24": "Cash bucket 24 mo",
+  "fireOsSimulationsDeltaWrPp": "WR {sign}{pp} pp",
+  "@fireOsSimulationsDeltaWrPp": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "+" },
+      "pp": { "type": "String", "example": "0.8" }
+    }
+  },
+  "fireOsSimulationsDeltaWrUnavailable": "WR —",
+  "fireOsSimulationsDeltaCash": "Cash {sign}{months} mo",
+  "@fireOsSimulationsDeltaCash": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "−" },
+      "months": { "type": "String", "example": "1.2" }
+    }
+  },
+  "fireOsSimulationsDeltaCashUnavailable": "Cash —",
   "fireOsStressTitle": "Stress tests",
   "fireOsStressSubtitle": "How the plan holds up under bear markets, expense surges, one-off shocks, FX swings, and cash depletion.",
   "fireOsStressEmpty": "Configure a FIRE plan to run stress tests.",
@@ -1477,6 +1503,38 @@
   "fireOsReviewGeneratedAt": "Generated {date}",
   "@fireOsReviewGeneratedAt": {
     "placeholders": { "date": { "type": "String", "example": "2026-05-20" } }
+  },
+  "fireOsReviewDiffTitle": "Compared to {key}",
+  "@fireOsReviewDiffTitle": {
+    "placeholders": { "key": { "type": "String", "example": "2026-04" } }
+  },
+  "fireOsReviewDiffNoBaseline": "No prior snapshot to diff against — save one to see month-over-month deltas.",
+  "fireOsReviewDiffWr": "WR {sign}{pp} pp",
+  "@fireOsReviewDiffWr": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "+" },
+      "pp": { "type": "String", "example": "0.4" }
+    }
+  },
+  "fireOsReviewDiffWrUnavailable": "WR delta unavailable (infinite either side)",
+  "fireOsReviewDiffNetWorth": "Net worth {sign}{amount}",
+  "@fireOsReviewDiffNetWorth": {
+    "placeholders": {
+      "sign": { "type": "String", "example": "+" },
+      "amount": { "type": "String", "example": "¥30,000" }
+    }
+  },
+  "fireOsReviewDiffNetWorthCurrencyChanged": "Net worth currency changed — delta skipped.",
+  "fireOsReviewDiffSafetyChanged": "Safety {from} → {to}",
+  "@fireOsReviewDiffSafetyChanged": {
+    "placeholders": {
+      "from": { "type": "String", "example": "cautious" },
+      "to": { "type": "String", "example": "safe" }
+    }
+  },
+  "fireOsReviewDiffSafetyHeld": "Safety held at {level}",
+  "@fireOsReviewDiffSafetyHeld": {
+    "placeholders": { "level": { "type": "String", "example": "safe" } }
   },
   "fireOsReviewSaveSnapshot": "Save snapshot",
   "fireOsReviewSaved": "Saved · {key}",
