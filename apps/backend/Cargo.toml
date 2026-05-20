@@ -24,11 +24,9 @@ console_error_panic_hook = "0.1"
 # does not build for `wasm32-unknown-unknown` without a non-default crypto
 # backend; argon2 is pure-Rust and salt entropy comes from `getrandom` (js).
 argon2 = "0.5"
-# NOTE: hmac 0.12 is built on the digest 0.10 trait family. sha2 must
-# stay on 0.10 to satisfy `Hmac<Sha256>: Mac` (HS256 JWT + the
-# scoped-detail HMAC merchant hash). The #133 bump to sha2 0.11
-# (digest 0.11) broke the build tree-wide; pinned back here.
-hmac = "0.12"
+# Keep hmac and sha2 on the same digest trait family so `Hmac<Sha256>: Mac`
+# remains valid for HS256 JWT and scoped-detail merchant hashes.
+hmac = "0.13"
 sha2 = "0.11"
 base64 = "0.22"
 getrandom = { version = "0.2", features = ["js"] }
