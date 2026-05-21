@@ -10702,6 +10702,54 @@ abstract class AppLocalizations {
     String ago,
     String stale,
   );
+
+  /// Onboarding heading shown at first launch
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to NaviWealth'**
+  String get onboardingTitle;
+
+  /// Onboarding sub-heading explaining the mode picker
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how you want to use the app'**
+  String get onboardingSubtitle;
+
+  /// Onboarding card title: traditional account with sync
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud account'**
+  String get onboardingCloudTitle;
+
+  /// Onboarding cloud-account card body
+  ///
+  /// In en, this message translates to:
+  /// **'Sync data across devices'**
+  String get onboardingCloudDescription;
+
+  /// Onboarding card title: no account, data stays on device
+  ///
+  /// In en, this message translates to:
+  /// **'Local only'**
+  String get onboardingLocalOnlyTitle;
+
+  /// Onboarding local-only card body
+  ///
+  /// In en, this message translates to:
+  /// **'Data stays on this device, no sync'**
+  String get onboardingLocalOnlyDescription;
+
+  /// Account-section label shown to local-only users instead of an email
+  ///
+  /// In en, this message translates to:
+  /// **'Local mode'**
+  String get settingsAccountLocalOnlyBadge;
+
+  /// Account-section subtitle clarifying that local mode does not sync
+  ///
+  /// In en, this message translates to:
+  /// **'Data is stored only on this device'**
+  String get settingsAccountLocalOnlyHint;
 }
 
 class _AppLocalizationsDelegate

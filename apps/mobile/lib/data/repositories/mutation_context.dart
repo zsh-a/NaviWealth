@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/providers.dart';
+import '../../core/sync/local_hlc_stamper.dart';
 import '../../core/sync/providers.dart';
 import '../../core/sync/sync_engine.dart';
+import '../../features/auth/data/auth_controller.dart';
+import '../db/providers.dart';
 import '../domain/hlc.dart';
 
 /// Per-mutation envelope of sync metadata.
@@ -63,18 +66,40 @@ class MutationStamper {
   }
 }
 
+/// Sentinel user id used in local-only mode (no backend account). Stable
+/// across runs so it acts as a coherent "owner" for per-user singleton
+/// tables (e.g. `settings`, `options_strategy_profile`).
+const String kLocalOnlyUserId = 'local-user';
+
 /// Override in tests to inject a fixed user id.
 final currentUserIdProvider = Provider<Future<String> Function()>((ref) {
-  final session = ref.watch(authSessionProvider);
+  final auth = ref.watch(authControllerProvider).value;
   return () async {
-    if (session == null) {
-      throw StateError('MutationStamper requires an authenticated session.');
-    }
-    return session.userId;
+    if (auth is AuthLoggedIn) return auth.session.userId;
+    if (auth is AuthLocalOnly) return kLocalOnlyUserId;
+    throw StateError('MutationStamper requires an authenticated session.');
   };
 });
 
 final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
+  final auth = ref.watch(authControllerProvider).value;
+
+  if (auth is AuthLocalOnly) {
+    // Local-only mode: build a stamper that doesn't depend on the sync
+    // engine. The device id comes from the local install identity (no
+    // backend); HLC ticks go straight through DriftCursorStore.
+    final db = await ref.watch(appDatabaseProvider.future);
+    final deviceId = await ref
+        .read(deviceIdentityStoreProvider)
+        .getOrCreate();
+    final stamper = LocalHlcStamper(db: db, deviceId: deviceId);
+    return MutationStamper(
+      currentUserId: ref.watch(currentUserIdProvider),
+      deviceId: () async => deviceId,
+      stampHlc: stamper.stamp,
+    );
+  }
+
   final engine = await ref.watch(syncEngineProvider.future);
   if (engine == null) {
     throw StateError('MutationStamper requires an authenticated session.');

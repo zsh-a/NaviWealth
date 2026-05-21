@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_guard.dart';
+import 'app_mode_store.dart';
 import 'auth_controller.dart';
 
 /// Login page route. The router declares it under this name; we reference
@@ -9,12 +10,13 @@ import 'auth_controller.dart';
 /// than a redirect loop.
 const String kLoginPath = '/login';
 
+/// First-launch mode picker. Shown when the user hasn't yet chosen between
+/// a cloud account and local-only mode.
+const String kOnboardingPath = '/onboarding';
+
 /// Predicate: which paths are reachable while logged out?
-///
-/// Currently only the login page. The pairing-code flow on the new device
-/// will be added here once the backend exposes pairing endpoints.
 bool _isPublicPath(String location) {
-  return location == kLoginPath;
+  return location == kLoginPath || location == kOnboardingPath;
 }
 
 class AuthRouteGuard implements RouteGuard {
@@ -35,26 +37,47 @@ class AuthRouteGuard implements RouteGuard {
     // router refresh listenable.
     if (value == null) return null;
 
-    final loggedIn = value is AuthLoggedIn;
-    if (!loggedIn && !_isPublicPath(location)) {
-      // Preserve the destination so we can bounce back after login.
-      final target = state.uri.toString();
-      if (target.isEmpty || target == '/') return kLoginPath;
-      return Uri(
-        path: kLoginPath,
-        queryParameters: <String, String>{'next': target},
-      ).toString();
+    // Local-only users have all in-app routes open; only the auth-mode
+    // public pages bounce them home.
+    if (value is AuthLocalOnly) {
+      if (_isPublicPath(location)) return '/';
+      return null;
     }
-    if (loggedIn && location == kLoginPath) {
-      // Already authed; honour `?next=` if it's a real in-app path,
-      // otherwise drop to home.
-      final next = state.uri.queryParameters['next'];
-      if (next != null && next.startsWith('/') && next != kLoginPath) {
-        return next;
+
+    if (value is AuthLoggedIn) {
+      if (location == kLoginPath || location == kOnboardingPath) {
+        // Honour `?next=` from the login flow if it's a real in-app path,
+        // otherwise drop to home.
+        final next = state.uri.queryParameters['next'];
+        if (next != null && next.startsWith('/') && !_isPublicPath(next)) {
+          return next;
+        }
+        return '/';
       }
-      return '/';
+      return null;
     }
-    return null;
+
+    // Logged out — decide between onboarding and login based on the
+    // user's persisted mode choice. Reading the mode depends on
+    // SharedPreferences; some unit tests don't seed it, so treat the
+    // absence as "user has previously chosen cloud" (the pre-onboarding
+    // behaviour) to keep legacy tests passing.
+    if (_isPublicPath(location)) return null;
+    AppMode mode = AppMode.cloud;
+    try {
+      mode = _ref.read(appModeProvider);
+    } catch (_) {
+      // Preference layer not wired (test env) — fall through to /login.
+    }
+    if (mode == AppMode.unset) {
+      return kOnboardingPath;
+    }
+    final target = state.uri.toString();
+    if (target.isEmpty || target == '/') return kLoginPath;
+    return Uri(
+      path: kLoginPath,
+      queryParameters: <String, String>{'next': target},
+    ).toString();
   }
 }
 

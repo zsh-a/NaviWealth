@@ -5916,4 +5916,28 @@ class AppLocalizationsZh extends AppLocalizations {
   ) {
     return '$label:$ago · $stale';
   }
+
+  @override
+  String get onboardingTitle => '欢迎使用 NaviWealth';
+
+  @override
+  String get onboardingSubtitle => '选择你的使用方式';
+
+  @override
+  String get onboardingCloudTitle => '云账号';
+
+  @override
+  String get onboardingCloudDescription => '多设备同步数据';
+
+  @override
+  String get onboardingLocalOnlyTitle => '仅本地';
+
+  @override
+  String get onboardingLocalOnlyDescription => '数据留在本机，不进行同步';
+
+  @override
+  String get settingsAccountLocalOnlyBadge => '本地模式';
+
+  @override
+  String get settingsAccountLocalOnlyHint => '数据仅保存在本机';
 }

@@ -13,6 +13,7 @@
 abstract final class AppRoutes {
   // ── Auth ────────────────────────────────────────────────────────────────
   static const login = '/login';
+  static const onboarding = '/onboarding';
 
   // ── Primary tabs ────────────────────────────────────────────────────────
   static const home = '/';
@@ -99,6 +100,7 @@ abstract final class AppRoutes {
 /// helpers; mirrors the [AppRoutes] structure.
 abstract final class AppRouteNames {
   static const login = 'login';
+  static const onboarding = 'onboarding';
   static const home = 'home';
   static const settings = 'settings';
   static const devices = 'devices';
