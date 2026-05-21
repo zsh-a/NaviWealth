@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,24 +6,23 @@ import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
+import '../application/scan_controller.dart';
+import '../application/scan_inputs_bridge.dart';
+import '../data/options_opportunity_cache_repository.dart';
 import '../data/providers.dart';
 import '../domain/approved_underlying.dart';
+import '../domain/option_contract.dart';
+import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
+import '../domain/trade_journal_entry.dart';
 import 'approved_underlying_form_sheet.dart';
 import 'income_planner_strings.dart';
 import 'occ_disclosure_sheet.dart';
+import 'opportunity_detail_sheet.dart';
 import 'strategy_profile_sheet.dart';
+import 'trade_journal_sheet.dart';
 
 /// Top-level Income Planner page (`docs/options-income.md` §9).
-///
-/// P0 surface:
-///   * OCC ODD disclosure gate on first run
-///   * Strategy profile read/edit
-///   * Approved underlyings CRUD
-///   * Opportunities section is a P1 placeholder (scanner not wired yet)
-///
-/// Web build: returns an empty page. Income Planner is mobile-only,
-/// matching the AI device-only invariant in `docs/ai-architecture.md`.
 class IncomePlannerPage extends ConsumerWidget {
   const IncomePlannerPage({super.key});
 
@@ -32,8 +32,7 @@ class IncomePlannerPage extends ConsumerWidget {
       return const _UnsupportedOnWebPage();
     }
     final profileAsync = ref.watch(optionsStrategyProfileProvider);
-    final acked =
-        profileAsync.value?.hasAcknowledgedRiskDisclosure ?? false;
+    final acked = profileAsync.value?.hasAcknowledgedRiskDisclosure ?? false;
     final FHeaderAction? settingsAction = acked
         ? FHeaderAction(
             icon: const Icon(Icons.tune),
@@ -52,8 +51,7 @@ class IncomePlannerPage extends ConsumerWidget {
           loading: () => const _LoadingState(),
           error: (e, _) => _ErrorState(message: '$e'),
           data: (profile) {
-            if (profile == null ||
-                !profile.hasAcknowledgedRiskDisclosure) {
+            if (profile == null || !profile.hasAcknowledgedRiskDisclosure) {
               return const _StartState();
             }
             return _ConfiguredBody(profile: profile);
@@ -159,6 +157,9 @@ class _ConfiguredBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final approvedAsync = ref.watch(approvedUnderlyingsProvider);
+    final scanState = ref.watch(scanControllerProvider);
+    final cacheState = ref.watch(latestScanStateProvider);
+    final opportunitiesAsync = ref.watch(cachedOpportunitiesProvider);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
@@ -179,12 +180,433 @@ class _ConfiguredBody extends ConsumerWidget {
               : _ApprovedList(items: items),
         ),
         const SizedBox(height: AppSpacing.s24),
-        const _SectionHeader(
-          title: IncomePlannerStrings.opportunitiesSectionTitle,
+        _OpportunitiesHeader(
+          state: scanState,
+          cacheState: cacheState.value,
+          onRefresh: () => _runScan(context, ref),
         ),
         const SizedBox(height: AppSpacing.s8),
-        const _OpportunitiesPlaceholder(),
+        _OpportunitiesBody(
+          state: scanState,
+          opportunitiesAsync: opportunitiesAsync,
+        ),
+        const SizedBox(height: AppSpacing.s24),
+        const _TradeJournalSection(),
       ],
+    );
+  }
+
+  Future<void> _runScan(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(scanControllerProvider.notifier);
+    final side = await ref.read(scanSideInputsProvider.future);
+    await controller.runScan(
+      availableCash: side.availableCash,
+      holdingsBySymbol: side.holdingsBySymbol,
+    );
+  }
+}
+
+class _OpportunitiesHeader extends StatelessWidget {
+  const _OpportunitiesHeader({
+    required this.state,
+    required this.cacheState,
+    required this.onRefresh,
+  });
+
+  final ScanState state;
+  final ScanCacheState? cacheState;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final running = state is ScanRunning;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                IncomePlannerStrings.opportunitiesSectionTitle,
+                style: context.theme.typography.lg.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (cacheState != null) ...[
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  _formatLastScan(cacheState!),
+                  style: context.theme.typography.xs.copyWith(
+                    color: cacheState!.isStale
+                        ? context.theme.colors.destructive
+                        : context.theme.colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.primary,
+          onPress: running ? null : onRefresh,
+          child: Text(
+            running
+                ? IncomePlannerStrings.refreshRunning
+                : IncomePlannerStrings.refreshAction,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatLastScan(ScanCacheState s) {
+    final delta = DateTime.now().toUtc().difference(s.scannedAt);
+    final ago = delta.inMinutes < 60
+        ? '${delta.inMinutes}m ago'
+        : delta.inHours < 24
+            ? '${delta.inHours}h ago'
+            : '${delta.inDays}d ago';
+    if (s.isStale) {
+      return '${IncomePlannerStrings.lastScanLabel}: $ago · ${IncomePlannerStrings.lastScanStale}';
+    }
+    return '${IncomePlannerStrings.lastScanLabel}: $ago · ${s.count} candidate(s)';
+  }
+}
+
+class _OpportunitiesBody extends StatelessWidget {
+  const _OpportunitiesBody({
+    required this.state,
+    required this.opportunitiesAsync,
+  });
+
+  final ScanState state;
+  final AsyncValue<List<OptionsOpportunity>> opportunitiesAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state is ScanFailure) {
+      return _ErrorCard(
+        title: IncomePlannerStrings.refreshFailedTitle,
+        message: '${(state as ScanFailure).error}',
+      );
+    }
+    return opportunitiesAsync.when(
+      loading: () => const _LoadingTile(),
+      error: (e, _) => _ErrorCard(
+        title: IncomePlannerStrings.refreshFailedTitle,
+        message: '$e',
+      ),
+      data: (items) {
+        if (items.isEmpty) {
+          if (state is ScanSuccess) {
+            return const _EmptyCard(
+              body: IncomePlannerStrings.opportunitiesAllRejected,
+            );
+          }
+          return const _EmptyCard(
+            body: IncomePlannerStrings.opportunitiesEmpty,
+          );
+        }
+        return Column(
+          children: [
+            for (final opp in items)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                child: _OpportunityCard(opportunity: opp),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _OpportunityCard extends StatelessWidget {
+  const _OpportunityCard({required this.opportunity});
+
+  final OptionsOpportunity opportunity;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final metrics = opportunity.metrics;
+    final contract = opportunity.contract;
+    return FCard(
+      child: InkWell(
+        onTap: () => showOpportunityDetailSheet(context, opportunity),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _StrategyBadge(strategy: opportunity.strategy),
+                  const SizedBox(width: AppSpacing.s8),
+                  _RiskBadge(risk: opportunity.risk),
+                  const Spacer(),
+                  Text(
+                    '${contract.underlying} ${contract.dte}DTE',
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              _MetricsRow(metrics: metrics, contract: contract),
+              const SizedBox(height: AppSpacing.s12),
+              if (opportunity.explanation.whyGood.isNotEmpty) ...[
+                Text(
+                  IncomePlannerStrings.detailWhyGood,
+                  style: context.theme.typography.xs.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                for (final line in opportunity.explanation.whyGood.take(2))
+                  _BulletRow(line: line),
+              ],
+              if (opportunity.explanation.whyRisky.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  IncomePlannerStrings.detailWhyRisky,
+                  style: context.theme.typography.xs.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.destructive,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                for (final line in opportunity.explanation.whyRisky.take(2))
+                  _BulletRow(line: line),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricsRow extends StatelessWidget {
+  const _MetricsRow({required this.metrics, required this.contract});
+
+  final OpportunityMetrics metrics;
+  final OptionContract contract;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.s12,
+      runSpacing: AppSpacing.s8,
+      children: [
+        _Metric(
+          label: IncomePlannerStrings.metricStrike,
+          value: '${contract.strike.currency} '
+              '${metrics.cashRequired.amount / Decimal.fromInt(100)}',
+        ),
+        _Metric(
+          label: IncomePlannerStrings.metricAnnualized,
+          value: _pct(metrics.annualizedYield),
+        ),
+        _Metric(
+          label: IncomePlannerStrings.metricMargin,
+          value: _pct(metrics.marginOfSafety),
+        ),
+        _Metric(
+          label: IncomePlannerStrings.metricCash,
+          value: '${metrics.cashRequired.currency} '
+              '${_fmtMoney(metrics.cashRequired.amount)}',
+        ),
+      ],
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: context.theme.typography.xs.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s2),
+        Text(
+          value,
+          style: context.theme.typography.sm.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BulletRow extends StatelessWidget {
+  const _BulletRow({required this.line});
+
+  final String line;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.s4, top: AppSpacing.s2),
+      child: Text(
+        '• $line',
+        style: context.theme.typography.xs.copyWith(height: 1.4),
+      ),
+    );
+  }
+}
+
+class _StrategyBadge extends StatelessWidget {
+  const _StrategyBadge({required this.strategy});
+
+  final OptionsStrategyKind strategy;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = switch (strategy) {
+      OptionsStrategyKind.cashSecuredPut => IncomePlannerStrings.chipCashSecuredPut,
+      OptionsStrategyKind.coveredCall => IncomePlannerStrings.chipCoveredCall,
+    };
+    final colors = context.theme.colors;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s2,
+        ),
+        child: Text(
+          label,
+          style: context.theme.typography.xs.copyWith(
+            color: colors.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RiskBadge extends StatelessWidget {
+  const _RiskBadge({required this.risk});
+
+  final OpportunityRiskLevel risk;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final (label, color) = switch (risk) {
+      OpportunityRiskLevel.low => (
+          IncomePlannerStrings.riskLow,
+          colors.primary,
+        ),
+      OpportunityRiskLevel.moderate => (
+          IncomePlannerStrings.riskModerate,
+          colors.mutedForeground,
+        ),
+      OpportunityRiskLevel.elevated => (
+          IncomePlannerStrings.riskElevated,
+          colors.destructive,
+        ),
+    };
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s2,
+        ),
+        child: Text(
+          label,
+          style: context.theme.typography.xs.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyCard extends StatelessWidget {
+  const _EmptyCard({required this.body});
+
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Text(
+          body,
+          style: context.theme.typography.sm.copyWith(
+            color: colors.mutedForeground,
+            height: 1.45,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colors.destructive,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              message,
+              style: context.theme.typography.xs.copyWith(
+                color: colors.destructive,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -275,8 +697,7 @@ class _ApprovedTile extends StatelessWidget {
     final colors = context.theme.colors;
     return FCard(
       child: InkWell(
-        onTap: () =>
-            showApprovedUnderlyingSheet(context, existing: item),
+        onTap: () => showApprovedUnderlyingSheet(context, existing: item),
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -368,23 +789,114 @@ class _LoadingTile extends StatelessWidget {
   }
 }
 
-class _OpportunitiesPlaceholder extends StatelessWidget {
-  const _OpportunitiesPlaceholder();
+class _TradeJournalSection extends ConsumerWidget {
+  const _TradeJournalSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Text(
-          IncomePlannerStrings.opportunitiesEmpty,
-          style: context.theme.typography.sm.copyWith(
-            color: colors.mutedForeground,
-            height: 1.45,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          title: IncomePlannerStrings.journalSectionTitle,
+          trailing: FButton(
+            variant: FButtonVariant.outline,
+            onPress: () => showTradeJournalSheet(context),
+            child: const Text(IncomePlannerStrings.journalAddCta),
           ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.s8),
+        // Inline live list — keep the planner page light; full history
+        // can be opened from the sheet's "All entries" link.
+        Consumer(
+          builder: (context, ref, _) {
+            final entriesAsync = ref.watch(tradeJournalEntriesProvider);
+            return entriesAsync.when(
+              loading: () => const _LoadingTile(),
+              error: (e, _) => _ErrorCard(
+                title: IncomePlannerStrings.refreshFailedTitle,
+                message: '$e',
+              ),
+              data: (entries) {
+                if (entries.isEmpty) {
+                  return const _EmptyCard(
+                    body: IncomePlannerStrings.journalEmpty,
+                  );
+                }
+                return Column(
+                  children: [
+                    for (final entry in entries.take(3))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.s4,
+                        ),
+                        child: FCard(
+                          child: InkWell(
+                            onTap: () => showTradeJournalSheet(
+                              context,
+                              existingId: entry.id,
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.s16,
+                                vertical: AppSpacing.s12,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${entry.symbol} · ${entry.optionSymbol}',
+                                          style: context.theme.typography.sm
+                                              .copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                            height: AppSpacing.s2),
+                                        Text(
+                                          entry.status.displayLabel,
+                                          style: context.theme.typography.xs
+                                              .copyWith(
+                                            color: colors.mutedForeground,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '+${entry.entryCredit}',
+                                    style:
+                                        context.theme.typography.sm.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ],
     );
   }
 }
+
+String _pct(Decimal value) {
+  final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);
+  return '$pct%';
+}
+
+String _fmtMoney(Decimal value) => value.toStringAsFixed(2);

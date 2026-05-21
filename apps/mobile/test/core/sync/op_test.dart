@@ -169,6 +169,8 @@ void main() {
         // Options Income Planner P0 (`docs/options-income.md`).
         'options_strategy_profile',
         'approved_underlyings',
+        // Options Income Planner P3 — trade journal.
+        'options_trade_journal',
       };
       expect(kSyncableTables, expected);
     });

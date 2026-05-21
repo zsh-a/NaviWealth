@@ -263,6 +263,33 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {userId};
 }
 
+/// Options Income Planner — trade journal entries (synced). One row per
+/// open / closed position the user records. See `docs/options-income.md`
+/// §6.2 and §1.1 ("Trade Journal").
+@DataClassName('OptionsTradeJournalRow')
+class OptionsTradeJournal extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get strategy => text()();   // cash_secured_put | covered_call
+  TextColumn get symbol => text()();
+  TextColumn get optionSymbol => text()();
+  DateTimeColumn get openedAt => dateTime()();
+  DateTimeColumn get closedAt => dateTime().nullable()();
+  TextColumn get entryCredit => text().map(const DecimalConverter())();
+  TextColumn get exitDebit =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get realizedPnl =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get currency => text().withLength(min: 3, max: 8)();
+  TextColumn get status => text()();    // open | closed | assigned | expired
+  TextColumn get notes => text().nullable()();
+
+  @override
+  String? get tableName => 'options_trade_journal';
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Options Income Planner — symbols the user has explicitly approved for
 /// sell-put / covered-call candidate generation. See
 /// `docs/options-income.md` §6.2.

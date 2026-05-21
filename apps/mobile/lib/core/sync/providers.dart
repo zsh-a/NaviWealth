@@ -78,6 +78,8 @@ final syncOpApplierProvider = Provider<OpApplier>((ref) {
     'users',
     // Options Income Planner P0.
     'approved_underlyings',
+    // Options Income Planner P3 — trade journal.
+    'options_trade_journal',
   ];
   final handlers = <String, OpApplier>{
     'accounts': AccountOpApplier(db),

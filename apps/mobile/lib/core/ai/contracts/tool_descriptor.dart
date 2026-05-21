@@ -419,6 +419,39 @@ const allToolDescriptors = <ToolDescriptor>[
     allowedContextTier: BudgetTier.standard,
     sideEffect: SideEffect.deviceLocalWrite,
   ),
+  // Options Income Planner — see docs/options-income.md §8.2.
+  ToolDescriptor(
+    name: 'get_options_income_opportunities',
+    access: Access.read,
+    risk: RiskLevel.suggest,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+    readModelLayer: ReadModelLayer.analytical,
+  ),
+  ToolDescriptor(
+    name: 'get_options_strategy_profile',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    readModelLayer: ReadModelLayer.snapshot,
+  ),
+  ToolDescriptor(
+    name: 'propose_options_profile_update',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.standard,
+    sideEffect: SideEffect.deviceLocalWrite,
+  ),
+  ToolDescriptor(
+    name: 'propose_options_journal_entry',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.standard,
+    sideEffect: SideEffect.deviceLocalWrite,
+  ),
 ];
 
 ToolDescriptor? lookupToolDescriptor(String name) {
