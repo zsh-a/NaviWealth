@@ -197,12 +197,9 @@ test/
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `mobile.yml` | `apps/mobile/**` | format, analyze, build_runner check, test+coverage, web/android/iOS build |
-| `backend.yml` | `apps/backend/**` | fmt, clippy, wasm32 check, cargo audit, deploy/preview |
-| `asset-catalog.yml` | `tool/asset_catalog/**`, `tool/build-asset-catalog.sh` | offline pytest + stub bake (full ingest is manual / self-hosted) |
-| `security.yml` | weekly + lockfile changes | dart pub outdated, cargo audit, Trivy |
+| `mobile.yml` | `apps/mobile/**` | analyze, build_runner check, test+coverage, golden regression, web build |
+| `backend.yml` | `apps/backend/**` | fmt, clippy, wasm32 check, deploy/preview |
 | `release.yml` | tag `vX.Y.Z` + manual | version stamp, build mobile+backend, GitHub Release, deploy backend |
-| `web-smoke.yml` | nightly + manual | Playwright (Chromium / Firefox / WebKit) |
 
 ---
 

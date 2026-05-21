@@ -325,7 +325,7 @@
 ### 4.4 安全
 - Web 端敏感数据存储模型重审（见 §1.5）；
 - JWT 刷新窗口、设备撤销链路压测（已有 FIR-29/30/37 基础）；
-- 依赖审计：`security.yml` 已周扫 + 锁文件变更触发，可加 SBOM 产出。
+- 依赖审计：不再作为 GitHub Actions CI 门禁；需要时手动运行 `dart pub outdated`、`cargo audit` 与文件系统漏洞扫描，可后续补 SBOM 产出。
 
 ---
 
