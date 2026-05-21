@@ -164,58 +164,55 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
         onSubmit: _save,
         busy: _busy,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _LabeledTextField(
-              label: l10n.incomePlannerSymbolLabel,
-              hint: l10n.incomePlannerSymbolHint,
-              controller: _symbolCtl,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _LabeledTextField(
-              label: l10n.incomePlannerJournalOptionSymbolLabel,
-              hint: l10n.incomePlannerJournalOptionSymbolHint,
-              controller: _optionSymbolCtl,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _StrategySelect(
-              value: _strategy,
-              onChanged: (v) => setState(() => _strategy = v),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _LabeledTextField(
-              label: l10n.incomePlannerJournalCreditLabel,
-              hint: l10n.incomePlannerJournalAmountHint,
-              controller: _creditCtl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _LabeledTextField(
-              label: l10n.incomePlannerJournalDebitLabel,
-              hint: l10n.incomePlannerJournalAmountHint,
-              controller: _debitCtl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _StatusSelect(
-              value: _status,
-              onChanged: (v) => setState(() => _status = v),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _LabeledTextField(
-              label: l10n.incomePlannerJournalNotesLabel,
-              hint: '',
-              controller: _notesCtl,
-              maxLines: 3,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _LabeledTextField(
+            label: l10n.incomePlannerSymbolLabel,
+            hint: l10n.incomePlannerSymbolHint,
+            controller: _symbolCtl,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalOptionSymbolLabel,
+            hint: l10n.incomePlannerJournalOptionSymbolHint,
+            controller: _optionSymbolCtl,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _StrategySelect(
+            value: _strategy,
+            onChanged: (v) => setState(() => _strategy = v),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalCreditLabel,
+            hint: l10n.incomePlannerJournalAmountHint,
+            controller: _creditCtl,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalDebitLabel,
+            hint: l10n.incomePlannerJournalAmountHint,
+            controller: _debitCtl,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _StatusSelect(
+            value: _status,
+            onChanged: (v) => setState(() => _status = v),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabeledTextField(
+            label: l10n.incomePlannerJournalNotesLabel,
+            hint: '',
+            controller: _notesCtl,
+            maxLines: 3,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+        ],
       ),
     );
   }
@@ -260,6 +257,47 @@ class _LabeledTextField extends StatelessWidget {
   }
 }
 
+/// Row of equal-width segmented buttons. Used for strategy and status
+/// pickers so they align with the full-width text fields above/below.
+class _SegmentedRow<T> extends StatelessWidget {
+  const _SegmentedRow({
+    required this.options,
+    required this.value,
+    required this.labelOf,
+    required this.onChanged,
+  });
+
+  final List<T> options;
+  final T value;
+  final String Function(T) labelOf;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[];
+    for (var i = 0; i < options.length; i++) {
+      if (i > 0) children.add(const SizedBox(width: AppSpacing.s8));
+      final option = options[i];
+      children.add(
+        Expanded(
+          child: FButton(
+            variant: option == value
+                ? FButtonVariant.primary
+                : FButtonVariant.outline,
+            onPress: () => onChanged(option),
+            child: Text(
+              labelOf(option),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      );
+    }
+    return Row(children: children);
+  }
+}
+
 class _StrategySelect extends StatelessWidget {
   const _StrategySelect({required this.value, required this.onChanged});
 
@@ -269,21 +307,11 @@ class _StrategySelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Row(
-      children: [
-        for (final option in OptionsStrategyKind.values) ...[
-          Expanded(
-            child: FButton(
-              variant: option == value
-                  ? FButtonVariant.primary
-                  : FButtonVariant.outline,
-              onPress: () => onChanged(option),
-              child: Text(optionsStrategyKindShortLabel(l10n, option)),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-        ],
-      ],
+    return _SegmentedRow<OptionsStrategyKind>(
+      options: OptionsStrategyKind.values,
+      value: value,
+      labelOf: (o) => optionsStrategyKindShortLabel(l10n, o),
+      onChanged: onChanged,
     );
   }
 }
@@ -297,18 +325,11 @@ class _StatusSelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: AppSpacing.s8,
-      children: [
-        for (final option in TradeJournalStatus.values)
-          FButton(
-            variant: option == value
-                ? FButtonVariant.primary
-                : FButtonVariant.outline,
-            onPress: () => onChanged(option),
-            child: Text(tradeJournalStatusLabel(l10n, option)),
-          ),
-      ],
+    return _SegmentedRow<TradeJournalStatus>(
+      options: TradeJournalStatus.values,
+      value: value,
+      labelOf: (o) => tradeJournalStatusLabel(l10n, o),
+      onChanged: onChanged,
     );
   }
 }
