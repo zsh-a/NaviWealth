@@ -199,7 +199,7 @@ test/
 |----------|---------|---------|
 | `mobile.yml` | `apps/mobile/**` | analyze, build_runner check, test+coverage, golden regression, web build |
 | `backend.yml` | `apps/backend/**` | fmt, clippy, wasm32 check, deploy/preview |
-| `release.yml` | tag `vX.Y.Z` + manual | version stamp, build mobile+backend, GitHub Release, deploy backend |
+| `release.yml` | tag `vX.Y.Z` + manual | version stamp, APK GitHub Release, deploy backend |
 
 ---
 

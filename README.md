@@ -19,7 +19,7 @@ naviwealth/
     ├── workflows/
     │   ├── mobile.yml          analyze + test (coverage) / golden regression / build web
     │   ├── backend.yml         fmt + clippy + check (wasm32) / deploy / preview
-    │   └── release.yml         tag vX.Y.Z 触发：版本写入 + 构建 + GH Release + 后端部署
+    │   └── release.yml         tag vX.Y.Z 触发：版本写入 + APK Release + 后端部署
     ├── dependabot.yml          Actions / pub / cargo 依赖自动更新
     └── CODEOWNERS              默认评审人
 ```
@@ -114,7 +114,7 @@ PR 推送 → `wrangler versions upload`（生成 preview URL，不接管流量�
 |--------|------|----------|
 | `mobile` | `apps/mobile/**` | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / golden regression / web 构建 |
 | `backend` | `apps/backend/**` | fmt / clippy / check (wasm32) / deploy 或 PR preview |
-| `release` | `vX.Y.Z` tag + 手动 dispatch | 版本写入 → 构建 mobile + backend → GitHub Release → 后端部署 |
+| `release` | `vX.Y.Z` tag + 手动 dispatch | 版本写入 → APK GitHub Release → 后端部署 |
 
 覆盖率阈值（[`codecov.yml`](codecov.yml)）：项目 60%、patch 70%。`*.g.dart` / `*.freezed.dart` 不计入。
 

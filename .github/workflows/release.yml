@@ -2,10 +2,10 @@ name: release
 
 # Unified release workflow. Convention:
 #   v0.2.0 — stamps version into both mobile (pubspec.yaml) and backend
-#            (Cargo.toml), creates a GitHub Release with mobile artifacts,
+#            (Cargo.toml), creates a GitHub Release with the APK artifact,
 #            and optionally builds + deploys the backend.
 #
-# Tag push (vX.Y.Z) always builds both mobile and backend.
+# Tag push (vX.Y.Z) always builds the APK and backend deploy build.
 # Manual dispatch allows skipping the backend build via the `backend` input.
 
 on:
@@ -115,25 +115,22 @@ jobs:
         id: api-url
         working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - name: Decode signing keystore
         if: env.KEYSTORE_BASE64 != ''
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_BASE64" | base64 -d > "${{ runner.temp }}/release.keystore"
-      - name: Build release APK & AAB
+      - name: Build release APK
         env:
           KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - name: Normalize APK filename
         run: |
-          flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
-          flutter build appbundle --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
-      - name: Package web bundle
-        run: |
-          cd build/web
-          tar -czf "../../naviwealth-web-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz" .
+          mv build/app/outputs/flutter-apk/app-release.apk \
+            "build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk"
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -141,9 +138,7 @@ jobs:
           name: v${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
           generate_release_notes: true
           files: |
-            apps/mobile/naviwealth-web-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz
-            apps/mobile/build/app/outputs/flutter-apk/app-release.apk
-            apps/mobile/build/app/outputs/bundle/release/app-release.aab
+            apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk
 
   backend-build:
     name: backend build
@@ -172,16 +167,6 @@ jobs:
         run: cargo install -q worker-build
       - name: Build worker artifact
         run: worker-build --release
-      - name: Package worker bundle
-        run: |
-          tar -czf "naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz" build/worker
-      - name: Upload backend artifact to release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: false
-          files: |
-            apps/backend/naviwealth-backend-${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.tar.gz
 
   backend-deploy:
     name: backend deploy
