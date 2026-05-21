@@ -10405,6 +10405,24 @@ abstract class AppLocalizations {
   /// **'No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.'**
   String get incomePlannerOpportunitiesAllRejected;
 
+  /// Title shown after a completed scan finds no qualifying option opportunities
+  ///
+  /// In en, this message translates to:
+  /// **'No matching opportunities this scan'**
+  String get incomePlannerNoMatchesTitle;
+
+  /// Toast shown after a completed scan returns zero qualifying opportunities
+  ///
+  /// In en, this message translates to:
+  /// **'Scan finished: no opportunities matched your current filters.'**
+  String get incomePlannerScanNoMatchesToast;
+
+  /// Short scan outcome summary shown in the zero-result state
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned {symbols} symbols · rejected {rejected} contracts · {errors} fetch errors'**
+  String incomePlannerScanSummary(int symbols, int rejected, int errors);
+
   /// Short label for the cash-secured put strategy
   ///
   /// In en, this message translates to:

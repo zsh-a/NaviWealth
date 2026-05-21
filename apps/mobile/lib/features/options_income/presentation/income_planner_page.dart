@@ -9,6 +9,7 @@ import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/scan_controller.dart';
 import '../application/scan_inputs_bridge.dart';
+import '../application/scan_orchestrator.dart' show ScanResult;
 import '../data/options_opportunity_cache_repository.dart';
 import '../data/providers.dart';
 import '../domain/approved_underlying.dart';
@@ -199,11 +200,23 @@ class _ConfiguredBody extends ConsumerWidget {
   }
 
   Future<void> _runScan(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     final controller = ref.read(scanControllerProvider.notifier);
     final side = await ref.read(scanSideInputsProvider.future);
-    await controller.runScan(
+    final result = await controller.runScan(
       availableCash: side.availableCash,
       holdingsBySymbol: side.holdingsBySymbol,
+    );
+    if (!context.mounted || result == null || result.opportunities.isNotEmpty) {
+      return;
+    }
+    AppMessenger.show(
+      context,
+      ToastKind.warning,
+      result.universe.isEmpty
+          ? l10n.incomePlannerRefreshUniverseEmpty
+          : l10n.incomePlannerScanNoMatchesToast,
+      duration: const Duration(seconds: 5),
     );
   }
 }
@@ -268,8 +281,8 @@ class _OpportunitiesHeader extends StatelessWidget {
     final ago = delta.inMinutes < 60
         ? l10n.incomePlannerLastScanMinutes(delta.inMinutes)
         : delta.inHours < 24
-            ? l10n.incomePlannerLastScanHours(delta.inHours)
-            : l10n.incomePlannerLastScanDays(delta.inDays);
+        ? l10n.incomePlannerLastScanHours(delta.inHours)
+        : l10n.incomePlannerLastScanDays(delta.inDays);
     if (s.isStale) {
       return l10n.incomePlannerLastScanStaleSummary(
         l10n.incomePlannerLastScanLabel,
@@ -312,13 +325,9 @@ class _OpportunitiesBody extends StatelessWidget {
       data: (items) {
         if (items.isEmpty) {
           if (state is ScanSuccess) {
-            return _EmptyCard(
-              body: l10n.incomePlannerOpportunitiesAllRejected,
-            );
+            return _ScanEmptyResultCard(result: (state as ScanSuccess).result);
           }
-          return _EmptyCard(
-            body: l10n.incomePlannerOpportunitiesEmpty,
-          );
+          return _EmptyCard(body: l10n.incomePlannerOpportunitiesEmpty);
         }
         return Column(
           children: [
@@ -419,7 +428,8 @@ class _MetricsRow extends StatelessWidget {
       children: [
         _Metric(
           label: l10n.incomePlannerMetricStrike,
-          value: '${contract.strike.currency} '
+          value:
+              '${contract.strike.currency} '
               '${metrics.cashRequired.amount / Decimal.fromInt(100)}',
         ),
         _Metric(
@@ -432,10 +442,92 @@ class _MetricsRow extends StatelessWidget {
         ),
         _Metric(
           label: l10n.incomePlannerMetricCash,
-          value: '${metrics.cashRequired.currency} '
+          value:
+              '${metrics.cashRequired.currency} '
               '${_fmtMoney(metrics.cashRequired.amount)}',
         ),
       ],
+    );
+  }
+}
+
+class _ScanEmptyResultCard extends StatelessWidget {
+  const _ScanEmptyResultCard({required this.result});
+
+  final ScanResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final universeEmpty = result.universe.isEmpty;
+    final body = universeEmpty
+        ? l10n.incomePlannerRefreshUniverseEmpty
+        : l10n.incomePlannerOpportunitiesAllRejected;
+    return FCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.incomePlannerNoMatchesTitle,
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              body,
+              style: context.theme.typography.sm.copyWith(
+                color: colors.mutedForeground,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.incomePlannerScanSummary(
+                result.universe.length,
+                result.rejected.length,
+                result.errors.length,
+              ),
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+            if (result.errors.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                result.errors.entries
+                    .take(2)
+                    .map((e) => '${e.key}: ${e.value}')
+                    .join('\n'),
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.destructive,
+                  height: 1.35,
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.s12),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => showStrategyProfileSheet(context),
+                  child: Text(l10n.incomePlannerPreferencesAction),
+                ),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => showApprovedUnderlyingSheet(context),
+                  child: Text(l10n.incomePlannerAddApprovedCta),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -529,18 +621,15 @@ class _RiskBadge extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final (label, color) = switch (risk) {
-      OpportunityRiskLevel.low => (
-          l10n.incomePlannerRiskLow,
-          colors.primary,
-        ),
+      OpportunityRiskLevel.low => (l10n.incomePlannerRiskLow, colors.primary),
       OpportunityRiskLevel.moderate => (
-          l10n.incomePlannerRiskModerate,
-          colors.mutedForeground,
-        ),
+        l10n.incomePlannerRiskModerate,
+        colors.mutedForeground,
+      ),
       OpportunityRiskLevel.elevated => (
-          l10n.incomePlannerRiskElevated,
-          colors.destructive,
-        ),
+        l10n.incomePlannerRiskElevated,
+        colors.destructive,
+      ),
     };
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -770,9 +859,7 @@ class _StrategyChip extends StatelessWidget {
     final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: enabled
-            ? colors.primary.withValues(alpha: 0.12)
-            : colors.muted,
+        color: enabled ? colors.primary.withValues(alpha: 0.12) : colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
@@ -836,9 +923,7 @@ class _TradeJournalSection extends ConsumerWidget {
               ),
               data: (entries) {
                 if (entries.isEmpty) {
-                  return _EmptyCard(
-                    body: l10n.incomePlannerJournalEmpty,
-                  );
+                  return _EmptyCard(body: l10n.incomePlannerJournalEmpty);
                 }
                 return Column(
                   children: [
@@ -870,26 +955,26 @@ class _TradeJournalSection extends ConsumerWidget {
                                           '${entry.symbol} · ${entry.optionSymbol}',
                                           style: context.theme.typography.sm
                                               .copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                         ),
-                                        const SizedBox(
-                                            height: AppSpacing.s2),
+                                        const SizedBox(height: AppSpacing.s2),
                                         Text(
                                           tradeJournalStatusLabel(
-                                              l10n, entry.status),
+                                            l10n,
+                                            entry.status,
+                                          ),
                                           style: context.theme.typography.xs
                                               .copyWith(
-                                            color: colors.mutedForeground,
-                                          ),
+                                                color: colors.mutedForeground,
+                                              ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Text(
                                     '+${entry.entryCredit}',
-                                    style:
-                                        context.theme.typography.sm.copyWith(
+                                    style: context.theme.typography.sm.copyWith(
                                       fontWeight: FontWeight.w600,
                                       color: colors.primary,
                                     ),
