@@ -27,7 +27,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="NaviWealth">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
@@ -161,7 +163,8 @@
   // flutter_bootstrap.js so the SW is registering while Dart compiles.
   //
   // Build with `flutter build web --pwa-strategy=none` so Flutter does not
-  // also generate flutter_service_worker.js (it would race this one).
+  // register its default service worker (newer Flutter may still emit a
+  // zero-byte placeholder file, which is inert).
   (function () {
     var bridge = {
       updateAvailable: false,

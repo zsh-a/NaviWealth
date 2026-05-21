@@ -21,7 +21,10 @@ test.describe('PWA prerequisites', () => {
       /name=["']apple-mobile-web-app-capable["'][^>]*content=["']yes["']|name=["']mobile-web-app-capable["'][^>]*content=["']yes["']/i,
     );
     expect(html, 'must declare an apple-touch-icon').toMatch(
-      /<link\s+[^>]*rel=["']apple-touch-icon["']/i,
+      /<link\s+[^>]*rel=["']apple-touch-icon["'][^>]*sizes=["']180x180["']/i,
+    );
+    expect(html, 'must disable telephone auto-linking').toMatch(
+      /name=["']format-detection["'][^>]*content=["']telephone=no["']/i,
     );
   });
 
