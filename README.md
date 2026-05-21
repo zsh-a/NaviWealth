@@ -17,9 +17,9 @@ naviwealth/
 ├── docs/                    协议、监控、路线图、兼容矩阵
 └── .github/
     ├── workflows/
-    │   ├── mobile.yml          analyze + test (coverage) / golden regression / build web
+    │   ├── mobile.yml          analyze + test (coverage) / golden regression / build web / Pages deploy
     │   ├── backend.yml         fmt + clippy + check (wasm32) / deploy / preview
-    │   └── release.yml         tag vX.Y.Z 触发：版本写入 + APK Release + 后端部署
+    │   └── release.yml         tag vX.Y.Z 触发：版本写入 + APK Release + Pages / 后端部署
     ├── dependabot.yml          Actions / pub / cargo 依赖自动更新
     └── CODEOWNERS              默认评审人
 ```
@@ -71,7 +71,7 @@ Worker 运行时（`wrangler secret put`）：
 
 GitHub Actions（`Settings → Secrets and variables → Actions`）：
 
-- `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` — Workers 部署（未配置时 deploy job 自动跳过）
+- `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` — Workers + Pages 部署（未配置时 deploy job 自动跳过）
 - `CODECOV_TOKEN` — 覆盖率上传（私有仓库必填）
 - `KEYSTORE_BASE64` + 签名 key — Android 签名
 
@@ -112,9 +112,9 @@ PR 推送 → `wrangler versions upload`（生成 preview URL，不接管流量�
 
 | 流水线 | 触发 | 关键步骤 |
 |--------|------|----------|
-| `mobile` | `apps/mobile/**` | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / golden regression / web 构建 |
+| `mobile` | `apps/mobile/**` | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / golden regression / web 构建 / Pages 部署 |
 | `backend` | `apps/backend/**` | fmt / clippy / check (wasm32) / deploy 或 PR preview |
-| `release` | `vX.Y.Z` tag + 手动 dispatch | 版本写入 → APK GitHub Release → 后端部署 |
+| `release` | `vX.Y.Z` tag + 手动 dispatch | 版本写入 → APK GitHub Release → Pages 部署 → 后端部署 |
 
 覆盖率阈值（[`codecov.yml`](codecov.yml)）：项目 60%、patch 70%。`*.g.dart` / `*.freezed.dart` 不计入。
 

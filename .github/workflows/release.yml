@@ -5,7 +5,8 @@ name: release
 #            (Cargo.toml), creates a GitHub Release with the APK artifact,
 #            and optionally builds + deploys the backend.
 #
-# Tag push (vX.Y.Z) always builds the APK and backend deploy build.
+# Tag push (vX.Y.Z) always builds the APK, deploys the web PWA to
+# Cloudflare Pages, and builds the backend deploy artifact.
 # Manual dispatch allows skipping the backend build via the `backend` input.
 
 on:
@@ -111,6 +112,8 @@ jobs:
         run: bash tool/build-cn-fonts.sh
       - name: Build Latin font subsets (Inter + Outfit)
         run: bash tool/build-latin-fonts.sh
+      - name: Materialize drift web assets
+        run: bash tool/setup-drift-web.sh
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}
@@ -127,10 +130,31 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - name: Build release web PWA
+        run: flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - name: Normalize APK filename
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
             "build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk"
+      - name: Check Pages deploy credentials
+        id: pages-deploy-gate
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping Pages deploy."
+          fi
+      - name: Deploy web PWA to Cloudflare Pages
+        if: steps.pages-deploy-gate.outputs.enabled == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/mobile
+          command: pages deploy --branch main
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

@@ -4,7 +4,9 @@
 // asset precache + cache-first. We need three different strategies for three
 // different traffic patterns (offline shell, API, WASM), plus an explicit
 // update-available channel back to the Flutter app. Build with
-// `flutter build web --pwa-strategy=none` so this file is the only SW served.
+// `flutter build web --pwa-strategy=none` so this file is the only SW
+// registered. Newer Flutter releases may still emit a zero-byte
+// flutter_service_worker.js placeholder; it is inert.
 //
 // Cache layout (versioned via SW_VERSION — bump on shell change):
 //   shell-v{n}    Cache-First. App shell + Flutter bootstrap/main chunks.

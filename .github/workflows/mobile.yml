@@ -169,10 +169,41 @@ jobs:
         id: api-url
         working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - run: flutter build web --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+      - run: flutter build web --release --pwa-strategy=none --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-web-build
           path: apps/mobile/build/web
           retention-days: 7
           if-no-files-found: error
+
+  deploy-pages:
+    name: deploy Cloudflare Pages
+    runs-on: ubuntu-latest
+    needs: build-web
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      HAS_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    concurrency:
+      group: pages-deploy-prod
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
+      - name: Download mobile web artifact
+        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: mobile-web-build
+          path: apps/mobile/build/web
+      - name: Skip Cloudflare Pages deploy
+        if: env.HAS_CLOUDFLARE_API_TOKEN != 'true'
+        run: echo "::notice::CLOUDFLARE_API_TOKEN not set in GitHub Secrets — skipping Pages deploy."
+      - name: Deploy to Cloudflare Pages
+        if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/mobile
+          command: pages deploy --branch main

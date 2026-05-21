@@ -81,6 +81,17 @@ flutter build web --release --pwa-strategy=none
 
 更新提醒：`window.naviwealthPwa` 桥接到 Dart 端 `PwaUpdateController`（`lib/core/pwa/`）；新版本就绪时底部出现 `PwaUpdateBanner`，点击「立即刷新」会发送 `SKIP_WAITING` 并整页 reload。
 
+## Cloudflare Pages
+
+`wrangler.toml` 声明 Pages 项目名和构建输出目录，`web/_redirects` 负责把刷新后的 SPA 子路由 fallback 到 `index.html`，`web/_headers` 给 service worker / shell 文件设置 no-cache，并给静态资源设置长缓存。
+
+本地直传：
+
+```bash
+flutter build web --release --pwa-strategy=none
+wrangler pages deploy --branch main
+```
+
 ## 渲染策略
 
 走 Flutter 默认 Web 渲染器（CanvasKit on desktop，HTML/auto on mobile）。Wasm 模式 dry-run 已通过；后续按需加 `--wasm`。
