@@ -3116,6 +3116,12 @@ abstract class AppLocalizations {
   /// **'Back to overview'**
   String get routeGoHome;
 
+  /// Secondary action on the error / not-found page that pops the previous route when one exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get routeGoBack;
+
   /// Title of the shortcut help dialog (Cmd/Ctrl+/)
   ///
   /// In en, this message translates to:

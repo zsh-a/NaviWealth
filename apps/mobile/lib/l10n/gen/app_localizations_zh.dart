@@ -1671,6 +1671,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get routeGoHome => '返回总览';
 
   @override
+  String get routeGoBack => '返回上一页';
+
+  @override
   String get shortcutsHelpTitle => '键盘快捷键';
 
   @override

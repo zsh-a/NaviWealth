@@ -923,6 +923,8 @@
   "@routeErrorTitle": { "description": "Title shown when go_router's errorBuilder fires for a runtime error (not a 404)." },
   "routeGoHome": "Back to overview",
   "@routeGoHome": { "description": "Action that navigates back to the home tab from an error / not-found page." },
+  "routeGoBack": "Go back",
+  "@routeGoBack": { "description": "Secondary action on the error / not-found page that pops the previous route when one exists." },
 
   "shortcutsHelpTitle": "Keyboard shortcuts",
   "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },

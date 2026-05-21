@@ -6,11 +6,18 @@ import 'package:go_router/go_router.dart';
 /// detail panes all agree on the same key.
 const String kSelectedQueryKey = 'selected';
 
-/// Reads `?selected=` off the current router location, or null if absent.
+/// Reads `?selected=` off the current router location, or null if absent
+/// (or if no GoRouter is mounted — returning null lets shared widgets
+/// like `MasterDetailLayout` be used in plain `MaterialApp` tests without
+/// stubbing a router).
 String? selectedQueryOf(BuildContext context) {
-  final raw = GoRouter.of(
-    context,
-  ).routeInformationProvider.value.uri.queryParameters[kSelectedQueryKey];
+  final router = GoRouter.maybeOf(context);
+  if (router == null) return null;
+  final raw = router
+      .routeInformationProvider
+      .value
+      .uri
+      .queryParameters[kSelectedQueryKey];
   if (raw == null || raw.isEmpty) return null;
   return raw;
 }

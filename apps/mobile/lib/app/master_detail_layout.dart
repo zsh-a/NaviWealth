@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../design_system/design_system.dart';
+import 'selection_query.dart';
 import 'shell_preferences.dart';
 
 /// Two-pane master-detail surface used by the desktop shell at ≥ 1240dp.
@@ -31,6 +32,11 @@ class MasterDetailLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final masterWidth = ref.watch(masterPaneWidthProvider);
     final colors = context.theme.colors;
+    // Drive AnimatedSwitcher from `?selected=`: switching rows (or
+    // clearing the selection) crossfades the detail pane instead of
+    // snapping to a blank surface. Empty state collapses to a fixed key
+    // so the fade plays both directions.
+    final selected = selectedQueryOf(context) ?? _emptyDetailKey;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -42,10 +48,30 @@ class MasterDetailLayout extends ConsumerWidget {
             ref.read(masterPaneWidthProvider.notifier).set(masterWidth + delta);
           },
         ),
-        Expanded(child: detail),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: Motion.fast,
+            switchInCurve: Motion.standardDecelerate,
+            switchOutCurve: Motion.standardAccelerate,
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
+            // Default layoutBuilder centers children with loose
+            // constraints, which shrinks form/empty panes that have no
+            // intrinsic size. Override with expand-fit so the detail
+            // pane fills the column.
+            layoutBuilder: (current, previous) => Stack(
+              fit: StackFit.expand,
+              alignment: Alignment.topLeft,
+              children: [...previous, ?current],
+            ),
+            child: KeyedSubtree(key: ValueKey(selected), child: detail),
+          ),
+        ),
       ],
     );
   }
+
+  static const String _emptyDetailKey = '__master_detail_empty__';
 }
 
 class _Splitter extends StatefulWidget {

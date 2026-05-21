@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../design_system/design_system.dart';
 import 'keyboard_platform.dart';
 import 'shortcut_bindings.dart';
 import 'shortcut_help_dialog.dart';
@@ -208,18 +210,45 @@ class _GuardedContextAction<T extends Intent> extends ContextAction<T> {
 /// Esc handling intentionally bypasses the text-input guard: hitting `Esc`
 /// inside a focused field should still close the surrounding dialog (after
 /// which the OS will hand focus back to whatever was beneath it).
+///
+/// Precedence mirrors [smartPop] so Esc, the toolbar back arrow, system
+/// back, and post-save `popOrGo` always agree on what "back" means:
+///
+///  1. **root `Navigator.pop()`** — closes a modal sheet / dialog if any
+///     overlay is on top (the original behavior).
+///  2. **clear `?selected=`** — desktop master-detail; unmounts the
+///     detail pane without leaving the list page.
+///  3. **`GoRouter.pop()`** — pages pushed inside a shell branch.
+///
+/// `isEnabled` is the union of the three so the Esc keystroke isn't
+/// silently swallowed when only one path is available.
 class _DismissOverlayAction extends ContextAction<DismissOverlayIntent> {
   @override
   bool isEnabled(DismissOverlayIntent intent, [BuildContext? context]) {
     if (context == null) return false;
-    final NavigatorState? nav = Navigator.maybeOf(context, rootNavigator: true);
-    return nav != null && nav.canPop();
+    final NavigatorState? rootNav = Navigator.maybeOf(
+      context,
+      rootNavigator: true,
+    );
+    if (rootNav != null && rootNav.canPop()) return true;
+    final router = GoRouter.maybeOf(context);
+    if (router == null) return false;
+    if (router.canPop()) return true;
+    return router.routeInformationProvider.value.uri.queryParameters
+        .containsKey('selected');
   }
 
   @override
   Object? invoke(DismissOverlayIntent intent, [BuildContext? context]) {
     if (context == null) return null;
-    Navigator.of(context, rootNavigator: true).maybePop();
+    final rootNav = Navigator.of(context, rootNavigator: true);
+    if (rootNav.canPop()) {
+      rootNav.pop();
+      return null;
+    }
+    if (clearSelectedDetail(context)) return null;
+    final router = GoRouter.maybeOf(context);
+    if (router != null && router.canPop()) router.pop();
     return null;
   }
 }
