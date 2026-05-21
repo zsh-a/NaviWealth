@@ -7713,6 +7713,1000 @@ class OptionsStrategyProfileTableCompanion
   }
 }
 
+class $OptionsTradeJournalTable extends OptionsTradeJournal
+    with TableInfo<$OptionsTradeJournalTable, OptionsTradeJournalRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OptionsTradeJournalTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($OptionsTradeJournalTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _strategyMeta = const VerificationMeta(
+    'strategy',
+  );
+  @override
+  late final GeneratedColumn<String> strategy = GeneratedColumn<String>(
+    'strategy',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _optionSymbolMeta = const VerificationMeta(
+    'optionSymbol',
+  );
+  @override
+  late final GeneratedColumn<String> optionSymbol = GeneratedColumn<String>(
+    'option_symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _openedAtMeta = const VerificationMeta(
+    'openedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> openedAt = GeneratedColumn<DateTime>(
+    'opened_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closedAtMeta = const VerificationMeta(
+    'closedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> closedAt = GeneratedColumn<DateTime>(
+    'closed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> entryCredit =
+      GeneratedColumn<String>(
+        'entry_credit',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>($OptionsTradeJournalTable.$converterentryCredit);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> exitDebit =
+      GeneratedColumn<String>(
+        'exit_debit',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>($OptionsTradeJournalTable.$converterexitDebitn);
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> realizedPnl =
+      GeneratedColumn<String>(
+        'realized_pnl',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $OptionsTradeJournalTable.$converterrealizedPnln,
+      );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    strategy,
+    symbol,
+    optionSymbol,
+    openedAt,
+    closedAt,
+    entryCredit,
+    exitDebit,
+    realizedPnl,
+    currency,
+    status,
+    notes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'options_trade_journal';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OptionsTradeJournalRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('strategy')) {
+      context.handle(
+        _strategyMeta,
+        strategy.isAcceptableOrUnknown(data['strategy']!, _strategyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_strategyMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('option_symbol')) {
+      context.handle(
+        _optionSymbolMeta,
+        optionSymbol.isAcceptableOrUnknown(
+          data['option_symbol']!,
+          _optionSymbolMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_optionSymbolMeta);
+    }
+    if (data.containsKey('opened_at')) {
+      context.handle(
+        _openedAtMeta,
+        openedAt.isAcceptableOrUnknown(data['opened_at']!, _openedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_openedAtMeta);
+    }
+    if (data.containsKey('closed_at')) {
+      context.handle(
+        _closedAtMeta,
+        closedAt.isAcceptableOrUnknown(data['closed_at']!, _closedAtMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OptionsTradeJournalRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OptionsTradeJournalRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $OptionsTradeJournalTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      strategy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}strategy'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      optionSymbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}option_symbol'],
+      )!,
+      openedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}opened_at'],
+      )!,
+      closedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}closed_at'],
+      ),
+      entryCredit: $OptionsTradeJournalTable.$converterentryCredit.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}entry_credit'],
+        )!,
+      ),
+      exitDebit: $OptionsTradeJournalTable.$converterexitDebitn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}exit_debit'],
+        ),
+      ),
+      realizedPnl: $OptionsTradeJournalTable.$converterrealizedPnln.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}realized_pnl'],
+        ),
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+    );
+  }
+
+  @override
+  $OptionsTradeJournalTable createAlias(String alias) {
+    return $OptionsTradeJournalTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterentryCredit =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterexitDebit =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterexitDebitn =
+      NullAwareTypeConverter.wrap($converterexitDebit);
+  static TypeConverter<Decimal, String> $converterrealizedPnl =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterrealizedPnln =
+      NullAwareTypeConverter.wrap($converterrealizedPnl);
+}
+
+class OptionsTradeJournalRow extends DataClass
+    implements Insertable<OptionsTradeJournalRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String strategy;
+  final String symbol;
+  final String optionSymbol;
+  final DateTime openedAt;
+  final DateTime? closedAt;
+  final Decimal entryCredit;
+  final Decimal? exitDebit;
+  final Decimal? realizedPnl;
+  final String currency;
+  final String status;
+  final String? notes;
+  const OptionsTradeJournalRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.strategy,
+    required this.symbol,
+    required this.optionSymbol,
+    required this.openedAt,
+    this.closedAt,
+    required this.entryCredit,
+    this.exitDebit,
+    this.realizedPnl,
+    required this.currency,
+    required this.status,
+    this.notes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['strategy'] = Variable<String>(strategy);
+    map['symbol'] = Variable<String>(symbol);
+    map['option_symbol'] = Variable<String>(optionSymbol);
+    map['opened_at'] = Variable<DateTime>(openedAt);
+    if (!nullToAbsent || closedAt != null) {
+      map['closed_at'] = Variable<DateTime>(closedAt);
+    }
+    {
+      map['entry_credit'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterentryCredit.toSql(entryCredit),
+      );
+    }
+    if (!nullToAbsent || exitDebit != null) {
+      map['exit_debit'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterexitDebitn.toSql(exitDebit),
+      );
+    }
+    if (!nullToAbsent || realizedPnl != null) {
+      map['realized_pnl'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterrealizedPnln.toSql(realizedPnl),
+      );
+    }
+    map['currency'] = Variable<String>(currency);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    return map;
+  }
+
+  OptionsTradeJournalCompanion toCompanion(bool nullToAbsent) {
+    return OptionsTradeJournalCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      strategy: Value(strategy),
+      symbol: Value(symbol),
+      optionSymbol: Value(optionSymbol),
+      openedAt: Value(openedAt),
+      closedAt: closedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAt),
+      entryCredit: Value(entryCredit),
+      exitDebit: exitDebit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exitDebit),
+      realizedPnl: realizedPnl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(realizedPnl),
+      currency: Value(currency),
+      status: Value(status),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+    );
+  }
+
+  factory OptionsTradeJournalRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OptionsTradeJournalRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      strategy: serializer.fromJson<String>(json['strategy']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      optionSymbol: serializer.fromJson<String>(json['optionSymbol']),
+      openedAt: serializer.fromJson<DateTime>(json['openedAt']),
+      closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
+      entryCredit: serializer.fromJson<Decimal>(json['entryCredit']),
+      exitDebit: serializer.fromJson<Decimal?>(json['exitDebit']),
+      realizedPnl: serializer.fromJson<Decimal?>(json['realizedPnl']),
+      currency: serializer.fromJson<String>(json['currency']),
+      status: serializer.fromJson<String>(json['status']),
+      notes: serializer.fromJson<String?>(json['notes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'strategy': serializer.toJson<String>(strategy),
+      'symbol': serializer.toJson<String>(symbol),
+      'optionSymbol': serializer.toJson<String>(optionSymbol),
+      'openedAt': serializer.toJson<DateTime>(openedAt),
+      'closedAt': serializer.toJson<DateTime?>(closedAt),
+      'entryCredit': serializer.toJson<Decimal>(entryCredit),
+      'exitDebit': serializer.toJson<Decimal?>(exitDebit),
+      'realizedPnl': serializer.toJson<Decimal?>(realizedPnl),
+      'currency': serializer.toJson<String>(currency),
+      'status': serializer.toJson<String>(status),
+      'notes': serializer.toJson<String?>(notes),
+    };
+  }
+
+  OptionsTradeJournalRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? strategy,
+    String? symbol,
+    String? optionSymbol,
+    DateTime? openedAt,
+    Value<DateTime?> closedAt = const Value.absent(),
+    Decimal? entryCredit,
+    Value<Decimal?> exitDebit = const Value.absent(),
+    Value<Decimal?> realizedPnl = const Value.absent(),
+    String? currency,
+    String? status,
+    Value<String?> notes = const Value.absent(),
+  }) => OptionsTradeJournalRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    strategy: strategy ?? this.strategy,
+    symbol: symbol ?? this.symbol,
+    optionSymbol: optionSymbol ?? this.optionSymbol,
+    openedAt: openedAt ?? this.openedAt,
+    closedAt: closedAt.present ? closedAt.value : this.closedAt,
+    entryCredit: entryCredit ?? this.entryCredit,
+    exitDebit: exitDebit.present ? exitDebit.value : this.exitDebit,
+    realizedPnl: realizedPnl.present ? realizedPnl.value : this.realizedPnl,
+    currency: currency ?? this.currency,
+    status: status ?? this.status,
+    notes: notes.present ? notes.value : this.notes,
+  );
+  OptionsTradeJournalRow copyWithCompanion(OptionsTradeJournalCompanion data) {
+    return OptionsTradeJournalRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      strategy: data.strategy.present ? data.strategy.value : this.strategy,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      optionSymbol: data.optionSymbol.present
+          ? data.optionSymbol.value
+          : this.optionSymbol,
+      openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
+      closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
+      entryCredit: data.entryCredit.present
+          ? data.entryCredit.value
+          : this.entryCredit,
+      exitDebit: data.exitDebit.present ? data.exitDebit.value : this.exitDebit,
+      realizedPnl: data.realizedPnl.present
+          ? data.realizedPnl.value
+          : this.realizedPnl,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      status: data.status.present ? data.status.value : this.status,
+      notes: data.notes.present ? data.notes.value : this.notes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OptionsTradeJournalRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('strategy: $strategy, ')
+          ..write('symbol: $symbol, ')
+          ..write('optionSymbol: $optionSymbol, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('closedAt: $closedAt, ')
+          ..write('entryCredit: $entryCredit, ')
+          ..write('exitDebit: $exitDebit, ')
+          ..write('realizedPnl: $realizedPnl, ')
+          ..write('currency: $currency, ')
+          ..write('status: $status, ')
+          ..write('notes: $notes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    strategy,
+    symbol,
+    optionSymbol,
+    openedAt,
+    closedAt,
+    entryCredit,
+    exitDebit,
+    realizedPnl,
+    currency,
+    status,
+    notes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OptionsTradeJournalRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.strategy == this.strategy &&
+          other.symbol == this.symbol &&
+          other.optionSymbol == this.optionSymbol &&
+          other.openedAt == this.openedAt &&
+          other.closedAt == this.closedAt &&
+          other.entryCredit == this.entryCredit &&
+          other.exitDebit == this.exitDebit &&
+          other.realizedPnl == this.realizedPnl &&
+          other.currency == this.currency &&
+          other.status == this.status &&
+          other.notes == this.notes);
+}
+
+class OptionsTradeJournalCompanion
+    extends UpdateCompanion<OptionsTradeJournalRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> strategy;
+  final Value<String> symbol;
+  final Value<String> optionSymbol;
+  final Value<DateTime> openedAt;
+  final Value<DateTime?> closedAt;
+  final Value<Decimal> entryCredit;
+  final Value<Decimal?> exitDebit;
+  final Value<Decimal?> realizedPnl;
+  final Value<String> currency;
+  final Value<String> status;
+  final Value<String?> notes;
+  final Value<int> rowid;
+  const OptionsTradeJournalCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.strategy = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.optionSymbol = const Value.absent(),
+    this.openedAt = const Value.absent(),
+    this.closedAt = const Value.absent(),
+    this.entryCredit = const Value.absent(),
+    this.exitDebit = const Value.absent(),
+    this.realizedPnl = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.status = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OptionsTradeJournalCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String strategy,
+    required String symbol,
+    required String optionSymbol,
+    required DateTime openedAt,
+    this.closedAt = const Value.absent(),
+    required Decimal entryCredit,
+    this.exitDebit = const Value.absent(),
+    this.realizedPnl = const Value.absent(),
+    required String currency,
+    required String status,
+    this.notes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       strategy = Value(strategy),
+       symbol = Value(symbol),
+       optionSymbol = Value(optionSymbol),
+       openedAt = Value(openedAt),
+       entryCredit = Value(entryCredit),
+       currency = Value(currency),
+       status = Value(status);
+  static Insertable<OptionsTradeJournalRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? strategy,
+    Expression<String>? symbol,
+    Expression<String>? optionSymbol,
+    Expression<DateTime>? openedAt,
+    Expression<DateTime>? closedAt,
+    Expression<String>? entryCredit,
+    Expression<String>? exitDebit,
+    Expression<String>? realizedPnl,
+    Expression<String>? currency,
+    Expression<String>? status,
+    Expression<String>? notes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (strategy != null) 'strategy': strategy,
+      if (symbol != null) 'symbol': symbol,
+      if (optionSymbol != null) 'option_symbol': optionSymbol,
+      if (openedAt != null) 'opened_at': openedAt,
+      if (closedAt != null) 'closed_at': closedAt,
+      if (entryCredit != null) 'entry_credit': entryCredit,
+      if (exitDebit != null) 'exit_debit': exitDebit,
+      if (realizedPnl != null) 'realized_pnl': realizedPnl,
+      if (currency != null) 'currency': currency,
+      if (status != null) 'status': status,
+      if (notes != null) 'notes': notes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OptionsTradeJournalCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? strategy,
+    Value<String>? symbol,
+    Value<String>? optionSymbol,
+    Value<DateTime>? openedAt,
+    Value<DateTime?>? closedAt,
+    Value<Decimal>? entryCredit,
+    Value<Decimal?>? exitDebit,
+    Value<Decimal?>? realizedPnl,
+    Value<String>? currency,
+    Value<String>? status,
+    Value<String?>? notes,
+    Value<int>? rowid,
+  }) {
+    return OptionsTradeJournalCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      strategy: strategy ?? this.strategy,
+      symbol: symbol ?? this.symbol,
+      optionSymbol: optionSymbol ?? this.optionSymbol,
+      openedAt: openedAt ?? this.openedAt,
+      closedAt: closedAt ?? this.closedAt,
+      entryCredit: entryCredit ?? this.entryCredit,
+      exitDebit: exitDebit ?? this.exitDebit,
+      realizedPnl: realizedPnl ?? this.realizedPnl,
+      currency: currency ?? this.currency,
+      status: status ?? this.status,
+      notes: notes ?? this.notes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (strategy.present) {
+      map['strategy'] = Variable<String>(strategy.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (optionSymbol.present) {
+      map['option_symbol'] = Variable<String>(optionSymbol.value);
+    }
+    if (openedAt.present) {
+      map['opened_at'] = Variable<DateTime>(openedAt.value);
+    }
+    if (closedAt.present) {
+      map['closed_at'] = Variable<DateTime>(closedAt.value);
+    }
+    if (entryCredit.present) {
+      map['entry_credit'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterentryCredit.toSql(
+          entryCredit.value,
+        ),
+      );
+    }
+    if (exitDebit.present) {
+      map['exit_debit'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterexitDebitn.toSql(exitDebit.value),
+      );
+    }
+    if (realizedPnl.present) {
+      map['realized_pnl'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterrealizedPnln.toSql(
+          realizedPnl.value,
+        ),
+      );
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OptionsTradeJournalCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('strategy: $strategy, ')
+          ..write('symbol: $symbol, ')
+          ..write('optionSymbol: $optionSymbol, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('closedAt: $closedAt, ')
+          ..write('entryCredit: $entryCredit, ')
+          ..write('exitDebit: $exitDebit, ')
+          ..write('realizedPnl: $realizedPnl, ')
+          ..write('currency: $currency, ')
+          ..write('status: $status, ')
+          ..write('notes: $notes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ApprovedUnderlyingsTable extends ApprovedUnderlyings
     with TableInfo<$ApprovedUnderlyingsTable, ApprovedUnderlyingRow> {
   @override
@@ -18472,6 +19466,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WatchlistItemsTable watchlistItems = $WatchlistItemsTable(this);
   late final $OptionsStrategyProfileTableTable optionsStrategyProfileTable =
       $OptionsStrategyProfileTableTable(this);
+  late final $OptionsTradeJournalTable optionsTradeJournal =
+      $OptionsTradeJournalTable(this);
   late final $ApprovedUnderlyingsTable approvedUnderlyings =
       $ApprovedUnderlyingsTable(this);
   late final $RecurringTransactionsTable recurringTransactions =
@@ -18510,6 +19506,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     prices,
     watchlistItems,
     optionsStrategyProfileTable,
+    optionsTradeJournal,
     approvedUnderlyings,
     recurringTransactions,
     liabilities,
@@ -22009,6 +23006,466 @@ typedef $$OptionsStrategyProfileTableTableProcessedTableManager =
         >,
       ),
       OptionsStrategyProfileRow,
+      PrefetchHooks Function()
+    >;
+typedef $$OptionsTradeJournalTableCreateCompanionBuilder =
+    OptionsTradeJournalCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String strategy,
+      required String symbol,
+      required String optionSymbol,
+      required DateTime openedAt,
+      Value<DateTime?> closedAt,
+      required Decimal entryCredit,
+      Value<Decimal?> exitDebit,
+      Value<Decimal?> realizedPnl,
+      required String currency,
+      required String status,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
+    OptionsTradeJournalCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> strategy,
+      Value<String> symbol,
+      Value<String> optionSymbol,
+      Value<DateTime> openedAt,
+      Value<DateTime?> closedAt,
+      Value<Decimal> entryCredit,
+      Value<Decimal?> exitDebit,
+      Value<Decimal?> realizedPnl,
+      Value<String> currency,
+      Value<String> status,
+      Value<String?> notes,
+      Value<int> rowid,
+    });
+
+class $$OptionsTradeJournalTableFilterComposer
+    extends Composer<_$AppDatabase, $OptionsTradeJournalTable> {
+  $$OptionsTradeJournalTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get strategy => $composableBuilder(
+    column: $table.strategy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get optionSymbol => $composableBuilder(
+    column: $table.optionSymbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get entryCredit =>
+      $composableBuilder(
+        column: $table.entryCredit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get exitDebit =>
+      $composableBuilder(
+        column: $table.exitDebit,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get realizedPnl =>
+      $composableBuilder(
+        column: $table.realizedPnl,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OptionsTradeJournalTableOrderingComposer
+    extends Composer<_$AppDatabase, $OptionsTradeJournalTable> {
+  $$OptionsTradeJournalTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get strategy => $composableBuilder(
+    column: $table.strategy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get optionSymbol => $composableBuilder(
+    column: $table.optionSymbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryCredit => $composableBuilder(
+    column: $table.entryCredit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exitDebit => $composableBuilder(
+    column: $table.exitDebit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get realizedPnl => $composableBuilder(
+    column: $table.realizedPnl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OptionsTradeJournalTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OptionsTradeJournalTable> {
+  $$OptionsTradeJournalTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get strategy =>
+      $composableBuilder(column: $table.strategy, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get optionSymbol => $composableBuilder(
+    column: $table.optionSymbol,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get openedAt =>
+      $composableBuilder(column: $table.openedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get closedAt =>
+      $composableBuilder(column: $table.closedAt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get entryCredit =>
+      $composableBuilder(
+        column: $table.entryCredit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get exitDebit =>
+      $composableBuilder(column: $table.exitDebit, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get realizedPnl =>
+      $composableBuilder(
+        column: $table.realizedPnl,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+}
+
+class $$OptionsTradeJournalTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OptionsTradeJournalTable,
+          OptionsTradeJournalRow,
+          $$OptionsTradeJournalTableFilterComposer,
+          $$OptionsTradeJournalTableOrderingComposer,
+          $$OptionsTradeJournalTableAnnotationComposer,
+          $$OptionsTradeJournalTableCreateCompanionBuilder,
+          $$OptionsTradeJournalTableUpdateCompanionBuilder,
+          (
+            OptionsTradeJournalRow,
+            BaseReferences<
+              _$AppDatabase,
+              $OptionsTradeJournalTable,
+              OptionsTradeJournalRow
+            >,
+          ),
+          OptionsTradeJournalRow,
+          PrefetchHooks Function()
+        > {
+  $$OptionsTradeJournalTableTableManager(
+    _$AppDatabase db,
+    $OptionsTradeJournalTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OptionsTradeJournalTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OptionsTradeJournalTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$OptionsTradeJournalTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> strategy = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> optionSymbol = const Value.absent(),
+                Value<DateTime> openedAt = const Value.absent(),
+                Value<DateTime?> closedAt = const Value.absent(),
+                Value<Decimal> entryCredit = const Value.absent(),
+                Value<Decimal?> exitDebit = const Value.absent(),
+                Value<Decimal?> realizedPnl = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OptionsTradeJournalCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                strategy: strategy,
+                symbol: symbol,
+                optionSymbol: optionSymbol,
+                openedAt: openedAt,
+                closedAt: closedAt,
+                entryCredit: entryCredit,
+                exitDebit: exitDebit,
+                realizedPnl: realizedPnl,
+                currency: currency,
+                status: status,
+                notes: notes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String strategy,
+                required String symbol,
+                required String optionSymbol,
+                required DateTime openedAt,
+                Value<DateTime?> closedAt = const Value.absent(),
+                required Decimal entryCredit,
+                Value<Decimal?> exitDebit = const Value.absent(),
+                Value<Decimal?> realizedPnl = const Value.absent(),
+                required String currency,
+                required String status,
+                Value<String?> notes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OptionsTradeJournalCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                strategy: strategy,
+                symbol: symbol,
+                optionSymbol: optionSymbol,
+                openedAt: openedAt,
+                closedAt: closedAt,
+                entryCredit: entryCredit,
+                exitDebit: exitDebit,
+                realizedPnl: realizedPnl,
+                currency: currency,
+                status: status,
+                notes: notes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OptionsTradeJournalTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OptionsTradeJournalTable,
+      OptionsTradeJournalRow,
+      $$OptionsTradeJournalTableFilterComposer,
+      $$OptionsTradeJournalTableOrderingComposer,
+      $$OptionsTradeJournalTableAnnotationComposer,
+      $$OptionsTradeJournalTableCreateCompanionBuilder,
+      $$OptionsTradeJournalTableUpdateCompanionBuilder,
+      (
+        OptionsTradeJournalRow,
+        BaseReferences<
+          _$AppDatabase,
+          $OptionsTradeJournalTable,
+          OptionsTradeJournalRow
+        >,
+      ),
+      OptionsTradeJournalRow,
       PrefetchHooks Function()
     >;
 typedef $$ApprovedUnderlyingsTableCreateCompanionBuilder =
@@ -27254,6 +28711,8 @@ class $AppDatabaseManager {
         _db,
         _db.optionsStrategyProfileTable,
       );
+  $$OptionsTradeJournalTableTableManager get optionsTradeJournal =>
+      $$OptionsTradeJournalTableTableManager(_db, _db.optionsTradeJournal);
   $$ApprovedUnderlyingsTableTableManager get approvedUnderlyings =>
       $$ApprovedUnderlyingsTableTableManager(_db, _db.approvedUnderlyings);
   $$RecurringTransactionsTableTableManager get recurringTransactions =>

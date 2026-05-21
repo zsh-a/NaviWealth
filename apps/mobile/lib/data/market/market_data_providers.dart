@@ -17,6 +17,8 @@ import 'http/retry_policy.dart';
 import 'metrics/market_metrics.dart';
 import 'providers/coingecko_provider.dart';
 import 'providers/market_provider.dart';
+import 'providers/options/options_chain_provider.dart';
+import 'providers/options/yfinance_options_provider.dart';
 import 'providers/sina_provider.dart';
 import 'providers/yfinance_provider.dart';
 import 'resolver/layered_price_resolver.dart';
@@ -45,6 +47,28 @@ final marketCacheProvider = FutureProvider<MarketCache>((ref) async {
     clock: ref.watch(clockProvider),
     policy: ref.watch(marketCachePolicyProvider),
   );
+});
+
+/// Options chain provider. Reuses the same [MarketHttpClient]/[RateLimiter]
+/// as [yfinanceProviderProvider] so quote + chain calls share one budget
+/// (`docs/options-income.md` §4.1). Built lazily because the Income Planner
+/// is mobile-only; pure-quote consumers don't pay the construction cost.
+final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  final http = MarketHttpClient(
+    providerName: 'yfinance_options',
+    rateLimiter: RateLimiter(
+      maxRequests: 60,
+      window: const Duration(minutes: 1),
+      clock: ref.watch(clockProvider),
+    ),
+    dio: dio,
+    retryPolicy: const RetryPolicy(),
+    clock: ref.watch(clockProvider),
+    metrics: ref.watch(marketMetricsProvider),
+  );
+  return YFinanceOptionsProvider(http: http);
 });
 
 final yfinanceProviderProvider = Provider<MarketProvider>((ref) {

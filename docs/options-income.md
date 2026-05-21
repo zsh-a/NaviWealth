@@ -4,7 +4,7 @@
 > 关联：[`docs/ai-architecture.md`](./ai-architecture.md)、[`docs/ai-protocol.md`](./ai-protocol.md)、[`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)、[`docs/market-data-providers.md`](./market-data-providers.md)、[`docs/sync-protocol.md`](./sync-protocol.md)
 > 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
 >
-> 状态（2026-05-21）：设计阶段。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。
+> 状态（2026-05-21）：P0–P3 已实现并通过分析与测试。MVP 行情源锁定 yfinance；AI tool **只读 cache**，不触发实时扫描。P4（Wheel / Income Cycle 状态机）与 P5（Tradier OAuth 接入）仍待启动。
 
 ---
 
@@ -662,41 +662,62 @@ P0/P3 的 backend 改动仅限"新增 D1 materialised 表 + `sql_table_name` 匹
 
 ## 15. 相关代码路径
 
-P0 已落地（2026-05-21）：
+P0–P3 已落地（2026-05-21）：
 
 ```
 apps/mobile/lib/features/options_income/
+├── application/
+│   ├── scan_controller.dart            # P1 — StateNotifier driving refresh button
+│   ├── scan_inputs_bridge.dart         # P1 — holdings/cash bridge from portfolio
+│   └── scan_orchestrator.dart          # P1 — universe → chain → scorer → cache
 ├── data/
 │   ├── approved_underlyings_repository.dart
+│   ├── options_opportunity_cache_repository.dart  # P1 — local-only cache repo
 │   ├── options_strategy_profile_repository.dart
-│   └── providers.dart
+│   ├── providers.dart
+│   └── trade_journal_repository.dart   # P3 — synced journal CRUD
 ├── domain/
 │   ├── approved_underlying.dart
-│   └── options_strategy_profile.dart
+│   ├── option_contract.dart            # P1
+│   ├── options_opportunity.dart        # P1 — Opportunity / Metrics / RiskLevel
+│   ├── options_strategy_profile.dart
+│   ├── opportunity_explanation.dart    # P1 — UI ⇄ AI shared explanation struct
+│   ├── services/opportunity_scorer.dart# P1/P2 — pure-Dart scorer
+│   └── trade_journal_entry.dart        # P3
 └── presentation/
     ├── approved_underlying_form_sheet.dart
     ├── income_planner_page.dart
     ├── income_planner_strings.dart
     ├── occ_disclosure_sheet.dart
-    └── strategy_profile_sheet.dart
+    ├── opportunity_detail_sheet.dart   # P1 — score breakdown, worst-case, log-trade CTA
+    ├── strategy_profile_sheet.dart
+    └── trade_journal_sheet.dart        # P3
 
-apps/mobile/lib/data/db/tables.dart                # OptionsStrategyProfileTable, ApprovedUnderlyings
-apps/mobile/lib/data/db/app_database.dart          # schemaVersion 11, migration v10→v11
-apps/mobile/lib/core/sync/op.dart                  # kSyncableTables += {options_strategy_profile, approved_underlyings}
-apps/mobile/lib/core/sync/providers.dart           # GenericLwwApplier wiring
-apps/mobile/lib/app/route_paths.dart               # accountsIncomePlanner
-apps/mobile/lib/app/router_builder.dart            # /accounts/income deferred route
-apps/backend/migrations/0019_options_income.sql    # D1 materialised tables
+apps/mobile/lib/data/market/providers/options/
+├── options_chain_provider.dart         # P1 abstract chain provider
+└── yfinance_options_provider.dart      # P1 — yfinance options chain adapter
+
+apps/mobile/lib/core/ai/runtime/device/tools/
+├── get_options_income_opportunities_tool.dart  # P1 — cache-read tool
+├── get_options_strategy_profile_tool.dart      # P1 — profile read tool
+├── propose_options_profile_update_tool.dart    # P1 — proposal
+└── propose_options_journal_entry_tool.dart     # P3 — proposal
+
+apps/mobile/lib/data/db/tables.dart                # +OptionsTradeJournal
+apps/mobile/lib/data/db/local_only_tables.dart     # opportunity cache DDL
+apps/mobile/lib/data/db/app_database.dart          # schemaVersion 13 (v11→v12→v13)
+apps/mobile/lib/core/sync/op.dart                  # kSyncableTables += {options_trade_journal}
+apps/mobile/lib/core/sync/providers.dart           # GenericLwwApplier += journal
+apps/mobile/lib/core/ai/contracts/tool_descriptor.dart  # +4 Income Planner descriptors
+apps/mobile/lib/core/ai/runtime/device/tools/device_tool_registry.dart  # +4 tools
+apps/backend/migrations/0019_options_income.sql    # D1 materialised tables (P0)
+apps/backend/migrations/0020_options_trade_journal.sql  # D1 journal (P3)
 apps/backend/src/sync/materialise.rs               # sql_table_name match arms
 ```
 
 后续阶段会落地：
 
 ```
-apps/mobile/lib/data/market/providers/options/  # OptionsChainProvider 实现（P1）
-apps/mobile/lib/data/db/local_only_tables.dart  # opportunity cache 表（P1）
-apps/mobile/lib/features/options_income/domain/services/opportunity_scorer.dart  # 评分引擎（P1/P2）
-apps/mobile/lib/core/ai/contracts/tool_descriptor.dart   # tool 描述符（P1）
-apps/mobile/lib/core/ai/runtime/device/tools/   # tool 实现（P1+）
-apps/backend/src/routes/market/options.rs       # OAuth 透传代理（P5+）
+P4: features/options_income/application/wheel_state_machine.dart   # Wheel / income cycle
+P5: apps/backend/src/routes/market/options.rs                       # Tradier OAuth proxy
 ```

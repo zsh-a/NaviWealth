@@ -7,6 +7,7 @@ import '../domain/hlc.dart';
 import 'connection.dart';
 import 'converters.dart';
 import 'event_log_tables.dart';
+import 'local_only_tables.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -29,6 +30,7 @@ const String defaultDbFileName = 'naviwealth.db';
     Prices,
     WatchlistItems,
     OptionsStrategyProfileTable,
+    OptionsTradeJournal,
     ApprovedUnderlyings,
     RecurringTransactions,
     Liabilities,
@@ -55,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,6 +73,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAiUndoStackTable(this);
       await _createAiTouchedEntitiesTable(this);
       await _createIngestTables(this);
+      await _createOptionsOpportunityCache(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -177,6 +180,17 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(optionsStrategyProfileTable);
         await m.createTable(approvedUnderlyings);
         await _createOptionsIncomeIndexes(this);
+      }
+      // v11 -> v12: Options Income Planner P1 — local-only opportunity
+      // cache table populated by the scanner (`docs/options-income.md`
+      // §6.2). Never enters the sync OpLog.
+      if (from < 12) {
+        await _createOptionsOpportunityCache(this);
+      }
+      // v12 -> v13: Options Income Planner P3 — synced trade journal.
+      if (from < 13) {
+        await m.createTable(optionsTradeJournal);
+        await _createOptionsTradeJournalIndexes(this);
       }
     },
     beforeOpen: (details) async {
@@ -296,6 +310,7 @@ const List<String> _journalEntryIndexStmts = [
   ..._watchlistIndexStmts,
   ..._recurringTransactionIndexStmts,
   ..._optionsIncomeIndexStmts,
+  ..._optionsTradeJournalIndexStmts,
 ];
 
 const List<String> _securitiesAssetIndexStmts = [
@@ -344,8 +359,28 @@ const List<String> _optionsIncomeIndexStmts = [
       'WHERE deleted_at IS NULL',
 ];
 
+const List<String> _optionsTradeJournalIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_options_trade_journal_owner_hlc '
+      'ON options_trade_journal(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_options_trade_journal_owner_opened '
+      'ON options_trade_journal(owner_user_id, opened_at DESC) '
+      'WHERE deleted_at IS NULL',
+];
+
 Future<void> _createOptionsIncomeIndexes(AppDatabase db) async {
   for (final stmt in _optionsIncomeIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createOptionsTradeJournalIndexes(AppDatabase db) async {
+  for (final stmt in _optionsTradeJournalIndexStmts) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createOptionsOpportunityCache(AppDatabase db) async {
+  for (final stmt in optionsOpportunityCacheDdl) {
     await db.customStatement(stmt);
   }
 }

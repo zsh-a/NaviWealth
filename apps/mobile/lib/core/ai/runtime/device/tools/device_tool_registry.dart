@@ -31,6 +31,8 @@ import 'get_fire_stress_tests_tool.dart';
 import 'get_holdings_tool.dart';
 import 'get_investment_performance_tool.dart';
 import 'get_net_worth_summary_tool.dart';
+import 'get_options_income_opportunities_tool.dart';
+import 'get_options_strategy_profile_tool.dart';
 import 'get_recurring_patterns_tool.dart';
 import 'get_refund_links_tool.dart';
 import 'get_subscription_changes_tool.dart';
@@ -42,6 +44,8 @@ import 'propose_expense_tool.dart';
 import 'propose_fire_bucket_rule_tool.dart';
 import 'propose_fire_plan_update_tool.dart';
 import 'propose_liability_payment_tool.dart';
+import 'propose_options_journal_entry_tool.dart';
+import 'propose_options_profile_update_tool.dart';
 import 'propose_trade_tool.dart';
 import 'read_account_window_tool.dart';
 import 'read_asset_window_tool.dart';
@@ -88,6 +92,11 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   SimulateFirePlanTool(),
   ProposeFirePlanUpdateTool(),
   ProposeFireBucketRuleTool(),
+  // Income Planner (`docs/options-income.md` §8).
+  GetOptionsIncomeOpportunitiesTool(),
+  GetOptionsStrategyProfileTool(),
+  ProposeOptionsProfileUpdateTool(),
+  ProposeOptionsJournalEntryTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

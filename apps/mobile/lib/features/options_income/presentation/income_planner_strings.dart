@@ -73,8 +73,59 @@ class IncomePlannerStrings {
   static const approvedSectionTitle = 'Approved underlyings';
   static const opportunitiesSectionTitle = 'Opportunities';
   static const opportunitiesEmpty =
-      'P1 will surface scan results here. Today this page only manages '
-      'your stance and your approved underlying list.';
+      'No cached opportunities yet. Tap “Refresh opportunities” to scan '
+      'your approved underlyings.';
+  static const refreshAction = 'Refresh opportunities';
+  static const refreshRunning = 'Scanning…';
+  static const refreshFailedTitle = 'Scan failed';
+  static const refreshUniverseEmpty =
+      'No symbols are eligible. Add at least one approved underlying '
+      'with put/call enabled, or check that you own ≥100 shares for '
+      'covered calls.';
+  static const lastScanLabel = 'Last scan';
+  static const lastScanStale =
+      'Cached results are older than 24h — refresh for fresher data.';
+  static const opportunitiesAllRejected =
+      'No candidates passed your hard filters this scan. Loosen your '
+      'preferences (e.g. lower yield floor, wider DTE) and try again.';
+
+  // Opportunity card chips
+  static const chipCashSecuredPut = 'Sell put';
+  static const chipCoveredCall = 'Covered call';
+  static const riskLow = 'Low risk';
+  static const riskModerate = 'Moderate';
+  static const riskElevated = 'Elevated';
+
+  // Card metrics
+  static const metricAnnualized = 'Annualized';
+  static const metricCash = 'Cash required';
+  static const metricBreakeven = 'Breakeven';
+  static const metricDte = 'DTE';
+  static const metricStrike = 'Strike';
+  static const metricMargin = 'Cushion';
+  static const cardDetailsCta = 'Details';
+
+  // Detail sheet
+  static const detailWhyGood = 'Why this looks good';
+  static const detailWhyRisky = 'Why this is risky';
+  static const detailWorstCase = 'Worst case';
+  static const detailBestFor = 'Best for';
+  static const detailAvoidIf = 'Avoid if';
+  static const detailScoreBreakdown = 'Score breakdown';
+  static const detailLogTrade = 'Log this trade';
+
+  // Trade journal
+  static const journalSectionTitle = 'Trade journal';
+  static const journalEmpty =
+      'Closed and open positions you log will appear here.';
+  static const journalAddCta = 'Log trade';
+  static const journalEditTitle = 'Edit trade journal entry';
+  static const journalCreditLabel = 'Credit received';
+  static const journalDebitLabel = 'Debit paid to close';
+  static const journalStatusOpen = 'Open';
+  static const journalStatusClosed = 'Closed';
+  static const journalStatusAssigned = 'Assigned';
+  static const journalStatusExpired = 'Expired';
 
   // Errors / validation
   static const symbolRequired = 'Symbol is required';

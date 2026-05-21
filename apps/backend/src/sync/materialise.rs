@@ -49,6 +49,8 @@ pub fn sql_table_name(wire: &str) -> Result<&'static str, AppError> {
         // Options Income Planner P0 (docs/options-income.md §6.2).
         "options_strategy_profile" => Ok("options_strategy_profile"),
         "approved_underlyings" => Ok("approved_underlyings"),
+        // Options Income Planner P3 — trade journal.
+        "options_trade_journal" => Ok("options_trade_journal"),
         other => Err(AppError::unknown_table(other)),
     }
 }
@@ -327,6 +329,11 @@ mod tests {
         assert_eq!(
             sql_table_name("approved_underlyings").unwrap(),
             "approved_underlyings"
+        );
+        // Options Income Planner P3 (0020_options_trade_journal.sql).
+        assert_eq!(
+            sql_table_name("options_trade_journal").unwrap(),
+            "options_trade_journal"
         );
     }
 

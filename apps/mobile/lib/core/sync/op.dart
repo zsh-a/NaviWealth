@@ -32,6 +32,8 @@ const Set<String> kSyncableTables = {
   // collection keyed by composite id `<market>:<symbol>`.
   'options_strategy_profile',
   'approved_underlyings',
+  // Options Income Planner P3 — trade journal entries.
+  'options_trade_journal',
 };
 
 enum OpType { insert, update, delete }
