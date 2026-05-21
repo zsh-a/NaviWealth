@@ -19,7 +19,9 @@ Configure at **Settings → Branches → Branch protection rules** for `main` (O
 - **Restrict who can push to matching branches**: on (only the merge button)
 - **Allow force pushes / deletions**: off
 
-`security.yml` (cargo audit, Trivy, dart pub outdated) is weekly + lockfile-triggered, not a per-PR gate.
+Only the core app checks are required. Auxiliary dependency-audit, asset-catalog,
+and browser-smoke workflows were removed from CI because they were not branch
+protection gates.
 
 ## Path-filtered checks
 

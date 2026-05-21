@@ -19,10 +19,7 @@ naviwealth/
     ├── workflows/
     │   ├── mobile.yml          analyze + test (coverage) / golden regression / build web
     │   ├── backend.yml         fmt + clippy + check (wasm32) / deploy / preview
-    │   ├── asset-catalog.yml   pytest 解析器 + stub bake
-    │   ├── security.yml        每周：dart pub outdated / cargo audit / Trivy
-    │   ├── release.yml         tag vX.Y.Z 触发：版本写入 + 构建 + GH Release + 后端部署
-    │   └── web-smoke.yml       每夜 + 手动：Playwright (Chromium / Firefox / WebKit)
+    │   └── release.yml         tag vX.Y.Z 触发：版本写入 + 构建 + GH Release + 后端部署
     ├── dependabot.yml          Actions / pub / cargo 依赖自动更新
     └── CODEOWNERS              默认评审人
 ```
@@ -117,10 +114,7 @@ PR 推送 → `wrangler versions upload`（生成 preview URL，不接管流量�
 |--------|------|----------|
 | `mobile` | `apps/mobile/**` | format / analyze / build_runner 一致性 / **test --coverage** / Codecov / golden regression / web 构建 |
 | `backend` | `apps/backend/**` | fmt / clippy / check (wasm32) / deploy 或 PR preview |
-| `asset-catalog` | `tool/asset_catalog/**`、`tool/build-asset-catalog.sh` | offline pytest + stub bake |
-| `security` | 每周一 + lockfile 变更 | `dart pub outdated` / `cargo audit` / Trivy |
 | `release` | `vX.Y.Z` tag + 手动 dispatch | 版本写入 → 构建 mobile + backend → GitHub Release → 后端部署 |
-| `web-smoke` | 每夜 + 手动 | Playwright（Chromium / Firefox / WebKit） |
 
 覆盖率阈值（[`codecov.yml`](codecov.yml)）：项目 60%、patch 70%。`*.g.dart` / `*.freezed.dart` 不计入。
 
