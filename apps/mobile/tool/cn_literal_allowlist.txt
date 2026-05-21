@@ -80,6 +80,24 @@ lib/core/ai/runtime/device/tools/propose_trade_tool.dart
 lib/core/ai/runtime/device/tools/read_account_window_tool.dart
 lib/core/ai/runtime/device/tools/read_asset_window_tool.dart
 lib/core/ai/runtime/device/tools/read_category_window_tool.dart
+# FIRE OS (roadmap-fire-os.md) + Income Planner (options-income.md) AI
+# device tools landed 2026-05-20 / 05-21. Identical category to the
+# device-tool entries above: LLM-facing schemas, JSON descriptions, and
+# short proposal labels persisted via the proposal_applier path; same
+# FIR-99 follow-up applies (restructure to enum codes + structured args
+# rendered through AppLocalizations at display time).
+lib/core/ai/runtime/device/tools/get_fire_buckets_tool.dart
+lib/core/ai/runtime/device/tools/get_fire_plan_tool.dart
+lib/core/ai/runtime/device/tools/get_fire_review_tool.dart
+lib/core/ai/runtime/device/tools/get_fire_state_tool.dart
+lib/core/ai/runtime/device/tools/get_fire_stress_tests_tool.dart
+lib/core/ai/runtime/device/tools/get_options_income_opportunities_tool.dart
+lib/core/ai/runtime/device/tools/get_options_strategy_profile_tool.dart
+lib/core/ai/runtime/device/tools/propose_fire_bucket_rule_tool.dart
+lib/core/ai/runtime/device/tools/propose_fire_plan_update_tool.dart
+lib/core/ai/runtime/device/tools/propose_options_journal_entry_tool.dart
+lib/core/ai/runtime/device/tools/propose_options_profile_update_tool.dart
+lib/core/ai/runtime/device/tools/simulate_fire_plan_tool.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
 # FIR-126: system account seed names ('系统收入账户', '系统支出账户',
@@ -132,3 +150,18 @@ lib/features/ingest/data/device_ingest_client.dart
 lib/features/ingest/data/ingest_confirm_service.dart
 lib/features/ingest/data/ingest_pipeline.dart
 lib/features/ingest/data/providers.dart
+
+# ─── Income Planner explanation strings (FIR-99 follow-up) ──────────
+# opportunity_scorer.dart produces OpportunityExplanation (summary /
+# whyGood / whyRisky / bestFor / avoidIf / worstCase) — these strings
+# are encoded into JSON and persisted to the `options_opportunity_cache`
+# table, then read verbatim by both the IncomePlannerPage opportunity
+# cards and the `get_options_income_opportunities` AI tool (which
+# explicitly instructs the LLM to quote, not rewrite, them).
+# Structurally identical to the proposal_applier.dart entry at the top
+# of this file: a pure-Dart domain layer with no BuildContext, output
+# baked into a cache table. Migrating wants OpportunityExplanation to
+# carry enum codes + numeric args, rendered through AppLocalizations
+# at display time (plus a one-off cache wipe). Track as the same FIR-99
+# follow-up.
+lib/features/options_income/domain/services/opportunity_scorer.dart
