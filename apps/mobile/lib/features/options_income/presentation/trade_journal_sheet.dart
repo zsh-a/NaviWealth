@@ -6,11 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';
-import 'income_planner_strings.dart';
+import 'income_planner_labels.dart';
 
 /// Open the trade-journal form sheet.
 ///
@@ -152,13 +153,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isEdit = widget.existingId != null;
     return AppSheet(
       title: isEdit
-          ? IncomePlannerStrings.journalEditTitle
-          : IncomePlannerStrings.journalAddCta,
+          ? l10n.incomePlannerJournalEditTitle
+          : l10n.incomePlannerJournalAddCta,
       footer: AppSheetFooter(
-        submitLabel: IncomePlannerStrings.saveAction,
+        submitLabel: l10n.incomePlannerSaveAction,
         onSubmit: _save,
         busy: _busy,
       ),
@@ -168,14 +170,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _LabeledTextField(
-              label: IncomePlannerStrings.symbolLabel,
-              hint: IncomePlannerStrings.symbolHint,
+              label: l10n.incomePlannerSymbolLabel,
+              hint: l10n.incomePlannerSymbolHint,
               controller: _symbolCtl,
             ),
             const SizedBox(height: AppSpacing.s12),
             _LabeledTextField(
-              label: 'Option symbol',
-              hint: 'AAPL250620P00190000',
+              label: l10n.incomePlannerJournalOptionSymbolLabel,
+              hint: l10n.incomePlannerJournalOptionSymbolHint,
               controller: _optionSymbolCtl,
             ),
             const SizedBox(height: AppSpacing.s12),
@@ -185,16 +187,16 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
             const SizedBox(height: AppSpacing.s12),
             _LabeledTextField(
-              label: IncomePlannerStrings.journalCreditLabel,
-              hint: '0.00',
+              label: l10n.incomePlannerJournalCreditLabel,
+              hint: l10n.incomePlannerJournalAmountHint,
               controller: _creditCtl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: AppSpacing.s12),
             _LabeledTextField(
-              label: IncomePlannerStrings.journalDebitLabel,
-              hint: '0.00',
+              label: l10n.incomePlannerJournalDebitLabel,
+              hint: l10n.incomePlannerJournalAmountHint,
               controller: _debitCtl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
@@ -206,7 +208,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
             const SizedBox(height: AppSpacing.s12),
             _LabeledTextField(
-              label: 'Notes',
+              label: l10n.incomePlannerJournalNotesLabel,
               hint: '',
               controller: _notesCtl,
               maxLines: 3,
@@ -266,6 +268,7 @@ class _StrategySelect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         for (final option in OptionsStrategyKind.values) ...[
@@ -275,11 +278,7 @@ class _StrategySelect extends StatelessWidget {
                   ? FButtonVariant.primary
                   : FButtonVariant.outline,
               onPress: () => onChanged(option),
-              child: Text(
-                option == OptionsStrategyKind.cashSecuredPut
-                    ? IncomePlannerStrings.chipCashSecuredPut
-                    : IncomePlannerStrings.chipCoveredCall,
-              ),
+              child: Text(optionsStrategyKindShortLabel(l10n, option)),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
@@ -297,6 +296,7 @@ class _StatusSelect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: AppSpacing.s8,
       children: [
@@ -306,7 +306,7 @@ class _StatusSelect extends StatelessWidget {
                 ? FButtonVariant.primary
                 : FButtonVariant.outline,
             onPress: () => onChanged(option),
-            child: Text(option.displayLabel),
+            child: Text(tradeJournalStatusLabel(l10n, option)),
           ),
       ],
     );

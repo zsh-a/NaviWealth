@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/options_strategy_profile.dart';
-import 'income_planner_strings.dart';
+import 'income_planner_labels.dart';
 
 /// Edit-or-create the strategy profile. Returns `true` on save.
 Future<bool> showStrategyProfileSheet(BuildContext context) async {
@@ -120,25 +121,26 @@ class _StrategyProfileSheetState
       AppMessenger.show(
         context,
         ToastKind.error,
-        IncomePlannerStrings.profileSaveError,
+        AppLocalizations.of(context).incomePlannerProfileSaveError,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final draft = _draft;
     if (draft == null) {
-      return const AppSheet(
-        title: IncomePlannerStrings.profileTitle,
-        child: SizedBox(height: 80),
+      return AppSheet(
+        title: l10n.incomePlannerProfileTitle,
+        child: const SizedBox(height: 80),
       );
     }
     return AppSheet(
-      title: IncomePlannerStrings.profileTitle,
+      title: l10n.incomePlannerProfileTitle,
       footer: AppSheetFooter(
-        submitLabel: IncomePlannerStrings.profileSave,
-        cancelLabel: IncomePlannerStrings.profileCancel,
+        submitLabel: l10n.incomePlannerProfileSave,
+        cancelLabel: l10n.incomePlannerProfileCancel,
         onSubmit: _save,
         busy: _busy,
       ),
@@ -146,15 +148,9 @@ class _StrategyProfileSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FSelect<OptionsStrategyMode>(
-            items: const {
-              IncomePlannerStrings.profileModeConservative:
-                  OptionsStrategyMode.conservative,
-              IncomePlannerStrings.profileModeBalanced:
-                  OptionsStrategyMode.balanced,
-              IncomePlannerStrings.profileModeAggressive:
-                  OptionsStrategyMode.aggressive,
-              IncomePlannerStrings.profileModeCustom:
-                  OptionsStrategyMode.custom,
+            items: {
+              for (final mode in OptionsStrategyMode.values)
+                optionsStrategyModeLabel(l10n, mode): mode,
             },
             control: FSelectControl<OptionsStrategyMode>.managed(
               initial: draft.mode,
@@ -162,20 +158,20 @@ class _StrategyProfileSheetState
                 if (value != null) _setMode(value);
               },
             ),
-            label: const Text(IncomePlannerStrings.profileMode),
+            label: Text(l10n.incomePlannerProfileMode),
           ),
           const SizedBox(height: AppSpacing.s16),
-          const _SectionLabel(IncomePlannerStrings.profileAllowedStrategies),
+          _SectionLabel(l10n.incomePlannerProfileAllowedStrategies),
           const SizedBox(height: AppSpacing.s8),
           _SwitchRow(
-            label: IncomePlannerStrings.profileAllowPut,
+            label: l10n.incomePlannerProfileAllowPut,
             value: draft.allowedStrategies
                 .contains(OptionsStrategyKind.cashSecuredPut),
             onChanged: (v) =>
                 _toggleAllowed(OptionsStrategyKind.cashSecuredPut, v),
           ),
           _SwitchRow(
-            label: IncomePlannerStrings.profileAllowCall,
+            label: l10n.incomePlannerProfileAllowCall,
             value: draft.allowedStrategies
                 .contains(OptionsStrategyKind.coveredCall),
             onChanged: (v) =>
@@ -183,17 +179,17 @@ class _StrategyProfileSheetState
           ),
           const SizedBox(height: AppSpacing.s12),
           _SwitchRow(
-            label: IncomePlannerStrings.profileAvoidEarnings,
+            label: l10n.incomePlannerProfileAvoidEarnings,
             value: draft.avoidEarnings,
             onChanged: _toggleAvoidEarnings,
           ),
           _SwitchRow(
-            label: IncomePlannerStrings.profileAvoidMacroEvents,
+            label: l10n.incomePlannerProfileAvoidMacroEvents,
             value: draft.avoidMacroEvents,
             onChanged: _toggleAvoidMacroEvents,
           ),
           _SwitchRow(
-            label: IncomePlannerStrings.profileOnlyApproved,
+            label: l10n.incomePlannerProfileOnlyApproved,
             value: draft.onlyOnApprovedUnderlyings,
             onChanged: _toggleOnlyApproved,
           ),

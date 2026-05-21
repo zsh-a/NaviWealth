@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/options_strategy_profile.dart';
-import 'income_planner_strings.dart';
 
 /// First-run OCC ODD disclosure (`docs/options-income.md` §11.2).
 ///
@@ -57,20 +57,21 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        IncomePlannerStrings.profileSaveError,
+        AppLocalizations.of(context).incomePlannerProfileSaveError,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return AppSheet(
-      title: IncomePlannerStrings.occTitle,
-      subtitle: IncomePlannerStrings.occSubtitle,
+      title: l10n.incomePlannerOccTitle,
+      subtitle: l10n.incomePlannerOccSubtitle,
       footer: AppSheetFooter(
-        submitLabel: IncomePlannerStrings.occAccept,
-        cancelLabel: IncomePlannerStrings.occCancel,
+        submitLabel: l10n.incomePlannerOccAccept,
+        cancelLabel: l10n.incomePlannerOccCancel,
         onSubmit: _accept,
         busy: _busy,
       ),
@@ -78,7 +79,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            IncomePlannerStrings.occBody,
+            l10n.incomePlannerOccBody,
             style: context.theme.typography.sm.copyWith(
               color: colors.mutedForeground,
               height: 1.45,
@@ -89,7 +90,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
           // wiring); a real link to the OCC ODD PDF will be added with
           // the help-center landing.
           Text(
-            IncomePlannerStrings.occLearnMore,
+            l10n.incomePlannerOccLearnMore,
             style: context.theme.typography.xs.copyWith(
               color: colors.primary,
             ),

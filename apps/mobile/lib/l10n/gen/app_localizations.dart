@@ -10092,6 +10092,586 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to list'**
   String get masterDetailBackToList;
+
+  /// Income Planner page title; also used by the accounts hub entry and command palette label
+  ///
+  /// In en, this message translates to:
+  /// **'Income Planner'**
+  String get incomePlannerTitle;
+
+  /// Accounts hub entry subtitle for Income Planner
+  ///
+  /// In en, this message translates to:
+  /// **'Screen sell-put and covered-call income opportunities'**
+  String get incomePlannerAccountsEntrySubtitle;
+
+  /// Chinese command-palette search keyword for options; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'期权'**
+  String get commandKeywordOptionsCn;
+
+  /// Chinese command-palette search keyword for sell put; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'卖看跌'**
+  String get commandKeywordSellPutCn;
+
+  /// Chinese command-palette search keyword for covered call; intentionally present in every locale
+  ///
+  /// In en, this message translates to:
+  /// **'备兑'**
+  String get commandKeywordCoveredCallCn;
+
+  /// Empty-state body shown when Income Planner is opened on the web build
+  ///
+  /// In en, this message translates to:
+  /// **'Income Planner is only available on mobile.'**
+  String get incomePlannerUnsupportedOnWeb;
+
+  /// Title of the OCC risk disclosure sheet (first-run gate)
+  ///
+  /// In en, this message translates to:
+  /// **'Options risk disclosure'**
+  String get incomePlannerOccTitle;
+
+  /// Subtitle of the OCC risk disclosure sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Read before using'**
+  String get incomePlannerOccSubtitle;
+
+  /// Long-form OCC ODD acknowledgement body
+  ///
+  /// In en, this message translates to:
+  /// **'Selling cash-secured puts and covered calls have defined and undefined risks. Sell-puts can require you to buy 100 shares at strike if assigned; covered calls cap upside above strike. Income Planner only screens opportunities that match your stated risk preferences — it does not predict prices and does not place orders. By continuing you acknowledge you have read OCC Characteristics and Risks of Standardized Options.'**
+  String get incomePlannerOccBody;
+
+  /// OCC disclosure accept action
+  ///
+  /// In en, this message translates to:
+  /// **'I have read and accept'**
+  String get incomePlannerOccAccept;
+
+  /// OCC disclosure dismiss action
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get incomePlannerOccCancel;
+
+  /// Link to the OCC Options Disclosure Document
+  ///
+  /// In en, this message translates to:
+  /// **'Open OCC ODD'**
+  String get incomePlannerOccLearnMore;
+
+  /// Title of the configuration start state
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your stance'**
+  String get incomePlannerStartTitle;
+
+  /// Body of the configuration start state
+  ///
+  /// In en, this message translates to:
+  /// **'Tell Income Planner which strategies and risk level you want, then approve the underlyings you would be happy to own or sell.'**
+  String get incomePlannerStartBody;
+
+  /// Start-state CTA opening the OCC disclosure sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Configure preferences'**
+  String get incomePlannerStartCta;
+
+  /// Empty state title for approved-underlyings list
+  ///
+  /// In en, this message translates to:
+  /// **'No approved underlyings yet'**
+  String get incomePlannerNoApprovedTitle;
+
+  /// Empty state body for approved-underlyings list
+  ///
+  /// In en, this message translates to:
+  /// **'Add the stocks or ETFs you would be willing to long-term hold (for sell puts) or sell at a higher price (for covered calls). Income Planner only scans symbols on this list.'**
+  String get incomePlannerNoApprovedBody;
+
+  /// CTA to add an underlying to the approved list
+  ///
+  /// In en, this message translates to:
+  /// **'Add underlying'**
+  String get incomePlannerAddApprovedCta;
+
+  /// Title of the strategy-profile sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get incomePlannerProfileTitle;
+
+  /// Field label for the strategy mode preset
+  ///
+  /// In en, this message translates to:
+  /// **'Risk mode'**
+  String get incomePlannerProfileMode;
+
+  /// Conservative preset label
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get incomePlannerProfileModeConservative;
+
+  /// Balanced preset label
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get incomePlannerProfileModeBalanced;
+
+  /// Aggressive preset label
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get incomePlannerProfileModeAggressive;
+
+  /// Custom preset label
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get incomePlannerProfileModeCustom;
+
+  /// Toggle label for the earnings-window guard
+  ///
+  /// In en, this message translates to:
+  /// **'Skip candidates within 7 days of earnings'**
+  String get incomePlannerProfileAvoidEarnings;
+
+  /// Toggle label for the macro-event guard
+  ///
+  /// In en, this message translates to:
+  /// **'Skip candidates within 7 days of CPI / FOMC'**
+  String get incomePlannerProfileAvoidMacroEvents;
+
+  /// Toggle label gating scans to the approved list
+  ///
+  /// In en, this message translates to:
+  /// **'Only scan symbols on the approved list (recommended)'**
+  String get incomePlannerProfileOnlyApproved;
+
+  /// Section heading for allowed strategies toggle group
+  ///
+  /// In en, this message translates to:
+  /// **'Strategies'**
+  String get incomePlannerProfileAllowedStrategies;
+
+  /// Toggle label for cash-secured puts
+  ///
+  /// In en, this message translates to:
+  /// **'Cash-secured puts'**
+  String get incomePlannerProfileAllowPut;
+
+  /// Toggle label for covered calls
+  ///
+  /// In en, this message translates to:
+  /// **'Covered calls'**
+  String get incomePlannerProfileAllowCall;
+
+  /// Profile sheet primary action
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get incomePlannerProfileSave;
+
+  /// Profile sheet cancel action
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get incomePlannerProfileCancel;
+
+  /// Title of the add-underlying sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Add approved underlying'**
+  String get incomePlannerAddUnderlyingTitle;
+
+  /// Title of the edit-underlying sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Edit underlying'**
+  String get incomePlannerEditUnderlyingTitle;
+
+  /// Symbol field label
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol'**
+  String get incomePlannerSymbolLabel;
+
+  /// Example symbol placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'AAPL'**
+  String get incomePlannerSymbolHint;
+
+  /// Market field label
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get incomePlannerMarketLabel;
+
+  /// Approved-underlying per-symbol allowPut toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Allow cash-secured puts'**
+  String get incomePlannerAllowPutLabel;
+
+  /// Approved-underlying per-symbol allowCall toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Allow covered calls'**
+  String get incomePlannerAllowCallLabel;
+
+  /// Generic save action label
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get incomePlannerSaveAction;
+
+  /// Generic delete action label
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get incomePlannerDeleteAction;
+
+  /// Generic cancel action label
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get incomePlannerCancelAction;
+
+  /// Section header for approved-underlyings list
+  ///
+  /// In en, this message translates to:
+  /// **'Approved underlyings'**
+  String get incomePlannerApprovedSectionTitle;
+
+  /// Section header for the opportunities list
+  ///
+  /// In en, this message translates to:
+  /// **'Opportunities'**
+  String get incomePlannerOpportunitiesSectionTitle;
+
+  /// Empty state for the opportunities section before the first scan
+  ///
+  /// In en, this message translates to:
+  /// **'No cached opportunities yet. Tap \"Refresh opportunities\" to scan your approved underlyings.'**
+  String get incomePlannerOpportunitiesEmpty;
+
+  /// CTA that triggers a new scan
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh opportunities'**
+  String get incomePlannerRefreshAction;
+
+  /// Refresh button label while a scan is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get incomePlannerRefreshRunning;
+
+  /// Error card title when a scan fails
+  ///
+  /// In en, this message translates to:
+  /// **'Scan failed'**
+  String get incomePlannerRefreshFailedTitle;
+
+  /// Body shown when the scan universe is empty
+  ///
+  /// In en, this message translates to:
+  /// **'No symbols are eligible. Add at least one approved underlying with put/call enabled, or check that you own ≥100 shares for covered calls.'**
+  String get incomePlannerRefreshUniverseEmpty;
+
+  /// Last-scan timestamp prefix
+  ///
+  /// In en, this message translates to:
+  /// **'Last scan'**
+  String get incomePlannerLastScanLabel;
+
+  /// Hint shown when the scan cache is older than 24 hours
+  ///
+  /// In en, this message translates to:
+  /// **'Cached results are older than 24h — refresh for fresher data.'**
+  String get incomePlannerLastScanStale;
+
+  /// Body shown when a scan completed but every candidate was rejected
+  ///
+  /// In en, this message translates to:
+  /// **'No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.'**
+  String get incomePlannerOpportunitiesAllRejected;
+
+  /// Short label for the cash-secured put strategy
+  ///
+  /// In en, this message translates to:
+  /// **'Sell put'**
+  String get incomePlannerChipCashSecuredPut;
+
+  /// Short label for the covered-call strategy
+  ///
+  /// In en, this message translates to:
+  /// **'Covered call'**
+  String get incomePlannerChipCoveredCall;
+
+  /// Risk badge: low
+  ///
+  /// In en, this message translates to:
+  /// **'Low risk'**
+  String get incomePlannerRiskLow;
+
+  /// Risk badge: moderate
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get incomePlannerRiskModerate;
+
+  /// Risk badge: elevated
+  ///
+  /// In en, this message translates to:
+  /// **'Elevated'**
+  String get incomePlannerRiskElevated;
+
+  /// Card metric: annualized yield
+  ///
+  /// In en, this message translates to:
+  /// **'Annualized'**
+  String get incomePlannerMetricAnnualized;
+
+  /// Card metric: cash required to collateralise the trade
+  ///
+  /// In en, this message translates to:
+  /// **'Cash required'**
+  String get incomePlannerMetricCash;
+
+  /// Card metric: breakeven price
+  ///
+  /// In en, this message translates to:
+  /// **'Breakeven'**
+  String get incomePlannerMetricBreakeven;
+
+  /// Card metric: days-to-expiration shorthand
+  ///
+  /// In en, this message translates to:
+  /// **'DTE'**
+  String get incomePlannerMetricDte;
+
+  /// Card metric: strike price
+  ///
+  /// In en, this message translates to:
+  /// **'Strike'**
+  String get incomePlannerMetricStrike;
+
+  /// Card metric: margin of safety / cushion
+  ///
+  /// In en, this message translates to:
+  /// **'Cushion'**
+  String get incomePlannerMetricMargin;
+
+  /// Card CTA opening the opportunity detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get incomePlannerCardDetailsCta;
+
+  /// Detail sheet section: strengths
+  ///
+  /// In en, this message translates to:
+  /// **'Why this looks good'**
+  String get incomePlannerDetailWhyGood;
+
+  /// Detail sheet section: weaknesses
+  ///
+  /// In en, this message translates to:
+  /// **'Why this is risky'**
+  String get incomePlannerDetailWhyRisky;
+
+  /// Detail sheet section: worst-case scenario
+  ///
+  /// In en, this message translates to:
+  /// **'Worst case'**
+  String get incomePlannerDetailWorstCase;
+
+  /// Detail sheet section: best-fit description
+  ///
+  /// In en, this message translates to:
+  /// **'Best for'**
+  String get incomePlannerDetailBestFor;
+
+  /// Detail sheet section: when to pass
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid if'**
+  String get incomePlannerDetailAvoidIf;
+
+  /// Detail sheet section: per-dimension score bars
+  ///
+  /// In en, this message translates to:
+  /// **'Score breakdown'**
+  String get incomePlannerDetailScoreBreakdown;
+
+  /// Detail sheet primary action: open trade-journal sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Log this trade'**
+  String get incomePlannerDetailLogTrade;
+
+  /// Section header for the trade journal
+  ///
+  /// In en, this message translates to:
+  /// **'Trade journal'**
+  String get incomePlannerJournalSectionTitle;
+
+  /// Empty state for the trade journal
+  ///
+  /// In en, this message translates to:
+  /// **'Closed and open positions you log will appear here.'**
+  String get incomePlannerJournalEmpty;
+
+  /// CTA to open a fresh journal sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Log trade'**
+  String get incomePlannerJournalAddCta;
+
+  /// Title of the journal sheet when editing an existing row
+  ///
+  /// In en, this message translates to:
+  /// **'Edit trade journal entry'**
+  String get incomePlannerJournalEditTitle;
+
+  /// Journal sheet field label for entry premium
+  ///
+  /// In en, this message translates to:
+  /// **'Credit received'**
+  String get incomePlannerJournalCreditLabel;
+
+  /// Journal sheet field label for close-out debit
+  ///
+  /// In en, this message translates to:
+  /// **'Debit paid to close'**
+  String get incomePlannerJournalDebitLabel;
+
+  /// Journal sheet field label for the OCC option symbol
+  ///
+  /// In en, this message translates to:
+  /// **'Option symbol'**
+  String get incomePlannerJournalOptionSymbolLabel;
+
+  /// Example option symbol placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'AAPL250620P00190000'**
+  String get incomePlannerJournalOptionSymbolHint;
+
+  /// Numeric amount placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'0.00'**
+  String get incomePlannerJournalAmountHint;
+
+  /// Journal sheet free-text notes label
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get incomePlannerJournalNotesLabel;
+
+  /// Journal status label: open position
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get incomePlannerJournalStatusOpen;
+
+  /// Journal status label: closed position
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get incomePlannerJournalStatusClosed;
+
+  /// Journal status label: assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get incomePlannerJournalStatusAssigned;
+
+  /// Journal status label: expired worthless
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get incomePlannerJournalStatusExpired;
+
+  /// Validation: missing symbol
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol is required'**
+  String get incomePlannerSymbolRequired;
+
+  /// Validation: symbol already approved
+  ///
+  /// In en, this message translates to:
+  /// **'This symbol is already on the list'**
+  String get incomePlannerDuplicateSymbol;
+
+  /// Error message when persisting the strategy profile fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save preferences'**
+  String get incomePlannerProfileSaveError;
+
+  /// Error message when persisting an approved-underlying fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save underlying'**
+  String get incomePlannerUnderlyingSaveError;
+
+  /// Generic preferences entry label
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get incomePlannerPreferencesAction;
+
+  /// Generic edit action label
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get incomePlannerEditAction;
+
+  /// Time-ago suffix in minutes
+  ///
+  /// In en, this message translates to:
+  /// **'{n}m ago'**
+  String incomePlannerLastScanMinutes(int n);
+
+  /// Time-ago suffix in hours
+  ///
+  /// In en, this message translates to:
+  /// **'{n}h ago'**
+  String incomePlannerLastScanHours(int n);
+
+  /// Time-ago suffix in days
+  ///
+  /// In en, this message translates to:
+  /// **'{n}d ago'**
+  String incomePlannerLastScanDays(int n);
+
+  /// Last-scan summary when the cache is fresh
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: {ago} · {count, plural, =1{1 candidate} other{{count} candidates}}'**
+  String incomePlannerLastScanFresh(String label, String ago, int count);
+
+  /// Last-scan summary when the cache is stale
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: {ago} · {stale}'**
+  String incomePlannerLastScanStaleSummary(
+    String label,
+    String ago,
+    String stale,
+  );
 }
 
 class _AppLocalizationsDelegate

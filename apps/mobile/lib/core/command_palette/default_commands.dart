@@ -97,6 +97,23 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       keywords: const <String>[AppRoutes.accountsFire, 'fire'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.accountsFire),
     ),
+    CommandPaletteEntry(
+      id: 'nav.incomePlanner',
+      label: l10n.incomePlannerTitle,
+      icon: Icons.candlestick_chart_outlined,
+      keywords: <String>[
+        AppRoutes.accountsIncomePlanner,
+        'income planner',
+        'options',
+        'sell put',
+        'covered call',
+        l10n.commandKeywordOptionsCn,
+        l10n.commandKeywordCashFlowCn,
+        l10n.commandKeywordSellPutCn,
+        l10n.commandKeywordCoveredCallCn,
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.accountsIncomePlanner),
+    ),
     ...rebalanceCommandPaletteEntries(l10n),
     CommandPaletteEntry(
       id: 'nav.settings',

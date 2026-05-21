@@ -90,13 +90,6 @@ extension TradeJournalStatusWire on TradeJournalStatus {
         TradeJournalStatus.assigned => 'assigned',
         TradeJournalStatus.expired => 'expired',
       };
-
-  String get displayLabel => switch (this) {
-        TradeJournalStatus.open => 'Open',
-        TradeJournalStatus.closed => 'Closed',
-        TradeJournalStatus.assigned => 'Assigned',
-        TradeJournalStatus.expired => 'Expired',
-      };
 }
 
 TradeJournalStatus parseTradeJournalStatus(String wire) {

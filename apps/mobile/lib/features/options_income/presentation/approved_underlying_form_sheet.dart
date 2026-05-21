@@ -4,9 +4,9 @@ import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/approved_underlying.dart';
-import 'income_planner_strings.dart';
 
 /// Add or edit an [ApprovedUnderlying]. When [existing] is provided the
 /// sheet is in edit mode; otherwise it adds a new row.
@@ -66,7 +66,7 @@ class _ApprovedUnderlyingFormSheetState
       AppMessenger.show(
         context,
         ToastKind.error,
-        IncomePlannerStrings.symbolRequired,
+        AppLocalizations.of(context).incomePlannerSymbolRequired,
       );
       return;
     }
@@ -100,7 +100,7 @@ class _ApprovedUnderlyingFormSheetState
       AppMessenger.show(
         context,
         ToastKind.error,
-        IncomePlannerStrings.underlyingSaveError,
+        AppLocalizations.of(context).incomePlannerUnderlyingSaveError,
       );
     }
   }
@@ -123,20 +123,21 @@ class _ApprovedUnderlyingFormSheetState
       AppMessenger.show(
         context,
         ToastKind.error,
-        IncomePlannerStrings.underlyingSaveError,
+        AppLocalizations.of(context).incomePlannerUnderlyingSaveError,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSheet(
       title: _isEdit
-          ? IncomePlannerStrings.editUnderlyingTitle
-          : IncomePlannerStrings.addUnderlyingTitle,
+          ? l10n.incomePlannerEditUnderlyingTitle
+          : l10n.incomePlannerAddUnderlyingTitle,
       footer: AppSheetFooter(
-        submitLabel: IncomePlannerStrings.saveAction,
-        cancelLabel: IncomePlannerStrings.cancelAction,
+        submitLabel: l10n.incomePlannerSaveAction,
+        cancelLabel: l10n.incomePlannerCancelAction,
         onSubmit: _save,
         busy: _busy,
       ),
@@ -145,8 +146,8 @@ class _ApprovedUnderlyingFormSheetState
         children: [
           FTextFormField(
             control: FTextFieldControl.managed(controller: _symbolController),
-            label: const Text(IncomePlannerStrings.symbolLabel),
-            hint: IncomePlannerStrings.symbolHint,
+            label: Text(l10n.incomePlannerSymbolLabel),
+            hint: l10n.incomePlannerSymbolHint,
             enabled: !_isEdit, // symbol is part of the PK; cannot change
             autofocus: !_isEdit,
             textCapitalization: TextCapitalization.characters,
@@ -165,16 +166,16 @@ class _ApprovedUnderlyingFormSheetState
                 if (value != null) setState(() => _market = value);
               },
             ),
-            label: const Text(IncomePlannerStrings.marketLabel),
+            label: Text(l10n.incomePlannerMarketLabel),
           ),
           const SizedBox(height: AppSpacing.s16),
           _SwitchRow(
-            label: IncomePlannerStrings.allowPutLabel,
+            label: l10n.incomePlannerAllowPutLabel,
             value: _allowPut,
             onChanged: (v) => setState(() => _allowPut = v),
           ),
           _SwitchRow(
-            label: IncomePlannerStrings.allowCallLabel,
+            label: l10n.incomePlannerAllowCallLabel,
             value: _allowCall,
             onChanged: (v) => setState(() => _allowCall = v),
           ),
@@ -183,7 +184,7 @@ class _ApprovedUnderlyingFormSheetState
             FButton(
               variant: FButtonVariant.destructive,
               onPress: _busy ? null : _delete,
-              child: const Text(IncomePlannerStrings.deleteAction),
+              child: Text(l10n.incomePlannerDeleteAction),
             ),
           ],
         ],

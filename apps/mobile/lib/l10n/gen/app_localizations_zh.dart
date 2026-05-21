@@ -5586,4 +5586,317 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get masterDetailBackToList => '返回列表';
+
+  @override
+  String get incomePlannerTitle => '期权现金流';
+
+  @override
+  String get incomePlannerAccountsEntrySubtitle => '扫描卖看跌 / 备兑看涨 现金流机会';
+
+  @override
+  String get commandKeywordOptionsCn => '期权';
+
+  @override
+  String get commandKeywordSellPutCn => '卖看跌';
+
+  @override
+  String get commandKeywordCoveredCallCn => '备兑';
+
+  @override
+  String get incomePlannerUnsupportedOnWeb => '期权现金流仅在移动端可用。';
+
+  @override
+  String get incomePlannerOccTitle => '期权风险披露';
+
+  @override
+  String get incomePlannerOccSubtitle => '使用前请阅读';
+
+  @override
+  String get incomePlannerOccBody =>
+      '卖出现金担保看跌(sell put)与备兑看涨(covered call)同时存在已知与未知风险。被行权时,卖看跌可能要求你以 strike 价买入 100 股;备兑看涨会让你失去 strike 以上的全部上涨。Income Planner 只筛选符合你已声明风险偏好的机会 —— 不预测价格,也不下达任何订单。继续即表示你已阅读 OCC《Characteristics and Risks of Standardized Options》。';
+
+  @override
+  String get incomePlannerOccAccept => '我已阅读并接受';
+
+  @override
+  String get incomePlannerOccCancel => '暂不';
+
+  @override
+  String get incomePlannerOccLearnMore => '打开 OCC ODD';
+
+  @override
+  String get incomePlannerStartTitle => '设置你的策略偏好';
+
+  @override
+  String get incomePlannerStartBody =>
+      '告诉 Income Planner 你愿意采用的策略与风险水平,然后批准你愿意持有或卖出的标的。';
+
+  @override
+  String get incomePlannerStartCta => '配置偏好';
+
+  @override
+  String get incomePlannerNoApprovedTitle => '暂无已批准标的';
+
+  @override
+  String get incomePlannerNoApprovedBody =>
+      '添加你愿意长期持有(用于卖看跌)或愿意在更高价卖出(用于备兑看涨)的股票或 ETF。Income Planner 只扫描清单内的标的。';
+
+  @override
+  String get incomePlannerAddApprovedCta => '添加标的';
+
+  @override
+  String get incomePlannerProfileTitle => '偏好设置';
+
+  @override
+  String get incomePlannerProfileMode => '风险模式';
+
+  @override
+  String get incomePlannerProfileModeConservative => '保守';
+
+  @override
+  String get incomePlannerProfileModeBalanced => '平衡';
+
+  @override
+  String get incomePlannerProfileModeAggressive => '激进';
+
+  @override
+  String get incomePlannerProfileModeCustom => '自定义';
+
+  @override
+  String get incomePlannerProfileAvoidEarnings => '跳过 7 天内有业绩公告的候选';
+
+  @override
+  String get incomePlannerProfileAvoidMacroEvents => '跳过 7 天内有 CPI / FOMC 的候选';
+
+  @override
+  String get incomePlannerProfileOnlyApproved => '仅扫描已批准清单内的标的(推荐)';
+
+  @override
+  String get incomePlannerProfileAllowedStrategies => '策略';
+
+  @override
+  String get incomePlannerProfileAllowPut => '卖看跌(现金担保)';
+
+  @override
+  String get incomePlannerProfileAllowCall => '备兑看涨';
+
+  @override
+  String get incomePlannerProfileSave => '保存';
+
+  @override
+  String get incomePlannerProfileCancel => '取消';
+
+  @override
+  String get incomePlannerAddUnderlyingTitle => '添加已批准标的';
+
+  @override
+  String get incomePlannerEditUnderlyingTitle => '编辑标的';
+
+  @override
+  String get incomePlannerSymbolLabel => '代码';
+
+  @override
+  String get incomePlannerSymbolHint => 'AAPL';
+
+  @override
+  String get incomePlannerMarketLabel => '市场';
+
+  @override
+  String get incomePlannerAllowPutLabel => '允许卖看跌(现金担保)';
+
+  @override
+  String get incomePlannerAllowCallLabel => '允许备兑看涨';
+
+  @override
+  String get incomePlannerSaveAction => '保存';
+
+  @override
+  String get incomePlannerDeleteAction => '删除';
+
+  @override
+  String get incomePlannerCancelAction => '取消';
+
+  @override
+  String get incomePlannerApprovedSectionTitle => '已批准标的';
+
+  @override
+  String get incomePlannerOpportunitiesSectionTitle => '机会';
+
+  @override
+  String get incomePlannerOpportunitiesEmpty => '暂无缓存机会。点击 \"刷新机会\" 扫描你的已批准标的。';
+
+  @override
+  String get incomePlannerRefreshAction => '刷新机会';
+
+  @override
+  String get incomePlannerRefreshRunning => '扫描中…';
+
+  @override
+  String get incomePlannerRefreshFailedTitle => '扫描失败';
+
+  @override
+  String get incomePlannerRefreshUniverseEmpty =>
+      '没有可扫描的标的。请至少添加一个启用 put/call 的已批准标的,或确认 covered call 标的持仓 ≥ 100 股。';
+
+  @override
+  String get incomePlannerLastScanLabel => '上次扫描';
+
+  @override
+  String get incomePlannerLastScanStale => '缓存数据已超过 24 小时 —— 刷新以获取最新数据。';
+
+  @override
+  String get incomePlannerOpportunitiesAllRejected =>
+      '本次扫描没有候选通过你的硬条件。请放宽偏好(如降低收益下限、扩大 DTE 窗口)后重试。';
+
+  @override
+  String get incomePlannerChipCashSecuredPut => '卖看跌';
+
+  @override
+  String get incomePlannerChipCoveredCall => '备兑看涨';
+
+  @override
+  String get incomePlannerRiskLow => '低风险';
+
+  @override
+  String get incomePlannerRiskModerate => '中等';
+
+  @override
+  String get incomePlannerRiskElevated => '偏高';
+
+  @override
+  String get incomePlannerMetricAnnualized => '年化';
+
+  @override
+  String get incomePlannerMetricCash => '占用现金';
+
+  @override
+  String get incomePlannerMetricBreakeven => '盈亏平衡';
+
+  @override
+  String get incomePlannerMetricDte => '到期天数';
+
+  @override
+  String get incomePlannerMetricStrike => '行权价';
+
+  @override
+  String get incomePlannerMetricMargin => '安全边际';
+
+  @override
+  String get incomePlannerCardDetailsCta => '详情';
+
+  @override
+  String get incomePlannerDetailWhyGood => '为什么值得考虑';
+
+  @override
+  String get incomePlannerDetailWhyRisky => '为什么有风险';
+
+  @override
+  String get incomePlannerDetailWorstCase => '最坏情况';
+
+  @override
+  String get incomePlannerDetailBestFor => '适合';
+
+  @override
+  String get incomePlannerDetailAvoidIf => '不适合';
+
+  @override
+  String get incomePlannerDetailScoreBreakdown => '评分明细';
+
+  @override
+  String get incomePlannerDetailLogTrade => '记录此交易';
+
+  @override
+  String get incomePlannerJournalSectionTitle => '交易日记';
+
+  @override
+  String get incomePlannerJournalEmpty => '你记录的未平仓与已平仓交易会显示在这里。';
+
+  @override
+  String get incomePlannerJournalAddCta => '记录交易';
+
+  @override
+  String get incomePlannerJournalEditTitle => '编辑交易日记';
+
+  @override
+  String get incomePlannerJournalCreditLabel => '收取权利金';
+
+  @override
+  String get incomePlannerJournalDebitLabel => '平仓支付';
+
+  @override
+  String get incomePlannerJournalOptionSymbolLabel => '期权代码';
+
+  @override
+  String get incomePlannerJournalOptionSymbolHint => 'AAPL250620P00190000';
+
+  @override
+  String get incomePlannerJournalAmountHint => '0.00';
+
+  @override
+  String get incomePlannerJournalNotesLabel => '备注';
+
+  @override
+  String get incomePlannerJournalStatusOpen => '未平仓';
+
+  @override
+  String get incomePlannerJournalStatusClosed => '已平仓';
+
+  @override
+  String get incomePlannerJournalStatusAssigned => '已行权';
+
+  @override
+  String get incomePlannerJournalStatusExpired => '已到期';
+
+  @override
+  String get incomePlannerSymbolRequired => '请输入代码';
+
+  @override
+  String get incomePlannerDuplicateSymbol => '该代码已在清单中';
+
+  @override
+  String get incomePlannerProfileSaveError => '无法保存偏好';
+
+  @override
+  String get incomePlannerUnderlyingSaveError => '无法保存标的';
+
+  @override
+  String get incomePlannerPreferencesAction => '偏好';
+
+  @override
+  String get incomePlannerEditAction => '编辑';
+
+  @override
+  String incomePlannerLastScanMinutes(int n) {
+    return '$n 分钟前';
+  }
+
+  @override
+  String incomePlannerLastScanHours(int n) {
+    return '$n 小时前';
+  }
+
+  @override
+  String incomePlannerLastScanDays(int n) {
+    return '$n 天前';
+  }
+
+  @override
+  String incomePlannerLastScanFresh(String label, String ago, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个候选',
+      one: '1 个候选',
+    );
+    return '$label:$ago · $_temp0';
+  }
+
+  @override
+  String incomePlannerLastScanStaleSummary(
+    String label,
+    String ago,
+    String stale,
+  ) {
+    return '$label:$ago · $stale';
+  }
 }

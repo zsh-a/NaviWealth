@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/options_opportunity.dart';
-import 'income_planner_strings.dart';
 import 'trade_journal_sheet.dart';
 
 /// Detail sheet for a single [OptionsOpportunity]. Surfaced from the
@@ -14,12 +14,13 @@ Future<void> showOpportunityDetailSheet(
   BuildContext context,
   OptionsOpportunity opportunity,
 ) {
+  final l10n = AppLocalizations.of(context);
   return showAppFormSheet(
     context: context,
     builder: (sheetCtx) => AppSheet(
       title: opportunity.explanation.summary,
       footer: AppSheetFooter(
-        submitLabel: IncomePlannerStrings.detailLogTrade,
+        submitLabel: l10n.incomePlannerDetailLogTrade,
         onSubmit: () async {
           Navigator.of(sheetCtx).pop();
           await showTradeJournalSheet(context, prefilled: opportunity);
@@ -37,6 +38,7 @@ class _DetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final exp = opportunity.explanation;
     final metrics = opportunity.metrics;
     final colors = context.theme.colors;
@@ -46,7 +48,7 @@ class _DetailBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Section(
-            title: IncomePlannerStrings.detailWorstCase,
+            title: l10n.incomePlannerDetailWorstCase,
             color: colors.destructive,
             child: Text(
               exp.worstCase,
@@ -57,61 +59,61 @@ class _DetailBody extends StatelessWidget {
           _StatsGrid(
             entries: <(String, String)>[
               (
-                IncomePlannerStrings.metricStrike,
+                l10n.incomePlannerMetricStrike,
                 '${opportunity.contract.strike.currency} '
                     '${opportunity.contract.strike.amount.toStringAsFixed(2)}',
               ),
               (
-                IncomePlannerStrings.metricBreakeven,
+                l10n.incomePlannerMetricBreakeven,
                 '${metrics.breakeven.currency} '
                     '${metrics.breakeven.amount.toStringAsFixed(2)}',
               ),
               (
-                IncomePlannerStrings.metricCash,
+                l10n.incomePlannerMetricCash,
                 '${metrics.cashRequired.currency} '
                     '${metrics.cashRequired.amount.toStringAsFixed(2)}',
               ),
               (
-                IncomePlannerStrings.metricAnnualized,
+                l10n.incomePlannerMetricAnnualized,
                 _pct(metrics.annualizedYield),
               ),
               (
-                IncomePlannerStrings.metricMargin,
+                l10n.incomePlannerMetricMargin,
                 _pct(metrics.marginOfSafety),
               ),
               (
-                IncomePlannerStrings.metricDte,
+                l10n.incomePlannerMetricDte,
                 '${opportunity.contract.dte}',
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.s16),
           _Section(
-            title: IncomePlannerStrings.detailWhyGood,
+            title: l10n.incomePlannerDetailWhyGood,
             color: colors.primary,
             child: _Bullets(exp.whyGood),
           ),
           if (exp.whyRisky.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s12),
             _Section(
-              title: IncomePlannerStrings.detailWhyRisky,
+              title: l10n.incomePlannerDetailWhyRisky,
               color: colors.destructive,
               child: _Bullets(exp.whyRisky),
             ),
           ],
           const SizedBox(height: AppSpacing.s12),
           _LabeledLine(
-            label: IncomePlannerStrings.detailBestFor,
+            label: l10n.incomePlannerDetailBestFor,
             value: exp.bestFor,
           ),
           const SizedBox(height: AppSpacing.s4),
           _LabeledLine(
-            label: IncomePlannerStrings.detailAvoidIf,
+            label: l10n.incomePlannerDetailAvoidIf,
             value: exp.avoidIf,
           ),
           const SizedBox(height: AppSpacing.s16),
           _Section(
-            title: IncomePlannerStrings.detailScoreBreakdown,
+            title: l10n.incomePlannerDetailScoreBreakdown,
             color: colors.mutedForeground,
             child: _ScoreBreakdown(breakdown: exp.scoreBreakdown),
           ),
