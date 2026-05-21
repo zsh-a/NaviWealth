@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/scan_controller.dart';
 import '../application/scan_inputs_bridge.dart';
 import '../data/options_opportunity_cache_repository.dart';
@@ -14,9 +15,8 @@ import '../domain/approved_underlying.dart';
 import '../domain/option_contract.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
-import '../domain/trade_journal_entry.dart';
 import 'approved_underlying_form_sheet.dart';
-import 'income_planner_strings.dart';
+import 'income_planner_labels.dart';
 import 'occ_disclosure_sheet.dart';
 import 'opportunity_detail_sheet.dart';
 import 'strategy_profile_sheet.dart';
@@ -31,6 +31,7 @@ class IncomePlannerPage extends ConsumerWidget {
     if (kIsWeb) {
       return const _UnsupportedOnWebPage();
     }
+    final l10n = AppLocalizations.of(context);
     final profileAsync = ref.watch(optionsStrategyProfileProvider);
     final acked = profileAsync.value?.hasAcknowledgedRiskDisclosure ?? false;
     final FHeaderAction? settingsAction = acked
@@ -41,7 +42,7 @@ class IncomePlannerPage extends ConsumerWidget {
         : null;
     return FScaffold(
       header: FHeader.nested(
-        title: const Text(IncomePlannerStrings.pageTitle),
+        title: Text(l10n.incomePlannerTitle),
         suffixes: [?settingsAction],
       ),
       childPad: false,
@@ -93,13 +94,12 @@ class _UnsupportedOnWebPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const FScaffold(
-      header: FHeader.nested(title: Text(IncomePlannerStrings.pageTitle)),
+    final l10n = AppLocalizations.of(context);
+    return FScaffold(
+      header: FHeader.nested(title: Text(l10n.incomePlannerTitle)),
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.s24),
-        child: Text(
-          'Income Planner is only available on mobile.',
-        ),
+        padding: const EdgeInsets.all(AppSpacing.s24),
+        child: Text(l10n.incomePlannerUnsupportedOnWeb),
       ),
     );
   }
@@ -110,6 +110,7 @@ class _StartState extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.s24),
@@ -124,14 +125,14 @@ class _StartState extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s16),
             Text(
-              IncomePlannerStrings.startTitle,
+              l10n.incomePlannerStartTitle,
               style: context.theme.typography.lg.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: AppSpacing.s8),
             Text(
-              IncomePlannerStrings.startBody,
+              l10n.incomePlannerStartBody,
               textAlign: TextAlign.center,
               style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,
@@ -140,7 +141,7 @@ class _StartState extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s20),
             FButton(
               onPress: () => showOccDisclosureSheet(context),
-              child: const Text(IncomePlannerStrings.startCta),
+              child: Text(l10n.incomePlannerStartCta),
             ),
           ],
         ),
@@ -156,6 +157,7 @@ class _ConfiguredBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final approvedAsync = ref.watch(approvedUnderlyingsProvider);
     final scanState = ref.watch(scanControllerProvider);
     final cacheState = ref.watch(latestScanStateProvider);
@@ -164,11 +166,11 @@ class _ConfiguredBody extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
         _SectionHeader(
-          title: IncomePlannerStrings.approvedSectionTitle,
+          title: l10n.incomePlannerApprovedSectionTitle,
           trailing: FButton(
             variant: FButtonVariant.outline,
             onPress: () => showApprovedUnderlyingSheet(context),
-            child: const Text(IncomePlannerStrings.addApprovedCta),
+            child: Text(l10n.incomePlannerAddApprovedCta),
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -219,6 +221,7 @@ class _OpportunitiesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final running = state is ScanRunning;
     return Row(
       children: [
@@ -227,7 +230,7 @@ class _OpportunitiesHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                IncomePlannerStrings.opportunitiesSectionTitle,
+                l10n.incomePlannerOpportunitiesSectionTitle,
                 style: context.theme.typography.lg.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -235,7 +238,7 @@ class _OpportunitiesHeader extends StatelessWidget {
               if (cacheState != null) ...[
                 const SizedBox(height: AppSpacing.s2),
                 Text(
-                  _formatLastScan(cacheState!),
+                  _formatLastScan(l10n, cacheState!),
                   style: context.theme.typography.xs.copyWith(
                     color: cacheState!.isStale
                         ? context.theme.colors.destructive
@@ -252,25 +255,33 @@ class _OpportunitiesHeader extends StatelessWidget {
           onPress: running ? null : onRefresh,
           child: Text(
             running
-                ? IncomePlannerStrings.refreshRunning
-                : IncomePlannerStrings.refreshAction,
+                ? l10n.incomePlannerRefreshRunning
+                : l10n.incomePlannerRefreshAction,
           ),
         ),
       ],
     );
   }
 
-  String _formatLastScan(ScanCacheState s) {
+  String _formatLastScan(AppLocalizations l10n, ScanCacheState s) {
     final delta = DateTime.now().toUtc().difference(s.scannedAt);
     final ago = delta.inMinutes < 60
-        ? '${delta.inMinutes}m ago'
+        ? l10n.incomePlannerLastScanMinutes(delta.inMinutes)
         : delta.inHours < 24
-            ? '${delta.inHours}h ago'
-            : '${delta.inDays}d ago';
+            ? l10n.incomePlannerLastScanHours(delta.inHours)
+            : l10n.incomePlannerLastScanDays(delta.inDays);
     if (s.isStale) {
-      return '${IncomePlannerStrings.lastScanLabel}: $ago · ${IncomePlannerStrings.lastScanStale}';
+      return l10n.incomePlannerLastScanStaleSummary(
+        l10n.incomePlannerLastScanLabel,
+        ago,
+        l10n.incomePlannerLastScanStale,
+      );
     }
-    return '${IncomePlannerStrings.lastScanLabel}: $ago · ${s.count} candidate(s)';
+    return l10n.incomePlannerLastScanFresh(
+      l10n.incomePlannerLastScanLabel,
+      ago,
+      s.count,
+    );
   }
 }
 
@@ -285,27 +296,28 @@ class _OpportunitiesBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (state is ScanFailure) {
       return _ErrorCard(
-        title: IncomePlannerStrings.refreshFailedTitle,
+        title: l10n.incomePlannerRefreshFailedTitle,
         message: '${(state as ScanFailure).error}',
       );
     }
     return opportunitiesAsync.when(
       loading: () => const _LoadingTile(),
       error: (e, _) => _ErrorCard(
-        title: IncomePlannerStrings.refreshFailedTitle,
+        title: l10n.incomePlannerRefreshFailedTitle,
         message: '$e',
       ),
       data: (items) {
         if (items.isEmpty) {
           if (state is ScanSuccess) {
-            return const _EmptyCard(
-              body: IncomePlannerStrings.opportunitiesAllRejected,
+            return _EmptyCard(
+              body: l10n.incomePlannerOpportunitiesAllRejected,
             );
           }
-          return const _EmptyCard(
-            body: IncomePlannerStrings.opportunitiesEmpty,
+          return _EmptyCard(
+            body: l10n.incomePlannerOpportunitiesEmpty,
           );
         }
         return Column(
@@ -329,6 +341,7 @@ class _OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final metrics = opportunity.metrics;
     final contract = opportunity.contract;
@@ -360,7 +373,7 @@ class _OpportunityCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s12),
               if (opportunity.explanation.whyGood.isNotEmpty) ...[
                 Text(
-                  IncomePlannerStrings.detailWhyGood,
+                  l10n.incomePlannerDetailWhyGood,
                   style: context.theme.typography.xs.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colors.mutedForeground,
@@ -373,7 +386,7 @@ class _OpportunityCard extends StatelessWidget {
               if (opportunity.explanation.whyRisky.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.s8),
                 Text(
-                  IncomePlannerStrings.detailWhyRisky,
+                  l10n.incomePlannerDetailWhyRisky,
                   style: context.theme.typography.xs.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colors.destructive,
@@ -399,25 +412,26 @@ class _MetricsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: AppSpacing.s12,
       runSpacing: AppSpacing.s8,
       children: [
         _Metric(
-          label: IncomePlannerStrings.metricStrike,
+          label: l10n.incomePlannerMetricStrike,
           value: '${contract.strike.currency} '
               '${metrics.cashRequired.amount / Decimal.fromInt(100)}',
         ),
         _Metric(
-          label: IncomePlannerStrings.metricAnnualized,
+          label: l10n.incomePlannerMetricAnnualized,
           value: _pct(metrics.annualizedYield),
         ),
         _Metric(
-          label: IncomePlannerStrings.metricMargin,
+          label: l10n.incomePlannerMetricMargin,
           value: _pct(metrics.marginOfSafety),
         ),
         _Metric(
-          label: IncomePlannerStrings.metricCash,
+          label: l10n.incomePlannerMetricCash,
           value: '${metrics.cashRequired.currency} '
               '${_fmtMoney(metrics.cashRequired.amount)}',
         ),
@@ -480,10 +494,8 @@ class _StrategyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = switch (strategy) {
-      OptionsStrategyKind.cashSecuredPut => IncomePlannerStrings.chipCashSecuredPut,
-      OptionsStrategyKind.coveredCall => IncomePlannerStrings.chipCoveredCall,
-    };
+    final l10n = AppLocalizations.of(context);
+    final label = optionsStrategyKindShortLabel(l10n, strategy);
     final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -514,18 +526,19 @@ class _RiskBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final (label, color) = switch (risk) {
       OpportunityRiskLevel.low => (
-          IncomePlannerStrings.riskLow,
+          l10n.incomePlannerRiskLow,
           colors.primary,
         ),
       OpportunityRiskLevel.moderate => (
-          IncomePlannerStrings.riskModerate,
+          l10n.incomePlannerRiskModerate,
           colors.mutedForeground,
         ),
       OpportunityRiskLevel.elevated => (
-          IncomePlannerStrings.riskElevated,
+          l10n.incomePlannerRiskElevated,
           colors.destructive,
         ),
     };
@@ -640,6 +653,7 @@ class _ApprovedEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return FCard(
       child: Padding(
@@ -648,14 +662,14 @@ class _ApprovedEmpty extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              IncomePlannerStrings.noApprovedTitle,
+              l10n.incomePlannerNoApprovedTitle,
               style: context.theme.typography.sm.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
-              IncomePlannerStrings.noApprovedBody,
+              l10n.incomePlannerNoApprovedBody,
               style: context.theme.typography.xs.copyWith(
                 color: colors.mutedForeground,
                 height: 1.4,
@@ -694,6 +708,7 @@ class _ApprovedTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return FCard(
       child: InkWell(
@@ -728,12 +743,12 @@ class _ApprovedTile extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               _StrategyChip(
-                label: IncomePlannerStrings.profileAllowPut,
+                label: l10n.incomePlannerProfileAllowPut,
                 enabled: item.allowPut,
               ),
               const SizedBox(width: AppSpacing.s6),
               _StrategyChip(
-                label: IncomePlannerStrings.profileAllowCall,
+                label: l10n.incomePlannerProfileAllowCall,
                 enabled: item.allowCall,
               ),
             ],
@@ -794,16 +809,17 @@ class _TradeJournalSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(
-          title: IncomePlannerStrings.journalSectionTitle,
+          title: l10n.incomePlannerJournalSectionTitle,
           trailing: FButton(
             variant: FButtonVariant.outline,
             onPress: () => showTradeJournalSheet(context),
-            child: const Text(IncomePlannerStrings.journalAddCta),
+            child: Text(l10n.incomePlannerJournalAddCta),
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -815,13 +831,13 @@ class _TradeJournalSection extends ConsumerWidget {
             return entriesAsync.when(
               loading: () => const _LoadingTile(),
               error: (e, _) => _ErrorCard(
-                title: IncomePlannerStrings.refreshFailedTitle,
+                title: l10n.incomePlannerRefreshFailedTitle,
                 message: '$e',
               ),
               data: (entries) {
                 if (entries.isEmpty) {
-                  return const _EmptyCard(
-                    body: IncomePlannerStrings.journalEmpty,
+                  return _EmptyCard(
+                    body: l10n.incomePlannerJournalEmpty,
                   );
                 }
                 return Column(
@@ -860,7 +876,8 @@ class _TradeJournalSection extends ConsumerWidget {
                                         const SizedBox(
                                             height: AppSpacing.s2),
                                         Text(
-                                          entry.status.displayLabel,
+                                          tradeJournalStatusLabel(
+                                              l10n, entry.status),
                                           style: context.theme.typography.xs
                                               .copyWith(
                                             color: colors.mutedForeground,

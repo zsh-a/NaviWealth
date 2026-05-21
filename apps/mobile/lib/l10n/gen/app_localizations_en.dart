@@ -5813,4 +5813,326 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get masterDetailBackToList => 'Back to list';
+
+  @override
+  String get incomePlannerTitle => 'Income Planner';
+
+  @override
+  String get incomePlannerAccountsEntrySubtitle =>
+      'Screen sell-put and covered-call income opportunities';
+
+  @override
+  String get commandKeywordOptionsCn => '期权';
+
+  @override
+  String get commandKeywordSellPutCn => '卖看跌';
+
+  @override
+  String get commandKeywordCoveredCallCn => '备兑';
+
+  @override
+  String get incomePlannerUnsupportedOnWeb =>
+      'Income Planner is only available on mobile.';
+
+  @override
+  String get incomePlannerOccTitle => 'Options risk disclosure';
+
+  @override
+  String get incomePlannerOccSubtitle => 'Read before using';
+
+  @override
+  String get incomePlannerOccBody =>
+      'Selling cash-secured puts and covered calls have defined and undefined risks. Sell-puts can require you to buy 100 shares at strike if assigned; covered calls cap upside above strike. Income Planner only screens opportunities that match your stated risk preferences — it does not predict prices and does not place orders. By continuing you acknowledge you have read OCC Characteristics and Risks of Standardized Options.';
+
+  @override
+  String get incomePlannerOccAccept => 'I have read and accept';
+
+  @override
+  String get incomePlannerOccCancel => 'Not now';
+
+  @override
+  String get incomePlannerOccLearnMore => 'Open OCC ODD';
+
+  @override
+  String get incomePlannerStartTitle => 'Set up your stance';
+
+  @override
+  String get incomePlannerStartBody =>
+      'Tell Income Planner which strategies and risk level you want, then approve the underlyings you would be happy to own or sell.';
+
+  @override
+  String get incomePlannerStartCta => 'Configure preferences';
+
+  @override
+  String get incomePlannerNoApprovedTitle => 'No approved underlyings yet';
+
+  @override
+  String get incomePlannerNoApprovedBody =>
+      'Add the stocks or ETFs you would be willing to long-term hold (for sell puts) or sell at a higher price (for covered calls). Income Planner only scans symbols on this list.';
+
+  @override
+  String get incomePlannerAddApprovedCta => 'Add underlying';
+
+  @override
+  String get incomePlannerProfileTitle => 'Preferences';
+
+  @override
+  String get incomePlannerProfileMode => 'Risk mode';
+
+  @override
+  String get incomePlannerProfileModeConservative => 'Conservative';
+
+  @override
+  String get incomePlannerProfileModeBalanced => 'Balanced';
+
+  @override
+  String get incomePlannerProfileModeAggressive => 'Aggressive';
+
+  @override
+  String get incomePlannerProfileModeCustom => 'Custom';
+
+  @override
+  String get incomePlannerProfileAvoidEarnings =>
+      'Skip candidates within 7 days of earnings';
+
+  @override
+  String get incomePlannerProfileAvoidMacroEvents =>
+      'Skip candidates within 7 days of CPI / FOMC';
+
+  @override
+  String get incomePlannerProfileOnlyApproved =>
+      'Only scan symbols on the approved list (recommended)';
+
+  @override
+  String get incomePlannerProfileAllowedStrategies => 'Strategies';
+
+  @override
+  String get incomePlannerProfileAllowPut => 'Cash-secured puts';
+
+  @override
+  String get incomePlannerProfileAllowCall => 'Covered calls';
+
+  @override
+  String get incomePlannerProfileSave => 'Save';
+
+  @override
+  String get incomePlannerProfileCancel => 'Cancel';
+
+  @override
+  String get incomePlannerAddUnderlyingTitle => 'Add approved underlying';
+
+  @override
+  String get incomePlannerEditUnderlyingTitle => 'Edit underlying';
+
+  @override
+  String get incomePlannerSymbolLabel => 'Symbol';
+
+  @override
+  String get incomePlannerSymbolHint => 'AAPL';
+
+  @override
+  String get incomePlannerMarketLabel => 'Market';
+
+  @override
+  String get incomePlannerAllowPutLabel => 'Allow cash-secured puts';
+
+  @override
+  String get incomePlannerAllowCallLabel => 'Allow covered calls';
+
+  @override
+  String get incomePlannerSaveAction => 'Save';
+
+  @override
+  String get incomePlannerDeleteAction => 'Delete';
+
+  @override
+  String get incomePlannerCancelAction => 'Cancel';
+
+  @override
+  String get incomePlannerApprovedSectionTitle => 'Approved underlyings';
+
+  @override
+  String get incomePlannerOpportunitiesSectionTitle => 'Opportunities';
+
+  @override
+  String get incomePlannerOpportunitiesEmpty =>
+      'No cached opportunities yet. Tap \"Refresh opportunities\" to scan your approved underlyings.';
+
+  @override
+  String get incomePlannerRefreshAction => 'Refresh opportunities';
+
+  @override
+  String get incomePlannerRefreshRunning => 'Scanning…';
+
+  @override
+  String get incomePlannerRefreshFailedTitle => 'Scan failed';
+
+  @override
+  String get incomePlannerRefreshUniverseEmpty =>
+      'No symbols are eligible. Add at least one approved underlying with put/call enabled, or check that you own ≥100 shares for covered calls.';
+
+  @override
+  String get incomePlannerLastScanLabel => 'Last scan';
+
+  @override
+  String get incomePlannerLastScanStale =>
+      'Cached results are older than 24h — refresh for fresher data.';
+
+  @override
+  String get incomePlannerOpportunitiesAllRejected =>
+      'No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.';
+
+  @override
+  String get incomePlannerChipCashSecuredPut => 'Sell put';
+
+  @override
+  String get incomePlannerChipCoveredCall => 'Covered call';
+
+  @override
+  String get incomePlannerRiskLow => 'Low risk';
+
+  @override
+  String get incomePlannerRiskModerate => 'Moderate';
+
+  @override
+  String get incomePlannerRiskElevated => 'Elevated';
+
+  @override
+  String get incomePlannerMetricAnnualized => 'Annualized';
+
+  @override
+  String get incomePlannerMetricCash => 'Cash required';
+
+  @override
+  String get incomePlannerMetricBreakeven => 'Breakeven';
+
+  @override
+  String get incomePlannerMetricDte => 'DTE';
+
+  @override
+  String get incomePlannerMetricStrike => 'Strike';
+
+  @override
+  String get incomePlannerMetricMargin => 'Cushion';
+
+  @override
+  String get incomePlannerCardDetailsCta => 'Details';
+
+  @override
+  String get incomePlannerDetailWhyGood => 'Why this looks good';
+
+  @override
+  String get incomePlannerDetailWhyRisky => 'Why this is risky';
+
+  @override
+  String get incomePlannerDetailWorstCase => 'Worst case';
+
+  @override
+  String get incomePlannerDetailBestFor => 'Best for';
+
+  @override
+  String get incomePlannerDetailAvoidIf => 'Avoid if';
+
+  @override
+  String get incomePlannerDetailScoreBreakdown => 'Score breakdown';
+
+  @override
+  String get incomePlannerDetailLogTrade => 'Log this trade';
+
+  @override
+  String get incomePlannerJournalSectionTitle => 'Trade journal';
+
+  @override
+  String get incomePlannerJournalEmpty =>
+      'Closed and open positions you log will appear here.';
+
+  @override
+  String get incomePlannerJournalAddCta => 'Log trade';
+
+  @override
+  String get incomePlannerJournalEditTitle => 'Edit trade journal entry';
+
+  @override
+  String get incomePlannerJournalCreditLabel => 'Credit received';
+
+  @override
+  String get incomePlannerJournalDebitLabel => 'Debit paid to close';
+
+  @override
+  String get incomePlannerJournalOptionSymbolLabel => 'Option symbol';
+
+  @override
+  String get incomePlannerJournalOptionSymbolHint => 'AAPL250620P00190000';
+
+  @override
+  String get incomePlannerJournalAmountHint => '0.00';
+
+  @override
+  String get incomePlannerJournalNotesLabel => 'Notes';
+
+  @override
+  String get incomePlannerJournalStatusOpen => 'Open';
+
+  @override
+  String get incomePlannerJournalStatusClosed => 'Closed';
+
+  @override
+  String get incomePlannerJournalStatusAssigned => 'Assigned';
+
+  @override
+  String get incomePlannerJournalStatusExpired => 'Expired';
+
+  @override
+  String get incomePlannerSymbolRequired => 'Symbol is required';
+
+  @override
+  String get incomePlannerDuplicateSymbol =>
+      'This symbol is already on the list';
+
+  @override
+  String get incomePlannerProfileSaveError => 'Could not save preferences';
+
+  @override
+  String get incomePlannerUnderlyingSaveError => 'Could not save underlying';
+
+  @override
+  String get incomePlannerPreferencesAction => 'Preferences';
+
+  @override
+  String get incomePlannerEditAction => 'Edit';
+
+  @override
+  String incomePlannerLastScanMinutes(int n) {
+    return '${n}m ago';
+  }
+
+  @override
+  String incomePlannerLastScanHours(int n) {
+    return '${n}h ago';
+  }
+
+  @override
+  String incomePlannerLastScanDays(int n) {
+    return '${n}d ago';
+  }
+
+  @override
+  String incomePlannerLastScanFresh(String label, String ago, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count candidates',
+      one: '1 candidate',
+    );
+    return '$label: $ago · $_temp0';
+  }
+
+  @override
+  String incomePlannerLastScanStaleSummary(
+    String label,
+    String ago,
+    String stale,
+  ) {
+    return '$label: $ago · $stale';
+  }
 }

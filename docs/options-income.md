@@ -570,6 +570,8 @@ Watchlist Opportunities  关注标的机会
 - ApprovedUnderlyings 列表：增删 + 单个标的的 `allowPut` / `allowCall` / `maxBuyPrice` / `minSellPrice`。
 - 首次进入强制弹"期权风险披露"（基于 OCC ODD），用户确认后写入 `riskDisclosureAckAt`。
 
+**L10n**:所有 UI 字符串走 `lib/l10n/app_en.arb` + `app_zh.arb`,通过 `AppLocalizations.of(context).incomePlanner*` 访问。Domain 枚举(`TradeJournalStatus` / `OptionsStrategyKind` / `OptionsStrategyMode`)的展示标签集中在 `presentation/income_planner_labels.dart` 的本地化辅助函数中,domain 层不依赖 `AppLocalizations`。
+
 ### 9.3 web 行为
 
 ```dart
