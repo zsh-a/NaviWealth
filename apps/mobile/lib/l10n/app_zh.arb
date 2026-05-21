@@ -1521,6 +1521,7 @@
   "localSecuritiesCatalog": "本地目录",
   "localSecuritiesManualAdd": "未找到？手动添加",
   "localSecuritiesUseQueryAsCode": "使用 \"{query}\" 作为代码",
+  "localSecuritiesMarketLabel": "市场",
 
   "dashboardInsightFireLabel": "FIRE",
   "dashboardInsightFireToGoYears": "还需 {years} 年 {months} 个月",

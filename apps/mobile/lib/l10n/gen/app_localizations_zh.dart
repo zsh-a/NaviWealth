@@ -4801,6 +4801,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get localSecuritiesMarketLabel => '市场';
+
+  @override
   String get dashboardInsightFireLabel => 'FIRE';
 
   @override

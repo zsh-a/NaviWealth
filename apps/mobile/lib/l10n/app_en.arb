@@ -2815,6 +2815,8 @@
     "description": "Local securities picker: use search query as code",
     "placeholders": { "query": { "type": "String" } }
   },
+  "localSecuritiesMarketLabel": "Market",
+  "@localSecuritiesMarketLabel": { "description": "Symbol field: market selector label" },
 
   "dashboardInsightFireLabel": "FIRE",
   "@dashboardInsightFireLabel": { "description": "Dashboard insight label: FIRE plan" },

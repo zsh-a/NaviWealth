@@ -4979,6 +4979,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get localSecuritiesMarketLabel => 'Market';
+
+  @override
   String get dashboardInsightFireLabel => 'FIRE';
 
   @override

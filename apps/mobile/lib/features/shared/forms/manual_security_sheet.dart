@@ -11,7 +11,7 @@ import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'currency_picker.dart';
-import 'local_securities_picker.dart';
+import 'symbol_field.dart';
 
 /// Bottom sheet for hand-adding a security that's missing from the local
 /// catalog. Returns a [LocalSecurityChoice] via `Navigator.pop` so the

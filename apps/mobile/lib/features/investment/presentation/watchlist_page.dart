@@ -12,6 +12,7 @@ import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/form_dirty_guard.dart';
+import '../../shared/forms/symbol_field.dart';
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
 
@@ -421,27 +422,23 @@ class _WatchlistItemSheet extends ConsumerStatefulWidget {
 
 class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _symbol;
   late final TextEditingController _above;
   late final TextEditingController _below;
-  late AssetMarket _market;
+  LocalSecurityChoice? _choice;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     final item = widget.item;
-    _symbol = TextEditingController(text: item?.symbol ?? '');
     _above = TextEditingController(text: item?.alertRules.above?.toString());
     _below = TextEditingController(text: item?.alertRules.below?.toString());
-    _market = item?.market ?? AssetMarket.usStock;
-    widget.dirty.bindTextControllers([_symbol, _above, _below]);
+    widget.dirty.bindTextControllers([_above, _below]);
     widget.dirty.snapshotBaseline();
   }
 
   @override
   void dispose() {
-    _symbol.dispose();
     _above.dispose();
     _below.dispose();
     super.dispose();
@@ -457,29 +454,12 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.item == null) ...[
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _symbol),
-              label: Text(l10n.watchlistSymbolField),
-              textCapitalization: TextCapitalization.characters,
-              textInputAction: TextInputAction.next,
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? l10n.watchlistSymbolRequired
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            FSelect<AssetMarket>(
-              items: {
-                for (final market in _editableMarkets)
-                  _marketLabel(l10n, market): market,
+            SymbolField(
+              markets: _editableMarkets,
+              onChanged: (choice) {
+                setState(() => _choice = choice);
+                widget.dirty.markDirty();
               },
-              control: FSelectControl<AssetMarket>.managed(
-                initial: _market,
-                onChange: (value) {
-                  setState(() => _market = value ?? _market);
-                  widget.dirty.markDirty();
-                },
-              ),
-              label: Text(l10n.watchlistMarketField),
             ),
             const SizedBox(height: 12),
           ],
@@ -528,6 +508,9 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final item = widget.item;
+    final choice = _choice;
+    if (item == null && choice == null) return; // add path requires a pick
     setState(() => _saving = true);
     widget.dirty.busy = true;
     try {
@@ -536,9 +519,12 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
         above: Decimal.tryParse(_above.text.trim()),
         below: Decimal.tryParse(_below.text.trim()),
       );
-      final item = widget.item;
       if (item == null) {
-        await repo.add(symbol: _symbol.text, market: _market, rules: rules);
+        await repo.add(
+          symbol: choice!.symbol,
+          market: choice.market,
+          rules: rules,
+        );
       } else {
         await repo.updateAlertRules(item: item, rules: rules);
       }

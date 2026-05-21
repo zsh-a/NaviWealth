@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../data/domain/enums.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/symbol_field.dart';
 import '../data/providers.dart';
 import '../domain/approved_underlying.dart';
 
@@ -34,8 +36,7 @@ class _ApprovedUnderlyingFormSheet extends ConsumerStatefulWidget {
 
 class _ApprovedUnderlyingFormSheetState
     extends ConsumerState<_ApprovedUnderlyingFormSheet> {
-  late final TextEditingController _symbolController;
-  late AssetMarket _market;
+  LocalSecurityChoice? _choice;
   late bool _allowPut;
   late bool _allowCall;
   bool _busy = false;
@@ -46,23 +47,24 @@ class _ApprovedUnderlyingFormSheetState
   void initState() {
     super.initState();
     final existing = widget.existing;
-    _symbolController = TextEditingController(
-      text: existing?.symbol ?? '',
-    );
-    _market = existing?.market ?? AssetMarket.usStock;
+    if (existing != null) {
+      // Edit mode: symbol is part of the PK so it can't change; seed the
+      // field's read-only summary from the row.
+      _choice = LocalSecurityChoice(
+        symbol: existing.symbol,
+        market: existing.market,
+        type: AssetType.stock,
+        currency: 'USD',
+        fromCatalog: true,
+      );
+    }
     _allowPut = existing?.allowPut ?? true;
     _allowCall = existing?.allowCall ?? true;
   }
 
-  @override
-  void dispose() {
-    _symbolController.dispose();
-    super.dispose();
-  }
-
   Future<void> _save() async {
-    final symbol = _symbolController.text.trim();
-    if (symbol.isEmpty) {
+    final choice = _choice;
+    if (choice == null) {
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -78,8 +80,8 @@ class _ApprovedUnderlyingFormSheetState
       final existing = widget.existing;
       if (existing == null) {
         await repo.add(
-          symbol: symbol,
-          market: _market,
+          symbol: choice.symbol,
+          market: choice.market,
           allowPut: _allowPut,
           allowCall: _allowCall,
         );
@@ -144,29 +146,18 @@ class _ApprovedUnderlyingFormSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FTextFormField(
-            control: FTextFieldControl.managed(controller: _symbolController),
-            label: Text(l10n.incomePlannerSymbolLabel),
+          SymbolField(
+            markets: const [
+              AssetMarket.usStock,
+              AssetMarket.hkStock,
+              AssetMarket.cnA,
+              AssetMarket.crypto,
+            ],
+            initialValue: _choice,
+            readOnly: _isEdit,
+            label: l10n.incomePlannerSymbolLabel,
             hint: l10n.incomePlannerSymbolHint,
-            enabled: !_isEdit, // symbol is part of the PK; cannot change
-            autofocus: !_isEdit,
-            textCapitalization: TextCapitalization.characters,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FSelect<AssetMarket>(
-            items: const {
-              'US': AssetMarket.usStock,
-              'HK': AssetMarket.hkStock,
-              'CN A': AssetMarket.cnA,
-              'Crypto': AssetMarket.crypto,
-            },
-            control: FSelectControl<AssetMarket>.managed(
-              initial: _market,
-              onChange: (value) {
-                if (value != null) setState(() => _market = value);
-              },
-            ),
-            label: Text(l10n.incomePlannerMarketLabel),
+            onChanged: (c) => setState(() => _choice = c),
           ),
           const SizedBox(height: AppSpacing.s16),
           _SwitchRow(
