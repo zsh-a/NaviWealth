@@ -8685,6 +8685,12 @@ abstract class AppLocalizations {
   /// **'Use \"{query}\" as code'**
   String localSecuritiesUseQueryAsCode(String query);
 
+  /// Symbol field: market selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get localSecuritiesMarketLabel;
+
   /// Dashboard insight label: FIRE plan
   ///
   /// In en, this message translates to:

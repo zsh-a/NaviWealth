@@ -10,8 +10,8 @@ import 'package:naviwealth/domain/entities/quote.dart';
 import 'package:naviwealth/domain/entities/symbol_info.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
-import 'package:naviwealth/features/shared/forms/local_securities_picker.dart';
 import 'package:naviwealth/features/shared/forms/manual_security_sheet.dart';
+import 'package:naviwealth/features/shared/forms/symbol_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Configurable [MarketDataService] stub for the FIR-78 enrichment tests.

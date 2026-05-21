@@ -14,7 +14,6 @@ import '../../../data/repositories/journal_entry_builders.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
-import '../../../data/securities_catalog/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
@@ -39,7 +38,7 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
     this.prefill,
   });
 
-  /// Pre-selected asset id. When null the user picks via [LocalSecuritiesPicker].
+  /// Pre-selected asset id. When null the user picks via [SymbolField].
   final String? assetId;
 
   /// Pre-selected account id.
@@ -585,27 +584,20 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   }
 
   Widget _buildAssetSearch() {
-    final l10n = AppLocalizations.of(context);
-    final searchAsync = ref.watch(securitiesSearchServiceProvider);
-    return searchAsync.when(
-      loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text(l10n.tradeEntryCatalogLoadError('$e')),
-      data: (search) => LocalSecuritiesPicker(
-        search: search,
-        onSelected: (choice) {
-          setState(() {
-            _selected = choice;
-            dirty.markDirty();
-            if (choice != null) {
-              _currency = choice.currency;
-              // Hand focus to the first amount field as soon as an asset
-              // is picked so the user can keep typing without reaching
-              // back up the form.
-              _quantityFocus.requestFocus();
-            }
-          });
-        },
-      ),
+    return SymbolField(
+      onChanged: (choice) {
+        setState(() {
+          _selected = choice;
+          dirty.markDirty();
+          if (choice != null) {
+            _currency = choice.currency;
+            // Hand focus to the first amount field as soon as an asset
+            // is picked so the user can keep typing without reaching
+            // back up the form.
+            _quantityFocus.requestFocus();
+          }
+        });
+      },
     );
   }
 
