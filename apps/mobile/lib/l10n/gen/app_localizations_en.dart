@@ -1726,6 +1726,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get routeGoHome => 'Back to overview';
 
   @override
+  String get routeGoBack => 'Go back';
+
+  @override
   String get shortcutsHelpTitle => 'Keyboard shortcuts';
 
   @override

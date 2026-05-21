@@ -55,6 +55,7 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.cashFlowTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.event_repeat_outlined),

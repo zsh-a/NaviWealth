@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
 
@@ -25,6 +26,7 @@ class RouteErrorPage extends StatelessWidget {
     final message = hasError
         ? l10n.routeNotFoundMessage(state.uri.toString())
         : l10n.commonError;
+    final canPop = GoRouter.of(context).canPop();
 
     return FScaffold(
       childPad: false,
@@ -55,11 +57,28 @@ class RouteErrorPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () => context.go(AppRoutes.home),
-                  prefix: const Icon(Icons.home_outlined, size: 16),
-                  child: Text(l10n.routeGoHome),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (canPop) ...[
+                      FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: () => smartPop(context),
+                        prefix: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 14,
+                        ),
+                        child: Text(l10n.routeGoBack),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    FButton(
+                      variant: FButtonVariant.primary,
+                      onPress: () => context.go(AppRoutes.home),
+                      prefix: const Icon(Icons.home_outlined, size: 16),
+                      child: Text(l10n.routeGoHome),
+                    ),
+                  ],
                 ),
               ],
             ),

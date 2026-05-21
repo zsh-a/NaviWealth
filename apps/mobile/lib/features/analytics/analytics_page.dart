@@ -30,7 +30,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.analyticsAppBarTitle)),
+      header: FHeader.nested(
+        title: Text(l10n.analyticsAppBarTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,

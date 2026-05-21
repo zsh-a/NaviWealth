@@ -100,7 +100,10 @@ class _ScaffoldMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FScaffold(
-      header: FHeader.nested(title: Text(title)),
+      header: FHeader.nested(
+        title: Text(title),
+        prefixes: [backHeaderAction(context)],
+      ),
       child: Center(child: child),
     );
   }

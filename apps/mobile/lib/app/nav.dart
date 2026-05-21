@@ -1,40 +1,22 @@
 import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
+
+import '../design_system/design_system.dart';
 
 /// Pop to the previous route when there is a back stack, otherwise
 /// navigate to a logical [fallback].
 ///
-/// Single replacement for the ad-hoc mix of `context.pop()` /
-/// `Navigator.of(context).pop()` / `context.go(list)` previously
-/// scattered across form save/delete/cancel handlers. Precedence
-/// mirrors the long-standing `_smartPop` in
-/// `design_system/widgets/back_header_action.dart`:
-///
-///  1. `GoRouter.pop()` — pages reached via `push`/`go` inside a shell
-///     branch (the common case: form opened from its list).
-///  2. local `Navigator.pop()` — modal sheets / dialogs hosting the
-///     widget.
-///  3. `go(fallback)` — the deep-link case with no back stack at all.
-///     [fallback] must be a real destination (the owning list / hub),
-///     never a bare `/` unless that genuinely is the parent.
-void popOrGo(BuildContext context, {required String fallback}) {
-  final router = GoRouter.maybeOf(context);
-  if (router != null && router.canPop()) {
-    router.pop();
-    return;
-  }
-  final navigator = Navigator.of(context, rootNavigator: false);
-  if (navigator.canPop()) {
-    navigator.pop();
-    return;
-  }
-  (router ?? GoRouter.of(context)).go(fallback);
-}
+/// Thin wrapper over [smartPop] (`design_system/widgets/back_header_action.dart`)
+/// that forwards an explicit fallback — i.e. "where this surface logically
+/// belongs when there is no back stack at all" (typically the owning list
+/// or hub). All four precedence steps live in `smartPop`; keeping this
+/// wrapper means form save/delete handlers can read in one line as
+/// `popOrGo(context, fallback: AppRoutes.accountsList)`.
+void popOrGo(BuildContext context, {required String fallback}) =>
+    smartPop(context, fallback: fallback);
 
 /// Logical parent of [location]: drop the last path segment.
 ///
-/// Used as the deep-link `popOrGo` fallback so "back" lands on the
-/// parent list/hub instead of bouncing the user to the dashboard.
+/// Public so unit tests can pin the deep-link fallback contract.
 ///
 ///   /activity/expenses/new   -> /activity/expenses
 ///   /accounts/list/abc123    -> /accounts/list

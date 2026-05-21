@@ -44,6 +44,7 @@ class IncomePlannerPage extends ConsumerWidget {
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.incomePlannerTitle),
+        prefixes: [backHeaderAction(context)],
         suffixes: [?settingsAction],
       ),
       childPad: false,
@@ -97,7 +98,10 @@ class _UnsupportedOnWebPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.incomePlannerTitle)),
+      header: FHeader.nested(
+        title: Text(l10n.incomePlannerTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s24),
         child: Text(l10n.incomePlannerUnsupportedOnWeb),
