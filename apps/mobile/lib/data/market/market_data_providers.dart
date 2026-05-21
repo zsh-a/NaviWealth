@@ -20,6 +20,7 @@ import 'providers/market_provider.dart';
 import 'providers/options/options_chain_provider.dart';
 import 'providers/options/yfinance_options_provider.dart';
 import 'providers/sina_provider.dart';
+import 'providers/yahoo_crumb_session.dart';
 import 'providers/yfinance_provider.dart';
 import 'resolver/layered_price_resolver.dart';
 
@@ -49,6 +50,14 @@ final marketCacheProvider = FutureProvider<MarketCache>((ref) async {
   );
 });
 
+/// Shared cookie + crumb session for Yahoo Finance. Yahoo started
+/// gating `query1`/`query2` endpoints behind a per-session crumb token
+/// in 2023; without it the API returns `401 Invalid Crumb`. The session
+/// caches the handshake for the app lifetime and refreshes on 401.
+final yahooCrumbSessionProvider = Provider<YahooCrumbSession>((ref) {
+  return YahooCrumbSession();
+});
+
 /// Options chain provider. Reuses the same [MarketHttpClient]/[RateLimiter]
 /// as [yfinanceProviderProvider] so quote + chain calls share one budget
 /// (`docs/options-income.md` §4.1). Built lazily because the Income Planner
@@ -68,7 +77,10 @@ final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
   );
-  return YFinanceOptionsProvider(http: http);
+  return YFinanceOptionsProvider(
+    http: http,
+    session: ref.watch(yahooCrumbSessionProvider),
+  );
 });
 
 final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
