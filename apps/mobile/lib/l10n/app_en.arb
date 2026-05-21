@@ -3499,6 +3499,19 @@
   "@incomePlannerLastScanStale": { "description": "Hint shown when the scan cache is older than 24 hours" },
   "incomePlannerOpportunitiesAllRejected": "No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.",
   "@incomePlannerOpportunitiesAllRejected": { "description": "Body shown when a scan completed but every candidate was rejected" },
+  "incomePlannerNoMatchesTitle": "No matching opportunities this scan",
+  "@incomePlannerNoMatchesTitle": { "description": "Title shown after a completed scan finds no qualifying option opportunities" },
+  "incomePlannerScanNoMatchesToast": "Scan finished: no opportunities matched your current filters.",
+  "@incomePlannerScanNoMatchesToast": { "description": "Toast shown after a completed scan returns zero qualifying opportunities" },
+  "incomePlannerScanSummary": "Scanned {symbols} symbols · rejected {rejected} contracts · {errors} fetch errors",
+  "@incomePlannerScanSummary": {
+    "description": "Short scan outcome summary shown in the zero-result state",
+    "placeholders": {
+      "symbols": { "type": "int" },
+      "rejected": { "type": "int" },
+      "errors": { "type": "int" }
+    }
+  },
   "incomePlannerChipCashSecuredPut": "Sell put",
   "@incomePlannerChipCashSecuredPut": { "description": "Short label for the cash-secured put strategy" },
   "incomePlannerChipCoveredCall": "Covered call",

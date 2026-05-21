@@ -36,13 +36,13 @@ class ScanController extends StateNotifier<ScanState> {
 
   final Ref _ref;
 
-  Future<void> runScan({
+  Future<ScanResult?> runScan({
     required Money availableCash,
     Map<String, int> holdingsBySymbol = const {},
     Set<String> upcomingEarningsSymbols = const {},
     bool upcomingMacroEvent = false,
   }) async {
-    if (state is ScanRunning) return;
+    if (state is ScanRunning) return null;
     state = ScanRunning(startedAt: DateTime.now().toUtc());
     try {
       final orchestrator = await _ref.read(scanOrchestratorProvider.future);
@@ -66,8 +66,10 @@ class ScanController extends StateNotifier<ScanState> {
       _ref.invalidate(cachedOpportunitiesProvider);
       _ref.invalidate(latestScanStateProvider);
       state = ScanSuccess(result: result);
+      return result;
     } catch (e) {
       state = ScanFailure(error: e);
+      return null;
     }
   }
 
@@ -81,7 +83,8 @@ class ScanController extends StateNotifier<ScanState> {
       _ref.read(optionsStrategyProfileProvider).value;
 }
 
-final scanControllerProvider =
-    StateNotifierProvider<ScanController, ScanState>((ref) {
-  return ScanController(ref);
-});
+final scanControllerProvider = StateNotifierProvider<ScanController, ScanState>(
+  (ref) {
+    return ScanController(ref);
+  },
+);

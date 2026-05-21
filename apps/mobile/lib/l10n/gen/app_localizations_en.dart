@@ -5983,6 +5983,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'No candidates passed your hard filters this scan. Loosen your preferences (e.g. lower yield floor, wider DTE) and try again.';
 
   @override
+  String get incomePlannerNoMatchesTitle =>
+      'No matching opportunities this scan';
+
+  @override
+  String get incomePlannerScanNoMatchesToast =>
+      'Scan finished: no opportunities matched your current filters.';
+
+  @override
+  String incomePlannerScanSummary(int symbols, int rejected, int errors) {
+    return 'Scanned $symbols symbols · rejected $rejected contracts · $errors fetch errors';
+  }
+
+  @override
   String get incomePlannerChipCashSecuredPut => 'Sell put';
 
   @override
