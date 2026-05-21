@@ -179,6 +179,40 @@ class DriftCursorStore implements CursorStore {
   }
 }
 
+/// No-op [OutboxStore] used in local-only mode. All writes are silently
+/// dropped — the user opted out of sync at onboarding, so the outbox
+/// would never drain. `peekBatch` always returns empty so no sync path
+/// can pick up stale ops if one is wired by accident.
+class NoopOutboxStore implements OutboxStore {
+  const NoopOutboxStore();
+
+  @override
+  Future<int> depth() async => 0;
+
+  @override
+  Future<void> enqueue(Op op) async {}
+
+  @override
+  Future<List<Op>> peekBatch({
+    int maxOps = 500,
+    int maxBytes = 1024 * 1024,
+  }) async => const [];
+
+  @override
+  Future<void> ack(Iterable<String> opIds) async {}
+
+  @override
+  Future<void> recordFailure({
+    required String opId,
+    required String code,
+    String? message,
+    String? payload,
+  }) async {}
+
+  @override
+  Future<void> bumpAttempts(Iterable<String> opIds) async {}
+}
+
 /// In-memory [OutboxStore] for tests. Mirrors the FIFO ordering the Drift
 /// implementation enforces via `ORDER BY hlc_text ASC`.
 class InMemoryOutboxStore implements OutboxStore {

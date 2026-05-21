@@ -10,6 +10,7 @@ import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
+import '../../auth/data/auth_controller.dart';
 import '../../shared/forms/currency_picker.dart';
 import '../data/base_currency_preference.dart';
 import 'inline_setting_row.dart';
@@ -56,6 +57,7 @@ class SettingsOverview extends ConsumerWidget {
         ),
       ],
     );
+    final isLocalOnly = ref.watch(authControllerProvider).value is AuthLocalOnly;
     final dataGroup = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -64,13 +66,15 @@ class SettingsOverview extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             children: [
-              InlineLinkRow(
-                icon: Icons.cloud_sync_outlined,
-                label: l10n.settingsSyncTitle,
-                subtitle: l10n.settingsSyncSubtitle,
-                onTap: () => context.goNamed(AppRouteNames.sync),
-              ),
-              _SectionDivider(),
+              if (!isLocalOnly) ...[
+                InlineLinkRow(
+                  icon: Icons.cloud_sync_outlined,
+                  label: l10n.settingsSyncTitle,
+                  subtitle: l10n.settingsSyncSubtitle,
+                  onTap: () => context.goNamed(AppRouteNames.sync),
+                ),
+                _SectionDivider(),
+              ],
               InlineLinkRow(
                 icon: Icons.backup_outlined,
                 label: l10n.settingsDataTitle,
@@ -302,15 +306,22 @@ class _AccountSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final baseCurrency = ref.watch(baseCurrencyProvider);
+    final isLocalOnly = ref.watch(authControllerProvider).value is AuthLocalOnly;
 
     return Column(
       children: [
-        InlineLinkRow(
-          icon: Icons.devices_outlined,
-          label: l10n.settingsDevicesTitle,
-          subtitle: l10n.settingsDevicesSubtitle,
-          onTap: () => context.goNamed(AppRouteNames.devices),
-        ),
+        if (isLocalOnly)
+          _LocalModeStatusRow(
+            label: l10n.settingsAccountLocalOnlyBadge,
+            subtitle: l10n.settingsAccountLocalOnlyHint,
+          )
+        else
+          InlineLinkRow(
+            icon: Icons.devices_outlined,
+            label: l10n.settingsDevicesTitle,
+            subtitle: l10n.settingsDevicesSubtitle,
+            onTap: () => context.goNamed(AppRouteNames.devices),
+          ),
         _SectionDivider(),
         InlineSettingRow<String>(
           icon: Icons.currency_exchange,
@@ -667,6 +678,51 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Non-tappable status row shown in place of the Devices link for
+/// local-only users. Mirrors [InlineLinkRow]'s layout sans chevron.
+class _LocalModeStatusRow extends StatelessWidget {
+  const _LocalModeStatusRow({required this.label, required this.subtitle});
+
+  final String label;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Icon(
+            Icons.smartphone_outlined,
+            size: 18,
+            color: colors.mutedForeground,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: context.theme.typography.sm),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    subtitle,
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

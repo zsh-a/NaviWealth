@@ -8,6 +8,7 @@ import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/auth/token_store.dart';
 import '../../../core/logging/providers.dart';
+import 'app_mode_store.dart';
 
 /// The three observable states of the auth subsystem. Watched by
 /// [AuthRouteGuard] (router redirect) and the UI (login progress feedback).
@@ -30,6 +31,14 @@ class AuthLoggedOut extends AuthState {
 class AuthLoggedIn extends AuthState {
   const AuthLoggedIn(this.session);
   final AuthSession session;
+}
+
+/// Account-less local-only mode. The user opted out of the cloud account at
+/// onboarding; sync is inert, the outbox is a no-op, and mutations are
+/// stamped with synthetic user/device ids. The router treats this state
+/// equivalently to [AuthLoggedIn] for redirect purposes.
+class AuthLocalOnly extends AuthState {
+  const AuthLocalOnly();
 }
 
 enum LoggedOutReason { sessionExpired, manuallyLoggedOut }
@@ -67,6 +76,21 @@ class AuthController extends AsyncNotifier<AuthState> {
       }
       _bumpRouterRedirect();
     });
+    // Local-only mode is sticky and takes precedence over any persisted
+    // session — the choice is one-way per product decision. Reading the
+    // mode depends on SharedPreferences; some unit tests don't seed it,
+    // so swallow that error and treat the absence as "no preference yet".
+    AppMode mode = AppMode.unset;
+    try {
+      mode = ref.read(appModeProvider);
+    } catch (_) {
+      // Preference layer not wired (test env) — proceed as if unset.
+    }
+    if (mode == AppMode.localOnly) {
+      // Defensive: clear any stale token so the two never coexist.
+      await ref.read(tokenStoreProvider).clear();
+      return const AuthLocalOnly();
+    }
     final store = ref.read(tokenStoreProvider);
     final session = await store.read();
     if (session == null) return const AuthLoggedOut();
@@ -109,8 +133,38 @@ class AuthController extends AsyncNotifier<AuthState> {
       await deviceIdentity.remember(session.deviceId);
     }
     await store.write(session);
+    // Lock in the cloud mode so a cold start doesn't bounce the user
+    // back through onboarding. Defensive try/catch keeps tests that
+    // don't inject SharedPreferences passing.
+    try {
+      await ref.read(appModeStoreProvider).write(AppMode.cloud);
+      ref.invalidate(appModeProvider);
+    } catch (_) {
+      // Preference layer not wired (test env) — skip the mode bump.
+    }
     state = AsyncData(AuthLoggedIn(session));
     logger.i('auth_login_success user=${session.userId}');
+    _bumpRouterRedirect();
+  }
+
+  /// Opt into local-only mode. Persists the mode flag, drops any stale
+  /// token, and emits [AuthLocalOnly] so the router lands the user on
+  /// home. One-way per product decision.
+  Future<void> enterLocalOnlyMode() async {
+    await ref.read(appModeStoreProvider).write(AppMode.localOnly);
+    await ref.read(tokenStoreProvider).clear();
+    state = const AsyncData(AuthLocalOnly());
+    ref.invalidate(appModeProvider);
+    _bumpRouterRedirect();
+  }
+
+  /// Mark the user's mode preference as `cloud` so the next router redirect
+  /// sends them to /login instead of /onboarding. Does NOT change the
+  /// auth state (still [AuthLoggedOut]); the actual session is established
+  /// by [login].
+  Future<void> chooseCloud() async {
+    await ref.read(appModeStoreProvider).write(AppMode.cloud);
+    ref.invalidate(appModeProvider);
     _bumpRouterRedirect();
   }
 

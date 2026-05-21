@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/sync/drift_sync_storage.dart';
 import '../../core/sync/op_outbox.dart';
 import '../../domain/entities/fx_rate.dart' as dom;
+import '../../features/auth/data/auth_controller.dart';
 import '../audit/domain_event.dart';
 import '../audit/event_log_reader.dart';
 import '../db/providers.dart';
@@ -20,7 +21,15 @@ import 'securities_asset_repository.dart';
 /// FIFO outbox bound to the local database. Mirrors the engine's outbox so
 /// repos enqueue ops into the same row of the `op_outbox` table the
 /// SyncEngine drains on the next push.
+///
+/// In local-only mode the user opted out of sync entirely; the outbox
+/// becomes a no-op so repository writes don't accumulate ops that will
+/// never be drained.
 final outboxStoreProvider = FutureProvider<OutboxStore>((ref) async {
+  final auth = ref.watch(authControllerProvider).value;
+  if (auth is AuthLocalOnly) {
+    return const NoopOutboxStore();
+  }
   final db = await ref.watch(appDatabaseProvider.future);
   return DriftOutboxStore(db);
 });

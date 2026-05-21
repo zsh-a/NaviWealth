@@ -3617,5 +3617,22 @@
       "ago": { "type": "String" },
       "stale": { "type": "String" }
     }
-  }
+  },
+
+  "onboardingTitle": "Welcome to NaviWealth",
+  "@onboardingTitle": { "description": "Onboarding heading shown at first launch" },
+  "onboardingSubtitle": "Choose how you want to use the app",
+  "@onboardingSubtitle": { "description": "Onboarding sub-heading explaining the mode picker" },
+  "onboardingCloudTitle": "Cloud account",
+  "@onboardingCloudTitle": { "description": "Onboarding card title: traditional account with sync" },
+  "onboardingCloudDescription": "Sync data across devices",
+  "@onboardingCloudDescription": { "description": "Onboarding cloud-account card body" },
+  "onboardingLocalOnlyTitle": "Local only",
+  "@onboardingLocalOnlyTitle": { "description": "Onboarding card title: no account, data stays on device" },
+  "onboardingLocalOnlyDescription": "Data stays on this device, no sync",
+  "@onboardingLocalOnlyDescription": { "description": "Onboarding local-only card body" },
+  "settingsAccountLocalOnlyBadge": "Local mode",
+  "@settingsAccountLocalOnlyBadge": { "description": "Account-section label shown to local-only users instead of an email" },
+  "settingsAccountLocalOnlyHint": "Data is stored only on this device",
+  "@settingsAccountLocalOnlyHint": { "description": "Account-section subtitle clarifying that local mode does not sync" }
 }

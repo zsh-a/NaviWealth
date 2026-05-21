@@ -26,6 +26,7 @@ import '../features/assets/wealth_product_form_page.dart';
 import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
+import '../features/auth/presentation/onboarding_page.dart';
 import '../features/cashflow/ui/cashflow_page.dart';
 import '../features/cashflow/ui/dividend_center_page.dart';
 import '../features/cashflow/ui/recurring_transactions_page.dart';
@@ -111,6 +112,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
         path: AppRoutes.login,
         name: AppRouteNames.login,
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        name: AppRouteNames.onboarding,
+        builder: (context, state) => const OnboardingPage(),
       ),
       // Main shell: 4-branch IndexedStack preserves tab state across switches.
       // Order matches kPrimaryTabPaths: Home / Activity / Accounts / Settings.

@@ -6154,4 +6154,30 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$label: $ago · $stale';
   }
+
+  @override
+  String get onboardingTitle => 'Welcome to NaviWealth';
+
+  @override
+  String get onboardingSubtitle => 'Choose how you want to use the app';
+
+  @override
+  String get onboardingCloudTitle => 'Cloud account';
+
+  @override
+  String get onboardingCloudDescription => 'Sync data across devices';
+
+  @override
+  String get onboardingLocalOnlyTitle => 'Local only';
+
+  @override
+  String get onboardingLocalOnlyDescription =>
+      'Data stays on this device, no sync';
+
+  @override
+  String get settingsAccountLocalOnlyBadge => 'Local mode';
+
+  @override
+  String get settingsAccountLocalOnlyHint =>
+      'Data is stored only on this device';
 }

@@ -1865,5 +1865,14 @@
   "incomePlannerLastScanHours": "{n} 小时前",
   "incomePlannerLastScanDays": "{n} 天前",
   "incomePlannerLastScanFresh": "{label}:{ago} · {count, plural, =1{1 个候选} other{{count} 个候选}}",
-  "incomePlannerLastScanStaleSummary": "{label}:{ago} · {stale}"
+  "incomePlannerLastScanStaleSummary": "{label}:{ago} · {stale}",
+
+  "onboardingTitle": "欢迎使用 NaviWealth",
+  "onboardingSubtitle": "选择你的使用方式",
+  "onboardingCloudTitle": "云账号",
+  "onboardingCloudDescription": "多设备同步数据",
+  "onboardingLocalOnlyTitle": "仅本地",
+  "onboardingLocalOnlyDescription": "数据留在本机，不进行同步",
+  "settingsAccountLocalOnlyBadge": "本地模式",
+  "settingsAccountLocalOnlyHint": "数据仅保存在本机"
 }
