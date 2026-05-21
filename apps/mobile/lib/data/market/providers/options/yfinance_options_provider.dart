@@ -6,6 +6,7 @@ import '../../../../domain/values/money.dart';
 import '../../../../features/options_income/domain/option_contract.dart';
 import '../../exceptions.dart';
 import '../../http/market_http_client.dart';
+import '../yahoo_crumb_session.dart';
 import 'options_chain_provider.dart';
 
 /// Yahoo Finance options-chain adapter.
@@ -15,9 +16,14 @@ import 'options_chain_provider.dart';
 /// redistribution — see `docs/market-data-providers.md`; the data is
 /// consumed locally and never written to a synced table.
 class YFinanceOptionsProvider implements OptionsChainProvider {
-  YFinanceOptionsProvider({required MarketHttpClient http}) : _http = http;
+  YFinanceOptionsProvider({
+    required MarketHttpClient http,
+    required YahooCrumbSession session,
+  })  : _http = http,
+        _session = session;
 
   final MarketHttpClient _http;
+  final YahooCrumbSession _session;
 
   /// Per-symbol-per-expiration throttle. Maps "AAPL:2026-06-20" to its
   /// most recent successful response. The provider returns the cached
@@ -28,9 +34,6 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
 
   static const _base =
       'https://query1.finance.yahoo.com/v7/finance/options';
-
-  static const _userAgent =
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) NaviWealth/0.1';
 
   @override
   String get name => 'yfinance_options';
@@ -78,22 +81,49 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     return _projection(payload, request);
   }
 
+  /// Sends a chain request with the cached crumb + cookie attached. On
+  /// 401 (Yahoo rotates crumbs aggressively) the session is invalidated
+  /// and the call retried once with a fresh handshake.
+  Future<Response<Map<String, dynamic>>> _sendAuthed(
+    String symbol, {
+    int? expirationEpoch,
+  }) async {
+    Future<Response<Map<String, dynamic>>> attempt() async {
+      await _session.ensureReady();
+      final headers = Map<String, String>.from(
+        YahooCrumbSession.browserHeaders(),
+      );
+      final cookie = _session.cookieHeader;
+      if (cookie != null) headers['Cookie'] = cookie;
+      return _http.send<Map<String, dynamic>>(
+        RequestOptions(
+          path: '$_base/${Uri.encodeComponent(symbol)}',
+          method: 'GET',
+          responseType: ResponseType.json,
+          queryParameters: {
+            'date': ?expirationEpoch,
+            'crumb': ?_session.crumb,
+          },
+          headers: headers,
+        ),
+        endpoint: 'getOptionsChain',
+      );
+    }
+
+    try {
+      return await attempt();
+    } on ProviderUnavailableException catch (e) {
+      if (e.statusCode != 401) rethrow;
+      _session.invalidate();
+      return attempt();
+    }
+  }
+
   Future<_RawChain> _fetchOnce(
     String symbol, {
     int? expirationEpoch,
   }) async {
-    final response = await _http.send<Map<String, dynamic>>(
-      RequestOptions(
-        path: '$_base/${Uri.encodeComponent(symbol)}',
-        method: 'GET',
-        responseType: ResponseType.json,
-        queryParameters: {
-          'date': ?expirationEpoch,
-        },
-        headers: const {'User-Agent': _userAgent},
-      ),
-      endpoint: 'getOptionsChain',
-    );
+    final response = await _sendAuthed(symbol, expirationEpoch: expirationEpoch);
     final body = response.data;
     if (body is! Map<String, dynamic>) {
       throw ProviderResponseException(
