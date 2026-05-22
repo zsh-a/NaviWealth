@@ -2,7 +2,6 @@ use worker::*;
 
 mod auth;
 pub mod error;
-mod hlc;
 mod routes;
 mod sync;
 
@@ -50,8 +49,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/auth/logout/:device_id", routes::auth::logout)
         .post_async("/auth/refresh", routes::auth::refresh)
         .get_async("/me", routes::me::get)
-        .post_async("/sync/push", routes::sync::push)
-        .get_async("/sync/pull", routes::sync::pull)
+        .post_async("/sync", routes::sync::sync)
         .run(req, env)
         .await?;
 

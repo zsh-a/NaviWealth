@@ -16,6 +16,7 @@ import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/settings/fx_rates/fx_rate_sync_service.dart';
 
+import '../../../core/sync/_outbox_test_ext.dart';
 import '../../db/test_database.dart';
 import '../../repositories/_stub_stamper.dart';
 import '../fake_clock.dart';

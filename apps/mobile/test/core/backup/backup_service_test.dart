@@ -9,6 +9,7 @@ import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
 import '../../data/db/test_database.dart';
+import '../sync/_outbox_test_ext.dart';
 
 void main() {
   const testIterations = 1000; // fast for tests

@@ -146,7 +146,7 @@ migrations/       D1 SQL migrations (AI read-model tables kept as history; W-D7)
 ### Key Architectural Decisions
 
 - **Local-first**: client is source of truth; server is durable storage + fan-out.
-- **Sync**: eventual consistency via 30s polling, HLC-ordered OpLog, row-level LWW, tombstones for deletes. Protocol frozen at v1.0 — see `docs/sync-protocol.md`.
+- **Sync**: eventual consistency via polling, **row-state sync** (v2) — each row is a last-writer-wins register; the server is a generic versioned blob store, one `POST /sync` does push+pull. See `docs/sync-v2.md`. (`docs/sync-protocol.md` is the superseded v1 OpLog design, history only.)
 - **Money**: `Decimal` (not `double`) everywhere; `Money` value object rejects cross-currency ops at the type boundary; FX through explicit converter service.
 - **Database**: Drift ORM; SQLCipher (native), sqlite3 WASM (web).
 - **Auth**: single-user JWT (HS256), no registration endpoint; `BYPASS_AUTH` for dev.
@@ -217,7 +217,8 @@ test/
 
 | Doc | Description |
 |-----|-------------|
-| `docs/sync-protocol.md` | Sync protocol spec (Frozen v1.0): HLC, OpLog, push/pull, conflict resolution |
+| `docs/sync-v2.md` | **Active** sync spec (v2, row-state): generic row store, `version`/`seq`, single `POST /sync` |
+| `docs/sync-protocol.md` | Superseded v1 OpLog spec — history only |
 | `docs/sync-protocol-tests.md` | 50+ protocol test cases |
 | `docs/sync-e2e-manual.md` | Manual E2E checklist for multi-device sync |
 | `docs/sync-monitoring.md` | Latency targets, alert tiers, D1 sampling |

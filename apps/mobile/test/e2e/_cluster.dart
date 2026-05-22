@@ -1,131 +1,39 @@
+import 'package:drift/drift.dart' show Variable;
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/op.dart';
-import 'package:naviwealth/core/sync/op_applier.dart';
+import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/data/db/app_database.dart';
 
 import '../core/sync/_fake_api.dart';
+import '../data/db/test_database.dart';
 
-/// Materialised view of a single row inside a virtual device's local store.
-class MaterialisedRow {
-  MaterialisedRow({
-    required this.payload,
-    required this.lastHlc,
-    this.deletedAt,
-  });
-
-  Map<String, Object?> payload;
-  Hlc lastHlc;
-  DateTime? deletedAt;
-
-  bool get isDeleted => deletedAt != null;
-
-  @override
-  String toString() =>
-      'Row(${isDeleted ? 'DEL ' : ''}$payload @ $lastHlc)';
-}
-
-/// Row-level LWW applier backed by an in-memory map.
+/// One simulated device: a real in-memory Drift DB + the v2 SyncEngine.
 ///
-/// Mirrors the server-side materialiser logic from
-/// `apps/backend/src/sync/materialise.rs`: shadow ops with `op.hlc <= last_hlc`,
-/// shallow-merge `fields_diff` for insert/update, retain payload but flip
-/// `deleted_at` for tombstones, and clear `deleted_at` on resurrection.
-class LwwInMemoryApplier implements OpApplier {
-  final Map<String, Map<String, MaterialisedRow>> _tables = {};
-
-  Map<String, MaterialisedRow> _table(String t) =>
-      _tables.putIfAbsent(t, () => <String, MaterialisedRow>{});
-
-  MaterialisedRow? lookup(String table, String rowId) =>
-      _tables[table]?[rowId];
-
-  /// Visible rows (not tombstoned) for a table.
-  List<MaterialisedRow> list(String table) =>
-      (_tables[table] ?? const <String, MaterialisedRow>{})
-          .values
-          .where((r) => !r.isDeleted)
-          .toList();
-
-  /// Snapshot keyed by `<table>/<rowId>` of the user-visible state
-  /// (payload + tombstone flag).
-  ///
-  /// Convergence asserts the *materialised* state — not last_hlc, because
-  /// authors keep their `client_hlc` on locally-written rows while peers
-  /// apply `server_hlc` from the pull, and those are equal in ordering but
-  /// not bit-identical (different `node_id`).
-  Map<String, String> snapshot() {
-    final out = <String, String>{};
-    _tables.forEach((table, rows) {
-      rows.forEach((rowId, row) {
-        out['$table/$rowId'] = row.isDeleted ? 'DEL' : row.payload.toString();
-      });
-    });
-    return out;
-  }
-
-  @override
-  Future<void> applyAll(List<Op> ops) async {
-    for (final op in ops) {
-      _applyOne(op);
-    }
-  }
-
-  /// Apply a single op locally — used by virtual devices to mirror what the
-  /// repo layer does at write time (write the row first, queue the op).
-  void applyLocal(Op op) => _applyOne(op);
-
-  void _applyOne(Op op) {
-    final table = _table(op.tableName);
-    final cur = table[op.rowId];
-    if (cur != null && op.hlc <= cur.lastHlc) {
-      return; // shadowed
-    }
-    switch (op.opType) {
-      case OpType.delete:
-        table[op.rowId] = MaterialisedRow(
-          payload: cur?.payload ?? <String, Object?>{},
-          lastHlc: op.hlc,
-          deletedAt: DateTime.fromMillisecondsSinceEpoch(
-            op.hlc.wallMillis,
-            isUtc: true,
-          ),
-        );
-      case OpType.insert:
-      case OpType.update:
-        final base = cur?.payload ?? <String, Object?>{};
-        final merged = <String, Object?>{...base, ...?op.fieldsDiff};
-        table[op.rowId] = MaterialisedRow(
-          payload: merged,
-          lastHlc: op.hlc,
-          deletedAt: null,
-        );
-    }
-  }
-}
-
-/// One simulated device: SyncEngine + outbox + cursor + materialised store.
-///
-/// Holds all the moving parts a real device has. The harness drives time
-/// explicitly via [advanceClock] so tests can model "30 s polling cadence",
-/// "next morning", etc., without sleeping.
+/// Each device runs the production [RowApplier] / [DriftPendingRows] /
+/// [DriftCursorStore] against its own database, so convergence is asserted
+/// on the same code path the app uses. The harness drives time explicitly
+/// via [advanceClock] so tests can model "30 s polling cadence" without
+/// sleeping.
 class VirtualDevice {
   VirtualDevice({
     required this.id,
     required this.api,
     int initialClockMillis = 1_700_000_000_000,
   }) : clock = FixedClock(initialClockMillis),
-       outbox = InMemoryOutboxStore(),
-       cursors = InMemoryCursorStore(),
-       applier = LwwInMemoryApplier(),
+       db = makeTestDatabase(),
        statusBus = SyncStatusBus() {
+    pending = DriftPendingRows(db);
+    cursors = DriftCursorStore(db);
+    final outbox = DriftOutboxStore(db);
+    _outbox = outbox;
     engine = SyncEngine(
       api: api,
-      outbox: outbox,
+      pending: pending,
       cursors: cursors,
-      applier: applier,
+      applier: RowApplier(db),
       deviceId: id,
       statusBus: statusBus,
       clock: clock,
@@ -135,10 +43,11 @@ class VirtualDevice {
   final String id;
   final FakeSyncApiClient api;
   final FixedClock clock;
-  final InMemoryOutboxStore outbox;
-  final InMemoryCursorStore cursors;
-  final LwwInMemoryApplier applier;
+  final AppDatabase db;
   final SyncStatusBus statusBus;
+  late final DriftPendingRows pending;
+  late final DriftCursorStore cursors;
+  late final DriftOutboxStore _outbox;
   late final SyncEngine engine;
 
   bool offline = false;
@@ -146,56 +55,107 @@ class VirtualDevice {
 
   String _nextOpId() => '$id-op-${(++_opCounter).toString().padLeft(5, '0')}';
 
-  /// Issue a local mutation: stamp HLC, write to the local store, queue the
-  /// op for the next push. Mirrors what a repo's `mutate(...)` does in real
-  /// life — UI returns immediately, sync runs later.
-  Future<Op> writeRow({
+  /// Number of locally-dirty rows awaiting push.
+  Future<int> pendingDepth() => pending.depth();
+
+  /// Issue a local mutation: stamp an HLC, write the full row state to the
+  /// local DB, queue a dirty pointer. Mirrors what a repository's `mutate`
+  /// does — the UI returns immediately, sync runs later.
+  Future<void> writeRow({
     required String table,
     required String rowId,
-    required OpType opType,
-    Map<String, Object?>? fieldsDiff,
+    required Map<String, Object?> columns,
+    bool deleted = false,
   }) async {
     final hlc = await engine.stampHlc(overrideNowMillis: clock.nowMillis());
+    final row = <String, Object?>{
+      ...columns,
+      'id': rowId,
+      'hlc': hlc.toString(),
+      'owner_user_id': columns['owner_user_id'] ?? 'user-1',
+      'updated_at': clock.nowMillis() ~/ 1000,
+      'updated_by_device': id,
+      'deleted_at': deleted ? clock.nowMillis() ~/ 1000 : null,
+    };
+    await _writeLocal(table, rowId, row);
     final op = Op(
       opId: _nextOpId(),
       tableName: table,
       rowId: rowId,
-      opType: opType,
-      fieldsDiff: opType == OpType.delete ? null : fieldsDiff,
+      opType: deleted ? OpType.delete : OpType.update,
+      fieldsDiff: deleted ? null : columns,
       hlc: hlc,
       deviceId: id,
     );
-    applier.applyLocal(op);
-    await outbox.enqueue(op);
-    return op;
+    await _outbox.enqueue(op);
   }
 
-  /// Run one push+pull cycle if the device is online; no-op when offline.
+  /// Apply a full row-state to the local DB via INSERT OR REPLACE — the same
+  /// write the [RowApplier] performs for pulled rows.
+  Future<void> _writeLocal(
+    String table,
+    String rowId,
+    Map<String, Object?> row,
+  ) async {
+    final pk = kSyncPkOverrides[table] ?? 'id';
+    final ordered = <String, Object?>{...row};
+    ordered[pk] = rowId;
+    final cols = ordered.keys.toList(growable: false);
+    final placeholders = List.filled(cols.length, '?').join(', ');
+    await db.customStatement(
+      'INSERT OR REPLACE INTO $table (${cols.join(', ')}) '
+      'VALUES ($placeholders)',
+      cols.map((c) => ordered[c]).toList(growable: false),
+    );
+  }
+
+  /// Read the materialised state of a row, or `null` if absent.
+  Future<Map<String, Object?>?> lookup(String table, String rowId) async {
+    final pk = kSyncPkOverrides[table] ?? 'id';
+    final row = await db
+        .customSelect(
+          'SELECT * FROM $table WHERE $pk = ?',
+          variables: [Variable.withString(rowId)],
+        )
+        .getSingleOrNull();
+    return row?.data;
+  }
+
+  /// True if a row exists and is not tombstoned.
+  Future<bool> isVisible(String table, String rowId) async {
+    final row = await lookup(table, rowId);
+    return row != null && row['deleted_at'] == null;
+  }
+
+  /// Visible (non-tombstoned) row ids for a table.
+  Future<List<String>> visibleIds(String table) async {
+    final rows = await db
+        .customSelect('SELECT id FROM $table WHERE deleted_at IS NULL')
+        .get();
+    return rows.map((r) => r.read<String>('id')).toList();
+  }
+
+  /// Run one push+pull cycle if online; no-op when offline.
   Future<SyncCycleResult?> tickSync() async {
     if (offline) return null;
     return engine.run();
   }
 
-  /// Advance the device clock by [d] (used to model the 30 s polling cadence
-  /// or longer offline windows).
+  /// Advance the device clock by [d].
   void advanceClock(Duration d) => clock.advance(d);
+
+  Future<void> dispose() => db.close();
 }
 
 /// A cluster of virtual devices sharing one in-memory backend.
 ///
-/// All devices pull from / push to the same [FakeSyncApiClient]; devices are
-/// distinguished by `device_id` and the pull filter (`device_id != self`)
-/// keeps each device from seeing its own echoes — same invariant as
-/// `apps/backend/src/routes/sync.rs` `pull_inner`.
+/// All devices push to / pull from the same [FakeSyncApiClient]; the pull
+/// echo filter (`device_id != self`) keeps each device from seeing its own
+/// writes — the same invariant as `apps/backend/src/routes/sync.rs`.
 class SyncCluster {
-  SyncCluster({int? initialClockMillis}) : _initialClockMillis =
-            initialClockMillis ?? 1_700_000_000_000 {
-    api = FakeSyncApiClient()
-      ..serverHlc = Hlc(
-        wallMillis: _initialClockMillis - 1000,
-        counter: 0,
-        nodeId: Hlc.serverNodeId,
-      );
+  SyncCluster({int? initialClockMillis})
+    : _initialClockMillis = initialClockMillis ?? 1_700_000_000_000 {
+    api = FakeSyncApiClient();
   }
 
   final int _initialClockMillis;
@@ -215,9 +175,9 @@ class SyncCluster {
   /// Drive a sync round: every online device runs one push+pull cycle.
   ///
   /// Two passes guarantee full convergence regardless of registration
-  /// order — pass 1 lets every device upload its backlog so the server has
-  /// the union of all writes; pass 2 lets every device pull what its peers
-  /// just published.
+  /// order — pass 1 uploads every device's backlog so the server has the
+  /// union of all writes; pass 2 lets each device pull what its peers just
+  /// published.
   Future<void> syncAll() async {
     for (final d in devices) {
       await d.tickSync();
@@ -227,36 +187,42 @@ class SyncCluster {
     }
   }
 
-  /// Advance every device's clock — useful to simulate "wait 30 s" without
-  /// blocking the test thread.
   void advanceAllClocks(Duration d) {
     for (final dev in devices) {
       dev.advanceClock(d);
     }
   }
 
-  /// True when every device's materialised state is identical.
-  bool isConverged() {
-    if (devices.length < 2) return true;
-    final ref = devices.first.applier.snapshot();
-    for (final d in devices.skip(1)) {
-      if (!_mapEquals(ref, d.applier.snapshot())) return false;
+  Future<void> disposeAll() async {
+    for (final d in devices) {
+      await d.dispose();
     }
-    return true;
   }
 
-  /// Pretty-print divergence between two devices for failing assertions.
-  String describeDivergence(VirtualDevice a, VirtualDevice b) {
-    final sa = a.applier.snapshot();
-    final sb = b.applier.snapshot();
-    final keys = {...sa.keys, ...sb.keys}.toList()..sort();
-    final lines = <String>['device ${a.id} vs ${b.id}:'];
-    for (final k in keys) {
-      if (sa[k] != sb[k]) {
-        lines.add('  $k: ${sa[k]}  !=  ${sb[k]}');
-      }
+  /// Snapshot a device's visible state for a table, keyed by row id with the
+  /// LWW token (`hlc`) as the value — convergence compares these.
+  Future<Map<String, String>> _snapshot(VirtualDevice d, String table) async {
+    final rows = await d.db.customSelect('SELECT * FROM $table').get();
+    final out = <String, String>{};
+    for (final r in rows) {
+      final data = r.data;
+      final id = data['id'] as String;
+      out[id] = data['deleted_at'] == null
+          ? '${data['name']}@${data['hlc']}'
+          : 'DEL@${data['hlc']}';
     }
-    return lines.join('\n');
+    return out;
+  }
+
+  /// True when every device's materialised state for [table] is identical.
+  Future<bool> isConverged(String table) async {
+    if (devices.length < 2) return true;
+    final ref = await _snapshot(devices.first, table);
+    for (final d in devices.skip(1)) {
+      final snap = await _snapshot(d, table);
+      if (!_mapEquals(ref, snap)) return false;
+    }
+    return true;
   }
 }
 

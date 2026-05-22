@@ -10,6 +10,7 @@ import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/investment/data/watchlist_repository.dart';
 
+import '../../../core/sync/_outbox_test_ext.dart';
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 

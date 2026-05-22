@@ -9,6 +9,7 @@ import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/domain/posting.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 

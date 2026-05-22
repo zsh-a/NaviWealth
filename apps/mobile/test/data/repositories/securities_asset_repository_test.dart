@@ -7,6 +7,7 @@ import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 

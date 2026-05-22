@@ -5,6 +5,7 @@ import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 

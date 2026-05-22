@@ -44,7 +44,7 @@ class ChatSyncGate {
   final Duration _timeout;
   final Clock _clock;
 
-  OutboxStore get _outbox => _engine.outbox;
+  PendingRows get _outbox => _engine.pending;
 
   /// Returns once the outbox is drained, the deadline has passed, or
   /// the engine reports unrecoverable errors. Never throws — failures

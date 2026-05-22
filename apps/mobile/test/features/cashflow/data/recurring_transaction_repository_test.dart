@@ -8,6 +8,7 @@ import 'package:naviwealth/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/cashflow/data/recurring_transaction_repository.dart';
 
+import '../../../core/sync/_outbox_test_ext.dart';
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 

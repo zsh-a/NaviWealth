@@ -4,155 +4,149 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/errors.dart';
-import 'package:naviwealth/core/sync/op.dart';
-import 'package:naviwealth/core/sync/op_applier.dart';
+import 'package:naviwealth/core/sync/op_outbox.dart';
+import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
+import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/features/ai_chat/state/chat_sync_gate.dart';
 
 import '../../core/sync/_fake_api.dart';
-
-class _NoopApplier implements OpApplier {
-  @override
-  Future<void> applyAll(List<Op> ops) async {}
-}
+import '../../data/db/test_database.dart';
 
 const _dev = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
-Op _localOp(String id, int wall) => Op(
-      opId: id,
-      tableName: 'accounts',
-      rowId: 'row-$id',
-      opType: OpType.update,
-      fieldsDiff: const {'name': 'x'},
-      hlc: Hlc(wallMillis: wall, counter: 0, nodeId: _dev),
-      deviceId: _dev,
+/// In-memory [PendingRows] for the gate tests: a list of dirty pointers plus
+/// their current row snapshots.
+class _FakePendingRows implements PendingRows {
+  final List<PendingPointer> _pointers = [];
+  final Map<String, Map<String, Object?>> _rows = {};
+
+  void put(String opId, String rowId) {
+    _pointers.add(
+      PendingPointer(opId: opId, table: 'accounts', rowId: rowId),
     );
-
-({SyncEngine engine, FakeSyncApiClient api, InMemoryOutboxStore outbox})
-    _buildEngine({Clock? clock, int? batchMaxOps}) {
-  final api = FakeSyncApiClient();
-  final outbox = InMemoryOutboxStore();
-  final cursors = InMemoryCursorStore();
-  final bus = SyncStatusBus();
-  final engine = SyncEngine(
-    api: api,
-    outbox: outbox,
-    cursors: cursors,
-    applier: _NoopApplier(),
-    deviceId: _dev,
-    statusBus: bus,
-    clock: clock ?? FixedClock(2_000_000_000_000),
-    batchMaxOps: batchMaxOps ?? 500,
-  );
-  return (engine: engine, api: api, outbox: outbox);
-}
-
-/// SyncApiClient whose push completes only when the test signals it.
-/// Pull is left as a no-op happy server reply so the engine doesn't
-/// abort during the pull phase.
-class _StallingApiClient implements SyncApiClient {
-  _StallingApiClient(this._gate);
-  final Completer<void> _gate;
-  Hlc serverHlc = const Hlc(
-    wallMillis: 1_000_000_000_000,
-    counter: 0,
-    nodeId: Hlc.serverNodeId,
-  );
-
-  @override
-  Future<MeResponse> me() async => MeResponse(
-        userId: 'u',
-        serverNow: DateTime.now(),
-        serverHlc: serverHlc,
-      );
-
-  @override
-  Future<PushResponse> push({
-    required String deviceId,
-    required List<Op> ops,
-  }) async {
-    await _gate.future;
-    return PushResponse(
-      accepted: ops.length,
-      rejected: const [],
-      serverHlcHigh: serverHlc,
-      serverNow: DateTime.now(),
-    );
+    _rows['accounts $rowId'] = {
+      'id': rowId,
+      'name': 'x',
+      'hlc': const Hlc(wallMillis: 1, counter: 0, nodeId: _dev).toString(),
+      'deleted_at': null,
+    };
   }
 
   @override
-  Future<PullResponse> pull({
+  Future<int> depth() async => _pointers.length;
+
+  @override
+  Future<List<PendingPointer>> pointers() async =>
+      List.unmodifiable(_pointers);
+
+  @override
+  Future<Map<String, Object?>?> readRow(String table, String rowId) async =>
+      _rows['$table $rowId'];
+
+  @override
+  Future<void> clear(Iterable<String> opIds) async {
+    final set = opIds.toSet();
+    _pointers.removeWhere((p) => set.contains(p.opId));
+  }
+}
+
+({SyncEngine engine, FakeSyncApiClient api, _FakePendingRows pending})
+_buildEngine(AppDatabase db, {Clock? clock}) {
+  final api = FakeSyncApiClient();
+  final pending = _FakePendingRows();
+  final engine = SyncEngine(
+    api: api,
+    pending: pending,
+    cursors: InMemoryCursorStore(),
+    applier: RowApplier(db),
+    deviceId: _dev,
+    statusBus: SyncStatusBus(),
+    clock: clock ?? FixedClock(2_000_000_000_000),
+  );
+  return (engine: engine, api: api, pending: pending);
+}
+
+/// [SyncApiClient] whose `sync()` completes only when the test signals it.
+class _StallingApiClient implements SyncApiClient {
+  _StallingApiClient(this._gate);
+  final Completer<void> _gate;
+
+  @override
+  Future<SyncResponse> sync({
     required String deviceId,
-    required Hlc since,
-    int limit = kPullPageMaxOps,
-  }) async =>
-      PullResponse(
-        ops: const [],
-        serverHlcHigh: serverHlc,
-        hasMore: false,
-        serverNow: DateTime.now(),
-      );
+    required int since,
+    required List<RowChange> changes,
+  }) async {
+    await _gate.future;
+    return const SyncResponse(seq: 0, changes: [], more: false);
+  }
 }
 
 void main() {
+  late AppDatabase db;
+
+  setUp(() => db = makeTestDatabase());
+  tearDown(() => db.close());
+
   group('ChatSyncGate.awaitFlush', () {
-    test('returns clean when outbox is empty (no engine.run() invoked)',
-        () async {
-      final fixture = _buildEngine();
+    test('returns clean when the outbox is empty (no sync invoked)', () async {
+      final fixture = _buildEngine(db);
       final gate = ChatSyncGate(engine: fixture.engine);
 
       final outcome = await gate.awaitFlush();
 
       expect(outcome, ChatGateOutcome.clean);
-      expect(fixture.api.pushedBatches, isEmpty,
-          reason: 'no pending ops -> no push attempt');
+      expect(
+        fixture.api.syncCalls,
+        isEmpty,
+        reason: 'no pending rows → no sync attempt',
+      );
     });
 
-    test('drains pending ops then returns synced', () async {
-      final fixture = _buildEngine();
-      await fixture.outbox.enqueue(_localOp('1', 1_500_000_000_000));
-      await fixture.outbox.enqueue(_localOp('2', 1_500_000_000_001));
+    test('drains pending rows then returns synced', () async {
+      final fixture = _buildEngine(db);
+      fixture.pending.put('1', 'A1');
+      fixture.pending.put('2', 'A2');
 
       final gate = ChatSyncGate(engine: fixture.engine);
       final outcome = await gate.awaitFlush();
 
       expect(outcome, ChatGateOutcome.synced);
-      expect(await fixture.outbox.depth(), 0);
-      expect(fixture.api.pushedBatches.single.map((o) => o.opId),
-          ['1', '2']);
+      expect(await fixture.pending.depth(), 0);
+      expect(fixture.api.syncCalls, isNotEmpty);
     });
 
-    test('returns degraded when push errors', () async {
-      final fixture = _buildEngine();
-      fixture.api.programmedResponses
-          .add(SyncException(SyncErrorKind.network));
-      await fixture.outbox.enqueue(_localOp('1', 1_500_000_000_000));
+    test('returns degraded when sync errors', () async {
+      final fixture = _buildEngine(db);
+      fixture.api.programmedResponses.add(
+        SyncException(SyncErrorKind.network),
+      );
+      fixture.pending.put('1', 'A1');
 
       final gate = ChatSyncGate(engine: fixture.engine);
       final outcome = await gate.awaitFlush();
 
       expect(outcome, ChatGateOutcome.degraded);
-      // Ops stay in the outbox so a later periodic sync retries them.
-      expect(await fixture.outbox.depth(), 1);
+      // Rows stay pending so a later periodic sync retries them.
+      expect(await fixture.pending.depth(), 1);
     });
 
-    test('returns degraded when engine.run() exceeds the timeout', () async {
-      final outbox = InMemoryOutboxStore();
+    test('returns degraded when the sync exceeds the timeout', () async {
+      final pending = _FakePendingRows()..put('1', 'A1');
       final blocker = Completer<void>();
-      final api = _StallingApiClient(blocker);
       final engine = SyncEngine(
-        api: api,
-        outbox: outbox,
+        api: _StallingApiClient(blocker),
+        pending: pending,
         cursors: InMemoryCursorStore(),
-        applier: _NoopApplier(),
+        applier: RowApplier(db),
         deviceId: _dev,
         statusBus: SyncStatusBus(),
         clock: const SystemClock(),
       );
-      await outbox.enqueue(_localOp('1', 1_500_000_000_000));
 
       final gate = ChatSyncGate(
         engine: engine,
@@ -164,39 +158,14 @@ void main() {
 
       expect(outcome, ChatGateOutcome.degraded);
       expect(stopwatch.elapsed.inMilliseconds, greaterThanOrEqualTo(45));
-      expect(stopwatch.elapsed.inMilliseconds, lessThan(2000),
-          reason: 'gate must release the chat input close to timeout, '
-              'not stay stuck on the upstream push');
-
-      // Release the stalled push so the engine can clean up before the
-      // test ends.
-      blocker.complete();
-    });
-
-    test('returns degraded when later batches fail (residual ops)',
-        () async {
-      final fixture = _buildEngine(batchMaxOps: 1);
-      // First push succeeds; second push fails.
-      fixture.api.programmedResponses.add(
-        PushResponse(
-          accepted: 1,
-          rejected: const [],
-          serverHlcHigh: fixture.api.serverHlc,
-          serverNow: DateTime.now(),
-        ),
+      expect(
+        stopwatch.elapsed.inMilliseconds,
+        lessThan(2000),
+        reason: 'gate must release the chat input close to the timeout',
       );
-      fixture.api.programmedResponses
-          .add(SyncException(SyncErrorKind.network));
 
-      await fixture.outbox.enqueue(_localOp('a', 1_500_000_000_000));
-      await fixture.outbox.enqueue(_localOp('b', 1_500_000_000_001));
-
-      final gate = ChatSyncGate(engine: fixture.engine);
-      final outcome = await gate.awaitFlush();
-
-      expect(outcome, ChatGateOutcome.degraded);
-      // First op acknowledged; second remains in outbox.
-      expect(await fixture.outbox.depth(), 1);
+      // Release the stalled sync so the engine can clean up.
+      blocker.complete();
     });
   });
 }

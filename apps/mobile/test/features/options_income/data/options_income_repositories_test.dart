@@ -7,6 +7,7 @@ import 'package:naviwealth/features/options_income/data/approved_underlyings_rep
 import 'package:naviwealth/features/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';
 
+import '../../../core/sync/_outbox_test_ext.dart';
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 

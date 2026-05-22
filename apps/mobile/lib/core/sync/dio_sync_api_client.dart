@@ -3,92 +3,48 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-import '../../data/domain/hlc.dart';
 import 'errors.dart';
-import 'op.dart';
 import 'sync_api_client.dart';
 
 /// Dio-backed implementation of [SyncApiClient].
 ///
-/// Translates Dio errors into [SyncException]s with the [SyncErrorKind]
-/// the engine reacts to. The mapping mirrors `docs/sync-protocol.md` §5.4.
+/// Translates Dio errors into [SyncException]s with the [SyncErrorKind] the
+/// engine reacts to. The mapping mirrors `docs/sync-v2.md` §5.
 class DioSyncApiClient implements SyncApiClient {
-  DioSyncApiClient({required Dio dio, required this.tokenProvider})
-    : _dio = dio;
+  DioSyncApiClient({required Dio dio, required this.tokenProvider}) : _dio = dio;
 
   final Dio _dio;
 
-  /// Async fetcher for the bearer token. Called on every request so JWT
-  /// refresh from FIR-30 is transparent.
+  /// Async fetcher for the bearer token. Called on every request so a JWT
+  /// refresh is picked up transparently.
   final Future<String?> Function() tokenProvider;
 
   @override
-  Future<MeResponse> me() async {
-    final res = await _send<Map<String, Object?>>(method: 'GET', path: '/me');
-    return MeResponse(
-      userId: res['user_id'] as String,
-      serverNow: DateTime.parse(res['server_now'] as String).toUtc(),
-      serverHlc: Hlc.parse(res['server_hlc'] as String),
-    );
-  }
-
-  @override
-  Future<PushResponse> push({
+  Future<SyncResponse> sync({
     required String deviceId,
-    required List<Op> ops,
+    required int since,
+    required List<RowChange> changes,
   }) async {
     final body = {
       'device_id': deviceId,
-      'ops': ops.map((o) => o.toJson()).toList(growable: false),
+      'since': since,
+      'changes': changes.map((c) => c.toJson()).toList(growable: false),
     };
     final res = await _send<Map<String, Object?>>(
       method: 'POST',
-      path: '/sync/push',
+      path: '/sync',
       body: body,
     );
-    final rejectedRaw = (res['rejected'] as List?) ?? const [];
-    final rejected = rejectedRaw
-        .cast<Map<Object?, Object?>>()
-        .map(
-          (r) => PushRejection(
-            opId: r['op_id'] as String,
-            code: r['code'] as String,
-            message: r['message'] as String?,
-          ),
-        )
-        .toList(growable: false);
-    return PushResponse(
-      accepted: res['accepted'] as int,
-      rejected: rejected,
-      serverHlcHigh: Hlc.parse(res['server_hlc_high'] as String),
-      serverNow: DateTime.parse(res['server_now'] as String).toUtc(),
-    );
-  }
-
-  @override
-  Future<PullResponse> pull({
-    required String deviceId,
-    required Hlc since,
-    int limit = kPullPageMaxOps,
-  }) async {
-    final res = await _send<Map<String, Object?>>(
-      method: 'GET',
-      path: '/sync/pull',
-      query: {
-        'since': since.toString(),
-        'device_id': deviceId,
-        'limit': limit.toString(),
-      },
-    );
-    final opsRaw = (res['ops'] as List).cast<Map<Object?, Object?>>();
-    final ops = opsRaw
-        .map((m) => Op.fromJson(m.map((k, v) => MapEntry(k as String, v))))
-        .toList(growable: false);
-    return PullResponse(
-      ops: ops,
-      serverHlcHigh: Hlc.parse(res['server_hlc_high'] as String),
-      hasMore: res['has_more'] as bool,
-      serverNow: DateTime.parse(res['server_now'] as String).toUtc(),
+    final changesRaw = (res['changes'] as List? ?? const [])
+        .cast<Map<Object?, Object?>>();
+    return SyncResponse(
+      seq: (res['seq'] as num).toInt(),
+      changes: changesRaw
+          .map(
+            (m) => RowChange.fromJson(m.map((k, v) => MapEntry(k as String, v))),
+          )
+          .toList(growable: false),
+      more: (res['more'] as bool?) ?? false,
     );
   }
 
@@ -123,7 +79,6 @@ class DioSyncApiClient implements SyncApiClient {
       if (status >= 200 && status < 300) {
         if (res.data == null ||
             (res.data is String && (res.data as String).isEmpty)) {
-          if (T == dynamic) return null as T;
           throw SyncException(
             SyncErrorKind.unknown,
             statusCode: status,
@@ -135,9 +90,6 @@ class DioSyncApiClient implements SyncApiClient {
             : res.data;
         if (decoded is T) return decoded;
         if (decoded is Map) {
-          // Generic comparison `T == Map<String, Object?>` doesn't parse —
-          // every endpoint returns a JSON object, so coerce dynamic-valued
-          // maps to the expected Map<String, Object?> shape.
           final coerced = <String, Object?>{
             for (final entry in decoded.entries)
               entry.key.toString(): entry.value,
@@ -156,11 +108,7 @@ class DioSyncApiClient implements SyncApiClient {
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
-        throw SyncException(
-          SyncErrorKind.network,
-          message: e.message,
-          cause: e,
-        );
+        throw SyncException(SyncErrorKind.network, message: e.message, cause: e);
       }
       if (e.response != null) {
         throw _mapStatus(e.response!, path);
@@ -186,8 +134,6 @@ class DioSyncApiClient implements SyncApiClient {
         kind = SyncErrorKind.unauthorized;
       case 426:
         kind = SyncErrorKind.protocolVersion;
-      case 409:
-        kind = SyncErrorKind.clockSkew;
       case 413:
         kind = SyncErrorKind.payloadTooLarge;
       case 429:
@@ -213,9 +159,6 @@ class DioSyncApiClient implements SyncApiClient {
   Duration? _retryAfterHeader(Response<dynamic> res) {
     final raw = res.headers.value('retry-after');
     if (raw == null) return null;
-    // Spec only requires the integer-seconds form (`docs/sync-protocol.md`
-    // §5.4). HTTP-date variant is rare and not worth pulling dart:io for —
-    // fall through means "back off using the policy default".
     final secs = int.tryParse(raw.trim());
     if (secs != null) return Duration(seconds: secs);
     return null;
