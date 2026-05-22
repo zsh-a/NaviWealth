@@ -25,7 +25,7 @@ flutter test                                 # unit + widget tests
 flutter analyze --fatal-infos                # static analysis
 flutter run                                  # default device
 flutter run -d chrome                        # web dev
-flutter build web --release --pwa-strategy=none
+flutter build web --release
 flutter build apk --debug
 flutter build ios --debug --no-codesign      # macOS only
 ```

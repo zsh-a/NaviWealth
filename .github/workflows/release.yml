@@ -131,7 +131,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release --target-platform android-arm64 --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - name: Build release web PWA
-        run: flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+        run: flutter build web --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
       - name: Normalize APK filename
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \

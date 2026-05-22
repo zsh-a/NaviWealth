@@ -316,7 +316,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 - [ ] P1-A 至 P1-H 全部 merge 到 main；
 - [ ] codecov 项目覆盖率 ≥ 60%（patch 70%）；
-- [ ] `flutter build web --release --pwa-strategy=none` 产物大小 vs. v0.2.5 baseline 增量 ≤ +5%（见 `apps/mobile/docs/web-bundle.md`）；
+- [ ] `flutter build web --release` 产物大小 vs. v0.2.5 baseline 增量 ≤ +5%（见 `apps/mobile/docs/web-bundle.md`）；
 - [ ] 5 个 E2E sync 用例稳定通过；
 - [ ] 在 web/iOS/Android 三端各跑一次 happy path 验收（dashboard 加载 → 添加交易 → 查看 activity feed → 查看 portfolio 切视角 → 与 AI 对话 → 备份导出/恢复）；
 - [ ] 发布 0.3.0 tag，更新 `roadmap.md` phase 1 章节为 ✅ 状态。
