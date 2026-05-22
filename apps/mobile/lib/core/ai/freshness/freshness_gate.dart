@@ -18,8 +18,8 @@ import '../../sync/providers.dart';
 import '../contracts/contracts.dart';
 
 /// 端侧 HLC > read model 的 watermark 即认定 stale。HLC 的 canonical
-/// wire 形式 (`wallMillis.hex(counter)-nodeId`) 字典序与时序一致
-/// (docs/sync-protocol.md §3.1)，所以纯字符串比较够用。
+/// 字符串形式 (`wallMillis.hex(counter)-nodeId`) 字典序与时序一致
+/// (docs/sync-v2.md §4.1)，所以纯字符串比较够用。
 ///
 /// 一个细节：localHlc 可能是 nil HLC（设备首次同步前）；那时
 /// `wallMillis = 0` 一定小于任何真实 read model watermark，returns

@@ -561,7 +561,11 @@
   "pwaUpdateDismiss": "稍后",
 
   "authLoginTitle": "欢迎回来",
+  "authRegisterTitle": "创建账号",
   "authLoginSubmit": "登录",
+  "authRegisterSubmit": "创建账号",
+  "authRegisterSwitch": "创建账号",
+  "authLoginSwitch": "返回登录",
   "authEmailLabel": "邮箱",
   "authPasswordLabel": "密码",
   "authPasswordShowTooltip": "显示密码",
@@ -576,6 +580,7 @@
   "authLoginErrorNetwork": "无法连接服务器，请检查网络后重试。",
   "authLoginErrorServer": "服务器暂时无响应，请稍后重试。",
   "authLoginErrorGeneric": "登录失败，请重试。",
+  "authRegisterErrorAccountExists": "账号已存在，请直接登录。",
 
   "authLoginNoticeSessionExpired": "登录已过期，请重新登录。",
 

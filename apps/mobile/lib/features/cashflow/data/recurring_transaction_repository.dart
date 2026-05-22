@@ -4,7 +4,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../../core/sync/op.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../data/db/app_database.dart';
 import '../../../data/domain/enums.dart';
@@ -93,12 +92,7 @@ class RecurringTransactionRepository {
     );
     await _db.transaction(() async {
       await _db.into(_db.recurringTransactions).insert(_companion(transaction));
-      await _enqueue(
-        opType: OpType.insert,
-        rowId: transaction.id,
-        fields: _insertFields(transaction),
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: tableName, rowId: transaction.id);
     });
     return transaction;
   }
@@ -135,32 +129,11 @@ class RecurringTransactionRepository {
         hlc: stamp.hlc,
       ),
     );
-    final fields = <String, Object?>{..._syncFields(stamp)};
-    if (templateJournalBuildJson != null) {
-      fields['template_journal_build_json'] = templateJournalBuildJson;
-    }
-    if (rrule != null) {
-      fields['rrule'] = rrule;
-    }
-    if (nextDueAt != null) {
-      fields['next_due_at'] = _iso(_dateOnlyUtc(nextDueAt));
-    }
-    if (lastMaterialisedAt != null) {
-      fields['last_materialised_at'] = _iso(_dateOnlyUtc(lastMaterialisedAt));
-    }
-    if (enabled != null) {
-      fields['enabled'] = enabled;
-    }
     await _db.transaction(() async {
       await (_db.update(
         _db.recurringTransactions,
       )..where((t) => t.id.equals(id))).write(_updateCompanion(updated));
-      await _enqueue(
-        opType: OpType.update,
-        rowId: id,
-        fields: fields,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: tableName, rowId: id);
     });
     return updated;
   }
@@ -190,12 +163,7 @@ class RecurringTransactionRepository {
           deletedAt: Value(stamp.now),
         ),
       );
-      await _enqueue(
-        opType: OpType.delete,
-        rowId: id,
-        fields: null,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: tableName, rowId: id);
     });
   }
 
@@ -244,48 +212,6 @@ class RecurringTransactionRepository {
       hlc: Value(tx.sync.hlc),
       deletedAt: Value(tx.sync.deletedAt),
     );
-  }
-
-  Future<void> _enqueue({
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) {
-    return _outbox.enqueue(
-      Op(
-        opId: _uuid.v4(),
-        tableName: tableName,
-        rowId: rowId,
-        opType: opType,
-        fieldsDiff: fields,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      ),
-    );
-  }
-
-  Map<String, Object?> _insertFields(RecurringTransaction tx) {
-    return {
-      'id': tx.id,
-      'template_journal_build_json': tx.templateJournalBuildJson,
-      'rrule': tx.rrule,
-      'next_due_at': _iso(tx.nextDueAt),
-      'last_materialised_at': _isoOrNull(tx.lastMaterialisedAt),
-      'enabled': tx.enabled,
-      'owner_user_id': tx.sync.ownerUserId,
-      'updated_at': _iso(tx.sync.updatedAt),
-      'updated_by_device': tx.sync.updatedByDevice,
-      'hlc': tx.sync.hlc.toString(),
-    };
-  }
-
-  Map<String, Object?> _syncFields(MutationStamp stamp) {
-    return {
-      'updated_at': _iso(stamp.now),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
   }
 
   static DateTime _dateOnlyUtc(DateTime value) =>

@@ -162,9 +162,10 @@
   // (see lib/core/pwa/pwa_update_web.dart). The bridge installs *before*
   // flutter_bootstrap.js so the SW is registering while Dart compiles.
   //
-  // Build with `flutter build web --pwa-strategy=none` so Flutter does not
-  // register its default service worker (newer Flutter may still emit a
-  // zero-byte placeholder file, which is inert).
+  // The custom `web/flutter_bootstrap.js` calls `_flutter.loader.load()`
+  // without serviceWorkerSettings, so Flutter never registers its default
+  // service worker — no dependency on the deprecated `--pwa-strategy` flag.
+  // (Flutter may still emit an inert flutter_service_worker.js file.)
   (function () {
     var bridge = {
       updateAvailable: false,

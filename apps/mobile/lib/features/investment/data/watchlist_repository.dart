@@ -2,17 +2,12 @@ import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../../core/sync/op.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../data/db/app_database.dart';
-import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../domain/values/asset_market.dart';
-
-const _uuid = Uuid();
 
 class PriceAlertRules {
   const PriceAlertRules({this.above, this.below, this.enabled = true});
@@ -79,6 +74,8 @@ class WatchlistRepository {
   final OutboxStore _outbox;
   final MutationStamper _stamper;
 
+  static const String _tableName = 'watchlist_items';
+
   Stream<List<WatchlistItem>> watchActive(String ownerUserId) {
     final query = _db.select(_db.watchlistItems)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -119,22 +116,9 @@ class WatchlistRepository {
       hlc: stamp.hlc,
       deletedAt: const Value(null),
     );
-    final fields = _fields(
-      id: id,
-      symbol: normalizedSymbol,
-      market: market.wire,
-      addedAt: stamp.now,
-      alertRulesJson: alertJson,
-      ownerUserId: stamp.ownerUserId,
-      updatedAt: stamp.now,
-      updatedByDevice: stamp.deviceId,
-      hlc: stamp.hlc,
-      deletedAt: null,
-    );
-
     await _db.transaction(() async {
       await _db.into(_db.watchlistItems).insertOnConflictUpdate(row);
-      await _enqueue(OpType.insert, id, fields, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return WatchlistItem(
       id: id,
@@ -157,12 +141,6 @@ class WatchlistRepository {
   }) async {
     final stamp = await _stamper.stamp();
     final alertJson = jsonEncode(rules.toJson());
-    final diff = {
-      'alert_rules_json': alertJson,
-      'updated_at': _iso(stamp.now),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
     await _db.transaction(() async {
       await (_db.update(
         _db.watchlistItems,
@@ -174,7 +152,7 @@ class WatchlistRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.update, item.id, diff, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: item.id);
     });
   }
 
@@ -191,27 +169,8 @@ class WatchlistRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.delete, item.id, null, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: item.id);
     });
-  }
-
-  Future<void> _enqueue(
-    OpType type,
-    String rowId,
-    Map<String, Object?>? fields,
-    MutationStamp stamp,
-  ) {
-    return _outbox.enqueue(
-      Op(
-        opId: _uuid.v4(),
-        tableName: 'watchlist_items',
-        rowId: rowId,
-        opType: type,
-        fieldsDiff: fields,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      ),
-    );
   }
 
   static String idFor({required AssetMarket market, required String symbol}) =>
@@ -235,28 +194,3 @@ WatchlistItem _rowToDomain(WatchlistItemRow row) {
   );
 }
 
-Map<String, Object?> _fields({
-  required String id,
-  required String symbol,
-  required String market,
-  required DateTime addedAt,
-  required String alertRulesJson,
-  required String ownerUserId,
-  required DateTime updatedAt,
-  required String updatedByDevice,
-  required Hlc hlc,
-  required DateTime? deletedAt,
-}) => {
-  'id': id,
-  'symbol': symbol,
-  'market': market,
-  'added_at': _iso(addedAt),
-  'alert_rules_json': alertRulesJson,
-  'owner_user_id': ownerUserId,
-  'updated_at': _iso(updatedAt),
-  'updated_by_device': updatedByDevice,
-  'hlc': hlc.toString(),
-  'deleted_at': deletedAt == null ? null : _iso(deletedAt),
-};
-
-String _iso(DateTime value) => value.toUtc().toIso8601String();

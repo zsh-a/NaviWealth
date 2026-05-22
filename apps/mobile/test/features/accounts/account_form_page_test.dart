@@ -21,6 +21,7 @@ import 'package:naviwealth/features/shared/account_tree_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../../data/db/test_database.dart';
 import '../../data/repositories/_stub_stamper.dart';
 
@@ -251,7 +252,7 @@ void main() {
     expect(rows.single.name, 'Savings Bank');
   });
 
-  testWidgets('save persists icon + color in the queued outbox op', (
+  testWidgets('save persists icon + color and queues a dirty pointer', (
     tester,
   ) async {
     await _enlarge(tester);
@@ -270,11 +271,19 @@ void main() {
     await tester.tap(find.widgetWithText(FButton, 'Save'));
     await tester.pumpAndSettle();
 
-    final batch = await h.outbox.peekBatch();
-    final insertOp = batch.firstWhere(
-      (op) => op.tableName == 'accounts' && op.fieldsDiff?['name'] == 'My Bank',
+    // The v2 outbox is a pure dirty-pointer log — the row's icon / color
+    // live in the materialised `accounts` row, which the sync engine reads
+    // at push time.
+    final saved = await (h.db.select(h.db.accounts)
+          ..where((t) => t.name.equals('My Bank')))
+        .getSingle();
+    expect(saved.icon, 'savings');
+    expect(saved.color, '#3B82F6');
+
+    final batch = h.outbox.queued;
+    expect(
+      batch.any((op) => op.table == 'accounts' && op.rowId == saved.id),
+      isTrue,
     );
-    expect(insertOp.fieldsDiff!['icon'], 'savings');
-    expect(insertOp.fieldsDiff!['color'], '#3B82F6');
   });
 }

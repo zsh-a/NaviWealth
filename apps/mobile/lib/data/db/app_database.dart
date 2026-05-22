@@ -57,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -191,6 +191,16 @@ class AppDatabase extends _$AppDatabase {
       if (from < 13) {
         await m.createTable(optionsTradeJournal);
         await _createOptionsTradeJournalIndexes(this);
+      }
+      // v13 → v14: sync v2 cleanup. Drop the dead `sync_errors` table and
+      // rebuild `op_outbox` as a pure dirty-pointer log (`docs/sync-v2.md`
+      // §7.1). SyncBackfill (version bumped) re-enqueues every local row,
+      // so dropping the old outbox loses no pending change.
+      if (from < 14) {
+        await customStatement('DROP TABLE IF EXISTS sync_errors');
+        await customStatement('DROP TABLE IF EXISTS op_outbox');
+        await customStatement(createOpOutbox);
+        await customStatement(createOpOutboxIndex);
       }
     },
     beforeOpen: (details) async {

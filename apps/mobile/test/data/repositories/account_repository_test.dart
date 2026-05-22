@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 
@@ -27,7 +27,7 @@ void main() {
     await db.close();
   });
 
-  test('create writes the row and queues an insert op', () async {
+  test('create writes the row and queues a dirty pointer', () async {
     final account = await repo.create(
       type: AccountCategory.bank,
       name: '招行储蓄',
@@ -39,54 +39,48 @@ void main() {
     expect(account.type, AccountCategory.bank);
     expect(account.sync.ownerUserId, 'u-test');
 
-    final batch = await outbox.peekBatch();
+    final batch = outbox.queued;
     expect(batch, hasLength(1));
     final op = batch.single;
-    expect(op.tableName, 'accounts');
-    expect(op.opType, OpType.insert);
+    expect(op.table, 'accounts');
     expect(op.rowId, account.id);
-    expect(op.fieldsDiff!['name'], '招行储蓄');
-    expect(op.fieldsDiff!['type'], 'bank');
   });
 
-  test('update only diffs the changed fields and bumps HLC', () async {
+  test('update queues a dirty pointer and bumps HLC', () async {
     final account = await repo.create(
       type: AccountCategory.broker,
       name: 'Original',
       currency: 'USD',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final updated = await repo.update(account.id, name: 'Renamed');
     expect(updated.name, 'Renamed');
     expect(updated.sync.hlc, isNot(account.sync.hlc));
 
-    final batch = await outbox.peekBatch();
+    final batch = outbox.queued;
     expect(batch, hasLength(1));
     final op = batch.single;
-    expect(op.opType, OpType.update);
-    expect(op.fieldsDiff!.containsKey('name'), isTrue);
-    expect(op.fieldsDiff!['name'], 'Renamed');
-    // Type wasn't part of the patch, so it must NOT appear in the diff.
-    expect(op.fieldsDiff!.containsKey('type'), isFalse);
+    expect(op.table, 'accounts');
+    expect(op.rowId, account.id);
   });
 
-  test('softDelete writes a tombstone and queues a delete op', () async {
+  test('softDelete writes a tombstone and queues a dirty pointer', () async {
     final account = await repo.create(
       type: AccountCategory.cash,
       name: '现金',
       currency: 'CNY',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     await repo.softDelete(account.id);
     final reloaded = await repo.findById(account.id);
     expect(reloaded!.sync.deletedAt, isNotNull);
 
-    final batch = await outbox.peekBatch();
+    final batch = outbox.queued;
     expect(batch, hasLength(1));
-    expect(batch.single.opType, OpType.delete);
-    expect(batch.single.fieldsDiff, isNull);
+    expect(batch.single.table, 'accounts');
+    expect(batch.single.rowId, account.id);
   });
 
   test('listActive excludes archived and deleted accounts', () async {
@@ -112,23 +106,24 @@ void main() {
     expect(active.map((a) => a.id), [live.id]);
   });
 
-  test('clearInstitution serialises a null in the diff', () async {
+  test('clearInstitution nulls the column and queues a dirty pointer',
+      () async {
     final acc = await repo.create(
       type: AccountCategory.bank,
       name: 'A',
       currency: 'CNY',
       institution: '招商银行',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     await repo.update(acc.id, clearInstitution: true);
     final reloaded = await repo.findById(acc.id);
     expect(reloaded!.institution, isNull);
 
-    final batch = await outbox.peekBatch();
-    final diff = batch.single.fieldsDiff!;
-    expect(diff.containsKey('institution'), isTrue);
-    expect(diff['institution'], isNull);
+    final batch = outbox.queued;
+    expect(batch, hasLength(1));
+    expect(batch.single.table, 'accounts');
+    expect(batch.single.rowId, acc.id);
   });
 
   group('FIR-126 — accountCategory', () {
@@ -147,12 +142,12 @@ void main() {
       );
       expect(liability.category, AccountSide.liability);
 
-      // The insert op carries the category so peers learn the new
-      // accounting classification on their next pull.
-      final batch = await outbox.peekBatch();
+      // Each create queues one dirty pointer; the sync engine reads the
+      // row's current state (including its category) at push time.
+      final batch = outbox.queued;
       expect(batch, hasLength(2));
-      expect(batch.first.fieldsDiff!['category'], 'asset');
-      expect(batch.last.fieldsDiff!['category'], 'liability');
+      expect(batch.first.rowId, bank.id);
+      expect(batch.last.rowId, liability.id);
     });
 
     test('create honours an explicit category override', () async {
@@ -165,23 +160,21 @@ void main() {
       expect(acc.category, AccountSide.income);
     });
 
-    test('update with a new category emits a single-field diff', () async {
+    test('update with a new category queues a dirty pointer', () async {
       final acc = await repo.create(
         type: AccountCategory.asset,
         name: 'TBD',
         currency: 'CNY',
       );
-      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+      outbox.clearQueued();
 
       final updated = await repo.update(acc.id, category: AccountSide.equity);
       expect(updated.category, AccountSide.equity);
 
-      final batch = await outbox.peekBatch();
+      final batch = outbox.queued;
       expect(batch, hasLength(1));
-      final diff = batch.single.fieldsDiff!;
-      expect(diff['category'], 'equity');
-      expect(diff.containsKey('name'), isFalse);
-      expect(diff.containsKey('type'), isFalse);
+      expect(batch.single.table, 'accounts');
+      expect(batch.single.rowId, acc.id);
     });
 
     test('seedSystemAccounts inserts the full tree once', () async {
@@ -195,12 +188,10 @@ void main() {
       final reseeded = await repo.seedSystemAccounts();
       expect(reseeded, 0);
 
-      final ops = await outbox.peekBatch();
+      final ops = outbox.queued;
       // Inserts on the first call only; the no-op doesn't queue.
       expect(ops, hasLength(29));
-      // The tree's three top-level buckets are present.
-      final categories = ops.map((o) => o.fieldsDiff!['category']).toSet();
-      expect(categories, {'income', 'expense', 'equity'});
+      expect(ops.every((o) => o.table == 'accounts'), isTrue);
     });
 
     test(
@@ -260,22 +251,22 @@ void main() {
       expect(child.icon, 'bolt');
       expect(child.color, '#F97316');
 
-      final ops = await outbox.peekBatch();
-      // Both rows carry the new columns in their insert op so peers
-      // reconstruct the tree on the next pull.
-      expect(ops.last.fieldsDiff!['parent_id'], parent.id);
-      expect(ops.last.fieldsDiff!['icon'], 'bolt');
-      expect(ops.last.fieldsDiff!['color'], '#F97316');
+      final ops = outbox.queued;
+      // Both rows queue a dirty pointer; the engine reads each row's full
+      // current state (parent_id / icon / color) at push time.
+      expect(ops, hasLength(2));
+      expect(ops.last.rowId, child.id);
     });
 
-    test('update emits per-field diffs for parentId / icon / color', () async {
+    test('update queues a dirty pointer for parentId / icon / color',
+        () async {
       final acc = await repo.create(
         type: AccountCategory.asset,
         name: 'Misc',
         currency: 'CNY',
         category: AccountSide.expense,
       );
-      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+      outbox.clearQueued();
 
       // Re-parent + recolor in a single update.
       final updated = await repo.update(
@@ -288,17 +279,13 @@ void main() {
       expect(updated.icon, 'shopping_cart');
       expect(updated.color, '#10B981');
 
-      final batch = await outbox.peekBatch();
-      final diff = batch.single.fieldsDiff!;
-      expect(diff['parent_id'], 'system-account:u-test:expense');
-      expect(diff['icon'], 'shopping_cart');
-      expect(diff['color'], '#10B981');
-      // Untouched columns stay out of the diff (LWW field-level).
-      expect(diff.containsKey('name'), isFalse);
-      expect(diff.containsKey('category'), isFalse);
+      final batch = outbox.queued;
+      expect(batch, hasLength(1));
+      expect(batch.single.table, 'accounts');
+      expect(batch.single.rowId, acc.id);
     });
 
-    test('clearParentId nulls the link in the diff', () async {
+    test('clearParentId nulls the link and queues a dirty pointer', () async {
       final root = await repo.create(
         type: AccountCategory.asset,
         name: 'Top',
@@ -312,15 +299,16 @@ void main() {
         category: AccountSide.expense,
         parentId: root.id,
       );
-      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+      outbox.clearQueued();
 
       await repo.update(child.id, clearParentId: true);
       final reloaded = await repo.findById(child.id);
       expect(reloaded!.parentId, isNull);
 
-      final diff = (await outbox.peekBatch()).single.fieldsDiff!;
-      expect(diff.containsKey('parent_id'), isTrue);
-      expect(diff['parent_id'], isNull);
+      final batch = outbox.queued;
+      expect(batch, hasLength(1));
+      expect(batch.single.table, 'accounts');
+      expect(batch.single.rowId, child.id);
     });
 
     test('seedSystemAccounts wires parent_id and icon/color', () async {

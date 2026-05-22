@@ -1,82 +1,103 @@
-import '../../data/domain/hlc.dart';
-import 'op.dart';
+/// Wire types and client interface for sync v2 (`docs/sync-v2.md`).
+///
+/// v2 syncs the *current state* of each row, not a stream of ops. One
+/// `POST /sync` does push and pull in a single round trip.
+library;
 
-/// Sync wire-protocol version this client speaks
-/// (`docs/sync-protocol.md` §10).
-const int kSyncProtocolVersion = 1;
+/// Sync wire-protocol version this client speaks (`docs/sync-v2.md` §5).
+const int kSyncProtocolVersion = 2;
 
-/// Hard ceiling per push batch (§5.2).
-const int kPushBatchMaxOps = 500;
-const int kPushBatchMaxBytes = 1024 * 1024;
+/// Hard ceiling on rows per `POST /sync` request (`docs/sync-v2.md` §5.1).
+const int kSyncMaxChanges = 500;
 
-/// Pull page limit (§5.3).
-const int kPullPageMaxOps = 500;
-
-/// `GET /me` response.
-class MeResponse {
-  const MeResponse({
-    required this.userId,
-    required this.serverNow,
-    required this.serverHlc,
+/// A single row as it travels on the wire, both directions.
+///
+/// Outbound (client → server) sets [table], [id], [payload], [version],
+/// [deleted]. Inbound (server → client) additionally carries [deviceId]
+/// (the authoring device) and [seq] (the cursor value).
+class RowChange {
+  const RowChange({
+    required this.table,
+    required this.id,
+    required this.payload,
+    required this.version,
+    required this.deleted,
+    this.deviceId = '',
+    this.seq = 0,
   });
 
-  final String userId;
-  final DateTime serverNow;
-  final Hlc serverHlc;
+  /// Syncable table name (the Drift `actualTableName`).
+  final String table;
+
+  /// Primary key of the row.
+  final String id;
+
+  /// The full row as a JSON-safe column → value map. Carried even for
+  /// deleted rows so a device that never saw the row can still materialise
+  /// the tombstone (and so a later edit can resurrect it).
+  final Map<String, Object?>? payload;
+
+  /// Opaque, lexicographically-ordered LWW token (the row's HLC string).
+  final String version;
+
+  final bool deleted;
+
+  /// Authoring device. Server-set on inbound rows; ignored on outbound.
+  final String deviceId;
+
+  /// Server-assigned cursor value. Meaningful on inbound rows only.
+  final int seq;
+
+  Map<String, Object?> toJson() => {
+    'table': table,
+    'id': id,
+    'payload': payload,
+    'version': version,
+    'deleted': deleted,
+  };
+
+  static RowChange fromJson(Map<String, Object?> j) {
+    final rawPayload = j['payload'];
+    Map<String, Object?>? payload;
+    if (rawPayload is Map) {
+      payload = rawPayload.map((k, v) => MapEntry(k.toString(), v));
+    }
+    return RowChange(
+      table: j['table'] as String,
+      id: j['id'] as String,
+      payload: payload,
+      version: j['version'] as String,
+      deleted: (j['deleted'] as bool?) ?? false,
+      deviceId: (j['device_id'] as String?) ?? '',
+      seq: (j['seq'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
 
-/// Per-op rejection in a push response.
-class PushRejection {
-  const PushRejection({required this.opId, required this.code, this.message});
-  final String opId;
-  final String code;
-  final String? message;
-}
-
-/// `POST /sync/push` response.
-class PushResponse {
-  const PushResponse({
-    required this.accepted,
-    required this.rejected,
-    required this.serverHlcHigh,
-    required this.serverNow,
+/// `POST /sync` response (`docs/sync-v2.md` §5.1).
+class SyncResponse {
+  const SyncResponse({
+    required this.seq,
+    required this.changes,
+    required this.more,
   });
 
-  final int accepted;
-  final List<PushRejection> rejected;
+  /// Cursor the client adopts after applying [changes].
+  final int seq;
 
-  /// Highest server-stamped HLC in the batch. Used to advance the local
-  /// HLC state via `merge()` (§5.2).
-  final Hlc serverHlcHigh;
-  final DateTime serverNow;
+  /// Rows authored by other devices, newer than the request's `since`.
+  final List<RowChange> changes;
+
+  /// `true` ⇔ the client must sync again to drain the backlog.
+  final bool more;
 }
 
-/// `GET /sync/pull` response.
-class PullResponse {
-  const PullResponse({
-    required this.ops,
-    required this.serverHlcHigh,
-    required this.hasMore,
-    required this.serverNow,
-  });
-
-  final List<Op> ops;
-
-  /// Highest HLC observed on the server (not necessarily the last in this
-  /// page). Clients persist this even when [ops] is empty (SP-D-5).
-  final Hlc serverHlcHigh;
-  final bool hasMore;
-  final DateTime serverNow;
-}
-
+/// HTTP client for the single `POST /sync` endpoint.
 abstract class SyncApiClient {
-  Future<MeResponse> me();
-
-  Future<PushResponse> push({required String deviceId, required List<Op> ops});
-
-  Future<PullResponse> pull({
+  /// Push [changes] and pull everything newer than [since] in one round trip.
+  Future<SyncResponse> sync({
     required String deviceId,
-    required Hlc since,
-    int limit = kPullPageMaxOps,
+    required int since,
+    required List<RowChange> changes,
   });
 }

@@ -4,11 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
 import '../../data/db/test_database.dart';
+import '../sync/_outbox_test_ext.dart';
 
 void main() {
   const testIterations = 1000; // fast for tests
@@ -267,18 +267,12 @@ void main() {
         fileBytes: bytes,
       );
 
-      // Verify ops were enqueued.
-      final ops = await outbox.peekBatch();
+      // Verify dirty pointers were enqueued for the restored rows.
+      final ops = outbox.queued;
       expect(ops.length, 2); // 1 account + 1 tag
 
-      // All ops should be inserts.
-      for (final op in ops) {
-        expect(op.opType, OpType.insert);
-        expect(op.deviceId, testDeviceId);
-      }
-
-      // Ops should reference the correct tables.
-      final tableNames = ops.map((o) => o.tableName).toSet();
+      // Pointers should reference the correct tables.
+      final tableNames = ops.map((o) => o.table).toSet();
       expect(tableNames, containsAll(['accounts', 'tags']));
     });
 

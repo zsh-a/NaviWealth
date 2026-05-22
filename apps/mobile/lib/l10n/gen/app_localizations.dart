@@ -3374,11 +3374,35 @@ abstract class AppLocalizations {
   /// **'Welcome back'**
   String get authLoginTitle;
 
+  /// Subtitle on the registration screen, sits below the app name.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authRegisterTitle;
+
   /// Primary action button on the login form.
   ///
   /// In en, this message translates to:
   /// **'Sign in'**
   String get authLoginSubmit;
+
+  /// Primary action button on the registration form.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authRegisterSubmit;
+
+  /// Secondary action on the login form that switches to registration mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get authRegisterSwitch;
+
+  /// Secondary action on the registration form that switches back to login mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in instead'**
+  String get authLoginSwitch;
 
   /// No description provided for @authEmailLabel.
   ///
@@ -3451,6 +3475,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in failed. Please try again.'**
   String get authLoginErrorGeneric;
+
+  /// No description provided for @authRegisterErrorAccountExists.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists. Sign in instead.'**
+  String get authRegisterErrorAccountExists;
 
   /// Inline banner shown on the login screen after the auth controller dropped an expired session.
   ///

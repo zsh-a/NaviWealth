@@ -73,7 +73,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 | 约束 | 来源 | 对设计的影响 |
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](./ai-architecture.md) §4.6（W-D7） | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
-| Backend 只做 OpLog 透传 | [`sync-protocol.md`](./sync-protocol.md) v1.0 frozen | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走 OpLog。 |
+| Backend 只做 sync_rows 存储 | [`sync-v2.md`](./sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
 | Read Model 三层 | `lib/core/ai/contracts/tool_descriptor.dart` | profile = `snapshot`，opportunity = `analytical`，single chain = `scopedDetail`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
@@ -92,7 +92,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ```text
                 ┌──────────────────────────────────────────────┐
-                │  User Inputs (Drift, synced via OpLog)       │
+                │  User Inputs (Drift, synced via sync_rows)    │
                 │   • OptionsStrategyProfile                    │
                 │   • ApprovedUnderlyings                       │
                 │   • Portfolio holdings + cash (existing)      │
@@ -263,16 +263,16 @@ class OpportunityExplanation with _$OpportunityExplanation {
 
 ## 6. 数据层
 
-### 6.1 同步策略（与 OpLog 边界）
+### 6.1 同步策略（与 sync v2 边界）
 
 | 表 | 同步 | 理由 |
 |---|---|---|
-| `options_strategy_profile` | ✅ OpLog | 用户偏好，跨设备一致 |
-| `options_approved_underlyings` | ✅ OpLog | 用户清单，跨设备一致 |
-| `options_trade_journal` | ✅ OpLog | 真实复盘，需要历史 |
+| `options_strategy_profile` | ✅ sync_rows | 用户偏好，跨设备一致 |
+| `options_approved_underlyings` | ✅ sync_rows | 用户清单，跨设备一致 |
+| `options_trade_journal` | ✅ sync_rows | 真实复盘，需要历史 |
 | `options_opportunity_cache` | ❌ 本地 | 派生数据，重算成本低；跨设备各自扫描 |
 
-**OpLog op 类型**（client 自定义，backend 不解析语义）：
+**行级变更类型**（client 自定义，backend 不解析语义）：
 
 ```
 options_profile.upsert
@@ -623,14 +623,14 @@ if (kIsWeb) return const SizedBox.shrink();
 | **P0** | Profile + Approved List + OCC 披露 + Drift 表 + 同步 wiring + Income Planner 入口 | — | ⚠️ 极小：新表 migration + `sql_table_name` 两行（透传，无业务逻辑） |
 | **P1** | Covered Call Scanner（yfinance）+ `OpportunityScorer`（call 路径）+ income_planner_page tab 1 + `get_options_income_opportunities` tool | yfinance | ❌ |
 | **P2** | Cash-secured Put Scanner + sell put 路径 + cash 暴露检查 | yfinance | ❌ |
-| **P3** | Trade Journal + `propose_options_journal_entry` tool + activity 接入 | — | ⚠️ 同 P0：journal 表 migration |
+| **P3** | Trade Journal + `propose_options_journal_entry` tool + activity 接入 | — | ❌ |
 | **P4** | Wheel / Income Cycle 状态机 + 复盘视图 | yfinance | ❌ |
 | **P5** | Tradier sandbox 接入 | Tradier (OAuth) | ✅ 新增 `routes/market/options.rs` 透传 |
 
-P0/P3 的 backend 改动仅限"新增 D1 materialised 表 + `sql_table_name` 匹配条目"——服务端仍是不解析 payload 的透传层，与 [`sync-protocol.md`](./sync-protocol.md) v1.0 完全一致。
+P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](./sync-v2.md) 的 `sync_rows` 统一存储 opaque payload。
 **评分 / 候选生成 / opportunity cache 永远不上 server。** 这条线在 P5 接 OAuth 行情源时也不能松——P5 的 backend route 仅做凭证持有 + HTTP 透传，禁止 normalize / cache / score。
 
-> **2026-05-21 ADR 修订**：早期设计稿声称 "P0–P4 backend 不动一行代码" 不准确。NaviWealth 的同步协议要求每张同步表在 server 也有一份 materialised D1 表 + `materialise.rs::sql_table_name` 匹配条目（server 仍只透传 payload）。重要的是这部分代码量极小、零业务逻辑，所以原则上仍然是"客户端是事实源"。
+> **2026-05-22 ADR 修订**：sync v2 移除了 per-table materialised D1 表和 `materialise.rs::sql_table_name` 映射。新增同步表只需要端侧进入 row applier allow-list，backend 仍保持 schema-agnostic。
 
 ---
 
@@ -655,8 +655,8 @@ P0/P3 的 backend 改动仅限"新增 D1 materialised 表 + `sql_table_name` 匹
 | 2026-05-21 | MVP 行情源 = yfinance | Tradier sandbox / Polygon | 零成本、复用现有 `MarketHttpClient`；TOS 约束已被 [`market-data-providers.md`](./market-data-providers.md) 锚定 |
 | 2026-05-21 | AI tool 只读 cache | tool 可触发扫描 | 控本 + 解释一致性 + 限流可预测；详见 §8.1 |
 | 2026-05-21 | 评分引擎在端侧（纯 Dart） | 在 Worker 上 | 与 W-D7 device-only 原则一致；评分逻辑不下放 server |
-| 2026-05-21 | opportunity cache 不上同步 | 走 OpLog | 派生数据，重算成本低；跨设备各自扫描更新鲜 |
-| 2026-05-21 | profile / approved / journal 走 OpLog | 仅本地 | 用户状态，跨设备一致性必要 |
+| 2026-05-21 | opportunity cache 不上同步 | 走 sync_rows | 派生数据，重算成本低；跨设备各自扫描更新鲜 |
+| 2026-05-21 | profile / approved / journal 走 sync_rows | 仅本地 | 用户状态，跨设备一致性必要 |
 | 2026-05-21 | 模块为独立 feature `options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，独立 feature 避免双向依赖 |
 | 2026-05-21 | 命名 "Income Planner" | "Options Scanner" | 避免被识别成交易终端；与 NaviWealth 财富管理定位一致 |
 
@@ -708,13 +708,12 @@ apps/mobile/lib/core/ai/runtime/device/tools/
 apps/mobile/lib/data/db/tables.dart                # +OptionsTradeJournal
 apps/mobile/lib/data/db/local_only_tables.dart     # opportunity cache DDL
 apps/mobile/lib/data/db/app_database.dart          # schemaVersion 13 (v11→v12→v13)
-apps/mobile/lib/core/sync/op.dart                  # kSyncableTables += {options_trade_journal}
-apps/mobile/lib/core/sync/providers.dart           # GenericLwwApplier += journal
+apps/mobile/lib/core/sync/row_applier.dart         # sync_rows table allow-list
+apps/mobile/lib/core/sync/providers.dart           # row-state sync providers
 apps/mobile/lib/core/ai/contracts/tool_descriptor.dart  # +4 Income Planner descriptors
 apps/mobile/lib/core/ai/runtime/device/tools/device_tool_registry.dart  # +4 tools
-apps/backend/migrations/0019_options_income.sql    # D1 materialised tables (P0)
-apps/backend/migrations/0020_options_trade_journal.sql  # D1 journal (P3)
-apps/backend/src/sync/materialise.rs               # sql_table_name match arms
+apps/backend/migrations/0002_sync_schema.sql       # backend sync_rows store
+apps/backend/src/sync/store.rs                     # schema-agnostic row store
 ```
 
 后续阶段会落地：

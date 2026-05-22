@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
 import '../audit/event_log_writer.dart';
 import '../db/app_database.dart';
@@ -278,12 +277,6 @@ class ManualAssetRepository {
   }) async {
     final stamp = await _stamper.stamp();
     final encoded = metadata.encode();
-    final diff = <String, Object?>{
-      'metadata_json': encoded,
-      'updated_at': stamp.now.toUtc().toIso8601String(),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
     await _db.transaction(() async {
       final priorRow = await (_db.select(
         _db.assets,
@@ -296,7 +289,7 @@ class ManualAssetRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.update, id, diff, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
       if (priorRow != null) {
         await _eventLog.recordFieldChanged(
           entityTable: _tableName,
@@ -336,7 +329,7 @@ class ManualAssetRepository {
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(id))).write(companion);
-      await _enqueue(OpType.update, id, diff, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
       await _eventLog.recordFieldChanged(
         entityTable: _tableName,
         entityId: id,
@@ -360,7 +353,7 @@ class ManualAssetRepository {
           deletedAt: Value(stamp.now),
         ),
       );
-      await _enqueue(OpType.delete, id, null, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
       await _eventLog.recordSoftDeleted(
         entityTable: _tableName,
         entityId: id,
@@ -408,7 +401,7 @@ class ManualAssetRepository {
     };
     await _db.transaction(() async {
       await _db.into(_db.assets).insert(companion);
-      await _enqueue(OpType.insert, id, fields, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
       await _eventLog.recordCreated(
         entityTable: _tableName,
         entityId: id,
@@ -486,25 +479,6 @@ class ManualAssetRepository {
       );
     }
     await jeRepo.create(entry: build.entry, postings: build.postings);
-  }
-
-  Future<void> _enqueue(
-    OpType opType,
-    String rowId,
-    Map<String, Object?>? fields,
-    MutationStamp stamp,
-  ) {
-    return _outbox.enqueue(
-      Op(
-        opId: _uuid.v4(),
-        tableName: _tableName,
-        rowId: rowId,
-        opType: opType,
-        fieldsDiff: fields,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      ),
-    );
   }
 
   String _accountIdForAsset(AssetRow row) {

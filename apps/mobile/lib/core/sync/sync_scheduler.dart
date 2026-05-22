@@ -6,15 +6,10 @@ import '../logging/app_logger.dart';
 import 'sync_engine.dart';
 
 /// Drives the SyncEngine on the cadences specified in
-/// `docs/sync-protocol.md` §7.3:
+/// `docs/sync-v2.md` §7.4:
 ///   - App resumed → immediate sync
 ///   - Foreground → 30 s polling timer
 ///   - Manual "Sync now" → call [triggerNow]
-///
-/// Mobile background ticks (BackgroundTasks / WorkManager) and Web
-/// `Periodic Background Sync` are wired by the platform shell — this
-/// scheduler only owns the foreground story so the same code path is
-/// exercised on every platform's main thread.
 class SyncScheduler with WidgetsBindingObserver {
   SyncScheduler({
     required SyncEngine engine,

@@ -19,7 +19,7 @@
 CREATE TABLE IF NOT EXISTS read_model_freshness_meta (
   user_id              TEXT NOT NULL,
   read_model           TEXT NOT NULL,
-  source_hlc_watermark TEXT NOT NULL,   -- 该用户该 read model 已消费到的 op_log HLC
+  source_hlc_watermark TEXT NOT NULL,   -- 该用户该 read model 已消费到的行版本 HLC
   refreshed_at         TEXT NOT NULL,   -- ISO 时间戳，仅做 debug
   schema_version       INTEGER NOT NULL,
   calculation_version  INTEGER NOT NULL,

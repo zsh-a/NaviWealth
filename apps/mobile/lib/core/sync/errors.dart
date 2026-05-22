@@ -1,4 +1,4 @@
-/// Error envelope returned by the backend (`docs/sync-protocol.md` §5.4).
+/// Error envelope returned by the backend (`docs/sync-v2.md` §5).
 class SyncErrorBody {
   const SyncErrorBody({required this.code, this.message});
   final String code;
@@ -25,9 +25,6 @@ enum SyncErrorKind {
 
   /// `400` family — request is malformed; ops should be dropped, NOT retried.
   badRequest,
-
-  /// `409 clock_skew_too_large` — call `/me`, then retry.
-  clockSkew,
 
   /// `413 payload_too_large` — split the batch.
   payloadTooLarge,
@@ -70,7 +67,6 @@ class SyncException implements Exception {
       case SyncErrorKind.network:
       case SyncErrorKind.server:
       case SyncErrorKind.rateLimited:
-      case SyncErrorKind.clockSkew:
       case SyncErrorKind.unauthorized:
         return true;
       case SyncErrorKind.payloadTooLarge:

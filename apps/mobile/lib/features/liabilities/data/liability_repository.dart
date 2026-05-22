@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../../core/sync/op.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../data/db/app_database.dart';
 import '../../../data/domain/amortization_entry.dart';
@@ -24,9 +23,9 @@ import '../domain/amortization_calculator.dart';
 ///
 /// Mutation contract matches `AccountRepository` / `ManualAssetRepository`:
 /// every write happens inside a Drift transaction that *both* persists the
-/// row and enqueues the matching [Op] into the sync outbox. The
-/// schedule-generation pass at create time queues one liability insert and
-/// one amortization-entry insert per period in the same transaction.
+/// row and marks it dirty in the sync outbox. The schedule-generation pass
+/// at create time queues one liability row and one amortization-entry row
+/// per period in the same transaction.
 class LiabilityRepository {
   LiabilityRepository({
     required AppDatabase db,
@@ -160,43 +159,13 @@ class LiabilityRepository {
 
     await _db.transaction(() async {
       await _db.into(_db.liabilities).insert(companion);
-      await _enqueue(
-        table: _liabilityTable,
-        opType: OpType.insert,
-        rowId: id,
-        fields: _liabilityInsertFields(
-          id: id,
-          type: type,
-          name: name,
-          principal: principal,
-          interestRate: interestRate,
-          currency: currency,
-          paymentMethod: paymentMethod,
-          rateType: rateType,
-          accountId: accountId,
-          startDate: startDate,
-          endDate: endDate,
-          termMonths: termMonths,
-          monthlyPayment: monthlyPayment,
-          statementDay: statementDay,
-          paymentDueDay: paymentDueDay,
-          note: note,
-          stamp: stamp,
-        ),
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _liabilityTable, rowId: id);
 
       for (final entry in scheduleRows) {
         await _db
             .into(_db.amortizationEntries)
             .insert(_amortizationCompanion(entry, stamp));
-        await _enqueue(
-          table: _amortTable,
-          opType: OpType.insert,
-          rowId: entry.id,
-          fields: _amortInsertFields(entry, stamp),
-          stamp: stamp,
-        );
+        await _outbox.enqueue(table: _amortTable, rowId: entry.id);
       }
     });
 
@@ -261,18 +230,7 @@ class LiabilityRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(
-        table: _amortTable,
-        opType: OpType.update,
-        rowId: entry.id,
-        fields: <String, Object?>{
-          'paid_at': whenPaid.toUtc().toIso8601String(),
-          'updated_at': stamp.now.toUtc().toIso8601String(),
-          'updated_by_device': stamp.deviceId,
-          'hlc': stamp.hlc.toString(),
-        },
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _amortTable, rowId: entry.id);
 
       final liabilityAccountId = AccountRepository.systemAccountIdForPath(
         'liability:${liability.id}',
@@ -362,88 +320,6 @@ class LiabilityRepository {
       updatedByDevice: stamp.deviceId,
       hlc: stamp.hlc,
     );
-  }
-
-  Map<String, Object?> _liabilityInsertFields({
-    required String id,
-    required LiabilityType type,
-    required String name,
-    required Decimal principal,
-    required Decimal interestRate,
-    required String currency,
-    required RepaymentMethod paymentMethod,
-    required LiabilityRateType rateType,
-    required String? accountId,
-    required DateTime? startDate,
-    required DateTime? endDate,
-    required int? termMonths,
-    required Decimal? monthlyPayment,
-    required int? statementDay,
-    required int? paymentDueDay,
-    required String? note,
-    required MutationStamp stamp,
-  }) {
-    return <String, Object?>{
-      'id': id,
-      'type': type.name,
-      'name': name,
-      'principal': principal.toString(),
-      'interest_rate': interestRate.toString(),
-      'currency': currency,
-      'payment_method': paymentMethod.name,
-      'rate_type': rateType.name,
-      'account_id': accountId,
-      'start_date': startDate?.toUtc().toIso8601String(),
-      'end_date': endDate?.toUtc().toIso8601String(),
-      'term_months': termMonths,
-      'monthly_payment': monthlyPayment?.toString(),
-      'statement_day': statementDay,
-      'payment_due_day': paymentDueDay,
-      'note': note,
-      'owner_user_id': stamp.ownerUserId,
-      'updated_at': stamp.now.toUtc().toIso8601String(),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
-  }
-
-  Map<String, Object?> _amortInsertFields(
-    AmortizationEntry e,
-    MutationStamp stamp,
-  ) {
-    return <String, Object?>{
-      'id': e.id,
-      'liability_id': e.liabilityId,
-      'period_index': e.periodIndex,
-      'due_date': e.dueDate.toUtc().toIso8601String(),
-      'principal_payment': e.principalPayment.toString(),
-      'interest_payment': e.interestPayment.toString(),
-      'remaining_balance': e.remainingBalance.toString(),
-      'paid_at': e.paidAt?.toUtc().toIso8601String(),
-      'owner_user_id': stamp.ownerUserId,
-      'updated_at': stamp.now.toUtc().toIso8601String(),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
-  }
-
-  Future<void> _enqueue({
-    required String table,
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) async {
-    final op = Op(
-      opId: _uuid.v4(),
-      tableName: table,
-      rowId: rowId,
-      opType: opType,
-      fieldsDiff: fields,
-      hlc: stamp.hlc,
-      deviceId: stamp.deviceId,
-    );
-    await _outbox.enqueue(op);
   }
 
   Liability _toLiability(LiabilityRow r) {

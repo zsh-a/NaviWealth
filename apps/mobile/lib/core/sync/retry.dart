@@ -1,6 +1,6 @@
 import 'dart:math';
 
-/// Exponential backoff calculator (`docs/sync-protocol.md` §5.4 + §7.2).
+/// Exponential backoff calculator (`docs/sync-v2.md` §7.4).
 ///
 /// Schedule: 1s, 2s, 4s, … capped at 5min. Reset on any successful push or
 /// pull. A small jitter avoids thundering-herd when many devices sync after

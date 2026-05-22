@@ -5,9 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/dio_sync_api_client.dart';
 import 'package:naviwealth/core/sync/errors.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
 
 class _Captured {
   _Captured(this.options, this.body);
@@ -101,151 +99,158 @@ DioSyncApiClient _buildClient(
   );
 }
 
-Op _op({
-  String opId = 'op-1',
+RowChange _change({
   String table = 'accounts',
-  String rowId = 'A1',
-  OpType type = OpType.update,
-  Map<String, Object?>? fieldsDiff = const {'name': 'Cash'},
-  String deviceId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  Hlc hlc = const Hlc(
-    wallMillis: 1714291200000,
-    counter: 1,
-    nodeId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  ),
+  String id = 'A1',
+  Map<String, Object?>? payload = const {'name': 'Cash'},
+  String version = '1716381000123.0000-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  bool deleted = false,
 }) {
-  return Op(
-    opId: opId,
-    tableName: table,
-    rowId: rowId,
-    opType: type,
-    fieldsDiff: type == OpType.delete ? null : fieldsDiff,
-    hlc: hlc,
-    deviceId: deviceId,
+  return RowChange(
+    table: table,
+    id: id,
+    payload: payload,
+    version: version,
+    deleted: deleted,
   );
 }
 
 void main() {
-  group('DioSyncApiClient wire protocol', () {
-    test('me sends sync protocol headers and parses HLC response', () async {
+  group('DioSyncApiClient.sync wire protocol', () {
+    test('encodes the request body and headers', () async {
       final adapter = _FakeAdapter()
         ..on(
-          'GET',
-          '/me',
-          _Reply.ok({
-            'user_id': 'u-1',
-            'server_now': '2026-04-28T12:34:56.789Z',
-            'server_hlc':
-                '1714303596789.0000-00000000-0000-0000-0000-000000000000',
-          }),
+          'POST',
+          '/sync',
+          _Reply.ok({'seq': 1342, 'changes': <Object?>[], 'more': false}),
         );
       final client = _buildClient(adapter);
 
-      final res = await client.me();
+      await client.sync(
+        deviceId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        since: 1287,
+        changes: [_change(), _change(id: 'A2')],
+      );
 
-      expect(res.userId, 'u-1');
-      expect(res.serverNow, DateTime.utc(2026, 4, 28, 12, 34, 56, 789));
-      expect(res.serverHlc.wallMillis, 1714303596789);
-      final headers = adapter.calls.single.options.headers;
+      final captured = adapter.calls.single;
+      final headers = captured.options.headers;
       expect(headers['Sync-Protocol-Version'], '$kSyncProtocolVersion');
       expect(headers['Content-Type'], 'application/json; charset=utf-8');
       expect(headers['Accept'], 'application/json');
       expect(headers['Authorization'], 'Bearer sync-token');
+
+      final body = jsonDecode(captured.body) as Map<String, Object?>;
+      expect(body['device_id'], 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+      expect(body['since'], 1287);
+      final changes = body['changes'] as List<Object?>;
+      expect(changes, hasLength(2));
+      final first = changes.first as Map<String, Object?>;
+      expect(first['table'], 'accounts');
+      expect(first['id'], 'A1');
+      expect(first['payload'], {'name': 'Cash'});
+      expect(first['deleted'], false);
     });
 
-    test('push encodes batch body and parses per-op rejection', () async {
+    test('encodes a deleted row with a null payload', () async {
       final adapter = _FakeAdapter()
         ..on(
           'POST',
-          '/sync/push',
-          _Reply.ok({
-            'accepted': 1,
-            'rejected': [
-              {'op_id': 'op-bad', 'code': 'op_id_mutated', 'message': 'reused'},
-            ],
-            'server_hlc_high':
-                '1714291205000.0002-00000000-0000-0000-0000-000000000000',
-            'server_now': '2026-04-28T12:00:05.000Z',
-          }),
+          '/sync',
+          _Reply.ok({'seq': 5, 'changes': <Object?>[], 'more': false}),
         );
       final client = _buildClient(adapter);
 
-      final res = await client.push(
-        deviceId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-        ops: [
-          _op(),
-          _op(opId: 'op-bad'),
-        ],
+      await client.sync(
+        deviceId: 'd',
+        since: 0,
+        changes: [_change(payload: null, deleted: true)],
       );
 
-      expect(res.accepted, 1);
-      expect(res.rejected.single.code, 'op_id_mutated');
-      expect(res.serverHlcHigh.counter, 2);
-      final body =
-          jsonDecode(adapter.calls.single.body) as Map<String, Object?>;
-      expect(body['device_id'], 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-      final ops = body['ops'] as List<Object?>;
-      expect(ops, hasLength(2));
-      expect((ops.first as Map<String, Object?>)['op_type'], 'update');
-      expect((ops.first as Map<String, Object?>)['fields_diff'], {
-        'name': 'Cash',
-      });
+      final body = jsonDecode(adapter.calls.single.body) as Map<String, Object?>;
+      final change = (body['changes'] as List).single as Map<String, Object?>;
+      expect(change['payload'], isNull);
+      expect(change['deleted'], true);
     });
 
-    test('pull sends canonical cursor and parses returned ops', () async {
-      final since = Hlc.parse(
-        '1714291200000.0001-00000000-0000-0000-0000-000000000000',
-      );
-      final remote = _op(
-        opId: 'remote-1',
-        type: OpType.insert,
-        fieldsDiff: const {'id': 'A1', 'name': 'Cash'},
-        hlc: Hlc.parse(
-          '1714291205000.0000-00000000-0000-0000-0000-000000000000',
-        ),
-        deviceId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-      );
+    test('parses the response: seq, changes and more', () async {
       final adapter = _FakeAdapter()
         ..on(
-          'GET',
-          '/sync/pull',
+          'POST',
+          '/sync',
           _Reply.ok({
-            'ops': [remote.toJson()],
-            'server_hlc_high': remote.hlc.toString(),
-            'has_more': true,
-            'server_now': '2026-04-28T12:00:05.000Z',
+            'seq': 1342,
+            'changes': [
+              {
+                'table': 'assets',
+                'id': 'a1b2',
+                'payload': {'name': 'Brokerage'},
+                'version': '1716381005000.0000-bbbb',
+                'device_id': 'bbbb',
+                'deleted': false,
+                'seq': 1340,
+              },
+            ],
+            'more': true,
           }),
         );
       final client = _buildClient(adapter);
 
-      final res = await client.pull(
-        deviceId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-        since: since,
-        limit: 123,
-      );
+      final res = await client.sync(deviceId: 'd', since: 0, changes: const []);
 
-      expect(res.ops.single.opId, 'remote-1');
-      expect(res.hasMore, isTrue);
-      final query = adapter.calls.single.options.queryParameters;
-      expect(query['since'], since.toString());
-      expect(query['device_id'], 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-      expect(query['limit'], '123');
+      expect(res.seq, 1342);
+      expect(res.more, isTrue);
+      expect(res.changes, hasLength(1));
+      final row = res.changes.single;
+      expect(row.table, 'assets');
+      expect(row.id, 'a1b2');
+      expect(row.payload, {'name': 'Brokerage'});
+      expect(row.version, '1716381005000.0000-bbbb');
+      expect(row.deviceId, 'bbbb');
+      expect(row.seq, 1340);
+      expect(row.deleted, isFalse);
     });
 
-    test('maps protocol status codes to SyncException kinds', () async {
+    test('parses a tombstone change in the response', () async {
+      final adapter = _FakeAdapter()
+        ..on(
+          'POST',
+          '/sync',
+          _Reply.ok({
+            'seq': 9,
+            'changes': [
+              {
+                'table': 'accounts',
+                'id': 'gone',
+                'payload': {'name': 'Old', 'deleted_at': 1700000000},
+                'version': '1716381005000.0000-bbbb',
+                'device_id': 'bbbb',
+                'deleted': true,
+                'seq': 8,
+              },
+            ],
+            'more': false,
+          }),
+        );
+      final client = _buildClient(adapter);
+
+      final res = await client.sync(deviceId: 'd', since: 0, changes: const []);
+      expect(res.changes.single.deleted, isTrue);
+    });
+
+    test('maps status codes to SyncException kinds', () async {
       final cases = <int, SyncErrorKind>{
         401: SyncErrorKind.unauthorized,
-        409: SyncErrorKind.clockSkew,
         413: SyncErrorKind.payloadTooLarge,
         426: SyncErrorKind.protocolVersion,
+        429: SyncErrorKind.rateLimited,
         500: SyncErrorKind.server,
       };
 
       for (final entry in cases.entries) {
         final adapter = _FakeAdapter()
           ..on(
-            'GET',
-            '/me',
+            'POST',
+            '/sync',
             _Reply.json(entry.key, {
               'code': 'c_${entry.key}',
               'message': 'status ${entry.key}',
@@ -254,7 +259,7 @@ void main() {
         final client = _buildClient(adapter);
 
         await expectLater(
-          client.me(),
+          client.sync(deviceId: 'd', since: 0, changes: const []),
           throwsA(
             isA<SyncException>()
                 .having((e) => e.kind, 'kind', entry.value)
@@ -268,8 +273,8 @@ void main() {
     test('429 preserves Retry-After seconds for engine backoff', () async {
       final adapter = _FakeAdapter()
         ..on(
-          'GET',
-          '/me',
+          'POST',
+          '/sync',
           _Reply.json(
             429,
             {'code': 'rate_limited', 'message': 'slow down'},
@@ -281,7 +286,7 @@ void main() {
       final client = _buildClient(adapter);
 
       await expectLater(
-        client.me(),
+        client.sync(deviceId: 'd', since: 0, changes: const []),
         throwsA(
           isA<SyncException>()
               .having((e) => e.kind, 'kind', SyncErrorKind.rateLimited)
@@ -294,12 +299,13 @@ void main() {
       );
     });
 
-    test('connection errors map to retryable network failure', () async {
-      final adapter = _FakeAdapter()..on('GET', '/me', _Reply.networkError());
+    test('connection errors map to a retryable network failure', () async {
+      final adapter = _FakeAdapter()
+        ..on('POST', '/sync', _Reply.networkError());
       final client = _buildClient(adapter);
 
       await expectLater(
-        client.me(),
+        client.sync(deviceId: 'd', since: 0, changes: const []),
         throwsA(
           isA<SyncException>()
               .having((e) => e.kind, 'kind', SyncErrorKind.network)
