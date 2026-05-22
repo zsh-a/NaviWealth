@@ -58,6 +58,16 @@ abstract class AuthApiClient {
     String? deviceId,
   });
 
+  /// `POST /auth/register` — creates the first backend account and returns
+  /// the same session envelope as login. The backend rejects later attempts
+  /// once a user row already exists.
+  Future<AuthSession> register({
+    required String email,
+    required String password,
+    String? deviceName,
+    String? deviceId,
+  });
+
   /// `POST /auth/refresh` (Bearer). Rotates the JWT for the current device.
   Future<RefreshedToken> refresh(AuthSession current);
 

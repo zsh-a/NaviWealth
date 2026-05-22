@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/sync/op.dart';
 import '../../../../core/sync/op_outbox.dart';
 import '../../../../data/db/app_database.dart';
 import '../../../../data/domain/enums.dart';
@@ -17,11 +16,11 @@ import 'physical_asset_meta.dart';
 /// CRUD + valuation history for non-financial assets (real estate, vehicles).
 ///
 /// Acts as the single mutation entry point so callers can't accidentally
-/// forget the sync `Op` enqueue or the synthetic `valuationAdjust`
+/// forget the sync dirty-mark or the synthetic `valuationAdjust`
 /// transaction that the analytics layer relies on. Mirrors the contract
-/// of [ManualAssetRepository] / [LiabilityRepository] from FIR-44 / FIR-47:
-/// each write happens inside a Drift transaction that *both* mutates the
-/// row and enqueues a corresponding [Op].
+/// of [ManualAssetRepository] / [LiabilityRepository]: each write happens
+/// inside a Drift transaction that *both* mutates the row and marks it
+/// dirty in the sync outbox.
 class PhysicalAssetRepository {
   PhysicalAssetRepository({
     required AppDatabase db,
@@ -43,6 +42,8 @@ class PhysicalAssetRepository {
   final PriceRepository _priceRepo;
   final JournalEntryRepository? _journalEntryRepo;
   final Uuid _uuid;
+
+  static const String _tableName = 'assets';
 
   static const Set<AssetType> _physicalTypes = {
     AssetType.realEstate,
@@ -217,13 +218,7 @@ class PhysicalAssetRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(
-        tableName: 'assets',
-        rowId: assetId,
-        opType: OpType.delete,
-        stamp: stamp,
-        fields: null,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: assetId);
     });
   }
 
@@ -247,19 +242,7 @@ class PhysicalAssetRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(
-        tableName: 'assets',
-        rowId: assetId,
-        opType: OpType.update,
-        stamp: stamp,
-        fields: <String, Object?>{
-          'name': ?name,
-          'metadata_json': encoded,
-          'updated_at': stamp.now.toUtc().toIso8601String(),
-          'updated_by_device': stamp.deviceId,
-          'hlc': stamp.hlc.toString(),
-        },
-      );
+      await _outbox.enqueue(table: _tableName, rowId: assetId);
     });
   }
 
@@ -303,24 +286,7 @@ class PhysicalAssetRepository {
               hlc: stamp.hlc,
             ),
           );
-      await _enqueue(
-        tableName: 'assets',
-        rowId: id,
-        opType: OpType.insert,
-        stamp: stamp,
-        fields: <String, Object?>{
-          'id': id,
-          'type': type.name,
-          'symbol': id,
-          'currency': currency,
-          'name': name,
-          'metadata_json': encoded,
-          'owner_user_id': stamp.ownerUserId,
-          'updated_at': stamp.now.toUtc().toIso8601String(),
-          'updated_by_device': stamp.deviceId,
-          'hlc': stamp.hlc.toString(),
-        },
-      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
 
     final created = await getById(id);
@@ -371,23 +337,4 @@ class PhysicalAssetRepository {
     await jeRepo.create(entry: build.entry, postings: build.postings);
   }
 
-  Future<void> _enqueue({
-    required String tableName,
-    required String rowId,
-    required OpType opType,
-    required MutationStamp stamp,
-    required Map<String, Object?>? fields,
-  }) async {
-    final op = Op(
-      opId: _uuid.v4(),
-      tableName: tableName,
-      rowId: rowId,
-      opType: opType,
-      fieldsDiff: fields,
-      hlc: stamp.hlc,
-      deviceId: stamp.deviceId,
-    );
-    if (validateOpForQueue(op) != null) return;
-    await _outbox.enqueue(op);
-  }
 }

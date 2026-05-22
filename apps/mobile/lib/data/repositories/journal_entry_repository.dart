@@ -4,7 +4,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
 import '../db/app_database.dart';
 import '../domain/entry_kind.dart';
@@ -520,20 +519,10 @@ class JournalEntryRepository {
 
     await _db.transaction(() async {
       await _db.into(_db.journalEntries).insert(_journalCompanion(domainEntry));
-      await _enqueueJournal(
-        opType: OpType.insert,
-        rowId: jeId,
-        fields: _journalInsertFields(domainEntry),
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _journalTable, rowId: jeId);
       for (final p in domainPostings) {
         await _db.into(_db.postings).insert(_postingCompanion(p));
-        await _enqueuePosting(
-          opType: OpType.insert,
-          rowId: p.id,
-          fields: _postingInsertFields(p),
-          stamp: stamp,
-        );
+        await _outbox.enqueue(table: _postingsTable, rowId: p.id);
       }
     });
     return JournalEntryWithPostings(
@@ -644,12 +633,7 @@ class JournalEntryRepository {
       await (_db.update(
         _db.journalEntries,
       )..where((t) => t.id.equals(id))).write(jeUpdate);
-      await _enqueueJournal(
-        opType: OpType.update,
-        rowId: id,
-        fields: _journalInsertFields(domainEntry),
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _journalTable, rowId: id);
 
       // 2. Tombstone the existing postings + queue delete ops.
       final oldPostingRows =
@@ -668,23 +652,13 @@ class JournalEntryRepository {
             ..where((t) => t.deletedAt.isNull()))
           .write(tombstone);
       for (final p in oldPostingRows) {
-        await _enqueuePosting(
-          opType: OpType.delete,
-          rowId: p.id,
-          fields: null,
-          stamp: stamp,
-        );
+        await _outbox.enqueue(table: _postingsTable, rowId: p.id);
       }
 
       // 3. Insert the replacements.
       for (final p in domainPostings) {
         await _db.into(_db.postings).insert(_postingCompanion(p));
-        await _enqueuePosting(
-          opType: OpType.insert,
-          rowId: p.id,
-          fields: _postingInsertFields(p),
-          stamp: stamp,
-        );
+        await _outbox.enqueue(table: _postingsTable, rowId: p.id);
       }
     });
 
@@ -709,12 +683,7 @@ class JournalEntryRepository {
       await (_db.update(
         _db.journalEntries,
       )..where((t) => t.id.equals(id))).write(jeUpdate);
-      await _enqueueJournal(
-        opType: OpType.delete,
-        rowId: id,
-        fields: null,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _journalTable, rowId: id);
 
       final postingRows =
           await (_db.select(_db.postings)
@@ -732,12 +701,7 @@ class JournalEntryRepository {
             ..where((t) => t.deletedAt.isNull()))
           .write(postingUpdate);
       for (final p in postingRows) {
-        await _enqueuePosting(
-          opType: OpType.delete,
-          rowId: p.id,
-          fields: null,
-          stamp: stamp,
-        );
+        await _outbox.enqueue(table: _postingsTable, rowId: p.id);
       }
     });
   }
@@ -779,84 +743,6 @@ class JournalEntryRepository {
       updatedByDevice: p.sync.updatedByDevice,
       hlc: p.sync.hlc,
     );
-  }
-
-  Map<String, Object?> _journalInsertFields(JournalEntry entry) => {
-    'id': entry.id,
-    'date': entry.date.toUtc().toIso8601String(),
-    'settled_on': entry.settledOn?.toUtc().toIso8601String(),
-    'narration': entry.narration,
-    'payee': entry.payee,
-    'flag': entry.flag.name,
-    'tag_ids_json': jsonEncode(entry.tagIds),
-    'owner_user_id': entry.sync.ownerUserId,
-    'updated_at': entry.sync.updatedAt.toUtc().toIso8601String(),
-    'updated_by_device': entry.sync.updatedByDevice,
-    'hlc': entry.sync.hlc.toString(),
-  };
-
-  Map<String, Object?> _postingInsertFields(Posting p) => {
-    'id': p.id,
-    'journal_entry_id': p.journalEntryId,
-    'position': p.position,
-    'account_id': p.accountId,
-    'units': p.units.toString(),
-    'unit': p.unit,
-    'cost_per_unit': p.cost?.perUnit.toString(),
-    'cost_currency': p.cost?.currency,
-    'cost_lot_id': p.cost?.lotId,
-    'cost_acquired_on': p.cost?.acquiredOn?.toUtc().toIso8601String(),
-    'price_per_unit': p.price?.perUnit.toString(),
-    'price_currency': p.price?.currency,
-    'owner_user_id': p.sync.ownerUserId,
-    'updated_at': p.sync.updatedAt.toUtc().toIso8601String(),
-    'updated_by_device': p.sync.updatedByDevice,
-    'hlc': p.sync.hlc.toString(),
-  };
-
-  Future<void> _enqueueJournal({
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) => _enqueue(
-    tableName: _journalTable,
-    opType: opType,
-    rowId: rowId,
-    fields: fields,
-    stamp: stamp,
-  );
-
-  Future<void> _enqueuePosting({
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) => _enqueue(
-    tableName: _postingsTable,
-    opType: opType,
-    rowId: rowId,
-    fields: fields,
-    stamp: stamp,
-  );
-
-  Future<void> _enqueue({
-    required String tableName,
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) async {
-    final op = Op(
-      opId: _uuid.v4(),
-      tableName: tableName,
-      rowId: rowId,
-      opType: opType,
-      fieldsDiff: fields,
-      hlc: stamp.hlc,
-      deviceId: stamp.deviceId,
-    );
-    await _outbox.enqueue(op);
   }
 
   // ---------- Row → domain ----------

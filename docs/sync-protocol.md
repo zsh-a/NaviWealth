@@ -720,8 +720,8 @@ For a new syncable table under v1:
 7. Document rollback: remove the feature writer first, then tombstone or ignore
    the materialised rows; keep OpLog rows durable for cursor consistency.
 
-`recurring_transactions` follows this SOP in mobile schema v9 and backend
-migration `0018_recurring_transactions.sql`.
+`recurring_transactions` originally followed this v1 SOP in mobile schema v9;
+the dedicated backend migration was removed by the sync v2 clean rebuild.
 
 ---
 

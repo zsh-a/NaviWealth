@@ -7,7 +7,6 @@ import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/sync/providers.dart';
 import '../../../core/sync/sync_status.dart';
-import '../../../data/domain/hlc.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -348,7 +347,7 @@ class _DiagnosticsCard extends StatelessWidget {
   });
 
   final SyncStatusEvent event;
-  final Hlc? cursor;
+  final int? cursor;
   final String? deviceId;
   final String? apiBaseUrl;
 
@@ -375,10 +374,10 @@ class _DiagnosticsCard extends StatelessWidget {
           const FDivider(),
           _Row(
             label: l10n.syncStatusDetailCursor,
-            value: cursor == null
+            value: (cursor == null || cursor == 0)
                 ? l10n.syncStatusDetailCursorUnset
-                : _formatCursor(l10n, cursor!),
-            monospace: cursor != null,
+                : '#$cursor',
+            monospace: cursor != null && cursor != 0,
           ),
           if (apiBaseUrl != null) ...[
             const FDivider(),
@@ -394,11 +393,6 @@ class _DiagnosticsCard extends StatelessWidget {
     );
   }
 }
-
-/// Renders the pull cursor as a relative time so the reader can gauge
-/// freshness without squinting at a 36-char canonical HLC.
-String _formatCursor(AppLocalizations l10n, Hlc cursor) =>
-    _relativeTime(l10n, cursor.wallTime);
 
 // ---------------------------------------------------------------------------
 // Local counts (debug)

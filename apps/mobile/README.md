@@ -9,7 +9,7 @@ flutter pub get
 flutter run                              # 默认设备
 flutter test
 flutter analyze --fatal-infos
-flutter build web --release --pwa-strategy=none
+flutter build web --release
 flutter build apk --debug
 flutter build ios --debug --no-codesign  # macOS only
 ```
@@ -63,10 +63,10 @@ lib/
 
 ## Web PWA / 离线 Shell
 
-`web/service_worker.js` 是手写 SW，替换 Flutter 默认的 `flutter_service_worker.js`。Build Web 时 **必须** 关闭 Flutter 自带 SW：
+`web/service_worker.js` 是手写 SW，替换 Flutter 默认的 `flutter_service_worker.js`。Flutter 自带 SW 的关闭不再依赖已废弃的 `--pwa-strategy` flag（[flutter#156910](https://github.com/flutter/flutter/issues/156910)）——改由自定义模板 `web/flutter_bootstrap.js` 实现：它调用 `_flutter.loader.load()` 时不传 `serviceWorkerSettings`，Flutter 因此不会注册自带 SW。普通构建即可：
 
 ```bash
-flutter build web --release --pwa-strategy=none
+flutter build web --release
 ```
 
 | 流量 | 策略 | 缓存桶 |
@@ -88,7 +88,7 @@ flutter build web --release --pwa-strategy=none
 本地直传：
 
 ```bash
-flutter build web --release --pwa-strategy=none
+flutter build web --release
 wrangler pages deploy --branch main
 ```
 
@@ -112,6 +112,6 @@ wrangler pages deploy --branch main
 
 1. `analyze + test (coverage)` — `dart format --set-exit-if-changed`、`flutter analyze --fatal-infos`、`flutter test --coverage --exclude-tags=golden`、Codecov 上传
 2. `golden regression (mobile)` — `flutter test test/golden --tags=golden`，PR 上 byte-diff 失败
-3. `build web` — `flutter build web --release --pwa-strategy=none`
+3. `build web` — `flutter build web --release`
 
 Android / iOS 构建在 `release.yml` 里跟着 tag 跑，不属于 PR 必需 check。

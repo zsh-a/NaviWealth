@@ -11,7 +11,7 @@ use crate::auth::{
 use crate::error::AppError;
 
 #[derive(Deserialize)]
-struct LoginRequest {
+struct AuthRequest {
     email: String,
     password: String,
     #[serde(default)]
@@ -33,6 +33,11 @@ struct LoginResponse {
 struct UserRow {
     id: String,
     password_hash: String,
+}
+
+#[derive(Deserialize)]
+struct ExistingUserRow {
+    id: String,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -97,17 +102,14 @@ fn issue_token(
 }
 
 pub async fn login(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
-    let body: LoginRequest = match req.json().await {
+    let body: AuthRequest = match req.json().await {
         Ok(b) => b,
         Err(_) => return AppError::BadRequest("invalid JSON body".into()).into_response(),
     };
     into_response(login_inner(body, &ctx).await)
 }
 
-async fn login_inner(
-    body: LoginRequest,
-    ctx: &RouteContext<()>,
-) -> Result<LoginResponse, AppError> {
+async fn login_inner(body: AuthRequest, ctx: &RouteContext<()>) -> Result<LoginResponse, AppError> {
     if body.email.is_empty() || body.password.is_empty() {
         return Err(AppError::BadRequest("email and password required".into()));
     }
@@ -133,9 +135,86 @@ async fn login_inner(
         }
     };
 
+    issue_session(user_id, body.device_name, body.device_id, ctx, &db).await
+}
+
+pub async fn register(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
+    let body: AuthRequest = match req.json().await {
+        Ok(b) => b,
+        Err(_) => return AppError::BadRequest("invalid JSON body".into()).into_response(),
+    };
+    into_response(register_inner(body, &ctx).await)
+}
+
+async fn register_inner(
+    body: AuthRequest,
+    ctx: &RouteContext<()>,
+) -> Result<LoginResponse, AppError> {
+    if body.email.is_empty() || body.password.is_empty() {
+        return Err(AppError::BadRequest("email and password required".into()));
+    }
+    if body.password.len() < 8 {
+        return Err(AppError::BadRequest(
+            "password must be at least 8 characters".into(),
+        ));
+    }
+    let email_norm = body.email.trim().to_ascii_lowercase();
+    if !email_norm.contains('@') {
+        return Err(AppError::BadRequest("email must be valid".into()));
+    }
+
+    let db = db(ctx)?;
+    let existing: Option<ExistingUserRow> = db
+        .prepare("SELECT id FROM users LIMIT 1")
+        .first(None)
+        .await
+        .map_err(|e| AppError::Internal(format!("d1 first: {e}")))?;
+    if let Some(row) = existing {
+        worker::console_log!("registration_rejected_existing_user id={}", row.id);
+        return Err(AppError::coded(
+            409,
+            "registration_closed",
+            "registration is already complete",
+        ));
+    }
+
+    let user_id = Uuid::new_v4().to_string();
+    let password_hash = password::hash(&body.password)?;
+    db.prepare("INSERT INTO users (id, email, password_hash) VALUES (?1, ?2, ?3)")
+        .bind_refs([
+            &D1Type::Text(&user_id),
+            &D1Type::Text(&email_norm),
+            &D1Type::Text(&password_hash),
+        ])
+        .map_err(|e| AppError::Internal(format!("bind: {e}")))?
+        .run()
+        .await
+        .map_err(|e| {
+            let msg = e.to_string();
+            if msg.contains("UNIQUE") || msg.contains("constraint") {
+                AppError::coded(
+                    409,
+                    "registration_closed",
+                    "registration is already complete",
+                )
+            } else {
+                AppError::Internal(format!("d1 run: {e}"))
+            }
+        })?;
+
+    issue_session(user_id, body.device_name, body.device_id, ctx, &db).await
+}
+
+async fn issue_session(
+    user_id: String,
+    device_name: Option<String>,
+    requested_device_id: Option<String>,
+    ctx: &RouteContext<()>,
+    db: &D1Database,
+) -> Result<LoginResponse, AppError> {
     let secret = jwt_secret(ctx)?;
     let now = Utc::now();
-    let device_id = match body.device_id.as_deref().map(str::trim) {
+    let device_id = match requested_device_id.as_deref().map(str::trim) {
         Some(raw) if !raw.is_empty() => Uuid::parse_str(raw)
             .map_err(|_| AppError::BadRequest("device_id must be a UUID".into()))?
             .to_string(),
@@ -144,7 +223,7 @@ async fn login_inner(
     let (token, jti, exp) = issue_token(&user_id, &device_id, secret.as_bytes(), now)?;
 
     let now_iso = now.to_rfc3339();
-    let name_value = match body.device_name.as_deref().map(str::trim) {
+    let name_value = match device_name.as_deref().map(str::trim) {
         Some(s) if !s.is_empty() => D1Type::Text(s),
         _ => D1Type::Null,
     };

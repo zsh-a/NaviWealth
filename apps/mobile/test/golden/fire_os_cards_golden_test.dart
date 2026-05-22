@@ -13,6 +13,8 @@ import 'package:naviwealth/features/fire/domain/fire_stress_test.dart';
 import 'package:naviwealth/features/fire/presentation/fire_buckets_card.dart';
 import 'package:naviwealth/features/fire/presentation/fire_state_hero_card.dart';
 import 'package:naviwealth/features/fire/presentation/fire_stress_tests_card.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 
 import '_golden_setup.dart';
 
@@ -112,6 +114,13 @@ FireBucketAllocation _stubAllocation() {
   );
 }
 
+DashboardSnapshot _stubSnapshot() {
+  return DashboardSnapshot.empty(
+    asOf: DateTime.utc(2026, 5, 20),
+    baseCurrency: 'CNY',
+  );
+}
+
 List<FireStressResult> _stubStress() {
   Money m(String n) => Money(Decimal.parse(n), 'CNY');
   return [
@@ -202,6 +211,7 @@ void main() {
         fireBucketAllocationProvider.overrideWith(
           (ref) => AsyncValue.data(_stubAllocation()),
         ),
+        dashboardSnapshotProvider.overrideWith((ref) async => _stubSnapshot()),
       ],
       child: _wrapCard(const FireBucketsCard()),
     );

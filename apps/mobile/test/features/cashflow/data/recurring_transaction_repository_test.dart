@@ -1,13 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/cashflow/data/recurring_transaction_repository.dart';
 
+import '../../../core/sync/_outbox_test_ext.dart';
 import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 
@@ -55,7 +55,7 @@ void main() {
     await db.close();
   });
 
-  test('create writes synced row and queues insert op', () async {
+  test('create writes synced row and queues a dirty pointer', () async {
     final template = _templateJson();
 
     final tx = await recurringRepo.create(
@@ -68,12 +68,10 @@ void main() {
     expect(tx.id, 'rt-salary');
     expect(tx.enabled, isTrue);
 
-    final batch = await outbox.peekBatch();
+    final batch = outbox.queued;
     expect(batch, hasLength(1));
-    expect(batch.single.tableName, 'recurring_transactions');
-    expect(batch.single.opType, OpType.insert);
-    expect(batch.single.fieldsDiff!['rrule'], 'FREQ=MONTHLY;BYMONTHDAY=1');
-    expect(batch.single.fieldsDiff!['template_journal_build_json'], template);
+    expect(batch.single.table, 'recurring_transactions');
+    expect(batch.single.rowId, 'rt-salary');
   });
 
   test('materialiseDue creates deterministic journal entries once', () async {
@@ -83,7 +81,7 @@ void main() {
       rrule: 'FREQ=DAILY',
       nextDueAt: DateTime.utc(2026, 1, 1),
     );
-    await outbox.ack((await outbox.peekBatch()).map((op) => op.opId));
+    outbox.clearQueued();
 
     final firstRun = await service.materialiseDue(DateTime.utc(2026, 1, 3));
     final secondRun = await service.materialiseDue(DateTime.utc(2026, 1, 3));

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/route_guard.dart';
 import '../../../core/auth/auth_errors.dart';
 import '../../../core/auth/auth_session.dart';
+import '../../../core/auth/device_identity_store.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/auth/token_store.dart';
 import '../../../core/logging/providers.dart';
@@ -129,7 +130,48 @@ class AuthController extends AsyncNotifier<AuthState> {
       deviceName: deviceName,
       deviceId: deviceId,
     );
-    if (session.deviceId != deviceId) {
+    await _persistCloudSession(
+      session: session,
+      requestedDeviceId: deviceId,
+      store: store,
+      deviceIdentity: deviceIdentity,
+    );
+    logger.i('auth_login_success user=${session.userId}');
+  }
+
+  Future<void> register({
+    required String email,
+    required String password,
+    String? deviceName,
+  }) async {
+    final api = ref.read(authApiClientProvider);
+    final store = ref.read(tokenStoreProvider);
+    final deviceIdentity = ref.read(deviceIdentityStoreProvider);
+    final logger = ref.read(loggerProvider);
+    final deviceId = await deviceIdentity.getOrCreate();
+
+    final session = await api.register(
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    );
+    await _persistCloudSession(
+      session: session,
+      requestedDeviceId: deviceId,
+      store: store,
+      deviceIdentity: deviceIdentity,
+    );
+    logger.i('auth_register_success user=${session.userId}');
+  }
+
+  Future<void> _persistCloudSession({
+    required AuthSession session,
+    required String requestedDeviceId,
+    required TokenStore store,
+    required DeviceIdentityStore deviceIdentity,
+  }) async {
+    if (session.deviceId != requestedDeviceId) {
       await deviceIdentity.remember(session.deviceId);
     }
     await store.write(session);
@@ -143,7 +185,6 @@ class AuthController extends AsyncNotifier<AuthState> {
       // Preference layer not wired (test env) — skip the mode bump.
     }
     state = AsyncData(AuthLoggedIn(session));
-    logger.i('auth_login_success user=${session.userId}');
     _bumpRouterRedirect();
   }
 

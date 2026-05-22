@@ -1,6 +1,6 @@
 -- FIR-29: single-user auth schema.
--- Account rows are inserted directly by the operator (wrangler / D1 console);
--- there is no public registration endpoint.
+-- The first account is created through POST /auth/register. Registration
+-- closes once a user row exists; later sessions use POST /auth/login.
 
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY NOT NULL,

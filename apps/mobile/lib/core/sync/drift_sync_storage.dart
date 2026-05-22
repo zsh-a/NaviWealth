@@ -1,15 +1,18 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../data/db/app_database.dart';
 import '../../data/domain/hlc.dart';
 import 'cursor_store.dart';
-import 'op.dart';
 import 'op_outbox.dart';
+import 'row_applier.dart' show kSyncPkOverrides;
 
-/// Drift-backed implementation of [OutboxStore] using the v3 `op_outbox`
-/// table created in `core/db/migrations.dart`.
+/// Drift-backed [OutboxStore] over the `op_outbox` table.
+///
+/// v2 keeps `op_outbox` purely as a *dirty-pointer log*: the write path
+/// (repositories) still enqueues an op per mutation, but the sync engine
+/// only reads the `(table, row_id)` set out of it and pushes each row's
+/// current state. `fields_diff` / `op_type` are no longer interpreted.
 class DriftOutboxStore implements OutboxStore {
   DriftOutboxStore(this._db);
   final AppDatabase _db;
@@ -23,142 +26,113 @@ class DriftOutboxStore implements OutboxStore {
   }
 
   @override
-  Future<void> enqueue(Op op) async {
+  Future<void> enqueue({required String table, required String rowId}) async {
     await _db.customStatement(
-      'INSERT OR IGNORE INTO op_outbox '
-      '(op_id, hlc_text, device_id, table_name, row_id, op_type, '
-      ' fields_diff, created_at, attempts) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)',
+      'INSERT INTO op_outbox (op_id, table_name, row_id, created_at) '
+      'VALUES (?, ?, ?, ?)',
       [
-        op.opId,
-        op.hlc.toString(),
-        op.deviceId,
-        op.tableName,
-        op.rowId,
-        op.opType.wire,
-        op.fieldsDiff == null ? null : jsonEncode(op.fieldsDiff),
+        const Uuid().v4(),
+        table,
+        rowId,
         DateTime.now().toUtc().toIso8601String(),
       ],
     );
   }
+}
+
+/// Reads `op_outbox` as the set of locally-dirty rows and serialises each
+/// row's current state for push (`docs/sync-v2.md` §7.3).
+class DriftPendingRows implements PendingRows {
+  DriftPendingRows(this._db);
+  final AppDatabase _db;
 
   @override
-  Future<List<Op>> peekBatch({
-    int maxOps = 500,
-    int maxBytes = 1024 * 1024,
-  }) async {
-    final rows = await _db
-        .customSelect(
-          'SELECT op_id, hlc_text, device_id, table_name, row_id, op_type, '
-          '       fields_diff '
-          'FROM op_outbox '
-          'ORDER BY hlc_text ASC, created_at ASC '
-          'LIMIT ?',
-          variables: [Variable.withInt(maxOps)],
-        )
-        .get();
-
-    final result = <Op>[];
-    var bytes = 0;
-    for (final r in rows) {
-      final encoded = r.read<String?>('fields_diff');
-      Map<String, Object?>? fieldsDiff;
-      if (encoded != null) {
-        final decoded = jsonDecode(encoded);
-        if (decoded is Map) {
-          fieldsDiff = decoded.map((k, v) => MapEntry(k as String, v));
-        }
-      }
-      final op = Op(
-        opId: r.read<String>('op_id'),
-        tableName: r.read<String>('table_name'),
-        rowId: r.read<String>('row_id'),
-        opType: parseOpType(r.read<String>('op_type')),
-        fieldsDiff: fieldsDiff,
-        hlc: Hlc.parse(r.read<String>('hlc_text')),
-        deviceId: r.read<String>('device_id'),
-      );
-      // Always include at least one op so a single oversized payload
-      // can still be reported (server returns per-op `payload_too_large`).
-      if (result.isNotEmpty && bytes + op.encodedSizeBytes > maxBytes) {
-        break;
-      }
-      result.add(op);
-      bytes += op.encodedSizeBytes;
-    }
-    return result;
+  Future<int> depth() async {
+    final row = await _db
+        .customSelect('SELECT COUNT(*) AS c FROM op_outbox')
+        .getSingle();
+    return row.read<int>('c');
   }
 
+  /// All queued local mutations as `(opId, table, rowId)` pointers, oldest
+  /// first. Multiple ops on the same row collapse to one push downstream.
   @override
-  Future<void> ack(Iterable<String> opIds) async {
-    if (opIds.isEmpty) return;
+  Future<List<PendingPointer>> pointers() async {
+    final rows = await _db
+        .customSelect(
+          'SELECT op_id, table_name, row_id FROM op_outbox '
+          'ORDER BY created_at ASC, op_id ASC',
+        )
+        .get();
+    return rows
+        .map(
+          (r) => PendingPointer(
+            opId: r.read<String>('op_id'),
+            table: r.read<String>('table_name'),
+            rowId: r.read<String>('row_id'),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  /// Read a row's current state as a JSON-safe column → value map.
+  ///
+  /// Returns `null` if the row is gone — deletes are soft, so under normal
+  /// operation the row always exists; a `null` means a stale pointer.
+  @override
+  Future<Map<String, Object?>?> readRow(String table, String rowId) async {
+    final pk = kSyncPkOverrides[table] ?? 'id';
+    final row = await _db
+        .customSelect(
+          'SELECT * FROM $table WHERE $pk = ?',
+          variables: [Variable.withString(rowId)],
+        )
+        .getSingleOrNull();
+    return row?.data;
+  }
+
+  /// Delete acknowledged op pointers. New ops queued mid-flight carry fresh
+  /// `op_id`s and survive, so they are re-pushed on the next cycle.
+  @override
+  Future<void> clear(Iterable<String> opIds) async {
     final ids = opIds.toList(growable: false);
+    if (ids.isEmpty) return;
     final placeholders = List.filled(ids.length, '?').join(',');
     await _db.customStatement(
       'DELETE FROM op_outbox WHERE op_id IN ($placeholders)',
       ids,
     );
   }
-
-  @override
-  Future<void> recordFailure({
-    required String opId,
-    required String code,
-    String? message,
-    String? payload,
-  }) async {
-    await _db.transaction(() async {
-      await _db.customStatement(
-        'INSERT INTO sync_errors (op_id, code, message, payload, recorded_at) '
-        'VALUES (?, ?, ?, ?, ?)',
-        [
-          opId,
-          code,
-          message,
-          payload,
-          DateTime.now().toUtc().toIso8601String(),
-        ],
-      );
-      await _db.customStatement('DELETE FROM op_outbox WHERE op_id = ?', [
-        opId,
-      ]);
-    });
-  }
-
-  @override
-  Future<void> bumpAttempts(Iterable<String> opIds) async {
-    if (opIds.isEmpty) return;
-    final ids = opIds.toList(growable: false);
-    final placeholders = List.filled(ids.length, '?').join(',');
-    await _db.customStatement(
-      'UPDATE op_outbox SET attempts = attempts + 1 '
-      'WHERE op_id IN ($placeholders)',
-      ids,
-    );
-  }
 }
 
-/// Drift-backed [CursorStore] using the v3 `sync_meta` key/value table.
+/// Drift-backed [CursorStore] over the `sync_meta` key/value table.
 class DriftCursorStore implements CursorStore {
   DriftCursorStore(this._db);
   final AppDatabase _db;
 
-  static const _kCursor = 'sync.cursor';
+  static const _kSeq = 'sync.cursor';
   static const _kLocalHlc = 'sync.local_hlc';
 
   @override
-  Future<Hlc?> readCursor() => _readHlc(_kCursor);
+  Future<int> readSeq() async {
+    final raw = await _readValue(_kSeq);
+    return raw == null ? 0 : (int.tryParse(raw) ?? 0);
+  }
 
   @override
-  Future<void> writeCursor(Hlc hlc) => _writeHlc(_kCursor, hlc);
+  Future<void> writeSeq(int seq) => _writeValue(_kSeq, '$seq');
 
   @override
-  Future<Hlc?> readLocalHlc() => _readHlc(_kLocalHlc);
+  Future<Hlc?> readLocalHlc() async {
+    final raw = await _readValue(_kLocalHlc);
+    return raw == null ? null : Hlc.parse(raw);
+  }
 
   @override
-  Future<void> writeLocalHlc(Hlc hlc) => _writeHlc(_kLocalHlc, hlc);
+  Future<void> writeLocalHlc(Hlc hlc) =>
+      _writeValue(_kLocalHlc, hlc.toString());
 
-  Future<Hlc?> _readHlc(String key) async {
+  Future<String?> _readValue(String key) async {
     final rows = await _db
         .customSelect(
           'SELECT value FROM sync_meta WHERE key = ?',
@@ -166,23 +140,20 @@ class DriftCursorStore implements CursorStore {
         )
         .get();
     if (rows.isEmpty) return null;
-    final raw = rows.first.read<String>('value');
-    return Hlc.parse(raw);
+    return rows.first.read<String>('value');
   }
 
-  Future<void> _writeHlc(String key, Hlc hlc) async {
+  Future<void> _writeValue(String key, String value) async {
     await _db.customStatement(
       'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
       'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      [key, hlc.toString()],
+      [key, value],
     );
   }
 }
 
-/// No-op [OutboxStore] used in local-only mode. All writes are silently
-/// dropped — the user opted out of sync at onboarding, so the outbox
-/// would never drain. `peekBatch` always returns empty so no sync path
-/// can pick up stale ops if one is wired by accident.
+/// No-op [OutboxStore] used in local-only mode. All writes are dropped — the
+/// user opted out of sync, so nothing should ever enter the outbox.
 class NoopOutboxStore implements OutboxStore {
   const NoopOutboxStore();
 
@@ -190,95 +161,32 @@ class NoopOutboxStore implements OutboxStore {
   Future<int> depth() async => 0;
 
   @override
-  Future<void> enqueue(Op op) async {}
-
-  @override
-  Future<List<Op>> peekBatch({
-    int maxOps = 500,
-    int maxBytes = 1024 * 1024,
-  }) async => const [];
-
-  @override
-  Future<void> ack(Iterable<String> opIds) async {}
-
-  @override
-  Future<void> recordFailure({
-    required String opId,
-    required String code,
-    String? message,
-    String? payload,
-  }) async {}
-
-  @override
-  Future<void> bumpAttempts(Iterable<String> opIds) async {}
+  Future<void> enqueue({required String table, required String rowId}) async {}
 }
 
-/// In-memory [OutboxStore] for tests. Mirrors the FIFO ordering the Drift
-/// implementation enforces via `ORDER BY hlc_text ASC`.
+/// In-memory [OutboxStore] for tests.
 class InMemoryOutboxStore implements OutboxStore {
-  final List<Op> _items = [];
-  final List<({String opId, String code, String? message})> failures = [];
+  final List<({String table, String rowId})> items = [];
 
   @override
-  Future<int> depth() async => _items.length;
+  Future<int> depth() async => items.length;
 
   @override
-  Future<void> enqueue(Op op) async {
-    if (_items.any((o) => o.opId == op.opId)) return;
-    _items.add(op);
-    _items.sort((a, b) {
-      final c = a.hlc.toString().compareTo(b.hlc.toString());
-      return c;
-    });
+  Future<void> enqueue({required String table, required String rowId}) async {
+    items.add((table: table, rowId: rowId));
   }
-
-  @override
-  Future<List<Op>> peekBatch({
-    int maxOps = 500,
-    int maxBytes = 1024 * 1024,
-  }) async {
-    final out = <Op>[];
-    var bytes = 0;
-    for (final op in _items) {
-      if (out.length >= maxOps) break;
-      if (out.isNotEmpty && bytes + op.encodedSizeBytes > maxBytes) break;
-      out.add(op);
-      bytes += op.encodedSizeBytes;
-    }
-    return out;
-  }
-
-  @override
-  Future<void> ack(Iterable<String> opIds) async {
-    final set = opIds.toSet();
-    _items.removeWhere((o) => set.contains(o.opId));
-  }
-
-  @override
-  Future<void> recordFailure({
-    required String opId,
-    required String code,
-    String? message,
-    String? payload,
-  }) async {
-    failures.add((opId: opId, code: code, message: message));
-    _items.removeWhere((o) => o.opId == opId);
-  }
-
-  @override
-  Future<void> bumpAttempts(Iterable<String> opIds) async {}
 }
 
 /// In-memory [CursorStore] for tests.
 class InMemoryCursorStore implements CursorStore {
-  Hlc? _cursor;
+  int _seq = 0;
   Hlc? _localHlc;
 
   @override
-  Future<Hlc?> readCursor() async => _cursor;
+  Future<int> readSeq() async => _seq;
 
   @override
-  Future<void> writeCursor(Hlc hlc) async => _cursor = hlc;
+  Future<void> writeSeq(int seq) async => _seq = seq;
 
   @override
   Future<Hlc?> readLocalHlc() async => _localHlc;

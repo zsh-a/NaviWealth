@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/repositories/price_repository.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 
@@ -23,7 +23,7 @@ void main() {
     await db.close();
   });
 
-  test('record inserts a row and queues an insert op', () async {
+  test('record inserts a row and queues a dirty pointer', () async {
     final p = await repo.record(
       unit: 'us_stock:AAPL',
       quoteCurrency: 'USD',
@@ -32,11 +32,10 @@ void main() {
       source: 'manual',
     );
     expect(p.perUnit, Decimal.parse('190.55'));
-    final batch = await outbox.peekBatch();
+    final batch = outbox.queued;
     expect(batch, hasLength(1));
-    expect(batch.single.tableName, 'prices');
-    expect(batch.single.opType, OpType.insert);
-    expect(batch.single.fieldsDiff!['source'], 'manual');
+    expect(batch.single.table, 'prices');
+    expect(batch.single.rowId, p.id);
   });
 
   test(
@@ -78,7 +77,7 @@ void main() {
     },
   );
 
-  test('softDelete tombstones the row and queues a delete op', () async {
+  test('softDelete tombstones the row and queues a dirty pointer', () async {
     final p = await repo.record(
       unit: 'us_stock:AAPL',
       quoteCurrency: 'USD',
@@ -86,7 +85,7 @@ void main() {
       perUnit: Decimal.parse('190.55'),
       source: 'manual',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     await repo.softDelete(p.id);
     final latest = await repo.latestAt(
@@ -95,9 +94,10 @@ void main() {
       asOf: DateTime.utc(2026, 6, 1),
     );
     expect(latest, isNull, reason: 'softDelete should hide the row');
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.delete);
-    expect(batch.single.fieldsDiff, isNull);
+    final batch = outbox.queued;
+    expect(batch, hasLength(1));
+    expect(batch.single.table, 'prices');
+    expect(batch.single.rowId, p.id);
   });
 
   test('record rejects non-positive prices', () async {

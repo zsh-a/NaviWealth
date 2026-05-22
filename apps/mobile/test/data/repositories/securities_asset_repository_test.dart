@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/asset.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/securities_asset_repository.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 
+import '../../core/sync/_outbox_test_ext.dart';
 import '../db/test_database.dart';
 import '_stub_stamper.dart';
 
@@ -44,9 +44,9 @@ void main() {
     expect(asset.symbol, '600519');
     expect(asset.type, AssetType.stock);
 
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.insert);
-    expect(batch.single.tableName, 'assets');
+    final batch = outbox.queued;
+    expect(batch, hasLength(1));
+    expect(batch.single.table, 'assets');
     expect(batch.single.rowId, 'cn_a:600519');
   });
 
@@ -59,7 +59,7 @@ void main() {
       currency: 'USD',
       name: 'Apple Inc.',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final hlcBefore = (await repo.findById('us_stock:AAPL'))!.sync.hlc;
 
@@ -74,11 +74,11 @@ void main() {
     expect(again.id, 'us_stock:AAPL');
     expect(again.sync.hlc, hlcBefore,
         reason: 'no-op upsert must not bump the row HLC');
-    expect(await outbox.peekBatch(), isEmpty,
-        reason: 'no-op upsert must not enqueue an op');
+    expect(outbox.queued, isEmpty,
+        reason: 'no-op upsert must not enqueue a dirty pointer');
   });
 
-  test('upsertSecurity emits an update op when fields actually change',
+  test('upsertSecurity queues a dirty pointer when fields actually change',
       () async {
     await repo.upsertSecurity(
       symbol: 'AAPL',
@@ -87,7 +87,7 @@ void main() {
       currency: 'USD',
       name: 'Apple Inc.',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final updated = await repo.upsertSecurity(
       symbol: 'AAPL',
@@ -101,13 +101,10 @@ void main() {
     expect(updated.name, 'Apple Inc. (rebrand)');
     expect(updated.isin, 'US0378331005');
 
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.update);
-    final diff = batch.single.fieldsDiff!;
-    expect(diff['name'], 'Apple Inc. (rebrand)');
-    expect(diff['isin'], 'US0378331005');
-    expect(diff.containsKey('symbol'), isFalse,
-        reason: 'unchanged columns must not appear in the diff');
+    final batch = outbox.queued;
+    expect(batch, hasLength(1));
+    expect(batch.single.table, 'assets');
+    expect(batch.single.rowId, 'us_stock:AAPL');
   });
 
   test('same symbol in different markets resolve to distinct rows', () async {
@@ -207,21 +204,23 @@ void main() {
     expect(securities.map((a) => a.id), {'us_stock:AAPL'});
   });
 
-  test('softDelete tombstones the row and queues a delete op', () async {
+  test('softDelete tombstones the row and queues a dirty pointer', () async {
     final first = await repo.upsertSecurity(
       symbol: 'AAPL',
       market: AssetMarket.usStock,
       type: AssetType.stock,
       currency: 'USD',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     await repo.softDelete(first.id);
     final reloaded = await repo.findById(first.id);
     expect(reloaded!.sync.deletedAt, isNotNull);
 
-    final deleteBatch = await outbox.peekBatch();
-    expect(deleteBatch.single.opType, OpType.delete);
+    final deleteBatch = outbox.queued;
+    expect(deleteBatch, hasLength(1));
+    expect(deleteBatch.single.table, 'assets');
+    expect(deleteBatch.single.rowId, first.id);
 
     // findBySymbolAndMarket excludes tombstoned rows so it should not
     // surface the deleted instrument.
@@ -248,7 +247,7 @@ void main() {
       currency: 'USD',
       name: 'User-edited name',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final enriched = await repo.enrichMetadata(
       id: 'us_stock:AAPL',
@@ -264,13 +263,10 @@ void main() {
     expect(enriched.isin, 'US0378331005');
     expect(enriched.industry, 'Information Technology');
 
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.update);
-    final diff = batch.single.fieldsDiff!;
-    expect(diff.containsKey('name'), isFalse,
-        reason: 'name was already populated; must not appear in the diff');
-    expect(diff['isin'], 'US0378331005');
-    expect(diff['industry'], 'Information Technology');
+    final batch = outbox.queued;
+    expect(batch, hasLength(1));
+    expect(batch.single.table, 'assets');
+    expect(batch.single.rowId, 'us_stock:AAPL');
   });
 
   test('enrichMetadata is a no-op when every requested field is already set',
@@ -282,7 +278,7 @@ void main() {
       currency: 'USD',
       name: 'Apple Inc.',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final hlcBefore = (await repo.findById('us_stock:AAPL'))!.sync.hlc;
     final enriched = await repo.enrichMetadata(
@@ -292,8 +288,8 @@ void main() {
 
     expect(enriched.sync.hlc, hlcBefore,
         reason: 'no-op enrichment must not bump the HLC');
-    expect(await outbox.peekBatch(), isEmpty,
-        reason: 'no-op enrichment must not enqueue an op');
+    expect(outbox.queued, isEmpty,
+        reason: 'no-op enrichment must not enqueue a dirty pointer');
   });
 
   test('enrichMetadata fills empty name when the existing row has none',
@@ -304,7 +300,7 @@ void main() {
       type: AssetType.stock,
       currency: 'USD',
     );
-    await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final enriched = await repo.enrichMetadata(
       id: 'us_stock:AAPL',
@@ -312,9 +308,10 @@ void main() {
     );
     expect(enriched.name, 'Apple Inc.');
 
-    final batch = await outbox.peekBatch();
-    expect(batch.single.opType, OpType.update);
-    expect(batch.single.fieldsDiff!['name'], 'Apple Inc.');
+    final batch = outbox.queued;
+    expect(batch, hasLength(1));
+    expect(batch.single.table, 'assets');
+    expect(batch.single.rowId, 'us_stock:AAPL');
   });
 
   test('enrichMetadata throws when the asset does not exist', () async {

@@ -32,47 +32,21 @@ impl AppError {
         }
     }
 
-    pub fn ops_unordered() -> Self {
+    /// Push body, batch size or per-row payload over the cap (docs/sync-v2.md §5.1).
+    pub fn payload_too_large() -> Self {
         Self::coded(
-            400,
-            "ops_unordered",
-            "ops must be ordered by client_hlc ascending",
+            413,
+            "payload_too_large",
+            "request payload exceeds the limit",
         )
     }
 
-    pub fn empty_update() -> Self {
-        Self::coded(400, "empty_update", "update fields_diff cannot be empty")
-    }
-
+    /// The batch's `device_id` does not match the JWT-bound device.
     pub fn device_mismatch() -> Self {
         Self::coded(
             400,
             "device_mismatch",
-            "op device_id does not match batch device_id",
-        )
-    }
-
-    pub fn op_id_mutated() -> Self {
-        Self::coded(
-            400,
-            "op_id_mutated",
-            "op_id was reused with a different client_hlc",
-        )
-    }
-
-    pub fn invalid_hlc() -> Self {
-        Self::coded(400, "invalid_hlc", "since cursor is not a valid HLC")
-    }
-
-    pub fn payload_too_large() -> Self {
-        Self::coded(413, "payload_too_large", "request body exceeds 1 MB")
-    }
-
-    pub fn clock_skew_too_large() -> Self {
-        Self::coded(
-            409,
-            "clock_skew_too_large",
-            "client clock too far ahead of server",
+            "device_id does not match the authenticated device",
         )
     }
 
@@ -82,10 +56,6 @@ impl AppError {
 
     pub fn protocol_version() -> Self {
         Self::coded(426, "protocol_version", "unsupported sync protocol version")
-    }
-
-    pub fn unknown_table(name: &str) -> Self {
-        Self::coded(400, "unknown_table", format!("unknown sync table: {name}"))
     }
 
     pub fn status(&self) -> u16 {

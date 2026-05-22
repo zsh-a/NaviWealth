@@ -1,16 +1,16 @@
 import '../../data/domain/hlc.dart';
 
-/// Persists the SyncEngine's two pieces of clock state.
+/// Persists the SyncEngine's two pieces of state (`docs/sync-v2.md` §7.5).
 ///
-/// `cursor` — `last_pulled_hlc`. The next pull asks for `since = cursor`.
-/// Persisted **per user**, not per device (`docs/sync-protocol.md` §7.4).
+/// `seq` — the pull cursor. The next sync sends `since = seq`. A monotonic
+/// integer the server assigns; `0` before the first sync.
 ///
-/// `localHlc` — the HLC state used to stamp new local ops. Persisted so
-/// that a long-offline session whose physical clock briefly went backwards
-/// doesn't re-issue ops with HLCs lower than rows already on disk.
+/// `localHlc` — the HLC state used to stamp new local writes. Persisted so a
+/// session whose physical clock briefly went backwards never re-issues a
+/// version below rows already on disk.
 abstract class CursorStore {
-  Future<Hlc?> readCursor();
-  Future<void> writeCursor(Hlc hlc);
+  Future<int> readSeq();
+  Future<void> writeSeq(int seq);
 
   Future<Hlc?> readLocalHlc();
   Future<void> writeLocalHlc(Hlc hlc);

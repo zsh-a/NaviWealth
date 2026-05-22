@@ -2,11 +2,11 @@ use worker::Headers;
 
 use crate::error::AppError;
 
-pub const SUPPORTED_PROTOCOL_VERSION: &str = "1";
+pub const SUPPORTED_PROTOCOL_VERSION: &str = "2";
 
-/// Enforce `Sync-Protocol-Version: 1` on sync-domain endpoints. Missing
+/// Enforce `Sync-Protocol-Version: 2` on sync-domain endpoints. A missing
 /// header is allowed (back-compat with `/health`); only an explicit mismatch
-/// triggers 426 — see docs/sync-protocol.md §10.
+/// triggers 426 — see docs/sync-v2.md §5.
 pub fn check_protocol_version(headers: &Headers) -> Result<(), AppError> {
     if let Ok(Some(v)) = headers.get("Sync-Protocol-Version") {
         if v != SUPPORTED_PROTOCOL_VERSION {

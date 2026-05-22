@@ -1,3 +1,6 @@
+//! `GET /me` — JWT check plus a cheap "is there anything new" probe
+//! (docs/sync-v2.md §5.2).
+
 use chrono::Utc;
 use serde::Serialize;
 use worker::{Request, Response, Result as WorkerResult, RouteContext};
@@ -5,13 +8,15 @@ use worker::{Request, Response, Result as WorkerResult, RouteContext};
 use crate::auth::middleware::require_auth;
 use crate::error::AppError;
 use crate::routes::common::check_protocol_version;
-use crate::sync::state;
+use crate::sync::store;
 
 #[derive(Serialize)]
 struct MeBody {
     user_id: String,
     server_now: String,
-    server_hlc: String,
+    /// The server's current `MAX(seq)`. A client whose cursor already equals
+    /// this can skip the next sync round trip.
+    seq: i64,
 }
 
 pub async fn get(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -32,17 +37,12 @@ async fn handle(req: Request, ctx: RouteContext<()>) -> Result<Response, AppErro
         .env
         .d1("DB")
         .map_err(|_| AppError::Internal("DB unbound".into()))?;
-    let clock = state::load(&db, &auth.user_id).await?;
-    let now_ms = Utc::now().timestamp_millis();
-    // Surface the highest HLC the server would mint *now*; clone the state
-    // so a probe doesn't burn server clock state.
-    let mut probe = clock;
-    let next = state::stamp(&mut probe, 0, now_ms);
+    let seq = store::max_seq(&db, &auth.user_id).await?;
 
     let body = MeBody {
         user_id: auth.user_id,
         server_now: Utc::now().to_rfc3339(),
-        server_hlc: next.to_canonical(),
+        seq,
     };
     Response::from_json(&body).map_err(AppError::from)
 }

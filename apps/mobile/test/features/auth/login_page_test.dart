@@ -15,10 +15,16 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 class _StubAuthApi implements AuthApiClient {
   AuthSession? loginResponse;
   Object? loginError;
+  AuthSession? registerResponse;
+  Object? registerError;
   final List<
     ({String email, String password, String? deviceName, String? deviceId})
   >
   loginCalls = [];
+  final List<
+    ({String email, String password, String? deviceName, String? deviceId})
+  >
+  registerCalls = [];
 
   @override
   Future<AuthSession> login({
@@ -35,6 +41,23 @@ class _StubAuthApi implements AuthApiClient {
     ));
     if (loginError != null) throw loginError!;
     return loginResponse!;
+  }
+
+  @override
+  Future<AuthSession> register({
+    required String email,
+    required String password,
+    String? deviceName,
+    String? deviceId,
+  }) async {
+    registerCalls.add((
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    ));
+    if (registerError != null) throw registerError!;
+    return registerResponse!;
   }
 
   @override
@@ -105,6 +128,7 @@ void main() {
     expect(find.byKey(const ValueKey('login.email')), findsOneWidget);
     expect(find.byKey(const ValueKey('login.password')), findsOneWidget);
     expect(find.byKey(const ValueKey('login.submit')), findsOneWidget);
+    expect(find.byKey(const ValueKey('login.toggleMode')), findsOneWidget);
     expect(find.text(l10n.authLoginSubmit), findsOneWidget);
   });
 
@@ -194,6 +218,71 @@ void main() {
     expect(api.loginCalls.single.password, 'hunter22');
     expect(container.read(authControllerProvider).value, isA<AuthLoggedIn>());
     expect((await container.read(tokenStoreProvider).read())!.userId, 'u-1');
+  });
+
+  testWidgets('registration mode creates account and persists session', (
+    tester,
+  ) async {
+    final api = _StubAuthApi()..registerResponse = _session();
+    final container = _container(api: api);
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+    await _pump(tester, container);
+    final l10n = await _l10n(tester);
+
+    await tester.tap(find.byKey(const ValueKey('login.toggleMode')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('login.submit')),
+        matching: find.text(l10n.authRegisterSubmit),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('login.email')),
+      'new@user.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('login.password')),
+      'hunter22',
+    );
+    await tester.tap(find.byKey(const ValueKey('login.submit')));
+    await tester.pumpAndSettle();
+
+    expect(api.registerCalls, hasLength(1));
+    expect(api.registerCalls.single.email, 'new@user.com');
+    expect(api.loginCalls, isEmpty);
+    expect(container.read(authControllerProvider).value, isA<AuthLoggedIn>());
+  });
+
+  testWidgets('registration closed error uses account-exists banner', (
+    tester,
+  ) async {
+    final api = _StubAuthApi()
+      ..registerError = AuthException(AuthErrorKind.accountExists);
+    final container = _container(api: api);
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+    await _pump(tester, container);
+    final l10n = await _l10n(tester);
+
+    await tester.tap(find.byKey(const ValueKey('login.toggleMode')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('login.email')),
+      'new@user.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('login.password')),
+      'hunter22',
+    );
+    await tester.tap(find.byKey(const ValueKey('login.submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.authRegisterErrorAccountExists), findsOneWidget);
+    expect(container.read(authControllerProvider).value, isA<AuthLoggedOut>());
   });
 
   testWidgets('invalid credentials → inline error banner', (tester) async {
